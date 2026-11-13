@@ -15,6 +15,7 @@ import {
   isHtmlResponse,
 } from "../../scripts/csp.mjs";
 import { applyPublicStaticCache } from "../../scripts/public-static-cache.mjs";
+import { compressHtmlResponse } from "../lib/html-compression.ts";
 
 interface CspEvent {
   url: URL;
@@ -28,6 +29,12 @@ export default async function cspMiddleware(
   const nonce = generateNonce();
   const result = await next();
   if (!(result instanceof Response)) return result;
+
+  // An upstream encoder owns its document's existing nonce/CSP. Reading encoded
+  // bytes as text or replacing that policy would corrupt the document.
+  if (isHtmlResponse(result.headers.get("content-type")) && result.headers.has("content-encoding")) {
+    return result;
+  }
 
   const headers = new Headers(result.headers);
   headers.set("Content-Security-Policy", buildContentSecurityPolicy(nonce));
@@ -53,9 +60,12 @@ export default async function cspMiddleware(
 
   const stamped = stripModulePreloadsForPath(applyDocumentNonces(await result.text(), nonce), event.url.pathname);
   headers.delete("content-length");
-  return new Response(stamped, {
-    status: result.status,
-    statusText: result.statusText,
-    headers,
-  });
+  return compressHtmlResponse(
+    new Response(stamped, {
+      status: result.status,
+      statusText: result.statusText,
+      headers,
+    }),
+    event.req.headers.get("accept-encoding"),
+  );
 }

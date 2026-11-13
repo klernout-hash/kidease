@@ -18,7 +18,9 @@ import {
 } from "../src/lib/ai/smart-match-chat.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const ui = readFileSync(join(root, "src/components/smart-match.tsx"), "utf8");
+const ui = ["smart-match.tsx", "smart-match-chat.tsx"]
+  .map((file) => readFileSync(join(root, "src/components", file), "utf8"))
+  .join("\n");
 
 test("five questions advance from a chip or typed words, and back rewinds one step", () => {
   let answers = { ...EMPTY_MATCH_ANSWERS };

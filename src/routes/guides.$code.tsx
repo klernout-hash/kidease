@@ -3,7 +3,7 @@ import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { provincialGuideCopy } from "@/lib/provincial-guide-copy";
-import { canadaWideChildCareUrl, provincialGuideByCode, provincialGuidePath } from "@/lib/provincial-guides";
+import { canadaWideChildCareUrl, provincialGuidePath } from "@/lib/provincial-guide-route";
 import { localeLine } from "@/lib/french-type";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
@@ -11,7 +11,8 @@ import { isFrPath, localePath } from "@/lib/locale-path";
 import { useRouterState } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/guides/$code")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
+    const { provincialGuideByCode } = await import("@/lib/provincial-guides");
     const pt = provincialGuideByCode(params.code);
     if (!pt) throw notFound();
     return pt;

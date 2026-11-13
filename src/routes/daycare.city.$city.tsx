@@ -15,11 +15,12 @@ import {
 } from "@/lib/city-hubs";
 import { localeLine } from "@/lib/french-type";
 import { breadcrumbJsonLdScript, faqPageJsonLdScript } from "@/lib/page-seo";
-import { cityHubHead, loadCityHub } from "@/lib/city-hub-page";
+import { loadCityHub } from "@/lib/city-hub-page";
+import { cityHubHead } from "@/lib/city-hub-head";
 import { isFrPath, localePath } from "@/lib/locale-path";
 import { provinceAbbrev } from "@/lib/province-phrase";
 import { displayCentreName, formatCount } from "@/lib/utils";
-import { SITEMAP_ORIGIN, isSafeSitemapSlug } from "@/lib/sitemap";
+import { SITEMAP_ORIGIN, isSafeSitemapSlug } from "@/lib/public-url";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/daycare/city/$city")({

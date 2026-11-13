@@ -17,7 +17,6 @@ import {
   readShortlistCache,
   SHORTLIST_EVENT,
   stashPendingSave,
-  writeShortlistCache,
 } from "@/lib/shortlist";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -152,10 +151,10 @@ export function SaveListingButton({
         className={cn(
           appearance === "photo"
             ? cn(
-                "pointer-events-auto absolute right-2 top-2 z-20 grid place-items-center rounded-full",
+                "pointer-events-auto absolute right-2 top-2 z-20 grid min-h-[44px] min-w-[44px] place-items-center rounded-full",
                 framed ? "size-12 bg-surface text-fg ring-1 ring-border" : "size-11 text-white",
               )
-            : "inline-flex min-h-11 min-w-11 items-center justify-center",
+            : "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-fg",
           className,
         )}
       >
@@ -175,7 +174,7 @@ export function SaveListingButton({
         className={className}
         disabled={busy}
       >
-        <Heart className={saved ? "size-4 fill-fg" : "size-4"} />
+        <Heart className={cn("size-4", saved && "fill-current text-danger")} aria-hidden />
       </Button>
     );
   }
@@ -192,7 +191,7 @@ export function SaveListingButton({
         className={className}
         disabled={busy}
       >
-        <Heart className={cn("size-5", saved && "fill-fg")} />
+        <Heart className={cn("size-5", saved && "fill-current text-danger")} aria-hidden />
       </Button>
     );
   }
@@ -200,11 +199,12 @@ export function SaveListingButton({
   return (
     <button
       type="button"
+      data-ke="save-listing"
       onPointerDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => void onSave(e)}
       className={cn(
-        "pointer-events-auto absolute right-2 top-2 z-20 grid place-items-center rounded-full",
+        "pointer-events-auto absolute right-2 top-2 z-20 grid min-h-[44px] min-w-[44px] place-items-center rounded-full",
         framed
           ? "size-12 bg-surface text-fg ring-1 ring-border"
           : "size-11 text-white",
@@ -219,12 +219,14 @@ export function SaveListingButton({
           className={cn("size-7", saved ? "text-[#FF385C]" : "text-current")}
           strokeWidth={saved ? 2 : 2.25}
           fill={saved ? HEART_SAVED : "none"}
+          aria-hidden
         />
       ) : (
         <Heart
           className={cn("size-[22px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]", saved ? "text-[#FF385C]" : "text-current")}
           strokeWidth={1.7}
           fill={saved ? HEART_SAVED : "rgba(0,0,0,0.28)"}
+          aria-hidden
         />
       )}
     </button>

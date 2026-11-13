@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CityHubNotFoundPage } from "@/components/page-not-found";
 import { CityHubPage } from "@/routes/daycare.city.$city";
-import { cityHubHead, loadCityHub } from "@/lib/city-hub-page";
+import { loadCityHub } from "@/lib/city-hub-page";
+import { cityHubHead } from "@/lib/city-hub-head";
 
 export const Route = createFileRoute("/fr/daycare/city/$city")({
   loader: ({ params }) => loadCityHub(params.city),

@@ -173,7 +173,7 @@ export function SiteFooter() {
                 <Link
                   key={link.to}
                   to={localePath(link.to, locale)}
-                  className="ke-footer-link"
+                  className="ke-footer-link inline-flex min-h-[44px] items-center"
                 >
                   {footerLinkLabel(link, t, locale)}
                 </Link>

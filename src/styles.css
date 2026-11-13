@@ -349,6 +349,14 @@
   }
 }
 
+/* Keep the shared Button's touch floor when a caller supplies a smaller rem
+   minimum. This unlayered component rule wins over layered size utilities;
+   explicit larger heights and the existing size variants still grow. */
+.ke-button {
+  min-height: max(44px, 2.75rem);
+  min-width: 44px;
+}
+
 /* Header buttons use rem, so a large text size makes them wider than a 320px
    phone once the back control is also in the row. Kept outside @layer so it
    wins over the size utilities. 44px stays a full touch target. */
@@ -382,8 +390,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 2.75rem;
-    min-width: 2.75rem;
+    min-height: max(44px, 2.75rem);
+    min-width: max(44px, 2.75rem);
     max-width: none;
     padding: 0.15rem 0.7rem;
     border-radius: 9999px;
@@ -453,7 +461,7 @@
     display: flex;
     width: max-content;
     flex-wrap: nowrap;
-    gap: 0.5rem;
+    gap: max(8px, 0.5rem);
   }
   .ke-chip-carousel-track > * {
     flex: 0 0 auto;
@@ -465,7 +473,7 @@
   .ke-explore-cats {
     display: flex;
     flex-wrap: nowrap;
-    gap: 0.5rem;
+    gap: max(8px, 0.5rem);
     overflow-x: auto;
     padding-block: 0.15rem 0.35rem;
     -webkit-overflow-scrolling: touch;
@@ -498,7 +506,7 @@
   .ke-explore-filter-bar {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
     width: 100%;
     min-width: 0;
     max-width: 100%;
@@ -622,7 +630,7 @@
     display: flex;
     flex: 0 0 auto;
     align-items: center;
-    gap: 0.35rem;
+    gap: 8px;
     padding-left: 0.15rem;
     background: var(--color-bg);
     isolation: isolate;
@@ -643,8 +651,8 @@
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    min-height: 2.75rem;
-    min-width: 2.75rem;
+    min-height: max(44px, 2.75rem);
+    min-width: max(44px, 2.75rem);
     padding: 0 0.7rem;
     border: 0;
     border-radius: 9999px;
@@ -687,7 +695,7 @@
       max-width: none;
     }
     .ke-explore-icon-btn {
-      width: 2.75rem;
+      width: max(44px, 2.75rem);
       padding: 0;
     }
     .ke-explore-icon-btn-label {
@@ -793,6 +801,7 @@
     display: inline-flex;
     align-items: center;
     min-height: 3.15rem;
+    min-width: 44px;
     color: var(--color-muted);
     font-size: 13px;
     line-height: 1.3;
@@ -822,6 +831,7 @@
   .ke-footer-app-title {
     display: inline-flex;
     min-height: 3.15rem;
+    min-width: 44px;
     align-items: center;
     color: var(--color-fg);
     font-size: 13px;
@@ -850,6 +860,7 @@
     width: var(--ke-footer-store-width);
     height: 3.15rem;
     min-height: 3.15rem;
+    min-width: 44px;
     justify-content: center;
     align-items: center;
     gap: 0.35rem;
@@ -1197,6 +1208,7 @@
   }
   .ke-input {
     height: 2.75rem;
+    min-height: max(44px, 2.75rem);
     width: 100%;
     border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
@@ -2979,6 +2991,12 @@ html[data-resolved-theme="dark"] .ke-site-footer {
   }
 }
 
+/* Consent height changes with French, text size and wrapping. Reuse the
+   launcher's existing measured clearance in every channel while it is open. */
+html[data-cookie-banner="open"]:has(.ke-help-bot) .ke-help-bot {
+  bottom: calc(var(--ke-help-clear, calc(10.5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)))) + var(--ke-keyboard, 0px));
+}
+
 /* Keyboard open: the bottom tab bar steps aside instead of floating over content. */
 html[data-keyboard="open"] [data-ke="app-tab-bar"] {
   display: none !important;
@@ -3099,8 +3117,8 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
 }
 @media (max-width: 767px) {
   .ke-explore-filter-bar > [data-chip-carousel] {
-    flex: 1 1 calc(100% - 6.75rem);
-    max-width: calc(100% - 6.75rem);
+    flex: 1 1 0;
+    max-width: 100%;
   }
   .ke-explore-filter-actions {
     position: relative;
@@ -3139,6 +3157,16 @@ html[data-runtime="native"] .ke-page::after {
   height: calc(10rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
   pointer-events: none;
   flex: none;
+}
+/* The provider desk grows as its centre data arrives. Keep the same bottom
+   clearance on the page box so an anonymous spacer cannot shift offscreen. */
+html[data-channel="app"] .ke-page.ke-provider-page,
+html[data-runtime="native"] .ke-page.ke-provider-page {
+  padding-block-end: calc(10rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+}
+html[data-channel="app"] .ke-page.ke-provider-page::after,
+html[data-runtime="native"] .ke-page.ke-provider-page::after {
+  content: none;
 }
 main { min-width: 0; }
 

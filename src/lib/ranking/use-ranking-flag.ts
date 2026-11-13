@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { readAiFeatureFlags } from "@/lib/server/ai-flags";
+import { readClientAiFlags } from "../ai/client-flags.ts";
 import { rankingFlagOn } from "./variant.ts";
 
 function anonId() {
@@ -27,7 +27,7 @@ export function useRankingBestMatchFlag(): boolean | undefined {
   useEffect(() => {
     let stop = false;
     const id = user?.id && user.id !== "dev-user" ? user.id : anonId();
-    void readAiFeatureFlags({ data: { distinctId: id } })
+    void readClientAiFlags(id)
       .then((snapshot) => {
         if (!stop) setFlag(rankingFlagOn(snapshot));
       })

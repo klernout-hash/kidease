@@ -86,5 +86,5 @@ test("public search routes page the payload and keep a crawlable next link", () 
   assert.match(daycares, /evidence: narrowed\.evidence/);
   assert.match(daycares, /inclusiveFiltersEnabled\(\)/);
   assert.match(src("src/components/parent-desk.tsx"), /searchDaycares\(/);
-  assert.match(src("src/components/smart-match.tsx"), /searchDaycares\(/);
+  assert.match(src("src/components/smart-match-chat.tsx"), /searchDaycares\(/);
 });

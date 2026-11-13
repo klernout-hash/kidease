@@ -18,7 +18,8 @@ import { LicenceTypeFilters } from "@/components/licence-type-filters";
 import { careKeysParam, parseCareKeys, type CareDetailKey } from "@/lib/inclusive-search";
 import { type LicenceBucket } from "@/lib/phase1-search";
 import { CommuteDetourBar } from "@/components/commute-detour-bar";
-import { SearchCardAgesProvider } from "@/components/search-card-context";
+import { SearchCardAgesProvider, SearchCardOriginProvider } from "@/components/search-card-context";
+import { resolveSearchCardOrigin } from "@/lib/search-card-origin";
 import { DaycareCard } from "@/components/daycare-card";
 import { AreaWaitlistForm } from "@/components/area-waitlist-form";
 import { SEARCH_PAGE_MAX, pageFromSearch } from "@/lib/search-page";
@@ -164,7 +165,7 @@ const CompareBar = lazy(() =>
 export async function searchLoader({ location, abortController }: { location: { search: unknown }; abortController?: AbortController }) {
     const { reviewReportsEnabled } = await import("@/lib/features");
     const { readMobileSearchV2 } = await import("@/lib/mobile-search-flag");
-    const mobileSearchV2 = await readMobileSearchV2().catch(() => false);
+    const mobileSearchV2Read = readMobileSearchV2().catch(() => false);
     const reviewRatingFloor = ratingFloor(reviewReportsEnabled(), MIN_REVIEW_COUNT);
     const rawQ = searchQueryFromUnknown(location.search);
     const genericCare = isGenericCareQuery(rawQ);
@@ -185,7 +186,7 @@ export async function searchLoader({ location, abortController }: { location: { 
         pageLimitReached: false,
         evidence: searchEvidence(),
         reviewRatingFloor,
-        mobileSearchV2,
+        mobileSearchV2: await mobileSearchV2Read,
       };
     }
     const place = q || (city ? originFromSearchQuery(city)?.label || city : "");
@@ -210,7 +211,7 @@ export async function searchLoader({ location, abortController }: { location: { 
         pageLimitReached: false,
         evidence: searchEvidence(),
         reviewRatingFloor,
-        mobileSearchV2,
+        mobileSearchV2: await mobileSearchV2Read,
       };
     }
     const page = pageFromSearch(location.search);
@@ -290,7 +291,7 @@ export async function searchLoader({ location, abortController }: { location: { 
       pageLimitReached: painted.value?.pageLimitReached === true,
       evidence: readSearchEvidence(painted.value?.evidence),
       reviewRatingFloor,
-      mobileSearchV2,
+      mobileSearchV2: await mobileSearchV2Read,
     };
 }
 
@@ -413,7 +414,7 @@ export function SearchScreen({
   const bootHoldUrl = useRef(false);
   const typedPlace = (incoming.q || "").trim() || (incoming.city || "").trim();
   const bootLabel = (boot.origin?.label || "").trim();
-  if (!typedPlace && bootLabel && !(useAppStore.getState().origin.label || "").trim()) {
+  if (typeof window !== "undefined" && !typedPlace && bootLabel && !(useAppStore.getState().origin.label || "").trim()) {
     const source = boot.origin.source === "ip" ? "ip" : "default";
     bootHoldUrl.current = true;
     useAppStore.getState().setOrigin({ lat: boot.origin.lat, lng: boot.origin.lng, label: bootLabel }, source);
@@ -421,6 +422,13 @@ export function SearchScreen({
   }
   const origin = useAppStore((s) => s.origin);
   const originSource = useAppStore((s) => s.originSource);
+  const cardOrigin = useMemo(() => resolveSearchCardOrigin({
+    storedOrigin: origin,
+    storedSource: originSource,
+    bootOrigin: boot.origin,
+    unknownCity: boot.unknownCity,
+    needsPlace: boot.needsPlace,
+  }), [origin, originSource, boot.origin, boot.unknownCity, boot.needsPlace]);
   const located = useAppStore((s) => s.located);
   const setOrigin = useAppStore((s) => s.setOrigin);
   const workOrigin = useAppStore((s) => s.workOrigin);
@@ -555,9 +563,7 @@ export function SearchScreen({
 
   useEffect(() => {
     if (view === "map") setMapEnabled(true);
-    if (view !== "map" || storeChannel === "huawei") return;
-    void import("@/lib/osm-map").then((mod) => mod.preloadMapLibrary().catch(() => undefined));
-  }, [storeChannel, view]);
+  }, [view]);
 
   useEffect(() => {
     const place = (incoming.q || "").trim() || (incoming.city || "").trim();
@@ -1690,13 +1696,14 @@ export function SearchScreen({
                 secondaryTo: "/?change=1",
                 onSecondary: undefined as (() => void) | undefined,
               };
-  const whereLabel = (incoming.q || query || origin.label || "").trim();
+  const whereLabel = (incoming.q || query || origin.label || cardOrigin?.origin.label || "").trim();
   const city = (whereLabel || origin.label).split(",")[0];
   const askedPlace = Boolean((incoming.q || incoming.city || "").trim());
   const locationKnown =
     askedPlace ||
     located ||
     Boolean((origin.label || "").trim()) ||
+    Boolean((cardOrigin?.origin.label || "").trim()) ||
     originSource === "gps" ||
     originSource === "manual" ||
     originSource === "saved" ||
@@ -1877,6 +1884,7 @@ export function SearchScreen({
   ) : null;
 
   return (
+    <SearchCardOriginProvider value={cardOrigin}>
     <SearchCardAgesProvider ages={selectedAges}>
     <Shell>
       <div className="ke-dense ke-gutter mx-auto max-w-7xl pb-6 pt-2">
@@ -2536,5 +2544,6 @@ export function SearchScreen({
       </Suspense>
     </Shell>
     </SearchCardAgesProvider>
+    </SearchCardOriginProvider>
   );
 }

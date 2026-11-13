@@ -6,7 +6,7 @@ import ts from "typescript";
 // Execute the actual initializer, substituting only browser imports.
 const source = readFileSync(new URL("../src/lib/osm-map.ts", import.meta.url), "utf8");
 const start = source.indexOf("let libPromise:");
-const end = source.indexOf("/** @deprecated", start);
+const end = source.indexOf("export type KidEaseMap", start);
 assert.ok(start > 0 && end > start);
 const compiled = ts.transpileModule(source.slice(start, end).replaceAll("import.meta.url", "__moduleUrl"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -16,7 +16,8 @@ function initializer(moduleUrl = "https://preview.example/src/lib/osm-map.ts", b
   let failImport = false;
   const urls = [];
   const imports = [];
-  const ml = { setWorkerUrl: (url) => urls.push(url) };
+  const caps = [];
+  const ml = { setWorkerUrl: (url) => urls.push(url), setMaxParallelImageRequests: (cap) => caps.push(cap) };
   const module = { exports: {} };
   const load = (name) => {
     imports.push(name);
@@ -28,7 +29,7 @@ function initializer(moduleUrl = "https://preview.example/src/lib/osm-map.ts", b
     throw new Error(`Unexpected browser dependency: ${name}`);
   };
   new Function("require", "module", "exports", "window", "__moduleUrl", compiled)(load, module, module.exports, browser, moduleUrl);
-  return { load: module.exports.preloadOsmMap, urls, imports, ml, fail: (value) => { failImport = value; } };
+  return { load: module.exports.preloadOsmMap, urls, imports, caps, ml, fail: (value) => { failImport = value; } };
 }
 
 test("MapLibre receives the emitted worker URL and shares initialization", async () => {
@@ -39,6 +40,7 @@ test("MapLibre receives the emitted worker URL and shares initialization", async
   assert.equal(await app.load(), app.ml);
   assert.deepEqual(app.urls, ["https://preview.example/node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs"]);
   assert.equal(app.imports.length, 2);
+  assert.deepEqual(app.caps, [6]);
   assert.ok(app.imports.every((name) => !name.includes("maplibre-gl-worker")), "The worker is not executed on the main thread");
 });
 

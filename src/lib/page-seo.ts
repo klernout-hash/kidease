@@ -7,7 +7,7 @@
 import { frenchTypography } from "./french-type.ts";
 import { SUPPORT_INBOX_EMAIL } from "./support.ts";
 import { FACEBOOK_PROFILE_URL, INSTAGRAM_PROFILE_URL } from "./social.ts";
-import { SITEMAP_ORIGIN } from "./sitemap.ts";
+import { SITEMAP_ORIGIN } from "./public-url.ts";
 import { hreflangLinks, pathLocale } from "./locale-path.ts";
 
 export const HOME_SEO_TITLE = "KidEase · Licensed daycare near you";

@@ -5,20 +5,17 @@
 
 import { useEffect } from "react";
 import { useRouter } from "@tanstack/react-router";
-import {
-  collectRoutePathsFromTree,
-  installPreviewHostBridge,
-} from "@/lib/preview-host-bridge";
+import { startPreviewHostBridge } from "@/lib/preview-bridge-start";
 
 export function PreviewHostBridge() {
   const router = useRouter();
 
   useEffect(() => {
-    return installPreviewHostBridge({
+    return startPreviewHostBridge({
       navigate: (path) => {
         router.history.push(path);
       },
-      getRoutePaths: () => collectRoutePathsFromTree(router.routeTree),
+      routeTree: router.routeTree,
     });
   }, [router]);
 
