@@ -275,6 +275,66 @@ async function shot(page, name, width, content) {
   await page.screenshot({ path: join(dir, `${name}.png`), fullPage: false }).catch(() => {});
 }
 
+async function searchSmokeSnapshot(page) {
+  return page.evaluate(() => {
+    const visible = (node) => {
+      const box = node.getBoundingClientRect();
+      const style = getComputedStyle(node);
+      return box.width > 0 && box.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+    };
+    const coverage = [...document.querySelectorAll('[data-ke="search-coverage"]')].find(visible);
+    const cards = [...document.querySelectorAll("[data-slug]")].filter(visible);
+    return {
+      count: (document.querySelector('[data-ke="search-count"]')?.textContent || "").replace(/\s+/g, " ").trim(),
+      coverage: coverage?.getAttribute("data-coverage") || "complete",
+      warning: (coverage?.querySelector("span")?.textContent || "").replace(/\s+/g, " ").trim().slice(0, 240),
+      cards: cards.length,
+      seededLiveCard: cards.some((card) => card.getAttribute("data-slug") === "e2e-centre"),
+    };
+  });
+}
+
+function positiveLiveSearchCount(snapshot) {
+  const licensed = /\b[1-9]\d*\s+licensed centres?\b/i.test(snapshot.count);
+  const atLeast = /\bAt least [1-9]\d*\s+licensed centres?\b/i.test(snapshot.count);
+  if (snapshot.coverage === "complete") return licensed && !atLeast;
+  if (!snapshot.warning || !snapshot.seededLiveCard) return false;
+  if (snapshot.coverage === "partial") return atLeast;
+  return snapshot.coverage === "unverified" && /\b[1-9]\d*\s+listings? available to view\b/i.test(snapshot.count);
+}
+
+async function roleListingFromSearch(page, waitMs = timeoutMs) {
+  const listing = page.locator('a[href*="/daycare/"]:not([href*="/daycare/city"])').first();
+  const requests = [];
+  const origin = new URL(page.url()).origin;
+  const onResponse = (response) => {
+    const url = new URL(response.url());
+    if (url.origin === origin && url.pathname.startsWith("/_serverFn/")) {
+      requests.push({ path: url.pathname, method: response.request().method(), status: response.status() });
+      if (requests.length > 12) requests.shift();
+    }
+  };
+  page.on("response", onResponse);
+  let retried = false;
+  try {
+    await listing.waitFor({ state: "visible", timeout: waitMs }).catch(() => {});
+    const before = await searchSmokeSnapshot(page);
+    if (!(await listing.isVisible().catch(() => false)) && ["partial", "unverified", "error"].includes(before.coverage)) {
+      // One user-visible search recovery only; never reload or bypass the UI.
+      const retry = page.locator(".ke-search-results").getByRole("button", { name: /^(Retry|Réessayer)$/ }).first();
+      if (await retry.isVisible().catch(() => false) && await retry.isEnabled().catch(() => false)) {
+        await retry.click({ timeout: 5000 });
+        retried = true;
+        await listing.waitFor({ state: "visible", timeout: waitMs }).catch(() => {});
+      }
+    }
+    const href = await listing.isVisible().catch(() => false) ? (await listing.getAttribute("href")) || "" : "";
+    return { href, diagnostics: { before, after: await searchSmokeSnapshot(page), retried, requests } };
+  } finally {
+    page.off("response", onResponse);
+  }
+}
+
 async function runRoleFixture(page, base) {
   const context = page.context();
   try {
@@ -289,7 +349,7 @@ async function runRoleFixture(page, base) {
     }
     let guestNav = await page.locator("#ke-nav-drawer").innerText();
     const guestPricing = await page.locator('[data-ke="optional-upgrades"]').count();
-    const guestPlanLink = page.locator('#ke-nav-drawer [data-nav="plans"]');
+    const guestPlanLink = page.locator('#ke-nav-drawer a[href="/plans"]');
     const guestPlans = await guestPlanLink.count();
     const guestPlanLabel = ((await guestPlanLink.first().innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim();
     const guestFooterLink = page.locator('footer a[href="/plans"]');
@@ -342,7 +402,7 @@ async function runRoleFixture(page, base) {
       await menu.click({ timeout: 8000, force: true });
       const drawerNav = page.locator("#ke-nav-drawer [data-ke='role-nav']");
       await drawerNav.waitFor({ timeout: 8000 }).catch(() => {});
-      await page.locator('#ke-nav-drawer [data-nav="plans"]').waitFor({ timeout: 8000 }).catch(() => {});
+      await page.locator('#ke-nav-drawer a[href="/plans"]').waitFor({ timeout: 8000 }).catch(() => {});
       guestNav = `${guestNav}\n${await drawerNav.innerText().catch(() => "")}`;
       const dir = join(dirname(outDir), "shots");
       mkdirSync(dir, { recursive: true });
@@ -764,21 +824,12 @@ async function runRoleFixture(page, base) {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.context().clearCookies();
     await page.goto(new URL("/search?q=Winnipeg%2C+MB", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await page
-      .locator('a[href*="/daycare/"]:not([href*="/daycare/city"])')
-      .first()
-      .waitFor({ timeout: timeoutMs })
-      .catch(() => {});
-    const listingHref = await page.locator('a[href*="/daycare/"]').evaluateAll((els) => {
-      for (const el of els) {
-        const href = el.getAttribute("href") || "";
-        if (href.includes("/daycare/") && !href.includes("/daycare/city")) return href;
-      }
-      return "";
-    });
+    const listingSearch = await roleListingFromSearch(page);
+    const listingHref = listingSearch.href;
     if (!listingHref) {
-      record("listing-role-actions", false, { note: "no public listing link on /search" });
+      record("listing-role-actions", false, { note: "no public listing link on /search", search: listingSearch.diagnostics });
     } else {
+      if (listingSearch.diagnostics.retried) record("listing-search-retry", true, { search: listingSearch.diagnostics });
       const listingUrl = new URL(listingHref, base).href;
       const slug = listingHref.split("/daycare/")[1]?.split(/[?#]/)[0] || "";
       await page.setViewportSize({ width: 1280, height: 900 });
@@ -829,26 +880,21 @@ async function runRoleFixture(page, base) {
     const liveQuoted = /live=%22|live=%221%22|live="1"/.test(liveUrl);
     const liveParam = /[?&]live=1(?:&|$)/.test(liveUrl);
     const countLine = page.locator('[data-ke="search-count"]');
-    const countText = await countLine
-      .waitFor({ state: "visible", timeout: timeoutMs })
-      .then(() =>
-        page.waitForFunction(
-          () => {
-            const text = document.querySelector('[data-ke="search-count"]')?.textContent || "";
-            return /[1-9]\d*\s+licensed centre/i.test(text);
-          },
-          null,
-          { timeout: timeoutMs },
-        ),
-      )
-      .then(async () => ((await countLine.innerText()) || "").replace(/\s+/g, " ").trim())
-      .catch(async () => ((await countLine.innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim());
-    const liveCountOk = /[1-9]\d*\s+licensed centre/i.test(countText);
+    await countLine.waitFor({ state: "visible", timeout: timeoutMs }).catch(() => {});
+    const countDeadline = Date.now() + timeoutMs;
+    let liveSnapshot = await searchSmokeSnapshot(page);
+    while (!positiveLiveSearchCount(liveSnapshot) && Date.now() < countDeadline) {
+      await page.waitForTimeout(200);
+      liveSnapshot = await searchSmokeSnapshot(page);
+    }
+    const countText = liveSnapshot.count;
+    const liveCountOk = positiveLiveSearchCount(liveSnapshot);
     const browse = page.locator('[data-ke="browse-directory"]');
     const browseHref = (await browse.first().getAttribute("href").catch(() => "")) || "";
     const browseOk = /\/daycare\/city\/winnipeg(?:[/?#]|$)/.test(browseHref);
     record("live-chip-url", liveParam && !liveQuoted && liveCountOk && browseOk, {
       note: `${liveUrl} count=${countText} browse=${browseHref}`,
+      search: liveSnapshot,
     });
     await shot(page, "live-chip", 1280, '[data-ke="live-on-kidease"]');
     await shot(page, "live-chip-390", 390, '[data-ke="live-on-kidease"]');

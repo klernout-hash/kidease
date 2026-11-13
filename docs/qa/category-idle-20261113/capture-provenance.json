@@ -6,7 +6,7 @@
     "src/styles.css": "b5cafe2aa2adbec8e161e650c5d930158816bea3b12422ce2863ca08739814ba"
   },
   "capturedAt": "2026-11-13T07:25:37.021Z",
-  "fixtures": "Credential-free isolated local preview; bundled public catalogue and in-memory PGLite. No signed-in account. External server/browser network requests blocked.",
+  "fixtures": "Credential-free isolated local preview with in-memory PGlite and public icon/marketing assets. Catalogue JSON files were not staged beside this header-capture build, so recommendations may be empty. No signed-in account. External server/browser network requests blocked.",
   "appearance": "Classic default, light. English and French at 390x844 and1280x900. Stills captured with reduced motion for stable geometry.",
   "files": [
     {

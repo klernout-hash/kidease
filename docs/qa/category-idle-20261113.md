@@ -28,6 +28,8 @@ Exact latest-head GitHub checks remain a separate release requirement. Earlier s
 
 These actual built-app captures use isolated local PGLite and public bundled assets, with non-loopback server and browser requests blocked. No signed-in customer data is present. [Capture provenance](category-idle-20261113/capture-provenance.json) records source hashes, dimensions, fixture limits and checksums.
 
+Catalogue JSON files were not staged beside this header-capture build; homepage recommendations may therefore be empty. The header screenshots and motion remain actual rendered UI. The separate [role-harness follow-up](role-smoke-20261113.md) staged the unchanged repository catalogue locally for its search checks. No listing data was invented or substituted into these captures.
+
 | EN 390px | EN 1280px | FR 390px | FR 1280px |
 | --- | --- | --- | --- |
 | [Phone](category-idle-20261113/classic-en-390-home.png) | [Desktop](category-idle-20261113/classic-en-1280-home.png) | [Téléphone](category-idle-20261113/classic-fr-390-home.png) | [Ordinateur](category-idle-20261113/classic-fr-1280-home.png) |
