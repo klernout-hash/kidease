@@ -5,6 +5,7 @@ import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
 import { NotificationBell } from "@/components/notification-bell";
 import { AppearanceControl } from "@/components/appearance-control";
+import { CareCategoryIcon } from "@/components/care-category-icon";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
@@ -22,7 +23,6 @@ import { airbnbCopy, type AirbnbCopy } from "@/lib/airbnb-ui-copy";
 import { applyDocumentLocale, languageMeta, shippedLanguages } from "@/lib/languages";
 import { localePath, localeSwitchHref } from "@/lib/locale-path";
 import { writeLocaleChoiceCookie } from "@/lib/locale-geo";
-import { careCategoryArt } from "@/lib/care-category-art";
 import { feePillPulses } from "@/lib/card-photo-pills";
 import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import { photoUrl } from "@/lib/photo";
@@ -74,7 +74,6 @@ export function AirbnbCareCategories() {
     <div className="ke-airbnb-cats" data-ke="airbnb-care-cats" role="navigation" aria-label={t("railByCare")}>
       {CARE_CATEGORIES.map((cat, index) => {
         const on = careCategoryOn(cat, search);
-        const art = careCategoryArt(cat.id);
         const label = copy[cat.label];
         return (
           <Link
@@ -82,17 +81,10 @@ export function AirbnbCareCategories() {
             to={localePath(cat.search ? "/search" : "/", locale)}
             {...(cat.search ? { search: cat.search as never } : {})}
             data-ke={`airbnb-care-${cat.id}`}
-            className={cn("ke-airbnb-cat", on && "is-on")}
+            className={cn("ke-airbnb-cat touch-manipulation rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset", on && "is-on")}
             aria-current={on ? "page" : undefined}
           >
-            <span className="ke-airbnb-cat-art" style={{ animationDelay: `${index * 0.14}s` }}>
-              {art ? (
-                <>
-                  <img className="ke-care-gif" src={art.gif} alt="" width={44} height={44} />
-                  <img className="ke-care-still" src={art.still} alt="" width={44} height={44} />
-                </>
-              ) : null}
-            </span>
+            <CareCategoryIcon id={cat.id} index={index} />
             <span className="ke-airbnb-cat-label">{label}</span>
           </Link>
         );

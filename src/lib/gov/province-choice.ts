@@ -6,11 +6,11 @@ export function govOrgIsNational(province: string | null | undefined): boolean {
   return code === "ALL" || code === "CA";
 }
 
-export function govActorProvince(stored: string | null | undefined): { province: string; national: boolean } {
+export function govActorProvince(stored: string | null | undefined): { province: string; national: boolean } | null {
   const raw = String(stored || "").trim().toUpperCase();
   if (govOrgIsNational(raw)) return { province: "ALL", national: true };
   if (isProvinceCode(raw)) return { province: raw, national: false };
-  return { province: "MB", national: false };
+  return null;
 }
 
 export function govScopeProvince(actor: { province: string; national: boolean }, requested: string | null | undefined): string {

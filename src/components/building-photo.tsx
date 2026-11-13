@@ -6,6 +6,7 @@ import {
   HERO_SIZES,
   isResizedPhotoUrl,
   photoSrcSet,
+  photoFrameFallbackStyle,
   photoUrl,
   publicPhotoUrl,
   srcsetWidthsFor,
@@ -215,17 +216,12 @@ export function BuildingPhoto({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cur, skipTransform, broken, delivered]);
 
-  const sized =
-    className?.includes("aspect-") ||
-    className?.includes("size-full") ||
-    className?.includes("h-full");
-
   if (broken) {
     return (
       <ListingPhotoFallback
         claim={claim}
         className={className}
-        style={sized ? undefined : { aspectRatio: `${width} / ${height}` }}
+        style={photoFrameFallbackStyle(className, width, height)}
       />
     );
   }

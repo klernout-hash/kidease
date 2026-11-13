@@ -7,11 +7,14 @@ import {
   handleSupportOwnerReply,
   ownerAlertText,
   shouldSendOwnerSms,
+  supportCopy,
   supportPreview,
   supportRateAllows,
   supportRoleLabel,
   threadIdFromOwnerReply,
 } from "../src/lib/support-desk.ts";
+import { supportDeskEnabled } from "../src/lib/features.ts";
+import { localePath } from "../src/lib/locale-path.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => readFileSync(join(root, rel), "utf8");
@@ -21,6 +24,25 @@ test("support chat stays off unless the flag is on", () => {
   assert.match(read("src/lib/flags.ts"), /FEATURE_SUPPORT_SMS_REPLY: false/);
   assert.match(read("src/lib/server/support-desk.ts"), /if \(!supportDeskEnabled\(\)\)/);
   assert.match(read("src/components/support-desk-panel.tsx"), /if \(!enabled\) return null/);
+});
+
+test("unavailable support offers a localized contact route without a launch promise", () => {
+  assert.equal(supportDeskEnabled({ FEATURE_SUPPORT_CHAT: "0" }), false);
+  assert.equal(supportDeskEnabled({ FEATURE_SUPPORT_CHAT: "1" }), true);
+  assert.match(supportCopy.en.off, /unavailable.*contact KidEase/i);
+  assert.match(supportCopy.fr.off, /indisponible.*Contactez KidEase/);
+  for (const locale of ["en", "fr"]) {
+    assert.doesNotMatch(supportCopy[locale].off, /yet|not open|nothing.*sent|activation|FEATURE_|pas encore|n’est pas ouverte|rien.*envoyé/i);
+    assert.match(supportCopy[locale].contact, /KidEase/);
+  }
+  assert.equal(localePath("/contact", "en"), "/contact");
+  assert.equal(localePath("/contact", "fr"), "/fr/contact");
+  const panel = read("src/components/support-desk-panel.tsx");
+  const unavailable = panel.slice(panel.indexOf("if (!enabled) {"), panel.indexOf('data-open="yes"'));
+  assert.match(unavailable, /to=\{localePath\("\/contact", locale\)\}/);
+  assert.match(unavailable, /min-h-11 min-w-11/);
+  assert.match(unavailable, /focus-visible:ring-2/);
+  assert.doesNotMatch(unavailable, /<form|postSupportDesk/);
 });
 
 test("the owner phone is never bundled or written into the alert text", () => {

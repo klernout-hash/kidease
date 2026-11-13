@@ -40,7 +40,8 @@ test("French money, counts, and vacancy path", () => {
 test("French plans copy lists perks and avoids free-forever wording", () => {
   const fr = FOUNDING_PAGE.fr;
   const blob = `${fr.lead} ${fr.parentsBody} ${fr.daycarePill} ${fr.daycareBody}`;
-  assert.match(blob, /période fondatrice gratuite/);
+  assert.match(blob, /outils sans abonnement/);
+  assert.doesNotMatch(blob, /période fondatrice|lancement/);
   assert.match(fr.parentsBody, /5 centres/);
   assert.doesNotMatch(blob, /toujours|free forever|gratuit pour toujours/i);
   assert.equal(fr.priceUnit, "/mois");

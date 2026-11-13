@@ -10,6 +10,9 @@ import { getSql } from "@/lib/db";
 import { cleanEceNote, cleanEceRole, ecePostReady } from "@/lib/ece-jobs";
 import { eceJobsEnabled } from "@/lib/features";
 import { canadaProvinceCode, jobAppStatus, jobPostStatus, provinceBucket, staffingShortage } from "@/lib/gap-features";
+import { PROVINCES } from "@/lib/gov/places";
+import { govScopeProvince } from "@/lib/gov/province-choice";
+import type { GovActor } from "@/lib/server/gov-actor.server";
 import { nid } from "@/lib/utils";
 import { listAccessibleDaycareIds } from "./centre-access";
 
@@ -281,10 +284,17 @@ export const listJobShortage = createServerFn({ method: "GET" })
   .validator((input: { province?: string } | undefined) => ({
     province: canadaProvinceCode(input?.province) ?? "",
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const province = canadaProvinceCode(govScopeProvince(context.gov as GovActor, data.province)) ?? "";
     if (!eceJobsEnabled()) {
-      return { enabled: false as const, province: data.province, openJobs: 0, centres: 0 };
+      return { enabled: false as const, province, openJobs: 0, centres: 0 };
     }
+    // This view supports one province; do not invent a national total for CA/ALL.
+    if (!province) return { enabled: true as const, ...staffingShortage([], "") };
+    const provinceInfo = PROVINCES.find((row) => row.code === province);
+    const provinceAliases = [province, provinceInfo?.nameEn, provinceInfo?.nameFr]
+      .filter((value): value is string => Boolean(value))
+      .map((value) => value.trim().toUpperCase());
     const sql = await getSql();
     const rows = await sql<{ province: string | null; open_jobs: number; centres: number }>`
       select upper(coalesce(d.province, '')) as province,
@@ -295,17 +305,18 @@ export const listJobShortage = createServerFn({ method: "GET" })
       where coalesce(j.status, 'open') = 'open'
         and coalesce(d.is_test, 0) = 0
         and coalesce(d.is_demo, 0) = 0
+        and upper(btrim(coalesce(d.province, ''))) = any(${provinceAliases}::text[])
       group by 1
     `.catch(() => []);
     const buckets = new Map<string, { province: string; openJobs: number; centres: number }>();
     for (const row of rows) {
-      const province = provinceBucket(row.province);
-      if (!province) continue;
-      const current = buckets.get(province) ?? { province, openJobs: 0, centres: 0 };
+      const rowProvince = provinceBucket(row.province);
+      if (rowProvince !== province) continue;
+      const current = buckets.get(rowProvince) ?? { province: rowProvince, openJobs: 0, centres: 0 };
       current.openJobs += Number(row.open_jobs) || 0;
       current.centres += Number(row.centres) || 0;
-      buckets.set(province, current);
+      buckets.set(rowProvince, current);
     }
-    const tally = staffingShortage([...buckets.values()], data.province);
+    const tally = staffingShortage([...buckets.values()], province);
     return { enabled: true as const, ...tally };
   });

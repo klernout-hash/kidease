@@ -1,15 +1,15 @@
 import { Link } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
+import { ChevronDown } from "lucide-react";
 import { companyOperatorLine } from "@/lib/company";
 import { localePath } from "@/lib/locale-path";
-import { isKidEaseOperatorEmail } from "@/lib/admin-email";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { openCookieSettings } from "@/lib/prompt-manager";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { HeaderSocial } from "@/components/header-social";
 import { useRoleChrome } from "@/components/role-chrome";
 import type { ChromeRole } from "@/lib/role-access";
-import { AppStoreStatus } from "@/components/app-store-status";
+import { FooterAppBadges } from "@/components/footer-app-badges";
 import { LanguageSelect } from "@/components/language-select";
 import { isStorePurchasePath } from "@/lib/store-purchase-copy";
 import { useInNativeShell } from "@/lib/use-native-shell";
@@ -88,6 +88,18 @@ function Column({
   locale: string;
   t: (key: CopyKey) => string;
 }) {
+  const sectionRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const wide = window.matchMedia("(min-width: 640px)");
+    const sync = () => {
+      section.open = wide.matches;
+    };
+    sync();
+    wide.addEventListener("change", sync);
+    return () => wide.removeEventListener("change", sync);
+  }, [links.length]);
   if (links.length === 0) return null;
   const labeled = links.map((link) => ({
     ...link,
@@ -97,8 +109,11 @@ function Column({
   const sorted = labeled;
 
   return (
-    <section data-footer-col={id}>
-      <p className="ke-footer-title">{title}</p>
+    <details ref={sectionRef} open className="ke-footer-column" data-footer-col={id}>
+      <summary className="ke-footer-title ke-footer-toggle touch-manipulation">
+        {title}
+        <ChevronDown className="size-4" aria-hidden="true" />
+      </summary>
       <ul className="ke-footer-list">
         {sorted.map((link) => (
           <Item
@@ -110,20 +125,18 @@ function Column({
           </Item>
         ))}
       </ul>
-    </section>
+    </details>
   );
 }
 
 export function SiteFooter() {
   const { t, locale } = useCopy();
-  const { user, isPending } = useCurrentUserState();
   const chrome = useRoleChrome();
   const hideCommerce = useInNativeShell();
   const hidePlans = chrome.subscriptionsEnabled !== true;
   const fr = locale === "fr";
-  // Operator sign-in is not linked from the public footer. Kyle uses /login.
-  void isPending;
-  void isKidEaseOperatorEmail(user?.primaryEmail);
+  const helpAndKidEase = [...FOOTER_COLUMNS.support, ...FOOTER_COLUMNS.kidease]
+    .filter((link) => link.to !== "/get-app");
 
   return (
     <footer className="ke-site-footer mt-auto">
@@ -144,63 +157,44 @@ export function SiteFooter() {
               locale={locale}
               t={t}
             />
-            <Column id="support" title={t("support")} links={footerLinks(linksForRole(FOOTER_COLUMNS.support, chrome.role, "support", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)} locale={locale} t={t} />
-            <Column id="kidease" title={t("app")} links={footerLinks(linksForRole(FOOTER_COLUMNS.kidease, chrome.role, "kidease", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)} locale={locale} t={t} />
+            <Column id="support" title={fr ? "Aide et KidEase" : "Help & KidEase"} links={footerLinks(linksForRole(helpAndKidEase, chrome.role, "support", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)} locale={locale} t={t} />
           </nav>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-sm">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="ke-footer-app-row">
+            <FooterAppBadges />
+            <div className="ke-footer-actions">
+              <ShareKidEaseButton appearance="labeled" />
+              <HeaderSocial always />
+            </div>
+          </div>
+          <div className="ke-footer-legal">
+            <p>© {new Date().getFullYear()} KidEase · {t("footerCopy")}</p>
+            <nav className="ke-footer-legal-links" aria-label={fr ? "Confidentialité et conditions" : "Privacy and terms"}>
               {FOOTER_LEGAL.map((link) => (
                 <Link
                   key={link.to}
                   to={localePath(link.to, locale)}
-                  className="ke-footer-link inline-flex min-h-11 items-center"
+                  className="ke-footer-link"
                 >
                   {footerLinkLabel(link, t, locale)}
                 </Link>
               ))}
-            </div>
+              <button type="button" data-ke="cookie-settings-link" className="ke-footer-link touch-manipulation" onClick={openCookieSettings}>
+                {t("cookieSettings")}
+              </button>
+              {showGovFooterLink({ enabled: chrome.govPortalLink, native: hideCommerce }) ? (
+                <Link to={fr ? "/fr/gov/login" : "/gov/login"} className="ke-footer-link">
+                  {fr ? "Connexion gouvernement" : "Government sign-in"}
+                </Link>
+              ) : null}
+            </nav>
             <LanguageSelect pill />
           </div>
-          {showGovFooterLink({ enabled: chrome.govPortalLink, native: hideCommerce }) ? (
-            <p className="mt-2">
-              <Link
-                to={fr ? "/fr/gov/login" : "/gov/login"}
-                className="ke-footer-link inline-flex min-h-11 items-center text-sm"
-              >
-                {fr ? "Pour les gouvernements" : "For governments"}
-              </Link>
-            </p>
-          ) : null}
-
-          <AppStoreStatus compact />
-          <div className="ke-footer-legal">
-            <div className="ke-footer-legal-copy">
-              <p>
-                © {new Date().getFullYear()} KidEase
-                <span className="mx-1.5 text-subtle" aria-hidden>
-                  ·
-                </span>
-                {t("footerCopy")}
-              </p>
-              <p className="ke-footer-legal-note mt-2 max-w-prose" data-ke="data-sources">
-                <span className="font-medium text-fg">{t("dataSourcesTitle")}. </span>
-                {t("dataSourcesBody")}
-              </p>
-              <p className="ke-footer-legal-note">{t("neverSell")}</p>
-              <p className="ke-footer-legal-note">
-                <button type="button" data-ke="cookie-settings-link" className="ke-footer-link min-h-11 underline-offset-4 hover:underline" onClick={openCookieSettings}>
-                  {t("cookieSettings")}
-                </button>
-              </p>
-              <p className="ke-footer-legal-note" data-ke="company-operator">
-                {companyOperatorLine(fr ? "fr" : "en")}
-              </p>
-            </div>
-            <div className="ke-footer-legal-meta flex flex-row flex-wrap items-center justify-end gap-1">
-              <ShareKidEaseButton appearance="labeled" className="rounded-full border border-border px-3" />
-              <HeaderSocial always />
-            </div>
-          </div>
+          <details className="ke-footer-sources" data-ke="data-sources">
+            <summary className="ke-footer-link cursor-pointer">{t("dataSourcesTitle")}</summary>
+            <p>{t("dataSourcesBody")}</p>
+            <p>{t("neverSell")}</p>
+            <p data-ke="company-operator">{companyOperatorLine(fr ? "fr" : "en")}</p>
+          </details>
         </div>
       </div>
     </footer>

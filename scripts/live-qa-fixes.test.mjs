@@ -7,6 +7,8 @@ import { filterByDaycareName } from "../src/lib/explore-search.ts";
 import { directionsUrl } from "../src/lib/maps.ts";
 import { visibleDeskGroups, visibleDeskNav } from "../src/lib/desk-nav.ts";
 import { listingActionMode, showsParentBrowseActions, showsParentListingActions } from "../src/lib/role-access.ts";
+import { searchEvidence } from "../src/lib/search-evidence.ts";
+import { searchCoverageCopy } from "../src/lib/search-coverage.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -31,8 +33,18 @@ test("the search page asks the server for the name and counts the cards it shows
   const server = src("src/lib/server/daycares.ts");
   assert.match(server, /if \(\(data\.name \|\| ""\)\.trim\(\)\.length >= 2\) return searchByName/);
   assert.match(server, /filterByDaycareName/);
-  assert.match(search, /nameSearch \|\| \(extraFilters && !dietOnly\) \? visualItems\.length : resultTotal/);
-  assert.match(search, /dietOnly = careKeys\.length > 0 && extraFilters === 1/);
+  assert.match(search, /const centreCount = resultTotal/);
+  assert.match(search, /filters: resultFilters/);
+  assert.match(server, /filters\.name = query\.name \|\| filters\.name/);
+  assert.match(server, /const narrowed = await filteredSearchRows\(query\)/);
+  assert.match(server, /sliceSearchPage\(narrowed\.rows, page\), evidence: narrowed\.evidence/);
+  assert.match(server, /const matched = await filteredSearchRows/);
+  assert.match(server, /total: matched\.rows\.length, evidence: matched\.evidence/);
+  assert.match(search, /coverage\.incomplete \? coverage\.count\(centreCount\)/);
+  assert.equal(searchCoverageCopy(searchEvidence({ status: "complete", source: "primary" }), "en").count(3), "3 licensed centres");
+  assert.equal(searchCoverageCopy(searchEvidence({ status: "partial", source: "primary", reasons: ["candidate-limit"] }), "en").count(3), "At least 3 licensed centres");
+  assert.equal(searchCoverageCopy(searchEvidence({ status: "unverified", source: "snapshot" }), "en").count(3), "3 listings available to view");
+  assert.match(src("src/lib/search-result-filters.ts"), /care\.length && !matchesDeclaredCare\(row\.amenities, care\)/);
   assert.match(search, /: nameQuery\.trim\(\)/);
   assert.doesNotMatch(search, /if \(workOrigin\?\.label && !workQuery\) setWorkQuery/);
   assert.match(search, /const workForSearch = workQuery\.trim\(\) && workOrigin \? workOrigin : null/);
@@ -42,7 +54,7 @@ test("Find my match stays in the hero, search, and menu", () => {
   const entry = src("src/components/smart-match.tsx");
   assert.match(entry, /useAiFeatureFlag\(AI_FLAGS\.smartMatch\)/);
   assert.doesNotMatch(entry, /if \(!on\) return null/);
-  assert.match(src("src/routes/index.tsx"), /<SmartMatchEntry inline quiet/);
+  assert.match(src("src/routes/index.tsx"), /<SmartMatchEntry card/);
   assert.match(src("src/routes/search.tsx"), /<SmartMatchEntry/);
   const drawer = src("src/components/nav-drawer.tsx");
   assert.equal((drawer.match(/<SmartMatchEntry inline/g) || []).length, 2);

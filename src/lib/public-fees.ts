@@ -1,8 +1,14 @@
-/**
- * Parent-facing daycare dollar amounts on compare and Saved.
- * Off unless paid plans are on. Search cards keep a confirmed fee or a
- * real $10-a-day flag. This does not invent a household income.
- */
-export function parentListingFeesVisible(subscriptionsOn: boolean | null | undefined): boolean {
-  return subscriptionsOn === true;
+import { publicMonthlyFee, type ListingFeeInput } from "./listing-fee.ts";
+
+/** Public centre fees are available independently of KidEase subscription sales. */
+export function parentListingFeesVisible(): boolean {
+  return true;
+}
+
+/** Require centre fee evidence and never turn a daily cap into a monthly quote. */
+export function parentListingMonthlyFee(listing: ListingFeeInput & {
+  fromPrice?: number | null;
+}): number | null {
+  if (!listing.feeConfirmed && listing.feeConfidence !== "centre") return null;
+  return publicMonthlyFee(listing.fromPrice, listing);
 }

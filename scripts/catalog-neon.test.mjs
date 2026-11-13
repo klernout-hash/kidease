@@ -239,12 +239,14 @@ describe("null catalog rows stay renderable", () => {
 });
 
 describe("runtime SoT prefers Neon when populated", () => {
-  it("catalog and nearby fall back to JSON only when Neon is empty", () => {
+  it("catalog and nearby preserve Neon preference through result wrappers", () => {
     const catalog = src("src/lib/catalog.ts");
     const nearby = src("src/lib/server/nearby.ts");
     const neon = src("src/lib/server/catalog-neon.ts");
     assert.match(catalog, /loadJsonCatalog/);
-    assert.match(catalog, /loadNeonCatalogIfPreferred/);
+    assert.match(catalog, /queryNeonCatalogAllResult/);
+    assert.match(neon, /export async function loadNeonCatalogIfPreferred/);
+    assert.match(neon, /\(await queryNeonCatalogAllResult\(\)\)\?\.rows \?\? null/);
     assert.match(catalog, /nearbyFromNeonIfPreferred/);
     assert.match(nearby, /isNeonCatalogPreferred/);
     assert.match(nearby, /catalogNearFromJson/);

@@ -63,7 +63,9 @@ test("parent listing fields persist on desk save and render on the public page",
   assert.match(src("src/routes/daycare.\$slug.tsx"), /ListingSnapshotGrid/);
   assert.match(src("src/routes/daycare.\$slug.tsx"), /RequestInfoSheet/);
   assert.match(src("src/routes/search.tsx"), /ExploreFilterChips/);
-  assert.match(src("src/components/daycare-card.tsx"), /cardRequestInfo/);
+  assert.match(src("src/components/daycare-card.tsx"), /data-ke="card-view-details"/);
+  assert.match(src("src/routes/daycare.$slug.tsx"), /onInfo/);
+  assert.match(src("src/routes/daycare.$slug.tsx"), /requestInfo/);
   assert.match(src("src/lib/server/lead-requests.ts"), /createInfoRequest/);
   assert.match(src("src/lib/server/lead-requests.ts"), /kind: "info"/);
 });

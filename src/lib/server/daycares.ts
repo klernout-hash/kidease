@@ -9,29 +9,31 @@ import { catchmentMatch, clampRadiusKm, compareProximity, recommendedRank } from
 import { resolveListingTourTimezone } from "@/lib/tour-calendar";
 import {
   catalogByIdsGet,
+  catalogByIdsGetResult,
   catalogBySlugGet,
   catalogMonths,
-  catalogNamedCityFromJson,
+  catalogNamedCityFromJsonResult,
   catalogNear,
-  getPublicCatalog,
+  getPublicCatalogResult,
   type CatalogDaycare,
 } from "@/lib/catalog";
 import { filterByDaycareName, readLiveSearchFlag } from "@/lib/explore-search";
 import { hideListingFromPublicPage, isAdminOnlyListing, isExactSlugDemoListing, isHiddenTestListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
-import { nearbyListings, nearbyListingsAlong, nearbyListingsDual, type NearbyListing } from "./nearby";
+import { nearbyListings, nearbyListingsAlongResult, nearbyListingsDualResult, nearbyListingsResult, type NearbyListing } from "./nearby";
 import { callerIsTestAccount, callerMayViewHiddenListing } from "./public-listing";
 import { applyListingReadiness, compareFreshOpenSpots, hasConfirmedAges } from "@/lib/listing-readiness";
 import { standardGroupsForRange } from "@/lib/standard-age-groups";
 import { listingAgeUnknown } from "@/lib/now-loops";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
+import { overlayClaimedSearchResult } from "./search-claim-overlay";
 import { parseStoredDimensions } from "@/lib/review-dimensions";
 import { overlayParentReviews } from "./reviews";
 import { overlayQuality } from "./quality";
 import { overlayParentRank } from "./rank";
 import { overlayPriority } from "./promos";
-import { featuredCentreIdsInLock, overlayFeaturedCity } from "@/lib/server/provider-entitlements";
+import { featuredCentreIdsInLock, featuredCentreIdsInLockResult, overlayFeaturedCity } from "@/lib/server/provider-entitlements";
 import { compareWithPaidPins, sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
 import { sponsoredPinsFirst } from "@/lib/sponsored-flag";
 import { collapseAdjacentDuplicates, withJunkLast } from "@/lib/search-result-quality";
@@ -39,7 +41,7 @@ import { parseSearchSort } from "@/lib/search-sort";
 import { compareSmartMatchOrNearest, whyForListing, type RankAge, type SmartMatchQuery } from "@/lib/ranking/score";
 import { excludeRankingV2, rankingV2TieBreak } from "@/lib/ranking/v2";
 import { rankingV2Enabled } from "@/lib/features";
-import { matchesDeclaredCare, parseCareKeys } from "@/lib/inclusive-search";
+import { parseCareKeys } from "@/lib/inclusive-search";
 import { listingSubsidy } from "@/lib/fee-program";
 import {
   compareParentFit,
@@ -62,8 +64,11 @@ import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { pageFromSearch, sliceSearchPage } from "@/lib/search-page";
+import { filterSearchResults, hasSearchCoordinates, normalizeSearchResultFilters, projectSearchMapPins, type SearchResultFilters } from "@/lib/search-result-filters";
 import { rememberSearch, searchMemoKey } from "./search-memo";
-import { mergeApprovedCityListings } from "./approved-search";
+import { mergeApprovedCityListings, mergeApprovedCityListingsResult } from "./approved-search";
+import { mergeSearchEvidence, searchEvidence, withSearchRows, type SearchBatch } from "@/lib/search-evidence";
+import { combineSearchReads, settleSearchRead } from "@/lib/search-retrieval";
 import { alignSearchOrigin } from "@/lib/search-query";
 import { transactionalMailConfigured } from "@/lib/transactional-mail";
 import { inspectionHistoryEnabled } from "@/lib/features";
@@ -71,11 +76,11 @@ import { readCachedInspections } from "@/lib/server/inspection-history";
 import type { PublicInspection } from "@/lib/inspection-history";
 import { listingInfoSlaReady } from "@/lib/parent-listing";
 import { listedDaycareTypeFromSearch, matchesListedDaycareType } from "@/lib/care-type";
-import { CITY_TYPE_LIST_CAP, queryNeonCityHubListings } from "@/lib/server/catalog-neon";
+import { CITY_TYPE_LIST_CAP, queryNeonCityHubListingsResult } from "@/lib/server/catalog-neon";
 import { applyMasterCareType } from "@/lib/server/master-care-type";
 import { resolveSearchDirectory, listingBelongsToHub } from "@/lib/city-directory";
 import { cityHubDefBySlug, cityHubMapSearchQuery, normalizeCityKey } from "@/lib/city-hubs";
-import { listingsForCityHub } from "@/lib/server/city-directory";
+import { listingsForCityHubResult } from "@/lib/server/city-directory";
 import { geocode } from "@/lib/geo";
 import { ClientInputError } from "@/lib/observe";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
@@ -113,13 +118,20 @@ type SearchInput = {
   countDemand?: boolean;
   /** Signed-in parent only. Guests omit this and keep fresh-first order. */
   parentFit?: ParentFitProfile | null;
-  /** Centre name. When set, matches ignore radius and the location lock. */
+  /** Centre name. Public page/map results still obey the selected radius. */
   name?: string;
   /** Live on KidEase. Same centres as Claim verified. Filtered before paging. */
   live?: boolean;
   /** Declared diet and extra support, comma-separated. Ignored while the flag is off. */
   diet?: string;
+  /** Public list/map predicates. Applied together before paging. */
+  filters?: SearchResultFilters;
+  /** Explicit user retry; bypass only the relevant search/read caches. */
+  refresh?: boolean;
 };
+
+/** Internal only: one successful read must not be undone by a stale fallback. */
+type SearchCandidates = SearchBatch<DaycareCard> & { excludedIds?: string[] };
 
 function parseSort(raw: unknown): SearchSort {
   return parseSearchSort(raw);
@@ -441,6 +453,10 @@ function alignedSearchInput(data: SearchInput): SearchInput {
 
 /** Live + licence rows only. Used when the full catalogue search times out or returns nothing. */
 async function liveCardsForSearch(data: SearchInput): Promise<DaycareCard[]> {
+  return (await liveCardsForSearchResult(data)).rows;
+}
+
+async function liveCardsForSearchResult(data: SearchInput): Promise<SearchCandidates> {
   const origin = { lat: data.lat, lng: data.lng };
   const lock = resolveLocationLock({
     lat: origin.lat,
@@ -448,54 +464,65 @@ async function liveCardsForSearch(data: SearchInput): Promise<DaycareCard[]> {
     label: data.label,
     q: data.q,
   });
-  const listings = await mergeApprovedCityListings([], {
+  const batch = await mergeApprovedCityListingsResult({ rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) }, {
     origin,
     radiusKm: data.radiusKm,
     lock,
     label: data.label || data.q,
-  });
-  const listed = publicListings(uniqueById(listings.map((row) => toCard(row, origin, data.fsa)))).filter((card) =>
+  }, { refresh: data.refresh });
+  const listed = publicListings(uniqueById(batch.rows.map((row) => toCard(row, origin, data.fsa)))).filter((card) =>
     includeCardInRadius(card, origin, data.radiusKm),
   );
-  const pinned = await stampPaidPlacement(listed);
-  return withProvincial(pinned).then((rows) => rows.map(slimCard));
-}
-
-function unionLiveCards(primary: DaycareCard[], live: DaycareCard[]): DaycareCard[] {
-  const seen = new Set(primary.map((card) => card.id));
-  const missing = live.filter((card) => card.id && !seen.has(card.id));
-  return missing.length ? [...missing, ...primary] : primary;
+  const claimed = await overlayClaimedSearchResult(listed, mergeClaimedCard);
+  const pinned = await stampPaidPlacement(publicListings(claimed.rows));
+  return {
+    rows: (await withProvincial(pinned)).map(slimCard),
+    evidence: mergeSearchEvidence(batch.evidence, claimed.evidence),
+    excludedIds: claimed.rows.filter((card) => !isPublicListing(card)).map((card) => card.id),
+  };
 }
 
 /** Public catalogue matches for a centre name. Distance is display-only. */
-async function searchByName(data: SearchInput): Promise<DaycareCard[]> {
+async function searchByName(data: SearchInput): Promise<SearchCandidates> {
   const q = (data.name || "").trim();
-  if (q.length < 2) return [];
+  if (q.length < 2) return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) };
   const origin = { lat: data.lat, lng: data.lng };
-  let matched: CatalogDaycare[] | null = null;
+  let matched: SearchBatch<CatalogDaycare> | null = null;
   try {
-    const { queryNeonListingsByIds, queryNeonPublicNameIndex } = await import("@/lib/server/catalog-neon");
-    const index = await queryNeonPublicNameIndex();
+    const { queryNeonListingsByIdsResult, queryNeonPublicNameIndexResult } = await import("@/lib/server/catalog-neon");
+    const options = { refresh: data.refresh };
+    const index = await queryNeonPublicNameIndexResult(options);
     if (index) {
       const hits = filterByDaycareName(
-        index.map((row) => ({ id: row.id, name: row.name, nameFr: row.name_fr || "" })),
+        index.rows.map((row) => ({ id: row.id, name: row.name, nameFr: row.name_fr || "" })),
         q,
       );
-      matched = hits.length === 0 ? [] : await queryNeonListingsByIds(hits.map((row) => row.id));
+      const found = hits.length === 0 ? { rows: [], evidence: index.evidence }
+        : await queryNeonListingsByIdsResult(hits.map((row) => row.id), options);
+      if (found) matched = { rows: found.rows, evidence: mergeSearchEvidence(index.evidence, found.evidence) };
     }
   } catch {
     matched = null;
   }
-  if (!matched) matched = filterByDaycareName(await getPublicCatalog(), q);
-  const cards = await stampPaidPlacement(matched.map((row) => slimCard(toCard(row, origin, data.fsa))));
+  if (!matched) {
+    const catalog = await getPublicCatalogResult({ refresh: data.refresh });
+    matched = withSearchRows(catalog, filterByDaycareName(catalog.rows, q));
+  }
+  const mapped = matched.rows.map((row) => toCard(row, origin, data.fsa));
+  // Name results need the same claimed vacancy proof before public predicates run.
+  const claimed = await overlayClaimedSearchResult(mapped, mergeClaimedCard);
+  const cards = await stampPaidPlacement(publicListings(claimed.rows).map(slimCard));
   cards.sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name));
-  return cards;
+  return {
+    rows: cards, evidence: mergeSearchEvidence(matched.evidence, claimed.evidence),
+    excludedIds: claimed.rows.filter((card) => !isPublicListing(card)).map((card) => card.id),
+  };
 }
 
-async function searchIncludingLive(data: SearchInput): Promise<DaycareCard[]> {
+async function searchIncludingLive(data: SearchInput): Promise<SearchCandidates> {
   if ((data.name || "").trim().length >= 2) return searchByName(data);
   const decision = resolveSearchDirectory({ q: data.q, city: data.city });
-  if (decision.kind === "unknown") return [];
+  if (decision.kind === "unknown") return { rows: [], evidence: searchEvidence() };
   const hub = decision.kind === "hub" ? cityHubDefBySlug(decision.slug) : null;
   const searched = alignedSearchInput(
     hub
@@ -503,16 +530,21 @@ async function searchIncludingLive(data: SearchInput): Promise<DaycareCard[]> {
       : data,
   );
   if (hub) return runSearch({ ...searched, directorySlug: hub.slug });
-  const livePromise = liveCardsForSearch(searched);
-  const full = await withTimeoutFallback(runSearch(searched), LOADER_SETTLE_MS, null);
-  const live = await withTimeoutFallback(livePromise, full && full.length > 0 ? 80 : 400, []);
+  const livePromise = liveCardsForSearchResult(searched);
+  void livePromise.catch(() => undefined);
+  const full = await settleSearchRead(runSearch(searched), LOADER_SETTLE_MS);
+  const live = await settleSearchRead(livePromise, full.kind === "result" && full.batch.rows.length > 0 ? 80 : 400);
   const facility = data.facility;
-  if (!full || full.length === 0) {
-    const liveOnly = uniqueById(live);
-    return facility ? liveOnly.filter((card) => matchesListedDaycareType(card, facility)) : liveOnly;
-  }
-  const rows = unionLiveCards(full, live);
-  return facility ? rows.filter((card) => matchesListedDaycareType(card, facility)) : rows;
+  const combined = combineSearchReads(full, live);
+  const excludedIds = new Set([
+    ...(full.kind === "result" ? (full.batch as SearchCandidates).excludedIds ?? [] : []),
+    ...(live.kind === "result" ? (live.batch as SearchCandidates).excludedIds ?? [] : []),
+  ]);
+  const rows = uniqueById(combined.rows).filter((card) => !excludedIds.has(card.id));
+  return {
+    ...withSearchRows(combined, facility ? rows.filter((card) => matchesListedDaycareType(card, facility)) : rows),
+    excludedIds: [...excludedIds],
+  };
 }
 
 async function mergePinnedCentres(
@@ -532,23 +564,41 @@ async function mergePinnedCentres(
   return extra.length ? [...cards, ...extra] : cards;
 }
 
-/** Exact city + province rows, even when the stored pin is outside the radius. */
-async function withNamedCityListings(
-  rows: NearbyListing[],
-  lock: ReturnType<typeof resolveLocationLock>,
-): Promise<NearbyListing[]> {
-  if (!lock?.city || !lock.province) return rows;
-  const key = normalizeCityKey(lock.city);
-  if (!key) return rows;
-  if (rows.some((row) => normalizeCityKey(row.city) === key)) return rows;
-  const neon = await queryNeonCityHubListings(lock.province, [key]);
-  const extra =
-    neon && neon.length > 0 ? neon : await catalogNamedCityFromJson(lock.city, lock.province);
-  if (!extra.length) return rows;
-  return uniqueById([...rows, ...extra]);
+async function mergePinnedSearchCentres(
+  batch: SearchBatch<DaycareCard>, lock: ReturnType<typeof resolveLocationLock>,
+  origin: { lat: number; lng: number }, data: SearchInput,
+): Promise<SearchBatch<DaycareCard>> {
+  const ids = await featuredCentreIdsInLockResult(lock);
+  const have = new Set(batch.rows.map((card) => card.id));
+  const missing = ids.rows.filter((id) => !have.has(id));
+  const evidence = mergeSearchEvidence(batch.evidence, ids.evidence);
+  if (!missing.length) return { rows: batch.rows, evidence };
+  const found = await catalogByIdsGetResult(missing, { refresh: data.refresh });
+  const extra = found.rows.map((row) => toCard(row, origin, data.fsa))
+    .filter((card) => filterByLocationLock([card], lock).length > 0);
+  return { rows: extra.length ? [...batch.rows, ...extra] : batch.rows,
+    evidence: mergeSearchEvidence(evidence, found.evidence) };
 }
 
-async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
+/** Exact city + province rows, even when the stored pin is outside the radius. */
+async function withNamedCityListings(
+  batch: SearchBatch<NearbyListing>,
+  lock: ReturnType<typeof resolveLocationLock>,
+  data: SearchInput,
+): Promise<SearchBatch<NearbyListing>> {
+  const rows = batch.rows;
+  if (!lock?.city || !lock.province) return batch;
+  const key = normalizeCityKey(lock.city);
+  if (!key) return batch;
+  if (rows.some((row) => normalizeCityKey(row.city) === key)) return batch;
+  const options = { refresh: data.refresh };
+  const neon = await queryNeonCityHubListingsResult(lock.province, [key], options);
+  const extra =
+    neon && neon.rows.length > 0 ? neon : await catalogNamedCityFromJsonResult(lock.city, lock.province, options);
+  return { rows: uniqueById([...rows, ...extra.rows]), evidence: mergeSearchEvidence(batch.evidence, extra.evidence) };
+}
+
+async function runSearch(data: SearchInput): Promise<SearchCandidates> {
   const work =
     typeof data.lat2 === "number" && typeof data.lng2 === "number"
       ? { lat: data.lat2, lng: data.lng2 }
@@ -568,45 +618,52 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   const directory = data.directorySlug ? cityHubDefBySlug(data.directorySlug) : null;
   const corridor =
     !directory && anchors.intersect && anchors.secondary
-      ? await nearbyListingsAlong(anchors.primary, anchors.secondary, data.radiusKm)
-      : [];
+      ? await nearbyListingsAlongResult(anchors.primary, anchors.secondary, data.radiusKm, { refresh: data.refresh })
+      : null;
   const pool = directory
-    ? await listingsForCityHub(directory.slug)
-    : filterByLocationLock(
+    ? await listingsForCityHubResult(directory.slug, { refresh: data.refresh })
+    : (
         anchors.intersect && anchors.secondary
-          ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
-          : await nearbyListings(origin, data.radiusKm, data.facility ? CITY_TYPE_LIST_CAP : 400),
-        lock,
+          ? await nearbyListingsDualResult(anchors.primary, anchors.secondary, data.radiusKm, { refresh: data.refresh })
+          : await nearbyListingsResult(origin, data.radiusKm, data.facility ? CITY_TYPE_LIST_CAP : 400, { refresh: data.refresh })
       );
-  const merged = await mergeApprovedCityListings(pool, {
+  const lockedPool = directory ? pool : withSearchRows(pool, filterByLocationLock(pool.rows, lock));
+  const merged = await mergeApprovedCityListingsResult(lockedPool, {
     origin,
     radiusKm: data.radiusKm,
     lock,
     label: data.label || data.q,
-  });
-  const listings = directory ? merged : await withNamedCityListings(merged, lock);
+  }, { refresh: data.refresh });
+  const listings = directory ? merged : await withNamedCityListings(merged, lock, data);
   let cards: DaycareCard[] = [];
-  for (const d of listings) {
+  for (const d of listings.rows) {
     cards.push(toCard(d, origin, data.fsa));
   }
   cards = filterByLocationLock(cards, lock);
-  if (corridor.length) {
+  if (corridor?.rows.length) {
     const kept = new Set(cards.map((card) => card.id));
-    for (const row of corridor) {
+    for (const row of corridor.rows) {
       if (!kept.has(row.id)) cards.push(toCard(row, origin, data.fsa));
     }
   }
-  cards = await mergePinnedCentres(cards, lock, origin, data.fsa);
+  const candidateBatch = await mergePinnedSearchCentres({ rows: cards,
+    evidence: corridor ? mergeSearchEvidence(listings.evidence, corridor.evidence) : listings.evidence }, lock, origin, data);
+  cards = candidateBatch.rows;
   const overlayCap = 192;
   const rankSort =
     data.sort === "best" || data.sort === "match" || data.sort === "recommended" || data.sort === "urgency";
-  let distanceTail: DaycareCard[] = [];
   if (!rankSort && cards.length > overlayCap) {
     cards.sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name));
-    distanceTail = cards.slice(overlayCap);
-    cards = cards.slice(0, overlayCap);
   }
-  cards = await overlayClaimed(cards, mergeClaimedCard);
+  const headLength = rankSort ? cards.length : Math.min(cards.length, overlayCap);
+  const claimed = await overlayClaimedSearchResult(cards, mergeClaimedCard);
+  const enrichedBatch = {
+    rows: claimed.rows,
+    evidence: mergeSearchEvidence(candidateBatch.evidence, claimed.evidence),
+  };
+  // Keep the same prefix for expensive overlays; claimed facts also cover its tail.
+  const distanceTail = claimed.rows.slice(headLength);
+  cards = claimed.rows.slice(0, headLength);
   cards = await overlayParentReviews(cards);
   cards = await overlayQuality(cards);
   const rankPrefs = {
@@ -703,11 +760,15 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     });
   }
   const stamped = await withProvincial(listed);
-  return stamped.map((card) => {
+  const resultRows = stamped.map((card) => {
     const slim = slimCard(card);
     if (!useBest) return slim;
     return { ...slim, smartMatchWhy: whyForListing(card, matchQuery) };
   });
+  return {
+    ...withSearchRows(enrichedBatch, resultRows),
+    excludedIds: claimed.rows.filter((card) => !isPublicListing(card)).map((card) => card.id),
+  };
 }
 
 function normalizeSearchInput(input: SearchInput | null | undefined): SearchInput {
@@ -729,10 +790,12 @@ function normalizeSearchInput(input: SearchInput | null | undefined): SearchInpu
     wantExtendedHours: input.wantExtendedHours === true,
     schedules: parseSchedules(input.schedules),
     countDemand: input.countDemand === true,
+    refresh: input.refresh === true,
     parentFit: parseParentFit(input.parentFit),
     name: typeof input.name === "string" ? input.name.trim().slice(0, 80) : "",
     live: readLiveSearchFlag(input.live),
     diet: parseCareKeys(input.diet).join(","),
+    filters: normalizeSearchResultFilters(input.filters),
     facility: listedDaycareTypeFromSearch(
       input.facility === "before_after" ? { cat: "before-after" } : { fac: input.facility },
     ),
@@ -785,17 +848,51 @@ async function appendTestAccountFixtures(data: SearchInput, cards: DaycareCard[]
   return uniqueById([...extra, ...cards]);
 }
 
+function rankedSearchMemoKey(data: SearchInput): string {
+  return `coverage1:${searchMemoKey(data)}:${parentFitCacheKey(data.parentFit ?? null)}:rank=${JSON.stringify({
+    age: data.rankAge,
+    subsidy: data.wantSubsidy,
+    extended: data.wantExtendedHours,
+    schedules: data.schedules,
+  })}`;
+}
+
 export const searchDaycares = createServerFn({ method: "GET" })
   .validator((input: SearchInput) => normalizeSearchInput(input))
   .handler(async ({ data }) => {
     const found = await rememberSearch(
-      `${searchMemoKey(data)}:${parentFitCacheKey(data.parentFit ?? null)}`,
+      rankedSearchMemoKey(data),
       () => searchIncludingLive(data),
+      { refresh: data.refresh, cacheIf: (batch) => !batch.evidence.retryable },
     );
-    return sealPublicHomes(await appendTestAccountFixtures(data, found));
+    return sealPublicHomes(await appendTestAccountFixtures(data, found.rows));
   });
 
-/** Same ranking as searchDaycares, then one page of 96 cards. */
+/** Shared matched set. Ranking stays in searchIncludingLive; filters never reorder it. */
+async function filteredSearchRows(query: SearchInput): Promise<SearchBatch<DaycareCard>> {
+  const found = await rememberSearch(
+    rankedSearchMemoKey(query),
+    () => searchIncludingLive(query),
+    { refresh: query.refresh, cacheIf: (batch) => !batch.evidence.retryable },
+  );
+  const listed = query.live ? found.rows.filter((card) => isClaimVerified(card) && !card.isTest) : found.rows;
+  const all = await appendTestAccountFixtures(query, listed);
+  const filters = normalizeSearchResultFilters(query.filters);
+  // Preserve the existing feature gate for declared dietary/support predicates.
+  filters.diet = inclusiveFiltersEnabled() ? parseCareKeys([query.diet, filters.diet].filter(Boolean).join(",")).join(",") : "";
+  // The top-level name is authoritative, including loader calls without filters.
+  filters.name = query.name || filters.name;
+  const aligned = alignedSearchInput(query);
+  return withSearchRows(found, filterSearchResults(all, {
+    origin: { lat: aligned.lat, lng: aligned.lng },
+    secondOrigin: typeof query.lat2 === "number" && typeof query.lng2 === "number" ? { lat: query.lat2, lng: query.lng2 } : null,
+    mode: query.mode,
+    radiusKm: query.radiusKm,
+    filters,
+  }));
+}
+
+/** Same ranking as searchDaycares, filtered before one page of 96 cards. */
 export const searchDaycarePage = createServerFn({ method: "GET" })
   .validator((input: (SearchInput & { page?: unknown }) | undefined) => {
     if (!input || typeof input !== "object") throw new ClientInputError();
@@ -804,17 +901,18 @@ export const searchDaycarePage = createServerFn({ method: "GET" })
   })
   .handler(async ({ data }) => {
     const { page, ...query } = data;
-    const found = await rememberSearch(
-      `${searchMemoKey(query)}:${parentFitCacheKey(query.parentFit ?? null)}:diet=${query.diet || ""}`,
-      () => searchIncludingLive(query),
-    );
-    const listed = query.live ? found.filter((card) => isClaimVerified(card) && !card.isTest) : found;
-    const all = await appendTestAccountFixtures(query, listed);
-    const diet = parseCareKeys(query.diet);
-    const narrowed = diet.length && inclusiveFiltersEnabled()
-      ? all.filter((card) => matchesDeclaredCare(card.amenities, diet))
-      : all;
-    return sealPublicHomes(sliceSearchPage(narrowed, page));
+    const narrowed = await filteredSearchRows(query);
+    return sealPublicHomes({ ...sliceSearchPage(narrowed.rows, page), evidence: narrowed.evidence });
+  });
+
+/** Full matching map set, with the same predicates and total as every list page. */
+export const searchDaycareMap = createServerFn({ method: "GET" })
+  .validator((input: SearchInput) => normalizeSearchInput(input))
+  .handler(async ({ data }) => {
+    const matched = await filteredSearchRows({ ...data, countDemand: false });
+    // Seal homes while full privacy signals still exist, before the slim pin projection.
+    const sealed = await sealPublicHomes(matched.rows.filter(hasSearchCoordinates));
+    return { pins: projectSearchMapPins(sealed), total: matched.rows.length, evidence: matched.evidence };
   });
 
 /** Home type rows page 12 at a time. Keep a few pages of each nearby type. */

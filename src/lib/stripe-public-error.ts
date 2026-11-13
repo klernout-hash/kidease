@@ -1,4 +1,5 @@
 /** User-facing checkout copy. Raw Stripe text stays in logs and Admin. */
+import { publicErrorMessage } from "./public-error.ts";
 
 export const CHECKOUT_COULD_NOT_START =
   "Checkout could not start. Nothing was charged. Try again in a moment.";
@@ -63,5 +64,5 @@ export function mapCheckoutError(err: unknown, fallback = CHECKOUT_COULD_NOT_STA
 export function publicPayMessage(err: unknown, fallback: string): string {
   const message = err instanceof Error ? err.message.trim() : "";
   if (!message || STRIPE_LEAK.test(message)) return fallback;
-  return message;
+  return publicErrorMessage(message, fallback);
 }

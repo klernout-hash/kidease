@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { tx } from "../src/lib/copy.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -54,7 +55,11 @@ test("trust badges never claim KidEase police-checks staff or invent scores", ()
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustStaffAttested: "Staff attested"/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustScreeningOnFile: "Screening on file"/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustScreeningOnFile: "Dossier de filtrage"/);
-  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Payments: not charged yet/);
+  assert.match(tx("en", "trustPayLedger"), /Online payment unavailable/);
+  assert.match(tx("en", "trustPayLedgerTip"), /Contact the centre/);
+  for (const locale of ["en", "fr"]) {
+    assert.doesNotMatch(tx(locale, "trustPayLedger"), /ledger|not charged yet|test mode|grand livre|pas encore/i);
+  }
   assert.doesNotMatch((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /KidEase background-checked/);
   assert.doesNotMatch((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Background checked by KidEase/);
 });

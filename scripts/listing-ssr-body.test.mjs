@@ -23,3 +23,15 @@ test("listing first paint includes overview text and one ChildCare JSON-LD", () 
   assert.match(seo, /description: (found|sealed)\.description/);
   assert.match(seo, /hours: (found|sealed)\.hours/);
 });
+
+test("first paint keeps known hours and labels unconfirmed facts before hydration", () => {
+  const firstPaint = route.slice(route.indexOf("    const earlyPhoto"), route.indexOf("  const d = data.daycare;", route.indexOf("    const earlyPhoto")));
+  assert.match(firstPaint, /<dl[^>]+data-ke="listing-first-paint-facts"/);
+  assert.match(firstPaint, /earlyHours \? \(/);
+  assert.match(firstPaint, /<dd[^>]+>\{earlyHours\}<\/dd>/);
+  assert.match(firstPaint, /Not confirmed/);
+  assert.match(firstPaint, /Fees not confirmed\. A daily cap is not a monthly bill\./);
+  assert.match(firstPaint, /\{earlyAddress\}/);
+  assert.match(firstPaint, /\{earlyDesc\}/);
+  assert.doesNotMatch(firstPaint, /ListingHeaderPills/);
+});

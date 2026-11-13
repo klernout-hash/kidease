@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useCopy } from "@/lib/use-copy";
+import { localePath } from "@/lib/locale-path";
 import { messageReferenceInBody, supportCopy, withMessageReference, type SupportLocale } from "@/lib/support-desk";
 import { loadSupportDesk, postSupportDesk, supportDeskStatus } from "@/lib/server/support-desk";
 import { listAdminSupportDesk, replyAdminSupportDesk } from "@/lib/server/support-desk";
@@ -39,6 +41,12 @@ export function SupportDeskBar({
       <section className="mt-4 rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="support-desk" data-open="no">
         <h3 className="font-display text-xl">{copy.title}</h3>
         <p className="mt-1 text-sm text-muted">{copy.off}</p>
+        <Link
+          to={localePath("/contact", locale)}
+          className="mt-2 inline-flex min-h-11 min-w-11 items-center font-semibold text-primary underline-offset-4 touch-manipulation hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        >
+          {copy.contact}
+        </Link>
       </section>
     );
   }

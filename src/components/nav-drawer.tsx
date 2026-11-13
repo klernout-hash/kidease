@@ -9,7 +9,7 @@ import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { LanguageSelect } from "@/components/language-select";
 import { AppearanceControl } from "@/components/appearance-control";
 import { ShareKidEaseButton } from "@/components/share-button";
-import { MenuGlyph, MenuRow } from "@/components/menu-row";
+import { MenuGlyph } from "@/components/menu-row";
 import { CountBadge } from "@/components/count-badge";
 import { useDeskMenu } from "@/components/desk-menu";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
@@ -19,14 +19,12 @@ import { showDeskSwitcher } from "@/lib/desks";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
-import type { MenuIconId } from "@/lib/menu-icons";
 import { nextDrawerLatch, type DrawerLatch } from "@/lib/drawer-latch";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { useRoleChrome } from "@/components/role-chrome";
 import { SmartMatchEntry } from "@/components/smart-match";
-import { FooterMoreLinks } from "@/components/footer-more-links";
-
-type Item = { to: string; label: string; search?: Record<string, string>; icon: MenuIconId; marker?: string };
+import { FooterMenuLinks, FooterMoreLinks } from "@/components/footer-more-links";
+import { GUEST_DRAWER_FOOTER_OMIT, guestDrawerMenuGroupsForShell } from "@/lib/site-footer-nav";
 
 const drawerSummaryClass =
   "flex min-h-11 cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-normal text-subtle whitespace-normal break-words [&::-webkit-details-marker]:hidden";
@@ -68,12 +66,13 @@ function GuestDrawerLinks({
   onClose: () => void;
   title: string;
 }) {
-  const { t, locale } = useCopy();
+  const { t } = useCopy();
   const chrome = useRoleChrome();
   // Apple 3.1.1: the native shell must not link to plan checkout.
   // SUBSCRIPTIONS_ENABLED is the one switch for plans on the website too.
   const nativeShell = useInNativeShell();
   const showPlans = !nativeShell && chrome.subscriptionsEnabled === true;
+  const groups = guestDrawerMenuGroupsForShell({ native: nativeShell, plansOn: showPlans });
   return (
     <nav data-ke="role-nav" data-role="guest" aria-label={title}>
       <DrawerSection title={t("navFindCare")} marker="drawer-find-care" startOpen>
@@ -81,23 +80,10 @@ function GuestDrawerLinks({
         <div className="px-3 py-1">
           <SmartMatchEntry inline />
         </div>
-        <MenuRow to={localePath("/search", locale)} label={t("search")} icon="explore" appearance="drawer" marker="search" onClick={onClose} />
-        <MenuRow to={localePath("/search", locale)} search={{ view: "map" }} label={t("navMap")} icon="explore" appearance="drawer" marker="map" onClick={onClose} />
-        <MenuRow to={localePath("/cities", locale)} label={t("browseCities")} icon="explore" appearance="drawer" onClick={onClose} />
-        <MenuRow to={localePath("/compare", locale)} label={t("compare")} icon="compare" appearance="drawer" onClick={onClose} />
-        <MenuRow to={localePath("/tour-checklist", locale)} label={t("tourChecklist")} icon="tourChecklist" appearance="drawer" onClick={onClose} />
+        <FooterMenuLinks links={groups.find((group) => group.id === "find")?.links ?? []} appearance="drawer" onNavigate={onClose} />
       </DrawerSection>
       <DrawerSection title={t("navForDaycares")} marker="drawer-for-daycares">
-        <MenuRow to={localePath("/claim", locale)} label={t("listYourDaycare")} icon="claim" appearance="drawer" onClick={onClose} />
-        {showPlans ? (
-          <MenuRow to={localePath("/plans", locale)} label={t("navPlans")} icon="benefits" appearance="drawer" marker="plans" onClick={onClose} />
-        ) : null}
-        <MenuRow to={localePath("/jobs", locale)} label={t("findDaycareJobs")} icon="jobs" appearance="drawer" onClick={onClose} />
-      </DrawerSection>
-      <DrawerSection title={t("helpTitle")} marker="drawer-help">
-        <MenuRow to={localePath("/help", locale)} label={t("helpTitle")} icon="help" appearance="drawer" onClick={onClose} />
-        <MenuRow to={localePath("/faq", locale)} label={t("faqShort")} icon="faq" appearance="drawer" onClick={onClose} />
-        <MenuRow to={localePath("/contact", locale)} label={t("contactTitle")} icon="contact" appearance="drawer" onClick={onClose} />
+        <FooterMenuLinks links={groups.find((group) => group.id === "daycares")?.links ?? []} appearance="drawer" onNavigate={onClose} />
       </DrawerSection>
     </nav>
   );
@@ -107,7 +93,6 @@ export function NavDrawer({
   open,
   onClose,
   title,
-  items,
   parentLabel,
   providerLabel,
   signedIn,
@@ -125,7 +110,6 @@ export function NavDrawer({
   open: boolean;
   onClose: () => void;
   title: string;
-  items: Item[];
   parentLabel: string;
   providerLabel: string;
   signedIn: boolean;
@@ -344,33 +328,16 @@ export function NavDrawer({
           ) : null}
             </>
           )}
-          {guestMenu || items.length === 0 ? null : (
-            <details className="py-0.5" data-ke="drawer-help-links">
-              <summary className={drawerSummaryClass}>{t("menuGetHelp")}</summary>
-              {items.map((item) => (
-                <MenuRow
-                  key={item.to + item.label}
-                  to={item.to}
-                  search={item.search}
-                  label={item.label}
-                  icon={item.icon}
-                  appearance="drawer"
-                  marker={item.marker}
-                  onClick={onClose}
-                />
-              ))}
-            </details>
-          )}
           <FooterMoreLinks
             appearance="drawer"
             onNavigate={onClose}
             share={!signedIn}
             omit={
               guestMenu
-                ? ["/search", "/cities", "/compare", "/tour-checklist", "/claim", "/plans", "/jobs", "/help", "/faq", "/contact"]
+                ? GUEST_DRAWER_FOOTER_OMIT
                 : roleList
-                  ? ["/search", "/help", "/faq", "/contact"]
-                  : ["/help", "/faq", "/contact"]
+                  ? ["/search"]
+                  : []
             }
           />
           {signedIn ? <ShareKidEaseButton appearance="drawer" onDone={onClose} /> : null}

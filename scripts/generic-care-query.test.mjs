@@ -81,8 +81,10 @@ test("resolveLocationQuery and geocodePlace skip Photon for care words", () => {
 test("phone home keeps one Airbnb care row when the flag is on", () => {
   const css = src("src/styles.css");
   const shell = src("src/components/shell.tsx");
-  assert.match(shell, /data-ke="phone-care-tabs"/);
+  assert.match(shell, /data-ke="header-care-categories"/);
   assert.match(css, /\.ke-home \[data-ke="msv2-categories"\]/);
-  assert.match(css, /:has\(\.ke-home\) \[data-ke="phone-care-tabs"\]/);
-  assert.match(src("src/routes/index.tsx"), /<AirbnbCareCategories/);
+  assert.doesNotMatch(shell, /data-ke="phone-care-tabs"/);
+  const home = src("src/routes/index.tsx");
+  assert.equal(home.match(/<AirbnbCareCategories/g)?.length, 1);
+  assert.match(home, /headerCategories=\{boot\.airbnbUi/);
 });

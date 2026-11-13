@@ -44,11 +44,13 @@ export async function loadGovActor(userId: string): Promise<GovActor | null> {
   if (!row) return null;
   if (String(row.role) !== "government") return null;
   if (String(row.status) !== "active") return null;
+  const scope = govActorProvince(row.province);
+  if (!scope) return null;
   return {
     userId,
     orgId: row.org_id,
     orgName: row.org_name,
-    ...govActorProvince(row.province),
+    ...scope,
     demo: Number(row.demo) === 1,
     readOnly: Number(row.read_only) === 1 || Number(row.demo) === 1,
   };

@@ -1,0 +1,39 @@
+{
+  "source": "actual shared CareCategoryIcon bundled with React and exact category CSS",
+  "network": "all requests intercepted; only local HTML and original repository PNGs fulfilled",
+  "results": [
+    {
+      "width": 390,
+      "automaticWithoutInput": true,
+      "observedMillis": 7083,
+      "changingRenderedTransforms": true,
+      "stationaryControlsAndLabels": true,
+      "offscreenPauseResume": true,
+      "hiddenPauseResume": "synthetic document.hidden + dispatched visibilitychange DOM event; headless tabs remain visible",
+      "keyboardEnterAndSpace": true,
+      "nativeAnchorNavigation": true,
+      "reducedMotionLiveToggle": true,
+      "repeatedMounts": 3,
+      "cleanup": true
+    },
+    {
+      "width": 1280,
+      "automaticWithoutInput": true,
+      "observedMillis": 7050,
+      "changingRenderedTransforms": true,
+      "stationaryControlsAndLabels": true,
+      "offscreenPauseResume": true,
+      "hiddenPauseResume": "synthetic document.hidden + dispatched visibilitychange DOM event; headless tabs remain visible",
+      "keyboardEnterAndSpace": true,
+      "nativeAnchorNavigation": true,
+      "reducedMotionLiveToggle": true,
+      "repeatedMounts": 3,
+      "cleanup": true
+    }
+  ],
+  "initialReducedMotion": true,
+  "missingIntersectionObserverFallback": "motion follows document visibility; no off-screen guarantee without observer support",
+  "missingWebAnimationsFallback": "static functional controls",
+  "pageErrors": [],
+  "limitation": "Headless Chromium kept real document.hidden=false across tabs and lifecycle freeze; hidden-tab handling is verified through an explicit DOM-state/event simulation, not a physical browser-tab test."
+}

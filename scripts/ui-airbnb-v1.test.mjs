@@ -86,6 +86,6 @@ test("phone home shows every childcare category as an icon row", () => {
   assert.match(css, /ke-cat-bob/);
   assert.match(css, /ke-cat-draw/);
   assert.match(css, /\.ke-home \[data-ke="msv2-categories"\]/);
-  assert.match(css, /:has\(\.ke-home\) \[data-ke="phone-care-tabs"\]/);
-  assert.match(src("src/components/shell.tsx"), /data-ke="phone-care-tabs"/);
+  assert.match(css, /\[data-ke="header-care-categories"\] \.ke-airbnb-cats/);
+  assert.match(src("src/components/shell.tsx"), /data-ke="header-care-categories"/);
 });

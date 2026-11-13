@@ -87,7 +87,7 @@ function CallPage() {
 
         {status && !status.allowed ? (
           <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
-            <p className="text-sm text-muted">{status.error === VOICE_OFF ? status.error : t("voiceUnavailable")}</p>
+            <p className="text-sm text-muted">{status.error === VOICE_OFF ? t("voiceNoCredentials") : t("voiceUnavailable")}</p>
             <Button asChild className="mt-4">
               <Link to="/">{t("navHome")}</Link>
             </Button>

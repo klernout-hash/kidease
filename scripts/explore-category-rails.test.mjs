@@ -179,7 +179,7 @@ test("phone and desktop rail chrome stays first-class", () => {
   assert.match(css, /overscroll-behavior-x:\s*contain/);
   assert.match(css, /touch-action:\s*pan-x/);
   assert.match(css, /@media \(min-width: 1280px\)/);
-  assert.match(css, /--ke-card-w: 13rem/);
+  assert.match(css, /--ke-card-w: min\(10\.5rem, 42vw\)/);
   assert.match(listingRail, /hidden items-center gap-2 sm:flex/);
   assert.match(chips, /data-explore-cat="all"/);
   assert.match(chips, /t\("catAll"\)/);

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { tx } from "../src/lib/copy.ts";
 import { stripeChargesLive, INTERNAL_LEDGER_LABEL } from "../src/lib/stripe-live.ts";
 import { platformFeeBps, platformFeePercentLabel, splitFee } from "../src/lib/stripe-methods.ts";
 import {
@@ -178,7 +179,10 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
   assert.match(honesty, /moneyModeLoading/);
   assert.match(honesty, /if \(!ready\)/);
   const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
-  assert.match(copy, /moneyModeLoading: "Checking whether Stripe Checkout is live…"/);
+  assert.equal(tx("en", "moneyModeLoading"), "Checking payment details…");
+  for (const locale of ["en", "fr"]) {
+    assert.doesNotMatch(tx(locale, "moneyModeLoading"), /Stripe|live|en direct|test|keys|clés/i);
+  }
   assert.match(copy, /newBillLiveHint:/);
   assert.match(copy, /connectFeeParentPay:/);
   assert.match(copy, /connectFeeShownAtCheckout:/);

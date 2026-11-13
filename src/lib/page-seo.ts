@@ -455,7 +455,7 @@ export const MARKETING_PAGE_SEO_FR = {
   plans: {
     title: "Forfaits · KidEase",
     description:
-      "Recherche, favoris et messages aux garderies, sans frais. Les garderies ont tous les outils pendant la période fondatrice gratuite.",
+      "Recherche, favoris et messages aux garderies, sans frais. Les garderies peuvent utiliser tous les outils sans abonnement.",
     path: "/fr/plans",
   },
   plansPaid: {

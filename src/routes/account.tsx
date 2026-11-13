@@ -40,7 +40,6 @@ import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
 import { AlertPushSettings } from "@/components/alert-push-settings";
 import { HostActionEmailPref } from "@/components/host-action-list";
-import { GovernmentScopeCard } from "@/components/government-scope-card";
 import { ReferFriendPanel } from "@/components/refer-friend-panel";
 import { fieldErrorClass, RequiredMark } from "@/components/required-field";
 import { focusFirstInvalid } from "@/lib/profile-form";
@@ -691,7 +690,6 @@ function ProfilePane() {
   return (
     <AccountDeskFrame desk={desk}>
       <main className={desk ? "max-w-lg pb-6" : "ke-gutter mx-auto max-w-lg pb-10 pt-6"}>
-        <GovernmentScopeCard />
         {user ? (
           <input
             ref={inputRef}

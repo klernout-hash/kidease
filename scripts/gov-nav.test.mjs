@@ -17,14 +17,14 @@ test("a government session is not given the parent tab bar", () => {
   assert.equal(items.some((item) => item.to === "/gov"), true);
 });
 
-test("government sign-in stays on the desk and public browse can return", () => {
+test("government sign-in stays on the desk without a government banner on public browsing", () => {
   const login = read("src/components/gov/gov-login.tsx");
   const guard = read("src/lib/gov/desk-guard.ts");
   const shell = read("src/components/shell.tsx");
   const listing = read("src/routes/daycare.$slug.tsx");
   assert.match(login, /callbackURL: home/);
   assert.match(guard, /throw redirect\(\{ href: govClosedHome\(locale\) \}\)/);
-  assert.match(shell, /data-ke="gov-public-browse"/);
+  assert.doesNotMatch(shell, /data-ke="gov-public-browse"/);
   assert.match(shell, /chrome\.role === "government"/);
   assert.match(listing, /chrome\.role !== "government" && showPublicClaimPrompt/);
   assert.match(read("src/components/gov/gov-desk-nav.tsx"), /data-ke="gov-browse-public"/);

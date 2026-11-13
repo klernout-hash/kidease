@@ -188,7 +188,10 @@ test("provider guest gate and declined claims stay honest", () => {
   const claims = src("src/lib/server/claims.ts");
   assert.match(claims, /set last_vacancy_updated_at = now\(\)/);
   const search = src("src/routes/search.tsx");
-  assert.match(search, /vacancyFreshness\(vacancyTimestamp\(r\)\)\.kind === "fresh"/);
+  assert.match(search, /confirmedOnly, readyOnly, claimVerifiedOnly/);
+  assert.match(search, /filters: resultFilters/);
+  assert.match(src("src/lib/search-result-filters.ts"), /filters\.confirmedOnly && vacancyFreshness\(vacancyTimestamp\(row\), now\)\.kind !== "fresh"/);
+  assert.match(src("src/lib/server/daycares.ts"), /filterSearchResults\(all/);
   const forms = src("src/components/provider-listing-forms.tsx");
   assert.match(forms, /refreshVacancy/);
   assert.match(forms, /vacancyRefresh/);

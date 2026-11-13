@@ -18,6 +18,7 @@ import type { CaslPrefs } from "@/lib/casl";
 import { useShowPayCtas } from "@/components/pay-chrome";
 import { useViewAs } from "@/components/view-as-banner";
 import { useInNativeShell } from "@/lib/use-native-shell";
+import { useRoleChrome } from "@/components/role-chrome";
 
 export function ParentPlusPanel({
   offerCheckout = true,
@@ -39,8 +40,9 @@ export function ParentPlusPanel({
   const viewing = useViewAs();
   const loc = locale === "fr" ? "fr" : "en";
   const showPay = useShowPayCtas();
+  const { subscriptionsEnabled } = useRoleChrome();
   const nativeShell = useInNativeShell();
-  const offerPlans = showPay || alwaysOffer;
+  const offerPlans = subscriptionsEnabled && (showPay || alwaysOffer);
   const [state, setState] = useState<ParentPlusState | null>(null);
   const [interval, setInterval] = useState<PlusInterval>("year");
   const [busy, setBusy] = useState(false);
@@ -110,7 +112,7 @@ export function ParentPlusPanel({
   if (!state) return null;
   const current = state;
   const manageable = Boolean(current.stripeLive && current.subscriptionId && subscriptionAccessOpen(current.status) && current.plan !== "free");
-  if (!showPay && !manageable && !alwaysOffer) return null;
+  if (!offerPlans && !manageable) return null;
 
   const plusOn = subscriptionAccessOpen(state.status);
   const familyPlans = PARENT_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, interval, state.prices));
@@ -273,7 +275,6 @@ export function ParentPlusPanel({
         })}
       </div>
       {!offerCheckout && !(state.plan !== "free" && plusOn) ? <p className="mt-3 text-sm text-muted">{t("parentPlusNoBill")}</p> : null}
-      {showPay && !state.stripeLive ? <p className="mt-3 text-sm text-muted">{t("parentPlusRehearsal")}</p> : null}
       </>
       ) : null}
       {state.status ? <p className="mt-2 text-xs text-subtle">{state.status}</p> : null}

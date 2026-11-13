@@ -16,6 +16,7 @@ import {
   type VideoJoinStatus,
 } from "@/lib/server/video-join";
 import { primeCallMedia } from "@/lib/call-permissions";
+import { publicErrorMessage } from "@/lib/public-error";
 
 export const Route = createFileRoute("/video/$roomId")({
   head: () => ({
@@ -89,14 +90,14 @@ function VideoRoomPage() {
       if (result.ok) {
         setJoined(result);
       } else {
-        setError(result.error);
+        setError(publicErrorMessage(result.error, t("videoTourFailed")));
         if (result.paywall) {
           const next = await getVideoJoinStatus({ data: roomId }).catch(() => null);
           if (next) setStatus(next);
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("videoTourFailed"));
+      setError(publicErrorMessage(err, t("videoTourFailed")));
     } finally {
       setBusy(false);
     }
@@ -138,18 +139,8 @@ function VideoRoomPage() {
         ) : null}
 
         {!nativeShell && blockedScaffold && !joined ? (
-          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="store-coming-soon">
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-subtle">{t("comingSoon")}</p>
-            <p className="mt-2 font-medium">
-              {featureOff
-                ? t("videoFeatureOffTitle")
-                : sdkOff
-                  ? t("videoSdkOffTitle")
-                  : t("videoNoCredentialsTitle")}
-            </p>
-            <p className="mt-2 text-sm text-muted">
-              {featureOff ? t("videoFeatureOff") : sdkOff ? t("videoSdkOff") : t("videoNoCredentials")}
-            </p>
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="video-unavailable">
+            <p className="text-sm text-muted">{t("videoNoCredentials")}</p>
             <Button variant="secondary" asChild className="mt-4">
               <Link to="/inbox">{t("inbox")}</Link>
             </Button>
@@ -157,7 +148,7 @@ function VideoRoomPage() {
         ) : null}
 
         {!nativeShell && status?.error && !paywall && !blockedScaffold && !joined ? (
-          <p className="mt-4 text-sm text-danger">{status.error}</p>
+          <p className="mt-4 text-sm text-danger">{publicErrorMessage(status.error, t("videoTourFailed"))}</p>
         ) : null}
         {error && !blockedScaffold ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
 

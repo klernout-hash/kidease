@@ -45,7 +45,8 @@ test("the opened listing keeps named rooms, saved meals, compact cards, and redu
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(css, /html\[data-resolved-theme="dark"\]/);
   assert.match(card, /data-ke="card-live-pill"/);
-  assert.match(card, /ClaimListingCta/);
+  assert.match(card, /data-ke="card-view-details"/);
+  assert.match(page, /claimFreeListing|ClaimListingCta/);
   const about = read("src/components/about-you-form.tsx");
   assert.match(about, /Only you can see this/);
   assert.match(about, /Vous seul pouvez voir ceci/);

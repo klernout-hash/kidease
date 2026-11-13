@@ -40,8 +40,8 @@ export function WiringDesk({
         {enabled ? <div className="mt-6">{children}</div> : (
           <div className="mt-6">
             <EmptyState
-              title={fr ? "Cette étape est éteinte" : "This step is off"}
-              body={fr ? "Rien n’est envoyé. Vous pouvez chercher une garderie ou demander de l’aide." : "Nothing is sent. You can search for daycare or get help."}
+              title={fr ? "Cette action est indisponible" : "This action is unavailable"}
+              body={fr ? "Vous pouvez chercher une garderie ou demander de l’aide." : "You can search for daycare or get help."}
               action={fr ? "Chercher" : "Search daycare"}
               actionTo={localePath("/search", locale)}
               secondary={fr ? "Aide" : "Help"}

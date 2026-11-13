@@ -79,32 +79,38 @@ test("launch hold hides discovery only while a role desk is still resolving", ()
   assert.doesNotMatch(src("src/components/app-tab-bar.tsx"), /AirbnbDeskPill/);
 });
 
-test("guest visual cards use the compact photo layout with live, fee, and claim", () => {
+test("guest visual cards use the compact photo layout and one details action", () => {
   const card = src("src/components/daycare-card.tsx");
   assert.match(card, /data-ke="visual-card"/);
-  assert.match(card, /aspect-\[4\/3\]/);
-  assert.match(card, /rounded-\[14px\]/);
+  assert.match(card, /className="ke-card-photo"/);
+  assert.match(src("src/styles.css"), /--ke-card-photo-ratio:\s*20 \/ 19;/);
+  assert.match(card, /rounded-md bg-primary/);
+  assert.doesNotMatch(card, /rounded-\[14px\]/);
   assert.match(card, /data-ke="card-live-pill"/);
   assert.match(card, /SubsidyPill/);
   assert.match(card, /publicBrowseClaim/);
-  assert.match(card, /ClaimListingCta/);
+  assert.doesNotMatch(card, /ClaimListingCta/);
   assert.match(card, /data-ke="card-age-range"/);
   assert.doesNotMatch(card, /Provincial fee cap · eligibility varies/);
   assert.doesNotMatch(card, /data-ke="card-source"/);
   assert.doesNotMatch(card, /Availability not confirmed/);
   const visual = card.slice(card.indexOf('presentation === "visual"'), card.indexOf("return (\n    <article data-slug"));
-  assert.match(visual, /ClaimListingCta/);
+  assert.match(visual, /data-ke="card-view-details"/);
   assert.match(visual, /showLivePill=\{showLivePill\}/);
-  assert.match(visual, /data-ke="card-book-tour"/);
-  assert.match(card, /data-ke="card-request-info"/);
+  assert.doesNotMatch(visual, /card-book-tour|card-request-info|card-join-waitlist/);
+  assert.match(src("src/routes/daycare.$slug.tsx"), /claimFreeListing|ClaimListingCta/);
 });
 
 test("guest detail drops the dominant claim, repeated unknown table, and floating role pill", () => {
   const page = src("src/routes/daycare.$slug.tsx");
   assert.match(page, /data-ke="fees-and-support"/);
   assert.match(page, /Fees and support/);
-  assert.match(page, /data-ke="listing-claim-button"/);
-  assert.match(page, /bg-transparent/);
+  const secondary = page.slice(page.indexOf("function ListingOverflowItems"), page.indexOf("function DirectionsButton"));
+  assert.match(secondary, /offerClaim \? \(/);
+  assert.match(secondary, /to="\/claim"/);
+  assert.match(secondary, /claimFreeListing/);
+  assert.match(page, /<ListingMoreActions compact>/);
+  assert.doesNotMatch(page, /data-ke="listing-claim-button"/);
   assert.match(page, /compact/);
   assert.match(page, /hidden flex-wrap/);
   assert.match(src("src/components/listing-parent-pack.tsx"), /data-ke="programs-unknown-once"/);

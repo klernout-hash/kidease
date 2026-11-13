@@ -3,16 +3,16 @@
  * centre. It is not a monthly CAD amount, and a harvested "funded" or
  * "ten-a-day" amenity is not a fact.
  *
- * Show "$10/day" for every licensed program the rule covers:
- *   Saskatchewan, children under 6 (school-age-only programs stay off)
- *   Nunavut licensed centres (family and group homes stay off)
- * Show "$10/day" only when this centre is on a sourced list:
+ * Show "$10 / Day" only when this centre is on a sourced list or has a
+ * confirmed stored fee-program code for its province:
+ *   Saskatchewan — stored sk-10-day plus known under-six ages
+ *   Nunavut — stored nu-10-day plus known preschool ages and facility type
  *   British Columbia — official $10 a Day ChildCareBC list (name + city).
  *     CCFRI is a fee reduction, not $10 a day, and gets no pill until confirmed.
  *   Prince Edward Island — stored pe-10-day (designated Early Years Centre)
  *   Newfoundland and Labrador — stored nl-10-day after that centre is confirmed
- * Show "Fee cap" only for Manitoba fee program mb-10-day (funded).
- * The dollar amount stays in the sourced note, not as a quote on the card.
+ *   Manitoba — stored mb-10-day (funded). The note explains the eligible
+ *     schedule's maximum fee; the pill is a program label, not a fee quote.
  * Show "$9.65/day subsidized" only for Quebec services marked contribution réduite (subv=CR).
  * Show "Reduced fees" only where the NWT directory says subsidy=Yes or free,
  *   or a stored yt-reduced / nt-reduced code. Never show "$10/day" for NT or YT.
@@ -31,6 +31,8 @@ export const FEE_PROGRAMS = {
   "bc-10-day": { province: "BC", badge: "badgeTen" },
   "pe-10-day": { province: "PE", badge: "badgeTen" },
   "nl-10-day": { province: "NL", badge: "badgeTen" },
+  "sk-10-day": { province: "SK", badge: "badgeTen" },
+  "nu-10-day": { province: "NU", badge: "badgeTen" },
   "qc-9-65": { province: "QC", badge: "badgeQc965" },
   "nt-reduced": { province: "NT", badge: "badgeReduced" },
   "yt-reduced": { province: "YT", badge: "badgeReduced" },
@@ -53,6 +55,8 @@ const ALIASES: Record<string, FeeProgramCode> = {
   "bc-10-day": "bc-10-day",
   "pe-10-day": "pe-10-day",
   "nl-10-day": "nl-10-day",
+  "sk-10-day": "sk-10-day",
+  "nu-10-day": "nu-10-day",
   "qc-9-65": "qc-9-65",
   "qc-965": "qc-9-65",
   "nt-reduced": "nt-reduced",
@@ -122,7 +126,7 @@ function tenDay(
   source: string,
   verifiedAt: string = SUBSIDY_VERIFIED_AT,
 ): ListingSubsidy {
-  return subsidyFact("ten", "$10/day", "10 $/jour", note, noteFr, source, verifiedAt);
+  return subsidyFact("ten", "$10 / Day", "10 $ / jour", note, noteFr, source, verifiedAt);
 }
 
 /** Harvested catalogue conversion of a Manitoba $10 day into a fake monthly fee. */
@@ -201,11 +205,12 @@ export function listingSubsidy(d: SubsidyInput): ListingSubsidy | null {
   if (stored === "mb-10-day") {
     return subsidyFact(
       "ten_max",
-      "Fee cap",
-      "Plafond",
-      "Manitoba funded centre, parent fee capped at $10/day for 4–10 hours.",
-      "Centre financé du Manitoba. Le tarif parental est plafonné à 10 $ par jour pour 4 à 10 heures.",
+      "$10 / Day",
+      "10 $ / jour",
+      "Manitoba funded fee program: parent fee capped at $10/day for eligible 4–10-hour care. Shorter or longer days and school-day schedules differ. Confirm your child’s fee with the centre. Income-tested subsidy is separate.",
+      "Programme financé du Manitoba : tarif parental plafonné à 10 $ par jour pour la garde admissible de 4 à 10 heures. Les journées plus courtes, plus longues et scolaires diffèrent. Confirmez le tarif de votre enfant avec le centre. La subvention selon le revenu est distincte.",
       "https://www.gov.mb.ca/education/childcare/families/childcare_fees.html",
+      "2026-11-12",
     );
   }
   if (stored === "pe-10-day") {
@@ -226,28 +231,29 @@ export function listingSubsidy(d: SubsidyInput): ListingSubsidy | null {
   if (stored === "qc-9-65") return qcSubsidized();
   if (stored === "nt-reduced") return ntReduced();
   if (stored === "yt-reduced") return ytReduced();
+  if (stored === "sk-10-day") {
+    return skCoversUnderSix(d)
+      ? tenDay(
+          "Confirmed Saskatchewan regulated fee program for eligible children under 6. Ten or more days cost $217.50 a month; fewer than 10 days cost $10 a day. Confirm eligibility and your child’s schedule with the centre. Income-tested support is separate.",
+          "Programme réglementé confirmé de la Saskatchewan pour les enfants admissibles de moins de 6 ans. Dix jours ou plus coûtent 217,50 $ par mois; moins de 10 jours coûtent 10 $ par jour. Confirmez l’admissibilité et l’horaire de votre enfant avec le centre. L’aide selon le revenu est distincte.",
+          "https://www.saskatchewan.ca/residents/family-and-social-support/child-care/child-care-in-saskatchewan",
+          "2026-11-12",
+        )
+      : null;
+  }
+  if (stored === "nu-10-day") {
+    return nuPreschoolProgram(d)
+      ? tenDay(
+          "Confirmed Nunavut participating licensed program for eligible preschool care. Confirm your child’s eligibility, schedule and parent fee with the centre. Other parental subsidies have separate rules.",
+          "Programme agréé participant confirmé du Nunavut pour la garde préscolaire admissible. Confirmez l’admissibilité, l’horaire et le tarif parental de votre enfant avec le centre. Les autres subventions parentales ont leurs propres règles.",
+          "https://www.gov.nu.ca/en/education-and-schools/affordable-child-care",
+          "2026-11-12",
+        )
+      : null;
+  }
 
   const province = (d.province || "").trim().toUpperCase();
   if (!province || NO_PILL.has(province)) return null;
-  if (province === "SK") {
-    return skCoversUnderSix(d)
-      ? tenDay(
-          "Saskatchewan eligible child in regulated care. Full-time is $217.50 a month (10 or more days). Fewer than 10 days is $10 a day, up to $90 a month. The Child Care Regulations, 2015, s. 18(5).",
-          "Enfant admissible en garde réglementée en Saskatchewan. Le plein temps est 217,50 $ par mois (10 jours ou plus). Moins de 10 jours : 10 $ par jour, jusqu’à 90 $ par mois. Règlement de 2015, art. 18(5).",
-          "https://publications.saskatchewan.ca/api/v1/products/73483/formats/82271/download",
-          "2026-11-01",
-        )
-      : null;
-  }
-  if (province === "NU") {
-    return nuLicensedCentre(d)
-      ? tenDay(
-          "Nunavut licensed child care centre. The parent fee is $10 a day.",
-          "Centre de garde permis du Nunavut. Le tarif parental est de 10 $ par jour.",
-          "https://www.gov.nu.ca/en/education-and-schools/early-learning-and-child-care",
-        )
-      : null;
-  }
   if (province === "BC") return listedIn(bcYes, d) ? bcTen() : null;
   if (province === "QC") return listedIn(qcYes, d) ? qcSubsidized() : null;
   if (province === "NT") return listedIn(ntYes, d) ? ntReduced() : null;
@@ -326,7 +332,8 @@ export function subsidyNoteKey(d: {
   ageMinMonths?: number | null;
   ageMaxMonths?: number | null;
   feeProgram?: string | null;
-}): "subsidyNoteTen" | "subsidyNoteQc" | "subsidyNoteReduced" | "subsidyNoteQcNo" | "cwelccAskNote" {
+}):
+  "subsidyNoteTen" | "subsidyNoteQc" | "subsidyNoteReduced" | "subsidyNoteQcNo" | "cwelccAskNote" {
   const pill = confirmedFeeProgramBadge(d);
   if (pill === "badgeTen") return "subsidyNoteTen";
   if (pill === "badgeQc965") return "subsidyNoteQc";
@@ -352,34 +359,37 @@ function skCoversUnderSix(d: {
 }) {
   const facility = classifyFacilityType(d);
   if (facility.type === "school_age" && facility.source !== "fallback") return false;
-  if (schoolAgeOnlyAges(d)) return false;
-  return true;
+  return hasKnownPreschoolAges(d);
 }
 
-function nuLicensedCentre(d: {
+function nuPreschoolProgram(d: {
   amenities?: string | null;
   facilityType?: string | null;
   name?: string | null;
-}) {
-  const facility = classifyFacilityType(d);
-  if (facility.source === "fallback") return true;
-  return (
-    facility.type === "child_care_centre" ||
-    facility.type === "nursery_preschool" ||
-    facility.type === "school_age"
-  );
-}
-
-function schoolAgeOnlyAges(d: {
   agesKnown?: boolean | null;
   ageMinMonths?: number | null;
   ageMaxMonths?: number | null;
 }) {
-  const min = Number(d.ageMinMonths);
-  const max = Number(d.ageMaxMonths);
+  const facility = classifyFacilityType(d);
+  return (
+    facility.source !== "fallback" && facility.type !== "school_age" && hasKnownPreschoolAges(d)
+  );
+}
+
+function hasKnownPreschoolAges(d: {
+  agesKnown?: boolean | null;
+  ageMinMonths?: number | null;
+  ageMaxMonths?: number | null;
+}) {
+  const min = d.ageMinMonths;
+  const max = d.ageMaxMonths;
   const known =
-    d.agesKnown === true ||
-    (d.agesKnown !== false && Number.isFinite(min) && Number.isFinite(max) && max > min && max > 0);
-  if (!known || !Number.isFinite(min)) return false;
-  return min >= 72;
+    d.agesKnown !== false &&
+    typeof min === "number" &&
+    Number.isFinite(min) &&
+    min >= 0 &&
+    typeof max === "number" &&
+    Number.isFinite(max) &&
+    max > min;
+  return known && min < 72;
 }

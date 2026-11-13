@@ -7,6 +7,7 @@ import { getSql, type Sql } from "@/lib/db";
 import { homeProvince, redactLog, type ProvinceCode } from "@/lib/compliance/mode";
 import { transactionalMailFrom } from "@/lib/mail-from";
 import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
+import { govActorProvince } from "@/lib/gov/province-choice";
 
 export type Scope = {
   role: string;
@@ -27,11 +28,19 @@ export async function readScope(userId: string): Promise<Scope | null> {
   `.catch(() => []);
   const row = rows[0];
   if (!row?.role) return null;
+  let province = homeProvince(row.gov_province, row.org_province);
+  if (String(row.role).trim().toLowerCase() === "government") {
+    const organization = govActorProvince(row.org_province);
+    if (!organization) return null;
+    // A national organization may retain its legacy provincial selection.
+    // A provincial organization never takes authority from that preference.
+    province = organization.national ? homeProvince(row.gov_province) : homeProvince(organization.province);
+  }
   return {
     role: row.role,
     govProvince: row.gov_province,
     orgProvince: row.org_province,
-    province: homeProvince(row.gov_province, row.org_province),
+    province,
   };
 }
 

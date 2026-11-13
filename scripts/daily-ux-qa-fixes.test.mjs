@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { tx } from "../src/lib/copy.ts";
 import { GHOST_LISTING } from "../src/lib/ghost-listing.ts";
 import { inboxUnreadForDesk, inboxViewForDesk } from "../src/lib/inbox-view.ts";
 import {
@@ -199,7 +200,9 @@ test("Stripe Checkout CTAs stay honest when there are no bills", () => {
   const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /No centre bills yet/);
   assert.match(copy, /Aucune facture de centre/);
-  assert.match(copy, /it is not a centre bill/);
+  assert.match(tx("en", "noPaymentsLead"), /centre bills.*Stripe Checkout/i);
+  assert.doesNotMatch(tx("en", "noPaymentsLead"), /Parent Plus|subscription|upgrade/i);
+  assert.match(tx("en", "ledgerLiveParent"), /does not charge a deposit/);
 });
 
 test("search-alert SMS checkbox uses CASL statement, not a pre-checked email default", () => {

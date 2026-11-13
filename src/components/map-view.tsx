@@ -133,6 +133,8 @@ type Props = {
   items: DaycareCard[];
   /** Draw only these items, without loading nearby directory listings. */
   itemsOnly?: boolean;
+  /** Complete filtered search set. An empty array is a scoped, empty search. */
+  searchPins?: MapPin[];
   origin: { lat: number; lng: number };
   secondOrigin?: { lat: number; lng: number } | null;
   radiusKm: number;
@@ -181,6 +183,7 @@ export function MapView(props: Props) {
 function OsmMapView({
   items,
   itemsOnly = false,
+  searchPins,
   origin,
   secondOrigin,
   radiusKm,
@@ -227,6 +230,7 @@ function OsmMapView({
   const [picked, setPicked] = useState<string | null>(null);
   const [pickedPin, setPickedPin] = useState<MapPin | null>(null);
   const [viewData, setViewData] = useState<MapViewData | null>(null);
+  const searchScoped = !itemsOnly && searchPins !== undefined;
   const [mapEpoch, setMapEpoch] = useState(0);
   const [locating, setLocating] = useState(false);
   const [loadGen, setLoadGen] = useState(0);
@@ -234,6 +238,8 @@ function OsmMapView({
   const loadedView = useRef<MapViewData | null>(null);
   const itemsRef = useRef(items);
   itemsRef.current = items;
+  const searchPinsRef = useRef(searchPins);
+  searchPinsRef.current = searchPins;
   const detailSeq = useRef(0);
   const tileCache = useRef(new Map<string, { box: MapBbox; pins: MapPin[] }>());
   const openPinRef = useRef<(item: DotItem) => void>(() => {});
@@ -269,6 +275,7 @@ function OsmMapView({
     if (item.slug && "address" in item && item.address) return;
     void mapPinDetail({ data: { id: item.id } }).then((pin) => {
       if (detailSeq.current !== seq || !pin) return;
+      if (searchPinsRef.current && !searchPinsRef.current.some((match) => match.id === pin.id)) return;
       setPicked(pin.slug || pin.id);
       setPickedPin(pin);
       if (pin.slug) onSelectRef.current(pin.slug);
@@ -294,6 +301,15 @@ function OsmMapView({
     setPicked(null);
     onSelectRef.current(null);
   };
+
+  useEffect(() => {
+    if (itemsOnly || !searchPins || !picked) return;
+    if (searchPins.some((pin) => pin.id === picked || pin.slug === picked)) return;
+    detailSeq.current += 1;
+    setPicked(null);
+    setPickedPin(null);
+    onSelectRef.current(null);
+  }, [itemsOnly, searchPins, picked]);
 
   useEffect(() => {
     if (!selected) return;
@@ -573,7 +589,8 @@ function OsmMapView({
     const map = mapRef.current;
     const maps = mapsApiRef.current;
     if (itemsOnly) return;
-    if (!map || !maps || !ready) return;
+    // Search maps must never replace matching results with worldwide viewport tiles.
+    if (!map || !maps || !ready || searchScoped) return;
     let cancelled = false;
     let timer = 0;
     let request = 0;
@@ -718,10 +735,11 @@ function OsmMapView({
       window.clearTimeout(timer);
       maps.event.removeListener(listener);
     };
-  }, [ready, mapEpoch, itemsOnly]);
+  }, [ready, mapEpoch, itemsOnly, searchScoped]);
 
   useEffect(() => {
     if (itemsOnly || loadedView.current) return;
+    if (searchScoped) return;
     const zoomNow = mapZoomForRadius(radiusKm);
     if (mapLoadMode(zoomNow) !== "pins") return;
     const pins = searchCardsToMapPins(items);
@@ -741,7 +759,7 @@ function OsmMapView({
       if (current?.mode === "pins" && current.pins.map((pin) => pin.id).join(",") === signature) return current;
       return seeded;
     });
-  }, [items, origin, radiusKm, itemsOnly]);
+  }, [items, origin, radiusKm, itemsOnly, searchScoped]);
 
   useLayoutEffect(() => {
     const map = mapRef.current;
@@ -766,11 +784,14 @@ function OsmMapView({
               maxLng: ne.lng(),
             })
           : null;
+      const scoped = searchScoped && searchPins !== undefined && frame
+        ? projectMapRows(searchPins, zoom, frame)
+        : null;
       const seeded =
-        frame && (itemsOnly || !viewData || !bboxCovers(viewData.bbox, frame))
+        !searchScoped && frame && (itemsOnly || !viewData || !bboxCovers(viewData.bbox, frame))
           ? listPinsForCamera(searchCardsToMapPins(items), zoom, frame, { itemsOnly })
           : null;
-      const view = itemsOnly ? seeded : seeded && frame && bboxCovers(seeded.bbox, frame) ? seeded : viewData;
+      const view = itemsOnly ? seeded : searchScoped ? scoped : seeded && frame && bboxCovers(seeded.bbox, frame) ? seeded : viewData;
       const drawn = markersForMapView({
         items,
         view,
@@ -845,10 +866,10 @@ function OsmMapView({
       pinsRef.current = nextPins;
     };
 
-    // Remove a previous general-results layer before an items-only frame paints.
-    if (itemsOnly) paint();
-    const timer = itemsOnly ? 0 : window.setTimeout(paint, 50);
-    const idle = itemsOnly
+    // Clear previous directory markers before painting either supplied-data mode.
+    if (itemsOnly || searchScoped) paint();
+    const timer = itemsOnly || searchScoped ? 0 : window.setTimeout(paint, 50);
+    const idle = itemsOnly || searchScoped
       ? maps.event.addListener(map, "idle", paint)
       : maps.event.addListenerOnce(map, "idle", paint);
 
@@ -857,7 +878,7 @@ function OsmMapView({
       maps.event.removeListener(idle);
       pinHitRef.current = () => null;
     };
-  }, [items, itemsOnly, locale, picked, ready, zoom, viewData, mapEpoch, t]);
+  }, [items, itemsOnly, locale, picked, ready, zoom, viewData, mapEpoch, t, searchPins, searchScoped]);
 
   useEffect(() => {
     const maps = mapsApiRef.current;
