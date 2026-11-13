@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { NotificationPreferences } from "@/components/notification-preferences";
 import { Shell } from "@/components/shell";
 import { isVercelProduction } from "@/lib/features";
@@ -18,9 +18,11 @@ export const Route = createFileRoute("/preview/notification-preferences")({
     setup: search.setup === "push" ? ("push" as const) : undefined,
     held: search.held === "yes" ? ("yes" as const) : undefined,
   }),
-  loader: () => ({
-    open: !isVercelProduction() && String(process.env.KIDEASE_NOTIFICATION_PREVIEW || "") === "1",
-  }),
+  loader: () => {
+    const open = !isVercelProduction() && String(process.env.KIDEASE_NOTIFICATION_PREVIEW || "") === "1";
+    if (!open) throw notFound();
+    return { open };
+  },
   head: () => ({
     meta: [
       { title: "Notification preferences preview · KidEase" },

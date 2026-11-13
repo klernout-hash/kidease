@@ -14,7 +14,7 @@ export function plansHead(paid: boolean, locale: "en" | "fr" = "en") {
     title: "Plans · KidEase",
     description: paid
       ? "Search, up to five saved centres, and messages are included. Optional Parent Plus and centre plans are billed in Canadian dollars."
-      : "Parents can search, save up to five centres, and message daycares at no charge. Daycares get every tool during the free founding period.",
+      : "Parents can search, save up to five centres, and message daycares at no charge. Daycares can use every daycare tool without a subscription.",
     path: "/plans",
   });
 }

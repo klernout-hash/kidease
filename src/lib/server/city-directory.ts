@@ -1,4 +1,4 @@
-import { getPublicCatalog, type CatalogDaycare } from "@/lib/catalog";
+import { getPublicCatalog, getPublicCatalogResult, type CatalogDaycare } from "@/lib/catalog";
 import {
   cityHubNeedleKeys,
   directoryCountsFromGroups,
@@ -10,9 +10,10 @@ import {
 import { CITY_HUB_MIN_LISTINGS } from "@/lib/city-hubs";
 import {
   isNeonCatalogPreferred,
-  queryNeonCityHubListings,
+  queryNeonCityHubListingsResult,
   queryNeonDirectoryGroups,
 } from "@/lib/server/catalog-neon";
+import { searchEvidence, withSearchRows, type SearchBatch, type SearchReadOptions } from "@/lib/search-evidence";
 
 export type LiveDirectoryCounts = DirectoryCounts & { source: "neon" | "json" };
 
@@ -49,18 +50,35 @@ export async function loadDirectoryCounts(): Promise<LiveDirectoryCounts> {
 
 /** Same public rows a city hub count uses. Cap matches a full major-city directory. */
 export async function listingsForCityHub(slug: string): Promise<CatalogDaycare[]> {
+  return (await listingsForCityHubResult(slug)).rows;
+}
+
+export async function listingsForCityHubResult(slug: string, opts?: SearchReadOptions): Promise<SearchBatch<CatalogDaycare>> {
   const def = hubDef(slug);
-  if (!def) return [];
+  if (!def) return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary", retryable: false }) };
+  let primaryUnavailable = false;
   try {
-    if (await isNeonCatalogPreferred()) {
-      const neon = await queryNeonCityHubListings(def.province, cityHubNeedleKeys(def));
-      if (neon) return neon.filter((row) => listingBelongsToHub(row, def));
+    if (await isNeonCatalogPreferred(undefined, opts)) {
+      const neon = await queryNeonCityHubListingsResult(def.province, cityHubNeedleKeys(def), opts);
+      if (neon) return withSearchRows(neon, neon.rows.filter((row) => listingBelongsToHub(row, def)));
+      primaryUnavailable = true;
     }
   } catch {
+    primaryUnavailable = true;
     /* JSON fallback */
   }
-  const rows = await getPublicCatalog();
-  return rows.filter((row) => listingBelongsToHub(row, def));
+  const batch = await getPublicCatalogResult(opts);
+  const filtered = withSearchRows(batch, batch.rows.filter((row) => listingBelongsToHub(row, def)));
+  if (!primaryUnavailable || batch.evidence.source === "primary") return filtered;
+  return {
+    rows: filtered.rows,
+    evidence: searchEvidence({
+      ...batch.evidence,
+      status: "unverified",
+      reasons: [...batch.evidence.reasons, "source-fallback", "source-unavailable"],
+      retryable: true,
+    }),
+  };
 }
 
 export async function liveHubCount(slug: string): Promise<number | null> {

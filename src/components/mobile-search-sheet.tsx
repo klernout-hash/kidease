@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Search, X } from "lucide-react";
+import { List, Map, Search, SlidersHorizontal, X } from "lucide-react";
 import { popularHomeCities } from "@/lib/home-popular-cities";
 import { reverseGeocode } from "@/lib/geo";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
@@ -230,20 +230,28 @@ export function MobileSearchResults({
   countLabel,
   onCommit,
   onFilters,
+  filtersOpen = false,
+  filterCount = 0,
+  mapOn = false,
+  onMap,
   chips,
 }: {
   draft: MobileSearchDraft;
   countLabel: string;
   onCommit: (params: MobileSearchParams, draft: MobileSearchDraft) => void;
   onFilters: () => void;
+  filtersOpen?: boolean;
+  filterCount?: number;
+  mapOn?: boolean;
+  onMap?: () => void;
   chips: { id: string; label: string; on: boolean; onToggle: () => void }[];
 }) {
   const { t, locale } = useCopy();
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState(draft);
   useEffect(() => setCurrent(draft), [draft]);
-  const headline = resultsHeadline(whereAnswer(current), locale);
-  const sub = resultsSubline(current, locale);
+  const headline = resultsHeadline(whereAnswer(draft), locale);
+  const sub = resultsSubline(draft, locale);
   return (
     <div data-ke="msv2-results" className="sticky top-[var(--ke-header-h,3.5rem)] z-30 bg-bg/95 pb-2 backdrop-blur-md">
       <div className="flex items-center gap-2">
@@ -267,33 +275,47 @@ export function MobileSearchResults({
           <span className="block truncate text-base font-semibold text-fg">{headline}</span>
           {sub ? <span className="block truncate text-base text-muted">{sub}</span> : null}
         </button>
+      </div>
+      <div className="mt-2 flex items-center gap-2" data-ke="msv2-view-controls">
+        <div data-ke="msv2-result-chips" className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 [scrollbar-width:none]" role="group" aria-label={t("searchRowFilters")}>
+          {chips.map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              aria-pressed={chip.on}
+              className={cn(
+                "inline-flex h-11 shrink-0 items-center rounded-full px-3 text-base font-semibold",
+                chip.on ? "bg-primary text-primary-fg" : "bg-surface text-fg ring-1 ring-border",
+              )}
+              onClick={chip.onToggle}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
         <button
           type="button"
           data-ke="msv2-filters"
-          className="grid size-12 shrink-0 place-items-center rounded-full bg-surface ring-1 ring-border"
-          aria-label={t("msv2Filters")}
+          className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-surface px-3 text-sm font-semibold text-fg ring-1 ring-border"
+          aria-expanded={filtersOpen}
+          aria-controls="search-filters"
           onClick={onFilters}
         >
-          <span aria-hidden="true" className="text-lg leading-none">
-            ≡
-          </span>
+          <SlidersHorizontal className="size-4" aria-hidden />
+          {t("filters")}{filterCount ? ` · ${filterCount}` : ""}
         </button>
-      </div>
-      <div data-ke="msv2-result-chips" className="mt-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-        {chips.map((chip) => (
+        {onMap ? (
           <button
-            key={chip.id}
             type="button"
-            aria-pressed={chip.on}
-            className={cn(
-              "inline-flex h-11 shrink-0 items-center rounded-full px-3 text-base font-semibold",
-              chip.on ? "bg-primary text-primary-fg" : "bg-surface text-fg ring-1 ring-border",
-            )}
-            onClick={chip.onToggle}
+            data-ke="msv2-map-toggle"
+            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-surface px-3 text-sm font-semibold text-fg ring-1 ring-border"
+            aria-pressed={mapOn}
+            onClick={onMap}
           >
-            {chip.label}
+            {mapOn ? <List className="size-4" aria-hidden /> : <Map className="size-4" aria-hidden />}
+            {mapOn ? t("list") : t("map")}
           </button>
-        ))}
+        ) : null}
       </div>
       {countLabel ? (
         <p className="px-1 pt-1 text-base text-muted" data-ke="msv2-count">
@@ -304,7 +326,10 @@ export function MobileSearchResults({
         <SearchSheet
           draft={current}
           onChange={setCurrent}
-          onClose={() => setOpen(false)}
+          onClose={() => {
+            setCurrent(draft);
+            setOpen(false);
+          }}
           onCommit={(params, next) => {
             setCurrent(next);
             setOpen(false);

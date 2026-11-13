@@ -74,10 +74,10 @@ export function HomeDiscovery({
 
 function HomeCardSkeleton() {
   return (
-    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+    <div className="ke-rail ke-rail--visual mt-6" aria-busy="true">
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="space-y-2" aria-hidden="true">
-          <div className="ke-skel aspect-[4/3] w-full" />
+        <div key={i} className="ke-rail-card flex-col space-y-2" aria-hidden="true">
+          <div className="ke-skel ke-card-photo w-full" />
           <div className="ke-skel h-4 w-3/4" />
           <div className="ke-skel h-3 w-1/2" />
         </div>

@@ -1,6 +1,5 @@
 /**
- * Free founding period copy and the public badge rule.
- * No end date and no discount percent. Kyle sets those later.
+ * Current free-tool copy and the public badge rule.
  * Paid prices stay in upgrade-plans.ts and are not shown while subscriptions are off.
  */
 
@@ -21,35 +20,35 @@ export const FOUNDING_FREE_FEATURES: Array<{ en: string; fr: string }> = [
 export const FOUNDING_PAGE = {
   en: {
     kicker: "KidEase",
-    title: "Plans for daycares",
-    lead: "KidEase is a Canadian company that helps parents find licensed daycare. Parents can search, save up to five centres, and message daycares at no charge. Daycares get every tool during the free founding period.",
+    title: "Tools for daycares",
+    lead: "KidEase is a Canadian company that helps parents find licensed daycare. Parents can search, save up to five centres, and message daycares at no charge. Daycares can use every daycare tool without a subscription.",
     parentsTitle: "For parents",
     parentsBody: "Search licensed centres, save up to five favourites, and message daycares. No charge.",
     parentsCta: "Search daycares",
     daycareTitle: "For daycares",
     daycareName: "Free",
-    daycarePill: "Free founding period",
-    daycareBody: "Claim your listing and use every daycare tool during the free founding period. No card is charged.",
-    foundingTitle: "Founding member",
+    daycarePill: "Free listing tools",
+    daycareBody: "Claim your listing and use the daycare tools at no subscription charge. Centre bill payments are separate.",
+    foundingTitle: "Your daycare tools",
     foundingBody:
-      "Daycares that claim during launch get a Founding member badge. Founding members keep a locked-in discount when paid extras arrive.",
+      "KidEase subscriptions are unavailable. You can use all daycare tools without a subscription.",
     claim: "Claim your listing",
     priceUnit: "/month",
   },
   fr: {
     kicker: "KidEase",
-    title: "Forfaits pour les garderies",
-    lead: "KidEase est une entreprise canadienne qui aide les parents à trouver une garderie permise. Les parents cherchent, enregistrent jusqu’à cinq centres et écrivent aux garderies, sans frais. Les garderies ont tous les outils pendant la période fondatrice gratuite.",
+    title: "Outils pour les garderies",
+    lead: "KidEase est une entreprise canadienne qui aide les parents à trouver une garderie permise. Les parents cherchent, enregistrent jusqu’à cinq centres et écrivent aux garderies, sans frais. Les garderies peuvent utiliser tous les outils sans abonnement.",
     parentsTitle: "Pour les parents",
     parentsBody: "Recherche, favoris (5 centres) et messages aux garderies, sans frais.",
     parentsCta: "Chercher une garderie",
     daycareTitle: "Pour les garderies",
     daycareName: "Gratuit",
-    daycarePill: "Période fondatrice gratuite",
-    daycareBody: "Revendiquez votre fiche et utilisez tous les outils de garderie pendant la période fondatrice gratuite. Aucune carte n’est débitée.",
-    foundingTitle: "Membre fondateur",
+    daycarePill: "Outils de fiche gratuits",
+    daycareBody: "Revendiquez votre fiche et utilisez les outils sans frais d’abonnement. Les paiements des factures du centre sont séparés.",
+    foundingTitle: "Vos outils de garderie",
     foundingBody:
-      "Les garderies qui revendiquent leur fiche pendant le lancement reçoivent un badge Membre fondateur. Les membres fondateurs gardent un rabais bloqué quand les extras payants arrivent.",
+      "Les abonnements KidEase sont indisponibles. Vous pouvez utiliser tous les outils de garderie sans abonnement.",
     claim: "Revendiquer votre fiche",
     priceUnit: "/mois",
   },

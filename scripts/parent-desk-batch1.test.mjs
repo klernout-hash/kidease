@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { visibleDeskNav } from "../src/lib/desk-nav.ts";
 import { FLAG_DEFAULTS } from "../src/lib/flags.ts";
-import { parentListingFeesVisible } from "../src/lib/public-fees.ts";
+import { parentListingFeesVisible, parentListingMonthlyFee } from "../src/lib/public-fees.ts";
+import { canUsePayCheckout, subscriptionsEnabled } from "../src/lib/features.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -13,11 +14,14 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("provider plans and public daycare prices stay off until the flag is on", () => {
+test("public daycare fees remain available while subscription checkout stays off", () => {
   assert.equal(FLAG_DEFAULTS.FEATURE_PROVIDER_SUBSCRIPTIONS, false);
-  assert.equal(parentListingFeesVisible(false), false);
-  assert.equal(parentListingFeesVisible(undefined), false);
-  assert.equal(parentListingFeesVisible(true), true);
+  assert.equal(subscriptionsEnabled({ SUBSCRIPTIONS_ENABLED: "0" }), false);
+  assert.equal(parentListingFeesVisible(), true);
+  assert.equal(parentListingMonthlyFee({ fromPrice: 900, feeConfirmed: true, province: "ON", feeConfidence: "centre" }), 900);
+  for (const role of ["parent", "provider", "admin"]) {
+    assert.equal(canUsePayCheckout(role, { SUBSCRIPTIONS_ENABLED: "0", SHOW_PAY_CTAS: "1" }), false);
+  }
   const off = visibleDeskNav("daycare", {
     centreOwner: true,
     providerSubscriptions: false,
@@ -61,12 +65,29 @@ test("ask-for-info and message stay available, and waitlist joins a catalogue li
   assert.match(info, /conversationId=\{threadId/);
 });
 
-test("compare and Saved hide dollar amounts unless subscriptions are on", () => {
+test("compare and Saved show public fees independently of subscription sales", () => {
   const compare = src("src/routes/compare.tsx");
   const saved = src("src/components/parent-shortlist.tsx");
   assert.match(compare, /parentListingFeesVisible/);
+  assert.match(compare, /parentListingMonthlyFee\(d\)/);
+  assert.doesNotMatch(compare, /parentListingFeesVisible\(plansOn\)/);
   assert.match(compare, /feesOn \?/);
   assert.doesNotMatch(compare, /householdIncome:\s*70000/);
   assert.match(saved, /showFees=\{feesOn\}/);
-  assert.match(saved, /fromPrice: 0/);
+  assert.match(saved, /fromPrice: parentListingMonthlyFee\(item\) \?\? 0/);
+  assert.doesNotMatch(saved, /parentListingFeesVisible\([^)]*subscriptionsEnabled/);
+});
+
+test("public fee visibility does not disclose unknown amounts or inferred monthly caps", () => {
+  assert.equal(parentListingMonthlyFee({ fromPrice: 900, live: false, feeConfirmed: false }), null);
+  assert.equal(parentListingMonthlyFee({ fromPrice: 900, live: true, feeConfirmed: false }), null);
+  assert.equal(parentListingMonthlyFee({ fromPrice: 900, feeConfidence: "estimate" }), null);
+  assert.equal(parentListingMonthlyFee({ fromPrice: 900, feeConfidence: "centre" }), 900);
+  assert.equal(parentListingMonthlyFee({ fromPrice: 0, feeConfirmed: true }), null);
+  assert.equal(parentListingMonthlyFee({ fromPrice: undefined, feeConfirmed: true }), null);
+  assert.equal(parentListingMonthlyFee({ fromPrice: 218, feeConfirmed: true }), null);
+  const program = { province: "SK", feeProgram: "sk-10-day", agesKnown: true, ageMinMonths: 0, ageMaxMonths: 60 };
+  assert.equal(parentListingMonthlyFee({ ...program, fromPrice: 217.5, feeConfirmed: true }), null);
+  assert.equal(parentListingMonthlyFee({ ...program, fromPrice: 217.5, feeConfirmed: true, feeConfidence: "centre" }), 217.5);
+  assert.equal(parentListingMonthlyFee({ fromPrice: 217, feeConfirmed: true, province: "MB", feeProgram: "mb-10-day" }), null);
 });

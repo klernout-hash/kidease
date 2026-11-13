@@ -58,31 +58,31 @@ export function UrgentBroadcastPanel({ centres }: { centres: Array<BroadcastCent
   const reason =
     plan.reason === "sign-in"
       ? fr
-        ? "Connectez-vous pour envoyer une demande urgente."
-        : "Sign in to send an urgent request."
+        ? "Connectez-vous pour marquer cette recherche comme vérifiée."
+        : "Sign in to mark this search reviewed."
       : plan.reason === "window"
         ? fr
-          ? "La demande urgente est pour les 14 prochains jours."
-          : "Urgent requests are for the next 14 days."
+          ? "Ces résultats sont pour un besoin de garde dans les 14 prochains jours."
+          : "These matches are for care needed within the next 14 days."
         : plan.reason === "cooldown"
           ? fr
-            ? "Vous pouvez envoyer une demande tous les 7 jours."
-            : "You can send one request every 7 days."
+            ? "Vous avez vérifié ces résultats dans les 7 derniers jours. Ouvrez une fiche pour contacter un centre."
+            : "You reviewed these matches in the last 7 days. Open a listing to contact a centre."
           : plan.reason === "none"
             ? fr
-              ? "Aucun centre revendiqué dans cette liste ne correspond."
-              : "No claimed centre in this list matches."
+              ? "Aucun centre de cette liste ne correspond."
+              : "No centre in this list matches."
             : fr
-              ? `${plan.centres.length} centres au maximum (plafond de ${plan.cap}).`
-              : `${plan.centres.length} centres at most (cap of ${plan.cap}).`;
+              ? `${plan.centres.length} centres correspondent.`
+              : `${plan.centres.length} centres match.`;
 
   return (
     <section className="mt-8 rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border" data-ke="urgent-broadcast">
       <h2 className="font-display text-2xl">{fr ? "Besoin de garde vite" : "Need care fast"}</h2>
       <p className="mt-2 text-sm text-muted">
         {fr
-          ? "Une demande aux centres revendiqués, au plus 10, une fois par 7 jours. Les textos arrivent plus tard."
-          : "One note to claimed centres, at most 10, once every 7 days. Texts are coming soon."}
+          ? "Trouvez jusqu’à 10 centres qui correspondent à vos besoins. Ouvrez leur fiche pour les contacter."
+          : "Find up to 10 centres that match your needs. Open a listing to contact them."}
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <label className="block text-sm">
@@ -120,7 +120,7 @@ export function UrgentBroadcastPanel({ centres }: { centres: Array<BroadcastCent
       ) : null}
       {user ? (
         <Button type="button" className="mt-4" disabled={!plan.allowed || Boolean(sent)} onClick={send}>
-          {sent ? (fr ? "Demande notée" : "Request saved") : fr ? "Envoyer la demande" : "Send the request"}
+          {sent ? (fr ? "Recherche vérifiée" : "Search reviewed") : fr ? "Marquer la recherche comme vérifiée" : "Mark search reviewed"}
         </Button>
       ) : (
         <Button type="button" className="mt-4" asChild>

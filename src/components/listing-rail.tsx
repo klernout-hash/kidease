@@ -184,7 +184,7 @@ export function ListingRail({
                 <span
                   className={cn(
                     "relative block w-full overflow-hidden rounded-[14px]",
-                    "aspect-[4/3]",
+                    "ke-card-photo",
                   )}
                   aria-hidden="true"
                 >

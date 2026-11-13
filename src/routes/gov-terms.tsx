@@ -1,11 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { LegalPage } from "@/components/legal-doc";
 import { GOV_TERMS_EN, GOV_TERMS_FR } from "@/lib/legal-copy-v2";
-import { pageSeoHead } from "@/lib/page-seo";
+import { guardGovDesk, govRobotsHead, govRobotsHeaders } from "@/lib/gov/desk-guard";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/gov-terms")({
-  head: () => pageSeoHead({ title: "Government Portal Terms · KidEase", description: "Terms for licensing offices using the KidEase portal. KidEase is independent and not government-endorsed.", path: "/gov-terms" }),
+  beforeLoad: async ({ context }) => {
+    const access = await guardGovDesk("en", Boolean((context as { nativeShell?: boolean }).nativeShell));
+    if (access.nativeOnly) throw notFound();
+  },
+  head: () => govRobotsHead("Government Portal Terms · KidEase"),
+  headers: govRobotsHeaders,
   component: Page,
 });
 

@@ -8,6 +8,7 @@ import { CITY_HUB_DEFS } from "../src/lib/city-hubs.ts";
 import { nearbyHomeCities } from "../src/lib/home-popular-cities.ts";
 import { PROVINCES } from "../src/lib/geo.ts";
 import { SITEMAP_STATIC_PATHS } from "../src/lib/sitemap.ts";
+import { guestDrawerMenuGroupsForShell } from "../src/lib/site-footer-nav.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -54,7 +55,7 @@ test("home keeps a single trust disclaimer and the police-check wording", () => 
   assert.match(copy, /homeTrustVerify: "How we verify"/);
   assert.match(copy, /homeTrustVerify: "Comment nous vérifions"/);
   assert.doesNotMatch(copy, /trustBarLead:[\s\S]{0,220}—/);
-  assert.match(home, /<SmartMatchEntry inline quiet/);
+  assert.match(home, /<SmartMatchEntry card/);
   assert.match(home, /<ResumeVisitCard quiet/);
   assert.match(src("src/components/trust-bar.tsx"), /data-ke="home-trust-line"/);
   assert.match(src("src/components/trust-bar.tsx"), /localePath\("\/verify"/);
@@ -98,17 +99,32 @@ test("home search bar is a slim pill with a claim strip and a daycare header pil
   assert.match(copy, /heroTrustCount: "Listed from public registries"/);
   assert.match(copy, /heroTrustCount: "Inscrits à partir des registres publics"/);
   assert.doesNotMatch(copy, /37,000/);
-  assert.match(copy, /heroTrustFounding: "Free founding period"/);
-  assert.match(copy, /heroTrustFounding: "Période fondatrice gratuite"/);
+  assert.match(copy, /heroTrustFounding: "Free listing tools"/);
+  assert.match(copy, /heroTrustFounding: "Outils de fiche gratuits"/);
   assert.doesNotMatch(strip, /free forever/i);
   assert.doesNotMatch(strip, /—/);
-  const link = shell.slice(shell.indexOf('data-ke="list-your-daycare"') - 80, shell.indexOf('data-ke="list-your-daycare"') + 700);
-  assert.match(link, /border-primary/);
-  assert.match(link, /Building2/);
+  const marker = shell.indexOf('data-ke="list-your-daycare"');
+  const link = shell.slice(shell.lastIndexOf("<Link", marker), shell.indexOf("</Link>", marker) + 7);
+  assert.match(link, /localePath\("\/claim", locale\)/);
   assert.match(link, /navForDaycares/);
-  assert.match(link, /whitespace-normal/);
-  assert.doesNotMatch(link, /hidden md:inline-flex/);
+  assert.match(link, /hidden min-h-\[44px\] min-w-\[44px\]/);
+  assert.match(link, /md:inline-flex/);
+  assert.doesNotMatch(link, /border-primary|rounded-full|Building2/);
   assert.doesNotMatch(link, /listYourDaycare/);
+});
+
+test("header leaves tour requests on listings and keeps the daycare journey in the phone menu", () => {
+  const shell = src("src/components/shell.tsx");
+  assert.doesNotMatch(shell, /book-a-tour|HEADER_CTA|t\("bookTour"\)/);
+  const menu = guestDrawerMenuGroupsForShell({ native: true, plansOn: false });
+  const groups = menu.filter((group) => group.titleKey === "navForDaycares");
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].links.filter((link) => link.to === "/claim").length, 1);
+  const detail = src("src/routes/daycare.$slug.tsx");
+  assert.match(detail, /const primaryAction = live \? onTour : onInfo/);
+  assert.match(detail, /const primaryLabel = live \? t\("requestTour"\) : t\("requestInfo"\)/);
+  assert.match(detail, /<RequestTourSheet/);
+  assert.match(detail, /<RequestInfoSheet/);
 });
 
 test("search control has a Search button, radius, and no Care schedule subtitle", () => {

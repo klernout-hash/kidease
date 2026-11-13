@@ -11,6 +11,16 @@ export const DETAIL_SIZES = "(max-width: 767px) 100vw, 720px";
 /** Home How-it-works stills: 1-col phone, 2-col tablet, ~1/3 desktop. */
 export const STEP_SIZES = "(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 380px";
 
+/** Keep an existing picture frame when a missing image becomes a placeholder. */
+export function photoFrameFallbackStyle(className: string | undefined, width: number, height: number) {
+  const sized =
+    className?.includes("ke-card-photo") ||
+    className?.includes("aspect-") ||
+    className?.includes("size-full") ||
+    className?.includes("h-full");
+  return sized ? undefined : { aspectRatio: `${width} / ${height}` };
+}
+
 /** Production custom domain on bucket kidease-media. Not a secret. r2.dev returns 401. */
 export const R2_PUBLIC_MEDIA_ORIGIN = "https://media.kidease.ca";
 /** Optional/dev-only r2.dev pub host. Production uses media.kidease.ca. */

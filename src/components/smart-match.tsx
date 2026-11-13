@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowUp } from "lucide-react";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
@@ -130,19 +131,27 @@ function matchBubbles(answers: MatchChatAnswers, t: (key: CopyKey) => string, lo
   return out;
 }
 
-export function SmartMatchEntry({ inline = false, quiet = false }: { inline?: boolean; quiet?: boolean }) {
+export function SmartMatchEntry({ inline = false, quiet = false, card = false }: { inline?: boolean; quiet?: boolean; card?: boolean }) {
   const { user } = useCurrentUserState();
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const on = useAiFeatureFlag(AI_FLAGS.smartMatch);
   const [open, setOpen] = useState(false);
 
-  const button = quiet ? (
-    <button
+  const button = card ? (
+    <Button
       type="button"
-      className="inline-flex min-h-11 items-center px-1 text-sm font-medium text-muted underline-offset-4 hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation"
+      className="min-h-[44px] min-w-[44px] shrink-0 rounded-md px-5 touch-manipulation max-sm:w-full"
       data-ke="smart-match-open"
       data-flag={on ? "on" : "off"}
-      onClick={() => setOpen(true)}
+    >
+      {locale === "fr" ? "Trouver ma garderie" : "Find my match"} <span aria-hidden="true">→</span>
+    </Button>
+  ) : quiet ? (
+    <button
+      type="button"
+      className="inline-flex min-h-[44px] min-w-[44px] items-center px-1 text-sm font-medium text-muted underline-offset-4 hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation"
+      data-ke="smart-match-open"
+      data-flag={on ? "on" : "off"}
     >
       {t("smartMatchCta")}
     </button>
@@ -150,20 +159,35 @@ export function SmartMatchEntry({ inline = false, quiet = false }: { inline?: bo
     <Button
       type="button"
       variant="secondary"
-      className="whitespace-nowrap max-md:h-auto max-md:max-w-full max-md:whitespace-normal max-md:px-4 max-md:text-center"
+      className="min-h-[44px] min-w-[44px] whitespace-nowrap max-md:h-auto max-md:max-w-full max-md:whitespace-normal max-md:px-4 max-md:text-center"
       data-ke="smart-match-open"
       data-flag={on ? "on" : "off"}
-      onClick={() => setOpen(true)}
     >
       {t("smartMatchCta")}
     </Button>
   );
+  const trigger = <Dialog.Trigger asChild>{button}</Dialog.Trigger>;
 
   return (
-    <>
-      {inline ? button : <div className="mt-3 flex justify-center">{button}</div>}
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      {card ? (
+        <section
+          data-ke="smart-match-card"
+          className="mx-auto mt-4 flex w-full max-w-[960px] flex-col gap-4 rounded-xl border border-primary/15 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+        >
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold leading-snug text-fg">
+              {locale === "fr" ? "Besoin d’aide pour trouver la bonne garderie?" : "Need help finding the right daycare?"}
+            </h2>
+            <p className="mt-1 text-sm leading-5 text-muted">
+              {locale === "fr" ? "Répondez à 5 questions pour explorer les options pour votre famille." : "Answer 5 quick questions to explore options for your family."}
+            </p>
+          </div>
+          {trigger}
+        </section>
+      ) : inline ? trigger : <div className="mt-3 flex justify-center">{trigger}</div>}
       {open ? <SmartMatchChat onClose={() => setOpen(false)} signedIn={Boolean(user)} visitorId={user?.id} /> : null}
-    </>
+    </Dialog.Root>
   );
 }
 
@@ -179,7 +203,6 @@ function SmartMatchChat({
   const { t, locale } = useCopy();
   const { celebrate } = useSuccessConfirm();
   const navigate = useNavigate();
-  const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const [answers, setAnswers] = useState<MatchChatAnswers>(EMPTY_MATCH_ANSWERS);
@@ -193,8 +216,6 @@ function SmartMatchChat({
   const [unknownPlace, setUnknownPlace] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState(false);
-  const closeRef = useRef(onClose);
-  closeRef.current = onClose;
   const started = useRef(false);
   const step = currentMatchStep(answers);
 
@@ -202,17 +223,6 @@ function SmartMatchChat({
     if (started.current) return;
     started.current = true;
     track("smart_match_started");
-    panelRef.current?.focus();
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") closeRef.current();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("keydown", onKey);
-    };
   }, []);
 
   useEffect(() => {
@@ -419,25 +429,40 @@ function SmartMatchChat({
   const searchPlace = origin?.label || answers.place.trim();
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center md:items-center" role="presentation">
-      <button type="button" className="absolute inset-0 bg-fg/40" aria-label={t("close")} onClick={onClose} />
+    <Dialog.Portal>
+    <div className="fixed inset-0 z-[100] flex items-end justify-center md:items-center" role="presentation">
+      <Dialog.Overlay asChild>
+        <button type="button" tabIndex={-1} className="absolute inset-0 bg-fg/40" aria-label={t("close")} onClick={onClose} />
+      </Dialog.Overlay>
+      <Dialog.Content
+        asChild
+        aria-modal="true"
+        aria-describedby={undefined}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          panelRef.current?.focus();
+        }}
+        onEscapeKeyDown={(event) => {
+          // The drawer also listens for Escape; close only this top dialog.
+          event.stopPropagation();
+        }}
+      >
       <div
         ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
         tabIndex={-1}
         data-ke="smart-match-chat"
         className="relative z-10 flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-bg shadow-card ring-1 ring-border outline-none md:rounded-2xl"
       >
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-          <h2 id={titleId} className="font-display text-xl">
+          <Dialog.Title asChild>
+          <h2 className="font-display text-xl">
             {t("smartMatchTitle")}
           </h2>
+          </Dialog.Title>
           <button
             type="button"
             onClick={onClose}
-            className="grid size-11 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            className="grid size-11 min-h-[44px] min-w-[44px] place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             aria-label={t("close")}
           >
             ×
@@ -611,7 +636,7 @@ function SmartMatchChat({
                 type="submit"
                 aria-label={t("send")}
                 disabled={!draft.trim()}
-                className="grid size-11 shrink-0 place-items-center rounded-full bg-fg text-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-40"
+                className="grid size-11 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full bg-fg text-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-40"
               >
                 <ArrowUp className="size-5" aria-hidden />
               </button>
@@ -627,7 +652,9 @@ function SmartMatchChat({
           </div>
         </form>
       </div>
+      </Dialog.Content>
     </div>
+    </Dialog.Portal>
   );
 }
 
@@ -646,7 +673,7 @@ function Chip({
       aria-pressed={pressed}
       onClick={onClick}
       className={cn(
-        "min-h-11 whitespace-nowrap rounded-full px-4 text-sm font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+        "min-h-[44px] min-w-[44px] whitespace-nowrap rounded-full px-4 text-sm font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
         pressed ? "bg-fg text-bg" : "bg-surface text-fg ring-1 ring-border",
       )}
     >

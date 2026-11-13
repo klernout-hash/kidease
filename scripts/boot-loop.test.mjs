@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { rejectAfter, withTimeout, withTimeoutFallback } from "../src/lib/timeout.ts";
+import { settleSearchRead } from "../src/lib/search-retrieval.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -16,6 +17,8 @@ describe("boot settle helpers", () => {
     await assert.rejects(() => withTimeout(new Promise(() => {}), 20, "get-session-timeout"), /get-session-timeout/);
     assert.deepEqual(await withTimeoutFallback(new Promise(() => {}), 20, []), []);
     await assert.rejects(() => rejectAfter(10, "sql-timeout"), /sql-timeout/);
+    assert.equal((await settleSearchRead(new Promise(() => {}), 10)).kind, "timeout");
+    assert.equal((await settleSearchRead(Promise.reject(new Error("source unavailable")), 10)).kind, "error");
   });
 });
 
@@ -71,7 +74,8 @@ describe("home / session / splash cannot stay pending forever", () => {
     const db = src("src/lib/db.ts");
     assert.match(db, /getSqlWithin/);
     assert.match(daycares, /withTimeoutFallback\(loadFeatured/);
-    assert.match(daycares, /withTimeoutFallback\(runSearch/);
+    assert.match(daycares, /settleSearchRead\(runSearch\(searched\), LOADER_SETTLE_MS\)/);
+    assert.match(daycares, /combineSearchReads\(full, live\)/);
     assert.match(quality, /getSqlWithin/);
     assert.match(rank, /getSqlWithin/);
   });

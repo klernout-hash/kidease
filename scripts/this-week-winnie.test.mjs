@@ -38,7 +38,10 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
   assert.match(search, /search_filters_applied/);
   assert.match(search, /search_results_shown/);
   assert.match(search, /ExploreCategoryChips/);
-  assert.match(search, /listingMatchesExploreFilter/);
+  assert.match(search, /category: incoming\.cat/);
+  assert.match(search, /filters: resultFilters/);
+  assert.match(src("src/lib/search-result-filters.ts"), /listingMatchesExploreFilter\(row, filters\.category\)/);
+  assert.match(src("src/lib/server/daycares.ts"), /filterSearchResults\(all/);
   assert.match(search, /n_age_unknown/);
   assert.match(search, /showSearchEmpty/);
   assert.match(search, /ageGroup: "any"/);
@@ -54,8 +57,10 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
   assert.match(readiness, /Boolean\(d\.feeConfirmed\) \|\| hasListedFees\(d\)/);
 
   assert.match(listing, /requestInfo/);
-  assert.match(listing, /bookTour/);
-  assert.match(listing, /claimCta/);
+  assert.match(listing, /const primaryLabel = live \? t\("requestTour"\) : t\("requestInfo"\)/);
+  assert.match(listing, /const primaryAction = live \? onTour : onInfo/);
+  assert.match(listing, /RequestTourSheet/);
+  assert.match(listing, /claimFreeListing/);
   assert.match(listing, /unclaimedRequestNote|listing_request_started/);
   assert.match(copy, /no director reply/);
   assert.match(src("src/components/request-tour.tsx"), /listing_request_submitted/);
@@ -63,11 +68,13 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
   assert.match(src("src/routes/provider.tsx"), /provider_request_opened/);
   assert.match(src("src/components/daycare-lead-inbox.tsx"), /providerRequestsEmpty/);
 
-  assert.match(card, /CompareChip/);
+  assert.match(card, /data-ke="card-view-details"/);
+  assert.doesNotMatch(card, /CompareChip/);
   assert.match(listing, /compareAdd/);
   assert.match(listing, /toggleCompareItem/);
   assert.match(src("src/lib/site-footer-nav.ts"), /"\/compare"/);
-  assert.match(src("src/components/nav-drawer.tsx"), /localePath\("\/compare"/);
+  assert.match(src("src/components/nav-drawer.tsx"), /FooterMoreLinks/);
+  assert.match(src("src/components/footer-more-links.tsx"), /"\/compare": "compare"/);
   assert.match(compare, /compareFeesCwelcc/);
   assert.match(compare, /compareVacancy/);
   assert.match(compare, /comparePhoto/);

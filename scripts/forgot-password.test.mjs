@@ -3,7 +3,9 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
+import { tx } from "../src/lib/copy.ts";
 import { friendlyResetMailError } from "../src/lib/auth/reset-errors.ts";
+import { presentAuthCopy } from "../src/lib/auth/present-auth-copy.ts";
 import {
   RESET_MAIL_NOT_CONFIGURED,
   assertResetMailConfigured,
@@ -38,7 +40,10 @@ describe("forgot-password flow", () => {
     assert.match(routeFile, /getResetMailReady/);
     assert.match(routeFile, /mailReady/);
     assert.match(routeFile, /forgotPasswordMailMissing/);
-    assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /RESEND_API_KEY or SENDGRID_API_KEY or TITAN_APP_PASSWORD/);
+    for (const locale of ["en", "fr"]) {
+      assert.doesNotMatch(tx(locale, "forgotPasswordMailMissing"), /RESEND_API_KEY|SENDGRID_API_KEY|TITAN_APP_PASSWORD|Vercel/);
+    }
+    assert.match(tx("en", "forgotPasswordMailMissing"), /Try again.*sign-in method/);
     assert.match(routeTree, /from '\.\/routes\/forgot-password'/);
     assert.match(routeTree, /id:\s*'\/forgot-password'/);
     assert.match(routeTree, /path:\s*'\/forgot-password'/);
@@ -110,10 +115,10 @@ describe("forgot-password flow", () => {
   });
 
   it("maps missing mail config to honest UI copy", () => {
-    assert.match(
-      friendlyResetMailError("Email is not configured (missing RESEND_API_KEY or SENDGRID_API_KEY)"),
-      /RESEND_API_KEY or SENDGRID_API_KEY/,
-    );
+    const unavailable = friendlyResetMailError("Email is not configured (missing RESEND_API_KEY or SENDGRID_API_KEY)");
+    assert.equal(unavailable, "Could not send a reset email.");
+    assert.doesNotMatch(unavailable, /RESEND_API_KEY|SENDGRID_API_KEY|TITAN_APP_PASSWORD|configured/);
+    assert.equal(presentAuthCopy("fr", unavailable), tx("fr", "forgotPasswordSendFailed"));
     assert.match(friendlyResetMailError("Email could not be sent (401)."), /could not be sent/);
     assert.equal(friendlyResetMailError("Please complete the security check."), "Please complete the security check.");
   });

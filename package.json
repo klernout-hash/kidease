@@ -36,6 +36,7 @@
     "e2e": "node scripts/e2e-smoke.mjs",
     "e2e:preview": "node scripts/e2e-smoke.mjs --start-preview",
     "e2e:browser-smoke": "node scripts/browser-smoke.mjs http://127.0.0.1:8081/ artifacts/e2e/browser-smoke.png",
+    "e2e:inbox-layout": "node scripts/inbox-layout-smoke.mjs",
     "typecheck": "tsc --noEmit",
     "check:client-db": "node scripts/check-client-db.mjs",
     "test": "node --experimental-strip-types --test 'scripts/**/*.test.mjs'",

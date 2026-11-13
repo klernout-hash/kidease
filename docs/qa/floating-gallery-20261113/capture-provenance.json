@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "55197ba9827cd5f381b8a157d569c26401c0a1d0",
+  "sourceTree": "1a9cbd248c0b8bccf82b7485a53c68aff8d51e14",
+  "data": "Bundled public catalogue, local synthetic preferences and in-memory PGLite; no signed-in accounts. Non-loopback server/browser network access was blocked.",
+  "functionalCases": 8,
+  "routeChecks": 56,
+  "repeatCycles": 24,
+  "pageErrors": 0,
+  "observedCategoryLayoutShifts": 0,
+  "screenshots": [
+    {
+      "file": "classic-en-390-home.png",
+      "sha256": "dde14692948763a3769155069f3a7ee5527be00fda825f7d7a585a1067a4b861",
+      "bytes": 76876,
+      "mode": "classic",
+      "locale": "en",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "classic-en-1280-home.png",
+      "sha256": "43d971a0f61a586c70eb313826f59c6ed9dd48b5f7d8dc9a539ada6f3227e174",
+      "bytes": 209381,
+      "mode": "classic",
+      "locale": "en",
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "file": "classic-fr-390-home.png",
+      "sha256": "7fc25461d329d47389b18f541816973de67e6c6c45f5e00b8ed5378835b02e75",
+      "bytes": 80022,
+      "mode": "classic",
+      "locale": "fr",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "classic-fr-1280-home.png",
+      "sha256": "0aa756dd064ee74359101549b72243cf22cf796a4ed7808b729bf38dde1d4a9c",
+      "bytes": 213524,
+      "mode": "classic",
+      "locale": "fr",
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "file": "flagged-en-390-home.png",
+      "sha256": "4ef3ca82b803dc1c1d6ec3b55b444f5a88c506dc33a6a14df0323ddb36b64c6d",
+      "bytes": 77092,
+      "mode": "flagged",
+      "locale": "en",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "flagged-en-1280-home.png",
+      "sha256": "56731aceaa7610265648e82e08ef258b5aa09a682076945d79b032280be932f2",
+      "bytes": 211154,
+      "mode": "flagged",
+      "locale": "en",
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "file": "flagged-fr-390-home.png",
+      "sha256": "13368ddcb9628a89af825d78f46f33761b3ca4b0b207e2b70db8dfb9740c8ca2",
+      "bytes": 81971,
+      "mode": "flagged",
+      "locale": "fr",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "file": "flagged-fr-1280-home.png",
+      "sha256": "71bc2c225afa7093662be818ed84ac5680351e5c8f212a672903322aba7a3c1e",
+      "bytes": 197960,
+      "mode": "flagged",
+      "locale": "fr",
+      "width": 1280,
+      "height": 900
+    }
+  ],
+  "motionDrafts": [
+    {
+      "file": "floating-gallery-motion-390.webm",
+      "sha256": "37575e56e8803819f684af558edeb3f8ed2a04302f2caf2f17b2e258e8bd835b",
+      "bytes": 17782,
+      "sampledCaptureDurationMs": 3240.399999976158,
+      "frameCount": 20,
+      "description": "Actual rendered classic390 header PNGs encoded to WebM using recorded capture timestamps; no generated or reconstructed UI."
+    },
+    {
+      "file": "floating-gallery-motion-1280.webm",
+      "sha256": "7f208688d8c30064a0219de4e8ba0f2bff0093e4f4d385c1e700aeeaa18940a0",
+      "bytes": 42269,
+      "sampledCaptureDurationMs": 3374,
+      "frameCount": 20,
+      "description": "Actual rendered classic1280 header PNGs encoded to WebM using recorded capture timestamps; no generated or reconstructed UI."
+    },
+    {
+      "file": "floating-gallery-motion-flagged-390.webm",
+      "sha256": "70d9ec7b795a61001b7613c949a09b9a351d3e64e6afe7cae34b67f6a7a62ea5",
+      "bytes": 15188,
+      "sampledCaptureDurationMs": 3383.600000023842,
+      "frameCount": 20,
+      "description": "Actual rendered flagged390 header PNGs encoded to WebM using recorded capture timestamps; no generated or reconstructed UI."
+    },
+    {
+      "file": "floating-gallery-motion-flagged-1280.webm",
+      "sha256": "e73542a94fede51d03a8437670965b8f9c6449461d13772929416be5b0a77a7e",
+      "bytes": 33645,
+      "sampledCaptureDurationMs": 3463.0999999046326,
+      "frameCount": 20,
+      "description": "Actual rendered flagged1280 header PNGs encoded to WebM using recorded capture timestamps; no generated or reconstructed UI."
+    }
+  ],
+  "limitations": [
+    "Static screenshots disable animation; motion drafts use actual hydrated, font-settled browser frames with recorded timing.",
+    "Classic navigation retains six types; the existing optional gallery retains eight categories.",
+    "The scoped tests do not establish full accessibility, performance, physical/native-device or production acceptance.",
+    "Unchanged account/login styling produced a42x42px target in the settled Clean/gallery desktop check, below the repository44px guideline. Category targets meet44px. This remains a separate accessibility follow-up."
+  ],
+  "appearanceReview": {
+    "totalCombinations": 32,
+    "additionalAppearanceCases": 24,
+    "dimensions": [
+      "navigation: Classic/gallery",
+      "locale: EN/FR",
+      "viewport:390/1280",
+      "look:Classic/Clean",
+      "theme:light/dark"
+    ],
+    "scope": "Actual look/theme, decoded contained artwork, category target geometry, document overflow and page errors. This is not full visual/accessibility certification.",
+    "pageErrors": 0,
+    "additionalScreenshots": [
+      {
+        "file": "classic-en-390-clean-dark.png",
+        "bytes": 70500,
+        "sha256": "c12c096ead80b836209ecc49b0ec47cf2a89e3c37499cc45ceb131235011b46e",
+        "look": "clean",
+        "theme": "dark"
+      },
+      {
+        "file": "flagged-en-1280-clean-dark.png",
+        "bytes": 218486,
+        "sha256": "a7005d2502a7112695c49e8e1f4c19611979f9cef571ba84915347f645848a92",
+        "look": "clean",
+        "theme": "dark"
+      }
+    ],
+    "settledHeaderCheck": {
+      "case": "gallery EN1280 Clean/dark",
+      "settle": "Hydration owner + document.fonts.ready +2100ms +4 identical bounds samples100ms apart",
+      "controls": {
+        "brand": {
+          "width": 57.28125,
+          "height": 59.25,
+          "inViewport": true,
+          "centerHit": true
+        },
+        "account": {
+          "width": 42,
+          "height": 42,
+          "inViewport": true,
+          "centerHit": true
+        },
+        "menu": {
+          "width": 44,
+          "height": 44,
+          "inViewport": true,
+          "centerHit": true
+        },
+        "claim": {
+          "width": 88.890625,
+          "height": 44,
+          "inViewport": true,
+          "centerHit": true
+        },
+        "searchPrimary": {
+          "width": 44,
+          "height": 44,
+          "inViewport": true,
+          "centerHit": true
+        }
+      },
+      "pageErrors": [],
+      "outcome": "All five controls visible, inside viewport and center-hit-tested after settling. An earlier unsettled capture was excluded from acceptance."
+    }
+  }
+}

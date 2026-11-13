@@ -153,13 +153,13 @@ export function SaveListingButton({
           appearance === "photo"
             ? cn(
                 "pointer-events-auto absolute right-2 top-2 z-20 grid place-items-center rounded-full",
-                framed ? "size-12 bg-white ring-1 ring-black/10" : "size-11",
+                framed ? "size-12 bg-surface text-fg ring-1 ring-border" : "size-11 text-white",
               )
             : "inline-flex min-h-11 min-w-11 items-center justify-center",
           className,
         )}
       >
-        <Heart className={appearance === "photo" ? "size-7 text-[#1a1a1a]" : "size-4"} />
+        <Heart className={appearance === "photo" ? "size-7 text-current" : "size-4"} />
       </a>
     );
   }
@@ -206,8 +206,8 @@ export function SaveListingButton({
       className={cn(
         "pointer-events-auto absolute right-2 top-2 z-20 grid place-items-center rounded-full",
         framed
-          ? "size-12 bg-white ring-1 ring-black/10"
-          : "size-11",
+          ? "size-12 bg-surface text-fg ring-1 ring-border"
+          : "size-11 text-white",
         className,
       )}
       aria-label={label}
@@ -216,13 +216,13 @@ export function SaveListingButton({
     >
       {framed ? (
         <Heart
-          className={cn("size-7", saved ? "text-[#FF385C]" : "text-[#1a1a1a]")}
+          className={cn("size-7", saved ? "text-[#FF385C]" : "text-current")}
           strokeWidth={saved ? 2 : 2.25}
           fill={saved ? HEART_SAVED : "none"}
         />
       ) : (
         <Heart
-          className={cn("size-[22px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]", saved ? "text-[#FF385C]" : "text-white")}
+          className={cn("size-[22px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]", saved ? "text-[#FF385C]" : "text-current")}
           strokeWidth={1.7}
           fill={saved ? HEART_SAVED : "rgba(0,0,0,0.28)"}
         />

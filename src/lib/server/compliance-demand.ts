@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
-import { demandDelivery, demandMode, demandReport, quarterKey, quarterReportDue } from "@/lib/compliance/demand";
+import { demandDelivery, demandMode, demandReport, quarterKey, quarterReportDue, type DemandReportData } from "@/lib/compliance/demand";
+import type { PackMode } from "@/lib/compliance/mode";
 import { logPractice, readScope, sqlClient } from "@/lib/server/compliance-common";
 import { requireAdmin } from "@/lib/server/roles";
 
@@ -13,13 +14,26 @@ async function cells(province: string) {
     join daycares d on d.id = w.daycare_id
     where w.status = 'waiting' and upper(btrim(d.province)) = ${province.trim().toUpperCase()}
     group by d.province, d.city, w.age_group
-  `.catch(() => []);
+  `;
+  if (!Array.isArray(rows)) throw new Error("Demand report could not be loaded");
   return rows.map((row) => ({
     province: row.province,
     area: (row.city || "").trim() || "area",
     ageKey: row.age_group,
     n: Number(row.n) || 0,
   }));
+}
+
+/** Authentication and scope resolution stay outside this data-read boundary. */
+async function readDemandReport(mode: PackMode, province: string, today: string): Promise<DemandReportData> {
+  const context = { mode, province, quarter: quarterKey(today) };
+  if (mode === "off") return { ...context, enabled: false, status: "off", rows: [] };
+  try {
+    const report = demandReport(await cells(province), province);
+    return { ...context, enabled: true, status: "ready", rows: report.rows };
+  } catch {
+    return { ...context, enabled: true, status: "unavailable" };
+  }
 }
 
 export const loadGovDemand = createServerFn({ method: "GET" })
@@ -30,9 +44,7 @@ export const loadGovDemand = createServerFn({ method: "GET" })
     const scope = await readScope(gov.userId);
     const province = scope?.province || gov.province;
     const today = new Date().toISOString().slice(0, 10);
-    if (mode === "off") return { enabled: false as const, mode, province, quarter: quarterKey(today), rows: [] };
-    const report = demandReport(await cells(province), province);
-    return { enabled: true as const, mode, province, quarter: quarterKey(today), rows: report.rows };
+    return readDemandReport(mode, province, today);
   });
 
 export const loadAdminDemand = createServerFn({ method: "GET" })
@@ -42,9 +54,7 @@ export const loadAdminDemand = createServerFn({ method: "GET" })
     await requireAdmin(context.userId);
     const mode = demandMode(process.env);
     const today = new Date().toISOString().slice(0, 10);
-    if (mode === "off") return { enabled: false as const, mode, province: data.province, quarter: quarterKey(today), rows: [] };
-    const report = demandReport(await cells(data.province), data.province);
-    return { enabled: true as const, mode, province: data.province, quarter: quarterKey(today), rows: report.rows };
+    return readDemandReport(mode, data.province, today);
   });
 
 export async function runDemandJob(now = new Date()) {

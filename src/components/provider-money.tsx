@@ -72,11 +72,6 @@ export function ProviderMoneyPanel() {
         ) : (
           <LedgerHonesty stripeLive={stripeLive} className="mt-2" ready={ready} />
         )}
-        {ready && !stripeLive ? (
-          <p className="mt-2 text-sm text-muted">
-            {t("billDraftRehearsal")}
-          </p>
-        ) : null}
       </div>
 
       <form

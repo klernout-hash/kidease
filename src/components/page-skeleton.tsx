@@ -17,7 +17,7 @@ export function PageSkeleton({
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: cards }).map((_, i) => (
             <div key={i} className="space-y-2">
-              <div className="ke-skel aspect-[4/3] w-full" />
+              <div className="ke-skel ke-card-photo w-full" />
               <div className="ke-skel h-4 w-3/4" />
               <div className="ke-skel h-3 w-1/2" />
             </div>

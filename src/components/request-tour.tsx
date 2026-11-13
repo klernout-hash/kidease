@@ -366,7 +366,7 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
           <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
             <div>
               <h2 id={titleId} className="font-display text-xl">
-                {t("bookTour")}
+                {unclaimed ? t("requestTour") : t("bookTour")}
               </h2>
               <p className="mt-0.5 text-sm text-muted">{name}</p>
             </div>

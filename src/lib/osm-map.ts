@@ -134,12 +134,14 @@ export function preloadOsmMap(): Promise<MlModule> {
   if (typeof window === "undefined") return Promise.reject(new Error("Map is browser-only"));
   if (!libPromise) {
     libPromise = (async () => {
-      const [ml, worker] = await Promise.all([
+      const [ml] = await Promise.all([
         import("maplibre-gl"),
-        import("maplibre-gl/dist/maplibre-gl-worker.mjs?url"),
         import("maplibre-gl/dist/maplibre-gl.css"),
       ]);
-      ml.setWorkerUrl(worker.default);
+      // Pass the worker script URL without executing its class export on the page.
+      // Vite emits this self-contained script as a hashed asset in production.
+      const workerUrl = new URL("../../node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs", import.meta.url).href;
+      ml.setWorkerUrl(workerUrl);
       return ml;
     })().catch((err) => {
       libPromise = null;

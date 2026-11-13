@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { privateHttpUnavailableResponse } from "@/lib/gov/http-isolation";
 
 /** Alexa custom skill endpoint. FEATURE_ALEXA_SKILL off → 404. Signature verified on every call. */
 async function run(request: Request) {
@@ -21,17 +22,24 @@ async function run(request: Request) {
   );
   if (!verified.ok) return Response.json({ ok: false, error: verified.error }, { status: verified.status });
   const { getSql } = await import("@/lib/db");
-  const sql = await getSql();
+  const sql = await getSql().catch(() => null);
+  if (!sql) return privateHttpUnavailableResponse();
   const data = {
     async linkedUser(accessToken: string) {
       const rows = (await sql.query(
-        `select s."userId" as user_id,
+        `select s."userId" as user_id, profile.role,
                 exists(select 1 from provider_daycares p where p.user_id = s."userId") as provider
-           from "session" s where s.token = $1 and s."expiresAt" > now() limit 1`,
+           from "session" s
+           join profiles profile on profile.user_id = s."userId"
+          where s.token = $1 and s."expiresAt" > now() limit 1`,
         [accessToken],
-      )) as { user_id: string; provider: boolean }[];
+      )) as { user_id: string; role: string | null; provider: boolean }[];
       const r = rows[0];
-      return r ? { userId: r.user_id, role: r.provider ? ("provider" as const) : ("parent" as const) } : null;
+      const role = String(r?.role || "").trim().toLowerCase();
+      // Residual parent/centre records never grant a government identity access.
+      // Missing current profile roles stay unlinked; read failures return 503 below.
+      if (!r || (role !== "parent" && role !== "provider")) return null;
+      return { userId: r.user_id, role: r.provider ? ("provider" as const) : ("parent" as const) };
     },
     async spotsNear(city: string) {
       const rows = (await sql.query(
@@ -59,7 +67,11 @@ async function run(request: Request) {
       return rows[0]?.n || 0;
     },
   };
-  return Response.json(await handleAlexa(verified.json, data));
+  try {
+    return Response.json(await handleAlexa(verified.json, data));
+  } catch {
+    return privateHttpUnavailableResponse();
+  }
 }
 
 export const Route = createFileRoute("/api/alexa")({

@@ -34,11 +34,11 @@ export const HELP_ARTICLES: readonly HelpArticle[] = [
     keywords: ["claim", "owner", "revendiquer", "proprio"],
     en: {
       title: "Claim your listing",
-      body: "Daycare owners can claim the listing we already have. Claiming is free during the free founding period.",
+      body: "Daycare owners can claim their listing for free, update its details, and reply to families.",
     },
     fr: {
       title: "Revendiquer votre fiche",
-      body: "Les propriétaires peuvent revendiquer la fiche que nous avons déjà. La revendication est gratuite pendant la période fondatrice gratuite.",
+      body: "Les propriétaires peuvent revendiquer gratuitement leur fiche, mettre les détails à jour et répondre aux familles.",
     },
   },
   {
@@ -58,23 +58,23 @@ export const HELP_ARTICLES: readonly HelpArticle[] = [
     keywords: ["status", "down", "état", "panne"],
     en: {
       title: "Is KidEase working?",
-      body: "The status page shows whether the website and search are up. SMS and in-app chat are coming soon.",
+      body: "The status page shows whether the website and search are working. If you need help, contact support@kidease.ca.",
     },
     fr: {
       title: "KidEase fonctionne-t-il?",
-      body: "La page d’état montre si le site et la recherche marchent. Les textos et le clavardage dans l’appli arrivent bientôt.",
+      body: "La page d’état montre si le site et la recherche fonctionnent. Pour de l’aide, écrivez à support@kidease.ca.",
     },
   },
   {
     id: "parents-free",
     keywords: ["free", "price", "gratuit", "parent"],
     en: {
-      title: "Parents and the free founding period",
-      body: "Parents use KidEase during the free founding period.",
+      title: "Free tools for parents",
+      body: "Parents can search licensed care, save centres, and contact daycares for free. Centre bills are separate.",
     },
     fr: {
-      title: "Parents et la période fondatrice gratuite",
-      body: "Les parents utilisent KidEase pendant la période fondatrice gratuite. Nous ne disons pas gratuit pour toujours.",
+      title: "Outils gratuits pour les parents",
+      body: "Les parents peuvent chercher des services permis, enregistrer des centres et contacter les garderies gratuitement. Les factures de centre sont distinctes.",
     },
   },
   {
@@ -104,8 +104,8 @@ export const CANNED_REPLIES: readonly { id: string; en: string; fr: string }[] =
   },
   {
     id: "claim",
-    en: "Claim the listing from the centre page. Claiming stays free during the free founding period.",
-    fr: "Revendiquez la fiche depuis la page du centre. La revendication reste gratuite pendant la période fondatrice gratuite.",
+    en: "Claim your free listing from the centre page to update its details and reply to families.",
+    fr: "Revendiquez votre fiche gratuite depuis la page du centre pour mettre les détails à jour et répondre aux familles.",
   },
 ];
 

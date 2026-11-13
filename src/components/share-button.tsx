@@ -87,7 +87,7 @@ function ShareControl({
 
   const iconClass =
     appearance === "photo"
-      ? "size-[22px] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]"
+      ? "size-[22px] text-current drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]"
       : appearance === "icon"
         ? "size-5"
         : "size-4";
@@ -106,7 +106,7 @@ function ShareControl({
       aria-live="polite"
       className={cn(
         appearance === "icon" && "grid size-11 place-items-center rounded-full text-fg hover:bg-surface-2",
-        appearance === "photo" && "grid size-11 place-items-center rounded-full",
+        appearance === "photo" && "grid size-11 place-items-center rounded-full text-white",
         appearance === "labeled" &&
           "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-3 text-sm font-medium text-fg hover:bg-surface-2",
         appearance === "menu" && "block w-full px-3 py-2.5 text-left text-sm text-fg hover:bg-surface-2",

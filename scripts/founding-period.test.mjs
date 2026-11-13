@@ -15,6 +15,7 @@ import {
   resolveProviderEntitlements,
 } from "../src/lib/provider-entitlements.ts";
 import { FLAG_DEFAULTS } from "../src/lib/flags.ts";
+import { guestDrawerMenuGroupsForShell } from "../src/lib/site-footer-nav.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -32,13 +33,15 @@ test("subscriptions stay off and the founding badge stays on by default", () => 
   assert.equal(foundingBadgeEnabled({ FOUNDING_BADGE_ENABLED: "0" }), false);
 });
 
-test("founding copy names the free tier and does not invent a paid price", () => {
+test("free-tool copy describes current access without launch promises", () => {
   const blob = JSON.stringify(FOUNDING_PAGE) + JSON.stringify(FOUNDING_FREE_FEATURES);
-  assert.match(FOUNDING_PAGE.en.daycarePill, /Free founding period/);
-  assert.match(FOUNDING_PAGE.fr.daycarePill, /Période fondatrice gratuite/);
+  assert.equal(FOUNDING_PAGE.en.daycarePill, "Free listing tools");
+  assert.equal(FOUNDING_PAGE.fr.daycarePill, "Outils de fiche gratuits");
   assert.match(FOUNDING_PAGE.fr.parentsBody, /5 centres/);
   assert.doesNotMatch(blob, /toujours|gratuit pour toujours/i);
-  assert.match(FOUNDING_PAGE.en.foundingBody, /locked-in discount when paid extras arrive/);
+  assert.match(FOUNDING_PAGE.en.foundingBody, /subscriptions are unavailable/);
+  assert.match(FOUNDING_PAGE.en.daycareBody, /Centre bill payments are separate/);
+  assert.doesNotMatch(blob, /founding period|période fondatrice|during launch|pendant le lancement|locked-in discount|paid extras arrive/i);
   assert.match(FOUNDING_PAGE.en.lead, /Canadian company/);
   assert.match(blob, /Claimed listing/);
   assert.match(blob, /Open-spot posting/);
@@ -95,6 +98,9 @@ test("plans page redirects home while subscriptions are off and keeps checkout c
   assert.match(migration, /founding_member/);
   assert.match(migration, /d_d85jtifbkh2t/);
   assert.match(src("src/lib/server/approve-centre.ts"), /founding_member/);
-  assert.match(src("src/components/nav-drawer.tsx"), /localePath\("\/plans"/);
+  assert.match(src("src/components/nav-drawer.tsx"), /guestDrawerMenuGroupsForShell/);
+  const drawerLinks = (plansOn) => guestDrawerMenuGroupsForShell({ native: false, plansOn }).flatMap((group) => group.links);
+  assert.equal(drawerLinks(false).some((link) => link.to === "/plans"), false);
+  assert.equal(drawerLinks(true).some((link) => link.to === "/plans"), true);
   assert.match(src("src/lib/site-footer-nav.ts"), /"\/plans"/);
 });

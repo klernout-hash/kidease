@@ -1,0 +1,284 @@
+{
+  "schemaVersion": 1,
+  "historicalCaptures": [
+    {
+      "file": "historical-footer-en-1280.png",
+      "sha256": "9b247e2a5b117345bd3239d568563b46c49b9f30caf781b666f4fd82f5547507",
+      "width": 1280,
+      "height": 482,
+      "viewportWidth": 1280,
+      "kind": "element crop",
+      "locale": "en",
+      "captureSourceCommit": "fd2747fbd246317b1588341d65ae91ef4b9aa389",
+      "look": "classic",
+      "theme": "light",
+      "historical": true,
+      "pageErrors": "not inferred from this element crop",
+      "metadataChunks": [
+        "IDAT",
+        "IEND",
+        "IHDR"
+      ]
+    },
+    {
+      "file": "historical-footer-fr-1280.png",
+      "sha256": "ec0074b6406cd5415d48df1f5e35154086f71fb0e2482dddfbb4039c8d0e1336",
+      "width": 1280,
+      "height": 482,
+      "viewportWidth": 1280,
+      "kind": "element crop",
+      "locale": "fr",
+      "captureSourceCommit": "fd2747fbd246317b1588341d65ae91ef4b9aa389",
+      "look": "classic",
+      "theme": "light",
+      "historical": true,
+      "pageErrors": "not inferred from this element crop",
+      "metadataChunks": [
+        "IDAT",
+        "IEND",
+        "IHDR"
+      ]
+    },
+    {
+      "file": "historical-verified-pill-en-390.png",
+      "sha256": "7a77de93aa2d46ef670a8c6c10f592b132d88786e3306ba16f82159ad46a754d",
+      "width": 358,
+      "height": 341,
+      "viewportWidth": 390,
+      "kind": "element crop",
+      "locale": "en",
+      "captureSourceCommit": "fd2747fbd246317b1588341d65ae91ef4b9aa389",
+      "look": "classic",
+      "theme": "light",
+      "historical": true,
+      "pageErrors": "not inferred from this element crop",
+      "metadataChunks": [
+        "IDAT",
+        "IEND",
+        "IHDR"
+      ]
+    },
+    {
+      "file": "historical-verified-pill-en-1280.png",
+      "sha256": "bd9249f40b1045206fe86e17d9f9bb07b2f6d76205fa3fb4c549988358d90a03",
+      "width": 354,
+      "height": 337,
+      "viewportWidth": 1280,
+      "kind": "element crop",
+      "locale": "en",
+      "captureSourceCommit": "fd2747fbd246317b1588341d65ae91ef4b9aa389",
+      "look": "classic",
+      "theme": "light",
+      "historical": true,
+      "pageErrors": "not inferred from this element crop",
+      "metadataChunks": [
+        "IDAT",
+        "IEND",
+        "IHDR"
+      ]
+    }
+  ],
+  "currentCaptures": [
+    {
+      "file": "current-home-en-390.png",
+      "sha256": "53ba72caf1627a47fd3770b5c6ed999b6dbcf4380c175c0ef480d030b025c506",
+      "width": 390,
+      "height": 844,
+      "viewportWidth": 390,
+      "locale": "en",
+      "page": "home",
+      "kind": "viewport screenshot",
+      "look": "classic",
+      "theme": "light",
+      "historical": false,
+      "pageErrors": [],
+      "horizontalOverflow": false,
+      "detailSsrHasH1": null,
+      "metadataChunks": [
+        "IDAT",
+        "IEND",
+        "IHDR"
+      ]
+    },
+    {
+      "file": "current-detail-en-390.png",
+      "sha256": "6a097bcc458b5fe1dee34585334b1d0190819505b3e82ae67a30664be2083afb",
+      "width": 390,
+      "height": 844,
+      "viewportWidth": 390,
+      "locale": "en",
+      "page": "detail",
+      "kind": "viewport screenshot",
+      "look": "classic",
+      "theme": "light",
+      "historical": false,
+      "pageErrors": [],
+      "horizontalOverflow": false,
+      "detailSsrHasH1": true,
+      "metadataChunks": [
+        "IDAT",
+        "IEND",
+        "IHDR"
+      ]
+    },
+    {
+      "file": "current-home-en-1280.png",
+      "sha256": "70b6f27cd1cb17909ec056cca4e80871d78973636ad9989ba6180dc7e3989c2b",
+      "width": 1280,
+      "height": 900,
+      "viewportWidth": 1280,
+      "locale": "en",
+      "page": "home",
+      "kind": "viewport screenshot",
+      "look": "classic",
+      "theme": "light",
+      "historical": false,
+      "pageErrors": [],
+      "horizontalOverflow": false,
+      "detailSsrHasH1": null,
+      "metadataChunks": [
+        "IDAT",
+        "IEND",
+        "IHDR"
+      ]
+    },
+    {
+      "file": "current-detail-en-1280.png",
+      "sha256": "d10b30976ff5e026f58fcdd1f46534d56bb97bf8e24f81b203232a0b18361645",
+      "width": 1280,
+      "height": 900,
+      "viewportWidth": 1280,
+      "locale": "en",
+      "page": "detail",
+      "kind": "viewport screenshot",
+      "look": "classic",
+      "theme": "light",
+      "historical": false,
+      "pageErrors": [],
+      "horizontalOverflow": false,
+      "detailSsrHasH1": true,
+      "metadataChunks": [
+        "IDAT",
+        "IEND",
+        "IHDR"
+      ]
+    },
+    {
+      "file": "current-home-fr-390.png",
+      "sha256": "6461342228fc5e5a5b3dc7530adbf7ff29d442b663fc2bd69ff2acf47e2e9dd4",
+      "width": 390,
+      "height": 844,
+      "viewportWidth": 390,
+      "locale": "fr",
+      "page": "home",
+      "kind": "viewport screenshot",
+      "look": "classic",
+      "theme": "light",
+      "historical": false,
+      "pageErrors": [],
+      "horizontalOverflow": false,
+      "detailSsrHasH1": null,
+      "metadataChunks": [
+        "IDAT",
+        "IEND",
+        "IHDR"
+      ]
+    },
+    {
+      "file": "current-detail-fr-390.png",
+      "sha256": "efac61189111fd2dbd4f2a4c1781855a6e3fbc8d4ce2c44d199e7b3e87d2167a",
+      "width": 390,
+      "height": 844,
+      "viewportWidth": 390,
+      "locale": "fr",
+      "page": "detail",
+      "kind": "viewport screenshot",
+      "look": "classic",
+      "theme": "light",
+      "historical": false,
+      "pageErrors": [],
+      "horizontalOverflow": false,
+      "detailSsrHasH1": true,
+      "metadataChunks": [
+        "IDAT",
+        "IEND",
+        "IHDR"
+      ]
+    },
+    {
+      "file": "current-home-fr-1280.png",
+      "sha256": "d0218485d9634a1f32cf4827a8d58fa1187ab7ce5235a7f2270c04da5ade4905",
+      "width": 1280,
+      "height": 900,
+      "viewportWidth": 1280,
+      "locale": "fr",
+      "page": "home",
+      "kind": "viewport screenshot",
+      "look": "classic",
+      "theme": "light",
+      "historical": false,
+      "pageErrors": [],
+      "horizontalOverflow": false,
+      "detailSsrHasH1": null,
+      "metadataChunks": [
+        "IDAT",
+        "IEND",
+        "IHDR"
+      ]
+    },
+    {
+      "file": "current-detail-fr-1280.png",
+      "sha256": "d8ef83571c9210193653dbc7951156498ad9c43f7ab4782912574ab5e8d07698",
+      "width": 1280,
+      "height": 900,
+      "viewportWidth": 1280,
+      "locale": "fr",
+      "page": "detail",
+      "kind": "viewport screenshot",
+      "look": "classic",
+      "theme": "light",
+      "historical": false,
+      "pageErrors": [],
+      "horizontalOverflow": false,
+      "detailSsrHasH1": true,
+      "metadataChunks": [
+        "IDAT",
+        "IEND",
+        "IHDR"
+      ]
+    }
+  ],
+  "notes": [
+    "Historical captures are unchanged reviewed-layout PNGs, preceding blocker corrections.",
+    "Eligible pill uses an existing public Cornerstone Nelson listing and stored official-list snapshot dated 2026-09-30; no fresh provincial verification.",
+    "Missing listing photos retain branded fallbacks. Static captures disable animation; pulse/reduced-motion checks are separate.",
+    "Selected evidence excludes customer accounts/messages and visibility-overridden mobile-footer component captures.",
+    "Current home/detail captures use application/test source identical to the reviewed release; later public-review changes affect documentation only. All eight captured pages have no page errors and no horizontal overflow within this fixture run."
+  ],
+  "currentCaptureSession": {
+    "capturedAt": "2026-11-13T03:48:22.734Z",
+    "runtimeHead": "3632ab4d89757e54e4a8cb61257e439b7f38cdf1",
+    "sourceCommit": "960da0f4d0aedaf195d2e714f3b10264baad383c",
+    "equivalentReviewedHead": "f0d708cf89697a1ba0b578ae59eecb9f48257120",
+    "sourceEqualityPaths": [
+      "src",
+      "scripts",
+      "package.json",
+      "public",
+      "migrations",
+      "vite.config.ts"
+    ],
+    "sourceEquality": true,
+    "mode": "existing credential-free build:dev served by Vite preview",
+    "look": "classic",
+    "theme": "light",
+    "database": "in-memory local PGLite only",
+    "serverNetwork": "non-loopback fetch/socket/TLS blocked by harness",
+    "browserNetwork": "non-loopback requests blocked",
+    "data": "existing bundled public catalogue; local synthetic preferences; no signed-in accounts",
+    "limitations": [
+      "External listing photos, maps and services are blocked; screenshots do not validate their live availability.",
+      "Static screenshots disable animation and do not establish full accessibility, native or production acceptance."
+    ]
+  }
+}

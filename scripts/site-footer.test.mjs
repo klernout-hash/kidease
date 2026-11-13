@@ -47,15 +47,17 @@ test("footer Get the app stays in KidEase; Rate KidEase is not a footer label", 
   assert.doesNotMatch(nav, /rateKidEase/);
 });
 
-test("footer keeps Parents / Daycares / KidEase / Support groups without a duplicate legal row", () => {
+test("footer has Parents, Daycares, and one combined Help and KidEase column", () => {
   assert.match(footer, /ke-footer-cols/);
   assert.match(footer, /data-footer-col=\{id\}/);
   assert.match(footer, /id="parents"/);
   assert.match(footer, /id="daycares"/);
-  assert.match(footer, /id="kidease"/);
+  assert.doesNotMatch(footer, /id="kidease"/);
   assert.match(footer, /id="support"/);
-  assert.match(footer, /t\("app"\)/);
-  assert.match(footer, /t\("support"\)/);
+  assert.match(footer, /Help & KidEase/);
+  assert.match(footer, /Aide et KidEase/);
+  assert.equal((footer.match(/<Column\b/g) || []).length, 3);
+  assert.match(footer, /\.\.\.FOOTER_COLUMNS\.support, \.\.\.FOOTER_COLUMNS\.kidease/);
   assert.match(footer, /title="Parents"/);
   assert.match(footer, /Garderies/);
   assert.match(footer, /Daycares/);
@@ -70,13 +72,11 @@ test("footer keeps Parents / Daycares / KidEase / Support groups without a dupli
 test("hamburger is Parents, Daycares, Support; jobs are not a second Caregivers group", () => {
   const footerParents = footer.indexOf('id="parents"');
   const footerDaycares = footer.indexOf('id="daycares"');
-  const footerKidEase = footer.indexOf('id="kidease"');
   const footerSupport = footer.indexOf('id="support"');
   assert.ok(
     footerParents > 0 &&
       footerDaycares > footerParents &&
-      footerSupport > footerDaycares &&
-      footerKidEase > footerSupport,
+      footerSupport > footerDaycares,
   );
 
   const groups = src("src/lib/app-menu.ts");
@@ -101,9 +101,11 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
   assert.doesNotMatch(footer, /t\("googlePlay"\)/);
   assert.doesNotMatch(footer, /t\("operatorSignIn"\)/);
   assert.doesNotMatch(footer, /showOperatorSignIn/);
-  assert.match(footer, /isKidEaseOperatorEmail\(user\?\.primaryEmail\)/);
-  assert.match(copySrc, /comingSoon: "Coming soon"/);
-  assert.match(copySrc, /comingSoon: "Bientôt"/);
+  assert.doesNotMatch(footer, /<AppStoreStatus/);
+  assert.match(footer, /<FooterAppBadges/);
+  assert.equal((footer.match(/<ShareKidEaseButton\b/g) || []).length, 1);
+  assert.match(copySrc, /comingSoon: "Unavailable right now"/);
+  assert.match(copySrc, /comingSoon: "Indisponible pour le moment"/);
   assert.doesNotMatch(copySrc, /operatorSignIn/);
 });
 
@@ -191,11 +193,25 @@ test("Find daycare jobs lives on Daycares only; there is no KidEase careers foot
   assert.doesNotMatch(footer + nav, /openroad/i);
 });
 
-test("footer CSS clusters columns instead of stretching full width", () => {
-  assert.match(css, /\.ke-footer-inner \{[\s\S]*?max-width: 56rem;/);
-  assert.match(css, /grid-template-columns: 1fr 1fr;/);
-  assert.match(css, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+test("footer uses three compact columns and native disclosures on narrow screens", () => {
+  assert.match(css, /\.ke-footer-inner \{[\s\S]*?max-width: 64rem;/);
+  assert.match(css, /\.ke-footer-cols \{[^}]*grid-template-columns: 1fr 1\.1fr 1\.6fr;/);
+  assert.match(footer, /<details ref=\{sectionRef\} open/);
+  assert.match(footer, /<summary className="ke-footer-title ke-footer-toggle/);
+  assert.match(css, /\.ke-footer-link \{[^}]*min-height: 3\.15rem;/);
   assert.doesNotMatch(css, /gap: 3rem 4rem/);
+});
+
+test("footer has one app row and no fabricated Huawei download destination", () => {
+  const badges = src("src/components/footer-app-badges.tsx");
+  assert.match(badges, /liveAppStores\(\)/);
+  assert.match(badges, /href=\{store\.url!\}/);
+  assert.match(badges, /<span className="ke-footer-store-name" data-ke="footer-store-huawei"/);
+  assert.doesNotMatch(badges, /comingSoon|unavailable|appgallery\.huawei\.com|<ShareKidEaseButton/);
+  assert.match(badges, /to=\{localePath\("\/get-app", locale\)\}/);
+  assert.doesNotMatch(src("src/routes/index.tsx"), /<AppStoreStatus/);
+  assert.match(css, /\.ke-footer-store-badge,\s*\.ke-footer-store-name \{[^}]*width: var\(--ke-footer-store-width\);[^}]*height: 3\.15rem;/);
+  assert.match(css, /\.ke-footer-store-art img \{[^}]*object-fit: contain;/);
 });
 
 test("EN footer labels stay in use order", () => {

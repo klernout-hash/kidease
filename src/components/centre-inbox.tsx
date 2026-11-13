@@ -266,7 +266,7 @@ export function CentreInboxDesk({
   const confirmedTour = tour?.status === "accepted";
 
   const listPane = (
-    <div className="flex min-h-0 flex-col border-border lg:border-r">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto border-border lg:border-r">
       <div className="shrink-0 space-y-3 p-3">
         <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]">{t("messages")}</h2>
         <p className="text-sm text-muted">{t("inboxCentreTitle")}</p>
@@ -302,7 +302,7 @@ export function CentreInboxDesk({
           ))}
         </div>
       </div>
-      <ul className="min-h-0 flex-1 overflow-y-auto">
+      <ul className="shrink-0">
         {items === null ? (
           <li className="space-y-2 p-3" aria-hidden>
             <div className="ke-skel h-16 rounded-xl" />
@@ -561,6 +561,7 @@ export function CentreInboxDesk({
       desk="daycare"
       active="messages"
       wide
+      fitViewport
       onSelect={(id) => {
         if (id === "messages") return;
         void navigate({ to: "/provider", search: providerNavSearch(id) });
@@ -568,11 +569,11 @@ export function CentreInboxDesk({
     >
       <div
         data-ke="centre-inbox"
-        className="grid h-[calc(100dvh-6.5rem)] min-h-0 overflow-hidden md:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)] xl:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)_minmax(15rem,18rem)]"
+        className="grid min-h-0 flex-1 overflow-hidden md:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)] xl:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)_minmax(15rem,18rem)]"
       >
-        <div className={cn(selectedId ? "hidden md:flex md:flex-col" : "flex flex-col")}>{listPane}</div>
-        <div className={cn(!selectedId ? "hidden md:flex md:flex-col" : "flex flex-col")}>{threadPane}</div>
-        <div className="hidden border-l border-border xl:block">{detailPane()}</div>
+        <div className={cn("min-h-0", selectedId ? "hidden md:flex md:flex-col" : "flex flex-col")}>{listPane}</div>
+        <div className={cn("min-h-0", !selectedId ? "hidden md:flex md:flex-col" : "flex flex-col")}>{threadPane}</div>
+        <div className="hidden min-h-0 overflow-y-auto border-l border-border xl:block">{detailPane()}</div>
       </div>
       {detailOpen && selected ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center xl:hidden" role="presentation">
