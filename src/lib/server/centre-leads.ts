@@ -956,18 +956,15 @@ function publicRowFromStored(lead: StoredLead): Record<string, unknown> {
 export async function runCentreLeadJobs(fetchImpl: typeof fetch = fetch) {
   if (!centreLeadTrackerEnabled()) return { ok: true as const, skipped: true as const, reason: "flag" };
   const sql = await getSql();
-  const centres = await sql<{ daycare_id: string }>`
-    select daycare_id from centre_lead_settings order by enabled_at desc limit 20
-  `.catch(() => []);
-  let synced = 0;
-  for (const centre of centres) {
-    if (isHiddenLeadCentre(centre.daycare_id)) continue;
-    const leads = await syncCentre(sql, centre.daycare_id);
-    await recordAlerts(sql, centre.daycare_id, leads);
-    synced += 1;
-  }
-  const sent = centreApiEnabled() ? await deliverDueWebhooks(sql, fetchImpl) : 0;
-  return { ok: true as const, skipped: false as const, synced, sent };
+  const { withCentreLeadWorkerBatch } = await import("@/lib/server/centre-lead-worker-batch");
+  return withCentreLeadWorkerBatch(sql, {
+    shouldSkip: isHiddenLeadCentre,
+    processCentre: async (daycareId) => {
+      const leads = await syncCentre(sql, daycareId);
+      await recordAlerts(sql, daycareId, leads);
+    },
+    finish: async () => centreApiEnabled() ? deliverDueWebhooks(sql, fetchImpl) : 0,
+  });
 }
 
 async function deliverDueWebhooks(sql: Sql, fetchImpl: typeof fetch) {

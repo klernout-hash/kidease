@@ -1,0 +1,37 @@
+# Tracker worker coverage: independent draft handoff
+
+Base: main `9d9838ec3cefbd0b20a3d9dc248a2b6090809d9e` (including #846). Branch: `cursor/tracker-worker-coverage-20261113`. This draft is independent of #847 and does not modify that PR. No merge, deployment, production migration, worker invocation, schedule registration, environment/settings change, credential entry or spending is part of this work.
+
+## Concrete correction
+
+`runCentreLeadJobs` previously selected the newest 20 `centre_lead_settings` rows every time. Older enrolled centres could never be reached. The worker now uses an additive `centre_lead_worker_state` table, a durable daycare-ID cursor and a batch capped at 20. Two disjoint keyset queries wrap at most once; one batch contains no duplicate centre. For a stable finite enrolled population, successive completed batches cover the population instead of restarting at the newest 20. A deleted cursor centre does not break rotation. New settings rows join later batches without changing their enrolment or preferences.
+
+Progress is saved after each attempted centre, including a reported failure or a hidden-centre skip. A broken centre therefore does not block later centres. Results distinguish selected, attempted, synced, failed, skipped-centre and existing webhook counts. `synced` means the existing centre callback returned, not proof that all inherited best-effort reconciliation/alert writes succeeded. A failed batch produces HTTP 503; coordination/query failures propagate. The existing tracker-off and exact bearer-auth behavior remain intact. A healthy overlapping request returns an explicit `busy` skip and does not run callbacks or drain webhooks. The cap bounds selected centres, not all per-centre lead writes or total runtime; the unchanged global webhook finish pass can still process up to ten deliveries.
+
+One token lease coordinates ordinary overlapping worker calls. Ownership is checked/renewed before the next centre, checkpoint and existing webhook pass. Cursor updates and release cannot alter a replacement token's ownership. The existing webhook pass stays under the healthy lease and retains its existing API/held-delivery flags. Lease loss stops further phases and is reported as failure.
+
+This is **at-least-once coordination**, not exactly-once reconciliation or delivery. A callback already running when its lease expires is not fenced by the lease. A crash after domain effects but before checkpoint can repeat those effects. GET fallback and staff writes remain outside this lease, and existing reconciliation, random transition events and unleased individual webhook deliveries retain their known concurrency risks. These limits must be resolved or explicitly accepted before enabling a new recurring worker; this draft does not expand into a transaction/outbox redesign.
+
+## Prepared, disabled schedule
+
+The source prepares `centre-lead-worker-hourly` at proposed cadence `TZ=America/Winnipeg 10 * * * *`. `createCentreLeadWorkerFunctions` returns an empty list before SDK function creation unless the new environment variable `CENTRE_LEAD_WORKER_SCHEDULE` is exactly `1`. It is absent by default. No existing flag default or Vercel cron changes. Merely having Inngest keys or the existing tracker flag on does not register this schedule.
+
+If separately approved and configured later, the handler rechecks the opt-in and the current tracker feature flag, requires the original event ID, uses one durable step, concurrency 1, event-ID idempotency and zero automatic retries. Failed callbacks remain visible as scheduler failures; a later tick handles the next bounded batch, and a failed centre is retried on a later rotation. Inngest's documented 24-hour deduplication window does not provide permanent database-side idempotency. See [function configuration](https://www.inngest.com/docs/reference/typescript/v4/functions/create) and [idempotency](https://www.inngest.com/docs/durable-execution/guides-and-advanced/idempotency).
+
+No sync, registration or enabling action was performed. The proposed cadence is an inactive source choice awaiting operational approval. Twenty slots per hourly invocation means a stable population of N enrolled settings rows needs up to ceil(N/20) completed invocations for a rotation; hidden rows also consume slots. This is bounded fairness, not an immediate-refresh promise or a capacity guarantee under unbounded arrivals/failures.
+
+## Preserved fallback and remaining gates
+
+The tracker GET still calls its existing reconciliation and alert fallback. Missing settings remain ineligible; no centre is silently enrolled, no guest/manual identity is changed, and no lead IDs, stages, assignments, locks, notes, historical timestamps or stored preferences are migrated by the coordination schema. Existing page/staff races are not claimed fixed. The table adds coordination state only and leaves all customer history intact.
+
+Before enabling any recurring schedule: obtain explicit approval of cadence/batching and side effects; apply the additive schema through the authorized deployment path; ensure all worker callers use compatible code; resolve or accept the stated lease/read/staff/webhook limitations; configure the opt-in only under separate authorization; and verify real production registration plus a recent successful **scheduled, non-skipped** batch and fair coverage. Key presence, a build, `busy`/flag skips or a manual invocation are not that evidence. Do not invoke a production worker to manufacture proof.
+
+Before removing read fallback: establish identity-safe enrolment for every eligible centre, fair recovery for missing settings and failures, revision-safe reconciliation/semantic event deduplication, and reliable replacement scheduling verified by real operational evidence. The source still has broader tracker write-on-read behavior deliberately preserved here.
+
+Rollback should retain the coordination table/history; older code ignores it but returns to the old coverage behavior. Mixed old/new workers do not share coordination, so do not treat the new lease as protection during a mixed-version rollout. No historical expiry replay, payment/subscription/default-look/bot change or production live acceptance is claimed. Excluded PRs 357/336/307/289/841 and Huawei source files remain untouched. #847's scheduler-health and up-to-one-hour notice timing gates remain independent and unresolved here.
+
+## Validation record
+
+Focused tests execute the real coordination SQL against isolated PGlite and actual route/factory code with explicit dependency boundaries. Coverage includes 0/1/20/21/45 centres, wrap/deleted cursor, insertions, restarts, hidden rows, failure rotation, bounded batches, overlapping claims, expiry/takeover, stale checkpoint/release, failure propagation, existing auth/flags, and absent/default-off scheduler making no work calls. These interleavings are not multi-connection production stress proof. Final local and exact-head CI results are recorded in the PR description.
+
+Kyle's required screenshots remain required: capture the unchanged default-off Families page at 390×844 and 1280×900 in EN/FR through the existing synthetic signed-in CI flow, retain its normal artifact, retrieve originals, verify head/dimensions/hash and visually review them. Capture configuration is not evidence until those steps pass. No production/authenticated KidEase loader may be used for screenshots. Default-off captures do not demonstrate enabled-worker or enabled-tracker behavior.

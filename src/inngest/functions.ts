@@ -19,6 +19,7 @@ import { runCareReminderJob } from "@/lib/server/care-reminders";
 import { runOpsAlertsJob } from "@/lib/server/automation-ops";
 import { runUnifiedAlertScan } from "@/lib/server/unified-alerts";
 import { inngest } from "./client";
+import { createCentreLeadWorkerFunctions } from "./centre-lead-worker";
 
 /**
  * First Inngest job: wrap the existing saved-search alert cron.
@@ -226,6 +227,7 @@ export const topRatedMonthly = inngest.createFunction(
 );
 
 export const functions = [
+  ...createCentreLeadWorkerFunctions(),
   searchAlertsHourly,
   waitlistPulse,
   expireTourHoldsHourly,
