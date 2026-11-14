@@ -27,11 +27,11 @@ export function PasswordField({
           id={inputId}
           type={visible ? "text" : "password"}
           autoComplete={autoComplete}
-          className={`ke-input pr-12 ${className ?? ""}`.trim()}
+          className={`ke-input pr-[52px] ${className ?? ""}`.trim()}
         />
         <button
           type="button"
-          className="absolute inset-y-0 right-0 grid w-11 place-items-center text-muted hover:text-fg"
+          className="absolute inset-y-0 right-0 grid min-h-[44px] w-[44px] place-items-center text-muted hover:text-fg"
           onClick={() => setVisible((open) => !open)}
           aria-label={visible ? t("hidePassword") : t("showPassword")}
           aria-pressed={visible}

@@ -10,6 +10,7 @@ import {
   approvalSuccessReady,
   attachSuccessToastBridge,
   bindSuccessHost,
+  confirmSuccess,
   successAction,
 } from "../src/lib/success-confirm.ts";
 
@@ -154,4 +155,63 @@ test("spots, reports, and block-style saves celebrate only on the success branch
   assert.ok(blockStart > 0);
   assert.doesNotMatch(safety.slice(blockStart), /\.catch\([\s\S]{0,80}toast\.success/);
   assert.match(src("src/routes/inbox.$id.tsx") + src("src/components/centre-inbox.tsx"), /blockedSend/);
+});
+
+
+test("a confirmed save before lazy host mount is delivered once on bind", () => {
+  const originalWindow = globalThis.window;
+  globalThis.window = {};
+  try {
+    bindSuccessHost(null);
+    const request = { variant: "toast", title: "Profile saved" };
+    confirmSuccess(request);
+    const seen = [];
+    const unbind = bindSuccessHost((value) => seen.push(value));
+    assert.deepEqual(seen, [request]);
+    confirmSuccess({ variant: "toast", title: "" });
+    assert.deepEqual(seen, [request], "a pending bare celebration must not replace the named save");
+    unbind();
+    const again = [];
+    bindSuccessHost((value) => again.push(value))();
+    assert.deepEqual(again, []);
+  } finally {
+    bindSuccessHost(null);
+    if (originalWindow === undefined) delete globalThis.window;
+    else globalThis.window = originalWindow;
+  }
+});
+
+test("host readiness buffer is bounded by variant and never replays stale events", () => {
+  const originalWindow = globalThis.window;
+  const originalNow = Date.now;
+  let now = 20_000;
+  Date.now = () => now;
+  globalThis.window = {};
+  try {
+    bindSuccessHost(null);
+    confirmSuccess({ variant: "toast", title: "First save" });
+    confirmSuccess({ variant: "toast", title: "Latest save" });
+    confirmSuccess({ variant: "modal", title: "Booking received" });
+    const seen = [];
+    bindSuccessHost((value) => seen.push(value))();
+    assert.deepEqual(seen.map((value) => value.title), ["Latest save", "Booking received"]);
+    confirmSuccess({ variant: "toast", title: "Old save" });
+    now += 10_001;
+    bindSuccessHost((value) => seen.push(value))();
+    assert.equal(seen.length, 2);
+  } finally {
+    Date.now = originalNow;
+    bindSuccessHost(null);
+    if (originalWindow === undefined) delete globalThis.window;
+    else globalThis.window = originalWindow;
+  }
+});
+
+test("server confirmations never enter the browser host buffer", () => {
+  assert.equal(typeof window, "undefined");
+  bindSuccessHost(null);
+  confirmSuccess({ variant: "toast", title: "Server request" });
+  const seen = [];
+  bindSuccessHost((value) => seen.push(value))();
+  assert.deepEqual(seen, []);
 });

@@ -27,7 +27,7 @@ export function NotificationBell({
       aria-label={label}
       title={hint}
       className={cn(
-        "relative grid size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface",
+        "relative grid size-12 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full text-fg hover:bg-surface",
         className,
       )}
     >
@@ -36,7 +36,7 @@ export function NotificationBell({
       {badge ? (
         <span
           data-ke="notification-unread"
-          className="absolute right-1.5 top-1.5 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[9px] font-semibold leading-4 text-white"
+          className="absolute right-1.5 top-1.5 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[9px] font-semibold leading-4 text-primary-fg"
         >
           {badge}
         </span>
@@ -51,7 +51,7 @@ export function NotificationUnreadDot({ unread }: { unread: number }) {
   return (
     <span
       data-ke="notification-unread"
-      className="grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[9px] font-semibold leading-4 text-white"
+      className="grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[9px] font-semibold leading-4 text-primary-fg"
     >
       {formatUnreadBadge(count)}
     </span>

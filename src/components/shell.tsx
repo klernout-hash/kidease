@@ -30,14 +30,14 @@ import { ApplyReferral } from "@/components/apply-referral";
 import { KeyboardInset } from "@/components/keyboard-inset";
 import { FacebookEmailPrompt } from "@/components/facebook-email-prompt";
 import { FacebookRoleBoot } from "@/components/facebook-role-boot";
+import { cn } from "@/lib/utils";
 
 const SHELL_FRAME =
   "flex min-h-dvh min-h-[100dvh] w-full min-w-0 flex-col bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg";
 const APP_TAB_PAD = "[[data-channel=app]_&]:pb-[calc(4.75rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]";
 const HEADER_BAR =
   "ke-site-header sticky top-[var(--ke-view-as-h,0px)] z-40 border-b border-border bg-bg/95 pt-[var(--ke-safe-top,env(safe-area-inset-top))] backdrop-blur-md";
-
-export function Shell({ children, headerCategories, fitViewport = false }: { children: ReactNode; headerCategories?: ReactNode; fitViewport?: boolean }) {
+export function Shell({ children, headerCategories, fitViewport = false, pageClassName }: { children: ReactNode; headerCategories?: ReactNode; fitViewport?: boolean; pageClassName?: string }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useCurrentUserState();
@@ -113,12 +113,12 @@ export function Shell({ children, headerCategories, fitViewport = false }: { chi
         <KeyboardInset />
         <header className={HEADER_BAR}>
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
-            <Link to={homeTo} className="shrink-0" aria-label="KidEase">
+            <Link to={homeTo} className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
           </div>
         </header>
-        <div className="ke-page min-h-0 min-w-0 flex-1" data-ke="page">
+        <div className={cn("ke-page min-h-0 min-w-0 flex-1", pageClassName)} data-ke="page">
           {children}
         </div>
       </div>
@@ -131,7 +131,7 @@ export function Shell({ children, headerCategories, fitViewport = false }: { chi
         <KeyboardInset />
         <header className={HEADER_BAR}>
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
-            <Link to={homeTo} className="shrink-0" aria-label="KidEase">
+            <Link to={homeTo} className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
             <div className="ml-auto">
@@ -140,7 +140,7 @@ export function Shell({ children, headerCategories, fitViewport = false }: { chi
           </div>
         </header>
         <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${APP_TAB_PAD}`}>
-          <div className="ke-page min-h-0 min-w-0 flex-1" data-ke="page">
+          <div className={cn("ke-page min-h-0 min-w-0 flex-1", pageClassName)} data-ke="page">
             {children}
           </div>
         </div>
@@ -156,7 +156,7 @@ export function Shell({ children, headerCategories, fitViewport = false }: { chi
         <div className="ke-gutter relative mx-auto min-w-0 max-w-6xl">
           <div className={`flex w-full min-w-0 items-center gap-3 max-md:gap-2 ${headerCategories ? "min-h-14 flex-wrap md:min-h-16 md:flex-nowrap" : "h-14 max-md:h-auto max-md:min-h-14 md:h-16"}`}>
             {menuLeaf ? <MenuLeafBack /> : null}
-            <Link to={homeTo} className="relative z-20 shrink-0" aria-label="KidEase">
+            <Link to={homeTo} className="relative z-20 inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
             {headerCategories ? (
@@ -178,13 +178,16 @@ export function Shell({ children, headerCategories, fitViewport = false }: { chi
                 </Link>
               ) : null}
               <HeaderAccount />
-              <button
-                type="button"
+              <a
+                href={localePath("/menu", locale)}
+                data-ke="menu-trigger"
                 className="ke-web-only relative grid size-12 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation [[data-channel=website]_&]:grid"
                 aria-label={t("menu")}
                 aria-expanded={open}
                 aria-controls="ke-nav-drawer"
                 onClick={(e) => {
+                  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
                   e.stopPropagation();
                   setOpen(true);
                 }}
@@ -195,7 +198,7 @@ export function Shell({ children, headerCategories, fitViewport = false }: { chi
                   marker="menu-badge"
                   className="absolute right-0.5 top-0.5"
                 />
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -205,7 +208,7 @@ export function Shell({ children, headerCategories, fitViewport = false }: { chi
           <p className="text-sm text-fg">{t("guestViewBanner")}</p>
           <a
             href={hideAdmin ? NATIVE_ADMIN_NOTE_PATH : "/admin"}
-            className="mt-2 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
+            className="mt-2 inline-flex min-h-[44px] items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
             onClick={() => clearGuestViewCookie()}
           >
             {t("guestViewExit")}
@@ -220,7 +223,7 @@ export function Shell({ children, headerCategories, fitViewport = false }: { chi
           <p className="text-sm text-fg">{t("accountRestoreBody")}</p>
           <button
             type="button"
-            className="mt-2 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
+            className="mt-2 inline-flex min-h-[44px] items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
             onClick={() => {
               void restoreMyAccount()
                 .then(() => window.location.reload())
@@ -254,7 +257,7 @@ export function Shell({ children, headerCategories, fitViewport = false }: { chi
       <div data-ke="shell-content" className={`flex min-h-0 min-w-0 flex-1 flex-col ${hideTabs ? "" : APP_TAB_PAD}`}>
         <ApplyPendingShortlist />
         <ApplyReferral />
-        <div className="ke-page min-h-0 min-w-0 flex-1" data-ke="page">
+        <div className={cn("ke-page min-h-0 min-w-0 flex-1", pageClassName)} data-ke="page">
           {children}
           {hideFooter ? null : <SiteFooter />}
         </div>

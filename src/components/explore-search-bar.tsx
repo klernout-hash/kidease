@@ -223,10 +223,10 @@ export function ExploreSearchBar({
       data-ke="search-submit"
       className={
         compactSubmit
-          ? `grid shrink-0 place-items-center rounded-full bg-primary text-primary-fg shadow-card transition-colors duration-150 ease-out hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation ${
+          ? `grid min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full bg-primary text-primary-fg shadow-card transition-colors duration-150 ease-out hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation ${
               prominent ? "size-[44px]" : "size-12"
             }`
-          : "inline-flex h-11 shrink-0 touch-manipulation items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          : "inline-flex h-11 min-h-[44px] min-w-[44px] shrink-0 touch-manipulation items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
       }
       aria-label={t("findChildcare")}
     >
@@ -283,11 +283,11 @@ export function ExploreSearchBar({
           onSubmit(values.where);
         }}
       >
-        <div className="flex min-h-14 w-full items-center gap-2 rounded-full bg-surface py-1 pl-4 pr-1.5 shadow-card ring-1 ring-border">
+        <div className="flex min-h-14 w-full items-center gap-[8px] rounded-full bg-surface py-1 pl-4 pr-1.5 shadow-card ring-1 ring-border">
           <button
             type="button"
             data-ke="search-pill"
-            className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left"
+            className="flex min-h-[44px] min-w-[44px] flex-1 items-center gap-3 text-left"
             aria-expanded={false}
             aria-label={t("searchBarAria")}
             onClick={() => setExpanded(true)}
@@ -304,7 +304,7 @@ export function ExploreSearchBar({
           <button
             type="submit"
             data-ke="search-submit"
-            className="inline-flex h-11 shrink-0 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            className="inline-flex h-11 min-h-[44px] min-w-[44px] shrink-0 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
           >
             {t("searchSubmit")}
           </button>
@@ -432,7 +432,7 @@ export function ExploreSearchBar({
         <div className={cn(segmentClass("when", 1), prominent && "lg:min-w-0")}>
           <button
             type="button"
-            className="w-full min-w-0 text-left"
+            className="min-h-[44px] w-full min-w-0 text-left"
             aria-expanded={active === "when"}
             aria-controls={whenPanelId}
             onClick={() => setActive((cur) => (cur === "when" ? null : "when"))}

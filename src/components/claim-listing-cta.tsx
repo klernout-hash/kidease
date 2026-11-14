@@ -31,10 +31,10 @@ export function ClaimListingCta({
         capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("claim_cta", { source }));
       }}
       className={cn(
-        "box-border max-w-full bg-[#1f9d55] text-center font-semibold text-white touch-manipulation hover:bg-[#187a43] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f9d55]/50",
+        "box-border inline-flex min-h-[44px] min-w-[44px] max-w-full items-center justify-center bg-surface text-center font-semibold text-fg ring-1 ring-border touch-manipulation hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
         onCard
-          ? "block w-fit max-w-full break-words min-h-8 self-start rounded-full px-2.5 py-1 text-left text-[11px] leading-4"
-          : "inline-flex min-h-11 items-center justify-center rounded-[14px] px-4 text-sm shadow-card",
+          ? "w-fit break-words self-start rounded-full px-2.5 py-1 text-[11px] leading-4"
+          : "rounded-md px-4 text-sm shadow-card",
         className,
       )}
     >

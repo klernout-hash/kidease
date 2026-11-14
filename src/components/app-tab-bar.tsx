@@ -98,11 +98,11 @@ export function AppTabBar() {
       <nav
         data-ke="app-tab-bar"
         data-bar={storeTabs ? "store" : kind}
-        className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-slate-200/80 bg-surface pb-[var(--ke-safe-bottom,env(safe-area-inset-bottom))] pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] dark:border-white/15 [[data-channel=app]_&]:block"
+        className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface pb-[var(--ke-safe-bottom,env(safe-area-inset-bottom))] pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] [[data-channel=app]_&]:block"
       >
         <div
           className={cn(
-            "mx-auto grid max-w-lg px-1 pt-1 md:max-w-3xl",
+            "mx-auto grid max-w-lg gap-x-[8px] px-1 pt-1 md:max-w-3xl",
             storeTabs
               ? "grid-cols-4"
               : airbnb && (kind === "parent" || kind === "guest")
@@ -343,7 +343,7 @@ function Tab({
       data-nav={marker}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "ke-press relative flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 text-center text-[0.72rem] font-medium leading-[1.15] tracking-[-0.01em] touch-manipulation",
+        "ke-press relative flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 text-center text-[0.72rem] font-medium leading-[1.15] tracking-[-0.01em] touch-manipulation",
         active ? "text-primary" : "text-muted",
       )}
     >

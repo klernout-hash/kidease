@@ -14,6 +14,7 @@ import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
 import { isDoorPin } from "@/lib/card-distance";
 import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
+import { useSearchCardOrigin } from "@/components/search-card-context";
 import type { CopyKey } from "@/lib/copy";
 import { parentDistanceLabel } from "@/lib/distance-label";
 import { originIsParentLocation } from "@/lib/presence";
@@ -176,6 +177,7 @@ function ListingAnchor({
   return (
     <Link
       to={localePath(`/daycare/${slug}`, locale)}
+      preload="intent"
       className={className}
       data-ke={dataKe}
       aria-label={label}
@@ -243,8 +245,11 @@ export const DaycareCard = memo(function DaycareCard({
     claimStatus: item.claimStatus,
     claimedAt: item.claimedAt,
   });
-  const origin = useAppStore((s) => s.origin);
-  const originSource = useAppStore((s) => s.originSource);
+  const storedOrigin = useAppStore((s) => s.origin);
+  const storedOriginSource = useAppStore((s) => s.originSource);
+  const searchCardOrigin = useSearchCardOrigin();
+  const origin = searchCardOrigin?.origin ?? storedOrigin;
+  const originSource = searchCardOrigin ? searchCardOrigin.source : storedOriginSource;
   const sort = useAppStore((s) => s.sort);
   const rawKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
   const distanceKm = isDoorPin(item.lat, item.lng) ? rawKm : null;

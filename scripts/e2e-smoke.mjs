@@ -79,6 +79,7 @@ mkdirSync(dirname(outDir), { recursive: true });
 const verdictPath = join(dirname(outDir), "verdict.json");
 
 const timeoutMs = Number(process.env.E2E_TIMEOUT_MS || 45000);
+const HEADER_MENU_SELECTOR = 'header [aria-controls="ke-nav-drawer"]';
 const results = [];
 let previewChild = null;
 
@@ -173,14 +174,20 @@ async function pinWebkitE2eSession(context, base, response) {
 }
 
 async function openHeaderMenu(page) {
-  const menu = page.locator('header button[aria-label="Menu"]');
+  const menu = page.locator(HEADER_MENU_SELECTOR);
   const drawer = page.locator("#ke-nav-drawer");
-  await menu.first().waitFor({ timeout: timeoutMs });
+  await menu.first().waitFor({ state: "visible", timeout: timeoutMs });
+  // This fixture inspects the drawer. A pre-hydration link click instead opens /menu.
+  await page.waitForFunction((selector) => {
+    const element = document.querySelector(selector);
+    const key = element && Object.keys(element).find((name) => name.startsWith("__reactProps$"));
+    return Boolean(key && typeof element[key]?.onClick === "function");
+  }, HEADER_MENU_SELECTOR, { timeout: timeoutMs });
   let lastError = null;
   for (let attempt = 0; attempt < 8; attempt += 1) {
     if (await drawer.isVisible().catch(() => false)) return;
     try {
-      // A layout pass can leave the button without a box. Force still throws then.
+      // A layout pass can leave the trigger without a box. Force still throws then.
       await menu.first().click({ force: true, timeout: 2000 });
     } catch (error) {
       lastError = error;
@@ -250,9 +257,9 @@ async function upgradePlaces(page) {
   await openAccountGroup(page, '[data-ke="desk-desktop-nav"]');
   const panel = ((await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]').innerText().catch(() => "")) || "").trim();
   let drawer = "";
-  const menu = page.locator('header button[aria-label="Menu"]');
+  const menu = page.locator(HEADER_MENU_SELECTOR);
   if (await menu.isVisible().catch(() => false)) {
-    await menu.click({ force: true });
+    await openHeaderMenu(page);
     await openAccountGroup(page, "#ke-nav-drawer");
     const row = page.locator('#ke-nav-drawer [data-nav="upgrade"]');
     await row.waitFor({ timeout: 8000 }).catch(() => {});
@@ -267,7 +274,7 @@ async function shot(page, name, width, content) {
   // Channel is chosen once at document load. Reload so 390px shots use the app bar.
   await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
   const ready =
-    width < 1024 ? page.locator('[data-ke="app-tab-bar"]') : page.locator('header button[aria-label="Menu"]');
+    width < 1024 ? page.locator('[data-ke="app-tab-bar"]') : page.locator(HEADER_MENU_SELECTOR);
   await ready.first().waitFor({ timeout: timeoutMs }).catch(() => {});
   if (content) await page.locator(content).first().waitFor({ timeout: timeoutMs }).catch(() => {});
   const dir = join(dirname(outDir), "shots");
@@ -467,9 +474,9 @@ async function runRoleFixture(page, base) {
     await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await shot(page, "guest-desktop", 1280, "h1");
     await page.keyboard.press("Escape");
-    const menu = page.locator('header button[aria-label="Menu"]');
+    const menu = page.locator(HEADER_MENU_SELECTOR);
     if (await menu.isVisible().catch(() => false)) {
-      await menu.click({ timeout: 8000, force: true });
+      await openHeaderMenu(page);
       const drawerNav = page.locator("#ke-nav-drawer [data-ke='role-nav']");
       await drawerNav.waitFor({ timeout: 8000 }).catch(() => {});
       await page.locator('#ke-nav-drawer a[href="/plans"]').waitFor({ timeout: 8000 }).catch(() => {});
@@ -617,7 +624,7 @@ async function runRoleFixture(page, base) {
     );
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
-    const phoneMenuButton = page.locator('header button[aria-label="Menu"]');
+    const phoneMenuButton = page.locator(HEADER_MENU_SELECTOR);
     const phoneMenuHidden = !(await phoneMenuButton.isVisible().catch(() => false));
     const requestsBadge = page.locator('[data-ke="app-tab-bar"] [data-nav="bookings"] [data-ke="count-badge"]');
     await requestsBadge.waitFor({ timeout: timeoutMs }).catch(() => {});
@@ -1601,7 +1608,7 @@ async function signOutFromMenu(page) {
   if ((page.viewportSize()?.width ?? 0) < 1024) {
     await page.setViewportSize({ width: 1280, height: 800 });
   }
-  const menu = page.locator('header button[aria-label="Menu"]').first();
+  const menu = page.locator(HEADER_MENU_SELECTOR).first();
   if (!(await menu.isVisible().catch(() => false))) {
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
   }
@@ -1688,7 +1695,7 @@ async function runSignedInSessions(page, base) {
       const reloaded = !/\/login\/?$/i.test(new URL(page.url()).pathname);
       record(`signed-in-reload-${tag}`, reloaded && (await pageIsQuiet(page)), { note: page.url() });
 
-      const menuLabel = await page.locator('header button[aria-controls="ke-nav-drawer"]').getAttribute("aria-label");
+      const menuLabel = await page.locator('header [aria-controls="ke-nav-drawer"]').getAttribute("aria-label");
       record(`signed-in-menu-${tag}`, menuLabel === item.menu, { note: menuLabel || "" });
 
       await page.goto(new URL(item.home, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });

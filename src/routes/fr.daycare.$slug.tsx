@@ -9,7 +9,7 @@ import { rethrowRouterControl } from "@/lib/listing-loader-errors";
 import { ListingNotFoundPage } from "@/components/page-not-found";
 import { getHiddenReviewRedirect, getListingSeo } from "@/lib/server/daycares";
 import { parseListingAsk } from "@/lib/lead-requests";
-import { SITEMAP_ORIGIN } from "@/lib/sitemap";
+import { SITEMAP_ORIGIN } from "@/lib/public-url";
 
 export const Route = createFileRoute("/fr/daycare/$slug")({
   validateSearch: (s: Record<string, unknown>) => {

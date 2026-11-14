@@ -157,7 +157,7 @@ describe("Sentry wiring", () => {
     const parsed = parseSentryDsn("https://abc123@o0.ingest.sentry.io/456");
     assert.equal(parsed?.key, "abc123");
     assert.match(parsed?.store ?? "", /\/api\/456\/store\/$/);
-    assert.match(read("src/client.tsx"), /import "\.\/instrument\.client"/);
+    assert.match(read("src/client.tsx"), /import \{ instrumentationReady \} from "\.\/instrument\.client"/);
     assert.match(read("src/server.ts"), /import "\.\/instrument\.server"/);
     assert.match(read("src/server.ts"), /flushSentry/);
     assert.match(read("package.json"), /"@sentry\/react": "\^11\./);
