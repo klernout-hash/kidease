@@ -10,6 +10,7 @@ import { getSql } from "@/lib/db";
 import { nid } from "@/lib/utils";
 import { subscriptionsEnabled } from "@/lib/features";
 import { pushArmed } from "@/lib/channel-readiness";
+import { pushLive } from "@/lib/push";
 import { isAllowedWebPushEndpoint } from "@/lib/web-push";
 import {
   ALERT_CATEGORIES,
@@ -28,20 +29,33 @@ import {
   type AlertPrefMap,
   type AlertVars,
 } from "@/lib/alert-push";
-import { ALERT_UNSUB_TTL_MS, signAlertUnsubToken, verifyAlertUnsubToken } from "@/lib/alert-push-token";
+import {
+  ALERT_UNSUB_TTL_MS,
+  signAlertUnsubToken,
+  verifyAlertUnsubToken,
+} from "@/lib/alert-push-token";
 import { sendPushNotification } from "@/lib/server/push.server";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
 
 export async function writeFamilyTimeZone(userId: string, timeZone: string): Promise<void> {
   const sql = await getSql();
-  await sql`update profiles set time_zone = ${timeZone} where user_id = ${userId}`.catch(() => undefined);
+  await sql`update profiles set time_zone = ${timeZone} where user_id = ${userId}`.catch(
+    () => undefined,
+  );
 }
 
-export async function readFamilyTimeZone(sql: Sql, userId: string): Promise<string | null> {
+export async function readFamilyTimeZone(
+  sql: Sql,
+  userId: string,
+  strict = false,
+): Promise<string | null> {
   const rows = await sql<{ time_zone: string | null }>`
     select time_zone from profiles where user_id = ${userId} limit 1
-  `.catch(() => [] as Array<{ time_zone: string | null }>);
+  `.catch((error) => {
+    if (strict) throw error;
+    return [] as Array<{ time_zone: string | null }>;
+  });
   const zone = (rows[0]?.time_zone || "").trim();
   return zone || null;
 }
@@ -90,6 +104,8 @@ export type AlertDispatchResult = {
   reason?: string;
   pushed: boolean;
   emailed: boolean;
+  /** Present on isolated dispatches; fixed labels never contain recipient data. */
+  errors?: string[];
 };
 
 type OutboxRow = {
@@ -106,12 +122,13 @@ type OutboxRow = {
 
 let ensured = false;
 
-async function ensure(sql: Sql) {
+async function ensure(sql: Sql, strict = false) {
   if (ensured) return;
   try {
     await sql.query(ENSURE_SQL);
     ensured = true;
-  } catch {
+  } catch (error) {
+    if (strict) throw error;
     /* retry on the next call */
   }
 }
@@ -121,7 +138,10 @@ function flagOn(value: unknown): boolean {
 }
 
 function appOrigin() {
-  return (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://www.kidease.ca").replace(/\/$/, "");
+  return (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://www.kidease.ca").replace(
+    /\/$/,
+    "",
+  );
 }
 
 function absoluteHref(href: string): string {
@@ -139,12 +159,15 @@ export function alertUnsubUrl(userId: string, category: AlertCategory): string {
   return `${appOrigin()}/unsubscribe?token=${encodeURIComponent(token)}`;
 }
 
-export async function readAlertPrefs(userId: string): Promise<AlertPrefMap> {
+export async function readAlertPrefs(userId: string, strict = false): Promise<AlertPrefMap> {
   const sql = await getSql();
-  await ensure(sql);
+  await ensure(sql, strict);
   const rows = await sql<{ category: string; enabled: number | boolean }>`
     select category, enabled from notification_prefs where user_id = ${userId}
-  `.catch(() => [] as { category: string; enabled: number | boolean }[]);
+  `.catch((error) => {
+    if (strict) throw error;
+    return [] as { category: string; enabled: number | boolean }[];
+  });
   const out = {} as AlertPrefMap;
   for (const category of ALERT_CATEGORIES) out[category] = true;
   for (const row of rows) {
@@ -174,11 +197,19 @@ export async function writeAlertPrefs(
   return readAlertPrefs(userId);
 }
 
-async function localeFor(sql: Sql, userId: string, explicit?: AlertLocale): Promise<AlertLocale> {
+async function localeFor(
+  sql: Sql,
+  userId: string,
+  explicit?: AlertLocale,
+  strict = false,
+): Promise<AlertLocale> {
   if (explicit) return explicit;
   const rows = await sql<{ locale: string | null }>`
     select locale from profiles where user_id = ${userId} limit 1
-  `.catch(() => [] as { locale: string | null }[]);
+  `.catch((error) => {
+    if (strict) throw error;
+    return [] as { locale: string | null }[];
+  });
   return normalizeAlertLocale(rows[0]?.locale);
 }
 
@@ -193,7 +224,10 @@ function webPushPath(href: string): string {
   }
 }
 
-async function deliverChannels(row: OutboxRow): Promise<{ pushed: boolean; emailed: boolean }> {
+async function deliverChannels(
+  row: OutboxRow,
+  errors?: string[],
+): Promise<{ pushed: boolean; emailed: boolean }> {
   const category = isAlertCategory(row.category) ? row.category : null;
   const href = absoluteHref(safeAlertHref(row.href));
   const push = await sendPushNotification({
@@ -201,14 +235,28 @@ async function deliverChannels(row: OutboxRow): Promise<{ pushed: boolean; email
     title: row.title,
     body: row.body,
     url: href,
-  }).catch(() => null);
+  }).catch(() => {
+    errors?.push("native_push_failed");
+    return null;
+  });
+  if (errors) {
+    if (push?.ok && push.failed > 0) errors.push("native_push_failed");
+    else if (push && !push.ok && pushLive()) errors.push("native_push_failed");
+  }
   const { sendWebPushToUser } = await import("@/lib/server/web-push-send");
-  const web = await sendWebPushToUser({
-    userId: row.user_id,
-    title: row.title,
-    body: row.body,
-    url: webPushPath(row.href),
-  }).catch(() => ({ sent: 0 }));
+  const web = await sendWebPushToUser(
+    {
+      userId: row.user_id,
+      title: row.title,
+      body: row.body,
+      url: webPushPath(row.href),
+    },
+    errors ? { strictQuery: true } : undefined,
+  ).catch(() => {
+    errors?.push("web_push_failed");
+    return { sent: 0, failed: 0, reason: "error" };
+  });
+  if (web.failed > 0 || web.reason === "key_mismatch") errors?.push("web_push_failed");
   const pushed = Boolean(push && push.ok && push.sent > 0) || web.sent > 0;
   let emailed = false;
   if (!pushed && category && flagOn(row.email_fallback)) {
@@ -237,7 +285,8 @@ async function sendFallbackEmail(row: OutboxRow, href: string): Promise<boolean>
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
   const { brandedNotice } = await import("@/lib/email-layout");
   const blob = `${row.title}\n${row.body}`;
-  const aboutTestListing = /[([]\s*(qa|test)\s*[)\]]/i.test(blob) || /\bkidease\s+test\b/i.test(blob);
+  const aboutTestListing =
+    /[([]\s*(qa|test)\s*[)\]]/i.test(blob) || /\bkidease\s+test\b/i.test(blob);
   const sent = await sendTransactionalMail({
     purpose: "customer_alert",
     to: email,
@@ -250,17 +299,25 @@ async function sendFallbackEmail(row: OutboxRow, href: string): Promise<boolean>
       heading: letter.subject,
       text: letter.text,
       locale: locale === "fr" ? "fr" : "en",
-      cta: /^https:\/\//i.test(href) ? { label: locale === "fr" ? "Ouvrir" : "Open", href } : undefined,
+      cta: /^https:\/\//i.test(href)
+        ? { label: locale === "fr" ? "Ouvrir" : "Open", href }
+        : undefined,
     }),
   }).catch(() => null);
   return sent?.status === "sent";
 }
 
-async function markSent(sql: Sql, id: string) {
-  await sql`update notification_outbox set sent_at = now() where id = ${id}`.catch(() => undefined);
+async function markSent(sql: Sql, id: string, strict = false) {
+  await sql`update notification_outbox set sent_at = now() where id = ${id}`.catch((error) => {
+    if (strict) throw error;
+  });
 }
 
-async function deliverStored(sql: Sql, row: OutboxRow, now: Date): Promise<{ pushed: boolean; emailed: boolean }> {
+async function deliverStored(
+  sql: Sql,
+  row: OutboxRow,
+  now: Date,
+): Promise<{ pushed: boolean; emailed: boolean }> {
   const prefs = await readAlertPrefs(row.user_id);
   const zone = await readFamilyTimeZone(sql, row.user_id);
   const stored = isAlertCategory(row.category) ? prefs[row.category] : false;
@@ -301,7 +358,7 @@ export async function drainAlertOutbox(opts?: { now?: Date }): Promise<{ drained
   return { drained };
 }
 
-export async function dispatchCustomerAlert(input: {
+type CustomerAlertInput = {
   userId: string;
   category: AlertCategory;
   vars?: AlertVars;
@@ -310,18 +367,46 @@ export async function dispatchCustomerAlert(input: {
   emailFallback?: boolean;
   locale?: AlertLocale;
   now?: Date;
-}): Promise<AlertDispatchResult> {
+};
+
+export async function dispatchCustomerAlert(
+  input: CustomerAlertInput,
+): Promise<AlertDispatchResult> {
+  return dispatchAlert(input, false);
+}
+
+/** Deliver this tour alert only. Never visit the shared outbox drain. */
+export async function dispatchTourCustomerAlert(
+  input: Omit<CustomerAlertInput, "category" | "emailFallback"> & {
+    category: "tour" | "enquiry";
+    emailFallback?: false;
+  },
+): Promise<AlertDispatchResult & { ok: boolean; errors: string[] }> {
+  const result = await dispatchAlert(input, true);
+  const errors = result.errors ?? (result.reason === "error" ? ["alert_dispatch_failed"] : []);
+  return { ...result, ok: errors.length === 0, errors };
+}
+
+async function dispatchAlert(
+  input: CustomerAlertInput,
+  isolated: boolean,
+): Promise<AlertDispatchResult> {
   const userId = String(input.userId || "").trim();
   if (!userId || userId.startsWith("guest:")) {
     return { status: "skipped", reason: "no_user", pushed: false, emailed: false };
   }
+  const errors: string[] = [];
+  let phase = "alert_dispatch_failed";
   try {
     const now = input.now ?? new Date();
-    await drainAlertOutbox({ now });
+    if (!isolated) await drainAlertOutbox({ now });
+    phase = "alert_database_failed";
     const sql = await getSql();
-    await ensure(sql);
-    const prefs = await readAlertPrefs(userId);
-    const zone = await readFamilyTimeZone(sql, userId);
+    await ensure(sql, isolated);
+    phase = "alert_preferences_failed";
+    const prefs = await readAlertPrefs(userId, isolated);
+    phase = "alert_time_zone_failed";
+    const zone = await readFamilyTimeZone(sql, userId, isolated);
     const decision = decideCustomerAlert({
       category: input.category,
       prefEnabled: prefEnabled(prefs[input.category]),
@@ -331,13 +416,17 @@ export async function dispatchCustomerAlert(input: {
     if (decision.action === "skip") {
       return { status: "skipped", reason: decision.reason, pushed: false, emailed: false };
     }
-    const locale = await localeFor(sql, userId, input.locale);
+    phase = "alert_locale_failed";
+    const locale = await localeFor(sql, userId, input.locale, isolated);
     const copy = alertPushCopy(input.category, locale, input.vars);
     const href = safeAlertHref(input.href);
-    const dedupeKey = String(input.dedupeKey || "").trim().slice(0, 180);
+    const dedupeKey = String(input.dedupeKey || "")
+      .trim()
+      .slice(0, 180);
     if (!dedupeKey) return { status: "skipped", reason: "dedupe", pushed: false, emailed: false };
     const sendAfter = decision.action === "hold" ? nextAlertSendAt(now, zone) : now;
     const id = nid("nao");
+    phase = "alert_outbox_insert_failed";
     const inserted = await sql<{ id: string }>`
       insert into notification_outbox (
         id, user_id, category, locale, title, body, href, dedupe_key,
@@ -348,29 +437,51 @@ export async function dispatchCustomerAlert(input: {
       )
       on conflict (user_id, dedupe_key) do nothing
       returning id
-    `.catch(() => [] as { id: string }[]);
-    if (!inserted[0]) return { status: "skipped", reason: "duplicate", pushed: false, emailed: false };
-    if (decision.action === "hold") return { status: "held", pushed: false, emailed: false };
-    const sent = await deliverChannels({
-      id,
-      user_id: userId,
-      category: input.category,
-      locale,
-      title: copy.title,
-      body: copy.body,
-      href,
-      critical: isCriticalAlert(input.category) ? 1 : 0,
-      email_fallback: input.emailFallback ? 1 : 0,
+    `.catch((error) => {
+      if (isolated) throw error;
+      return [] as { id: string }[];
     });
-    await markSent(sql, id);
-    return { status: "delivered", pushed: sent.pushed, emailed: sent.emailed };
+    if (!inserted[0])
+      return { status: "skipped", reason: "duplicate", pushed: false, emailed: false };
+    if (decision.action === "hold") return { status: "held", pushed: false, emailed: false };
+    phase = "alert_channels_failed";
+    const sent = await deliverChannels(
+      {
+        id,
+        user_id: userId,
+        category: input.category,
+        locale,
+        title: copy.title,
+        body: copy.body,
+        href,
+        critical: isCriticalAlert(input.category) ? 1 : 0,
+        email_fallback: input.emailFallback ? 1 : 0,
+      },
+      isolated ? errors : undefined,
+    );
+    phase = "alert_outbox_completion_failed";
+    await markSent(sql, id, isolated);
+    return {
+      status: "delivered",
+      pushed: sent.pushed,
+      emailed: sent.emailed,
+      ...(isolated ? { errors: [...new Set(errors)] } : {}),
+    };
   } catch (err) {
     console.error("[kidease-alert] dispatch failed", err instanceof Error ? err.name : "error");
-    return { status: "skipped", reason: "error", pushed: false, emailed: false };
+    return {
+      status: "skipped",
+      reason: "error",
+      pushed: false,
+      emailed: false,
+      ...(isolated ? { errors: [...new Set([...errors, phase])] } : {}),
+    };
   }
 }
 
-export async function applyAlertUnsubscribeToken(token: string): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function applyAlertUnsubscribeToken(
+  token: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const secret = (process.env.BETTER_AUTH_SECRET || "").trim();
   const payload = verifyAlertUnsubToken(token, secret);
   if (!payload) return { ok: false, error: "This unsubscribe link is invalid or expired." };

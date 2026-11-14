@@ -376,7 +376,7 @@ test("healthy guest cron keeps actual bearer-secret authorization on GET and POS
       assert.equal(response.status, valid ? 200 : 401);
       assert.equal(harness.state.jobs.length, valid ? 1 : 0);
       assert.equal(harness.state.securityEvents[0].kind, valid ? "tour_holds_run" : "tour_holds_denied");
-      assert.equal(harness.state.heartbeats.length, valid ? 1 : 0);
+      assert.equal(harness.state.heartbeats.length, 0, "a dry-run is not a live worker heartbeat");
       if (valid) assert.equal(harness.state.jobs[0].dryRun, true);
     }
   }
