@@ -179,7 +179,8 @@ test("search reads ranking-best-match on the server, not the browser SDK", () =>
   assert.match(search, /useRankingBestMatchFlag/);
   assert.doesNotMatch(search, /isPostHogFlagEnabled/);
   assert.doesNotMatch(search, /getPostHog/);
-  assert.match(hook, /readAiFeatureFlags/);
+  assert.match(hook, /readClientAiFlags/);
+  assert.match(read("src/lib/ai/client-flags.ts"), /readAiFeatureFlags/);
   assert.match(hook, /rankingFlagOn/);
   assert.doesNotMatch(hook, /rankingBucket/);
   assert.doesNotMatch(hook, /isPostHogFlagEnabled/);
@@ -195,7 +196,8 @@ test("the quiz and the writer stay hidden until the real flag is read", () => {
   const writer = read("src/components/listing-writer.tsx");
   assert.match(hook, /useState\(false\)/);
   assert.match(hook, /aiFeatureVisible/);
-  assert.match(hook, /readAiFeatureFlags/);
+  assert.match(hook, /readClientAiFlags/);
+  assert.match(read("src/lib/ai/client-flags.ts"), /readAiFeatureFlags/);
   assert.match(smart, /useAiFeatureFlag\(AI_FLAGS\.smartMatch\)/);
   assert.match(writer, /useAiFeatureFlag\(AI_FLAGS\.listingWriter\)/);
   // Find my match stays on the page even when the flag is off. The listing writer stays gated.

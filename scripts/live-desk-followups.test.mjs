@@ -13,7 +13,7 @@ function src(rel) {
 
 const PLAN = /Parent Plus|Plus parents|KidEase plan|forfait|abonnement/i;
 
-test("parent Pay hides plan sentences while subscriptions are off", () => {
+test("parent Pay stays focused on centre bills at either subscription setting", () => {
   for (const locale of ["en", "fr"]) {
     for (const live of [true, false]) {
       const lead = tx(locale, parentPayLeadKey(false, live));
@@ -21,7 +21,8 @@ test("parent Pay hides plan sentences while subscriptions are off", () => {
       assert.doesNotMatch(lead, PLAN);
       assert.doesNotMatch(empty, PLAN);
     }
-    assert.match(tx(locale, parentPayLeadKey(true, true)), PLAN);
+    assert.doesNotMatch(tx(locale, parentPayLeadKey(true, true)), PLAN);
+    assert.match(tx(locale, parentPayLeadKey(true, true)), /Stripe Checkout/);
   }
   assert.match(tx("en", "ledgerLiveParentBills"), /KidEase service fee/);
   assert.match(tx("en", "ledgerLiveParent"), /centre receives the full bill/);

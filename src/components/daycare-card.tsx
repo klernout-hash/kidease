@@ -1,22 +1,20 @@
 import { Link } from "@tanstack/react-router";
 import { Star } from "lucide-react";
-import { memo, type MouseEvent, type ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import type { DaycareCard as Card } from "@/lib/types";
 import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { SaveListingButton } from "@/components/save-listing-button";
-import { ClaimListingCta } from "@/components/claim-listing-cta";
-import { ShareListingButton } from "@/components/share-button";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { useRoleChrome } from "@/components/role-chrome";
 import { showsParentBrowseActions } from "@/lib/role-access";
-import { spotOfferCopy } from "@/lib/spot-offer-copy";
 import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
 import { isDoorPin } from "@/lib/card-distance";
 import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
+import { useSearchCardOrigin } from "@/components/search-card-context";
 import type { CopyKey } from "@/lib/copy";
 import { parentDistanceLabel } from "@/lib/distance-label";
 import { originIsParentLocation } from "@/lib/presence";
@@ -37,7 +35,6 @@ import { TrustBadge, TrustSignals } from "@/components/trust-badge";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { TopRatedBadge } from "@/components/top-rated-badge";
 import { MatchCue, UrgencyCue } from "@/components/rank-cues";
-import { CompareChip } from "@/components/compare-chip";
 import {
   canShowMatchScore,
   honestVacancy,
@@ -89,9 +86,9 @@ function whyMatchLine(
 }
 
 const LIVE_PILL =
-  "inline-flex items-center rounded-full bg-[#22C55E] font-bold leading-none text-[#052e16] shadow-[0_1px_3px_rgba(0,0,0,0.28)]";
+  "inline-flex items-center rounded-full bg-ok font-bold leading-none text-surface shadow-card";
 const FEE_PILL =
-  "inline-flex items-center rounded-full bg-[#1D4ED8] font-bold leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.28)]";
+  "inline-flex items-center rounded-full bg-primary font-bold leading-none text-primary-fg shadow-card";
 
 function CardPhotoBadges({
   item,
@@ -100,7 +97,6 @@ function CardPhotoBadges({
   live,
   showLivePill,
   licenseWarning,
-  clearShare = false,
   showSubsidy = true,
 }: {
   item: Card;
@@ -109,8 +105,6 @@ function CardPhotoBadges({
   live: boolean;
   showLivePill: boolean;
   licenseWarning: TrustBadgeModel | null;
-  /** Rail cards also place a share control beside the heart. */
-  clearShare?: boolean;
   showSubsidy?: boolean;
 }) {
   const { t } = useCopy();
@@ -119,7 +113,7 @@ function CardPhotoBadges({
     <div
       className={cn(
         "pointer-events-none absolute z-[2] flex flex-col items-start",
-        clearShare ? "max-w-[calc(100%-7.5rem)]" : "max-w-[calc(100%-4.25rem)]",
+        "max-w-[calc(100%-4.25rem)]",
         compact ? "left-2 top-2 gap-1" : "left-3 top-3 gap-1.5",
       )}
     >
@@ -137,7 +131,7 @@ function CardPhotoBadges({
       {hollowPhoto && live ? (
         <span
           className={cn(
-            "inline-flex rounded-full bg-black/40 font-normal text-white/80",
+            "inline-flex rounded-full bg-surface/95 font-normal text-fg shadow-card",
             compact ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-[10px]",
           )}
         >
@@ -162,18 +156,12 @@ function CardPhotoBadges({
 function ListingAnchor({
   slug,
   className,
-  search,
-  hash,
-  onClick,
   children,
   "data-ke": dataKe,
   label,
 }: {
   slug: string;
   className?: string;
-  search?: { ask: "info" | "tour" };
-  hash?: string;
-  onClick?: (event: MouseEvent) => void;
   children: ReactNode;
   "data-ke"?: string;
   label?: string;
@@ -189,12 +177,10 @@ function ListingAnchor({
   return (
     <Link
       to={localePath(`/daycare/${slug}`, locale)}
-      search={search}
-      hash={hash}
+      preload="intent"
       className={className}
       data-ke={dataKe}
       aria-label={label}
-      onClick={onClick}
     >
       {children}
     </Link>
@@ -249,7 +235,6 @@ export const DaycareCard = memo(function DaycareCard({
   const { t, locale } = useCopy();
   const role = useRoleChrome().role;
   const parentActions = showsParentBrowseActions(role);
-  const joinLabel = spotOfferCopy(locale).join;
   const name = displayCentreName(locale === "fr" ? item.nameFr : item.name);
   const live = Boolean(item.live);
   const offerClaim = publicBrowseClaim({
@@ -260,8 +245,11 @@ export const DaycareCard = memo(function DaycareCard({
     claimStatus: item.claimStatus,
     claimedAt: item.claimedAt,
   });
-  const origin = useAppStore((s) => s.origin);
-  const originSource = useAppStore((s) => s.originSource);
+  const storedOrigin = useAppStore((s) => s.origin);
+  const storedOriginSource = useAppStore((s) => s.originSource);
+  const searchCardOrigin = useSearchCardOrigin();
+  const origin = searchCardOrigin?.origin ?? storedOrigin;
+  const originSource = searchCardOrigin ? searchCardOrigin.source : storedOriginSource;
   const sort = useAppStore((s) => s.sort);
   const rawKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
   const distanceKm = isDoorPin(item.lat, item.lng) ? rawKm : null;
@@ -344,8 +332,8 @@ export const DaycareCard = memo(function DaycareCard({
               eager={eager}
               priority={priority}
               claim={offerClaim}
-              rounded="rounded-[14px]"
-              className="aspect-[4/3]"
+              rounded="rounded-2xl"
+              className="ke-card-photo"
             />
           </ListingAnchor>
           <CardPhotoBadges
@@ -424,44 +412,14 @@ export const DaycareCard = memo(function DaycareCard({
             <CardMicroPills item={item} />
           </div>
         </ListingAnchor>
-        <div className="mt-1 flex w-full min-w-0 flex-wrap items-center gap-2">
-          {parentActions ? (
-            <ListingAnchor
-              slug={item.slug}
-              search={{ ask: "tour" }}
-              data-ke="card-book-tour"
-              className="relative z-10 inline-flex min-h-11 items-center justify-center whitespace-normal rounded-[14px] bg-primary px-3 text-center text-[13px] font-semibold leading-tight text-primary-fg no-underline touch-manipulation"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {t("bookTour")}
-            </ListingAnchor>
-          ) : null}
-          {parentActions ? (
-            <ListingAnchor
-              slug={item.slug}
-              search={{ ask: "info" }}
-              data-ke="card-request-info"
-              className="relative z-10 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline touch-manipulation"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {t("cardRequestInfo")}
-            </ListingAnchor>
-          ) : null}
-          {parentActions ? (
-            <ListingAnchor
-              slug={item.slug}
-              hash="join-waitlist"
-              data-ke="card-join-waitlist"
-              className="relative z-10 inline-flex min-h-11 items-center justify-center rounded-full bg-surface px-3 text-center text-[13px] font-semibold leading-tight text-fg no-underline ring-1 ring-border touch-manipulation"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {joinLabel}
-            </ListingAnchor>
-          ) : null}
-          {offerClaim ? (
-            <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 min-h-11" />
-          ) : null}
-        </div>
+        <ListingAnchor
+          slug={item.slug}
+          data-ke="card-view-details"
+          label={`${t("viewDetails")} · ${name}`}
+          className="mt-2 inline-flex min-h-[44px] min-w-[44px] w-full items-center justify-center whitespace-normal rounded-md bg-primary px-3 text-center text-[13px] font-semibold leading-tight text-primary-fg no-underline touch-manipulation"
+        >
+          {t("viewDetails")}
+        </ListingAnchor>
       </article>
     );
   }
@@ -470,14 +428,14 @@ export const DaycareCard = memo(function DaycareCard({
     <article data-slug={item.slug} className="ke-tile group flex h-full min-w-0 w-full flex-col">
       <div className="relative">
         <ListingAnchor slug={item.slug} label={name} className="block text-inherit no-underline">
-          {/* card-photo:rail (4:3, object-cover) */}
+          {/* Rail and visual photos share the Recently Viewed picture box. */}
           <PhotoCarousel
             photos={photos}
             eager={eager}
             priority={priority}
             claim={offerClaim}
-            rounded="rounded-lg"
-            className="aspect-[4/3]"
+            rounded="rounded-2xl"
+            className="ke-card-photo"
           />
         </ListingAnchor>
         <CardPhotoBadges
@@ -487,23 +445,7 @@ export const DaycareCard = memo(function DaycareCard({
           live={live}
           showLivePill={showLivePill}
           licenseWarning={licenseWarning}
-          clearShare={!compact}
         />
-        {isSafeSitemapSlug(item.slug) && !compact ? (
-          <CompareChip
-            id={item.id}
-            slug={item.slug}
-            className="pointer-events-auto absolute bottom-2 right-2 z-20"
-          />
-        ) : null}
-        {isSafeSitemapSlug(item.slug) && !compact ? (
-          <ShareListingButton
-            slug={item.slug}
-            name={name}
-            appearance="photo"
-            className="pointer-events-auto absolute right-16 top-2 z-20"
-          />
-        ) : null}
         {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
       </div>
 
@@ -511,14 +453,14 @@ export const DaycareCard = memo(function DaycareCard({
         <div className="mt-1 flex flex-1 flex-col space-y-px text-fg">
           <div className="flex items-start gap-1" data-ke="card-name">
             <div className="flex min-w-0 flex-1 items-start gap-0.5">
-              <h3 className="min-w-0 truncate text-[12px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg dark:text-white">
+              <h3 className="min-w-0 truncate text-[12px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg">
                 {name}
               </h3>
               {verifiedCheck ? <VerifiedCheck className="shrink-0" /> : null}
             </div>
             {showParentAverage ? (
               <span className="mt-px inline-flex shrink-0 items-center gap-0.5 text-[12px] leading-none tabular-nums" title={t("parentReviews")}>
-                <Star className="size-2.5 fill-fg text-fg dark:fill-white dark:text-white" strokeWidth={0} />
+                <Star className="size-2.5 fill-fg text-fg" strokeWidth={0} />
                 <span className="font-semibold">{((item.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
                 <span className="font-normal text-muted">({item.parentReviewCount})</span>
               </span>
@@ -592,44 +534,14 @@ export const DaycareCard = memo(function DaycareCard({
           <TrustSignals item={item} surface="card" compact />
         </div>
       ) : null}
-      <div className="mt-1.5 flex w-full min-w-0 flex-wrap items-center gap-2">
-        {parentActions ? (
-          <ListingAnchor
-            slug={item.slug}
-            search={{ ask: "tour" }}
-            data-ke="card-book-tour"
-            className="relative z-10 inline-flex min-h-11 appearance-none items-center justify-center whitespace-normal rounded-[14px] border-0 bg-primary px-3 text-center text-[13px] font-semibold leading-tight text-primary-fg no-underline shadow-none touch-manipulation [-moz-appearance:none]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {t("bookTour")}
-          </ListingAnchor>
-        ) : null}
-        {parentActions ? (
-          <ListingAnchor
-            slug={item.slug}
-            search={{ ask: "info" }}
-            data-ke="card-request-info"
-            className="relative z-10 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline touch-manipulation"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {t("cardRequestInfo")}
-          </ListingAnchor>
-        ) : null}
-        {parentActions ? (
-          <ListingAnchor
-            slug={item.slug}
-            hash="join-waitlist"
-            data-ke="card-join-waitlist"
-            className="relative z-10 inline-flex min-h-11 items-center justify-center rounded-full bg-surface px-3 text-center text-[13px] font-semibold leading-tight text-fg no-underline ring-1 ring-border touch-manipulation"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {joinLabel}
-          </ListingAnchor>
-        ) : null}
-        {offerClaim ? (
-          <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 min-h-11" />
-        ) : null}
-      </div>
+      <ListingAnchor
+        slug={item.slug}
+        data-ke="card-view-details"
+        label={`${t("viewDetails")} · ${name}`}
+        className="mt-2 inline-flex min-h-[44px] min-w-[44px] w-full items-center justify-center whitespace-normal rounded-md bg-primary px-3 text-center text-[13px] font-semibold leading-tight text-primary-fg no-underline touch-manipulation"
+      >
+        {t("viewDetails")}
+      </ListingAnchor>
     </article>
   );
 });

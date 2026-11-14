@@ -66,13 +66,13 @@ function button(label: string, href: string): string {
 
 const FOOTER = {
   en: {
-    tag: "Licensed child care, easier to find. Free for families during our founding period.",
+    tag: "Licensed child care, easier to find. Search and messages at no charge.",
     unsub: "Unsubscribe",
     help: "Help",
     privacy: "Privacy",
   },
   fr: {
-    tag: "Des services de garde agréés, plus faciles à trouver. Gratuit pour les familles pendant notre période de lancement.",
+    tag: "Des services de garde agréés, plus faciles à trouver. Recherche et messages sans frais.",
     unsub: "Se désabonner",
     help: "Aide",
     privacy: "Confidentialité",

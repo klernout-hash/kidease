@@ -28,8 +28,8 @@ test("listing detail drops FAQ blocks and keeps chips plus Support links", () =>
 
 test("mobile listing CTAs use short labels that stay inside pills", () => {
   const listing = src("src/routes/daycare.$slug.tsx");
-  assert.match(listing, /searchNearbyShort/);
-  assert.match(listing, /claimCtaShort/);
+  assert.match(listing, /live \? t\("requestTour"\) : t\("requestInfo"\)/);
+  assert.match(listing, /claimFreeListing/);
   assert.match(listing, /listing-sticky-cta/);
   assert.match(listing, /ListingMoreActions/);
   assert.doesNotMatch(listing, /overflow-x-auto overscroll-x-contain/);

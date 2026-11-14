@@ -20,14 +20,23 @@ const stubs = {
 const hooks = registerHooks({
   resolve(specifier, context, nextResolve) {
     if (context.parentURL === workerUrl) {
-      if (stubs[specifier]) return { url: `data:text/javascript,${encodeURIComponent(stubs[specifier])}`, shortCircuit: true };
-      if (specifier === "@/lib/tour-hold") return { url: new URL("../src/lib/tour-hold.ts", import.meta.url).href, shortCircuit: true };
-      if (specifier === "@/lib/threads") return { url: new URL("../src/lib/threads.ts", import.meta.url).href, shortCircuit: true };
+      if (stubs[specifier])
+        return {
+          url: `data:text/javascript,${encodeURIComponent(stubs[specifier])}`,
+          shortCircuit: true,
+        };
+      if (specifier === "@/lib/tour-hold")
+        return {
+          url: new URL("../src/lib/tour-hold.ts", import.meta.url).href,
+          shortCircuit: true,
+        };
+      if (specifier === "@/lib/threads")
+        return { url: new URL("../src/lib/threads.ts", import.meta.url).href, shortCircuit: true };
     }
     return nextResolve(specifier, context);
   },
 });
-const { expireDueTourHolds, runExpireTourHoldsJob } = await import(workerUrl);
+const { expireDueTourHolds, runExpireTourHoldsJob, TourHoldExpiryError } = await import(workerUrl);
 after(() => {
   hooks.deregister();
   delete globalThis.__tourHoldWorkerTest;
@@ -58,7 +67,8 @@ async function fixture({ afterScan, beforeClaim, failScan = false, boundaryRows 
     insert into conversations select conversation_id, null from tour_requests;
     insert into lead_requests select id, 'pending' from tour_requests;
   `);
-  if (!boundaryRows) await pg.exec("update tour_requests set status = 'declined' where id = 'legacy'");
+  if (!boundaryRows)
+    await pg.exec("update tour_requests set status = 'declined' where id = 'legacy'");
   const calls = { queries: [], notices: [], syncs: [], reminders: [] };
   const run = async (text, values = []) => {
     calls.queries.push(text.trim());
@@ -79,24 +89,47 @@ async function fixture({ afterScan, beforeClaim, failScan = false, boundaryRows 
   globalThis.__tourHoldWorkerTest = {
     sql,
     nextId: 0,
-    notify: async (_sql, input) => { calls.notices.push(input); },
+    notify: async (_sql, input) => {
+      calls.notices.push(input);
+      return { ok: true, errors: [] };
+    },
     sync: async (_sql, id, status) => {
       calls.syncs.push({ id, status });
       await pg.query("update lead_requests set status = $1 where source_id = $2", [status, id]);
+      return { ok: true, errors: [] };
     },
-    reminders: async (input) => { calls.reminders.push(input); },
+    reminders: async (input) => {
+      calls.reminders.push(input);
+      return {
+        ok: true,
+        status: "flag_off",
+        dryRun: Boolean(input.dryRun),
+        due: 0,
+        eligible: 0,
+        sent: 0,
+        noticesConfirmed: 0,
+        markedSent: 0,
+        alreadyMarked: 0,
+        failures: { scan: 0, notice: 0, mark: 0, entry: 0 },
+      };
+    },
   };
   return {
     pg,
     calls,
-    async close() { await pg.exec("rollback"); await pg.close(); },
+    async close() {
+      await pg.exec("rollback");
+      await pg.close();
+    },
   };
 }
 
 function overlappingScans() {
   let arrivals = 0;
   let release;
-  const bothScanned = new Promise((resolve) => { release = resolve; });
+  const bothScanned = new Promise((resolve) => {
+    release = resolve;
+  });
   return async () => {
     arrivals += 1;
     if (arrivals === 2) release();
@@ -106,20 +139,38 @@ function overlappingScans() {
 
 async function assertNoExpiryEffects({ pg, calls }) {
   assert.equal((await pg.query("select count(*)::int as n from messages")).rows[0].n, 0);
-  assert.equal((await pg.query("select count(*)::int as n from conversations where last_at is not null")).rows[0].n, 0);
+  assert.equal(
+    (await pg.query("select count(*)::int as n from conversations where last_at is not null"))
+      .rows[0].n,
+    0,
+  );
   assert.deepEqual(calls.notices, []);
   assert.deepEqual(calls.syncs, []);
+}
+
+function assertSuccessfulPhase(result, expected) {
+  assert.equal(result.ok, expected.ok);
+  assert.equal(result.expired, expected.expired);
+  assert.equal(result.dryRun, expected.dryRun);
+  assert.equal(result.expiry.status, expected.dryRun ? "dry_run" : "complete");
+  assert.equal(result.expiry.claimed, expected.dryRun ? 0 : expected.expired);
+  assert.ok(Object.values(result.expiry.failures).every((count) => count === 0));
 }
 
 test("worker dry-run includes exact deadline and 48h fallback without writes or notices, and forwards reminder dry-run", async () => {
   const f = await fixture({ boundaryRows: true });
   try {
-    assert.deepEqual(await runExpireTourHoldsJob({ dryRun: true }), { ok: true, expired: 2, dryRun: true });
+    const result = await runExpireTourHoldsJob({ dryRun: true });
+    assertSuccessfulPhase(result, { ok: true, expired: 2, dryRun: true });
+    assert.equal(result.expiry.due, 2);
+    assert.equal(result.reminders.status, "flag_off");
     assert.equal(f.calls.queries.length, 1);
     assert.match(f.calls.queries[0], /^select /);
     await assertNoExpiryEffects(f);
     assert.deepEqual(f.calls.reminders, [{ dryRun: true }]);
-  } finally { await f.close(); }
+  } finally {
+    await f.close();
+  }
 });
 
 test("overlapping worker scans and a later duplicate run persist and notify each claimed hold only once", async () => {
@@ -128,36 +179,61 @@ test("overlapping worker scans and a later duplicate run persist and notify each
     const results = await Promise.all([expireDueTourHolds(), expireDueTourHolds()]);
     assert.deepEqual(results.map((r) => r.expired).sort(), [0, 1]);
     assert.equal((await f.pg.query("select count(*)::int as n from messages")).rows[0].n, 1);
-    assert.equal((await f.pg.query("select count(*)::int as n from conversations where last_at is not null")).rows[0].n, 1);
+    assert.equal(
+      (await f.pg.query("select count(*)::int as n from conversations where last_at is not null"))
+        .rows[0].n,
+      1,
+    );
     assert.deepEqual(f.calls.syncs, [{ id: "due", status: "expired" }]);
     assert.equal(f.calls.notices.length, 1);
     assert.equal(f.calls.notices[0].daycareId, "centre-a");
     assert.equal(f.calls.notices[0].parentUserId, "parent-a");
-    assert.equal((await f.pg.query("select status from lead_requests where source_id = 'due'")).rows[0].status, "expired");
-    assert.equal((await f.pg.query("select status from tour_requests where id = 'accepted'")).rows[0].status, "accepted");
-    assert.equal((await f.pg.query("select status from tour_requests where id = 'other'")).rows[0].status, "pending");
+    assert.equal(
+      (await f.pg.query("select status from lead_requests where source_id = 'due'")).rows[0].status,
+      "expired",
+    );
+    assert.equal(
+      (await f.pg.query("select status from tour_requests where id = 'accepted'")).rows[0].status,
+      "accepted",
+    );
+    assert.equal(
+      (await f.pg.query("select status from tour_requests where id = 'other'")).rows[0].status,
+      "pending",
+    );
     assert.equal((await expireDueTourHolds()).expired, 0);
     assert.equal(f.calls.notices.length, 1);
     assert.equal(f.calls.syncs.length, 1);
-  } finally { await f.close(); }
+  } finally {
+    await f.close();
+  }
 });
 
 test("worker rechecks both acceptance and renewed deadline after the due scan", async (t) => {
   for (const change of ["accepted", "renewed"]) {
     await t.test(change, async () => {
-      const f = await fixture({ afterScan: async (pg) => {
-        await pg.exec(change === "accepted"
-          ? "update tour_requests set status = 'accepted' where id = 'due'"
-          : "update tour_requests set hold_expires_at = now() + interval '48 hours' where id = 'due'");
-      } });
+      const f = await fixture({
+        afterScan: async (pg) => {
+          await pg.exec(
+            change === "accepted"
+              ? "update tour_requests set status = 'accepted' where id = 'due'"
+              : "update tour_requests set hold_expires_at = now() + interval '48 hours' where id = 'due'",
+          );
+        },
+      });
       try {
-        assert.deepEqual(await expireDueTourHolds(), { ok: true, expired: 0, dryRun: false });
+        const result = await expireDueTourHolds();
+        assertSuccessfulPhase(result, { ok: true, expired: 0, dryRun: false });
+        assert.equal(result.expiry.lostClaims, 1);
         await assertNoExpiryEffects(f);
-        const { rows } = await f.pg.query("select status, responded_at, centre_note from tour_requests where id = 'due'");
+        const { rows } = await f.pg.query(
+          "select status, responded_at, centre_note from tour_requests where id = 'due'",
+        );
         assert.equal(rows[0].status, change === "accepted" ? "accepted" : "pending");
         assert.equal(rows[0].responded_at, null);
         assert.equal(rows[0].centre_note, null);
-      } finally { await f.close(); }
+      } finally {
+        await f.close();
+      }
     });
   }
 });
@@ -167,13 +243,33 @@ test("failed worker scan or claim rejects instead of reporting success or notify
     await t.test(operation, async () => {
       const f = await fixture({
         failScan: operation === "scan",
-        beforeClaim: operation === "claim" ? async () => { throw new Error("synthetic claim failure"); } : undefined,
+        beforeClaim:
+          operation === "claim"
+            ? async () => {
+                throw new Error("synthetic claim failure");
+              }
+            : undefined,
       });
       try {
-        await assert.rejects(() => expireDueTourHolds(), new RegExp(`synthetic ${operation} failure`));
+        await assert.rejects(
+          () => expireDueTourHolds(),
+          (error) => {
+            assert.ok(error instanceof TourHoldExpiryError);
+            assert.equal(error.message, `Tour hold expiry ${operation} failed`);
+            assert.equal(error.result.ok, false);
+            assert.equal(error.result.expiry.failures[operation], 1);
+            assert.doesNotMatch(error.message, /synthetic/);
+            return true;
+          },
+        );
         await assertNoExpiryEffects(f);
-        assert.equal((await f.pg.query("select status from tour_requests where id = 'due'")).rows[0].status, "pending");
-      } finally { await f.close(); }
+        assert.equal(
+          (await f.pg.query("select status from tour_requests where id = 'due'")).rows[0].status,
+          "pending",
+        );
+      } finally {
+        await f.close();
+      }
     });
   }
 });
@@ -181,10 +277,23 @@ test("failed worker scan or claim rejects instead of reporting success or notify
 test("worker notify=false still persists the exact-boundary and legacy expiry without sending notices", async () => {
   const f = await fixture({ boundaryRows: true });
   try {
-    assert.deepEqual(await expireDueTourHolds({ notify: false }), { ok: true, expired: 2, dryRun: false });
+    assertSuccessfulPhase(await expireDueTourHolds({ notify: false }), {
+      ok: true,
+      expired: 2,
+      dryRun: false,
+    });
     assert.equal((await f.pg.query("select count(*)::int as n from messages")).rows[0].n, 2);
-    assert.equal((await f.pg.query("select count(*)::int as n from tour_requests where status = 'expired' and responded_at = now()")).rows[0].n, 2);
+    assert.equal(
+      (
+        await f.pg.query(
+          "select count(*)::int as n from tour_requests where status = 'expired' and responded_at = now()",
+        )
+      ).rows[0].n,
+      2,
+    );
     assert.equal(f.calls.syncs.length, 2);
     assert.deepEqual(f.calls.notices, []);
-  } finally { await f.close(); }
+  } finally {
+    await f.close();
+  }
 });

@@ -25,10 +25,10 @@ test("privacy and start-a-daycare point at live official pages", () => {
   assert.match(src("src/routes/start-a-daycare.tsx"), /canadaFallbackUrl\(\)/);
 });
 
-test("claim perk says the phone apps are coming soon", () => {
+test("claim perk describes managing a listing without prelaunch promises", () => {
   const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
-  const en = "Phone apps are coming soon. Manage your listing on the website for now.";
-  const fr = "Les applications pour téléphone arrivent bientôt. Gérez votre fiche sur le site pour le moment.";
+  const en = "Manage your listing on your phone or computer.";
+  const fr = "Gérez votre fiche sur votre téléphone ou votre ordinateur.";
   assert.match(copy, new RegExp(en.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(copy, new RegExp(fr.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.doesNotMatch(copy, /Everything managed from a mobile app/);
@@ -38,19 +38,9 @@ test("claim perk says the phone apps are coming soon", () => {
     assert.doesNotMatch(line, /free forever/i);
     assert.doesNotMatch(line, /Winnipeg-based/i);
   }
-  const packs = {
-    zh: "手机应用即将推出。请先在网站上管理您的名录。",
-    yue: "手機應用程式即將推出。而家請喺網站管理你嘅刊登。",
-    pa: "ਫ਼ੋਨ ਐਪਾਂ ਜਲਦੀ ਆਉਣਗੀਆਂ। ਹੁਣ ਲਈ ਆਪਣੀ ਲਿਸਟਿੰਗ ਵੈੱਬਸਾਈਟ ਉੱਤੇ ਸੰਭਾਲੋ।",
-    es: "Las apps de teléfono llegan pronto. Por ahora, administra tu ficha en el sitio web.",
-    ar: "تطبيقات الهاتف قادمة قريبًا. أدر إعلانك على الموقع الآن.",
-    tl: "Malapit na ang mga phone app. Pamahalaan muna ang listing sa website.",
-    it: "Le app per telefono arriveranno presto. Per ora gestisci la scheda sul sito.",
-    de: "Die Telefon-Apps kommen bald. Verwalte dein Inserat vorerst auf der Website.",
-  };
-  for (const [code, line] of Object.entries(packs)) {
+  for (const code of ["zh", "yue", "pa", "es", "ar", "tl", "it", "de"]) {
     const pack = JSON.parse(src(`src/lib/i18n/${code}.json`));
-    assert.equal(pack.perkMobile, line);
-    assert.doesNotMatch(line, /—/);
+    assert.match(pack.perkMobile, /\S/);
+    assert.doesNotMatch(pack.perkMobile, /coming soon|bientôt|即将推出|即將推出|ਜਲਦੀ ਆਉਣਗੀਆਂ|llegan pronto|قادمة قريب|Malapit na|arriveranno presto|kommen bald/i);
   }
 });

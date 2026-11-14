@@ -25,6 +25,7 @@ function localRoute(env = {}) {
     Request,
     Response,
     URL,
+    TourHoldExpiryError: class extends Error {},
     createFileRoute: (path) => {
       assert.equal(path, "/api/tour-holds");
       return (options) => options;
@@ -85,7 +86,7 @@ test("tour cron defers with both Inngest keys without invoking the worker or hea
       ok: true,
       skipped: true,
       via: "inngest",
-      reason: "inngest-owns-schedule",
+      reason: "inngest-configured-registration-unverified",
     });
     assert.deepEqual(calls.jobs, []);
     assert.deepEqual(calls.heartbeats, []);
@@ -118,13 +119,13 @@ test("tour cron passes dryRun through and force bypasses Inngest only after auth
     const response = await handlers.POST({ request: request(query) });
     assert.deepEqual(await response.json(), { ok: true, expired: 2, dryRun });
     assert.deepEqual(calls.jobs, [{ dryRun }]);
-    assert.deepEqual(calls.heartbeats, ["tour-holds"]);
+    assert.deepEqual(calls.heartbeats, dryRun ? [] : ["tour-holds"]);
     assert.equal(calls.events[0].detail, dryRun ? "dry-run" : "ok");
   }
   assert.equal(shouldDeferTourHoldsToInngest(request("?dryRun=0&force=0"), configured), true);
 });
 
-test("both schedules retain hourly :50 and register the expiry/reminder worker", async () => {
+test("both schedules retain hourly :50 while tour registration remains explicitly disabled", async () => {
   const vercel = JSON.parse(source("vercel.json"));
   assert.equal(
     vercel.crons.find((entry) => entry.path === "/api/tour-holds").schedule,
@@ -153,7 +154,13 @@ test("both schedules retain hourly :50 and register the expiry/reminder worker",
   assert.equal(worker.options.id, "tour-holds-hourly");
   assert.equal(worker.options.triggers[0].cron, TOUR_HOLDS_CRON);
   assert.equal(worker.options.triggers[1].event, TOUR_HOLDS_EVENT);
-  assert.match(functionsSource, /export const functions = \[[\s\S]*?expireTourHoldsHourly/);
+  assert.match(
+    functionsSource,
+    /export const functions = selectRegisteredFunctions\(searchAlertsHourly, expireTourHoldsHourly/,
+  );
+  assert.match(source("src/inngest/registry.ts"), /TOUR_SCHEDULER_ACTIVATED = false/);
+  assert.match(functionsSource, /tourActivated: TOUR_SCHEDULER_ACTIVATED/);
+  assert.match(functionsSource, /inngestConfigured: inngestConfigured\(\)/);
   assert.match(source("src/routes/api/inngest.ts"), /serve\(\{\s*client: inngest,\s*functions,/);
   const step = {
     run: async (name, fn) => {

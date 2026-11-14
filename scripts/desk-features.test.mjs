@@ -214,7 +214,7 @@ test("flags wrap the live surfaces and do not send", () => {
   assert.match(src("src/routes/parent.tsx"), /tab === "tours"/);
   const reminders = src("src/lib/server/tour-reminders.ts");
   const due = reminders.slice(reminders.indexOf("export async function sendDueTourReminders"));
-  assert.match(due, /if \(!tourCalendarEnabled\(\)\) return \{ due: 0, sent: 0 \}/);
+  assert.match(due, /if \(!tourCalendarEnabled\(\)\) return \{ \.\.\.result, status: "flag_off" \}/);
   assert.doesNotMatch(due, /sendTransactionalMail/);
   assert.doesNotMatch(due, /notifyConsentedUserSms/);
   assert.match(src("src/lib/server/voice-call.ts"), /VOICE_OFF/);

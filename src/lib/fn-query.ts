@@ -40,6 +40,9 @@ export function dedupedQuery<T>(
 
   const pending = fn()
     .then((value) => {
+      // A fresh read may have replaced this pending request. Its predecessor
+      // still settles for its caller, but no longer owns the shared cache.
+      if (store.get(key)?.pending !== pending) return value;
       if (opts?.cacheIf && !opts.cacheIf(value)) {
         store.delete(key);
         return value;
@@ -49,7 +52,7 @@ export function dedupedQuery<T>(
     })
     .catch((err: unknown) => {
       const cur = store.get(key) as Entry<T> | undefined;
-      if (cur?.pending) store.delete(key);
+      if (cur?.pending === pending) store.delete(key);
       throw err;
     });
 

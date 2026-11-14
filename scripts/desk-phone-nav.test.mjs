@@ -58,7 +58,7 @@ test("Parent primaries include Search and Messages; Daycare Messages stays a des
 test("phone primary pills share the same chrome for buttons and Messages links", () => {
   const shell = src("src/components/desk-shell.tsx");
   assert.match(shell, /function navClass/);
-  assert.match(shell, /inline-flex box-border h-11 min-h-11/);
+  assert.match(shell, /inline-flex box-border h-11 min-h-\[44px\] min-w-\[44px\]/);
   assert.match(shell, /no-underline/);
   const link = shell.slice(shell.indexOf("function DeskNavLink"), shell.indexOf("function itemIsOn"));
   const button = shell.slice(shell.indexOf("function DeskNavButton"), shell.indexOf("function DeskNavLink"));
@@ -81,7 +81,7 @@ test("phone desk destinations live in one hamburger, and the desktop sidebar sta
   assert.doesNotMatch(drawer, /plan && "max-md:hidden"/);
   assert.match(shell, /hidden text-\[11px\] font-medium uppercase[\s\S]*md:block/);
   assert.match(shell, /data-ke="desk-desktop-nav"/);
-  assert.match(shell, /hidden flex-col gap-0\.5 md:flex/);
+  assert.match(shell, /hidden flex-col gap-\[8px\] md:flex/);
   assert.equal(DESK_NAV.parent.find((item) => item.id === "explore")?.href, "/parent");
 });
 

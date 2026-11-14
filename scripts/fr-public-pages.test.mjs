@@ -56,7 +56,7 @@ test("public French routes share the English page and canonicalise to /fr", () =
   assert.equal(SITEMAP_STATIC_PATHS.includes("/plans"), false);
 });
 
-test("French SEO copy keeps the founding period and names KidEase as Canadian where we introduce it", () => {
+test("French SEO copy describes current free tools and names KidEase as Canadian", () => {
   const blob = [
     MARKETING_PAGE_SEO_FR.claim.description,
     MARKETING_PAGE_SEO_FR.plans.description,
@@ -64,7 +64,8 @@ test("French SEO copy keeps the founding period and names KidEase as Canadian wh
     MARKETING_PAGE_SEO_FR.team.description,
     MARKETING_PAGE_SEO_FR.verify.description,
   ].join("\n");
-  assert.match(blob, /période fondatrice gratuite/i);
+  assert.match(blob, /outils sans abonnement/i);
+  assert.doesNotMatch(blob, /période fondatrice gratuite/i);
   assert.match(blob, /entreprise canadienne/);
   assert.doesNotMatch(blob, /gratuit pour toujours|free forever|—/);
 });

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AdminFeatureControls } from "@/components/admin-feature-controls";
 import { Shell } from "@/components/shell";
@@ -10,9 +10,11 @@ export const Route = createFileRoute("/preview/feature-controls")({
     look: search.look === "dark" ? ("dark" as const) : ("light" as const),
     lang: search.lang === "fr" ? ("fr" as const) : ("en" as const),
   }),
-  loader: () => ({
-    open: !isVercelProduction() && String(process.env.KIDEASE_FEATURE_CONTROLS_PREVIEW || "") === "1",
-  }),
+  loader: () => {
+    const open = !isVercelProduction() && String(process.env.KIDEASE_FEATURE_CONTROLS_PREVIEW || "") === "1";
+    if (!open) throw notFound();
+    return { open };
+  },
   head: () => ({
     meta: [
       { title: "Feature controls preview · KidEase" },

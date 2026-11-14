@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { register } from "node:module";
 import {
   compactExploreSearch,
   dateAsksForOpenSpot,
@@ -15,6 +16,9 @@ import {
   startWindowForDate,
   titleCaseCitySlug,
 } from "../src/lib/explore-search.ts";
+
+await register(new URL("./alias-loader.mjs", import.meta.url), import.meta.url);
+const { filterSearchResults } = await import("../src/lib/search-result-filters.ts");
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -71,7 +75,10 @@ test("Explore search bar is an Airbnb-style pill wired to /search params", () =>
   assert.match(search, /ExploreSearchBar/);
   assert.match(search, /parseExploreSearchFields/);
   assert.match(search, /coerceSearchText\(incomingRaw\.q\)/);
-  assert.match(search, /matchesDaycareName/);
+  assert.match(search, /normalizeSearchResultFilters/);
+  assert.match(search, /name: nameQuery/);
+  assert.match(src("src/lib/search-result-filters.ts"), /filters\.name && !matchesDaycareName\(row, filters\.name\)/);
+  assert.match(src("src/lib/server/daycares.ts"), /filters\.name = query\.name \|\| filters\.name/);
   assert.match(search, /name: fields.name/);
   assert.match(search, /from: fields.from/);
   assert.match(search, /setView\(view === "map" \? "list" : "map"\)/);
@@ -97,9 +104,36 @@ test("a start date in the next 14 days asks for a confirmed opening", () => {
   const bar = src("src/components/explore-search-bar.tsx");
   const search = src("src/routes/search.tsx");
   assert.match(bar, /data-ke="when-calendar"/);
-  assert.match(search, /dateAsksForOpenSpot\(needBy\)/);
+  assert.match(search, /start: incoming\.start, needBy, name: nameQuery/);
+  assert.match(src("src/lib/search-result-filters.ts"), /dateAsksForOpenSpot\(filters\.needBy, new Date\(now\)\) && vacancy\.kind !== "open"/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /searchWhenNote:/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /confirmed opening/);
+});
+
+test("the shared result set combines name, age, and near-date opening predicates without reordering", () => {
+  const now = Date.parse("2026-11-12T12:00:00Z");
+  const origin = { lat: 49.5, lng: -117.28 };
+  const card = (id, changes = {}) => ({
+    id, slug: id, name: "Bright Childcare", nameFr: "Garderie Bright",
+    ...origin, city: "Nelson", province: "BC", amenities: "", hours: "08:00-17:00",
+    languages: "English", staffLanguages: [], photos: [], facilityType: "child_care_centre",
+    ageMinMonths: 0, ageMaxMonths: 60, agesKnown: true,
+    claimed: true, claimStatus: "verified", live: true, isTest: false,
+    availabilityKnown: true, lastVacancyUpdatedAt: new Date(now).toISOString(),
+    spotsInfant: 1, spotsToddler: 1, spotsPreschool: 1,
+    ...changes,
+  });
+  const rows = [
+    card("ranked-first"), card("stale", { lastVacancyUpdatedAt: "2020-01-01T00:00:00Z" }),
+    card("wrong-name", { name: "Other Care", nameFr: "Autre garderie" }),
+    card("school", { ageMinMonths: 72, ageMaxMonths: 120 }), card("ranked-last"),
+  ];
+  const matched = filterSearchResults(rows, {
+    origin, radiusKm: 25,
+    filters: { name: "Bright", ages: ["infant"], openings: true, needBy: "2026-11-13" },
+  }, now);
+  assert.deepEqual(matched.map((row) => row.id), ["ranked-first", "ranked-last"]);
+  assert.deepEqual(rows.map((row) => row.id), ["ranked-first", "stale", "wrong-name", "school", "ranked-last"]);
 });
 
 test("daycare name search lists public records, not only the current radius", () => {

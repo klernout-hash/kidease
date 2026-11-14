@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { guestDrawerMenuGroupsForShell } from "../src/lib/site-footer-nav.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = 8097;
@@ -60,8 +61,11 @@ test("native commerce is guarded in the page and the component", () => {
   const drawer = src("src/components/nav-drawer.tsx");
   assert.match(drawer, /useInNativeShell/);
   assert.match(drawer, /showPlans = !nativeShell && chrome\.subscriptionsEnabled === true/);
-  assert.match(drawer, /localePath\("\/plans"/);
-  assert.match(drawer, /marker="plans"/);
+  assert.match(drawer, /guestDrawerMenuGroupsForShell\(\{ native: nativeShell, plansOn: showPlans \}\)/);
+  const drawerLinks = (native, plansOn) => guestDrawerMenuGroupsForShell({ native, plansOn }).flatMap((group) => group.links);
+  assert.equal(drawerLinks(true, true).some((link) => link.to === "/plans"), false);
+  assert.equal(drawerLinks(false, false).some((link) => link.to === "/plans"), false);
+  assert.equal(drawerLinks(false, true).some((link) => link.to === "/plans"), true);
   const login = src("src/routes/login.tsx");
   assert.match(login, /ContinueAgeNotice/);
   assert.match(login, /confirmAdultAge/);

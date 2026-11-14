@@ -17,7 +17,7 @@ export function friendlyResetMailError(message?: string | null) {
     raw.includes("reset password isn't enabled") ||
     raw.includes("reset_password_disabled")
   ) {
-    return "We can’t email a reset link until mail is configured (RESEND_API_KEY or SENDGRID_API_KEY).";
+    return "Could not send a reset email.";
   }
   if (
     raw.includes("could not send") ||

@@ -7,6 +7,7 @@ import { mintThreadVoiceToken } from "@/lib/server/voice-call";
 import { primeCallMedia } from "@/lib/call-permissions";
 import { createCallRinger, type RingEnd } from "@/lib/call-ring-client";
 import { voiceErrorPlan, voiceTokenRefreshPlan } from "@/lib/voice-device";
+import { publicErrorMessage } from "@/lib/public-error";
 
 /**
  * Browser call through Twilio. The access token stays in memory.
@@ -37,7 +38,7 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
         if (!minted.ok) {
           if (!cancelled) {
             setPhase("error");
-            setNote(minted.error);
+            setNote(publicErrorMessage(minted.error, t("voiceFailed")));
             setBusy(false);
           }
           return;

@@ -4,6 +4,7 @@ import { featuredPinForCentre } from "@/lib/centre-addons";
 import { listingMatchesLocationLock, type LocationLock } from "@/lib/location-lock";
 import { isProviderPlanId, parseProviderAddons, type ProviderPlanId } from "@/lib/provider-plans";
 import { subscriptionsEnabled } from "@/lib/features";
+import { searchEvidence, type SearchBatch } from "@/lib/search-evidence";
 import {
   applyFoundingPeriodEntitlements,
   inquiryAtCap,
@@ -185,7 +186,13 @@ export async function overlayFeaturedCity<T extends { id: string; featuredCity?:
 
 /** Centres whose paid pin belongs in this city or province search. */
 export async function featuredCentreIdsInLock(lock: LocationLock | null): Promise<string[]> {
-  if (!lock || !stripeChargesLive()) return [];
+  return (await featuredCentreIdsInLockResult(lock)).rows;
+}
+
+/** Same eligibility query, with missing-supplement evidence for public search. */
+export async function featuredCentreIdsInLockResult(lock: LocationLock | null): Promise<SearchBatch<string>> {
+  const complete = () => searchEvidence({ status: "complete", source: "primary" });
+  if (!lock || !stripeChargesLive()) return { rows: [], evidence: complete() };
   try {
     const sql = await getSql();
     const rows = await sql<{ id: string; city: string | null; province: string | null }>`
@@ -202,10 +209,10 @@ export async function featuredCentreIdsInLock(lock: LocationLock | null): Promis
         )
       )
     `;
-    return rows.filter((row) => listingMatchesLocationLock(row, lock)).map((row) => row.id);
+    return { rows: rows.filter((row) => listingMatchesLocationLock(row, lock)).map((row) => row.id), evidence: complete() };
   } catch (err) {
     console.error("[kidease-featured] lock lookup failed", err);
-    return [];
+    return { rows: [], evidence: searchEvidence({ status: "partial", source: "primary", reasons: ["supplement-unavailable"], retryable: true }) };
   }
 }
 

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { SEARCH_PAGE_SIZE, pageFromSearch, parseSearchPage, sliceSearchPage } from "../src/lib/search-page.ts";
+import { SEARCH_PAGE_SIZE, SEARCH_PAGE_MAX, pageFromSearch, parseSearchPage, sliceSearchPage } from "../src/lib/search-page.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -51,6 +51,22 @@ test("page query stays in range", () => {
   assert.equal(pageFromSearch({}), 1);
 });
 
+test("the page safety boundary stops navigation without hiding the known total", () => {
+  const rows = Array.from({ length: 4000 }, (_, id) => ({ id }));
+  const before = sliceSearchPage(rows, SEARCH_PAGE_MAX - 1);
+  assert.equal(before.nextPage, SEARCH_PAGE_MAX);
+  assert.equal(before.hasMore, true);
+  const last = sliceSearchPage(rows, SEARCH_PAGE_MAX);
+  assert.equal(last.total, 4000);
+  assert.equal(last.items.length, SEARCH_PAGE_SIZE);
+  assert.equal(last.nextPage, null);
+  assert.equal(last.hasMore, false);
+  assert.equal(last.pageLimitReached, true);
+  assert.equal(sliceSearchPage(rows, SEARCH_PAGE_MAX + 1).nextPage, null);
+  const exhausted = sliceSearchPage(rows.slice(0, SEARCH_PAGE_MAX * SEARCH_PAGE_SIZE), SEARCH_PAGE_MAX);
+  assert.equal(exhausted.pageLimitReached, false);
+});
+
 test("public search routes page the payload and keep a crawlable next link", () => {
   const search = src("src/routes/search.tsx");
   const french = src("src/routes/fr.search.tsx");
@@ -66,8 +82,9 @@ test("public search routes page the payload and keep a crawlable next link", () 
   assert.match(french, /searchLoader/);
   assert.doesNotMatch(french, /searchDaycares\(/);
   assert.match(daycares, /export const searchDaycares = createServerFn\(\{ method: "GET" \}\)/);
-  assert.match(daycares, /sliceSearchPage\(narrowed, page\)/);
+  assert.match(daycares, /sliceSearchPage\(narrowed\.rows, page\)/);
+  assert.match(daycares, /evidence: narrowed\.evidence/);
   assert.match(daycares, /inclusiveFiltersEnabled\(\)/);
   assert.match(src("src/components/parent-desk.tsx"), /searchDaycares\(/);
-  assert.match(src("src/components/smart-match.tsx"), /searchDaycares\(/);
+  assert.match(src("src/components/smart-match-chat.tsx"), /searchDaycares\(/);
 });

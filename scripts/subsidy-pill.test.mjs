@@ -17,25 +17,42 @@ function row(overrides) {
   };
 }
 
-test("Saskatchewan shows $10 for licensed care under 6, not school-age only", () => {
-  const regina = row({ province: "SK", city: "Regina", amenities: "licensed" });
+test("Saskatchewan needs stored program proof and known under-six ages", () => {
+  const regina = row({ province: "SK", city: "Regina", amenities: "licensed", feeProgram: "sk-10-day", agesKnown: true, ageMinMonths: 0, ageMaxMonths: 60 });
   assert.equal(confirmedFeeProgramBadge(regina), "badgeTen");
-  assert.equal(listingSubsidy(regina)?.subsidy_label, "$10/day");
+  assert.equal(listingSubsidy(regina)?.subsidy_label, "$10 / Day");
+  assert.equal(listingSubsidy({ ...regina, feeProgram: null }), null);
+  assert.equal(listingSubsidy({ ...regina, agesKnown: false }), null);
+  assert.equal(listingSubsidy({ ...regina, ageMinMonths: null, ageMaxMonths: null }), null);
   assert.equal(
-    confirmedFeeProgramBadge(row({ province: "SK", amenities: "licensed,in-school", agesKnown: false })),
+    confirmedFeeProgramBadge({ ...regina, facilityType: "school_age" }),
     null,
   );
   assert.equal(
     confirmedFeeProgramBadge(
-      row({ province: "SK", amenities: "licensed", agesKnown: true, ageMinMonths: 72, ageMaxMonths: 144 }),
+      { ...regina, ageMinMonths: 72, ageMaxMonths: 144 },
     ),
     null,
   );
 });
 
-test("Nunavut shows $10 on licensed centres, not family homes", () => {
-  assert.equal(confirmedFeeProgramBadge(row({ province: "NU", city: "Iqaluit", name: "Aakuluk Daycare", amenities: "licensed" })), "badgeTen");
-  assert.equal(confirmedFeeProgramBadge(row({ province: "NU", amenities: "licensed,home" })), null);
+test("Nunavut needs program proof, known preschool ages and a stored facility type", () => {
+  const centre = row({ province: "NU", city: "Iqaluit", feeProgram: "nu-10-day", facilityType: "child_care_centre", amenities: "licensed", agesKnown: true, ageMinMonths: 0, ageMaxMonths: 60 });
+  assert.equal(confirmedFeeProgramBadge(centre), "badgeTen");
+  assert.equal(listingSubsidy({ ...centre, feeProgram: null }), null);
+  assert.equal(listingSubsidy({ ...centre, facilityType: null }), null);
+  assert.equal(listingSubsidy({ ...centre, agesKnown: false }), null);
+  assert.equal(listingSubsidy({ ...centre, ageMinMonths: 72, ageMaxMonths: 144 }), null);
+  assert.equal(listingSubsidy({ ...centre, facilityType: "school_age" }), null);
+  assert.equal(confirmedFeeProgramBadge({ ...centre, facilityType: "family_home" }), "badgeTen");
+});
+
+test("a province, licence, harvested amenity or mismatched fee code never proves a $10 rate", () => {
+  for (const province of ["MB", "SK", "NU", "BC", "PE", "NL"]) {
+    assert.equal(listingSubsidy(row({ province, facilityType: "child_care_centre", agesKnown: true, ageMinMonths: 0, ageMaxMonths: 60 })), null, province);
+  }
+  assert.equal(listingSubsidy(row({ province: "ON", feeProgram: "mb-10-day" })), null);
+  assert.equal(listingSubsidy(row({ province: "MB", feeProgram: "sk-10-day" })), null);
 });
 
 test("provinces that are not at $10 never get the pill", () => {
@@ -57,13 +74,15 @@ test("Manitoba, PEI, and Newfoundland need a sourced yes, not a harvested amenit
   assert.equal(listingSubsidy(row({ province: "MB", city: "Winnipeg" })), null);
   const funded = row({ province: "MB", city: "Winnipeg", feeProgram: "mb-10-day", feeConfirmed: false });
   assert.equal(confirmedFeeProgramBadge(funded), "badgeTen");
-  assert.equal(listingSubsidy(funded)?.subsidy_label, "Fee cap");
-  assert.equal(listingSubsidy(funded)?.subsidy_label_fr, "Plafond");
-  assert.match(listingSubsidy(funded)?.subsidy_note ?? "", /capped at \$10\/day for 4–10 hours/);
+  assert.equal(listingSubsidy(funded)?.subsidy_label, "$10 / Day");
+  assert.equal(listingSubsidy(funded)?.subsidy_label_fr, "10 $ / jour");
+  assert.match(listingSubsidy(funded)?.subsidy_note ?? "", /capped at \$10\/day for eligible 4–10-hour care/);
+  assert.match(listingSubsidy(funded)?.subsidy_note ?? "", /school-day schedules differ/);
+  assert.match(listingSubsidy(funded)?.subsidy_note ?? "", /subsidy is separate/);
   assert.equal(confirmedFeeProgramBadge(row({ province: "PE", city: "Charlottetown" })), null);
-  assert.equal(listingSubsidy(row({ province: "PE", feeProgram: "pe-10-day" }))?.subsidy_label, "$10/day");
+  assert.equal(listingSubsidy(row({ province: "PE", feeProgram: "pe-10-day" }))?.subsidy_label, "$10 / Day");
   assert.equal(confirmedFeeProgramBadge(row({ province: "NL" })), null);
-  assert.equal(listingSubsidy(row({ province: "NL", feeProgram: "nl-10-day" }))?.subsidy_label, "$10/day");
+  assert.equal(listingSubsidy(row({ province: "NL", feeProgram: "nl-10-day" }))?.subsidy_label, "$10 / Day");
   assert.equal(confirmedFeeProgramBadge(row({ province: "YT" })), null);
   assert.equal(listingSubsidy(row({ province: "YT", feeProgram: "yt-reduced" }))?.subsidy_label, "Reduced fees");
 });
@@ -87,7 +106,7 @@ test("Quebec $9.65 only on a contribution-reduite match", () => {
 test("British Columbia $10 only when the official name and city match", () => {
   const listed = row({ province: "BC", city: "Nelson", name: "Cornerstone Children's Centre", amenities: "licensed" });
   assert.equal(confirmedFeeProgramBadge(listed), "badgeTen");
-  assert.equal(listingSubsidy(listed)?.subsidy_label, "$10/day");
+  assert.equal(listingSubsidy(listed)?.subsidy_label, "$10 / Day");
   const random = row({ province: "BC", city: "Vancouver", name: "Bonnie Bairns Childcare Services", amenities: "licensed,funded" });
   assert.equal(confirmedFeeProgramBadge(random), null);
   assert.equal(listingSubsidy(random)?.subsidy_label ?? "", "");

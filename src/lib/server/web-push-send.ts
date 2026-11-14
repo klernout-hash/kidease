@@ -6,7 +6,12 @@
 
 import { getSql } from "@/lib/db";
 import { pushArmed } from "@/lib/channel-readiness";
-import { vapidPrivateKey, vapidPublicKey, vapidSubject, webPushCredentialsPresent } from "@/lib/push";
+import {
+  vapidPrivateKey,
+  vapidPublicKey,
+  vapidSubject,
+  webPushCredentialsPresent,
+} from "@/lib/push";
 import { isAllowedWebPushEndpoint } from "@/lib/web-push";
 import { encryptWebPushPayload, vapidAuthorization, vapidKeysMatch } from "@/lib/web-push-crypto";
 
@@ -28,8 +33,14 @@ type SubRow = {
 };
 
 export async function sendWebPushToUser(
-  input: { userId: string; title: string; body: string; url: string; call?: { type: "call" | "call-cancel"; ringId: string } },
-  options: { env?: EnvMap; fetchImpl?: typeof fetch; nowSec?: number } = {},
+  input: {
+    userId: string;
+    title: string;
+    body: string;
+    url: string;
+    call?: { type: "call" | "call-cancel"; ringId: string };
+  },
+  options: { env?: EnvMap; fetchImpl?: typeof fetch; nowSec?: number; strictQuery?: boolean } = {},
 ): Promise<WebPushSendResult> {
   const env = options.env ?? process.env;
   if (!pushArmed(env) || !webPushCredentialsPresent(env)) {
@@ -50,8 +61,12 @@ export async function sendWebPushToUser(
     where user_id = ${userId}
     order by last_seen_at desc
     limit 8
-  `.catch(() => [] as SubRow[]);
-  if (!rows.length) return { sent: 0, failed: 0, removed: 0, skipped: true, reason: "no_subscription" };
+  `.catch((error) => {
+    if (options.strictQuery) throw error;
+    return [] as SubRow[];
+  });
+  if (!rows.length)
+    return { sent: 0, failed: 0, removed: 0, skipped: true, reason: "no_subscription" };
 
   const fetchImpl = options.fetchImpl ?? fetch;
   const nowSec = options.nowSec ?? Math.floor(Date.now() / 1000);
@@ -103,6 +118,12 @@ export async function sendWebPushToUser(
       failed += 1;
     }
   }
-  console.info("[kidease-web-push]", { event: "send", sent, failed, removed, subscriptions: rows.length });
+  console.info("[kidease-web-push]", {
+    event: "send",
+    sent,
+    failed,
+    removed,
+    subscriptions: rows.length,
+  });
   return { sent, failed, removed, skipped: sent === 0 };
 }

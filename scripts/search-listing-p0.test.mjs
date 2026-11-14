@@ -47,7 +47,8 @@ test("search reserves rail space so Priority listings and the form do not shift"
   assert.match(search, /ke-search-results/);
   assert.match(search, /min-h-\[10rem\]/);
   assert.match(search, /data-ke="search-result-list"/);
-  assert.match(search, /ke-skel aspect-\[4\/3\]/);
+  assert.match(search, /ke-skel ke-card-photo/);
+  assert.match(src("src/styles.css"), /\.ke-card-photo \{[^}]*aspect-ratio: var\(--ke-card-photo-ratio\);/);
   assert.doesNotMatch(search, /grid grid-cols-2 gap-x-3 gap-y-4/);
   assert.match(search, /min-h-5/);
   assert.match(place, /relative z-30 min-w-0 flex-1 overflow-visible/);

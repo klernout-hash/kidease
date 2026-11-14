@@ -1,12 +1,7 @@
 import { companyOperatorLine } from "@/lib/company";
 import {
-  FOOTER_DAYCARES,
-  FOOTER_KIDEASE,
-  FOOTER_LEGAL,
-  FOOTER_PARENTS,
-  FOOTER_SUPPORT,
   footerLinkLabel,
-  footerLinksForShell,
+  footerMenuGroupsForShell,
   type FooterLinkDef,
 } from "@/lib/site-footer-nav";
 import { localePath } from "@/lib/locale-path";
@@ -45,6 +40,33 @@ const ICONS: Record<string, MenuIconId> = {
   "/cookies": "cookies",
 };
 
+/** The same link labels, destinations, and icons in each drawer group. */
+export function FooterMenuLinks({
+  links,
+  appearance,
+  onNavigate,
+}: {
+  links: readonly FooterLinkDef[];
+  appearance: "page" | "drawer";
+  onNavigate?: () => void;
+}) {
+  const { t, locale } = useCopy();
+  return <>{links.map((link) => (
+    <MenuRow
+      key={`${link.to}|${JSON.stringify(link.search ?? {})}`}
+      to={localePath(link.to, locale)}
+      search={link.search}
+      label={footerLinkLabel(link, t, locale)}
+      icon={ICONS[link.to] ?? "help"}
+      appearance={appearance}
+      marker={appearance === "drawer" && link.to === "/search"
+        ? link.search?.view === "map" ? "map" : "search"
+        : `more-${link.to.replace(/^\//, "") || "home"}`}
+      onClick={onNavigate}
+    />
+  ))}</>;
+}
+
 /**
  * Every footer page, for the phone menu and the account screen.
  * Signed-out visitors have no account tab, so the hamburger uses this too.
@@ -65,17 +87,8 @@ export function FooterMoreLinks({
   const native = useInNativeShell();
   const chrome = useRoleChrome();
   const plansOn = !native && chrome.subscriptionsEnabled === true;
-  const hidden = new Set(omit);
-  const show = (links: readonly FooterLinkDef[]) =>
-    footerLinksForShell({ native, plansOn }, links).filter((link) => !hidden.has(link.to));
   const fr = locale === "fr";
-  const groups = [
-    { id: "find", title: t("navFindCare"), links: show(FOOTER_PARENTS) },
-    { id: "daycares", title: t("navForDaycares"), links: show(FOOTER_DAYCARES) },
-    { id: "help", title: t("menuGetHelp"), links: show(FOOTER_SUPPORT) },
-    { id: "about", title: t("about"), links: show(FOOTER_KIDEASE) },
-    { id: "legal", title: t("menuPrivacyLegal"), links: show(FOOTER_LEGAL) },
-  ].filter((group) => group.links.length > 0);
+  const groups = footerMenuGroupsForShell({ native, plansOn, omit });
 
   if (appearance === "drawer") {
     return (
@@ -83,20 +96,10 @@ export function FooterMoreLinks({
         {groups.map((group) => (
           <details key={group.id} className="py-0.5" data-ke={`drawer-more-${group.id}`}>
             <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-normal text-subtle [&::-webkit-details-marker]:hidden">
-              {group.title}
+              {t(group.titleKey)}
             </summary>
             <div data-ke="mobile-menu-links">
-              {group.links.map((link) => (
-                <MenuRow
-                  key={link.to}
-                  to={localePath(link.to, locale)}
-                  label={footerLinkLabel(link, t, locale)}
-                  icon={ICONS[link.to] ?? "help"}
-                  appearance="drawer"
-                  marker={`more-${link.to.replace(/^\//, "") || "home"}`}
-                  onClick={onNavigate}
-                />
-              ))}
+              <FooterMenuLinks links={group.links} appearance="drawer" onNavigate={onNavigate} />
             </div>
           </details>
         ))}
@@ -114,17 +117,7 @@ export function FooterMoreLinks({
         {title}
       </h2>
       <nav aria-label={title} data-ke="mobile-menu-links">
-        {links.map((link) => (
-          <MenuRow
-            key={link.to}
-            to={localePath(link.to, locale)}
-            label={footerLinkLabel(link, t, locale)}
-            icon={ICONS[link.to] ?? "help"}
-            appearance="page"
-            marker={`more-${link.to.replace(/^\//, "") || "home"}`}
-            onClick={onNavigate}
-          />
-        ))}
+        <FooterMenuLinks links={links} appearance="page" onNavigate={onNavigate} />
         {share ? <ShareKidEaseButton appearance="row" onDone={onNavigate} /> : null}
         <div className="mt-3 flex min-h-11 items-center gap-3 px-1">
           <LanguageSelect className="w-full justify-start" />

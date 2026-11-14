@@ -20,6 +20,7 @@ import { runPhoneViewportPass, runMobileLayoutRegression, runPhoneIssuePass } fr
 import { runFoldResizePass } from "./fold-resize.mjs";
 import { STORE_GROUP_NAMES, runStoreViewportPass } from "./store-viewports.mjs";
 import { runDesktopVisualPass } from "./desktop-visual.mjs";
+import { captureAppStoreAvailability } from "./app-store-availability.mjs";
 import { checkedOutputPath, checkedUrl, smokeAllowedOutputDirs } from "./browser-guard.mjs";
 import { withNetRetry } from "./e2e-net.mjs";
 import {
@@ -78,6 +79,7 @@ mkdirSync(dirname(outDir), { recursive: true });
 const verdictPath = join(dirname(outDir), "verdict.json");
 
 const timeoutMs = Number(process.env.E2E_TIMEOUT_MS || 45000);
+const HEADER_MENU_SELECTOR = 'header [aria-controls="ke-nav-drawer"]';
 const results = [];
 let previewChild = null;
 
@@ -172,14 +174,20 @@ async function pinWebkitE2eSession(context, base, response) {
 }
 
 async function openHeaderMenu(page) {
-  const menu = page.locator('header button[aria-label="Menu"]');
+  const menu = page.locator(HEADER_MENU_SELECTOR);
   const drawer = page.locator("#ke-nav-drawer");
-  await menu.first().waitFor({ timeout: timeoutMs });
+  await menu.first().waitFor({ state: "visible", timeout: timeoutMs });
+  // This fixture inspects the drawer. A pre-hydration link click instead opens /menu.
+  await page.waitForFunction((selector) => {
+    const element = document.querySelector(selector);
+    const key = element && Object.keys(element).find((name) => name.startsWith("__reactProps$"));
+    return Boolean(key && typeof element[key]?.onClick === "function");
+  }, HEADER_MENU_SELECTOR, { timeout: timeoutMs });
   let lastError = null;
   for (let attempt = 0; attempt < 8; attempt += 1) {
     if (await drawer.isVisible().catch(() => false)) return;
     try {
-      // A layout pass can leave the button without a box. Force still throws then.
+      // A layout pass can leave the trigger without a box. Force still throws then.
       await menu.first().click({ force: true, timeout: 2000 });
     } catch (error) {
       lastError = error;
@@ -249,9 +257,9 @@ async function upgradePlaces(page) {
   await openAccountGroup(page, '[data-ke="desk-desktop-nav"]');
   const panel = ((await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]').innerText().catch(() => "")) || "").trim();
   let drawer = "";
-  const menu = page.locator('header button[aria-label="Menu"]');
+  const menu = page.locator(HEADER_MENU_SELECTOR);
   if (await menu.isVisible().catch(() => false)) {
-    await menu.click({ force: true });
+    await openHeaderMenu(page);
     await openAccountGroup(page, "#ke-nav-drawer");
     const row = page.locator('#ke-nav-drawer [data-nav="upgrade"]');
     await row.waitFor({ timeout: 8000 }).catch(() => {});
@@ -266,12 +274,142 @@ async function shot(page, name, width, content) {
   // Channel is chosen once at document load. Reload so 390px shots use the app bar.
   await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
   const ready =
-    width < 1024 ? page.locator('[data-ke="app-tab-bar"]') : page.locator('header button[aria-label="Menu"]');
+    width < 1024 ? page.locator('[data-ke="app-tab-bar"]') : page.locator(HEADER_MENU_SELECTOR);
   await ready.first().waitFor({ timeout: timeoutMs }).catch(() => {});
   if (content) await page.locator(content).first().waitFor({ timeout: timeoutMs }).catch(() => {});
   const dir = join(dirname(outDir), "shots");
   mkdirSync(dir, { recursive: true });
   await page.screenshot({ path: join(dir, `${name}.png`), fullPage: false }).catch(() => {});
+}
+
+async function searchSmokeSnapshot(page) {
+  return page.evaluate(() => {
+    const visible = (node) => {
+      const box = node.getBoundingClientRect();
+      const style = getComputedStyle(node);
+      return box.width > 0 && box.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+    };
+    const coverage = [...document.querySelectorAll('[data-ke="search-coverage"]')].find(visible);
+    const cards = [...document.querySelectorAll("[data-slug]")].filter(visible);
+    const anchors = [...document.querySelectorAll('a[href*="/daycare/"]:not([href*="/daycare/city"])')];
+    const first = anchors[0];
+    const firstBox = first?.getBoundingClientRect();
+    const countNode = document.querySelector('[data-ke="search-count"]');
+    const loading = Boolean(countNode?.querySelector(".ke-skel"));
+    return {
+      count: (countNode?.textContent || "").replace(/\s+/g, " ").trim(),
+      coverage: coverage?.getAttribute("data-coverage") || (loading ? "pending" : "complete"),
+      warning: (coverage?.querySelector("span")?.textContent || "").replace(/\s+/g, " ").trim().slice(0, 240),
+      cards: cards.length,
+      seededLiveCard: cards.some((card) => card.getAttribute("data-slug") === "e2e-centre"),
+      phase: loading ? "loading" : cards.length ? "results" : "empty",
+      viewport: { width: innerWidth, height: innerHeight, scrollY },
+      mobileVariantPresent: Boolean(document.querySelector('[data-ke="msv2-split"]')),
+      links: { total: anchors.length, visible: anchors.filter(visible).length },
+      firstLink: first ? {
+        path: (first.getAttribute("href") || "").split(/[?#]/)[0].slice(0, 160),
+        visible: visible(first),
+        width: firstBox.width, height: firstBox.height,
+        mobile: Boolean(first.closest('[data-ke="msv2-split"]')),
+      } : null,
+    };
+  });
+}
+
+function positiveLiveSearchCount(snapshot) {
+  const licensed = /\b[1-9]\d*\s+licensed centres?\b/i.test(snapshot.count);
+  const atLeast = /\bAt least [1-9]\d*\s+licensed centres?\b/i.test(snapshot.count);
+  if (snapshot.coverage === "complete") return licensed && !atLeast;
+  if (!snapshot.warning || !snapshot.seededLiveCard) return false;
+  if (snapshot.coverage === "partial") return atLeast;
+  return snapshot.coverage === "unverified" && /\b[1-9]\d*\s+listings? available to view\b/i.test(snapshot.count);
+}
+
+async function roleListingFromSearch(page, waitMs = timeoutMs) {
+  // Responsive variants keep hidden copies in the DOM. Select a visible link
+  // before taking the first match, preserving the requirement for a real card.
+  const listing = page.locator('a[href*="/daycare/"]:not([href*="/daycare/city"]):visible').first();
+  const requests = [];
+  const origin = new URL(page.url()).origin;
+  const onResponse = (response) => {
+    const url = new URL(response.url());
+    if (url.origin === origin && url.pathname.startsWith("/_serverFn/")) {
+      requests.push({ path: url.pathname, method: response.request().method(), status: response.status() });
+      if (requests.length > 12) requests.shift();
+    }
+  };
+  page.on("response", onResponse);
+  let retried = false;
+  try {
+    // Capture the visible match before collecting diagnostics: a background
+    // refresh can replace the results between separate visibility/href reads.
+    let href = (await listing.getAttribute("href", { timeout: waitMs }).catch(() => "")) || "";
+    const before = await searchSmokeSnapshot(page);
+    if (!href && ["partial", "unverified", "error"].includes(before.coverage)) {
+      // One user-visible search recovery only; never reload or bypass the UI.
+      const retry = page.locator(".ke-search-results").getByRole("button", { name: /^(Retry|Réessayer)$/ }).first();
+      if (await retry.isVisible().catch(() => false) && await retry.isEnabled().catch(() => false)) {
+        await retry.click({ timeout: 5000 });
+        retried = true;
+        href = (await listing.getAttribute("href", { timeout: waitMs }).catch(() => "")) || "";
+      }
+    }
+    return { href, diagnostics: { before, after: await searchSmokeSnapshot(page), retried, requests } };
+  } finally {
+    page.off("response", onResponse);
+  }
+}
+
+async function runRoleListingDiscoveryRegression(browser) {
+  const page = await browser.newPage();
+  try {
+    await page.route("**/*", (route) => route.abort());
+    for (const width of [390, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.setContent(`<style>
+        .desktop { display:none }
+        @media(min-width:768px) { .mobile { display:none } .desktop { display:block } }
+      </style>
+      <div data-ke="search-count">2 listings available to view</div>
+      <div class="mobile" data-ke="msv2-split"><article data-slug="fixture-mobile"><a href="/daycare/fixture-mobile">Mobile listing</a></article></div>
+      <div class="desktop ke-search-results"><article data-slug="fixture-desktop"><a href="/daycare/fixture-desktop">Desktop listing</a></article></div>`);
+      const found = await roleListingFromSearch(page, 300);
+      const expected = width < 768 ? "/daycare/fixture-mobile" : "/daycare/fixture-desktop";
+      record(`role-search-visible-copy-${width}`, found.href === expected && !found.diagnostics.retried, { search: found.diagnostics });
+    }
+    for (const state of ["hidden", "empty", "loading"]) {
+      await page.setContent(`<div data-ke="search-count">${state === "loading" ? '<span class="ke-skel">Loading centres…</span>' : "0 listings available to view"}</div>${state === "hidden" ? '<div hidden><article data-slug="fixture-hidden"><a href="/daycare/fixture-hidden">Hidden listing</a></article></div>' : ""}`);
+      const found = await roleListingFromSearch(page, 150);
+      record(`role-search-rejects-${state}`, found.href === "" && !found.diagnostics.retried && (state !== "loading" || found.diagnostics.after.coverage === "pending"), { search: found.diagnostics });
+    }
+    await page.setContent('<div data-ke="search-count"><span class="ke-skel">Loading centres…</span></div>');
+    await page.evaluate(() => setTimeout(() => {
+      document.body.innerHTML = '<div data-ke="search-count">1 listing available to view</div><article data-slug="fixture-loaded"><a href="/daycare/fixture-loaded">Loaded listing</a></article>';
+    }, 50));
+    const loaded = await roleListingFromSearch(page, 500);
+    record("role-search-waits-for-visible-result", loaded.href === "/daycare/fixture-loaded" && !loaded.diagnostics.retried, { search: loaded.diagnostics });
+    await page.setContent('<div data-ke="search-count">1 listing available to view</div><article data-slug="fixture-before-refresh"><a href="/daycare/fixture-before-refresh">Visible listing</a></article>');
+    const evaluate = page.evaluate.bind(page);
+    let refreshed = false;
+    // Reproduce a UI refresh between the diagnostic and the later href read
+    // used by the former helper, without changing its positive requirement.
+    page.evaluate = async (...parameters) => {
+      const result = await evaluate(...parameters);
+      if (!refreshed) {
+        refreshed = true;
+        await evaluate(() => { document.body.innerHTML = '<div data-ke="search-count"><span class="ke-skel">Loading centres…</span></div>'; });
+      }
+      return result;
+    };
+    try {
+      const captured = await roleListingFromSearch(page, 300);
+      record("role-search-captures-visible-link-before-refresh", captured.href === "/daycare/fixture-before-refresh" && captured.diagnostics.before.cards === 1 && captured.diagnostics.after.coverage === "pending" && !captured.diagnostics.retried, { search: captured.diagnostics });
+    } finally {
+      page.evaluate = evaluate;
+    }
+  } finally {
+    await page.close();
+  }
 }
 
 async function runRoleFixture(page, base) {
@@ -288,7 +426,7 @@ async function runRoleFixture(page, base) {
     }
     let guestNav = await page.locator("#ke-nav-drawer").innerText();
     const guestPricing = await page.locator('[data-ke="optional-upgrades"]').count();
-    const guestPlanLink = page.locator('#ke-nav-drawer [data-nav="plans"]');
+    const guestPlanLink = page.locator('#ke-nav-drawer a[href="/plans"]');
     const guestPlans = await guestPlanLink.count();
     const guestPlanLabel = ((await guestPlanLink.first().innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim();
     const guestFooterLink = page.locator('footer a[href="/plans"]');
@@ -336,12 +474,12 @@ async function runRoleFixture(page, base) {
     await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await shot(page, "guest-desktop", 1280, "h1");
     await page.keyboard.press("Escape");
-    const menu = page.locator('header button[aria-label="Menu"]');
+    const menu = page.locator(HEADER_MENU_SELECTOR);
     if (await menu.isVisible().catch(() => false)) {
-      await menu.click({ timeout: 8000, force: true });
+      await openHeaderMenu(page);
       const drawerNav = page.locator("#ke-nav-drawer [data-ke='role-nav']");
       await drawerNav.waitFor({ timeout: 8000 }).catch(() => {});
-      await page.locator('#ke-nav-drawer [data-nav="plans"]').waitFor({ timeout: 8000 }).catch(() => {});
+      await page.locator('#ke-nav-drawer a[href="/plans"]').waitFor({ timeout: 8000 }).catch(() => {});
       guestNav = `${guestNav}\n${await drawerNav.innerText().catch(() => "")}`;
       const dir = join(dirname(outDir), "shots");
       mkdirSync(dir, { recursive: true });
@@ -486,7 +624,7 @@ async function runRoleFixture(page, base) {
     );
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
-    const phoneMenuButton = page.locator('header button[aria-label="Menu"]');
+    const phoneMenuButton = page.locator(HEADER_MENU_SELECTOR);
     const phoneMenuHidden = !(await phoneMenuButton.isVisible().catch(() => false));
     const requestsBadge = page.locator('[data-ke="app-tab-bar"] [data-nav="bookings"] [data-ke="count-badge"]');
     await requestsBadge.waitFor({ timeout: timeoutMs }).catch(() => {});
@@ -763,21 +901,12 @@ async function runRoleFixture(page, base) {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.context().clearCookies();
     await page.goto(new URL("/search?q=Winnipeg%2C+MB", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await page
-      .locator('a[href*="/daycare/"]:not([href*="/daycare/city"])')
-      .first()
-      .waitFor({ timeout: timeoutMs })
-      .catch(() => {});
-    const listingHref = await page.locator('a[href*="/daycare/"]').evaluateAll((els) => {
-      for (const el of els) {
-        const href = el.getAttribute("href") || "";
-        if (href.includes("/daycare/") && !href.includes("/daycare/city")) return href;
-      }
-      return "";
-    });
+    const listingSearch = await roleListingFromSearch(page);
+    const listingHref = listingSearch.href;
     if (!listingHref) {
-      record("listing-role-actions", false, { note: "no public listing link on /search" });
+      record("listing-role-actions", false, { note: "no public listing link on /search", search: listingSearch.diagnostics });
     } else {
+      if (listingSearch.diagnostics.retried) record("listing-search-retry", true, { search: listingSearch.diagnostics });
       const listingUrl = new URL(listingHref, base).href;
       const slug = listingHref.split("/daycare/")[1]?.split(/[?#]/)[0] || "";
       await page.setViewportSize({ width: 1280, height: 900 });
@@ -828,26 +957,21 @@ async function runRoleFixture(page, base) {
     const liveQuoted = /live=%22|live=%221%22|live="1"/.test(liveUrl);
     const liveParam = /[?&]live=1(?:&|$)/.test(liveUrl);
     const countLine = page.locator('[data-ke="search-count"]');
-    const countText = await countLine
-      .waitFor({ state: "visible", timeout: timeoutMs })
-      .then(() =>
-        page.waitForFunction(
-          () => {
-            const text = document.querySelector('[data-ke="search-count"]')?.textContent || "";
-            return /[1-9]\d*\s+licensed centre/i.test(text);
-          },
-          null,
-          { timeout: timeoutMs },
-        ),
-      )
-      .then(async () => ((await countLine.innerText()) || "").replace(/\s+/g, " ").trim())
-      .catch(async () => ((await countLine.innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim());
-    const liveCountOk = /[1-9]\d*\s+licensed centre/i.test(countText);
+    await countLine.waitFor({ state: "visible", timeout: timeoutMs }).catch(() => {});
+    const countDeadline = Date.now() + timeoutMs;
+    let liveSnapshot = await searchSmokeSnapshot(page);
+    while (!positiveLiveSearchCount(liveSnapshot) && Date.now() < countDeadline) {
+      await page.waitForTimeout(200);
+      liveSnapshot = await searchSmokeSnapshot(page);
+    }
+    const countText = liveSnapshot.count;
+    const liveCountOk = positiveLiveSearchCount(liveSnapshot);
     const browse = page.locator('[data-ke="browse-directory"]');
     const browseHref = (await browse.first().getAttribute("href").catch(() => "")) || "";
     const browseOk = /\/daycare\/city\/winnipeg(?:[/?#]|$)/.test(browseHref);
     record("live-chip-url", liveParam && !liveQuoted && liveCountOk && browseOk, {
       note: `${liveUrl} count=${countText} browse=${browseHref}`,
+      search: liveSnapshot,
     });
     await shot(page, "live-chip", 1280, '[data-ke="live-on-kidease"]');
     await shot(page, "live-chip-390", 390, '[data-ke="live-on-kidease"]');
@@ -1484,7 +1608,7 @@ async function signOutFromMenu(page) {
   if ((page.viewportSize()?.width ?? 0) < 1024) {
     await page.setViewportSize({ width: 1280, height: 800 });
   }
-  const menu = page.locator('header button[aria-label="Menu"]').first();
+  const menu = page.locator(HEADER_MENU_SELECTOR).first();
   if (!(await menu.isVisible().catch(() => false))) {
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
   }
@@ -1597,7 +1721,7 @@ async function runSignedInSessions(page, base) {
       const reloaded = !/\/login\/?$/i.test(new URL(page.url()).pathname);
       record(`signed-in-reload-${tag}`, reloaded && (await pageIsQuiet(page)), { note: page.url() });
 
-      const menuLabel = await page.locator('header button[aria-controls="ke-nav-drawer"]').getAttribute("aria-label");
+      const menuLabel = await page.locator('header [aria-controls="ke-nav-drawer"]').getAttribute("aria-label");
       record(`signed-in-menu-${tag}`, menuLabel === item.menu, { note: menuLabel || "" });
 
       await page.goto(new URL(item.home, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
@@ -1875,6 +1999,10 @@ try {
     if (args.signedIn) {
       await runSignedInSessions(page, base);
     } else if (args.desktopVisualOnly) {
+      const appStores = await captureAppStoreAvailability(browser, base, join(root, "artifacts/e2e/desktop-actual/app-store-availability"));
+      record("app-store-availability", appStores.skipped || appStores.captures === 16, {
+        note: appStores.skipped ? appStores.reason : "EN/FR, 390/1280, classic/clean, light/dark; actual public routes",
+      });
       const desktopProblems = await runDesktopVisualPass(browser, base);
       record("desktop-visual", desktopProblems.length === 0, {
         note: desktopProblems.length ? desktopProblems.slice(0, 6).join(" | ") : "1280 to 2560",
@@ -2089,6 +2217,7 @@ try {
     }
 
   if (smokeGroupSelected(args, "role")) {
+    await runRoleListingDiscoveryRegression(browser);
     await runRoleFixture(page, base);
   }
   if (smokeGroupSelected(args, "webkit")) {

@@ -13,6 +13,7 @@ import { provinceSearchTokens, type LocationLock } from "@/lib/location-lock";
 import { isPublicListing, PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import { CATALOG_SELECT, catalogRowToListing, type CatalogDbRow } from "./catalog-neon";
 import type { NearbyListing } from "./nearby";
+import { mergeSearchEvidence, searchEvidence, type SearchBatch, type SearchReadOptions } from "@/lib/search-evidence";
 
 const APPROVED_CITY_SQL = `
 select ${CATALOG_SELECT}
@@ -56,11 +57,20 @@ export async function mergeApprovedCityListings(
     label?: string | null;
   },
 ): Promise<NearbyListing[]> {
+  return (await mergeApprovedCityListingsResult({ rows: listings, evidence: searchEvidence() }, input)).rows;
+}
+
+export async function mergeApprovedCityListingsResult(
+  batch: SearchBatch<NearbyListing>,
+  input: { origin: LatLng; radiusKm: number; lock: LocationLock | null; label?: string | null },
+  _opts?: SearchReadOptions,
+): Promise<SearchBatch<NearbyListing>> {
+  const listings = batch.rows;
   const lock = input.lock;
-  if (!lock?.city || !lock.province) return listings;
+  if (!lock?.city || !lock.province) return batch;
   const tokens = provinceSearchTokens(lock.province);
   const cities = [...new Set(lock.metroKeys.map((key) => key.trim()).filter(Boolean))];
-  if (tokens.length === 0 || cities.length === 0) return listings;
+  if (tokens.length === 0 || cities.length === 0) return batch;
   const box = radiusBounds(input.origin, input.radiusKm);
   let rows: CatalogDbRow[] = [];
   try {
@@ -74,7 +84,12 @@ export async function mergeApprovedCityListings(
       box.maxLng,
     ]);
   } catch {
-    return listings;
+    return {
+      rows: listings,
+      evidence: mergeSearchEvidence(batch.evidence, searchEvidence({
+        status: "partial", source: "primary", reasons: ["supplement-unavailable"], retryable: true,
+      })),
+    };
   }
   const seen = new Set(listings.map((row) => row.id));
   const merged = [...listings];
@@ -100,5 +115,11 @@ export async function mergeApprovedCityListings(
     };
     merged.push(located);
   }
-  return merged;
+  return {
+    rows: merged,
+    evidence: mergeSearchEvidence(batch.evidence, searchEvidence({
+      status: rows.length >= 400 ? "partial" : "complete", source: "primary",
+      reasons: rows.length >= 400 ? ["candidate-limit"] : [], retryable: false,
+    })),
+  };
 }

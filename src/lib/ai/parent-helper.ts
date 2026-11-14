@@ -51,11 +51,7 @@ export const PARENT_HELPER_SYSTEM = [
 
 export const PARENT_HELPER_EVENTS = ["parent_helper_asked", "parent_helper_unknown", "parent_helper_subsidy"] as const;
 
-export function parentHelperEventProps(input: { path?: string } = {}) {
-  const path = String(input.path || "").trim();
-  if (!path.startsWith("/")) return {};
-  return { path };
-}
+export { parentHelperEventProps } from "./event-props.ts";
 
 export type GuideSourcePage = { path: string; text: string };
 

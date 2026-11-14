@@ -78,7 +78,7 @@ export function ParentCentreToolsPanel() {
             ))}
             {of("tap_receipt").map((r) => (
               <li key={r.id} className="py-2">
-                {copy.receipts} · {copy.tap} · {r.createdAt.slice(0, 10)} · ${money(Number(r.payload.amountCents) || 0)} · {copy.testNoCharge}
+                {copy.tap} · {r.createdAt.slice(0, 10)} · ${money(Number(r.payload.amountCents) || 0)} · {copy.testNoCharge}
               </li>
             ))}
           </ul>

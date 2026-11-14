@@ -111,7 +111,7 @@ export const Route = createRootRoute({
       throw redirect({ href: "/fr/delete-account", statusCode: 301 });
     }
     const search = `${location.searchStr || ""}${location.hash || ""}`;
-    const [roleChrome, visitorLocale, frCa, frAuthQc] = await Promise.all([
+    const [roleChrome, visitorLocale, frCa, frAuthQc, storeRead, airbnbUi] = await Promise.all([
       getRoleChrome().catch(() => ({
         signedIn: true,
         role: null as null,
@@ -127,11 +127,12 @@ export const Route = createRootRoute({
       getVisitorLocale({ data: { pathname: location.pathname, search } }).catch(() => GUEST_LOCALE),
       readFrCaEnabled().catch(() => false),
       readFrAuthQc().catch(() => false),
+      readRequestStoreChannel(location.searchStr || ""),
+      readAirbnbUi().catch(() => airbnbUiEnabled()),
     ]);
     if (visitorLocale.redirectTo) {
       throw redirect({ href: visitorLocale.redirectTo, statusCode: 302 });
     }
-    const storeRead = await readRequestStoreChannel(location.searchStr || "");
     const storeChannel = storeRead.channel;
     const nativeShell = shellBlocksCommerce(storeChannel);
     const hideAdmin = storeRead.hideAdmin;
@@ -151,7 +152,7 @@ export const Route = createRootRoute({
         "live",
       frCa: frCa === true,
       frAuthQc: frAuthQc === true,
-      airbnbUi: await readAirbnbUi().catch(() => airbnbUiEnabled()),
+      airbnbUi,
     };
   },
   errorComponent: (props) => {

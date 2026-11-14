@@ -12,6 +12,8 @@ import {
 } from "../src/lib/city-directory.ts";
 import { cityHubDefBySlug } from "../src/lib/city-hubs.ts";
 import { cityParamFromUnknown, searchQueryFromUnknown } from "../src/lib/search-query.ts";
+import { searchEvidence } from "../src/lib/search-evidence.ts";
+import { searchCoverageCopy } from "../src/lib/search-coverage.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -53,6 +55,8 @@ test("an unknown city is not the home city", () => {
   assert.equal(hubForDirectoryQuery("NotARealCityZZZ"), null);
   assert.equal(resolveSearchDirectory({ q: "NotARealCityZZZ" }).kind, "nearby");
   assert.equal(resolveSearchDirectory({ city: "Brandon" }).kind, "nearby");
+  assert.equal(searchCoverageCopy(searchEvidence(), "en").incomplete, true);
+  assert.equal(searchCoverageCopy(searchEvidence(), "en").count(0), "0 listings available to view");
 });
 
 test("directory counts use the same city membership as search", () => {
@@ -86,7 +90,7 @@ test("search route honours city and refuses an unknown city fallback", () => {
   assert.match(search, /if \(city\) out\.city = city/);
   assert.match(search, /originsMatchSearchQuery\(boot\.origin, incoming\.q\)/);
   assert.match(server, /resolveSearchDirectory/);
-  assert.match(server, /if \(decision\.kind === "unknown"\) return \[\]/);
+  assert.match(server, /if \(decision\.kind === "unknown"\) return \{ rows: \[\], evidence: searchEvidence\(\) \}/);
   assert.match(server, /listingsForCityHub/);
   assert.match(server, /directorySlug: undefined/);
 });

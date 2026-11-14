@@ -15,6 +15,7 @@ import { periodLabel } from "@/lib/stripe-methods";
 import { type Bill, billDollars } from "@/lib/bill";
 import { WalletMethodHints } from "@/components/wallet-methods";
 import { openStripeCheckout } from "@/lib/wallets";
+import { publicPayMessage } from "@/lib/stripe-public-error";
 import { NativePayNote } from "@/components/native-pay-note";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
@@ -134,9 +135,9 @@ function PayBillPage() {
         await openStripeCheckout(res.url);
         return;
       }
-      toast.error("Pay link was not ready.");
+      toast.error(t("billInternalPay"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("billInternalPay"));
+      toast.error(publicPayMessage(err, t("billInternalPay")));
     } finally {
       setBusy(false);
     }

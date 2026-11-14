@@ -1,12 +1,12 @@
-import { config } from "zod";
+import { config } from "zod/v4/core";
 
 /**
- * Zod otherwise probes `new Function("")` on the first object parse.
- * The probe is inside try/catch, but Chrome still reports a script-src
- * violation when 'unsafe-eval' is absent. jitless skips the probe.
- * Called from the module body so it runs before later client imports.
+ * Configure before later static modules can construct a Zod object. The probe
+ * otherwise reports a CSP violation even when its new Function throw is caught.
  */
 config({ jitless: true });
 
-/** Referenced from client.tsx so the bundler keeps this side effect. */
-export const zodCspInstalled = true;
+/** A real call keeps this module despite sideEffects:false; normal boot writes once. */
+export function installZodCsp(): void {
+  if (config().jitless !== true) config({ jitless: true });
+}

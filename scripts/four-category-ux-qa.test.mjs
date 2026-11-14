@@ -41,8 +41,11 @@ test("Guest: live vs all counts, empty-search lead, and listing login handoff", 
   assert.match(listing, /setTourOpen\(true\)/);
   assert.match(listing, /ListingTourTimes/);
   assert.doesNotMatch(listing, /goLogin\("needSignInTour"/);
-  assert.match(listing, /guestListingTrust/);
-  assert.match(listing, /guestBrowse/);
+  assert.match(listing, /const primaryAction = live \? onTour : onInfo/);
+  assert.match(listing, /data-ke="listing-next-step-lead"/);
+  assert.match(listing, /A reply isn.t guaranteed/);
+  const tourAction = listing.slice(listing.indexOf("function onTour()"), listing.indexOf("function onMessage()"));
+  assert.doesNotMatch(tourAction, /goLogin|if \(!user\)/);
   const login = src("src/routes/login.tsx");
   assert.match(login, /loginLeadListing/);
   assert.match(login, /loginLeadSearchSave/);

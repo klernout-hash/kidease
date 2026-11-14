@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { STORE_PLACEHOLDER_REVIEW, showStoreComingSoon } from "../src/lib/store-placeholders.ts";
+import { tx } from "../src/lib/copy.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -11,12 +12,15 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("store apps hide the coming-soon store line; the website keeps it", () => {
+test("store apps hide the store status line; the website gives current availability", () => {
   assert.equal(showStoreComingSoon("web"), true);
   for (const channel of ["apple", "google", "microsoft", "samsung", "huawei", "amazon"]) {
     assert.equal(showStoreComingSoon(channel), false);
   }
-  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /storeComingSoon: "Coming soon"/);
+  assert.equal(tx("en", "storeComingSoon"), "Download unavailable");
+  assert.equal(tx("fr", "storeComingSoon"), "Téléchargement indisponible");
+  assert.doesNotMatch(`${tx("en", "storeComingSoon")} ${tx("fr", "storeComingSoon")}`, /coming soon|bientôt/i);
+  assert.match(src("src/components/store-badges.tsx"), /const href = configured\?\.live \? configured\.url : null/);
   assert.match(src("src/components/store-badges.tsx"), /storeComingSoon/);
   assert.match(src("src/routes/get-app.tsx"), /data-ke="store-coming-soon"/);
   assert.match(src("src/routes/get-app.tsx"), /data-ke="store-already-in-app"/);

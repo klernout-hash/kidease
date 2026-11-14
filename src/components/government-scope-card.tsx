@@ -28,7 +28,8 @@ export function GovernmentScopeCard() {
 
   if (!data?.show) return null;
 
-  const home = fr ? "Aller à l’accueil" : "Go home";
+  const home = fr ? "Ouvrir le tableau de bord" : "Open dashboard";
+  const homeTo = fr ? "/fr/gov" : "/gov";
 
   if (native) {
     return (
@@ -39,7 +40,7 @@ export function GovernmentScopeCard() {
             ? "Les totaux du gouvernement restent sur le site web. Cette appli ne vous déconnecte pas."
             : "Government totals stay on the website. This app does not sign you out."}
         </p>
-        <Link to="/" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary">
+        <Link to={homeTo} search={{ province: "", region: "", city: "" }} className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary">
           {home}
         </Link>
       </section>
@@ -52,7 +53,7 @@ export function GovernmentScopeCard() {
       <h2 className="mt-1 font-display text-2xl">{fr ? "Totaux de votre province" : "Your province totals"}</h2>
       {data.reason === "off" ? (
         <p className="mt-2 text-sm text-muted">
-          {fr ? "Les totaux provinciaux ne sont pas encore offerts." : "Provincial totals are not on yet."}
+          {fr ? "Les totaux provinciaux sont indisponibles." : "Provincial totals are unavailable."}
         </p>
       ) : null}
       {data.reason === "missing" ? (
@@ -60,6 +61,20 @@ export function GovernmentScopeCard() {
           {fr
             ? "Demandez à KidEase d’ajouter votre province. Aucun autre chiffre n’est affiché."
             : "Ask KidEase to add your province. No other numbers are shown."}
+        </p>
+      ) : null}
+      {data.reason === "unsupported" ? (
+        <p className="mt-2 text-sm text-muted">
+          {fr
+            ? "Ce résumé concerne une seule province. Choisissez une province dans le tableau de bord."
+            : "This summary covers one province. Choose a province in the dashboard."}
+        </p>
+      ) : null}
+      {data.reason === "unavailable" ? (
+        <p className="mt-2 text-sm text-muted" role="status">
+          {fr
+            ? "Les totaux n’ont pas pu être chargés. Réessayez plus tard."
+            : "Totals could not be loaded. Try again later."}
         </p>
       ) : null}
       {data.reason === "ok" ? (
@@ -77,7 +92,7 @@ export function GovernmentScopeCard() {
           </p>
         </>
       ) : null}
-      <Link to="/" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary">
+      <Link to={homeTo} search={{ province: "", region: "", city: "" }} className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary">
         {home}
       </Link>
     </section>

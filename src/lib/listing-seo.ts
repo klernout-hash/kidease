@@ -14,7 +14,7 @@ import { normalizeListingSlug } from "./listing-slug.ts";
 import { breadcrumbJsonLd, breadcrumbJsonLdScript } from "./page-seo.ts";
 import { isMissingCatalogueBuilding } from "./catalogue-buildings.ts";
 import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
-import { SITEMAP_ORIGIN, sitemapListingPath } from "./sitemap.ts";
+import { SITEMAP_ORIGIN, sitemapListingPath } from "./public-url.ts";
 import { displayCentreName } from "./utils.ts";
 
 /** Official storefront or https media only. Placeholders and street-view stock stay out of OG.

@@ -73,7 +73,7 @@ export function LanguageSelect({
       className={cn(
         "relative inline-flex items-center justify-center overflow-visible",
         pill && "h-11 gap-1.5 rounded-full border border-border bg-surface px-3 text-fg",
-        compact ? "h-8" : "h-11 min-w-[7.25rem]",
+        compact ? "h-8" : "h-11 min-h-[44px] min-w-[7.25rem]",
         className,
       )}
     >
@@ -126,7 +126,7 @@ export function LanguageSelect({
           pill && "pr-5 text-left text-sm text-fg",
           compact
             ? "ke-header-chrome h-8 min-h-8 px-2.5 text-[11px] leading-none"
-            : "h-11 min-h-11 px-3.5 text-[15px]",
+            : "h-11 min-h-[44px] px-3.5 text-[15px]",
         )}
         aria-label={t("language")}
       >

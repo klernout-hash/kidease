@@ -19,11 +19,10 @@ import { localeLine } from "@/lib/french-type";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import {
   filterStartDaycarePts,
-  parseStartDaycareSearch,
-  startDaycarePath,
   startDaycarePt,
   type StartDaycarePt,
 } from "@/lib/start-daycare-hub";
+import { parseStartDaycareSearch, startDaycarePath } from "@/lib/start-daycare-route";
 import { cn } from "@/lib/utils";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";

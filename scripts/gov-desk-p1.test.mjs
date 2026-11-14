@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { govCopy } from "../src/lib/gov/copy.ts";
+import { demandCopy } from "../src/lib/compliance/demand.ts";
 
 const dash = readFileSync(new URL("../src/components/gov/gov-dashboard.tsx", import.meta.url), "utf8");
 const frame = readFileSync(new URL("../src/components/gov/gov-frame.tsx", import.meta.url), "utf8");
@@ -25,12 +26,16 @@ test("the government desk keeps the three ledgers and the source list apart from
   assert.match(fr.sourcesNote, /pas un flux en direct/);
 });
 
-test("licence dates, saved-search demand, jobs, and the audit page do not overclaim", () => {
+test("licence dates, waitlist entries, jobs, and the audit page do not overclaim", () => {
   assert.match(calendar, /data-ke="gov-status-lanes"/);
   assert.match(calendar, /Tracked overdue dates in this tool/);
   assert.doesNotMatch(calendar, /\{data\.province\}: \{data\.overdue\}/);
-  assert.match(demand, /Saved-search demand/);
-  assert.match(demand, /not children or official applications/);
+  assert.match(demand, /title=\{copy\.title\} copy=\{copy\}/);
+  assert.match(demandCopy("en").why, /not unique child or family counts/);
+  assert.match(demandCopy("fr").why, /pas un décompte d’enfants ou de familles distincts/);
+  // The separate dashboard reads area saved searches and retains its own label.
+  assert.match(govCopy("en").waitlist, /Saved-search demand/);
+  assert.match(govCopy("fr").waitlist, /recherches enregistrées/);
   assert.match(jobs, /data-ke="gov-jobs-view-only"/);
   assert.match(jobs, /not a staffing shortage/);
   assert.match(jobs, /coverage unknown/);

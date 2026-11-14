@@ -8,6 +8,7 @@ export type GovApiZone = "public" | "parent" | "provider" | "admin" | "governmen
 
 const PARENT_API = [
   "/api/family-documents",
+  "/api/invoices",
   "/api/search-alerts",
   "/api/spot-offers",
   "/api/referrals",
@@ -39,10 +40,37 @@ export function isGovLoginPath(raw: string | null | undefined): boolean {
 }
 
 /** Paths that must never appear in the public sitemap. */
-export const GOV_SITEMAP_PATHS = ["/gov", "/gov/login", "/fr/gov", "/fr/gov/login"] as const;
+export const GOV_SITEMAP_PATHS = ["/gov", "/gov/login", "/fr/gov", "/fr/gov/login", "/gov-terms"] as const;
+
+/**
+ * Match the installed Router's once-only pathname decoding before its default
+ * case-insensitive static matching. Keep escaped percent/backslash sequences
+ * intact; unrestricted or repeated decoding changes which routes can match.
+ * The Router comparison tests guard this compatibility when dependencies change.
+ */
+export function canonicalApiPath(raw: string | null | undefined): string {
+  let path = String(raw || "").split("?")[0] || "/";
+  // eslint-disable-next-line no-control-regex -- Match the Router's path-data normalization.
+  if (/[%\\\x00-\x1f\x7f]/.test(path)) {
+    const segment = (value: string) => {
+      let decoded: string;
+      try { decoded = decodeURI(value); }
+      catch {
+        decoded = value.replace(/%[0-9A-F]{2}/gi, (part) => {
+          try { return decodeURI(part); } catch { return part; }
+        });
+      }
+      // eslint-disable-next-line no-control-regex -- Preserve the Router's control-character sanitizing behavior.
+      return decoded.replace(/[\x00-\x1f\x7f"<>`{}]/g, (character) =>
+        `%${character.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0")}`);
+    };
+    path = path.split(/(%25|%5C)/gi).map((part, index) => index % 2 ? part : segment(part)).join("");
+  }
+  return path.toLowerCase().replace(/\/+$/, "") || "/";
+}
 
 export function apiZoneForPath(raw: string | null | undefined): GovApiZone {
-  const path = (String(raw || "").split("?")[0] || "/").replace(/\/+$/, "") || "/";
+  const path = canonicalApiPath(raw);
   if (path === "/api/gov" || path.startsWith("/api/gov/")) return "government";
   if (path === "/api/admin" || path.startsWith("/api/admin/") || path.startsWith("/api/admin.")) return "admin";
   if (PARENT_API.some((prefix) => path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}.`))) {
@@ -51,8 +79,16 @@ export function apiZoneForPath(raw: string | null | undefined): GovApiZone {
   if (PROVIDER_API.some((prefix) => path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}.`))) {
     return "provider";
   }
+  // The shared PDF URL also serves parent agreements. The handler checks the
+  // stored pack kind and its record-specific permissions before loading bytes.
+  if (/^\/api\/contracts\/[^/]+\/pdf$/.test(path)) return "parent";
   if (path.startsWith("/api/contracts")) return "provider";
   return "public";
+}
+
+export function privateHttpZoneForPath(raw: string | null | undefined): "parent" | "provider" | "admin" | null {
+  const zone = apiZoneForPath(raw);
+  return zone === "parent" || zone === "provider" || zone === "admin" ? zone : null;
 }
 
 export function roleMayEnterZone(role: string | null | undefined, zone: GovApiZone): boolean {

@@ -65,6 +65,26 @@ export type MobileSearchParams = {
   spoken?: string;
 };
 
+/** Editing Where/When/Who must not erase the advanced filters already applied. */
+export function mergeMobileSearchParams(previous: Record<string, unknown>, next: MobileSearchParams) {
+  const keys = ["q", "from", "to", "age", "ages", "sched", "fac", "cat", "openings", "subsidy", "inclusive", "spoken"] as const;
+  const applied = Object.fromEntries(keys.map((key) => [key, typeof previous[key] === "string" ? previous[key] : undefined]));
+  const represented = mobileSearchParams(draftFromParams(applied));
+  const merged: Record<string, unknown> = { ...previous, page: undefined };
+  for (const key of keys) {
+    // Preserve choices this smaller sheet cannot represent, such as multiple
+    // facility types or languages, until their actual filter is changed.
+    if (next[key] === represented[key]) continue;
+    if (key === "spoken") {
+      const others = String(previous.spoken || "").split(",").filter((language) => language && language !== "fr");
+      merged.spoken = [...others, ...(next.spoken === "fr" ? ["fr"] : [])].join(",") || undefined;
+    } else {
+      merged[key] = next[key];
+    }
+  }
+  return merged;
+}
+
 const RECENT_KEY = "kidease-mobile-search-v2";
 const RECENT_LIMIT = 5;
 

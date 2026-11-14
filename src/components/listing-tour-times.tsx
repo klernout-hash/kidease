@@ -49,7 +49,11 @@ export function ListingTourTimes({
     return (
       <section id="listing-tours" className="scroll-mt-24" data-listing-tour-times data-tour-unclaimed>
         <h2 className="font-display text-2xl">{t("tourTimesPublicHint")}</h2>
-        <p className="mt-3 max-w-prose text-sm text-muted">{t("tourTimesUnclaimed")}</p>
+        <p className="mt-3 max-w-prose text-sm text-muted">
+          {daycare.live
+            ? loc === "fr" ? "Les demandes de visite se font depuis un compte parent." : "Tour requests are available from a parent account."
+            : t("tourTimesUnclaimed")}
+        </p>
       </section>
     );
   }
@@ -82,7 +86,7 @@ export function ListingTourTimes({
       )}
       {canBook ? (
         <Button className="mt-3" variant="secondary" onClick={onBook}>
-          {t("bookTour")}
+          {t("requestTour")}
         </Button>
       ) : null}
     </section>

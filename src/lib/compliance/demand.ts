@@ -18,6 +18,13 @@ export type DemandCell = {
   n: number;
 };
 
+type DemandReportContext = { mode: PackMode; province: string; quarter: string | null };
+export type DemandReportData = DemandReportContext & (
+  | { enabled: false; status: "off"; rows: [] }
+  | { enabled: true; status: "ready"; rows: ReturnType<typeof demandReport>["rows"] }
+  | { enabled: true; status: "unavailable" }
+);
+
 export function demandMode(env: EnvMap): PackMode {
   return modeFor(DEMAND_FLAG, env);
 }
@@ -82,23 +89,31 @@ export function demandCopy(locale: "en" | "fr") {
   if (locale === "fr") {
     return {
       what: "KidEase pour votre province",
-      why: "Voyez la demande de places par secteur et par âge. Les petits groupes sont cachés.",
-      next: "Voir le trimestre",
+      title: "Inscriptions aux listes d’attente",
+      why: "Ce rapport compte les inscriptions marquées « en attente » dans KidEase, par ville de la garderie et groupe d’âge choisi. Un même compte peut figurer sur plusieurs listes. Ce n’est pas un décompte d’enfants ou de familles distincts. Les inscriptions ne se limitent pas au trimestre affiché. Certains résultats peuvent être masqués ou regroupés pour protéger la vie privée.",
+      next: "Voir les inscriptions",
       help: "Aide",
       home: "Accueil",
       off: "Cet outil est éteint.",
       practice: "Mode pratique : le rapport est écrit, pas envoyé.",
-      empty: "Pas assez de demandes pour afficher un chiffre.",
+      empty: "Aucun nombre d’inscriptions à afficher. Certains résultats peuvent être masqués pour protéger la vie privée.",
+      unavailable: "Le rapport n’a pas pu être chargé. Réessayez dans un instant.",
+      retry: "Réessayer",
+      retrying: "Nouvel essai…",
     };
   }
   return {
     what: "KidEase for your province",
-    why: "See waitlist demand by area and age. Small groups are hidden.",
-    next: "See this quarter",
+    title: "Daycare waitlist entries",
+    why: "Counts KidEase waitlist entries marked waiting, grouped by the daycare’s city and selected age group. The same account can appear on several lists. These are not unique child or family counts. Entries are not limited to the displayed quarter. Some results may be hidden or combined for privacy.",
+    next: "View waitlist entries",
     help: "Help",
     home: "Home",
     off: "This tool is off.",
     practice: "Practice mode: the report is written down, not sent.",
-    empty: "There are not enough requests to show a number.",
+    empty: "No waitlist counts to show. Some results may be hidden for privacy.",
+    unavailable: "The report could not be loaded. Try again in a moment.",
+    retry: "Try again",
+    retrying: "Trying again…",
   };
 }

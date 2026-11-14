@@ -17,7 +17,7 @@ import { loadNeedCareFast } from "@/lib/server/need-care-fast";
 import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
-import { SITEMAP_ORIGIN } from "@/lib/sitemap";
+import { SITEMAP_ORIGIN } from "@/lib/public-url";
 
 export const Route = createFileRoute("/need-care-fast")({
   validateSearch: parseNeedCareFastSearch,

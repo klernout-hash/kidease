@@ -395,7 +395,7 @@ function TapTool({ copy, data, records, save }: ToolProps) {
       </div>
       <Button className="mt-3 min-h-11" disabled={!bookingId || !(cents >= 100)} onClick={() => void save("tap_receipt", { amountCents: cents, method: "tap_to_pay_test", date: new Date().toISOString() }, bookingId)}>{copy.tapTest}</Button>
       </>) : null}
-      <History copy={copy} rows={records.filter((r) => r.kind === "tap_receipt")} render={(r) => `${r.createdAt.slice(0, 10)} · $${money(Number(r.payload.amountCents) || 0)} · test`} />
+      <History copy={copy} rows={records.filter((r) => r.kind === "tap_receipt")} render={(r) => `${r.createdAt.slice(0, 10)} · $${money(Number(r.payload.amountCents) || 0)} · ${copy.testNoCharge}`} />
     </div>
   );
 }

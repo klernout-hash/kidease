@@ -78,7 +78,8 @@ describe("parent tools wiring", () => {
     for (const locale of ["en", "fr"]) {
       const pack = copy[locale];
       assert.match(pack.trackCalled, /\S/);
-      assert.match(pack.shareShortlistLead, /coming soon|bientôt/i);
+      assert.match(pack.shareShortlistLead, /\S/);
+      assert.doesNotMatch(pack.shareShortlistLead, /coming soon|bientôt/i);
       assert.match(pack.anchorBothHint, /\{n\}/);
       assert.match(pack.anchorBothHint, /\{u\}/);
       assert.doesNotMatch(pack.shortlistLead, /free forever|gratuit pour toujours|Winnipeg-based/i);

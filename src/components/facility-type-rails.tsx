@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { CareCategoryIcon } from "@/components/care-category-icon";
 import type { CopyKey } from "@/lib/copy";
 import { FACILITY_TYPES, type FacilityType } from "@/lib/facility-type";
 import { localePath } from "@/lib/locale-path";
@@ -53,15 +54,6 @@ export function selectedBrowseType(search: unknown): BrowseDaycareType | undefin
   if (bag.cat === "before-after") return "before_after";
   return undefined;
 }
-
-const CARE_TYPE_EMOJI: Record<BrowseDaycareType, string> = {
-  child_care_centre: "🏫",
-  family_home: "🏡",
-  group_home: "🏘️",
-  nursery_preschool: "🧸",
-  school_age: "🎒",
-  before_after: "🌅",
-};
 
 /** Six licensed childcare types, in daycare-type order, for the home header row. */
 export function HomeCareTypeRow({
@@ -126,7 +118,7 @@ export function HomeCareTypeRow({
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(node);
-    // The row is measured once on the first paint. Emoji and text fonts
+    // The row is measured once on the first paint. The label fonts
     // can still be loading then, and a wider font hides the last type at
     // 1440px. Measure again when those fonts are in.
     const fonts = document.fonts;
@@ -158,24 +150,17 @@ export function HomeCareTypeRow({
     >
       {BROWSE_DAYCARE_TYPES.map((type, index) => {
         const on = selected === type;
-        const className =
+        const className = "ke-floating-category min-h-11 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset " + (
           compact
             ? `flex min-h-11 w-max max-w-none shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl px-2.5 py-1 text-center transition-colors duration-150 ease-out ${
                 fit && index >= visible ? "hidden " : ""
               }${on ? "text-fg" : "text-muted hover:bg-surface hover:text-fg"}`
             : `flex w-max max-w-none shrink-0 flex-col items-center gap-1.5 rounded-xl px-2.5 pb-2 pt-1.5 text-center transition-colors duration-150 ease-out ${
                 fit && index >= visible ? "hidden " : ""
-              }${on ? "text-fg" : "text-muted hover:text-fg"}`;
+              }${on ? "text-fg" : "text-muted hover:text-fg"}`);
         const body = (
           <>
-            <span
-              className={`leading-none [font-family:'Apple_Color_Emoji','Segoe_UI_Emoji','Noto_Color_Emoji',sans-serif] ${
-                compact ? "text-[1.45rem] sm:text-[1.65rem]" : "text-[2.65rem]"
-              }`}
-              aria-hidden
-            >
-              {CARE_TYPE_EMOJI[type]}
-            </span>
+            <CareCategoryIcon id={type} index={index} />
             <span
               className={`whitespace-nowrap font-semibold leading-tight ${
                 compact ? "text-[12px] leading-tight" : "text-[13px]"

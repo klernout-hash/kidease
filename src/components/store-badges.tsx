@@ -145,7 +145,7 @@ export function StoreBadges() {
                 <BadgeImage store={store} locale={lang} muted />
               )}
               <p className={store === "huawei" && !href ? "text-sm font-medium" : "mt-2 text-sm font-medium"}>{names[store]}</p>
-              <p className="text-sm text-muted">{href ? t("storeAvailableNow") : t("storeComingSoon")}</p>
+              <p className="text-sm text-muted">{configured?.live ? t("storeAvailableNow") : t("storeComingSoon")}</p>
             </li>
           );
         })}
@@ -154,20 +154,22 @@ export function StoreBadges() {
   );
 }
 
-function BadgeImage({
+export function BadgeImage({
   store,
   locale,
   muted,
+  compact = false,
 }: {
   store: keyof typeof BADGES;
   locale: ShippedLocale;
   muted?: boolean;
+  compact?: boolean;
 }) {
   return (
     <img
       src={badgeSrc(store, locale)}
       alt=""
-      className={muted ? "h-10 w-auto max-w-full opacity-60 grayscale" : "h-10 w-auto max-w-full"}
+      className={`${compact ? "h-8" : "h-10"} w-auto max-w-full${muted ? " opacity-60 grayscale" : ""}`}
       decoding="async"
     />
   );
