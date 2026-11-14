@@ -282,6 +282,34 @@ async function shot(page, name, width, content) {
   await page.screenshot({ path: join(dir, `${name}.png`), fullPage: false }).catch(() => {});
 }
 
+async function captureCentreLeadWorkerView(page, base, locale) {
+  const dir = join(dirname(outDir), "shots");
+  mkdirSync(dir, { recursive: true });
+  const path = locale === "fr" ? "/fr/provider/leads" : "/provider/leads";
+  const title = locale === "fr" ? "Familles de votre centre" : "Families at your centre";
+  const offBody = locale === "fr"
+    ? "Cette page est fermée. Vos messages, visites et listes d’attente fonctionnent encore."
+    : "This page is turned off. Your messages, tours, and waitlist still work.";
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.getByRole("heading", { level: 1, name: title, exact: true }).waitFor({ timeout: timeoutMs });
+    await page.getByText(offBody, { exact: true }).waitFor({ timeout: timeoutMs });
+    // Static off-page content can precede hydration and the seeded session.
+    await page.waitForFunction(() => {
+      const groups = [...document.querySelectorAll('[data-ke="desk-desktop-nav"] details')];
+      return groups.length > 0 && groups.every((group) => group.dataset.keGroup === "1");
+    }, undefined, { timeout: timeoutMs });
+    await page.locator('[data-ke="header-avatar"]').getByText("ED", { exact: true }).waitFor({ timeout: timeoutMs });
+    await page.locator('[data-ke="desk-switcher-slot"] [data-ke="desk-switch-tab"][data-desk="parent"]').waitFor({ state: "attached", timeout: timeoutMs });
+    await page.locator('header [data-ke="book-a-tour"]').waitFor({ state: "detached", timeout: timeoutMs });
+    if (width === 1280) await page.locator('[data-ke="desk-desktop-nav"] [data-nav="today"]').waitFor({ timeout: timeoutMs });
+    if (!(await pageIsQuiet(page))) throw new Error("Tracker capture did not reach the default-off synthetic view");
+    await page.screenshot({ path: join(dir, `tracker-worker-${locale}-${width}.png`), fullPage: false });
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
+}
+
 async function searchSmokeSnapshot(page) {
   return page.evaluate(() => {
     const visible = (node) => {
@@ -1791,6 +1819,10 @@ async function runSignedInSessions(page, base) {
       record(`signed-in-account-${tag}`, photo === 0 && kept.includes(bio) && (await pageIsQuiet(page)), {
         note: `photo=${photo} bio=${kept.slice(0, 72)}`,
       });
+      if (item.role === "provider") {
+        await captureCentreLeadWorkerView(page, base, item.locale);
+        record(`tracker-worker-screenshots-${item.locale}`, true, { note: "Default-off Families page at 390 and 1280" });
+      }
       if (tag === "parent-en") {
         await page.goto(new URL("/parent?tab=saved", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
         const savedText = await page.locator("body").innerText().catch(() => "");
