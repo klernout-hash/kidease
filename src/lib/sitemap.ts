@@ -6,11 +6,12 @@
  * QA ghost / admin-only slugs never appear.
  */
 
-import { isPublicListing, looksLikeTestFixture, type ListingVisibilityInput } from "./listing-visibility.ts";
+import { isPublicListing, type ListingVisibilityInput } from "./listing-visibility.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
 import { SITEMAP_FR_PATHS } from "./locale-path.ts";
 
-export const SITEMAP_ORIGIN = "https://www.kidease.ca";
+import { SITEMAP_ORIGIN, sitemapListingPath, isSafeSitemapSlug } from "./public-url.ts";
+export { SITEMAP_ORIGIN, sitemapListingPath, isSafeSitemapSlug } from "./public-url.ts";
 export const SITEMAP_LISTING_CAP = 500;
 /** URLs per listing sitemap file (Google allows 50_000; keep files small). */
 export const LISTING_SITEMAP_CAP = 5000;
@@ -18,7 +19,6 @@ export const LISTING_SITEMAP_CAP = 5000;
 export const LISTING_SITEMAP_TOTAL_CAP = 50_000;
 export const SITEMAP_LISTINGS_PATH = "/sitemap-listings.xml";
 export const SITEMAP_LASTMOD = "2026-09-08";
-const BLOCKED_SITEMAP_SLUGS = new Set(["test-ghost", "test-ghost-claim-lab"]);
 const LISTING_SITEMAP_PAGE_RE = /^\/sitemap-listings-([1-9]\d*)\.xml$/;
 
 export const SITEMAP_STATIC_PATHS = [
@@ -85,27 +85,6 @@ export function sitemapPublicPaths(extraPaths: readonly string[] = []) {
     out.push(clean);
   }
   return out;
-}
-
-/**
- * Catalogue slugs are alphanumeric plus hyphens. Repeated and trailing hyphens
- * are real (truncated registry names such as "la-bulle-de-lait-"). They are
- * still one path segment — no slash, space, or dot.
- */
-const SLUG_RE = /^[a-z0-9]+(?:-*[a-z0-9]+)*-*$/i;
-
-export function isSafeSitemapSlug(slug: string | null | undefined): boolean {
-  const value = (slug || "").trim();
-  if (!value || value.length > 80) return false;
-  if (/^(null|undefined)$/i.test(value)) return false;
-  if (!SLUG_RE.test(value)) return false;
-  if (BLOCKED_SITEMAP_SLUGS.has(value.toLowerCase())) return false;
-  if (looksLikeTestFixture({ slug: value })) return false;
-  return true;
-}
-
-export function sitemapListingPath(slug: string): string {
-  return `/daycare/${slug}`;
 }
 
 /** Same rows search keeps, as safe listing URLs. One slug per centre. */

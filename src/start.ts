@@ -3,6 +3,8 @@ import { reportError } from "@/lib/observe";
 import { nativeAdminRedirectTarget } from "@/lib/native-admin";
 import { clientIpFromHeaders, consumeServerFnBudget } from "@/lib/server-fn-throttle";
 import { bareServerFnRequest } from "@/lib/server-fn-request";
+import { privateHttpZoneForPath } from "@/lib/gov/access";
+import { privateHttpUnavailableResponse } from "@/lib/gov/http-isolation";
 
 /**
  * Native shells must not document-GET /admin*. Cloudflare Access answers that
@@ -175,14 +177,19 @@ const localeRequestMiddleware = createMiddleware({ type: "request" }).server(asy
 });
 
 const govHttpIsolation = createMiddleware({ type: "request" }).server(async ({ next, request }) => {
+  let zone: ReturnType<typeof privateHttpZoneForPath>;
   try {
-    const path = new URL(request.url).pathname;
-    if (!path.startsWith("/api/")) return next();
+    zone = privateHttpZoneForPath(new URL(request.url).pathname);
+  } catch {
+    return privateHttpUnavailableResponse();
+  }
+  if (!zone) return next();
+  try {
     const { blockGovernmentOnPrivateHttp } = await import("@/lib/server/gov-guard.server");
     const blocked = await blockGovernmentOnPrivateHttp(request);
     if (blocked) return blocked;
   } catch {
-    return next();
+    return privateHttpUnavailableResponse();
   }
   return next();
 });

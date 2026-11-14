@@ -180,13 +180,12 @@ test("Share KidEase lives in the app menu and drawer, not the header", () => {
   assert.match(drawer, /appearance="drawer"/);
 });
 
-test("listing cards and listing detail share the centre deep link", () => {
+test("listing cards lead to the detail page where the centre deep link can be shared", () => {
   const card = src("src/components/daycare-card.tsx");
   const listing = src("src/routes/daycare.$slug.tsx");
   const button = src("src/components/share-button.tsx");
-  assert.match(card, /ShareListingButton/);
-  assert.match(card, /appearance="photo"/);
-  assert.match(card, /pointer-events-auto/);
+  assert.match(card, /data-ke="card-view-details"/);
+  assert.doesNotMatch(card, /ShareListingButton/);
   assert.match(button, /onPointerDown/);
   assert.match(button, /stopPropagation/);
   assert.match(listing, /ShareListingButton/);

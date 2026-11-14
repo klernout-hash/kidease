@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AI_FLAGS } from "@/lib/ai/flags";
 import { helpBubbleDistinctId } from "@/lib/ai/help-bubble";
-import { parentHelperEventProps } from "@/lib/ai/parent-helper";
+import { parentHelperEventProps } from "@/lib/ai/event-props";
 import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { askParentHelper, estimateSubsidy } from "@/lib/server/parent-helper";

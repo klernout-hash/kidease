@@ -85,7 +85,8 @@ test("public and desk chrome hide Upgrade / Subscribe unless flagged", () => {
   const parent = src("src/components/parent-desk.tsx");
   assert.match(parent, /ParentPlusPanel/);
   const plusPanel = src("src/components/parent-plus.tsx");
-  assert.match(plusPanel, /!showPay && !manageable/);
+  assert.match(plusPanel, /subscriptionsEnabled && \(showPay \|\| alwaysOffer\)/);
+  assert.match(plusPanel, /!offerPlans && !manageable/);
   assert.match(plusPanel, /ManageBillingCard/);
   const video = src("src/routes/video.$roomId.tsx");
   assert.match(video, /PayCtas/);
@@ -126,7 +127,7 @@ test("free landing page keeps claim free and never invents $10-a-day fees", () =
   assert.match(src("src/components/listing-hero-gallery.tsx"), /claimQuery/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /claimListingFrame: "Claim listing"/);
   assert.match(listing, /claimFreeListing/);
-  assert.match(listing, /parentRequestNotLive/);
+  assert.match(src("src/components/request-tour.tsx"), /parentRequestNotLive/);
   assert.match(listing, /FreeListingShareActions/);
   assert.match(listing, /listingJsonLdScript/);
   assert.doesNotMatch(listing, /\$49/);

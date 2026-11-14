@@ -80,30 +80,94 @@ function requestUrl(input: FetchInput): string {
   return input.url;
 }
 
+function requestSignal(input: FetchInput, init?: FetchInit): AbortSignal | undefined {
+  if (init?.signal !== undefined) return init.signal ?? undefined;
+  return input instanceof Request ? input.signal : undefined;
+}
+
+function abortReason(signal: AbortSignal): unknown {
+  return signal.reason ?? new DOMException("The operation was aborted", "AbortError");
+}
+
+function checkCancelled(signal?: AbortSignal): void {
+  if (signal?.aborted) throw abortReason(signal);
+}
+
+/** No transport is running during backoff, so cancellation can release it now. */
+function waitForRetry(
+  ms: number,
+  signal?: AbortSignal,
+  sleep?: (ms: number) => Promise<void>,
+): Promise<void> {
+  if (signal?.aborted) return Promise.reject(abortReason(signal));
+  return new Promise((resolve, reject) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let settled = false;
+    const finish = (error?: unknown, failed = false) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+      if (failed) reject(error);
+      else resolve();
+    };
+    const onAbort = () => finish(signal ? abortReason(signal) : undefined, true);
+    signal?.addEventListener("abort", onAbort, { once: true });
+    if (sleep) void Promise.resolve().then(() => sleep(ms)).then(() => finish(), (error: unknown) => finish(error, true));
+    else timer = setTimeout(() => finish(), ms);
+  });
+}
+
+/** Race a wait with cancellation, removing its listener on every settle path. */
+function waitWithSignal<T>(pending: Promise<T>, signal?: AbortSignal | null): Promise<T> {
+  if (!signal) return pending;
+  if (signal.aborted) {
+    void pending.catch(() => undefined);
+    return Promise.reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+  }
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => {
+      signal.removeEventListener("abort", abort);
+      reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+    };
+    signal.addEventListener("abort", abort, { once: true });
+    pending.then((value) => { signal.removeEventListener("abort", abort); resolve(value); },
+      (error) => { signal.removeEventListener("abort", abort); reject(error); });
+  });
+}
+
 export function createServerFnFetch(options: {
   fetchImpl: (input: FetchInput, init?: FetchInit) => Promise<Response>;
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
 }): (input: FetchInput, init?: FetchInit) => Promise<Response> {
   const now = options.now ?? (() => Date.now());
-  const sleep = options.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
   const circuit = new ServerFnCircuit(now);
   const tails = new Map<string, Promise<unknown>>();
 
   return (input, init) => {
     const key = serverFnRequestKey(requestUrl(input));
     if (!key) return options.fetchImpl(input, init);
+    const signal = requestSignal(input, init);
+    const requestInit = signal ? { ...init, signal } : init;
     const prev = tails.get(key) ?? Promise.resolve();
-    const run = prev.catch(() => undefined).then(async () => {
+    const before = prev.catch(() => undefined);
+    const run = waitWithSignal(before, signal).then(async () => {
+      signal?.throwIfAborted();
       if (circuit.blocked(key)) throw new Error("Too many requests");
       let response: Response | null = null;
       for (let attempt = 1; attempt <= SERVER_FN_ATTEMPT_CAP; attempt += 1) {
+        checkCancelled(signal);
         if (circuit.blocked(key)) throw new Error("Too many requests");
         const wait = circuit.waitMs(key);
-        if (wait > 0) await sleep(wait);
+        if (wait > 0) await waitForRetry(wait, signal, options.sleep);
+        signal?.throwIfAborted();
         try {
-          response = await options.fetchImpl(input, init);
+          response = await waitWithSignal(options.fetchImpl(input, requestInit), signal);
+          signal?.throwIfAborted();
         } catch (error) {
+          // Abandoning a read is not a service failure and must not be retried.
+          if (signal?.aborted) throw signal.reason ?? error;
           circuit.recordFailure(key, 503, null);
           if (attempt === SERVER_FN_ATTEMPT_CAP) throw error;
           continue;
@@ -117,7 +181,10 @@ export function createServerFnFetch(options: {
       }
       return response as Response;
     });
-    tails.set(key, run.then(() => undefined, () => undefined));
+    const settled = run.then(() => undefined, () => undefined);
+    // A cancelled queued read rejects promptly, while its predecessor still
+    // owns the queue until it settles. Cancelling an active read frees its slot.
+    tails.set(key, before.then(() => settled));
     return run;
   };
 }

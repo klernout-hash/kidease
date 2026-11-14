@@ -17,7 +17,7 @@ export function HeroClaimStrip({ lower = false }: { lower?: boolean } = {}) {
       className="mx-auto mt-3 flex w-full max-w-[960px] flex-wrap items-center justify-center gap-x-3 gap-y-2"
     >
       <p className="text-center text-sm font-normal leading-5 text-fg">{t("heroDaycareLead")}</p>
-      <Button asChild size="sm" className="min-h-11 max-w-full whitespace-normal px-3.5 text-center">
+      <Button asChild size="sm" className="max-w-full whitespace-normal px-3.5 text-center">
         <Link to={localePath("/claim", locale)}>{t("heroClaimListing")}</Link>
       </Button>
       <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">

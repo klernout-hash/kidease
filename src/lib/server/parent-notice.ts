@@ -21,18 +21,27 @@ export async function saveParentInAppNotice(
     daycareName?: string | null;
     status?: string | null;
   },
+  options?: { strict?: boolean },
 ): Promise<void> {
   const userId = String(input.userId || "").trim();
   if (!userId || userId.startsWith("guest:")) return;
   const href = String(input.href || "").trim();
   if (!isAllowedNotificationHref(href)) return;
-  const sourceKey = String(input.sourceKey || "").trim().slice(0, 180);
+  const sourceKey = String(input.sourceKey || "")
+    .trim()
+    .slice(0, 180);
   if (!sourceKey) return;
   const { ensureUserNotifications } = await import("./runtime-schema");
   await ensureUserNotifications(sql);
-  const name = String(input.daycareName || "").trim().slice(0, 120) || null;
-  const status = String(input.status || "").trim().slice(0, 40) || null;
-  await sql`
+  const name =
+    String(input.daycareName || "")
+      .trim()
+      .slice(0, 120) || null;
+  const status =
+    String(input.status || "")
+      .trim()
+      .slice(0, 40) || null;
+  const write = sql`
     insert into user_notifications (
       id, user_id, kind, title_key, href, source_key, daycare_name, status, created_at
     ) values (
@@ -40,5 +49,7 @@ export async function saveParentInAppNotice(
       ${sourceKey}, ${name}, ${status}, now()
     )
     on conflict (user_id, source_key) do nothing
-  `.catch(() => undefined);
+  `;
+  if (options?.strict) await write;
+  else await write.catch(() => undefined);
 }

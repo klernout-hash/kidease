@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const rowClass =
   "ke-press flex min-h-14 items-center justify-between gap-3 border-b border-border px-1 text-[15px] text-fg last:border-b-0";
 const drawerClass =
-  "flex min-h-12 items-center gap-3 rounded-xl px-3 text-[15px] font-medium text-fg hover:bg-surface";
+  "flex min-h-[44px] items-center gap-3 rounded-xl px-3 text-[15px] font-medium text-fg hover:bg-surface";
 
 export function MenuGlyph({ id, className }: { id: MenuIconId; className?: string }) {
   const Icon = menuIcon(id);

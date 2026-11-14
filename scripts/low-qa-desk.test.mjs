@@ -30,16 +30,16 @@ test("settings links open alerts, login, and email choices", () => {
   }
 });
 
-test("daycare today names the founding period, never free forever", () => {
+test("daycare today names the free listing tools without a prelaunch period", () => {
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /FOUNDING_PAGE\[foundingLocale\(locale\)\]\.daycarePill/);
   assert.doesNotMatch(provider, /:\s*"Free"/);
   assert.doesNotMatch(src("src/lib/founding-period.ts"), /free forever/i);
-  assert.equal(tx("en", "heroTrustFounding"), "Free founding period");
+  assert.equal(tx("en", "heroTrustFounding"), "Free listing tools");
 });
 
 test("pay copy does not point at a missing Parent Plus block", () => {
-  assert.match(tx("en", "noPaymentsLead"), /it is not a centre bill/);
+  assert.match(tx("en", "noPaymentsLead"), /centre bills.*Stripe Checkout/i);
   assert.doesNotMatch(tx("en", "noPaymentsLead"), /Parent Plus, above/i);
   assert.doesNotMatch(tx("fr", "noPaymentsLead"), /ci-dessus/i);
   assert.match(src("src/components/parent-desk.tsx"), /t\("openBills"\)/);

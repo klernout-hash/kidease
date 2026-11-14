@@ -379,7 +379,10 @@ test("search and explore wire one Top 7 chip row and ?cat=", () => {
   assert.match(lib, /parseExploreRailAges/);
   assert.match(lib, /formatExploreRailAges/);
   assert.match(lib, /toggleExploreRailAge/);
-  assert.match(search, /listingMatchesExploreFilter/);
+  assert.match(search, /normalizeSearchResultFilters/);
+  assert.match(search, /category: incoming\.cat/);
+  assert.match(src("src/lib/search-result-filters.ts"), /filters\.category && !listingMatchesExploreFilter\(row, filters\.category\)/);
+  assert.match(src("src/lib/server/daycares.ts"), /filterSearchResults\(all/);
   assert.doesNotMatch(lib, /Tiny Tots/);
   assert.match(search, /ExploreCategoryChips/);
   assert.match(search, /searchFor/);

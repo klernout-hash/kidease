@@ -68,12 +68,12 @@ export function QboPanel({ daycareId }: { daycareId: string }) {
       const result = await startQboConnect({ data: { daycareId } });
       if (!result.ok) {
         setMissing(result.missing);
-        toast.error(fr ? "QuickBooks n'est pas prêt." : "QuickBooks is not ready yet.");
+        toast.error(fr ? "La connexion à QuickBooks n’a pas abouti. Réessayez dans un instant." : "QuickBooks could not connect. Try again in a moment.");
         return;
       }
       window.location.assign(result.url);
     } catch {
-      toast.error(fr ? "QuickBooks n'est pas prêt." : "QuickBooks is not ready yet.");
+      toast.error(fr ? "La connexion à QuickBooks n’a pas abouti. Réessayez dans un instant." : "QuickBooks could not connect. Try again in a moment.");
     } finally {
       setBusy(false);
     }
@@ -155,8 +155,7 @@ export function QboPanel({ daycareId }: { daycareId: string }) {
       {!ready ? <p className="mt-4 text-sm text-muted">{fr ? "Vérification de QuickBooks…" : "Checking QuickBooks…"}</p> : null}
       {ready && missing.length ? (
         <p className="mt-4 text-sm" data-ke="qbo-missing">
-          {fr ? "QuickBooks n'est pas connecté. Il manque encore ces réglages Intuit : " : "QuickBooks is not connected. These Intuit settings are still needed: "}
-          {missing.join(", ")}.
+          {fr ? "La connexion à QuickBooks est indisponible. Vous pouvez continuer à gérer vos factures ici." : "QuickBooks connection is unavailable. You can continue managing your bills here."}
         </p>
       ) : null}
       <div className="mt-4 flex flex-wrap gap-3">

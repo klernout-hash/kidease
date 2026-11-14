@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AI_FLAGS } from "@/lib/ai/flags";
-import { reviewSummaryEventProps } from "@/lib/ai/review-summary";
+import { reviewSummaryEventProps } from "@/lib/ai/event-props";
 import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { summarizeListingReviews } from "@/lib/server/review-summary";

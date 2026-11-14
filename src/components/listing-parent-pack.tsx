@@ -12,13 +12,12 @@ import {
 import { publicMonthlyFee } from "@/lib/listing-fee";
 import { formatMonthlyFee, listingFeeNotes, monthlyFeeVisible, partTimeMonthlyFee } from "@/lib/public-programs";
 import { standardAgeLabel } from "@/lib/standard-age-groups";
-import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import { honestVacancy } from "@/lib/now-loops";
 import { useCopy } from "@/lib/use-copy";
 import { displayListingText, money } from "@/lib/utils";
 import type { Daycare } from "@/lib/types";
 
-/** Openings, ages, hours, and a starting fee. City, type, and trust stay elsewhere. */
+/** One labeled facts group; source links stay beside the figures they support. */
 export function ListingHeaderPills({
   item,
   agesLabel = "",
@@ -34,43 +33,53 @@ export function ListingHeaderPills({
   const loc = locale === "fr" ? "fr" : "en";
   const vacancy = honestVacancy(item);
   const opening = honestOpeningWindow(item);
-  const parts: string[] = [];
-  if (opening) parts.push(parentOpeningLabel(opening, loc));
-  else if (vacancy.kind === "open") parts.push(`${vacancy.spots} ${t("spots")}`);
-  else if (vacancy.kind === "waitlist" || vacancy.kind === "confirm") parts.push(t(vacancy.labelKey));
+  const availability = opening
+    ? parentOpeningLabel(opening, loc)
+    : vacancy.kind === "open"
+      ? `${vacancy.spots} ${t("spots")}`
+      : t(vacancy.labelKey);
   const provincial = item.provincialOpening;
   const provincialDate = provincial?.asOf ? new Date(provincial.asOf) : null;
   const provincialLabel =
     provincialDate && !Number.isNaN(provincialDate.getTime())
       ? provincialDate.toLocaleDateString(loc === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium" })
       : "";
-  if (provincial && provincialLabel && provincial.sourceUrl) {
-    const ages = provincial.ageLabel === "All ages" ? t("provincialOpeningsAllAges") : "";
-    parts.push(
-      [t("provincialOpenings"), String(provincial.total), ages, t("provincialOpeningsAsOf").replace("{date}", provincialLabel)]
-        .filter(Boolean)
-        .join(" · "),
-    );
-  }
-  if (agesLabel) parts.push(agesLabel);
+  const provincialAges = provincial?.ageLabel === "All ages" ? t("provincialOpeningsAllAges") : "";
   const hoursText = hours.trim();
-  if (hoursText && hoursText !== "—" && hoursText !== "-") parts.push(hoursText);
-  const subsidy = listingSubsidy(item);
-  if (feeFrom > 0) parts.push(`${t("monthlyFrom")} ${money(feeFrom, locale)}${t("month")}`);
-  else if (subsidy) parts.push(subsidyLabel(subsidy, loc));
-  if (!parts.length && !provincial?.sourceUrl) return null;
+  const showHours = Boolean(hoursText && hoursText !== "—" && hoursText !== "-");
   return (
-    <p className="mt-2 text-sm leading-5 text-fg" data-listing-header-pills>
-      {parts.join(" · ")}
-      {provincial?.sourceUrl ? (
-        <>
-          {parts.length ? " · " : null}
-          <a href={provincial.sourceUrl} className="underline" rel="noreferrer" target="_blank">
-            {t("dataPointSource")}
-          </a>
-        </>
+    <dl className="mt-5 grid grid-cols-1 gap-x-6 gap-y-4 border-y border-border py-5 sm:grid-cols-2" data-listing-header-pills data-ke="listing-highlights">
+      {agesLabel ? (
+        <div>
+          <dt className="text-sm text-muted">{loc === "fr" ? "Groupes d’âge" : "Age groups"}</dt>
+          <dd className="mt-1 text-base font-medium">{agesLabel}</dd>
+        </div>
       ) : null}
-    </p>
+      {showHours ? (
+        <div>
+          <dt className="text-sm text-muted">{loc === "fr" ? "Heures" : "Hours"}</dt>
+          <dd className="mt-1 text-base font-medium">{hoursText}</dd>
+        </div>
+      ) : null}
+      <div>
+        <dt className="text-sm text-muted">{t("availability")}</dt>
+        <dd className="mt-1 text-base font-medium" data-ke="listing-availability">{availability}</dd>
+        {provincial && provincialLabel && provincial.sourceUrl ? (
+          <dd className="mt-1 text-sm text-muted">
+            {t("provincialOpenings")} · {provincial.total}{provincialAges ? ` · ${provincialAges}` : ""} · {t("provincialOpeningsAsOf").replace("{date}", provincialLabel)}
+            {" · "}<a href={provincial.sourceUrl} className="font-medium text-primary underline underline-offset-4" rel="noreferrer" target="_blank">{t("dataPointSource")}</a>
+          </dd>
+        ) : null}
+      </div>
+      <div>
+        <dt className="text-sm text-muted">{loc === "fr" ? "Frais mensuels" : "Monthly fees"}</dt>
+        <dd className={`mt-1 text-base font-medium ${feeFrom > 0 ? "text-fg" : "text-muted"}`}>
+          <a href="#listing-fees" className="text-inherit underline decoration-border underline-offset-4 hover:decoration-primary">
+            {feeFrom > 0 ? `${t("monthlyFrom")} ${money(feeFrom, locale)}${t("month")}` : t("programsAsk")}
+          </a>
+        </dd>
+      </div>
+    </dl>
   );
 }
 

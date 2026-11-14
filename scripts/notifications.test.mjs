@@ -205,8 +205,15 @@ test("hamburger and /menu rows keep an icon for every category", () => {
   for (const id of required) {
     assert.match(icons, new RegExp(`${id}:`), id);
   }
-  assert.match(src("src/components/nav-drawer.tsx"), /icon="explore"/);
-  assert.match(drawer, /icon=\{item\.icon\}/);
+  assert.match(drawer, /guestDrawerMenuGroupsForShell/);
+  assert.match(drawer, /<FooterMoreLinks/);
+  const footerMore = src("src/components/footer-more-links.tsx");
+  assert.match(footerMore, /icon=\{ICONS\[link\.to\] \?\? "help"\}/);
+  for (const [href, icon] of [["/help", "help"], ["/faq", "faq"], ["/contact", "contact"], ["/how-it-works", "howItWorks"], ["/report", "support"]]) {
+    assert.match(footerMore, new RegExp(`"${href}": "${icon}"`), href);
+  }
+  assert.match(src("src/components/role-nav.tsx"), /icon=\{item\.icon\}/);
+  assert.match(src("src/components/menu-row.tsx"), /<MenuGlyph id=\{icon\}/);
   assert.match(drawer, /MenuGlyph id="language"/);
   assert.match(drawer, /MenuGlyph id="logout"/);
   assert.doesNotMatch(drawer, /MenuGlyph id="admin"/);

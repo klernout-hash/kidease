@@ -52,7 +52,9 @@
   --radius-device: 36px;
   --shadow-card: 0 1px 2px rgba(28, 24, 20, 0.04), 0 8px 24px rgba(28, 24, 20, 0.06);
   --shadow-lift: 0 2px 6px rgba(28, 24, 20, 0.05), 0 16px 36px rgba(28, 24, 20, 0.08);
-  --ke-card-w: 11.25rem;
+  /* One picture box for Recently Viewed, category rows, and native listing rails. */
+  --ke-card-w: min(10.5rem, 42vw);
+  --ke-card-photo-ratio: 20 / 19;
   /* Marketplace density. 14px root scales rem spacing; these tighten boxes further. */
   --spacing-box: 0.625rem;
   --spacing-box-tight: 0.35rem;
@@ -106,13 +108,6 @@
       --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 28px rgba(0, 0, 0, 0.28);
       --shadow-lift: 0 2px 8px rgba(0, 0, 0, 0.4), 0 16px 36px rgba(0, 0, 0, 0.32);
     }
-  }
-  html[data-channel="app"] {
-    --ke-card-w: 11.25rem;
-  }
-  html[data-channel="website"] {
-    /* ~184px: 5–6 listing tiles on a 1280–1440 Explore row */
-    --ke-card-w: 11.5rem;
   }
   html {
     color-scheme: light;
@@ -354,6 +349,14 @@
   }
 }
 
+/* Keep the shared Button's touch floor when a caller supplies a smaller rem
+   minimum. This unlayered component rule wins over layered size utilities;
+   explicit larger heights and the existing size variants still grow. */
+.ke-button {
+  min-height: max(44px, 2.75rem);
+  min-width: 44px;
+}
+
 /* Header buttons use rem, so a large text size makes them wider than a 320px
    phone once the back control is also in the row. Kept outside @layer so it
    wins over the size utilities. 44px stays a full touch target. */
@@ -387,8 +390,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 2.75rem;
-    min-width: 2.75rem;
+    min-height: max(44px, 2.75rem);
+    min-width: max(44px, 2.75rem);
     max-width: none;
     padding: 0.15rem 0.7rem;
     border-radius: 9999px;
@@ -458,7 +461,7 @@
     display: flex;
     width: max-content;
     flex-wrap: nowrap;
-    gap: 0.5rem;
+    gap: max(8px, 0.5rem);
   }
   .ke-chip-carousel-track > * {
     flex: 0 0 auto;
@@ -470,7 +473,7 @@
   .ke-explore-cats {
     display: flex;
     flex-wrap: nowrap;
-    gap: 0.5rem;
+    gap: max(8px, 0.5rem);
     overflow-x: auto;
     padding-block: 0.15rem 0.35rem;
     -webkit-overflow-scrolling: touch;
@@ -503,7 +506,7 @@
   .ke-explore-filter-bar {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
     width: 100%;
     min-width: 0;
     max-width: 100%;
@@ -627,7 +630,7 @@
     display: flex;
     flex: 0 0 auto;
     align-items: center;
-    gap: 0.35rem;
+    gap: 8px;
     padding-left: 0.15rem;
     background: var(--color-bg);
     isolation: isolate;
@@ -648,8 +651,8 @@
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    min-height: 2.75rem;
-    min-width: 2.75rem;
+    min-height: max(44px, 2.75rem);
+    min-width: max(44px, 2.75rem);
     padding: 0 0.7rem;
     border: 0;
     border-radius: 9999px;
@@ -692,7 +695,7 @@
       max-width: none;
     }
     .ke-explore-icon-btn {
-      width: 2.75rem;
+      width: max(44px, 2.75rem);
       padding: 0;
     }
     .ke-explore-icon-btn-label {
@@ -746,27 +749,18 @@
     pointer-events: none !important;
   }
   .ke-footer-inner {
-    max-width: 56rem;
+    max-width: 64rem;
     margin-inline: auto;
   }
   .ke-footer-cols {
     display: grid;
     width: 100%;
-    max-width: 56rem;
-    margin-inline: auto;
-    grid-template-columns: 1fr 1fr;
-    justify-items: center;
-    gap: 16px 24px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
   }
-  @media (min-width: 640px) {
-    .ke-footer-cols {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      justify-items: center;
-      gap: 16px 24px;
-    }
-    .ke-footer-cols:has(> :nth-child(4)) {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
+  .ke-footer-column {
+    min-width: 0;
+    border-bottom: 1px solid var(--color-border);
   }
   .ke-footer-title {
     margin: 0;
@@ -779,16 +773,35 @@
   }
   .ke-footer-list {
     list-style: none;
-    margin: 0.4rem 0 0;
-    padding: 0;
+    margin: 0;
+    padding: 0 0 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 1rem;
+  }
+  .ke-footer-toggle {
     display: flex;
-    flex-direction: column;
-    gap: 0.05rem;
+    min-height: 3.25rem;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    text-align: start;
+    font: inherit;
+    cursor: pointer;
+    list-style: none;
+  }
+  .ke-footer-toggle::-webkit-details-marker {
+    display: none;
+  }
+  .ke-footer-column[open] > summary svg {
+    transform: rotate(180deg);
   }
   .ke-footer-link {
     display: inline-flex;
     align-items: center;
-    min-height: 1.7rem;
+    min-height: 3.15rem;
+    min-width: 44px;
     color: var(--color-muted);
     font-size: 13px;
     line-height: 1.3;
@@ -799,55 +812,156 @@
     text-decoration: underline;
     text-underline-offset: 3px;
   }
+  .ke-footer-app-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.25rem;
+    margin-top: 1.25rem;
+  }
+  .ke-footer-apps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 1rem;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .ke-footer-app-title {
+    display: inline-flex;
+    min-height: 3.15rem;
+    min-width: 44px;
+    align-items: center;
+    color: var(--color-fg);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .ke-footer-store-row {
+    --ke-footer-store-width: min(9rem, calc((100vw - 4rem) / 3));
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ke-footer-store-row > li {
+    display: flex;
+    flex: none;
+  }
+  .ke-footer-store-badge,
+  .ke-footer-store-name {
+    display: inline-flex;
+    width: var(--ke-footer-store-width);
+    height: 3.15rem;
+    min-height: 3.15rem;
+    min-width: 44px;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.4rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    background: var(--color-surface);
+    color: var(--color-fg);
+    text-decoration: none;
+  }
+  .ke-footer-store-art {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+  .ke-footer-store-art img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+  .ke-footer-store-badge:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+  .ke-footer-store-name {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.15;
+    text-align: center;
+  }
+  .ke-footer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
   .ke-footer-legal {
-    margin-top: 1.15rem;
-    padding-top: 0.85rem;
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
     border-top: 1px solid var(--color-border);
     display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0 1rem;
     color: var(--color-muted);
     font-size: 12px;
     line-height: 1.45;
   }
-  .ke-footer-legal-copy,
-  .ke-footer-legal-meta {
+  .ke-footer-legal-links {
     display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 0.75rem;
   }
-  .ke-footer-legal-copy p,
-  .ke-footer-legal-meta p {
+  .ke-footer-legal p {
     margin: 0;
   }
-  .ke-footer-legal-note {
+  .ke-footer-sources {
     color: var(--color-subtle);
     font-size: 11px;
+    line-height: 1.6;
+    max-width: 70ch;
   }
-  .ke-footer-operator {
-    color: var(--color-subtle);
+  .ke-footer-sources summary {
     font-size: 11px;
-    letter-spacing: 0.02em;
-    text-decoration: none;
-    width: fit-content;
   }
-  .ke-footer-operator:hover {
-    color: var(--color-muted);
+  .ke-footer-sources p {
+    margin-top: 0.5rem;
   }
   @media (min-width: 640px) {
     .ke-site-footer {
       padding-block: 1.5rem 1.25rem;
     }
-    .ke-footer-legal {
-      flex-direction: row;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 1.5rem;
+    .ke-footer-cols {
+      grid-template-columns: 1fr 1.1fr 1.6fr;
+      gap: 2rem;
     }
-    .ke-footer-legal-meta {
-      align-items: flex-end;
-      text-align: right;
-      flex-shrink: 0;
+    .ke-footer-cols:not(:has(> :nth-child(3))) {
+      grid-template-columns: 1fr 1.5fr;
+    }
+    .ke-footer-column {
+      border: 0;
+    }
+    .ke-footer-toggle svg {
+      display: none;
+    }
+    .ke-footer-list {
+      display: flex;
+      flex-direction: column;
+      margin-top: 0.5rem;
+      padding: 0;
+    }
+    [data-footer-col="support"] .ke-footer-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-content: start;
+      gap: 0 1rem;
     }
   }
   .ke-listings,
@@ -931,9 +1045,6 @@
     transition: transform 160ms ease;
   }
   @media (min-width: 1280px) {
-    [data-ke="explore-category-rails"] {
-      --ke-card-w: 13rem;
-    }
     .ke-listing-rail-port::after {
       width: 0;
     }
@@ -947,13 +1058,6 @@
   .ke-rail--visual {
     gap: 0.75rem;
   }
-  .ke-rail--visual .ke-rail-card {
-    flex-basis: min(85vw, 18.5rem);
-    width: min(85vw, 18.5rem);
-    max-width: min(85vw, 18.5rem);
-    min-width: min(85vw, 18.5rem);
-    contain-intrinsic-size: min(85vw, 18.5rem) 22rem;
-  }
   /* Phone: snap each card, keep the first card inside the gutter, and let the next card peek. */
   @media (max-width: 767px) {
     .ke-rail--visual {
@@ -966,7 +1070,7 @@
       overflow: hidden;
     }
     .ke-rail--visual .ke-rail-card .ke-photo-frame {
-      aspect-ratio: 4 / 3;
+      aspect-ratio: var(--ke-card-photo-ratio);
       width: 100%;
     }
     .ke-rail--visual .ke-rail-card h3 {
@@ -983,15 +1087,6 @@
     }
     html, body {
       overflow-x: clip;
-    }
-  }
-  @media (min-width: 768px) {
-    .ke-rail--visual .ke-rail-card {
-      flex-basis: 17.5rem;
-      width: 17.5rem;
-      max-width: 17.5rem;
-      min-width: 17.5rem;
-      contain-intrinsic-size: 17.5rem 22rem;
     }
   }
   .ke-rail-card--in {
@@ -1093,7 +1188,18 @@
     overflow: visible;
   }
   .ke-card-photo {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: var(--ke-card-photo-ratio);
+    width: 100%;
+    height: auto;
+    flex: none;
+  }
+  .ke-card-photo > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
   }
   .ke-card h3 {
     font-family: var(--font-sans);
@@ -1102,6 +1208,7 @@
   }
   .ke-input {
     height: 2.75rem;
+    min-height: max(44px, 2.75rem);
     width: 100%;
     border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
@@ -1774,8 +1881,7 @@
   }
   html[data-channel="app"] .ke-app-search .ke-live-pulse,
   html[data-channel="app"] .ke-app-search .ke-muted-pulse,
-  html[data-channel="app"] .ke-app-search .ke-badge-pulse,
-  html[data-channel="app"] .ke-app-search .ke-priority-pill {
+  html[data-channel="app"] .ke-app-search .ke-badge-pulse {
     animation: none;
   }
   html[data-channel="app"] .ke-map-pick {
@@ -2585,7 +2691,8 @@ html[data-channel="app"] .ke-child-rest {
 @media (min-width: 768px) {
   html[data-channel="app"] .ke-rail--visual {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
+    grid-template-columns: repeat(auto-fill, var(--ke-card-w));
+    justify-content: start;
     overflow: visible;
     scroll-snap-type: none;
   }
@@ -2884,6 +2991,12 @@ html[data-resolved-theme="dark"] .ke-site-footer {
   }
 }
 
+/* Consent height changes with French, text size and wrapping. Reuse the
+   launcher's existing measured clearance in every channel while it is open. */
+html[data-cookie-banner="open"]:has(.ke-help-bot) .ke-help-bot {
+  bottom: calc(var(--ke-help-clear, calc(10.5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)))) + var(--ke-keyboard, 0px));
+}
+
 /* Keyboard open: the bottom tab bar steps aside instead of floating over content. */
 html[data-keyboard="open"] [data-ke="app-tab-bar"] {
   display: none !important;
@@ -2926,7 +3039,7 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
   position: relative;
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: var(--ke-card-photo-ratio);
   height: auto;
   overflow: hidden;
   align-self: flex-start;
@@ -3004,8 +3117,8 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
 }
 @media (max-width: 767px) {
   .ke-explore-filter-bar > [data-chip-carousel] {
-    flex: 1 1 calc(100% - 6.75rem);
-    max-width: calc(100% - 6.75rem);
+    flex: 1 1 0;
+    max-width: 100%;
   }
   .ke-explore-filter-actions {
     position: relative;
@@ -3045,7 +3158,49 @@ html[data-runtime="native"] .ke-page::after {
   pointer-events: none;
   flex: none;
 }
+/* The provider desk grows as its centre data arrives. Keep the same bottom
+   clearance on the page box so an anonymous spacer cannot shift offscreen. */
+html[data-channel="app"] .ke-page.ke-provider-page,
+html[data-runtime="native"] .ke-page.ke-provider-page {
+  padding-block-end: calc(10rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+}
+html[data-channel="app"] .ke-page.ke-provider-page::after,
+html[data-runtime="native"] .ke-page.ke-provider-page::after {
+  content: none;
+}
 main { min-width: 0; }
+
+/* The inbox owns one viewport. Only its list/transcript scrolls; page spacers
+   otherwise let focus scroll the back control away and leave an empty tail. */
+html:has([data-ke-viewport="inbox"]),
+html:has([data-ke-viewport="inbox"]) body {
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+html:has([data-ke-viewport="inbox"]) body {
+  position: fixed;
+  inset: 0;
+  overflow: clip;
+}
+[data-ke-viewport="inbox"] {
+  height: var(--ke-viewport-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+[data-ke-viewport="inbox"] > header {
+  flex-shrink: 0;
+}
+[data-ke-viewport="inbox"] > [data-ke="shell-content"] {
+  padding-bottom: var(--ke-frame-tabs, 0px);
+}
+[data-ke-viewport="inbox"] .ke-page {
+  display: flex;
+  flex-direction: column;
+}
+html:has([data-ke-viewport="inbox"]) .ke-page::after {
+  display: none;
+}
 
 /* FEATURE_UI_AIRBNB_V1. These rules match only when the flag sets data-ui. */
 html[data-ui="airbnb-v1"] {
@@ -3118,6 +3273,45 @@ html[data-ui="airbnb-v1"][data-theme="dark"] {
   scrollbar-width: none;
 }
 .ke-airbnb-cats::-webkit-scrollbar { display: none; }
+/* Home categories belong to the sticky header. The row scrolls inside its own
+   space on smaller screens, without covering the account or menu controls. */
+[data-ke="header-care-categories"] .ke-airbnb-cats {
+  justify-content: safe center;
+  gap: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0.25rem 0;
+  overscroll-behavior-x: contain;
+}
+[data-ke="header-care-categories"] .ke-airbnb-cat {
+  justify-content: center;
+  gap: 0.25rem;
+  width: 6rem;
+  min-height: 4.75rem;
+  padding: 0.25rem 0.3rem 0.65rem;
+  color: var(--color-muted);
+}
+[data-ke="header-care-categories"] .ke-airbnb-cat:hover,
+[data-ke="header-care-categories"] .ke-airbnb-cat.is-on {
+  color: var(--color-fg);
+}
+[data-ke="header-care-categories"] .ke-airbnb-cat-art,
+[data-ke="header-care-categories"] .ke-airbnb-cat-art img {
+  width: 2.25rem;
+  height: 2.25rem;
+  max-width: 2.25rem;
+  animation: none;
+}
+[data-ke="header-care-categories"] .ke-airbnb-cat-label {
+  display: block;
+  overflow: visible;
+  max-width: 100%;
+  min-height: 2.3em;
+  font-size: 0.7rem;
+  line-height: 1.15;
+  white-space: normal;
+}
+
 .ke-airbnb-cat {
   position: relative;
   display: flex;
@@ -3184,7 +3378,6 @@ html[data-ui="airbnb-v1"][data-theme="dark"] {
 /* Airbnb v1 phone home: keep the icon care row; hide emoji + pill duplicates. */
 html[data-ui="airbnb-v1"] .ke-home [data-ke="msv2-categories"] { display: none !important; }
 html[data-ui="airbnb-v1"] .ke-home [data-ke="msv2-home"] .sticky { padding-bottom: 0; }
-html[data-ui="airbnb-v1"]:has(.ke-home) [data-ke="phone-care-tabs"] { display: none !important; }
 /* Legacy selector kept for older airbnb-home markup. */
 html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-categories"] { display: none !important; }
 html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky { padding-bottom: 0; }
@@ -3219,7 +3412,8 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
 }
 .ke-airbnb-count { color: var(--airbnb-muted); margin: 1.35rem 0 0; font-size: 0.95rem; }
 .ke-airbnb-card {
-  flex: 0 0 86%;
+  flex: 0 0 var(--ke-card-w);
+  width: var(--ke-card-w);
   scroll-snap-align: start;
   text-decoration: none;
   color: inherit;
@@ -3228,7 +3422,7 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
 .ke-airbnb-photo {
   position: relative;
   display: block;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: var(--ke-card-photo-ratio);
   border-radius: 1rem;
   overflow: hidden;
   background: var(--airbnb-line);
@@ -3242,9 +3436,9 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
   min-height: 1.5rem;
   align-items: center;
   border-radius: 999px;
-  background: #1d4ed8;
+  background: var(--color-primary);
   padding: 0.15rem 0.55rem;
-  color: #fff;
+  color: var(--color-primary-fg);
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
@@ -3361,6 +3555,25 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
+/* The original Floating Gallery artwork is static. Motion belongs to this
+   reserved icon box, so the label, hit target and surrounding layout stay still. */
+.ke-category-art {
+  display: block;
+  flex: none;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin-block: 0.25rem;
+  pointer-events: none;
+  transform-origin: 50% 70%;
+}
+.ke-category-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  transform-origin: 50% 70%;
+}
 @media (prefers-reduced-motion: reduce) {
   html[data-ui="airbnb-v1"] .ke-airbnb-sheet { transition: none; }
   .ke-airbnb-cat-art,
@@ -3374,6 +3587,12 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
   .ke-care-gif { display: none; }
   .ke-care-still { display: block; }
   .ke-priority-pill { animation: none; }
+  .ke-category-art,
+  .ke-category-icon {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
 }
 
 
@@ -3519,8 +3738,8 @@ html[data-look="clean"] :is(.ke-tile, .ke-visual-card) :is(a, button).size-12.bg
   fill: rgba(0, 0, 0, 0.3);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
 }
-/* Pills on a photo are white with dark text. Live keeps a green dot. */
-html[data-look="clean"] [data-ke="card-photo-pills"] :is([data-ke="card-live-pill"], .bg-\[\#1D4ED8\]) {
+/* Live is neutral with a green dot. Confirmed fee-program pills keep their blue. */
+html[data-look="clean"] [data-ke="card-photo-pills"] [data-ke="card-live-pill"] {
   background: rgba(255, 255, 255, 0.96);
   color: #222222;
   font-weight: 600;
@@ -3609,91 +3828,14 @@ html[data-look="clean"] .bg-\[\#1f9d55\]:hover {
   /* Home rails. Photos are close to square with 20px corners. */
   html[data-look="clean"] .ke-listing-rail .ke-photo-frame {
     border-radius: 20px;
-    aspect-ratio: 20 / 19;
   }
 }
-/* The care picture tabs from the phone home also show on the website home. They stay in the page,
-   right under the header, so they scroll away with it. */
-@media (min-width: 768px) {
-  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only {
-    display: block;
-  }
-  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cats {
-    justify-content: center;
-    gap: 0;
-    overflow: visible;
-    margin: 0;
-    padding: 0;
-  }
-  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat {
-    justify-content: center;
-    gap: 0.3rem;
-    width: 6.2rem;
-    min-height: 5.5rem;
-    padding: 0.5rem 0.1rem 0.8rem;
-    color: var(--color-muted);
-  }
-  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat:hover,
-  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat.is-on {
-    color: var(--color-fg);
-  }
-  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat.is-on::after {
-    left: 0.6rem;
-    right: 0.6rem;
-    bottom: 0.2rem;
-    height: 3px;
-    border-radius: 3px;
-  }
-  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat-art {
-    width: 3rem;
-    height: 3rem;
-    animation: none;
-  }
-  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat-art img {
-    width: 3rem;
-    height: 3rem;
-    max-width: 3rem;
-    border-radius: 0.85rem;
-  }
-  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat-label {
-    max-width: 6.1rem;
-    min-height: 0;
-    font-size: 11.5px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    white-space: nowrap;
-    -webkit-line-clamp: 1;
-  }
-}
-/* Tablet widths have less room, so the row can scroll sideways. */
-@media (min-width: 768px) and (max-width: 1279px) {
-  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cats {
-    justify-content: safe center;
-    overflow-x: auto;
-  }
-}
-/* Wide screens. The row moves up beside the logo, in the header band. */
-@media (min-width: 1280px) {
-  html[data-look="clean"]:has(.ke-home) [data-ke="live-on-kidease-tab"] {
-    display: none;
-  }
-  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only {
-    position: relative;
-    z-index: 41;
-    display: flex;
-    align-items: center;
-    width: fit-content;
-    height: 6rem;
-    margin: -6rem auto 0;
-  }
-}
-/* Signed-out visitors get two extra header buttons (Book a tour, For daycares). On
-   laptop widths a centred row would run under them, so it sits beside the logo instead. */
-@media (min-width: 1280px) and (max-width: 1535.98px) {
-  html[data-look="clean"]:has(header [data-ke="book-a-tour"]) .ke-home > .ke-airbnb-phone-only {
-    margin-right: auto;
-    margin-left: 7rem;
-  }
+/* The home header owns the category row at every width. */
+html[data-look="clean"] [data-ke="header-care-categories"] .ke-airbnb-cat.is-on::after {
+  left: 0.6rem;
+  right: 0.6rem;
+  bottom: 0.15rem;
+  height: 3px;
 }
 /* Home hero. One quiet line of links under the search bar, then straight to the listings. */
 html[data-look="clean"] [data-ke="home-claim-strip"][data-place="hero"] {
@@ -3778,36 +3920,4 @@ html[data-look="clean"] .border:not([class*="border-"]) {
 }
 html[data-look="clean"] :is(input, select, textarea).border:not([class*="border-"]) {
   border-color: var(--ke-field-line);
-}
-/* Category pictures. The clean look shows a drawn icon for each care type in place of the room photo. */
-html[data-look="clean"] [data-ke="airbnb-care-all"] .ke-airbnb-cat-art img {
-  content: url("/photos/care-icons/all.webp");
-}
-html[data-look="clean"] [data-ke="airbnb-care-child_care_centre"] .ke-airbnb-cat-art img {
-  content: url("/photos/care-icons/child_care_centre.webp");
-}
-html[data-look="clean"] [data-ke="airbnb-care-family_home"] .ke-airbnb-cat-art img {
-  content: url("/photos/care-icons/family_home.webp");
-}
-html[data-look="clean"] [data-ke="airbnb-care-group_home"] .ke-airbnb-cat-art img {
-  content: url("/photos/care-icons/group_home.webp");
-}
-html[data-look="clean"] [data-ke="airbnb-care-nursery_preschool"] .ke-airbnb-cat-art img {
-  content: url("/photos/care-icons/nursery_preschool.webp");
-}
-html[data-look="clean"] [data-ke="airbnb-care-school_age"] .ke-airbnb-cat-art img {
-  content: url("/photos/care-icons/school_age.webp");
-}
-html[data-look="clean"] [data-ke="airbnb-care-before_after"] .ke-airbnb-cat-art img {
-  content: url("/photos/care-icons/before_after.webp");
-}
-html[data-look="clean"] [data-ke="airbnb-care-open"] .ke-airbnb-cat-art img {
-  content: url("/photos/care-icons/open.webp");
-}
-html[data-look="clean"] .ke-airbnb-cat-art {
-  animation: none;
-}
-html[data-look="clean"] .ke-airbnb-cat .ke-airbnb-cat-art img {
-  border-radius: 0;
-  object-fit: contain;
 }

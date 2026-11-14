@@ -2,12 +2,14 @@ import { centreLeadTrackerEnabled } from "@/lib/features";
 import { runCentreLeadJobs } from "@/lib/server/centre-leads";
 import { inngest } from "./client";
 
-/** Proposed cadence only. Registration requires the separate schedule opt-in. */
+/** Proposed cadence only. This factory is not imported by the served registry. */
 export const CENTRE_LEAD_WORKER_CRON = "TZ=America/Winnipeg 10 * * * *";
 
 /**
- * The default app registers no tracker schedule. The feature flag remains an
- * execution guard so a cold PostHog overlay cannot decide registry membership.
+ * Construct an unserved definition only after the schedule opt-in. The bounded
+ * app registry never calls this factory, even when the opt-in is set. A separate
+ * reviewed registration change and schema approval are required for activation.
+ * The feature flag remains an execution guard, not a registration decision.
  */
 export function createCentreLeadWorkerFunctions(env: NodeJS.ProcessEnv = process.env) {
   if (env.CENTRE_LEAD_WORKER_SCHEDULE !== "1") return [];

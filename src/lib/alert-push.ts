@@ -356,8 +356,8 @@ const SETTING_COPY: Record<AlertCategory, { en: { label: string; detail: string 
     fr: { label: "Photo ou avis", detail: "Une photo ou un avis sur votre fiche demande un coup d'oeil." },
   },
   billing: {
-    en: { label: "Billing", detail: "Subscription and payment updates. Only while paid plans are on." },
-    fr: { label: "Facturation", detail: "Abonnement et paiements. Seulement quand les forfaits payants sont ouverts." },
+    en: { label: "Billing", detail: "Updates about your KidEase subscription." },
+    fr: { label: "Facturation", detail: "Nouvelles de votre abonnement KidEase." },
   },
 };
 
@@ -420,7 +420,7 @@ export function alertSettingsIntro(locale: AlertLocale, audience: AlertAudience)
           : audience === "daycare"
           ? "KidEase prévient votre garderie des demandes, des messages et des documents. Choisissez ce que vous voulez recevoir."
           : "KidEase vous prévient des places, des messages et des visites. Choisissez ce que vous voulez recevoir.",
-      founding: "KidEase est une entreprise canadienne. Ces alertes font partie de la période fondatrice gratuite.",
+      founding: "KidEase est une entreprise canadienne. Ces alertes sont incluses sans frais.",
       quiet: "Rien n'est envoyé après 21 h dans votre fuseau horaire, jusqu'à 8 h.",
       save: "Enregistrer les alertes",
       saved: "Alertes enregistrées",
@@ -438,7 +438,7 @@ export function alertSettingsIntro(locale: AlertLocale, audience: AlertAudience)
         : audience === "daycare"
         ? "KidEase tells your centre about requests, messages, and documents. Pick what you want."
         : "KidEase tells you about spots, messages, and visits. Pick what you want.",
-    founding: "KidEase is a Canadian company. These alerts are part of the free founding period.",
+    founding: "KidEase is a Canadian company. These alerts are included at no charge.",
     quiet: "Nothing is sent after 9 p.m. in your time zone, until 8 a.m.",
     save: "Save alerts",
     saved: "Alerts saved",
@@ -474,7 +474,7 @@ export function getAlertsPromptCopy(locale: AlertLocale) {
       yes: "Recevoir les alertes",
       no: "Pas maintenant",
       signIn: "Se connecter pour les alertes",
-      unsupported: "Ce navigateur ne peut pas encore recevoir les alertes. Le courriel est dans votre compte. Les applis téléphone arrivent bientôt.",
+      unsupported: "Ce navigateur ne peut pas recevoir d’alertes. Gérez les alertes par courriel dans votre compte.",
     };
   }
   return {
@@ -483,7 +483,7 @@ export function getAlertsPromptCopy(locale: AlertLocale) {
     yes: "Get alerts",
     no: "Not now",
     signIn: "Sign in to get alerts",
-    unsupported: "This browser cannot receive alerts yet. Email choices are in your account. The phone apps are coming soon.",
+    unsupported: "This browser cannot receive alerts. You can manage email alerts in your account.",
   };
 }
 

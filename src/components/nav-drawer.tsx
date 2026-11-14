@@ -9,7 +9,7 @@ import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { LanguageSelect } from "@/components/language-select";
 import { AppearanceControl } from "@/components/appearance-control";
 import { ShareKidEaseButton } from "@/components/share-button";
-import { MenuGlyph, MenuRow } from "@/components/menu-row";
+import { MenuGlyph } from "@/components/menu-row";
 import { CountBadge } from "@/components/count-badge";
 import { useDeskMenu } from "@/components/desk-menu";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
@@ -19,17 +19,30 @@ import { showDeskSwitcher } from "@/lib/desks";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
-import type { MenuIconId } from "@/lib/menu-icons";
 import { nextDrawerLatch, type DrawerLatch } from "@/lib/drawer-latch";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { useRoleChrome } from "@/components/role-chrome";
 import { SmartMatchEntry } from "@/components/smart-match";
-import { FooterMoreLinks } from "@/components/footer-more-links";
-
-type Item = { to: string; label: string; search?: Record<string, string>; icon: MenuIconId; marker?: string };
+import { FooterMenuLinks, FooterMoreLinks } from "@/components/footer-more-links";
+import { GUEST_DRAWER_FOOTER_OMIT, guestDrawerMenuGroupsForShell } from "@/lib/site-footer-nav";
 
 const drawerSummaryClass =
-  "flex min-h-11 cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-normal text-subtle whitespace-normal break-words [&::-webkit-details-marker]:hidden";
+  "flex min-h-[44px] cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-normal text-subtle whitespace-normal break-words [&::-webkit-details-marker]:hidden";
+
+function drawerTabStops(panel: HTMLElement) {
+  return Array.from(
+    panel.querySelectorAll<HTMLElement>(
+      'a[href], button, select, textarea, input, summary, [tabindex]',
+    ),
+  ).filter(
+    (element) =>
+      element.tabIndex >= 0 &&
+      !element.matches(":disabled") &&
+      !element.closest("[inert]") &&
+      element.getClientRects().length > 0 &&
+      getComputedStyle(element).visibility !== "hidden",
+  );
+}
 
 /** A heading with no links is not a section. Groups collapse so the menu is not one long list. */
 function DrawerSection({
@@ -68,12 +81,13 @@ function GuestDrawerLinks({
   onClose: () => void;
   title: string;
 }) {
-  const { t, locale } = useCopy();
+  const { t } = useCopy();
   const chrome = useRoleChrome();
   // Apple 3.1.1: the native shell must not link to plan checkout.
   // SUBSCRIPTIONS_ENABLED is the one switch for plans on the website too.
   const nativeShell = useInNativeShell();
   const showPlans = !nativeShell && chrome.subscriptionsEnabled === true;
+  const groups = guestDrawerMenuGroupsForShell({ native: nativeShell, plansOn: showPlans });
   return (
     <nav data-ke="role-nav" data-role="guest" aria-label={title}>
       <DrawerSection title={t("navFindCare")} marker="drawer-find-care" startOpen>
@@ -81,23 +95,10 @@ function GuestDrawerLinks({
         <div className="px-3 py-1">
           <SmartMatchEntry inline />
         </div>
-        <MenuRow to={localePath("/search", locale)} label={t("search")} icon="explore" appearance="drawer" marker="search" onClick={onClose} />
-        <MenuRow to={localePath("/search", locale)} search={{ view: "map" }} label={t("navMap")} icon="explore" appearance="drawer" marker="map" onClick={onClose} />
-        <MenuRow to={localePath("/cities", locale)} label={t("browseCities")} icon="explore" appearance="drawer" onClick={onClose} />
-        <MenuRow to={localePath("/compare", locale)} label={t("compare")} icon="compare" appearance="drawer" onClick={onClose} />
-        <MenuRow to={localePath("/tour-checklist", locale)} label={t("tourChecklist")} icon="tourChecklist" appearance="drawer" onClick={onClose} />
+        <FooterMenuLinks links={groups.find((group) => group.id === "find")?.links ?? []} appearance="drawer" onNavigate={onClose} />
       </DrawerSection>
       <DrawerSection title={t("navForDaycares")} marker="drawer-for-daycares">
-        <MenuRow to={localePath("/claim", locale)} label={t("listYourDaycare")} icon="claim" appearance="drawer" onClick={onClose} />
-        {showPlans ? (
-          <MenuRow to={localePath("/plans", locale)} label={t("navPlans")} icon="benefits" appearance="drawer" marker="plans" onClick={onClose} />
-        ) : null}
-        <MenuRow to={localePath("/jobs", locale)} label={t("findDaycareJobs")} icon="jobs" appearance="drawer" onClick={onClose} />
-      </DrawerSection>
-      <DrawerSection title={t("helpTitle")} marker="drawer-help">
-        <MenuRow to={localePath("/help", locale)} label={t("helpTitle")} icon="help" appearance="drawer" onClick={onClose} />
-        <MenuRow to={localePath("/faq", locale)} label={t("faqShort")} icon="faq" appearance="drawer" onClick={onClose} />
-        <MenuRow to={localePath("/contact", locale)} label={t("contactTitle")} icon="contact" appearance="drawer" onClick={onClose} />
+        <FooterMenuLinks links={groups.find((group) => group.id === "daycares")?.links ?? []} appearance="drawer" onNavigate={onClose} />
       </DrawerSection>
     </nav>
   );
@@ -107,7 +108,6 @@ export function NavDrawer({
   open,
   onClose,
   title,
-  items,
   parentLabel,
   providerLabel,
   signedIn,
@@ -125,7 +125,6 @@ export function NavDrawer({
   open: boolean;
   onClose: () => void;
   title: string;
-  items: Item[];
   parentLabel: string;
   providerLabel: string;
   signedIn: boolean;
@@ -165,19 +164,21 @@ export function NavDrawer({
   useEffect(() => {
     if (!open) return;
     dismissPopovers();
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
       if (e.key !== "Tab" || !panelRef.current) return;
-      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
-        "a[href], button:not([disabled]), select, textarea, input",
-      );
+      const focusable = drawerTabStops(panelRef.current);
       if (!focusable.length) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
+      if (!panelRef.current.contains(document.activeElement)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+      } else if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
       } else if (!e.shiftKey && document.activeElement === last) {
@@ -189,6 +190,7 @@ export function NavDrawer({
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
     };
   }, [open, onClose]);
 
@@ -199,8 +201,8 @@ export function NavDrawer({
 
   return createPortal(
     <div className="pointer-events-auto">
-      <button
-        type="button"
+      <div
+        aria-hidden="true"
         className="fixed inset-0 z-[80] bg-fg/40 backdrop-blur-[2px]"
         onClick={onClose}
       />
@@ -210,27 +212,27 @@ export function NavDrawer({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="fixed inset-y-0 right-0 z-[90] flex w-[min(86vw,24rem)] flex-col bg-bg shadow-lift ring-1 ring-border"
+        className="fixed inset-y-0 right-0 z-[90] flex w-[min(86vw,24rem)] min-w-0 flex-col overflow-y-auto overscroll-contain bg-bg shadow-lift ring-1 ring-border"
       >
-        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
           <BrandMark size="sm" align="start" />
           {headerExtra}
           <button
             ref={closeRef}
             type="button"
             onClick={onClose}
-            className="grid size-12 place-items-center rounded-full text-fg hover:bg-surface-2"
+            className="grid size-12 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full text-fg hover:bg-surface-2"
             aria-label={t("close")}
           >
             <X className="size-6" strokeWidth={1.75} />
           </button>
         </div>
         {!signedIn && showMenus ? (
-          <div className="border-b border-border px-3 py-3">
+          <div className="shrink-0 border-b border-border px-3 py-3">
             <Link
               to={loginTo}
               onClick={onClose}
-              className="flex min-h-12 items-center gap-3 rounded-full bg-primary px-3 text-base font-medium text-primary-fg"
+              className="flex min-h-[44px] items-center gap-3 rounded-full bg-primary px-3 text-base font-medium text-primary-fg"
             >
               <MenuGlyph id="login" className="text-primary-fg" />
               {t("signIn")}
@@ -239,14 +241,14 @@ export function NavDrawer({
               to={loginTo}
               search={{ intent: "up" }}
               onClick={onClose}
-              className="mt-2 flex min-h-12 items-center gap-3 rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
+              className="mt-2 flex min-h-[44px] items-center gap-3 rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
             >
               <MenuGlyph id="parent" />
               {t("createAccount")}
             </Link>
           </div>
         ) : null}
-        <nav className="flex-1 overflow-y-auto px-3 py-3">
+        <nav className="flex-1 px-3 py-3">
           {guestMenu ? (
             <GuestDrawerLinks navExtra={navExtra} onClose={onClose} title={title} />
           ) : (
@@ -288,7 +290,7 @@ export function NavDrawer({
                   </summary>
                   <div>
                     {group.id === "settings" ? (
-                      <div className="flex min-h-12 items-center gap-3 px-3">
+                      <div className="flex min-h-[44px] items-center gap-3 px-3">
                         <MenuGlyph id="language" />
                         <LanguageSelect className="w-full justify-start" />
                       </div>
@@ -298,7 +300,7 @@ export function NavDrawer({
                         const label = item.labelKey ? t(item.labelKey) : item.label;
                         const on = deskMenu.active === item.id;
                         const rowClass = cn(
-                          "flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-base font-medium",
+                          "flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-left text-base font-medium",
                           on ? "bg-primary text-primary-fg" : "text-fg hover:bg-surface",
                         );
                         const body = (
@@ -344,33 +346,16 @@ export function NavDrawer({
           ) : null}
             </>
           )}
-          {guestMenu || items.length === 0 ? null : (
-            <details className="py-0.5" data-ke="drawer-help-links">
-              <summary className={drawerSummaryClass}>{t("menuGetHelp")}</summary>
-              {items.map((item) => (
-                <MenuRow
-                  key={item.to + item.label}
-                  to={item.to}
-                  search={item.search}
-                  label={item.label}
-                  icon={item.icon}
-                  appearance="drawer"
-                  marker={item.marker}
-                  onClick={onClose}
-                />
-              ))}
-            </details>
-          )}
           <FooterMoreLinks
             appearance="drawer"
             onNavigate={onClose}
             share={!signedIn}
             omit={
               guestMenu
-                ? ["/search", "/cities", "/compare", "/tour-checklist", "/claim", "/plans", "/jobs", "/help", "/faq", "/contact"]
+                ? GUEST_DRAWER_FOOTER_OMIT
                 : roleList
-                  ? ["/search", "/help", "/faq", "/contact"]
-                  : ["/help", "/faq", "/contact"]
+                  ? ["/search"]
+                  : []
             }
           />
           {signedIn ? <ShareKidEaseButton appearance="drawer" onDone={onClose} /> : null}
@@ -381,7 +366,7 @@ export function NavDrawer({
                 to={deskHrefForLocale(accountHref, pathname)}
                 search={accountSearch}
                 onClick={onClose}
-                className="flex min-h-12 items-center gap-3 rounded-xl bg-primary px-3 text-base font-medium text-primary-fg"
+                className="flex min-h-[44px] items-center gap-3 rounded-xl bg-primary px-3 text-base font-medium text-primary-fg"
               >
                 <MenuGlyph id="account" className="text-primary-fg" />
                 {accountLabel}
@@ -390,7 +375,7 @@ export function NavDrawer({
                 to={localePath("/delete-account", locale)}
                 data-ke="drawer-delete-account"
                 onClick={onClose}
-                className="mt-2 flex min-h-12 items-center gap-3 rounded-xl px-3 text-base text-fg ring-1 ring-border"
+                className="mt-2 flex min-h-[44px] items-center gap-3 rounded-xl px-3 text-base text-fg ring-1 ring-border"
               >
                 {t("deleteAccount")}
               </Link>
@@ -401,7 +386,7 @@ export function NavDrawer({
                   onClose();
                   onSignOut();
                 }}
-                className="mt-2 flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-base text-fg ring-1 ring-border"
+                className="mt-2 flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-base text-fg ring-1 ring-border"
               >
                 <MenuGlyph id="logout" />
                 {t("signOut")}
@@ -409,7 +394,7 @@ export function NavDrawer({
             </>
           ) : null}
         </nav>
-        <div className={cn("space-y-2 border-t border-border px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]", deskMenu && "hidden")}>
+        <div className={cn("shrink-0 space-y-2 border-t border-border px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]", deskMenu && "hidden")}>
           <div className="flex items-center gap-3 overflow-visible rounded-full bg-surface px-3 ring-1 ring-border">
             <MenuGlyph id="language" />
             <LanguageSelect className="w-full justify-start" />

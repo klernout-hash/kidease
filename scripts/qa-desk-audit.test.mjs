@@ -118,6 +118,7 @@ test("provider desk requests redirects and public pages do not preload vacancy o
   assert.match(actor, /UnauthorizedError/);
   assert.doesNotMatch(actor, /return id/);
   assert.ok(contrastRatio("#0e1424", "#8eabef") >= 4.5);
-  assert.match(src("src/components/shell.tsx"), /aria-current=\{headerLive \? "true" : undefined\}/);
-  assert.doesNotMatch(src("src/components/shell.tsx"), /aria-pressed=\{headerLive\}/);
+  assert.match(src("src/components/shell.tsx"), /data-ke="header-care-categories"/);
+  assert.doesNotMatch(src("src/components/shell.tsx"), /live-on-kidease-tab/);
+  assert.match(src("src/components/airbnb-screens.tsx"), /aria-current=\{on \? "page" : undefined\}/);
 });

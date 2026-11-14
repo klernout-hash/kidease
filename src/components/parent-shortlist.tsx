@@ -16,9 +16,8 @@ import { inviteShortlistShare, leaveShortlistShare } from "@/lib/server/parent-t
 import { MAX_SHORTLIST_COMPARE, toggleCompareSelection } from "@/lib/shortlist";
 import { useAppStore } from "@/lib/store";
 import type { Booking, DaycareCard as Card, TourRequest } from "@/lib/types";
-import { parentListingFeesVisible } from "@/lib/public-fees";
+import { parentListingFeesVisible, parentListingMonthlyFee } from "@/lib/public-fees";
 import { useCopy } from "@/lib/use-copy";
-import { useRoleChrome } from "@/components/role-chrome";
 import { useStoreChannel } from "@/lib/use-native-shell";
 import { StoreMapFallback } from "@/components/store-map-fallback";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
@@ -49,9 +48,11 @@ export function ParentShortlist({
   onTrack?: (id: string, next: { trackStatus: TrackStatus; callNote: string; tourNote: string }) => void;
   onLeave?: () => void;
 }) {
-  const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
+  const items = useMemo(() => (Array.isArray(rawItems)
+    ? rawItems.map((item) => ({ ...item, fromPrice: parentListingMonthlyFee(item) ?? 0 }))
+    : []), [rawItems]);
   const { t, locale } = useCopy();
-  const feesOn = parentListingFeesVisible(useRoleChrome().subscriptionsEnabled);
+  const feesOn = parentListingFeesVisible();
   const storeChannel = useStoreChannel();
   const { plusOpen } = useParentPlusAccess();
   const leadKey = plusOpen ? "shortlistLeadOpen" : "shortlistLead";
@@ -243,7 +244,7 @@ export function ParentShortlist({
           <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
             <MapView
               itemsOnly
-              items={feesOn ? visible : visible.map((item) => ({ ...item, fromPrice: 0 }))}
+              items={visible}
               origin={
                 located && Number.isFinite(origin.lat)
                   ? { lat: origin.lat, lng: origin.lng }

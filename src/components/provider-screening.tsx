@@ -24,6 +24,7 @@ import { useCopy } from "@/lib/use-copy";
 import { centrePickerLabel } from "@/lib/centre-label";
 import { isReauthRequiredMessage } from "@/lib/reauth";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
+import { publicErrorMessage } from "@/lib/public-error";
 import { useReauthPrompt } from "@/components/reauth-dialog";
 import type { CopyKey } from "@/lib/copy";
 
@@ -255,7 +256,7 @@ export function ProviderScreeningPanel() {
         setPendingUpload(pending);
         return "confirm";
       }
-      toast.error(presentAuthCopy(locale, raw) || t("uploadDocTooBig"));
+      toast.error(presentAuthCopy(locale, publicErrorMessage(raw, t("actionFailed"))));
       return "error";
     } finally {
       setBusy(false);

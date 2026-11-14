@@ -139,11 +139,26 @@ type Deliver = (request: SuccessRequest) => void;
 let deliver: Deliver | null = null;
 let lastShownAt = 0;
 
+// A fast save can finish before the lazy host mounts. Keep at most the latest
+// toast and milestone for a short replay window; never buffer on the server.
+const HOST_PENDING_MS = 10_000;
+const pending = new Map<SuccessVariant, { request: SuccessRequest; at: number }>();
+
 const PENDING_CELEBRATION_KEY = "ke-good-job";
 
 export function bindSuccessHost(next: Deliver | null) {
   deliver = next;
   lastShownAt = 0;
+  if (next) {
+    const queued = [...pending.values()];
+    pending.clear();
+    for (const item of queued) {
+      if (Date.now() - item.at <= HOST_PENDING_MS) {
+        lastShownAt = Date.now();
+        next(item.request);
+      }
+    }
+  }
   return () => {
     if (deliver === next) deliver = null;
   };
@@ -156,7 +171,8 @@ export function confirmSuccess(request: SuccessRequest) {
   // A bare Good Job right after a catalog toast or dialog would stack. Keep the first.
   if (bareToast && now - lastShownAt < TOAST_DEDUPE_MS) return;
   lastShownAt = now;
-  deliver?.(request);
+  if (deliver) deliver(request);
+  else if (typeof window !== "undefined") pending.set(request.variant, { request, at: now });
 }
 
 /**

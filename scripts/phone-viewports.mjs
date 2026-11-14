@@ -231,7 +231,8 @@ export async function runPhoneIssuePass(browser, base) {
       const imgStyle = getComputedStyle(img);
       const box = frame.getBoundingClientRect();
       const ratio = box.width > 0 ? box.width / box.height : 0;
-      if (frameStyle.overflow !== "hidden" || ratio < 1.2 || ratio > 1.45) {
+      // Listing cards and Recently Viewed share the approved 20:19 photo box.
+      if (frameStyle.overflow !== "hidden" || Math.abs(ratio - 20 / 19) > 0.02) {
         notes.push(`photo-frame ratio ${ratio.toFixed(2)} overflow ${frameStyle.overflow}`);
       }
       if (imgStyle.objectFit !== "cover" || imgStyle.position !== "absolute") {

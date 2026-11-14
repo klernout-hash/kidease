@@ -4,34 +4,34 @@
  * Totals never include a name, a street, or a child.
  */
 import { govScopesEnabled, type EnvMap } from "./features.ts";
+import { isProvinceCode } from "./gov/places.ts";
 
 export type GovCentreRow = {
   province?: string | null;
   openSpots?: number | null;
 };
 
-export type GovScopeView = {
-  show: boolean;
-  reason: "not_gov" | "off" | "missing" | "ok";
-  province: string | null;
-};
+export type GovScopeView =
+  | { show: false; reason: "not_gov"; province: null }
+  | { show: true; reason: "off" | "missing" | "unsupported"; province: null }
+  | { show: true; reason: "ok"; province: string };
 
 export function normalizeGovProvince(value: string | null | undefined): string | null {
   const code = String(value || "").trim().toUpperCase();
-  return /^[A-Z]{2}$/.test(code) ? code : null;
+  return isProvinceCode(code) ? code : null;
 }
 
 export function govScopeView(input: {
-  role?: string | null;
-  govProvince?: string | null;
+  /** Supplied by government authentication, never a client/profile selection. */
+  actor?: { province: string; national: boolean } | null;
   enabled?: boolean;
   env?: EnvMap;
 }): GovScopeView {
-  const role = String(input.role || "").trim().toLowerCase();
-  if (role !== "government") return { show: false, reason: "not_gov", province: null };
+  if (!input.actor) return { show: false, reason: "not_gov", province: null };
   const enabled = input.enabled ?? govScopesEnabled(input.env);
   if (!enabled) return { show: true, reason: "off", province: null };
-  const province = normalizeGovProvince(input.govProvince);
+  if (input.actor.national) return { show: true, reason: "unsupported", province: null };
+  const province = normalizeGovProvince(input.actor.province);
   if (!province) return { show: true, reason: "missing", province: null };
   return { show: true, reason: "ok", province };
 }

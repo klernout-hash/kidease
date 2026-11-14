@@ -12,6 +12,8 @@ function IconToggle({
   label,
   count,
   onClick,
+  expanded,
+  controls,
   children,
   "data-ke": dataKe,
 }: {
@@ -19,6 +21,8 @@ function IconToggle({
   label: string;
   count?: number;
   onClick: () => void;
+  expanded?: boolean;
+  controls?: string;
   children: ReactNode;
   "data-ke"?: string;
 }) {
@@ -26,7 +30,9 @@ function IconToggle({
     <button
       type="button"
       className="ke-explore-icon-btn"
-      aria-pressed={pressed}
+      aria-pressed={expanded === undefined ? pressed : undefined}
+      aria-expanded={expanded}
+      aria-controls={controls}
       aria-label={count ? `${label} · ${count}` : label}
       title={label}
       data-ke={dataKe}
@@ -139,6 +145,8 @@ export function ExploreFilterBar({
         <IconToggle
           pressed={filtersOpen || filterCount > 0}
           label={t("filters")}
+          expanded={filtersOpen}
+          controls="search-filters"
           count={filterCount || undefined}
           data-ke="explore-filters-toggle"
           onClick={onFilters}

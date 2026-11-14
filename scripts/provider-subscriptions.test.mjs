@@ -83,7 +83,8 @@ test("daycare subscription route sends directors back to Today", () => {
   assert.match(panel, /not parent Plus/);
   assert.match(panel, /startProviderCheckout/);
   assert.match(panel, /startProviderBillingPortal/);
-  assert.match(panel, /Card payments are not live yet/);
+  assert.match(panel, /!subscriptionsOn && !planOpen && !pinOpen\) return null/);
+  assert.doesNotMatch(panel, /Card payments are not live yet|Stripe price ID is set on Vercel|FoundingPlans/);
   assert.match(panel, /entitlements\.entitledPlan/);
   assert.match(server, /providerSubscriptions/);
   assert.match(server, /resolveProviderEntitlements/);

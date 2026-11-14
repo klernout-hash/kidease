@@ -8,9 +8,8 @@ import { HeroClaimStrip } from "@/components/hero-claim-strip";
 import { HomeHowVideo } from "@/components/home-how-video";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
-import type { BrowseDaycareType } from "@/components/facility-type-rails";
+import { HomeCareTypeRow, type BrowseDaycareType } from "@/components/facility-type-rails";
 import { getHomeCareType, setHomeCareType, subscribeHomeCareType } from "@/lib/home-care-selection";
-import { ListingRail } from "@/components/listing-rail";
 import { HomeDiscovery } from "@/components/home-discovery";
 import { RecentlyViewedRow } from "@/components/recently-viewed-row";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,6 @@ import {
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { useAppStore } from "@/lib/store";
-import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { uniqueById } from "@/lib/utils";
 import { publicListings } from "@/lib/listing-visibility";
@@ -51,9 +49,7 @@ import { compactExploreSearch, readLiveSearchFlag } from "@/lib/explore-search";
 import { LocationConsentCard } from "@/components/location-consent";
 import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
-import { AppStoreStatus } from "@/components/app-store-status";
 import { featuredHomeAgreement, homeLiveStrip } from "@/lib/home-live-strip";
-import { listingMatchesLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import type { DaycareCard as Card } from "@/lib/types";
 import type { SearchAge } from "@/lib/now-loops";
 import type { SearchStart } from "@/lib/search-start";
@@ -77,10 +73,13 @@ export function homeValidateSearch(s: Record<string, unknown>) {
   };
 }
 
-export async function loadProductHome() {
-  const airbnbUi = await import("@/lib/airbnb-ui-flag")
-    .then((mod) => mod.readAirbnbUi())
-    .catch(() => false);
+export async function loadProductHome(knownAirbnbUi?: boolean) {
+  const flags = Promise.all([
+    typeof knownAirbnbUi === "boolean"
+      ? Promise.resolve(knownAirbnbUi)
+      : import("@/lib/airbnb-ui-flag").then((mod) => mod.readAirbnbUi()).catch(() => false),
+    readMobileSearchV2().catch(() => false),
+  ]);
   const raw = await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
   const origin = searchOriginOrWinnipeg(raw);
   try {
@@ -88,19 +87,21 @@ export async function loadProductHome() {
       featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label, radiusKm: 25 } }),
       HOME_PAINT_BUDGET_MS,
     );
+    const [airbnbUi, mobileSearchV2] = await flags;
     return {
       featured: Array.isArray(painted.value) ? painted.value : [],
       featuredReady: painted.ready,
       origin,
-      mobileSearchV2: await readMobileSearchV2().catch(() => false),
+      mobileSearchV2,
       airbnbUi,
     };
   } catch {
+    const [airbnbUi, mobileSearchV2] = await flags;
     return {
       featured: [],
       featuredReady: true,
       origin,
-      mobileSearchV2: await readMobileSearchV2().catch(() => false),
+      mobileSearchV2,
       airbnbUi,
     };
   }
@@ -110,7 +111,7 @@ export type ProductHomeBoot = Awaited<ReturnType<typeof loadProductHome>>;
 
 export const Route = createFileRoute("/")({
   validateSearch: homeValidateSearch,
-  loader: () => loadProductHome(),
+  loader: ({ context }) => loadProductHome(context.airbnbUi),
   staleTime: 60_000,
   pendingMs: 0,
   pendingMinMs: 0,
@@ -322,13 +323,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
     () => publicFeatured.filter((row) => isClaimVerified(row)),
     [publicFeatured],
   );
-  const liveRail = useMemo(() => {
-    const label = origin.label || boot.origin.label;
-    const lock = resolveLocationLock({ lat: origin.lat, lng: origin.lng, label });
-    const local = claimedLive.filter((row) => listingMatchesLocationLock(row, lock));
-    if (local.length) return { items: local, showDistance: true };
-    return { items: claimedLive, showDistance: false };
-  }, [boot.origin.label, claimedLive, origin.label, origin.lat, origin.lng]);
   const liveCount = useMemo(() => publicFeatured.filter((r) => r.live).length, [publicFeatured]);
   const strip = homeLiveStrip(liveCount, publicFeatured.length);
   const featuredAgreement = featuredHomeAgreement(publicFeatured.length);
@@ -415,12 +409,12 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         }}
       />
       </div>
+      <SmartMatchEntry card />
       <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
       <div
         data-ke="home-hero-pills"
         className="mx-auto mt-2 flex min-h-11 w-full max-w-[960px] flex-wrap items-center justify-center gap-x-2.5 [&:has([data-ke=smart-match-open]):has([data-ke=resume-visit])_[data-ke=home-hero-dot]]:inline"
       >
-        <SmartMatchEntry inline quiet />
         <span aria-hidden="true" data-ke="home-hero-dot" className="hidden text-muted">
           ·
         </span>
@@ -459,7 +453,21 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
   );
 
   return (
-    <Shell>
+    <Shell
+      headerCategories={boot.airbnbUi ? (
+        <Suspense fallback={null}>
+          <AirbnbCareCategories />
+        </Suspense>
+      ) : (
+        <HomeCareTypeRow
+          compact
+          toSearch
+          selected={homeType}
+          onSelect={setHomeCareType}
+          city={origin.label}
+        />
+      )}
+    >
       <div data-ke="launch-shell" role="status" aria-live="polite" className="w-full text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">KidEase</p>
         <p className="mt-3 text-base font-medium text-fg">
@@ -468,13 +476,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
       </div>
       <JsonLd json={organizationGraphJsonLdScript(locale === "fr" ? "fr" : "en")} />
       <div className="ke-home w-full min-w-0" data-ke="home-discovery-surface">
-      {boot.airbnbUi ? (
-        <div className="ke-airbnb-phone-only">
-          <Suspense fallback={null}>
-            <AirbnbCareCategories />
-          </Suspense>
-        </div>
-      ) : null}
       <h1 className="ke-gutter mx-auto w-full pt-4 text-center text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
         {t("tagline")}
       </h1>
@@ -494,18 +495,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           <TrustBar />
         </div>
 
-        {liveRail.items.length ? (
-          <section className="ke-gutter mx-auto w-full pt-6" data-ke="home-live-on-kidease">
-            <ListingRail
-              title={t("liveOnKidEase")}
-              items={liveRail.items.slice(0, 12)}
-              visual
-              showDistance={liveRail.showDistance}
-              seeAllHref={`${localePath("/search", locale)}?live=1`}
-            />
-          </section>
-        ) : null}
-
         {!featuredReady || featuredAgreement.showSection ? (
         <section id="featured" className="ke-gutter mx-auto w-full pb-8 pt-4 md:pb-12 md:pt-5">
           <h2 className="scroll-mb-32 text-xl tracking-[-0.03em] max-lg:sr-only md:text-2xl">{t(strip.featuredTitleKey)}</h2>
@@ -515,7 +504,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
             shown={liveClaimed ? claimedLive : shown}
             publicFeatured={publicFeatured}
             placeLabel={origin.label}
-            priorityFirst={liveRail.items.length === 0}
+            priorityFirst
             liveOnly={liveOnly}
             hasPublic={publicFeatured.length > 0}
             onShowAll={() => setLiveOnly(false)}
@@ -568,7 +557,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         </div>
 
         <div className="ke-classic-only ke-gutter mx-auto w-full">
-          <RecentlyViewedRow items={recentPublic} />
+          <RecentlyViewedRow items={recentPublic} cards />
         </div>
 
         <section className="bg-surface">
@@ -627,9 +616,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
             </Button>
           </div>
         </section>
-        <div className="ke-gutter mx-auto w-full pb-10">
-          <AppStoreStatus compact />
-        </div>
 
       </div>
 
@@ -644,17 +630,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
             <RecentlyViewedRow items={recentPublic} cards />
           </div>
           <TrustBar />
-          {liveRail.items.length ? (
-            <div className="mt-4" data-ke="home-live-on-kidease">
-              <ListingRail
-                title={t("liveOnKidEase")}
-                items={liveRail.items.slice(0, 12)}
-                visual
-                showDistance={liveRail.showDistance}
-                seeAllHref={`${localePath("/search", locale)}?live=1`}
-              />
-            </div>
-          ) : null}
           <h2 className="mt-4 scroll-mb-32 text-xl tracking-[-0.03em] max-lg:sr-only">{t(strip.featuredTitleKey)}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">{t(FEATURE_SPONSORED_LISTINGS ? "featuredBody" : "featuredBodyPlain")}</p>
           <HomeDiscovery
@@ -662,7 +637,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
             shown={liveClaimed ? claimedLive : shown}
             publicFeatured={publicFeatured}
             placeLabel={origin.label}
-            priorityFirst={liveRail.items.length === 0}
+            priorityFirst
             liveOnly={liveOnly}
             hasPublic={publicFeatured.length > 0}
             onShowAll={() => setLiveOnly(false)}
@@ -677,7 +652,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
             </Button>
           </div>
           <div className="ke-classic-only">
-            <RecentlyViewedRow items={recentPublic} />
+            <RecentlyViewedRow items={recentPublic} cards />
           </div>
         </section>
       </div>

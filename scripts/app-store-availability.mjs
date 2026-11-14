@@ -63,7 +63,8 @@ export async function captureAppStoreAvailability(browser, base, outDir) {
           await page.waitForFunction(() => [...document.querySelectorAll("#stores img")].every((img) => img.complete && img.naturalWidth > 0));
           const available = locale === "fr" ? "Offert maintenant" : "Available now";
           const soon = locale === "fr" ? "Bientôt offert" : "Coming soon";
-          row.observed = await page.evaluate(({ available, soon }) => {
+          const unavailable = locale === "fr" ? "Téléchargement indisponible" : "Download unavailable";
+          row.observed = await page.evaluate(({ available, soon, unavailable }) => {
             const panels = [document.querySelector("main [data-ke='app-store-status']"), document.querySelector("#stores")];
             return {
               width: innerWidth, height: innerHeight, language: document.documentElement.lang, clientWidth: document.documentElement.clientWidth, scrollWidth: document.documentElement.scrollWidth,
@@ -74,12 +75,12 @@ export async function captureAppStoreAvailability(browser, base, outDir) {
                 const pending = tiles.filter((li) => /^(App Store|Galaxy Store|Samsung Galaxy Store|Microsoft Store)/.test(li.textContent.trim()));
                 return {
                   huaweiText: huawei?.textContent.trim(), available: huawei?.textContent.includes(available), soon: huawei?.textContent.includes(soon), links: huawei?.querySelectorAll("a").length,
-                  pendingCount: pending.length, pendingUnlinked: pending.every((li) => li.textContent.includes(soon) && !li.querySelector("a")),
+                  pendingCount: pending.length, pendingUnlinked: pending.every((li) => li.textContent.includes(unavailable) && !li.querySelector("a")),
                   playLink: tiles.find((li) => li.textContent.includes("Google Play"))?.querySelector("a")?.getAttribute("href"),
                 };
               }),
             };
-          }, { available, soon });
+          }, { available, soon, unavailable });
           const observed = row.observed;
           assert.equal(observed.width, width);
           assert.equal(observed.height, height);
@@ -93,7 +94,7 @@ export async function captureAppStoreAvailability(browser, base, outDir) {
             assert.equal(panel.soon, false, `${file}: stale Huawei label`);
             assert.equal(panel.links, 0, `${file}: unknown Huawei URL`);
             assert.equal(panel.pendingCount, 3);
-            assert.equal(panel.pendingUnlinked, true);
+            assert.equal(panel.pendingUnlinked, true, `${file}: unavailable downloads retain their status and have no link`);
             assert.equal(panel.playLink, "https://play.google.com/store/apps/details?id=ca.kidease.app");
           }
           await page.screenshot({ path: join(outDir, file), fullPage: true, animations: "disabled" });

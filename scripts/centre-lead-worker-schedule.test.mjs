@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
+import * as scheduling from "../src/lib/inngest.ts";
+import { selectRegisteredFunctions, TOUR_SCHEDULER_ACTIVATED } from "../src/inngest/registry.ts";
 
 const compiled = ts.transpileModule(
   readFileSync(new URL("../src/inngest/centre-lead-worker.ts", import.meta.url), "utf8"),
@@ -61,6 +63,55 @@ function fixture({
 
 const plain = (value) => JSON.parse(JSON.stringify(value));
 const event = { id: "scheduled-occurrence-1" };
+
+test("the served registry does not admit tracker even when its environment opt-in is set", () => {
+  const source = readFileSync(new URL("../src/inngest/functions.ts", import.meta.url), "utf8");
+  const javascript = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  for (const value of [undefined, "0", "1", "true"]) {
+    const exports = {};
+    const jobs = [];
+    const dependencies = {
+      "@/lib/inngest": { ...scheduling, inngestConfigured: () => true },
+      "./registry": { selectRegisteredFunctions, TOUR_SCHEDULER_ACTIVATED },
+      "./client": { inngest: { createFunction: (options, handler) => ({ options, handler }) } },
+    };
+    for (const match of source.matchAll(/from "(@\/lib\/server\/[^"]+)"/g)) {
+      dependencies[match[1]] = new Proxy(
+        {},
+        {
+          get:
+            (_, name) =>
+            (...args) => {
+              jobs.push({ name, args });
+            },
+        },
+      );
+    }
+    runInNewContext(javascript, {
+      exports,
+      process: { env: { CENTRE_LEAD_WORKER_SCHEDULE: value } },
+      require: (name) => {
+        assert.ok(Object.hasOwn(dependencies, name), `Unapproved serving dependency: ${name}`);
+        return dependencies[name];
+      },
+    });
+    assert.equal(TOUR_SCHEDULER_ACTIVATED, false);
+    assert.deepEqual(
+      exports.functions.map((fn) => fn.options.id),
+      ["search-alerts-hourly"],
+    );
+    assert.deepEqual(
+      selectRegisteredFunctions(exports.searchAlertsHourly, exports.expireTourHoldsHourly, {
+        tourActivated: true,
+        inngestConfigured: true,
+      }).map((fn) => fn.options.id),
+      ["search-alerts-hourly", "tour-holds-hourly"],
+    );
+    assert.deepEqual(jobs, []);
+  }
+});
 
 test("tracker schedule is absent unless its new opt-in is exactly 1", () => {
   for (const value of [undefined, "", "0", "true", "yes", "01", " 1", "1 ", "typo"]) {

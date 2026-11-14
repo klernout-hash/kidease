@@ -116,22 +116,22 @@ export function ListingRail({
               {title}
             </h2>
           )}
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-[8px]">
             {seeAllHref ? (
               <a
                 href={seeAllHref}
-                className="ke-see-all inline-flex min-h-11 items-center pe-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                className="ke-see-all inline-flex min-h-[44px] min-w-[44px] items-center justify-center pe-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
               >
                 {t("seeAll")}
               </a>
             ) : null}
             {showChevrons ? (
-              <div className="ke-listing-rail-arrows hidden items-center gap-2 sm:flex">
+              <div className="ke-listing-rail-arrows hidden items-center gap-[8px] sm:flex">
                 <button
                   type="button"
                   aria-label={t("railPrev")}
                   onClick={() => go(-1)}
-                  className="ke-listing-rail-arrow grid size-11 place-items-center rounded-full bg-surface text-fg ring-1 ring-border"
+                  className="ke-listing-rail-arrow grid size-11 min-h-[44px] min-w-[44px] place-items-center rounded-full bg-surface text-fg ring-1 ring-border"
                 >
                   <ChevronLeft className="size-4" strokeWidth={2} />
                 </button>
@@ -139,7 +139,7 @@ export function ListingRail({
                   type="button"
                   aria-label={t("railNext")}
                   onClick={() => go(1)}
-                  className="ke-listing-rail-arrow grid size-11 place-items-center rounded-full bg-surface text-fg ring-1 ring-border"
+                  className="ke-listing-rail-arrow grid size-11 min-h-[44px] min-w-[44px] place-items-center rounded-full bg-surface text-fg ring-1 ring-border"
                 >
                   <ChevronRight className="size-4" strokeWidth={2} />
                 </button>
@@ -184,7 +184,7 @@ export function ListingRail({
                 <span
                   className={cn(
                     "relative block w-full overflow-hidden rounded-[14px]",
-                    "aspect-[4/3]",
+                    "ke-card-photo",
                   )}
                   aria-hidden="true"
                 >

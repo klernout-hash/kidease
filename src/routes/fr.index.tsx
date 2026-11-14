@@ -5,7 +5,7 @@ import { HomePage, homeValidateSearch, loadProductHome } from "./index";
 
 export const Route = createFileRoute("/fr/")({
   validateSearch: homeValidateSearch,
-  loader: () => loadProductHome(),
+  loader: ({ context }) => loadProductHome(context.airbnbUi),
   staleTime: 60_000,
   pendingMs: 0,
   pendingMinMs: 0,

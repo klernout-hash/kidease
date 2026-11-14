@@ -15,8 +15,8 @@ const input = { purpose: "host_action", to: "a@b.ca", subject: "s", text: "plain
 
 test("layout: 600px, CTA, unsubscribe, dark mode, escaped, copy guardrails", () => {
   const h = renderBrandedEmail(base);
-  for (const s of ['width="600"', "prefers-color-scheme: dark", "Finish my listing", "api/unsubscribe?token=t", "&lt;b&gt;x&lt;/b&gt;", "founding period"]) assert.ok(h.includes(s), s);
-  assert.doesNotMatch(h, /free forever|GST|\d{7} Ontario|endorsed by/i);
+  for (const s of ['width="600"', "prefers-color-scheme: dark", "Finish my listing", "api/unsubscribe?token=t", "&lt;b&gt;x&lt;/b&gt;", "Search and messages at no charge"]) assert.ok(h.includes(s), s);
+  assert.doesNotMatch(h, /free forever|founding period|GST|\d{7} Ontario|endorsed by/i);
 });
 test("layout: non-https CTA is neutralised", () => {
   assert.ok(!renderBrandedEmail({ ...base, cta: { label: "x", href: "javascript:alert(1)" } }).includes("javascript:"));

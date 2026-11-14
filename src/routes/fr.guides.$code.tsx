@@ -1,11 +1,12 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { GuideView } from "@/routes/guides.$code";
-import { provincialGuideByCode, provincialGuidePath } from "@/lib/provincial-guides";
+import { provincialGuidePath } from "@/lib/provincial-guide-route";
 import { provinceLocativeFr } from "@/lib/province-phrase";
 import { pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/fr/guides/$code")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
+    const { provincialGuideByCode } = await import("@/lib/provincial-guides");
     const pt = provincialGuideByCode(params.code);
     if (!pt) throw notFound();
     return pt;

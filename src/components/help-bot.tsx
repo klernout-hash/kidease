@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { helpBubbleDistinctId, helpChatQuestion } from "@/lib/ai/help-bubble";
 import { helpLauncherVisible } from "@/lib/help-launcher";
-import { parentHelperEventProps } from "@/lib/ai/parent-helper";
+import { parentHelperEventProps } from "@/lib/ai/event-props";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";

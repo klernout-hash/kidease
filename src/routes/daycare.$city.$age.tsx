@@ -8,7 +8,7 @@ import { ageVacancyPath, type AgeVacancyPage } from "@/lib/age-vacancy";
 import { loadAgeVacancyPage } from "@/lib/server/age-vacancy";
 import { pageSeoHead } from "@/lib/page-seo";
 import { isFrPath, localePath } from "@/lib/locale-path";
-import { SITEMAP_ORIGIN } from "@/lib/sitemap";
+import { SITEMAP_ORIGIN } from "@/lib/public-url";
 import { useCopy } from "@/lib/use-copy";
 import { useRouterState } from "@tanstack/react-router";
 

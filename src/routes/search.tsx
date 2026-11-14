@@ -15,14 +15,20 @@ import { ExploreFilterChips } from "@/components/explore-filter-chips";
 import { PioneerFilterRail } from "@/components/pioneer-filter-rail";
 import { InclusiveCareFilters } from "@/components/inclusive-care-filters";
 import { LicenceTypeFilters } from "@/components/licence-type-filters";
-import { careKeysParam, matchesDeclaredCare, parseCareKeys, type CareDetailKey } from "@/lib/inclusive-search";
-import { licenceMatches, type LicenceBucket } from "@/lib/phase1-search";
+import { careKeysParam, parseCareKeys, type CareDetailKey } from "@/lib/inclusive-search";
+import { type LicenceBucket } from "@/lib/phase1-search";
 import { CommuteDetourBar } from "@/components/commute-detour-bar";
-import { SearchCardAgesProvider } from "@/components/search-card-context";
+import { SearchCardAgesProvider, SearchCardOriginProvider } from "@/components/search-card-context";
+import { resolveSearchCardOrigin } from "@/lib/search-card-origin";
 import { DaycareCard } from "@/components/daycare-card";
 import { AreaWaitlistForm } from "@/components/area-waitlist-form";
-import { SEARCH_PAGE_SIZE, pageFromSearch } from "@/lib/search-page";
-import { searchDaycarePage } from "@/lib/server/daycares";
+import { SEARCH_PAGE_MAX, pageFromSearch } from "@/lib/search-page";
+import { searchDaycareMap, searchDaycarePage } from "@/lib/server/daycares";
+import { normalizeSearchResultFilters, schoolAgeOnlyFromSearch } from "@/lib/search-result-filters";
+import { searchMapState, type SearchMapResult } from "@/lib/search-map-state";
+import { readSearchEvidence, searchEvidence } from "@/lib/search-evidence";
+import { createSearchLoaderRead, createSearchRequestGate, searchCoverageCopy, searchMapCount } from "@/lib/search-coverage";
+import type { MapPin } from "@/lib/map-cluster";
 import { matchCentres } from "@/lib/server/ai";
 import { isIqaluitQuery, reverseGeocode } from "@/lib/geo";
 import { originFromDeviceFix, productHomeOrigin, readClientTimeZone, searchOriginOrWinnipeg } from "@/lib/default-origin";
@@ -46,7 +52,7 @@ import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { publicListings } from "@/lib/listing-visibility";
 import { fsaOf, MAX_SEARCH_RADIUS_KM } from "@/lib/proximity";
 import { areaPresence } from "@/lib/presence";
-import { readSearchCache, searchCacheKey, writeSearchCache } from "@/lib/search-cache";
+import { readSearchCache, searchCacheKey, writeSearchCache, type SearchPageResponse } from "@/lib/search-cache";
 import { readRecentSearches, rememberSearch, writeRecentSearches, type RecentSearch } from "@/lib/recent-searches";
 import { parentFitCacheKey } from "@/lib/parent-fit";
 import { parentFitFromSearch, useParentFitFacts } from "@/lib/use-parent-fit";
@@ -58,23 +64,19 @@ import { useAppStore, type SortKey } from "@/lib/store";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
-import { confirmedFeeProgramBadge } from "@/lib/fee-program";
-import { parsePioneerSearch, pioneerFiltersFrom, rowMatchesPioneer, type PioneerSearch } from "@/lib/pioneer-filters";
-import { hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
+import { parsePioneerSearch, type PioneerSearch } from "@/lib/pioneer-filters";
 import { ChipButton } from "@/components/chip";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { DualAnchorBar } from "@/components/dual-anchor-bar";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { MobileSearchResults } from "@/components/mobile-search-sheet";
-import { draftFromParams, type MobileSearchParams } from "@/lib/mobile-search-v2";
+import { draftFromParams, mergeMobileSearchParams, type MobileSearchParams } from "@/lib/mobile-search-v2";
 import { SmartMatchEntry } from "@/components/smart-match";
 import { resolveLocationQuery } from "@/components/place-search";
 import {
   compactExploreSearch,
-  dateAsksForOpenSpot,
   liveSearchParam,
-  matchesDaycareName,
   orderNameMatches,
   parseExploreSearchFields,
   licensedSearchCountLine,
@@ -83,17 +85,13 @@ import {
 } from "@/lib/explore-search";
 import {
   compactParentListingSearch,
-  matchesParentListingFilters,
-  parentSearchActive,
   parseParentListingSearch,
   visibleParentChipOptions,
   type ParentListingSearch,
 } from "@/lib/parent-listing";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
-import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { ratingFloor } from "@/lib/review-reports";
-import { isClaimVerified } from "@/lib/trust";
 import type { DaycareCard as Card } from "@/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { countBucket } from "@/lib/product-events";
@@ -119,7 +117,6 @@ import {
   RAIL_AGES,
   isCareType,
   isRailAge,
-  matchesCareType,
   matchesRailAge,
   type CareType,
   type RailAge,
@@ -132,7 +129,6 @@ import {
   formatExploreRailAges,
   isExploreCategory,
   isFacilityExploreCategory,
-  listingMatchesExploreFilter,
   parseExploreRailAges,
   resolvedExploreCategory,
   toggleExploreRailAge,
@@ -161,14 +157,15 @@ import { StoreMapFallback } from "@/components/store-map-fallback";
 import { useStoreChannel } from "@/lib/use-native-shell";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
+const EMPTY_MAP_PINS: MapPin[] = [];
 const CompareBar = lazy(() =>
   import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })),
 );
 
-export async function searchLoader({ location }: { location: { search: unknown } }) {
+export async function searchLoader({ location, abortController }: { location: { search: unknown }; abortController?: AbortController }) {
     const { reviewReportsEnabled } = await import("@/lib/features");
     const { readMobileSearchV2 } = await import("@/lib/mobile-search-flag");
-    const mobileSearchV2 = await readMobileSearchV2().catch(() => false);
+    const mobileSearchV2Read = readMobileSearchV2().catch(() => false);
     const reviewRatingFloor = ratingFloor(reviewReportsEnabled(), MIN_REVIEW_COUNT);
     const rawQ = searchQueryFromUnknown(location.search);
     const genericCare = isGenericCareQuery(rawQ);
@@ -185,8 +182,11 @@ export async function searchLoader({ location }: { location: { search: unknown }
         page: 1,
         hasMore: false,
         total: 0,
+        nextPage: null,
+        pageLimitReached: false,
+        evidence: searchEvidence(),
         reviewRatingFloor,
-        mobileSearchV2,
+        mobileSearchV2: await mobileSearchV2Read,
       };
     }
     const place = q || (city ? originFromSearchQuery(city)?.label || city : "");
@@ -207,8 +207,11 @@ export async function searchLoader({ location }: { location: { search: unknown }
         page: 1,
         hasMore: false,
         total: 0,
+        nextPage: null,
+        pageLimitReached: false,
+        evidence: searchEvidence(),
         reviewRatingFloor,
-        mobileSearchV2,
+        mobileSearchV2: await mobileSearchV2Read,
       };
     }
     const page = pageFromSearch(location.search);
@@ -243,6 +246,18 @@ export async function searchLoader({ location }: { location: { search: unknown }
             : undefined,
         ),
         diet: careKeysParam(parseCareKeys(searchRecord.diet)),
+        filters: normalizeSearchResultFilters({
+          pioneer: parsePioneerSearch(searchRecord),
+          parent: parseParentListingSearch(searchRecord),
+          ages: parseExploreRailAges(searchRecord),
+          schoolAgeOnly: schoolAgeOnlyFromSearch(searchRecord),
+          category: searchRecord.cat,
+          openings: exploreOpeningsSelected(searchRecord),
+          start: searchRecord.start,
+          needBy: searchRecord.from,
+          diet: careKeysParam(parseCareKeys(searchRecord.diet)),
+          name: searchRecord.name,
+        }),
       },
     };
     const indexed = indexedPlaceQuery(place, city);
@@ -250,13 +265,19 @@ export async function searchLoader({ location }: { location: { search: unknown }
       value: Awaited<ReturnType<typeof searchDaycarePage>> | null;
       ready: boolean;
     };
-    const painted: SearchPaint = indexed
-      ? await withTimeoutFallback<SearchPaint>(
-          searchDaycarePage(pageRequest).then((value) => ({ value, ready: true })),
-          SQL_SETTLE_MS,
-          { value: null, ready: false },
-        )
-      : await withPaintBudget(searchDaycarePage(pageRequest), PAINT_BUDGET_MS);
+    const read = createSearchLoaderRead(abortController?.signal);
+    let painted: SearchPaint = { value: null, ready: false };
+    try {
+      painted = indexed
+        ? await withTimeoutFallback<SearchPaint>(
+            searchDaycarePage({ ...pageRequest, signal: read.signal }).then((value) => ({ value, ready: true })),
+            SQL_SETTLE_MS,
+            { value: null, ready: false },
+          )
+        : await withPaintBudget(searchDaycarePage({ ...pageRequest, signal: read.signal }), PAINT_BUDGET_MS);
+    } finally {
+      read.finish(painted.ready);
+    }
     return {
       items: painted.value?.items ?? [],
       itemsReady: painted.ready,
@@ -266,8 +287,11 @@ export async function searchLoader({ location }: { location: { search: unknown }
       page: painted.value?.page ?? page,
       hasMore: painted.value?.hasMore === true,
       total: painted.value?.total ?? 0,
+      nextPage: painted.value?.nextPage ?? null,
+      pageLimitReached: painted.value?.pageLimitReached === true,
+      evidence: readSearchEvidence(painted.value?.evidence),
       reviewRatingFloor,
-      mobileSearchV2,
+      mobileSearchV2: await mobileSearchV2Read,
     };
 }
 
@@ -390,7 +414,7 @@ export function SearchScreen({
   const bootHoldUrl = useRef(false);
   const typedPlace = (incoming.q || "").trim() || (incoming.city || "").trim();
   const bootLabel = (boot.origin?.label || "").trim();
-  if (!typedPlace && bootLabel && !(useAppStore.getState().origin.label || "").trim()) {
+  if (typeof window !== "undefined" && !typedPlace && bootLabel && !(useAppStore.getState().origin.label || "").trim()) {
     const source = boot.origin.source === "ip" ? "ip" : "default";
     bootHoldUrl.current = true;
     useAppStore.getState().setOrigin({ lat: boot.origin.lat, lng: boot.origin.lng, label: bootLabel }, source);
@@ -398,6 +422,13 @@ export function SearchScreen({
   }
   const origin = useAppStore((s) => s.origin);
   const originSource = useAppStore((s) => s.originSource);
+  const cardOrigin = useMemo(() => resolveSearchCardOrigin({
+    storedOrigin: origin,
+    storedSource: originSource,
+    bootOrigin: boot.origin,
+    unknownCity: boot.unknownCity,
+    needsPlace: boot.needsPlace,
+  }), [origin, originSource, boot.origin, boot.unknownCity, boot.needsPlace]);
   const located = useAppStore((s) => s.located);
   const setOrigin = useAppStore((s) => s.setOrigin);
   const workOrigin = useAppStore((s) => s.workOrigin);
@@ -450,11 +481,30 @@ export function SearchScreen({
           : null,
   );
   const resultPage = incoming.page ?? 1;
-  const [hasMore, setHasMore] = useState(boot.hasMore === true);
+  const [nextPage, setNextPage] = useState<number | null>(boot.nextPage);
+  const [pageLimitReached, setPageLimitReached] = useState(boot.pageLimitReached);
+  const [resultEvidence, setResultEvidence] = useState(boot.evidence);
   const [resultTotal, setResultTotal] = useState(boot.total ?? 0);
   const [refreshing, setRefreshing] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [filters, setFilters] = useState(false);
+  useEffect(() => {
+    if (!filters) return;
+    const frame = requestAnimationFrame(() => {
+      const title = document.getElementById("search-filters-title");
+      title?.focus({ preventScroll: true });
+      title?.scrollIntoView({ block: "start", behavior: "auto" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [filters]);
+
+  function closeFilters() {
+    setFilters(false);
+    requestAnimationFrame(() => {
+      const toggles = document.querySelectorAll<HTMLElement>('[data-ke="msv2-filters"], [data-ke="explore-filters-toggle"]');
+      Array.from(toggles).find((button) => button.getClientRects().length > 0)?.focus();
+    });
+  }
   const [need, setNeed] = useState("");
   const [matchNote, setMatchNote] = useState<string | null>(null);
   const [matchBusy, setMatchBusy] = useState(false);
@@ -479,7 +529,17 @@ export function SearchScreen({
   );
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [careType, setCareType] = useState<CareType | "any">("any");
-  const [schoolAgeOnly, setSchoolAgeOnly] = useState(false);
+  const [schoolAgeOnly, setSchoolAgeOnly] = useState(() => schoolAgeOnlyFromSearch(incoming));
+  const [licensedChip, setLicensedChip] = useState(true);
+  const [topRatedChip, setTopRatedChip] = useState(false);
+  const [mobileViewport, setMobileViewport] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setMobileViewport(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [saveBusy, setSaveBusy] = useState(false);
@@ -491,13 +551,19 @@ export function SearchScreen({
   const [mapEnabled, setMapEnabled] = useState(false);
   const storeChannel = useStoreChannel();
   const [searchFailed, setSearchFailed] = useState(false);
+  const [mapResult, setMapResult] = useState<SearchMapResult | null>(null);
+  const [mapFailedKey, setMapFailedKey] = useState<string | null>(null);
+  const [mapPendingKey, setMapPendingKey] = useState<string | null>(null);
+  const [retryRequest, setRetryRequest] = useState<{ pageKey: string; mapKey: string; attempt: number } | null>(null);
+  const pageGate = useRef(createSearchRequestGate());
+  const mapGate = useRef(createSearchRequestGate());
+  const pageAbort = useRef<AbortController | null>(null);
+  const mapAbort = useRef<AbortController | null>(null);
   useLivePresence(locationConsent === "granted");
 
   useEffect(() => {
     if (view === "map") setMapEnabled(true);
-    if (view !== "map" || storeChannel === "huawei") return;
-    void import("@/lib/osm-map").then((mod) => mod.preloadMapLibrary().catch(() => undefined));
-  }, [storeChannel, view]);
+  }, [view]);
 
   useEffect(() => {
     const place = (incoming.q || "").trim() || (incoming.city || "").trim();
@@ -535,14 +601,12 @@ export function SearchScreen({
     const ageGate = (
       selectedAges.length === 1 ? selectedAges[0] : cat && isRailAge(cat) ? cat : undefined
     ) as RailAge | undefined;
+    setSchoolAgeOnly(schoolAgeOnlyFromSearch(incoming));
     if (ageGate === "school-age") {
-      setSchoolAgeOnly(true);
       setAgeGroup("any");
     } else if (ageGate) {
-      setSchoolAgeOnly(false);
       setAgeGroup(ageGate);
     } else {
-      setSchoolAgeOnly(false);
       setAgeGroup("any");
     }
     if (incoming.care) setCareType(incoming.care);
@@ -686,6 +750,19 @@ export function SearchScreen({
       ? pickedAge
       : "any";
   const rankSchedules = parseParentListingSearch(incoming).sched;
+  const resultFilters = normalizeSearchResultFilters({
+    pioneer: parsePioneerSearch(incoming),
+    parent: parseParentListingSearch(incoming),
+    liveOnly, availability: avail, ten, meals, outdoor, inclusive,
+    diet: dietParam, licence, extended, infantOnly, catchmentOnly,
+    confirmedOnly, readyOnly, claimVerifiedOnly, favoritesOnly,
+    careType, schoolAgeOnly, category: incoming.cat,
+    ages: parseExploreRailAges(incoming), openings: exploreOpeningsSelected(incoming),
+    start: incoming.start, needBy, name: nameQuery,
+    licensedOnly: boot.mobileSearchV2 && mobileViewport && licensedChip,
+    topRatedOnly: boot.mobileSearchV2 && mobileViewport && topRatedChip,
+  });
+  const resultFiltersKey = JSON.stringify(resultFilters);
   const searchData = {
     lat: cameraHome.lat,
     lng: cameraHome.lng,
@@ -707,6 +784,7 @@ export function SearchScreen({
     name: nameQuery.trim() || undefined,
     live: claimVerifiedOnly || readLiveSearchFlag(incoming.live),
     diet: dietParam || undefined,
+    filters: resultFilters,
     lat2: viewAnchors.cityOwned ? undefined : workForSearch?.lat,
     lng2: viewAnchors.cityOwned ? undefined : workForSearch?.lng,
     mode: viewAnchors.mode,
@@ -720,7 +798,6 @@ export function SearchScreen({
     }),
   };
   const fitKey = parentFitCacheKey(searchData.parentFit);
-  const fitLanguageKey = fitFacts.languages.join(",");
   const cacheInput = {
     lat: cameraHome.lat,
     lng: cameraHome.lng,
@@ -740,113 +817,158 @@ export function SearchScreen({
     parentFit: fitKey,
     claimLive: claimVerifiedOnly || readLiveSearchFlag(incoming.live),
     diet: dietParam,
+    filters: resultFiltersKey,
+    ranking: JSON.stringify({ rankAge, ten, extended, schedules: rankSchedules }),
   };
-  const locationLock = useMemo(
-    () =>
-      resolveLocationLock({
-        lat: cameraHome.lat,
-        lng: cameraHome.lng,
-        label: cameraHome.label,
-        q: placeQuery,
-      }),
-    [cameraHome.lat, cameraHome.lng, cameraHome.label, placeQuery],
-  );
-
   useEffect(() => {
     setCareKeys(parseCareKeys(dietParam));
   }, [dietParam]);
 
+  const pageKey = searchCacheKey(cacheInput);
+  const searchMapKey = searchCacheKey({ ...cacheInput, page: 1 });
+  const mapCanSearch = !unknownCity && !(boot.needsPlace && !requestedPlace && !(origin.label || "").trim());
+  const pageCanSearch = mapCanSearch || Boolean(nameQuery.trim());
+  // Change identity during render, before a late response can reach an effect cleanup.
+  pageGate.current.select(pageCanSearch ? pageKey : "");
+  mapGate.current.select(view === "map" && mapCanSearch ? searchMapKey : "");
+  const requestData = useRef(searchData);
+  requestData.current = searchData;
   useEffect(() => {
-    if ((boot.needsPlace && !requestedPlace && !(origin.label || "").trim()) || (unknownCity && !nameQuery.trim())) {
+    if (!pageCanSearch) {
       setItems([]);
       setRefreshing(false);
       setSearchFailed(false);
       setResultTotal(0);
+      setResultEvidence(searchEvidence());
+      setNextPage(null);
+      setPageLimitReached(false);
       return;
     }
+    const gate = pageGate.current;
+    const ticket = gate.begin(pageKey);
+    const controller = new AbortController();
+    pageAbort.current = controller;
     let live = true;
-    const key = searchCacheKey(cacheInput);
-    const cached = readSearchCache(key);
-    const lockRows = (rows: Card[]) => (nameQuery.trim() ? rows : filterByLocationLock(rows, locationLock));
-    if (cached) {
-      setItems(lockRows(cached));
-      setHasMore(cached.length >= SEARCH_PAGE_SIZE);
-      setSearchFailed(false);
-    } else {
-      setRefreshing(true);
-      setSearchFailed(false);
+    const current = () => live && gate.accepts(ticket);
+    const cached = readSearchCache(pageKey);
+    const fresh = retryRequest?.pageKey === pageKey;
+    const data = requestData.current;
+    function apply(result: SearchPageResponse) {
+      setItems(result.items);
+      setNextPage(result.nextPage);
+      setPageLimitReached(result.pageLimitReached);
+      setResultTotal(result.total);
+      setResultEvidence(readSearchEvidence(result.evidence));
     }
+    setRefreshing(true);
+    setSearchFailed(false);
+    if (cached) apply(cached);
+    else {
+      setItems(null);
+      setNextPage(null);
+      setPageLimitReached(false);
+      setResultEvidence(searchEvidence());
+    }
+    const fail = () => {
+      if (!current()) return;
+      gate.invalidate();
+      controller.abort();
+      setItems((rows) => rows ?? []);
+      setSearchFailed(true);
+      setResultEvidence(searchEvidence());
+      setNextPage(null);
+      setPageLimitReached(false);
+      setRefreshing(false);
+    };
+    const watchdog = window.setTimeout(fail, 12_000);
     const tmr = window.setTimeout(() => {
-      void dedupedQuery(`search-page:${key}`, QUERY_STALE_MS, () => searchDaycarePage({ data: searchData }))
+      if (!current()) return;
+      // Search reads use server memoization. Direct calls keep a fresh Retry out
+      // of the generic client dedup cache, including its older pending reads.
+      void searchDaycarePage({ data: { ...data, refresh: fresh }, signal: controller.signal })
         .then((result) => {
-          if (!live) return;
-          const locked = lockRows(result.items);
-          setItems(locked);
-          setHasMore(result.hasMore);
-          setResultTotal(result.total);
+          if (!current()) return;
+          const response = { ...result, evidence: readSearchEvidence(result.evidence) };
+          apply(response);
           setSearchFailed(false);
-          writeSearchCache(key, locked);
+          writeSearchCache(pageKey, response);
           captureMarketplaceFunnel({ step: "search", source: "search", dest_path: "/search" });
-          if ((result.total ?? locked.length) === 0) {
+          if (result.total === 0 && response.evidence.status === "complete") {
             captureMarketplaceFunnel({ step: "zero_result", source: "search", dest_path: "/search" });
           }
         })
-        .catch(() => {
-          if (live && !cached) {
-            setItems([]);
-            setSearchFailed(true);
-          }
-        })
+        .catch(fail)
         .finally(() => {
-          if (live) setRefreshing(false);
+          if (!current()) return;
+          window.clearTimeout(watchdog);
+          setRefreshing(false);
         });
-    }, cached ? 160 : 0);
-    const watchdog = window.setTimeout(() => {
-      if (!live) return;
-      setItems((cur) => {
-        if (cur) return cur;
-        setSearchFailed(true);
-        return [];
-      });
-      setRefreshing(false);
-    }, 12_000);
+    }, cached && !fresh ? 160 : 0);
     trackLocation("search", cameraHome.lat, cameraHome.lng, cameraHome.label, { radiusKm });
     return () => {
       live = false;
+      controller.abort();
       window.clearTimeout(tmr);
       window.clearTimeout(watchdog);
     };
-  }, [
-    origin.lat,
-    origin.lng,
-    radiusKm,
-    sort,
-    rankAge,
-    ten,
-    query,
-    origin.label,
-    incoming.q,
-    incoming.live,
-    claimVerifiedOnly,
-    nameQuery,
-    incoming.city,
-    dietParam,
-    incoming.fac,
-    incoming.cat,
-    needBy,
-    workQuery,
-    workForSearch?.lat,
-    workForSearch?.lng,
-    anchorMode,
-    extended,
-    rankSchedules.join(","),
-    resultPage,
-    fitKey,
-    budgetMonthly,
-    fitFacts.signedIn,
-    fitFacts.childAgeMonths,
-    fitLanguageKey,
-  ]);
+  }, [pageKey, pageCanSearch, retryRequest, cameraHome.lat, cameraHome.lng, cameraHome.label, radiusKm]);
+
+  const mapState = searchMapState({ canSearch: mapCanSearch, key: searchMapKey, result: mapResult, failedKey: mapFailedKey, pendingKey: mapPendingKey });
+  const currentMapResult = mapState.result;
+  const searchMapPins = currentMapResult?.pins ?? EMPTY_MAP_PINS;
+  useEffect(() => {
+    if (view !== "map" || !mapCanSearch) return;
+    const gate = mapGate.current;
+    const ticket = gate.begin(searchMapKey);
+    const controller = new AbortController();
+    mapAbort.current = controller;
+    let live = true;
+    const current = () => live && gate.accepts(ticket);
+    setMapFailedKey(null);
+    setMapPendingKey(searchMapKey);
+    const fail = () => {
+      if (!current()) return;
+      gate.invalidate();
+      controller.abort();
+      setMapFailedKey(searchMapKey);
+      setMapPendingKey(null);
+    };
+    const watchdog = window.setTimeout(fail, 12_000);
+    void searchDaycareMap({ data: { ...requestData.current, countDemand: false, refresh: retryRequest?.mapKey === searchMapKey }, signal: controller.signal })
+      .then((result) => {
+        if (!current()) return;
+        setMapResult({ key: searchMapKey, ...result, evidence: readSearchEvidence(result.evidence) });
+        setMapPendingKey(null);
+      }).catch(fail).finally(() => { window.clearTimeout(watchdog); });
+    return () => { live = false; controller.abort(); window.clearTimeout(watchdog); };
+  }, [view, searchMapKey, retryRequest, mapCanSearch]);
+
+  const mapCoverage = searchCoverageCopy(currentMapResult?.evidence, locale);
+  const mapStatus = mapState.kind === "location" ? (
+    <p className="text-sm text-muted" role="status" data-ke="search-map-location">
+      {locale === "fr" ? "Choisissez une ville, une adresse ou un code postal pour voir les résultats sur la carte." : "Choose a city, address or postal code to see map results."}
+    </p>
+  ) : mapState.kind === "error" ? (
+    <div className="flex flex-wrap items-center gap-2 text-sm" role="status" data-ke="search-map-error">
+      <span>{locale === "fr" ? "Les résultats de la carte n’ont pas pu être chargés." : "Map results could not be loaded."}</span>
+      <Button type="button" variant="secondary" size="sm" onClick={retrySearch}>{t("mapRetry")}</Button>
+    </div>
+  ) : !currentMapResult ? (
+    <p className="text-sm text-muted" role="status">{t("mapLoading")}</p>
+  ) : (
+    <div className="text-sm text-muted" role="status" data-ke="search-map-count">
+      <p>{searchMapCount(currentMapResult.pins.length, currentMapResult.total, currentMapResult.evidence, locale)}</p>
+      {mapCoverage.incomplete ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1" data-ke="search-map-coverage">
+          <span>{mapCoverage.detail}</span>
+          <Button type="button" variant="secondary" size="sm" onClick={retrySearch} disabled={refreshing}>{mapCoverage.retry}</Button>
+          <Link to={localePath("/", locale)} search={{ change: "1" }} className="inline-flex min-h-11 items-center underline">{mapCoverage.changeArea}</Link>
+        </div>
+      ) : currentMapResult.pins.length < currentMapResult.total ? (
+        <p>{locale === "fr" ? "Certaines fiches ne sont pas affichées sur la carte." : "Some listings are not shown on the map."}</p>
+      ) : null}
+    </div>
+  );
 
   const parentFilters = useMemo(() => parseParentListingSearch(incoming), [incoming]);
   const liveOn = claimVerifiedOnly || readLiveSearchFlag(incoming.live);
@@ -1280,32 +1402,20 @@ export function SearchScreen({
   }
 
   function retrySearch() {
-    if (unknownCity && !nameQuery.trim()) {
-      setItems([]);
-      setSearchFailed(false);
-      setRefreshing(false);
-      return;
-    }
-    setItems(null);
-    setSearchFailed(false);
+    if (!pageCanSearch) return;
+    // Invalidate synchronously: a response resolving before the next effect
+    // cannot overwrite the new attempt or repopulate the session cache.
+    pageGate.current.invalidate();
+    mapGate.current.invalidate();
+    pageAbort.current?.abort();
+    mapAbort.current?.abort();
     setRefreshing(true);
-    void dedupedQuery(`search-page:${searchCacheKey(cacheInput)}`, QUERY_STALE_MS, () =>
-      searchDaycarePage({ data: searchData }),
-      { fresh: true },
-    )
-      .then((result) => {
-        const locked = nameQuery.trim() ? result.items : filterByLocationLock(result.items, locationLock);
-        setItems(locked);
-        setHasMore(result.hasMore);
-        setResultTotal(result.total);
-        setSearchFailed(false);
-        writeSearchCache(searchCacheKey(cacheInput), locked);
-      })
-      .catch(() => {
-        setItems([]);
-        setSearchFailed(true);
-      })
-      .finally(() => setRefreshing(false));
+    setSearchFailed(false);
+    if (view === "map") {
+      setMapPendingKey(searchMapKey);
+      setMapFailedKey(null);
+    }
+    setRetryRequest((previous) => ({ pageKey, mapKey: searchMapKey, attempt: (previous?.attempt ?? 0) + 1 }));
   }
 
   async function runMatch() {
@@ -1330,67 +1440,9 @@ export function SearchScreen({
     }
   }
 
-  const list = useMemo(() => {
-    let rows = publicListings(nameQuery.trim() ? (items ?? []) : filterByLocationLock(items ?? [], locationLock));
-    if (liveOnly) rows = rows.filter((r) => r.live && !r.isTest);
-    if (avail === "open") rows = rows.filter((r) => honestVacancy(r).kind === "open");
-    if (avail === "waitlist") rows = rows.filter((r) => honestVacancy(r).kind === "waitlist");
-    if (avail === "unknown") rows = rows.filter((r) => !r.availabilityKnown);
-    const pioneer = pioneerFiltersFrom(parsePioneerSearch(incoming as Record<string, unknown>));
-    if (ten || pioneer.cwelcc) rows = rows.filter((r) => confirmedFeeProgramBadge(r) != null);
-    if (meals || pioneer.meals) rows = rows.filter((r) => rowMatchesPioneer(r, { ...pioneer, cwelcc: false, openings: false, inclusive: false, subsidy: false, langs: [], meals: true }));
-    if (pioneer.subsidy) rows = rows.filter((r) => rowMatchesPioneer(r, { ...pioneer, cwelcc: false, openings: false, inclusive: false, meals: false, langs: [], subsidy: true }));
-    if (pioneer.langs.length) rows = rows.filter((r) => rowMatchesPioneer(r, { ...pioneer, cwelcc: false, openings: false, inclusive: false, meals: false, subsidy: false }));
-    if (outdoor)
-      rows = rows.filter(
-        (r) => hasAmenity(r.amenities, "outdoor") || hasAmenity(r.amenities, "yard"),
-      );
-    if (inclusive || pioneer.inclusive) rows = rows.filter((r) => hasAmenity(r.amenities, "inclusive"));
-    if (careKeys.length) rows = rows.filter((r) => matchesDeclaredCare(r.amenities, careKeys));
-    if (licence) rows = rows.filter((r) => licenceMatches((r as { licenceType?: string | null }).licenceType, licence));
-    if (extended) rows = rows.filter((r) => staysLate(r.hours, r.amenities) || opensEarly(r.hours));
-    if (infantOnly) rows = rows.filter((r) => matchesRailAge(r, "infant"));
-    if (catchmentOnly) rows = rows.filter((r) => r.inCatchment);
-    if (confirmedOnly)
-      rows = rows.filter((r) => vacancyFreshness(vacancyTimestamp(r)).kind === "fresh");
-    if (readyOnly) rows = rows.filter((r) => r.detailsReady === true);
-    if (claimVerifiedOnly) rows = rows.filter((r) => isClaimVerified(r));
-    if (favoritesOnly) rows = rows.filter((r) => r.guestFavorite === true);
-    if (careType !== "any") rows = rows.filter((r) => matchesCareType(r, careType));
-    if (schoolAgeOnly) rows = rows.filter((r) => matchesRailAge(r, "school-age"));
-    const cat = isExploreCategory(incoming.cat) ? incoming.cat : undefined;
-    if (cat) rows = rows.filter((r) => listingMatchesExploreFilter(r, cat));
-    if (nameQuery.trim()) rows = rows.filter((r) => matchesDaycareName(r, nameQuery));
-    if (needBy && dateAsksForOpenSpot(needBy)) {
-      rows = rows.filter((r) => honestVacancy(r).kind === "open");
-    }
-    if (parentSearchActive(parentFilters)) rows = rows.filter((r) => matchesParentListingFilters(r, parentFilters));
-    return rows;
-  }, [
-    items,
-    liveOnly,
-    avail,
-    ten,
-    meals,
-    outdoor,
-    inclusive,
-    careKeys,
-    licence,
-    extended,
-    infantOnly,
-    catchmentOnly,
-    confirmedOnly,
-    readyOnly,
-    claimVerifiedOnly,
-    favoritesOnly,
-    careType,
-    schoolAgeOnly,
-    locationLock,
-    nameQuery,
-    needBy,
-    parentFilters,
-    incoming,
-  ]);
+  // Server predicates run on the complete ranked set before pagination. Never
+  // replace a filtered page with raw items or apply page-only totals here.
+  const list = useMemo(() => publicListings(items ?? []), [items]);
   const selectedAges = parseExploreRailAges(incoming);
   const openingsOn = exploreOpeningsSelected(incoming);
   const searchAge =
@@ -1411,23 +1463,7 @@ export function SearchScreen({
   }, [gated, list, searchAge, searchStart]);
   const shownList = gated ? split.primary : list;
   const resultCount = shownList.length + (gated ? split.ageUnknown.length : 0);
-  const extraListingFilters =
-    avail !== "any" ||
-    ten ||
-    meals ||
-    outdoor ||
-    inclusive ||
-    extended ||
-    infantOnly ||
-    catchmentOnly ||
-    confirmedOnly ||
-    readyOnly ||
-    claimVerifiedOnly ||
-    favoritesOnly ||
-    careType !== "any" ||
-    Boolean(nameQuery.trim()) ||
-    parentSearchActive(parentFilters);
-  const pooled = publicListings(extraListingFilters || (liveOnly && shownList.length > 0) ? shownList : (items ?? []));
+  const pooled = shownList;
   const railItems = nameQuery.trim() ? orderNameMatches(pooled) : preferCompleteCards(pooled);
   const visualItems = railItems.filter((row) => {
     if (
@@ -1561,6 +1597,8 @@ export function SearchScreen({
     isIqaluitQuery(`${incoming.q || ""} ${incoming.city || ""} ${origin.label || ""}`);
   const needsCanada =
     Boolean(boot.needsPlace) && !requestedPlace && !(origin.label || "").trim();
+  const coverage = searchCoverageCopy(resultEvidence, locale);
+  const incompleteEmpty = pageCanSearch && !searchFailed && coverage.incomplete && items !== null && visualItems.length === 0;
   const emptyState = needsCanada
     ? {
         title: t("canadaSearchTitle"),
@@ -1571,6 +1609,15 @@ export function SearchScreen({
         secondary: undefined as string | undefined,
         secondaryTo: undefined as string | undefined,
         onSecondary: undefined as (() => void) | undefined,
+      }
+    : incompleteEmpty
+    ? {
+        title: coverage.emptyTitle,
+        body: coverage.emptyDetail,
+        action: coverage.retry,
+        onAction: retrySearch,
+        secondary: coverage.changeArea,
+        secondaryTo: localePath("/?change=1", locale),
       }
     : iqaluitEmpty
     ? {
@@ -1649,13 +1696,14 @@ export function SearchScreen({
                 secondaryTo: "/?change=1",
                 onSecondary: undefined as (() => void) | undefined,
               };
-  const whereLabel = (incoming.q || query || origin.label || "").trim();
+  const whereLabel = (incoming.q || query || origin.label || cardOrigin?.origin.label || "").trim();
   const city = (whereLabel || origin.label).split(",")[0];
   const askedPlace = Boolean((incoming.q || incoming.city || "").trim());
   const locationKnown =
     askedPlace ||
     located ||
     Boolean((origin.label || "").trim()) ||
+    Boolean((cardOrigin?.origin.label || "").trim()) ||
     originSource === "gps" ||
     originSource === "manual" ||
     originSource === "saved" ||
@@ -1664,16 +1712,15 @@ export function SearchScreen({
   const whereSet = Boolean(whereLabel);
   const mapOrigin = anchors.primary;
   const nameSearch = Boolean(nameQuery.trim());
-  const dietOnly = careKeys.length > 0 && extraFilters === 1;
-  const centreCount = nameSearch || (extraFilters && !dietOnly) ? visualItems.length : resultTotal;
-  const licensedCount =
-    centreCount === 1
-      ? t("searchLicensedCountOne")
-      : t("searchLicensedCount").replace("{n}", String(centreCount));
+  const centreCount = resultTotal;
+  const licensedCount = coverage.incomplete ? coverage.count(centreCount) : centreCount === 1
+    ? t("searchLicensedCountOne") : t("searchLicensedCount").replace("{n}", String(centreCount));
   const browseHint = splitLiveBrowseHint(t("exploreBrowseHint").replace("{n}", String(fabric.live)));
   const placeBits = (whereLabel || origin.label).split(",").map((part) => part.trim());
   const browseHub = cityHubDefForPlace(placeBits[0], normalizeProvinceCode(placeBits[1]) || placeBits[1]);
-  const searchCountLine = licensedSearchCountLine({
+  const searchCountLine = searchFailed
+    ? locale === "fr" ? "La recherche n’a pas pu être actualisée" : "Search could not be refreshed"
+    : coverage.incomplete ? licensedCount : licensedSearchCountLine({
     nameSearch,
     liveCount: fabric.live,
     licensed: licensedCount,
@@ -1780,8 +1827,6 @@ export function SearchScreen({
 
   const exploreCatCounts = countExploreCategories(catalog);
   const activeCat = resolvedExploreCategory(incoming);
-  const [licensedChip, setLicensedChip] = useState(true);
-  const [topRatedChip, setTopRatedChip] = useState(false);
   const mobileDraft = useMemo(
     () =>
       draftFromParams({
@@ -1802,39 +1847,63 @@ export function SearchScreen({
   );
   function commitMobileSearch(params: MobileSearchParams) {
     void navigate({
-      search: {
-        q: params.q,
-        from: params.from,
-        to: params.to,
-        age: params.age,
-        ages: params.ages,
-        sched: params.sched,
-        fac: params.fac,
-        cat: params.cat,
-        openings: params.openings,
-        subsidy: params.subsidy,
-        inclusive: params.inclusive,
-        spoken: params.spoken,
-      },
+      search: (previous) => mergeMobileSearchParams(previous, params),
+      // SearchSheet owns the temporary history entry while it is open.
+      replace: true,
     });
   }
-  const mobileRows = visualItems.filter((row) => {
-    if (licensedChip && !row.licenseNumber) return false;
-    if (topRatedChip && row.topRated !== true) return false;
-    return true;
-  });
+  const mobileRows = visualItems;
+
+  const safeNextPage = nextPage !== null && nextPage > resultPage && nextPage <= SEARCH_PAGE_MAX ? nextPage : null;
+  const listingPagination = items !== null && (safeNextPage !== null || resultPage > 1 || pageLimitReached) ? (
+    <nav className="mt-6 flex flex-wrap gap-3" aria-label={t("search")}>
+      {resultPage > 1 ? (
+        <Button asChild variant="secondary">
+          <Link to={localePath("/search", locale)} search={listingPageSearch(resultPage - 1)}>
+            {t("showPreviousListings")}
+          </Link>
+        </Button>
+      ) : null}
+      {safeNextPage !== null ? (
+        <Button asChild variant="secondary">
+          <Link to={localePath("/search", locale)} search={listingPageSearch(safeNextPage)}>
+            {t("showMoreListings")}
+          </Link>
+        </Button>
+      ) : null}
+      {pageLimitReached ? (
+        <div className="basis-full text-sm text-muted" role="status" data-ke="search-page-limit">
+          <p>{locale === "fr" ? "Vous avez atteint la dernière page de cette recherche. La carte ou une zone plus précise peut vous aider à poursuivre." : "You’ve reached the last page of this search. Use the map or a smaller area to keep looking."}</p>
+          <div className="flex flex-wrap gap-3">
+            <Button type="button" variant="secondary" size="sm" onClick={() => setView("map")}>{t("map")}</Button>
+            <Link to={localePath("/", locale)} search={{ change: "1" }} className="inline-flex min-h-11 items-center underline">{coverage.changeArea}</Link>
+          </div>
+        </div>
+      ) : null}
+    </nav>
+  ) : null;
 
   return (
+    <SearchCardOriginProvider value={cardOrigin}>
     <SearchCardAgesProvider ages={selectedAges}>
     <Shell>
       <div className="ke-dense ke-gutter mx-auto max-w-7xl pb-6 pt-2">
         {boot.mobileSearchV2 ? (
-          <div className="md:hidden">
+          <div className="contents md:hidden">
             <MobileSearchResults
               draft={mobileDraft}
-              countLabel={items === null ? t("searchCountLoading") : searchCountLine}
+              countLabel={items === null || refreshing ? t("searchCountLoading") : mobileRows.length !== visualItems.length
+                ? locale === "fr" ? `${mobileRows.length} centres affichés sur cette page` : `${mobileRows.length} centres shown on this page`
+                : searchCountLine}
               onCommit={commitMobileSearch}
-              onFilters={() => setFilters(true)}
+              onFilters={() => setFilters((open) => !open)}
+              filtersOpen={filters}
+              filterCount={sheetFilterCount}
+              mapOn={view === "map"}
+              onMap={() => {
+                dismissPopovers();
+                setView(view === "map" ? "list" : "map");
+              }}
               chips={[
                 {
                   id: "open",
@@ -1905,49 +1974,59 @@ export function SearchScreen({
                 },
               ]}
             />
-            <div data-ke="msv2-split" className="mt-2">
-              {mapEnabled && storeChannel !== "huawei" ? (
-                <div className="h-[46dvh] min-h-52 overflow-hidden rounded-2xl ring-1 ring-border">
-                  <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
-                    <MapView
-                      items={mobileRows}
-                      origin={mapOrigin}
-                      placeLabel={whereLabel || origin.label}
-                      secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
-                      radiusKm={radiusKm}
-                      activeSlug={active}
-                      onSelect={(slug) => setActive(slug)}
-                      onRelocate={(pos) => followDevice(pos)}
-                      onLocate={() => void geo()}
-                      onFallback={() => setView("list")}
-                    />
-                  </Suspense>
-                </div>
-              ) : null}
-              <div
-                data-ke="msv2-list"
-                className="relative z-10 -mt-5 max-h-[58dvh] overflow-y-auto rounded-t-3xl bg-bg px-1 pb-8 shadow-card"
-              >
-                <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-border" aria-hidden="true" />
-                {items === null ? null : mobileRows.length === 0 ? (
-                  <p className="px-3 text-base text-muted">{t("noResults")}</p>
-                ) : (
-                  <DaycareTypeRails
-                    items={mobileRows}
-                    visual
-                    eagerThumbs
-                    labelFar={nameSearch}
-                    skipLiveLooking
-                    ratingFloor={boot.reviewRatingFloor}
-                    seeAll={false}
-                    layout="stack"
-                  />
-                )}
-              </div>
-            </div>
           </div>
         ) : null}
-        <div className={cn("flex items-end justify-between gap-3 max-md:flex-wrap max-md:gap-y-1", boot.mobileSearchV2 && "max-md:hidden")}>
+        <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
+        <ExploreSearchBar
+          className="mt-2"
+          startCollapsed
+          values={{ where: query, name: nameQuery, from: needBy, to: needUntil }}
+          origin={origin}
+          radiusKm={shownRadius}
+          onRadiusChange={setRadiusKm}
+          start={searchStart ?? ""}
+          childSummary={selectedAges.map((age) => t(EXPLORE_AGE_RAIL_COPY[age])).join(", ")}
+          childAges={RAIL_AGES.map((age) => ({
+            id: age,
+            label: t(EXPLORE_AGE_RAIL_COPY[age]),
+            on: selectedAges.includes(age),
+          }))}
+          onChildAge={(id) => {
+            if (isRailAge(id)) writeAgeSearch(id);
+          }}
+          onWhereChange={setQuery}
+          onWhereResolved={applyPlace}
+          onNameChange={setNameQuery}
+          onDatesChange={({ from, to }) => {
+            setNeedBy(from);
+            setNeedUntil(to);
+          }}
+          onStartChange={(start) => writeNowLoopSearch({ start })}
+          onLocate={() => void geo()}
+          onSubmit={(typed) => void applyQuery(typed)}
+        />
+        <div className="mt-1 flex flex-wrap items-start gap-x-4">
+        {recentSearches.length ? (
+          <details data-ke="recent-searches">
+            <summary className="inline-flex min-h-11 cursor-pointer items-center text-xs font-medium text-muted">{t("recentSearches")}</summary>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {recentSearches.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  className="inline-flex min-h-11 max-w-full items-center rounded-full bg-surface px-3 text-sm ring-1 ring-border"
+                  onClick={() => void applyQuery(item.label)}
+                >
+                  <span className="truncate">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </details>
+        ) : null}
+        <SmartMatchEntry inline quiet />
+        </div>
+        </div>
+        <div className={cn("mt-2 flex items-end justify-between gap-3 max-md:flex-wrap max-md:gap-y-1", boot.mobileSearchV2 && "max-md:hidden")}>
           <div className="min-w-0 max-md:max-w-full max-md:flex-1 max-md:basis-[min(100%,12rem)]">
             <h1
               className="font-display text-[1.35rem] leading-tight tracking-[-0.03em] text-balance max-md:break-words"
@@ -1959,15 +2038,8 @@ export function SearchScreen({
                   ? t(BROWSE_RAIL_COPY.before_after)
                   : headingCity}
             </h1>
-            <Link
-              to="/need-care-fast"
-              search={{ q: locationKnown ? String(city || "").trim().slice(0, 80) : "" }}
-              className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
-            >
-              {t("needCareFast")}
-            </Link>
             <p className="mt-0.5 min-h-5 text-sm text-muted text-balance" aria-live="polite" data-ke="search-count">
-              {items === null ? (
+              {items === null || refreshing ? (
                 <span className="inline-flex max-w-full flex-wrap items-center gap-2">
                   <span className="ke-skel inline-block h-3.5 w-28" aria-hidden="true" />
                   <span>{t("searchCountLoading")}</span>
@@ -1995,11 +2067,11 @@ export function SearchScreen({
             </p>
           </div>
           <Link
-            to="/"
-            search={{ change: "1" }}
-            className="inline-flex min-h-11 shrink-0 items-center text-sm font-medium text-primary max-w-full text-left"
+            to="/need-care-fast"
+            search={{ q: locationKnown ? String(city || "").trim().slice(0, 80) : "" }}
+            className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
           >
-            {t("changeLocation")}
+            {t("needCareFast")}
           </Link>
         </div>
         {saveOpen ? (
@@ -2039,59 +2111,19 @@ export function SearchScreen({
           </div>
         ) : null}
 
-        <details className={cn("mt-2 rounded-xl bg-surface px-3 ring-1 ring-border", boot.mobileSearchV2 && "max-md:hidden")}>
-          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold">
-            {locale === "fr" ? "Liste d’attente du quartier" : "Area waitlist"}
-          </summary>
-          <AreaWaitlistForm returnTo={localePath("/search", locale)} />
-        </details>
 
-        <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
-        <ExploreSearchBar
-          className="mt-2"
-          startCollapsed
-          values={{ where: query, name: nameQuery, from: needBy, to: needUntil }}
-          origin={origin}
-          start={searchStart ?? ""}
-          childSummary={selectedAges.map((age) => t(EXPLORE_AGE_RAIL_COPY[age])).join(", ")}
-          childAges={RAIL_AGES.map((age) => ({
-            id: age,
-            label: t(EXPLORE_AGE_RAIL_COPY[age]),
-            on: selectedAges.includes(age),
-          }))}
-          onChildAge={(id) => {
-            if (isRailAge(id)) writeAgeSearch(id);
-          }}
-          onWhereChange={setQuery}
-          onWhereResolved={applyPlace}
-          onNameChange={setNameQuery}
-          onDatesChange={({ from, to }) => {
-            setNeedBy(from);
-            setNeedUntil(to);
-          }}
-          onStartChange={(start) => writeNowLoopSearch({ start })}
-          onLocate={() => void geo()}
-          onSubmit={(typed) => void applyQuery(typed)}
-        />
-        {recentSearches.length ? (
-          <div className="mt-2" data-ke="recent-searches">
-            <p className="text-xs font-medium text-muted">{t("recentSearches")}</p>
-            <div className="mt-1 flex flex-wrap gap-2">
-              {recentSearches.map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  className="inline-flex min-h-11 max-w-full items-center rounded-full bg-surface px-3 text-sm ring-1 ring-border"
-                  onClick={() => void applyQuery(item.label)}
-                >
-                  <span className="truncate">{item.label}</span>
-                </button>
-              ))}
-            </div>
+        {items !== null && pageCanSearch && (searchFailed || coverage.incomplete) ? (
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted" role="status" data-ke="search-coverage" data-coverage={searchFailed ? "error" : coverage.evidence.status}>
+            <span>{searchFailed
+              ? locale === "fr" ? "Les résultats n’ont pas pu être actualisés. Les fiches affichées peuvent ne plus être à jour." : "Results could not be refreshed. Any listings shown may be out of date."
+              : coverage.detail}</span>
+            {visualItems.length > 0 ? <>
+              <Button type="button" variant="secondary" size="sm" onClick={retrySearch} disabled={refreshing}>{coverage.retry}</Button>
+              <Link to={localePath("/", locale)} search={{ change: "1" }} className="inline-flex min-h-11 items-center underline">{coverage.changeArea}</Link>
+            </> : null}
           </div>
         ) : null}
-        <SmartMatchEntry />
-        </div>
+
         <div className="ke-explore-filter-sticky mt-3" data-msv2-hide={boot.mobileSearchV2 ? "mobile" : undefined}>
         <ExploreFilterBar
           listingCount={items !== null ? resultCount : undefined}
@@ -2124,12 +2156,7 @@ export function SearchScreen({
           onOpenSpots={() => writeRailSelection({ openings: !openingsOn })}
           tenOn={ten}
           onTen={() => setTen((v) => !v)}
-          filtersOpen={
-            filters ||
-            sheetFilterCount > 0 ||
-            parentSearchActive(parentFilters) ||
-            (Boolean(workOrigin) && anchorMode !== "home")
-          }
+          filtersOpen={filters}
           filterCount={sheetFilterCount}
           onFilters={() => setFilters((v) => !v)}
           mapOn={view === "map"}
@@ -2159,37 +2186,21 @@ export function SearchScreen({
 
         {filters ? (
           <div
+            id="search-filters"
+            role="region"
+            aria-labelledby="search-filters-title"
             className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border"
             data-ke="explore-filters-sheet"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold">{t("filters")}</p>
+              <h2 id="search-filters-title" tabIndex={-1} className="scroll-mt-64 text-sm font-semibold outline-none md:scroll-mt-36">{t("filters")}</h2>
               <div className="flex items-center gap-2">
                 <ChipButton onClick={clearListingFilters}>{locale === "fr" ? "Tout effacer" : "Clear all"}</ChipButton>
-                <ChipButton onClick={() => setFilters(false)}>{t("close")}</ChipButton>
+                <ChipButton onClick={closeFilters}>{t("close")}</ChipButton>
               </div>
             </div>
             <PioneerFilterRail value={parsePioneerSearch(incoming as Record<string, unknown>)} onChange={writePioneer} />
             <CommuteDetourBar />
-            <div>
-              <p className="text-sm font-semibold">{t("recommendedForYou")}</p>
-              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {(
-                  [
-                    [avail === "open", t("filterOpen"), () => setAvail((v) => (v === "open" ? "any" : "open"))],
-                    [meals, t("filterMeals"), () => setMeals((v) => !v)],
-                    [outdoor, t("filterOutdoor"), () => setOutdoor((v) => !v)],
-                    [extended, t("filterExtended"), () => setExtended((v) => !v)],
-                    [infantOnly, standardAgeLabel("infant", locale), () => setInfantOnly((v) => !v)],
-                    [ten, t("filterTen"), () => setTen((v) => !v)],
-                  ] as [boolean, string, () => void][]
-                ).map(([on, label, toggle]) => (
-                  <button key={label} type="button" className="ke-care-tile" aria-pressed={on} onClick={toggle}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
             <div className="flex items-center justify-end gap-3">
               {user ? (
                 <ChipButton onClick={openSaveSearch}>{t("saveSearch")}</ChipButton>
@@ -2336,6 +2347,63 @@ export function SearchScreen({
           </div>
         ) : null}
 
+        {boot.mobileSearchV2 ? (
+          <div className="md:hidden" data-ke="msv2-split">
+            {view === "map" ? (
+              storeChannel === "huawei" ? (
+                <div className="mt-3 overflow-hidden rounded-2xl ring-1 ring-border"><StoreMapFallback /></div>
+              ) : mapEnabled ? (
+                <div className="mt-3 space-y-2">
+                {mapStatus}
+                <div className="h-[46dvh] min-h-52 overflow-hidden rounded-2xl ring-1 ring-border" data-ke="msv2-map">
+                  <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
+                    <MapView
+                      items={mobileRows}
+                      searchPins={searchMapPins}
+                      origin={mapOrigin}
+                      placeLabel={whereLabel || origin.label}
+                      secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
+                      radiusKm={radiusKm}
+                      activeSlug={active}
+                      onSelect={(slug) => setActive(slug)}
+                      onRelocate={(pos) => followDevice(pos)}
+                      onLocate={() => void geo()}
+                      onFallback={() => setView("list")}
+                    />
+                  </Suspense>
+                </div>
+                </div>
+              ) : null
+            ) : null}
+            <div data-ke="msv2-list" className="mt-3 min-w-0 bg-bg pb-6">
+              {items === null ? <p className="px-1 text-sm text-muted">{t("searchCountLoading")}</p> : mobileRows.length === 0 ? (
+                <EmptyState
+                  title={emptyState.title}
+                  body={emptyState.body}
+                  action={emptyState.action}
+                  actionTo={"actionTo" in emptyState ? emptyState.actionTo : undefined}
+                  onAction={emptyState.onAction}
+                  secondary={emptyState.secondary}
+                  onSecondary={emptyState.onSecondary}
+                  secondaryTo={emptyState.secondaryTo}
+                />
+              ) : (
+                <DaycareTypeRails
+                  items={mobileRows}
+                  visual
+                  eagerThumbs
+                  labelFar={nameSearch}
+                  skipLiveLooking
+                  ratingFloor={boot.reviewRatingFloor}
+                  seeAll={false}
+                  layout="stack"
+                />
+              )}
+              <div data-ke="mobile-search-pagination">{listingPagination}</div>
+            </div>
+          </div>
+        ) : null}
+
         <div
           className={cn(
             "ke-search-results relative z-0 mt-2 contain-layout",
@@ -2351,10 +2419,12 @@ export function SearchScreen({
               </div>
             ) : mapEnabled ? (
               <div className="mt-4 space-y-3">
+                {mapStatus}
                 <div className="h-[min(72dvh,36rem)] min-h-[18rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(62vh,34rem)]">
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
                       items={shownList}
+                      searchPins={searchMapPins}
                       origin={mapOrigin}
                       placeLabel={whereLabel || origin.label}
                       secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
@@ -2387,7 +2457,7 @@ export function SearchScreen({
             <div className="ke-result-stack" aria-busy="true" aria-label={t("searchCountLoading")}>
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="space-y-2" aria-hidden="true">
-                  <div className="ke-skel aspect-[4/3] w-full rounded-[14px]" />
+                  <div className="ke-skel ke-card-photo w-full rounded-[14px]" />
                   <div className="ke-skel h-4 w-3/5" />
                   <div className="ke-skel h-3 w-2/5" />
                 </div>
@@ -2440,24 +2510,7 @@ export function SearchScreen({
             </div>
           )}
           <ParentHelperPanel collapsed />
-          {items !== null && (hasMore || resultPage > 1) ? (
-            <nav className="mt-6 flex flex-wrap gap-3" aria-label={t("search")}>
-              {resultPage > 1 ? (
-                <Button asChild variant="secondary">
-                  <Link to={localePath("/search", locale)} search={listingPageSearch(resultPage - 1)}>
-                    {t("showPreviousListings")}
-                  </Link>
-                </Button>
-              ) : null}
-              {hasMore ? (
-                <Button asChild variant="secondary">
-                  <Link to={localePath("/search", locale)} search={listingPageSearch(resultPage + 1)}>
-                    {t("showMoreListings")}
-                  </Link>
-                </Button>
-              ) : null}
-            </nav>
-          ) : null}
+          {listingPagination}
           {gated && split.ageUnknown.length ? (
             <div className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border">
               <p className="font-semibold">{t("ageNotConfirmed")}</p>
@@ -2479,11 +2532,18 @@ export function SearchScreen({
             </div>
           ) : null}
         </div>
+        <details className="mt-6 rounded-xl bg-surface px-3 ring-1 ring-border" data-ke="area-waitlist">
+          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold">
+            {locale === "fr" ? "Liste d’attente du quartier" : "Area waitlist"}
+          </summary>
+          <AreaWaitlistForm returnTo={localePath("/search", locale)} />
+        </details>
       </div>
       <Suspense fallback={null}>
         <CompareBar />
       </Suspense>
     </Shell>
     </SearchCardAgesProvider>
+    </SearchCardOriginProvider>
   );
 }

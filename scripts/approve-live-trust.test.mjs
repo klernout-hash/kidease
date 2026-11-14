@@ -364,8 +364,8 @@ test("guest, parent, and daycare stay in sync with the approval strip", () => {
   assert.equal(publicBrowseClaim({ ...unclaimed, listingActive: false, role: "guest" }), false);
   assert.equal(publicBrowseClaim({ live: true, claimed: true, claimStatus: "approved", role: "guest" }), false);
   assert.equal(publicBrowseClaim({ live: false, claimed: true, claimStatus: "waiting", role: "guest" }), false);
-  assert.equal(listingSubsidy({ province: "MB", feeProgram: "mb-10-day" })?.subsidy_label, "Fee cap");
-  assert.equal(listingSubsidy({ province: "PE", feeProgram: "pe-10-day" })?.subsidy_label, "$10/day");
+  assert.equal(listingSubsidy({ province: "MB", feeProgram: "mb-10-day" })?.subsidy_label, "$10 / Day");
+  assert.equal(listingSubsidy({ province: "PE", feeProgram: "pe-10-day" })?.subsidy_label, "$10 / Day");
   assert.equal(listingSubsidy({ province: "ON" }), null);
   assert.equal(listingSubsidy({ province: "QC", feeProgram: "qc-9-65" })?.subsidy_label, "$9.65/day subsidized");
   assert.notEqual(listingSubsidy({ province: "NT", feeProgram: "nt-reduced" })?.subsidy_label, "$10/day");
@@ -377,8 +377,13 @@ test("guest, parent, and daycare stay in sync with the approval strip", () => {
 
   const page = src("src/routes/daycare.$slug.tsx");
   assert.match(page, /showPublicClaimPrompt\(d\)/);
-  assert.match(page, /data-ke="listing-claim-prompt"/);
-  assert.match(page, /data-ke="listing-claim-button"/);
+  const secondary = page.slice(page.indexOf("function ListingOverflowItems"), page.indexOf("function DirectionsButton"));
+  assert.match(secondary, /offerClaim \? \(/);
+  assert.match(secondary, /to="\/claim"/);
+  assert.match(secondary, /search=\{\{ id: d\.id, q: name \}\}/);
+  assert.match(secondary, /claimFreeListing/);
+  assert.equal((page.match(/<ListingOverflowItems \/>/g) ?? []).length, 2);
+  assert.doesNotMatch(page, /data-ke="listing-claim-prompt"|data-ke="listing-claim-button"/);
   assert.match(page, /offerClaim \? \(/);
   assert.match(page, /data-ke="listing-sticky-tour"/);
   assert.match(page, /data-ke="listing-sticky-cta"/);

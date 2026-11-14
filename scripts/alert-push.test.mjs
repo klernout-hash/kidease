@@ -79,7 +79,7 @@ test("alert copy stays plain in English and French", () => {
   });
   blobs.push(letter.text, letter.html);
   const all = blobs.join("\n");
-  assert.doesNotMatch(all, /—|–|police check|free forever/i);
+  assert.doesNotMatch(all, /—|–|police check|free forever|free founding period|période fondatrice|coming soon|bientôt/i);
   assert.match(all, /Canadian company/);
   assert.match(all, /entreprise canadienne/);
   assert.match(alertPushCopy("waitlist", "fr", { name: "Oaks", status: "waitlisted" }).body, /en attente/);

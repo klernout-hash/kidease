@@ -1,5 +1,5 @@
-import { createFileRoute, Link, notFound, redirect, useNavigate, useParams, useSearch, useLoaderData, type ErrorComponentProps } from "@tanstack/react-router";
-import { Info, MapPinned, MessageCircle, Star } from "lucide-react";
+import { createFileRoute, Link, notFound, redirect, useNavigate, useParams, useSearch, useLoaderData, useRouter } from "@tanstack/react-router";
+import { MapPinned, MessageCircle, Star } from "lucide-react";
 import { parentLoginSearch, parentSignupSearch } from "@/lib/auth/parent-login";
 import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { ShareListingButton } from "@/components/share-button";
@@ -40,7 +40,6 @@ import {
 } from "@/lib/listing-seo";
 import { ListingCultureCard } from "@/components/listing-culture-card";
 import { SaveListingButton } from "@/components/save-listing-button";
-import { ClaimListingCta } from "@/components/claim-listing-cta";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import { listingOfferGroups } from "@/lib/listing-offers";
@@ -110,7 +109,7 @@ import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
 import { publicAgeSourceUrl, standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import type { ListingSeoSource } from "@/lib/listing-seo";
-import { formatMonth, money, displayCentreName, displayListingText } from "@/lib/utils";
+import { formatMonth, displayCentreName, displayListingText } from "@/lib/utils";
 
 import { openDirections } from "@/lib/maps";
 import { ListingMap } from "@/components/listing-map";
@@ -118,6 +117,7 @@ import { OpenInMapsLink } from "@/components/map-unavailable";
 import type { PublicInspection } from "@/lib/inspection-history";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
 import { parseListingAsk, type ListingAsk } from "@/lib/lead-requests";
+import { roomPhotoIndex } from "@/lib/listing-gallery";
 
 export const Route = createFileRoute("/daycare/$slug")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -158,6 +158,7 @@ export const Route = createFileRoute("/daycare/$slug")({
   },
   notFoundComponent: ListingNotFoundPage,
   errorComponent: ListingRetryPage,
+  wrapInSuspense: true,
   headers: ({ loaderData }) => {
     if (loaderData?.noindex) return { "X-Robots-Tag": "noindex, nofollow" };
     return undefined;
@@ -196,8 +197,9 @@ export const Route = createFileRoute("/daycare/$slug")({
   component: Listing,
 });
 
-export function ListingRetryPage({ reset }: ErrorComponentProps) {
+export function ListingRetryPage() {
   const { t } = useCopy();
+  const router = useRouter();
   return (
     <Shell>
       <main className="ke-gutter mx-auto max-w-lg py-16" data-ke="listing-retry">
@@ -205,17 +207,13 @@ export function ListingRetryPage({ reset }: ErrorComponentProps) {
           title={t("listingRetry")}
           body={t("listingRetryLead")}
           action={t("tryAgain")}
-          onAction={() => reset()}
+          onAction={() => { void router.invalidate(); }}
           secondary={t("search")}
           secondaryTo="/search"
         />
       </main>
     </Shell>
   );
-}
-
-function ClaimListingButton({ id, name, className = "" }: { id: string; name: string; className?: string }) {
-  return <ClaimListingCta daycareId={id} name={name} source="listing" className={className} />;
 }
 
 export function Listing() {
@@ -245,6 +243,7 @@ export function Listing() {
     eceJobs?: boolean;
   } | null>(null);
   const [photo, setPhoto] = useState(0);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -431,26 +430,26 @@ export function Listing() {
           <div className="ke-gutter">
             {earlyName ? <h1 className="mt-3 font-display text-[1.75rem] leading-tight md:text-[2rem]">{earlyName}</h1> : null}
             <p className="mt-1 text-sm text-muted">{[seo?.city, seo?.province].filter(Boolean).join(", ")}</p>
-            <ul className="mt-4 divide-y divide-border" data-ke="listing-highlights">
+            <dl className="mt-5 grid grid-cols-1 gap-x-6 gap-y-4 border-y border-border py-5 sm:grid-cols-2" data-ke="listing-first-paint-facts">
               {earlyHours ? (
-                <li className="py-3">
-                  <p className="text-base font-semibold">{t("hours")}</p>
-                  <p className="text-sm leading-5 text-muted">{earlyHours}</p>
-                </li>
+                <div>
+                  <dt className="text-sm text-muted">{t("hours")}</dt>
+                  <dd className="mt-1 text-base font-medium">{earlyHours}</dd>
+                </div>
               ) : null}
-              <li className="py-3">
-                <p className="text-base font-semibold">{locale === "fr" ? "Disponibilité" : "Availability"}</p>
-                <p className="text-sm leading-5 text-muted">{locale === "fr" ? "Non confirmée" : "Not confirmed"}</p>
-              </li>
-              <li className="py-3">
-                <p className="text-base font-semibold">{locale === "fr" ? "Frais et soutien" : "Fees and support"}</p>
-                <p className="text-sm leading-5 text-muted">
+              <div>
+                <dt className="text-sm text-muted">{t("availability")}</dt>
+                <dd className="mt-1 text-base font-medium">{locale === "fr" ? "Non confirmée" : "Not confirmed"}</dd>
+              </div>
+              <div>
+                <dt className="text-sm text-muted">{locale === "fr" ? "Frais et soutien" : "Fees and support"}</dt>
+                <dd className="mt-1 text-sm text-muted">
                   {locale === "fr"
                     ? "Frais non confirmés. Un plafond quotidien n’est pas une facture mensuelle."
                     : "Fees not confirmed. A daily cap is not a monthly bill."}
-                </p>
-              </li>
-            </ul>
+                </dd>
+              </div>
+            </dl>
             <div id="listing-overview" className="mt-6 space-y-6">
               {earlyDesc ? (
                 <section data-ke="listing-about">
@@ -466,12 +465,6 @@ export function Listing() {
                   ) : (
                     <p className="mt-2 max-w-prose text-muted">{earlyDesc}</p>
                   )}
-                </section>
-              ) : null}
-              {earlyHours ? (
-                <section>
-                  <h2 className="font-display text-2xl">{t("hours")}</h2>
-                  <p className="mt-2 max-w-prose text-muted">{earlyHours}</p>
                 </section>
               ) : null}
               {earlyAddress ? (
@@ -552,7 +545,6 @@ export function Listing() {
   const hours = displayListingText(locale === "fr" ? d.hoursFr : d.hours);
   const tagline = displayListingText(locale === "fr" ? d.taglineFr : d.tagline);
   const address = displayListingText(d.address);
-  const spots = d.spotsInfant + d.spotsToddler + d.spotsPreschool;
   const classified = classifyListingPhotos(d.photos);
   const interiors = classified.interiors;
   const photos = (() => {
@@ -560,7 +552,8 @@ export function Listing() {
     list.sort((a, b) => Number(isOfficialBuildingPhoto(b)) - Number(isOfficialBuildingPhoto(a)));
     return list.length ? list : [LISTING_PLACEHOLDER];
   })();
-  const gallery = photos.filter((src) => isRealListingPhoto(src) && !isMissingCatalogueBuilding(src));
+  const gallery = [...new Set([...photos, ...(data.spaces?.spaces ?? []).flatMap((space) => space.photos)])]
+    .filter((src) => isRealListingPhoto(src) && !isMissingCatalogueBuilding(src));
   const roomPhotos = interiors.filter((src) => isRealListingPhoto(src) && !isMissingCatalogueBuilding(src));
   const prices = [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly]
     .map((amount) => publicMonthlyFee(amount, d))
@@ -572,6 +565,7 @@ export function Listing() {
   const approved = publicApprovalEligible(d);
   const verifiedCheck = showVerifiedCheck(d);
   const facilityLabel = t(facilityTypeLabelKey(classifyFacilityType(d).type));
+  const publicPlace = d.addressProtected ? d.addressPlace || `${d.city}, ${d.province}` : `${d.city}, ${d.province}`;
   const updatedAt = d.lastVacancyUpdatedAt || d.lastPhotoUpdatedAt;
   const updatedLabel = updatedAt
     ? new Date(updatedAt).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
@@ -656,10 +650,21 @@ export function Listing() {
     setMessageOpen(true);
   }
 
-  const waitlisted = known && spots <= 0;
   const offerClaim = chrome.role !== "government" && showPublicClaimPrompt(d);
   const cityHub = cityHubDefForPlace(d.city, d.province);
   const heroBack = cityHub ? { to: "/daycare/city/$city" as const, city: cityHub.slug } : { to: "/search" as const };
+  const primaryLabel = live ? t("requestTour") : t("requestInfo");
+  const primaryAction = live ? onTour : onInfo;
+  const nextStepLead = live
+    ? locale === "fr" ? "Consultez les heures de visite ou demandez au centre de vous renseigner." : "See posted tour times, or ask the daycare about a visit."
+    : locale === "fr" ? "Demandez des renseignements à cette garderie. Une réponse n’est pas garantie." : "Ask this daycare for information. A reply isn’t guaranteed.";
+
+  function openRoomPhoto(src: string) {
+    const index = roomPhotoIndex(gallery, src);
+    if (index == null) return;
+    setPhoto(index);
+    setGalleryOpen(true);
+  }
 
   function ListingEditLink() {
     if (!ownEdit) return null;
@@ -675,7 +680,7 @@ export function Listing() {
   function ListingOverflowItems() {
     return (
       <>
-        {parentActions ? <ListingMoreItem onClick={onTour} data-ke="listing-sticky-tour">{t("bookTour")}</ListingMoreItem> : null}
+        {parentActions && !live ? <ListingMoreItem onClick={onTour} data-ke="listing-sticky-tour">{locale === "fr" ? "Demander une visite" : "Ask about a visit"}</ListingMoreItem> : null}
         {parentActions && live ? <ListingMoreItem onClick={onRequest}>{t("requestSpotCta")}</ListingMoreItem> : null}
         {parentActions ? (
           <>
@@ -685,7 +690,8 @@ export function Listing() {
             <span className="sr-only" data-ke="listing-sticky-message">{t("stickyMessage")} {t("stickyInfo")}</span>
           </>
         ) : null}
-        {parentActions ? <ListingMoreItem onClick={onInfo}>{t("requestInfo")}</ListingMoreItem> : null}
+        {parentActions && live ? <ListingMoreItem onClick={onInfo}>{t("requestInfo")}</ListingMoreItem> : null}
+        {parentActions ? <ListingMoreItem asChild><a href="#listing-availability-details">{locale === "fr" ? "Disponibilité et liste d’attente" : "Availability and waitlist"}</a></ListingMoreItem> : null}
         <ListingMoreItem onClick={() => toggleCompareItem({ id: d.id, slug: d.slug }, compareMax)}>
           {comparing ? t("comparing") : t("compareAdd")}
         </ListingMoreItem>
@@ -696,10 +702,9 @@ export function Listing() {
           <Link
             to="/claim"
             search={{ id: d.id, q: name }}
-            role="menuitem"
             className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
           >
-            {t("claimCtaShort")}
+            {t("claimFreeListing")}
           </Link>
         ) : null}
         {licenceHref ? (
@@ -707,7 +712,6 @@ export function Listing() {
             href={licenceHref}
             target="_blank"
             rel="noreferrer"
-            role="menuitem"
             className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
           >
             {t("viewLicenceRecord")}
@@ -716,7 +720,6 @@ export function Listing() {
         {publicTelHref(d.phone) ? (
           <a
             href={publicTelHref(d.phone) || undefined}
-            role="menuitem"
             className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
             onClick={() => {
               const ctx = rankingContextFor(d.id);
@@ -737,7 +740,6 @@ export function Listing() {
             href={publicWebsiteHref(d.website) || undefined}
             target="_blank"
             rel="noreferrer"
-            role="menuitem"
             className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
             onClick={() => {
               const ctx = rankingContextFor(d.id);
@@ -757,7 +759,6 @@ export function Listing() {
           href={subsidyEstimatorUrl(d.province)}
           target="_blank"
           rel="noreferrer"
-          role="menuitem"
           className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
         >
           {t("checkSubsidy")}
@@ -789,34 +790,27 @@ export function Listing() {
 
   function ListingActions() {
     return (
-      <div data-ke={parentActions ? "listing-parent-actions" : ownEdit ? "listing-own-edit" : "listing-actions-none"}>
+      <div className="grid gap-2" data-ke={parentActions ? "listing-parent-actions" : ownEdit ? "listing-own-edit" : "listing-actions-none"}>
         <ListingEditLink />
-        {parentActions && live ? (
-          <Button className="min-h-11 w-full whitespace-normal rounded-[14px] touch-manipulation" data-ke="listing-primary-cta" onClick={onInfo}>
-            {t("requestInfo")}
+        {parentActions ? (
+          <Button className="min-h-11 w-full whitespace-normal rounded-[14px] touch-manipulation" data-ke="listing-primary-cta" onClick={primaryAction}>
+            {primaryLabel}
           </Button>
         ) : null}
-        {parentActions && !live ? (
-          <Button className="min-h-11 rounded-[14px] touch-manipulation" variant="secondary" asChild>
-            <Link to={localePath("/search", locale)}>{t("searchNearbyShort")}</Link>
-          </Button>
-        ) : null}
-        {parentActions && !live ? (
-          <p className="text-xs text-muted" data-ke="listing-not-live">{t("parentRequestNotLive")}</p>
-        ) : null}
-        <DirectionsButton />
       </div>
     );
   }
 
   return (
     <Shell>
-      <article className={`ke-listing-page ke-listing-read mx-auto max-w-5xl overflow-x-hidden pb-[calc(12rem+env(safe-area-inset-bottom))] md:pb-10`}>
-        <div className="lg:ke-gutter lg:pt-4">
+      <article className={`ke-listing-page ke-listing-read mx-auto min-w-0 max-w-6xl pb-[calc(12rem+env(safe-area-inset-bottom))] md:pb-10`}>
+        <div className="min-w-0 md:col-span-2 md:mb-6 md:px-4 md:pt-4 lg:ke-gutter">
           <ListingHeroGallery
             photos={gallery}
             index={photo}
             onIndex={setPhoto}
+            open={galleryOpen}
+            onOpenChange={setGalleryOpen}
             back={heroBack}
             slug={d.slug}
             name={name}
@@ -860,13 +854,7 @@ export function Listing() {
                 <h1 className="min-w-0 font-display text-[24px] font-semibold leading-[30px] md:text-[30px] md:leading-9">{name}</h1>
                 {verifiedCheck ? <VerifiedCheck className="mt-1 shrink-0" /> : null}
               </div>
-              <p className="mt-1 text-sm text-muted" data-ke="listing-availability">
-                {known && spots > 0
-                  ? `${spots} ${t("spots")}`
-                  : locale === "fr"
-                    ? "Disponibilité non confirmée"
-                    : "Availability not confirmed"}
-              </p>
+
             </div>
           {!isPublicListing(d) ? (
             <p
@@ -880,15 +868,12 @@ export function Listing() {
               <ShareListingButton slug={d.slug} name={name} appearance="icon" className="shrink-0" />
             )}
           </div>
-          <p className="mt-1 text-sm text-muted">
-            {d.addressProtected ? d.addressPlace || `${d.city}, ${d.province}` : `${d.city}, ${d.province}`}
-          </p>
+          <p className="mt-2 text-base text-muted" data-ke="listing-place-type">{facilityLabel} · {publicPlace}</p>
           {d.addressProtected ? (
             <p className="mt-2 max-w-prose text-sm" data-ke="home-address-note">{t("homeAddressNote")}</p>
           ) : null}
           <SponsoredMark show={d.featuredCity} className="mt-2" />
           <FoundingMemberBadge show={d.foundingMember} className="mt-2" />
-          {tagline.trim() ? <p className="mt-0.5 text-sm text-muted">{tagline}</p> : null}
           {approved || licensed ? (
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm" data-ke="listing-trust-line">
               {approved ? (
@@ -912,40 +897,7 @@ export function Listing() {
             </div>
           ) : null}
           <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={showCentreFees ? from : 0} />
-          <ul className="mt-4 divide-y divide-border" data-ke="listing-highlights">
-            <li className="py-3">
-              <p className="text-base font-semibold">{d.addressProtected ? d.addressPlace || `${d.city}, ${d.province}` : `${d.city}, ${d.province}`}</p>
-              <p className="text-sm leading-5 text-muted">{facilityLabel}{agesLabel ? ` · ${agesLabel}` : ""}</p>
-            </li>
-            {hours.trim() && hours.trim() !== "—" ? (
-              <li className="py-3">
-                <p className="text-base font-semibold">{locale === "fr" ? "Heures" : "Hours"}</p>
-                <p className="text-sm leading-5 text-muted">{hours}</p>
-              </li>
-            ) : null}
-            <li className="py-3">
-              <p className="text-base font-semibold">{locale === "fr" ? "Disponibilité" : "Availability"}</p>
-              <p className="text-sm leading-5 text-muted">
-                {known && spots > 0
-                  ? `${spots} ${t("spots")}`
-                  : locale === "fr"
-                    ? "Non confirmée"
-                    : "Not confirmed"}
-              </p>
-            </li>
-            <li className="py-3">
-              <a href="#listing-fees" className="block">
-                <p className="text-base font-semibold">{locale === "fr" ? "Frais et soutien" : "Fees and support"}</p>
-                <p className="text-sm leading-5 text-muted">
-                  {showCentreFees && from > 0
-                    ? `${money(from, locale)}${t("month")}`
-                    : locale === "fr"
-                      ? "Frais non confirmés. Un plafond quotidien n’est pas une facture mensuelle."
-                      : "Fees not confirmed. A daily cap is not a monthly bill."}
-                </p>
-              </a>
-            </li>
-          </ul>
+
           {ageSourceUrl ? (
             <p className="mt-1 text-xs leading-5 text-muted" data-ke="province-age-label">
               {t("agesFromProvince")}{" "}
@@ -954,41 +906,12 @@ export function Listing() {
               </a>
             </p>
           ) : null}
-          {offerClaim ? (
-            <p className="mt-3 text-sm" data-ke="listing-claim-button">
-              <ClaimListingButton
-                id={d.id}
-                name={name}
-                className="min-h-11 bg-transparent px-0 text-sm font-medium text-primary shadow-none underline underline-offset-4 hover:bg-transparent"
-              />
-            </p>
-          ) : null}
+
           <ListingBadges item={ranked} compact feeOnly />
           <HiringEceBadge show={Boolean(data.jobs?.length)} />
-          <InspectionTrustCard
-            province={d.province}
-            name={name}
-            licenseNumber={d.licenseNumber}
-            listingId={d.id}
-            licenseStatus={d.licenseStatus}
-            licenseExpiry={d.licenseExpiry}
-            claimed={Boolean(d.claimed)}
-            inspections={data.inspections}
-            compact
-          />
-          {data.inspectionSync ? (
-            <section className="mt-4 rounded-2xl bg-surface p-4 text-sm leading-6" data-ke="inspection-sync">
-              <h2 className="font-display text-2xl">{locale === "fr" ? "Dernière inspection" : "Latest inspection"}</h2>
-              <p className="mt-2">
-                {data.inspectionSync.inspectedOn} · {data.inspectionSync.outcome}
-              </p>
-              <p>
-                <a className="underline" href={data.inspectionSync.sourceUrl}>
-                  {data.inspectionSync.source}
-                </a>
-              </p>
-            </section>
-          ) : null}
+          {parentActions ? <p className="mt-4 text-sm text-muted md:hidden" data-ke="listing-next-step-lead">{nextStepLead}</p> : null}
+
+
         </header>
         <ListingJumpNav />
         <div className="mt-6">
@@ -997,30 +920,13 @@ export function Listing() {
               <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
             ) : null}
             {ownEdit ? <CompletenessBanner item={d} /> : null}
-            {!live ? (
-              <p className="text-sm text-muted">
-                {t("unclaimedNotice")}{" "}
-                <Link
-                  to="/verify"
-                  hash="unclaimed"
-                  className="font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  {t("unclaimedWhatMeans")}
-                </Link>
-              </p>
-            ) : null}
-            {offerClaim ? (
-              <p className="text-sm" data-ke="listing-claim-prompt">
-                {t("isThisYours")}{" "}
-                <Link to="/claim" search={{ id: d.id, q: name }} className="text-primary underline-offset-4 hover:underline">
-                  {t("claimFreeListing")}
-                </Link>
-              </p>
-            ) : null}
 
-            {(desc || "").trim() ? (
+
+
+            {(desc || tagline || "").trim() ? (
               <section data-ke="listing-about">
                 <h2 className="font-display text-2xl">{t("about")}</h2>
+                {tagline.trim() && tagline !== desc ? <p className="mt-2 max-w-prose text-base leading-7">{tagline}</p> : null}
                 {desc.length > 180 ? (
                   <details className="group mt-2">
                     <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
@@ -1199,7 +1105,7 @@ export function Listing() {
                             key={src}
                             type="button"
                             data-ke="listing-room-card"
-                            onClick={() => setPhoto(gallery.indexOf(src))}
+                            onClick={() => openRoomPhoto(src)}
                             className="w-[min(78%,16rem)] shrink-0 text-left touch-manipulation"
                             aria-label={`${space.name} ${index + 1}`}
                           >
@@ -1212,7 +1118,7 @@ export function Listing() {
                 </div>
               </section>
             ) : (
-              <ListingRoomRail photos={roomPhotos} onOpen={(src) => setPhoto(gallery.indexOf(src))} />
+              <ListingRoomRail photos={roomPhotos} onOpen={openRoomPhoto} />
             )}
 
             <ListingTourTimes daycare={d} onBook={onTour} canBook={live && parentActions} />
@@ -1257,7 +1163,7 @@ export function Listing() {
                 </dl>
               </section>
             ) : null}
-            <section>
+            <section id="listing-availability-details" className="scroll-mt-24">
               <h2 className="font-display text-2xl">{t("availability")}</h2>
               {known ? (
                 <ul className="mt-3 divide-y divide-border text-sm">
@@ -1276,7 +1182,7 @@ export function Listing() {
               <VacancyFreshness item={d} className="mt-2 text-xs text-subtle" lead />
               {parentActions && live ? (
                 <div className="mt-4">
-                  <WaitlistOptIn daycareId={d.id} daycareSlug={d.slug} province={d.province} next={`/daycare/${d.slug}`} />
+                  <WaitlistOptIn daycareId={d.id} daycareSlug={d.slug} province={d.province} next={`/daycare/${d.slug}?ask=waitlist`} />
                 </div>
               ) : null}
               {parentActions ? <JoinWaitlist daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
@@ -1313,13 +1219,47 @@ export function Listing() {
                   ))}
                 </ul>
               ) : null}
-              <h3 className="mt-4 text-base font-semibold">{t("licenceAndInspections")}</h3>
+          <InspectionTrustCard
+            province={d.province}
+            name={name}
+            licenseNumber={d.licenseNumber}
+            listingId={d.id}
+            licenseStatus={d.licenseStatus}
+            licenseExpiry={d.licenseExpiry}
+            claimed={Boolean(d.claimed)}
+            inspections={data.inspections}
+            compact
+          />
+            {!live ? (
+              <p className="text-sm text-muted">
+                {t("unclaimedNotice")}{" "}
+                <Link
+                  to="/verify"
+                  hash="unclaimed"
+                  className="font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {t("unclaimedWhatMeans")}
+                </Link>
+              </p>
+            ) : null}
+          {data.inspectionSync ? (
+            <section className="mt-4 rounded-2xl bg-surface p-4 text-sm leading-6" data-ke="inspection-sync">
+              <h2 className="font-display text-2xl">{locale === "fr" ? "Dernière inspection" : "Latest inspection"}</h2>
+              <p className="mt-2">
+                {data.inspectionSync.inspectedOn} · {data.inspectionSync.outcome}
+              </p>
+              <p>
+                <a className="underline" href={data.inspectionSync.sourceUrl}>
+                  {data.inspectionSync.source}
+                </a>
+              </p>
+            </section>
+          ) : null}
               <p className="mt-2 max-w-prose text-sm text-muted">{t("licenceRecordLead")}</p>
               <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm">
                 {licensed && !approved ? (
                   <Meta label={t("licenseStatus")} value={t(licensed.labelKey as CopyKey)} />
                 ) : null}
-                <Meta label={t("facilityType")} value={facilityLabel} />
                 <Meta label={t("lastInspection")} value={t("seeOfficialRecord")} />
               </dl>
               <div className="mt-3 flex flex-col items-start gap-1">
@@ -1405,15 +1345,12 @@ export function Listing() {
           <ListingRail title={t("similar")} items={liveLookingOnly(data.nearby)} seeAllHref={localePath("/search", locale)} className="mt-12 first:mt-12" />
         ) : null}
         </div>
-        <aside className="ke-listing-summary ke-panel mx-4 hidden h-fit px-4 py-4 shadow-card md:mx-0 md:block" data-ke="listing-action-summary">
-          <ListingCtaSnippet live={live} from={from} hours={hours} prominent />
-          <p className="mt-1 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
-          {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
+        <aside className="ke-listing-summary ke-panel mx-4 hidden h-fit space-y-3 rounded-2xl border border-border px-5 py-5 shadow-card md:mx-0 md:mr-4 md:block" style={{ gridRow: 2, top: "calc(var(--ke-header-h, 4rem) + 1rem)" }} aria-labelledby="listing-next-step" data-ke="listing-action-summary">
+          <h2 id="listing-next-step" className="font-display text-xl font-semibold">{locale === "fr" ? "Votre prochaine étape" : "Your next step"}</h2>
+          {parentActions ? <p className="text-sm text-muted" data-ke="listing-next-step-lead">{nextStepLead}</p> : null}
           <div className="mt-3 grid gap-1.5">
             <ListingActions />
-            {parentActions && live && waitlisted ? (
-              <WaitlistOptIn daycareId={d.id} daycareSlug={d.slug} province={d.province} next={`/daycare/${d.slug}?ask=waitlist`} />
-            ) : null}
+
             <ListingMoreActions>
               <ListingOverflowItems />
               <div className="px-1 py-1">
@@ -1427,17 +1364,24 @@ export function Listing() {
         </aside>
       </article>
 
-      {!requestOpen ? (
+      {!requestOpen && !tourOpen && !infoOpen && !messageOpen && !galleryOpen ? (
       <div className={`fixed inset-x-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden bottom-[var(--ke-keyboard,0px)] [[data-channel=app]_&]:bottom-[calc(5rem+var(--ke-keyboard,0px))]`} data-ke="listing-sticky-bar">
         <div className="mx-auto flex max-w-lg items-center gap-2" data-ke={parentActions ? "listing-parent-actions" : undefined}>
           {parentActions ? (
-            <Button className="min-h-11 min-w-0 flex-1 whitespace-normal rounded-full px-4 touch-manipulation" data-ke="listing-sticky-cta" onClick={live ? onTour : onInfo}>
-              {live ? t("bookTour") : t("requestInfo")}
+            <Button className="min-h-11 min-w-0 flex-1 whitespace-normal rounded-full px-4 touch-manipulation" data-ke="listing-sticky-cta" onClick={primaryAction}>
+              {primaryLabel}
             </Button>
           ) : ownEdit ? (
             <ListingEditLink />
           ) : null}
           {parentActions ? <SaveListingButton daycareId={d.id} nextPath={localePath(`/daycare/${slug}`, locale)} appearance="bar" className="shrink-0" /> : null}
+          <ListingMoreActions compact>
+            <ListingOverflowItems />
+            <div className="px-1 py-1">
+              <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full" />
+              <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} {...directionsPlace} />
+            </div>
+          </ListingMoreActions>
         </div>
       </div>
       ) : null}
@@ -1529,31 +1473,6 @@ function Meta({ label, value }: { label: string; value: string }) {
       <dt className="text-[11px] leading-4 text-muted">{label}</dt>
       <dd className="truncate text-sm font-medium leading-5">{value}</dd>
     </div>
-  );
-}
-
-function ListingCtaSnippet({
-  live,
-  from,
-  hours,
-  prominent = false,
-}: {
-  live: boolean;
-  from: number;
-  hours: string;
-  prominent?: boolean;
-}) {
-  const { t, locale } = useCopy();
-  const fee = live && from > 0 ? `${t("monthlyFrom")} ${money(from, locale)}${t("month")}` : "";
-  const hoursText = hours.trim();
-  const showHours = Boolean(hoursText && hoursText !== "—" && hoursText !== "-");
-  if (!fee && !showHours) return null;
-  return (
-    <p className={prominent ? "text-base leading-6" : "mb-1 truncate text-base leading-6"} data-ke="listing-cta-snippet">
-      {fee ? <span className="font-semibold text-fg">{fee}</span> : null}
-      {fee && showHours ? <span className="text-muted"> · </span> : null}
-      {showHours ? <span className="text-muted">{hoursText}</span> : null}
-    </p>
   );
 }
 

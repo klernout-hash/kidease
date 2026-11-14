@@ -23,6 +23,7 @@ import {
 } from "../src/lib/store-review.ts";
 import { STORE } from "../src/lib/store-listing.ts";
 import { FOOTER_KIDEASE } from "../src/lib/site-footer-nav.ts";
+import { tx } from "../src/lib/copy.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -172,7 +173,8 @@ describe("plugin wiring and honest copy", () => {
     assert.doesNotMatch(src(".env.example"), /VITE_PLAY_STORE_URL=https:/);
     assert.match(src("src/routes/get-app.tsx"), /AMAZON_APPSTORE_URL/);
     assert.match(src("src/components/store-badges.tsx"), /storeComingSoon/);
-    assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /storeComingSoon: "Coming soon"/);
+    assert.equal(tx("en", "storeComingSoon"), "Download unavailable");
+    assert.doesNotMatch(tx("en", "storeComingSoon"), /coming soon|launch|test/i);
     assert.doesNotMatch(src("src/routes/get-app.tsx"), /apps\.apple\.com/);
     assert.doesNotMatch(src("src/components/store-badges.tsx"), /apps\.apple\.com|play\.google\.com\/store/);
     assert.match(src(".env.example"), /# NEXT_PUBLIC_AMAZON_APPSTORE_URL=/);

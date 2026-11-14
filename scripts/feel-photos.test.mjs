@@ -3,6 +3,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { careCategoryArt } from "../src/lib/care-category-art.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -69,7 +70,9 @@ test("marketing feel photos stay on existing /photos paths", () => {
   const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
   assert.doesNotMatch(web, /HeroYard/);
   assert.doesNotMatch(readFileSync(join(root, "src/components/shell.tsx"), "utf8"), /HomeCareTypeRow/);
-  assert.match(readFileSync(join(root, "src/lib/care-category-art.ts"), "utf8"), /playroom\.jpg/);
+  // Category illustrations are separate from the unchanged marketing photos.
+  assert.equal(careCategoryArt("nursery_preschool").src, "/photos/care-icons/KidEase_Nursery.png");
+  assert.ok(statSync(join(root, "public", careCategoryArt("nursery_preschool").src)).size > 8_000);
   assert.doesNotMatch(home, /HeroBanner/);
   assert.match(home, /\[\[data-channel=app\]/);
   assert.match(source, /\/photos\/hero\.jpg/);
