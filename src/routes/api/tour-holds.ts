@@ -2,13 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { cronAuthorized } from "@/lib/cron-auth";
 import { pingCronHeartbeat } from "@/lib/server/cron-heartbeat";
 import { shouldDeferTourHoldsToInngest } from "@/lib/inngest";
-import { runExpireTourHoldsJob } from "@/lib/server/tour-holds";
+import { runExpireTourHoldsJob, TourHoldExpiryError } from "@/lib/server/tour-holds";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 
 async function run(request: Request) {
   const ip = requestIp(request);
   if (!cronAuthorized(request)) {
-    await logSecurityEvent({ kind: "tour_holds_denied", ip, detail: "missing or invalid cron secret" });
+    await logSecurityEvent({
+      kind: "tour_holds_denied",
+      ip,
+      detail: "missing or invalid cron secret",
+    });
     return new Response("Unauthorized", { status: 401 });
   }
   const url = new URL(request.url);
@@ -19,13 +23,30 @@ async function run(request: Request) {
       ok: true,
       skipped: true,
       via: "inngest",
-      reason: "inngest-owns-schedule",
+      reason: "inngest-configured-registration-unverified",
     });
   }
-  const result = await runExpireTourHoldsJob({ dryRun });
-  await logSecurityEvent({ kind: "tour_holds_run", ip, detail: dryRun ? "dry-run" : "ok" });
-  await pingCronHeartbeat("tour-holds");
-  return Response.json(result);
+  try {
+    const result = await runExpireTourHoldsJob({ dryRun });
+    await logSecurityEvent({
+      kind: "tour_holds_run",
+      ip,
+      detail: !result.ok ? "failed" : dryRun ? "dry-run" : "ok",
+    });
+    if (result.ok && !dryRun) await pingCronHeartbeat("tour-holds");
+    return Response.json(result, {
+      status: result.ok ? 200 : 503,
+      headers: { "cache-control": "no-store" },
+    });
+  } catch (error) {
+    await logSecurityEvent({ kind: "tour_holds_run", ip, detail: "failed" });
+    // Driver errors may include connection details. Return only our fixed phase result.
+    const result =
+      error instanceof TourHoldExpiryError
+        ? error.result
+        : { ok: false, error: "tour-holds-failed", dryRun };
+    return Response.json(result, { status: 503, headers: { "cache-control": "no-store" } });
+  }
 }
 
 export const Route = createFileRoute("/api/tour-holds")({

@@ -1,6 +1,6 @@
 # Inngest (background jobs)
 
-KidEase uses [Inngest](https://www.inngest.com) for durable background work. Jobs today: saved-search alerts (hourly), **waitlist pulse** (`kidease/waitlist.pulse`), and **tour soft-hold expiry** (`kidease/tour-holds.expire`). Later: SMS digests, DocuSign follow-ups.
+KidEase uses [Inngest](https://www.inngest.com) for durable background work. The served registry is limited to existing saved-search alerts. Tour registration is disabled by a checked-in activation gate; other job definitions are not served. See [tour scheduler readiness](operations/tour-scheduler-readiness.md) before any deployment or sync.
 
 TanStack Start on Vercel — **not** a Next.js `app/api` route. The handler is `src/routes/api/inngest.ts` (`createFileRoute` + `inngest/edge`).
 
@@ -27,7 +27,7 @@ Absent keys = the Next/Vite app still boots. `/api/inngest` exists but Cloud can
 3. Sync:
    - Production: `https://www.kidease.ca/api/inngest`
    - Preview: `https://<preview>.vercel.app/api/inngest`
-4. After a successful sync you should see **Search alerts (hourly)** (`search-alerts-hourly`), **Waitlist pulse** (`waitlist-pulse`), and **Expire tour soft-holds** (`tour-holds-hourly`).
+4. With the current default-off gate, a successful sync must list only **Search alerts (hourly)** (`search-alerts-hourly`). Tour activation needs the separate reviewed procedure above. Do not resync an older deployment exposing all 17 job definitions.
 5. Local: `npx inngest-cli@latest dev` and `npm run dev`. Dev Server discovers `http://localhost:8080/api/inngest`. Local keys are not required.
 
 If Preview has Vercel Deployment Protection, enable **Protection Bypass for Automation** and add that secret in the Inngest Vercel integration so Cloud can reach `/api/inngest`.
@@ -46,18 +46,18 @@ Event `kidease/search-alerts.run` can invoke the same function from the Inngest 
 
 ## Waitlist pulse
 
-`waitlist-pulse` fans out one “spot open” event. Event `kidease/waitlist.pulse` with `data.pulseId`. Idempotent on that id.
+`waitlist-pulse` is defined but not registered by this bounded serving endpoint. Its implementation fans out one “spot open” event with `data.pulseId`; that definition is not authorization to activate it.
 
 When Inngest keys are unset, `enqueueWaitlistPulse` runs `runWaitlistPulseJob()` inline. SMS still requires `FEATURE_SMS` + CASL. `FEATURE_PUSH` stays off. See `docs/waitlist-pulse.md`.
 
 ## Tour soft-holds
 
-`tour-holds-hourly` expires overdue pending holds (`hold_expires_at`) and frees the seat. Same work as `GET|POST /api/tour-holds`.
+`tour-holds-hourly` is prepared but registration defaults off. When separately activated it expires overdue pending holds (`hold_expires_at`) and frees the seat, then runs gated due reminders. Same worker as `GET|POST /api/tour-holds`. Its readiness gate does not change the existing HTTP fallback decision.
 
 | When | What runs |
 | --- | --- |
 | `INNGEST_*` unset | Vercel cron `50 * * * *` → `/api/tour-holds`. |
-| Both keys set | Inngest cron `TZ=America/Winnipeg 50 * * * *`. `/api/tour-holds` no-ops unless `?dryRun=1` or `?force=1`. |
+| Both keys set | `/api/tour-holds` still defers unless `?dryRun=1` or `?force=1`. This does not prove tour registration or execution. The default-off gate intentionally leaves live activation for separate approval. |
 
 Event `kidease/tour-holds.expire` can invoke the same function from the dashboard. Book/list paths also expire due holds so a slot can free before the hourly tick.
 

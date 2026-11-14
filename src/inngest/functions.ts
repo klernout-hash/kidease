@@ -19,6 +19,8 @@ import { runCareReminderJob } from "@/lib/server/care-reminders";
 import { runOpsAlertsJob } from "@/lib/server/automation-ops";
 import { runUnifiedAlertScan } from "@/lib/server/unified-alerts";
 import { inngest } from "./client";
+import { selectRegisteredFunctions, TOUR_SCHEDULER_ACTIVATED } from "./registry";
+import { inngestConfigured } from "@/lib/inngest";
 
 /**
  * First Inngest job: wrap the existing saved-search alert cron.
@@ -72,6 +74,7 @@ export const expireTourHoldsHourly = inngest.createFunction(
     id: "tour-holds-hourly",
     name: "Expire tour soft-holds (hourly)",
     triggers: [{ cron: TOUR_HOLDS_CRON }, { event: TOUR_HOLDS_EVENT }],
+    concurrency: { limit: 1 },
   },
   async ({ event, step }) => {
     const data = event && typeof event === "object" && "data" in event ? event.data : undefined;
@@ -225,22 +228,9 @@ export const topRatedMonthly = inngest.createFunction(
   async ({ step }) => step.run("top-rated", () => runTopRatedSweep()),
 );
 
-export const functions = [
-  searchAlertsHourly,
-  waitlistPulse,
-  expireTourHoldsHourly,
-  rankingMarketNightly,
-  provincialVacancyNightly,
-  truthCheckerNightly,
-  expireSpotOffersHourly,
-  openSpotsCheckinWeekly,
-  opsAlertsHourly,
-  invoiceRemindersDaily,
-  listingRemindersDaily,
-  staleOpenSpotsDaily,
-  tourFollowupsHourly,
-  neonBackupWeekly,
-  careRemindersTick,
-  unifiedAlertsQuarterHour,
-  topRatedMonthly,
-];
+// Only existing search is served by default. Other definitions remain unserved.
+// Tour can join this list only through the separately reviewed activation gate.
+export const functions = selectRegisteredFunctions(searchAlertsHourly, expireTourHoldsHourly, {
+  tourActivated: TOUR_SCHEDULER_ACTIVATED,
+  inngestConfigured: inngestConfigured(),
+});
