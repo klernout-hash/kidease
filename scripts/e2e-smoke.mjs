@@ -91,13 +91,13 @@ async function settleMockCheckout(page) {
   });
 }
 
-async function setFixture(context, base, { role, plan, own, activity, attention } = {}) {
+async function setFixture(context, base, { role, plan, own, activity, attention, engagement } = {}) {
   await context.clearCookies();
   // Up to 2 retries on CI and locally for ECONNRESET and the same connection errors.
   const res = await withNetRetry(
     () =>
       context.request.post(new URL("/api/e2e-seed", base).href, {
-        data: { role, paid: plan === "paid", ownSlug: own || "", activity: Boolean(activity), attention: Boolean(attention) },
+        data: { role, paid: plan === "paid", ownSlug: own || "", activity: Boolean(activity), attention: Boolean(attention), engagement: Boolean(engagement) },
         headers: { origin: base, "content-type": "application/json" },
       }),
     { retries: 2, label: `seed ${role || "parent"}` },
@@ -1645,10 +1645,36 @@ async function openSupportCase(page, base, path, width) {
   record(label, shown && inbox === 0 && marker > 0, { note: page.url() });
 }
 
+async function captureTourReadViews(page, base, item, tag) {
+  const dir = join(dirname(outDir), "shots");
+  mkdirSync(dir, { recursive: true });
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    if (item.role === "parent") {
+      const tourPath = item.locale === "fr" ? "/fr/parent?tab=requests" : "/parent?tab=requests";
+      await page.goto(new URL(tourPath, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      const tour = page.locator("#tour-e2e-eng-tour");
+      await tour.waitFor({ timeout: timeoutMs });
+      await tour.scrollIntoViewIfNeeded();
+      if (!(await pageIsQuiet(page))) throw new Error("Tour screenshot did not reach the synthetic view");
+      await page.screenshot({ path: join(dir, `tour-read-${tag}-tours-${width}.png`), fullPage: false });
+    }
+    const inboxPath = item.locale === "fr" ? `/fr${item.inbox}` : item.inbox;
+    await page.goto(new URL(inboxPath, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.locator(item.role === "parent" ? '[data-ke="inbox-split"]' : '[data-ke="centre-inbox"]').first().waitFor({ timeout: timeoutMs });
+    const thread = page.locator('[data-ke="inbox-row"][href*="/inbox/e2e-eng-thread"]');
+    await thread.waitFor({ timeout: timeoutMs });
+    await thread.scrollIntoViewIfNeeded();
+    if (!(await pageIsQuiet(page))) throw new Error("Inbox screenshot did not reach the synthetic view");
+    await page.screenshot({ path: join(dir, `tour-read-${tag}-inbox-${width}.png`), fullPage: false });
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
+}
+
 async function runSignedInSessions(page, base) {
   const context = page.context();
   await setFixture(context, base, { role: "parent" });
-  await setFixture(context, base, { role: "provider" });
+  await setFixture(context, base, { role: "provider", engagement: true });
   const cases = [
     {
       role: "parent",
@@ -1729,6 +1755,8 @@ async function runSignedInSessions(page, base) {
 
       await page.goto(new URL(item.inbox, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
       record(`signed-in-messages-${tag}`, !/\/login/i.test(page.url()) && (await pageIsQuiet(page)), { note: page.url() });
+      await captureTourReadViews(page, base, item, tag);
+      record(`tour-read-screenshots-${tag}`, true, { note: "Synthetic tour/inbox views at 390 and 1280" });
 
       await page.goto(new URL(item.account, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
       const photo = await page.getByRole("link", { name: /sign in to add a photo|connectez-vous pour ajouter une photo/i }).count();

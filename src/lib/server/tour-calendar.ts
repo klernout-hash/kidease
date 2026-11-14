@@ -80,18 +80,19 @@ async function windowsForDaycare(
   opts?: { upcomingOnly?: boolean },
 ): Promise<PublicTourSlot[]> {
   const upcoming = opts?.upcomingOnly !== false;
-  await import("@/lib/server/tour-holds")
-    .then((mod) => mod.expireDueTourHolds({ notify: true }))
-    .catch(() => undefined);
+  // Overdue pending holds release inventory without persisting expiry or sending notices.
   const rows = await sql<WindowRow>`
     select w.id, w.daycare_id, w.window_date, w.start_time, w.end_time, w.capacity, w.timezone, w.start_at,
            coalesce((
              select count(*)::int from tour_requests t
-             where t.window_id = w.id and t.status in ('pending', 'accepted')
+             where t.window_id = w.id
+               and (t.status = 'accepted' or (t.status = 'pending'
+                 and coalesce(t.hold_expires_at, t.created_at + interval '48 hours') > now()))
            ), 0) as booked,
            coalesce((
              select count(*)::int from tour_requests t
              where t.window_id = w.id and t.status = 'pending'
+               and coalesce(t.hold_expires_at, t.created_at + interval '48 hours') > now()
            ), 0) as pending,
            coalesce((
              select count(*)::int from tour_requests t
@@ -344,18 +345,18 @@ export const bookTourSlot = createServerFn({ method: "POST" })
     }
     if (listed) await upsertDaycare(sql, listed);
 
-    await import("@/lib/server/tour-holds")
-      .then((mod) => mod.expireDueTourHolds({ notify: true }))
-      .catch(() => undefined);
     const windows = await sql<WindowRow>`
       select w.id, w.daycare_id, w.window_date, w.start_time, w.end_time, w.capacity, w.timezone, w.start_at,
              coalesce((
                select count(*)::int from tour_requests t
-               where t.window_id = w.id and t.status in ('pending', 'accepted')
+               where t.window_id = w.id
+                 and (t.status = 'accepted' or (t.status = 'pending'
+                   and coalesce(t.hold_expires_at, t.created_at + interval '48 hours') > now()))
              ), 0) as booked,
              coalesce((
                select count(*)::int from tour_requests t
                where t.window_id = w.id and t.status = 'pending'
+                 and coalesce(t.hold_expires_at, t.created_at + interval '48 hours') > now()
              ), 0) as pending,
              coalesce((
                select count(*)::int from tour_requests t
@@ -444,7 +445,9 @@ export const bookTourSlot = createServerFn({ method: "POST" })
 
     const existingHold = await sql<{ id: string }>`
       select id from tour_requests
-      where window_id = ${slot.id} and user_id = ${userId} and status in ('pending', 'accepted')
+      where window_id = ${slot.id} and user_id = ${userId}
+        and (status = 'accepted' or (status = 'pending'
+          and coalesce(hold_expires_at, created_at + interval '48 hours') > now()))
       limit 1
     `.catch(() => []);
     if (existingHold[0]) throw new Error("You already asked for this tour time.");
@@ -458,7 +461,9 @@ export const bookTourSlot = createServerFn({ method: "POST" })
     const taken = await sql<{ booked: number }>`
       select coalesce(count(*)::int, 0) as booked
       from tour_requests
-      where window_id = ${slot.id} and status in ('pending', 'accepted')
+      where window_id = ${slot.id}
+        and (status = 'accepted' or (status = 'pending'
+          and coalesce(hold_expires_at, created_at + interval '48 hours') > now()))
     `.catch(() => [{ booked: slot.booked }]);
     if (remainingTourSeats(slot.capacity, taken[0]?.booked ?? slot.booked) < 1) {
       throw new Error("That tour time is full. Pick another.");
