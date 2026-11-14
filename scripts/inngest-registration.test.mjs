@@ -48,17 +48,23 @@ function definitions({ configured = false, outcome = { fixture: true, ok: true }
 
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
-test("the real served registry is search only with a checked-in default-off tour gate", () => {
-  assert.equal(TOUR_SCHEDULER_ACTIVATED, false);
+test("the approved served registry admits only search and keyed tour without running jobs", () => {
+  assert.equal(TOUR_SCHEDULER_ACTIVATED, true);
   for (const configured of [false, true]) {
     const { exported, calls } = definitions({ configured });
     assert.deepEqual(
       exported.functions.map((fn) => fn.options.id),
-      ["search-alerts-hourly"],
+      configured ? ["search-alerts-hourly", "tour-holds-hourly"] : ["search-alerts-hourly"],
     );
     assert.equal(calls.length, 0, "defining or registering functions must not execute jobs");
     assert.equal(Object.values(exported).filter((item) => item?.options?.id).length, 17);
     assert.equal(exported.functions[0], exported.searchAlertsHourly);
+    if (configured) assert.equal(exported.functions[1], exported.expireTourHoldsHourly);
+    for (const fn of Object.values(exported).filter((item) => item?.options?.id)) {
+      if (fn !== exported.searchAlertsHourly && fn !== exported.expireTourHoldsHourly) {
+        assert.equal(exported.functions.includes(fn), false, `${fn.options.id} must remain unserved`);
+      }
+    }
   }
 });
 
@@ -80,7 +86,7 @@ test("the prepared tour wrapper preserves its step and forwards a failed phase r
   assert.deepEqual(plain(calls), [{ name: "runExpireTourHoldsJob", input: { dryRun: true } }]);
 });
 
-test("deliberate tour opt-in exposes exactly search and tour without admitting unrelated jobs", () => {
+test("tour opt-in requires configured keys and explicit opt-out restores search only", () => {
   const { exported, calls } = definitions();
   const selected = selectRegisteredFunctions(
     exported.searchAlertsHourly,
@@ -103,7 +109,7 @@ test("deliberate tour opt-in exposes exactly search and tour without admitting u
   for (const options of [
     {},
     { tourActivated: true },
-    { inngestConfigured: true },
+    { tourActivated: false, inngestConfigured: true },
     { tourActivated: true, inngestConfigured: false },
   ]) {
     assert.deepEqual(
@@ -117,28 +123,31 @@ test("deliberate tour opt-in exposes exactly search and tour without admitting u
   }
 });
 
-test("the actual serve route receives only the approved registry and stable app identity", () => {
-  const { exported } = definitions();
-  const client = { id: scheduling.INNGEST_APP_ID };
-  const served = [];
-  evaluate("src/routes/api/inngest.ts", {
-    "@tanstack/react-router": { createFileRoute: (path) => (options) => ({ path, ...options }) },
-    "inngest/edge": {
-      serve: (options) => {
-        served.push(options);
-        return async () => new Response();
+test("the actual serve route receives exactly the approved registry and stable app identity", () => {
+  for (const configured of [false, true]) {
+    const { exported, calls } = definitions({ configured });
+    const client = { id: scheduling.INNGEST_APP_ID };
+    const served = [];
+    evaluate("src/routes/api/inngest.ts", {
+      "@tanstack/react-router": { createFileRoute: (path) => (options) => ({ path, ...options }) },
+      "inngest/edge": {
+        serve: (options) => {
+          served.push(options);
+          return async () => new Response();
+        },
       },
-    },
-    "@/inngest/functions": { functions: exported.functions },
-    "@/inngest/client": { inngest: client },
-  });
-  assert.equal(served.length, 1);
-  assert.equal(served[0].client.id, "kidease");
-  assert.equal(served[0].functions, exported.functions);
-  assert.deepEqual(
-    served[0].functions.map((fn) => fn.options.id),
-    ["search-alerts-hourly"],
-  );
+      "@/inngest/functions": { functions: exported.functions },
+      "@/inngest/client": { inngest: client },
+    });
+    assert.equal(served.length, 1);
+    assert.equal(served[0].client.id, "kidease");
+    assert.equal(served[0].functions, exported.functions);
+    assert.deepEqual(
+      served[0].functions.map((fn) => fn.options.id),
+      configured ? ["search-alerts-hourly", "tour-holds-hourly"] : ["search-alerts-hourly"],
+    );
+    assert.equal(calls.length, 0);
+  }
 });
 
 test("existing search triggers, step identity and dry-run forwarding remain unchanged", async () => {
@@ -166,7 +175,7 @@ test("existing search triggers, step identity and dry-run forwarding remain unch
   }
 });
 
-test("registration readiness does not activate Vercel tour fallback or change search ownership", () => {
+test("tour registration preserves Vercel key-based ownership and existing search behavior", () => {
   const environments = [
     {},
     { INNGEST_EVENT_KEY: "fixture-event" },
