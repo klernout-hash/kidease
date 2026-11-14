@@ -1,9 +1,9 @@
 /**
  * Registration is an activation boundary, not a list of every job in the repo.
- * Keep this checked-in gate off until Kyle separately approves live tour work,
- * deployment and sync. Changing runtime feature flags or keys cannot enable it.
+ * Kyle approved only search plus hourly tour work, deployment and sync.
+ * Both existing keys are still required; unrelated jobs remain unregistered.
  */
-export const TOUR_SCHEDULER_ACTIVATED = false;
+export const TOUR_SCHEDULER_ACTIVATED = true;
 
 export function selectRegisteredFunctions<Search, Tour>(
   search: Search,

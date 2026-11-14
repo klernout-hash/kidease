@@ -1,6 +1,6 @@
 # Inngest (background jobs)
 
-KidEase uses [Inngest](https://www.inngest.com) for durable background work. The served registry is limited to existing saved-search alerts. Tour registration is disabled by a checked-in activation gate; other job definitions are not served. See [tour scheduler readiness](operations/tour-scheduler-readiness.md) before any deployment or sync.
+KidEase uses [Inngest](https://www.inngest.com) for durable background work. The approved serving registry contains existing saved-search alerts and hourly tour holds when both existing Inngest keys are configured. With either key absent it serves search only. The other 15 job definitions and tracker remain unserved. Deployment, sync and natural tour execution still require the coordinator rollout checks. See [tour scheduler readiness](operations/tour-scheduler-readiness.md) before any deployment or sync.
 
 TanStack Start on Vercel — **not** a Next.js `app/api` route. The handler is `src/routes/api/inngest.ts` (`createFileRoute` + `inngest/edge`).
 
@@ -22,15 +22,13 @@ Absent keys = the Next/Vite app still boots. `/api/inngest` exists but Cloud can
 
 ## Register the app in Inngest Cloud
 
-1. Sign in at [app.inngest.com](https://app.inngest.com). Create an app (SDK id is `kidease`).
-2. Paste Event Key and Signing Key into Vercel **kidease-git** (Production + Preview). Redeploy.
-3. Sync:
-   - Production: `https://www.kidease.ca/api/inngest`
-   - Preview: `https://<preview>.vercel.app/api/inngest`
-4. With the current default-off gate, a successful sync must list only **Search alerts (hourly)** (`search-alerts-hourly`). Tour activation needs the separate reviewed procedure above. Do not resync an older deployment exposing all 17 job definitions.
+1. Use the existing Production app at [app.inngest.com](https://app.inngest.com), SDK id `kidease`; do not create a second app or change keys.
+2. Verify the reviewed activation head, exact-head checks, production deployment identity and presence of both existing keys without exposing values.
+3. The coordinator verifies that `https://www.kidease.ca/api/inngest` targets that current deployment, then syncs through the existing authorized app. Deployment itself can activate registration if the hosting integration auto-syncs.
+4. The approved endpoint must list exactly **Search alerts (hourly)** (`search-alerts-hourly`) and **Tour holds (hourly)** (`tour-holds-hourly`). Stop on any other function or identity mismatch. Do not resync an older deployment exposing all 17 definitions or treat a Preview URL with the same app ID as isolation.
 5. Local: `npx inngest-cli@latest dev` and `npm run dev`. Dev Server discovers `http://localhost:8080/api/inngest`. Local keys are not required.
 
-If Preview has Vercel Deployment Protection, enable **Protection Bypass for Automation** and add that secret in the Inngest Vercel integration so Cloud can reach `/api/inngest`.
+This production rollout does not change Preview protection, access controls or secrets. Do not broaden access to make a sync succeed.
 
 ## First job: search alerts
 
@@ -42,7 +40,7 @@ If Preview has Vercel Deployment Protection, enable **Protection Bypass for Auto
 | Both keys set (Cloud registered) | Inngest cron `TZ=America/Winnipeg 20 * * * *` runs the job. `/api/search-alerts` no-ops so it does not double-fire. |
 | `?dryRun=1` or `?force=1` | HTTP route still runs locally (ops). |
 
-Event `kidease/search-alerts.run` can invoke the same function from the Inngest dashboard.
+The existing `kidease/search-alerts.run` event trigger is unchanged; the tour rollout does not send manual events.
 
 ## Waitlist pulse
 
@@ -52,14 +50,14 @@ When Inngest keys are unset, `enqueueWaitlistPulse` runs `runWaitlistPulseJob()`
 
 ## Tour soft-holds
 
-`tour-holds-hourly` is prepared but registration defaults off. When separately activated it expires overdue pending holds (`hold_expires_at`) and frees the seat, then runs gated due reminders. Same worker as `GET|POST /api/tour-holds`. Its readiness gate does not change the existing HTTP fallback decision.
+`tour-holds-hourly` is admitted by this approved activation source only with both existing keys. After deployment and verified registration, its natural hourly :50 sweep expires overdue pending holds (`hold_expires_at`) and frees the seat, then runs gated due reminders. It uses the same worker as `GET|POST /api/tour-holds`; the existing HTTP fallback decision is unchanged. Source registration is not proof of live execution.
 
 | When | What runs |
 | --- | --- |
 | `INNGEST_*` unset | Vercel cron `50 * * * *` → `/api/tour-holds`. |
-| Both keys set | `/api/tour-holds` still defers unless `?dryRun=1` or `?force=1`. This does not prove tour registration or execution. The default-off gate intentionally leaves live activation for separate approval. |
+| Both keys set | `/api/tour-holds` still defers unless `?dryRun=1` or `?force=1`. This does not prove tour registration or execution. Require the verified two-function registry and natural-run phase evidence from the rollout procedure. |
 
-Event `kidease/tour-holds.expire` can invoke the same function from the dashboard. Book/list paths also expire due holds so a slot can free before the hourly tick.
+The existing `kidease/tour-holds.expire` event trigger is retained, but no manual event, forced route or dry-run is used for rollout proof. Book/list paths still expire due holds so a slot can free before the hourly tick; #847 remains blocked on verified natural scheduled execution. Kyle has accepted up-to-one-hour expiry-notice timing.
 
 ## Later (not this PR)
 
