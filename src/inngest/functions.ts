@@ -228,8 +228,8 @@ export const topRatedMonthly = inngest.createFunction(
   async ({ step }) => step.run("top-rated", () => runTopRatedSweep()),
 );
 
-// Only existing search is served by default. Other definitions remain unserved.
-// Tour can join this list only through the separately reviewed activation gate.
+// Only existing search and the approved, keyed tour function can be served.
+// Other definitions remain unserved; key absence keeps this search-only.
 export const functions = selectRegisteredFunctions(searchAlertsHourly, expireTourHoldsHourly, {
   tourActivated: TOUR_SCHEDULER_ACTIVATED,
   inngestConfigured: inngestConfigured(),

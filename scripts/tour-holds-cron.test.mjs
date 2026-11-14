@@ -125,7 +125,7 @@ test("tour cron passes dryRun through and force bypasses Inngest only after auth
   assert.equal(shouldDeferTourHoldsToInngest(request("?dryRun=0&force=0"), configured), true);
 });
 
-test("both schedules retain hourly :50 while tour registration remains explicitly disabled", async () => {
+test("both schedules retain hourly :50 with approved keyed tour registration", async () => {
   const vercel = JSON.parse(source("vercel.json"));
   assert.equal(
     vercel.crons.find((entry) => entry.path === "/api/tour-holds").schedule,
@@ -158,7 +158,7 @@ test("both schedules retain hourly :50 while tour registration remains explicitl
     functionsSource,
     /export const functions = selectRegisteredFunctions\(searchAlertsHourly, expireTourHoldsHourly/,
   );
-  assert.match(source("src/inngest/registry.ts"), /TOUR_SCHEDULER_ACTIVATED = false/);
+  assert.match(source("src/inngest/registry.ts"), /TOUR_SCHEDULER_ACTIVATED = true/);
   assert.match(functionsSource, /tourActivated: TOUR_SCHEDULER_ACTIVATED/);
   assert.match(functionsSource, /inngestConfigured: inngestConfigured\(\)/);
   assert.match(source("src/routes/api/inngest.ts"), /serve\(\{\s*client: inngest,\s*functions,/);
