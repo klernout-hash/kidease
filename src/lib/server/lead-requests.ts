@@ -34,6 +34,7 @@ import { leadNotificationHref, leadTitleKey, notificationSourceKey } from "@/lib
 import { resolveActorUserId } from "@/lib/server/actor-user";
 import { saveParentInAppNotice } from "@/lib/server/parent-notice";
 import type { LeadEntryPoint } from "@/lib/lead-intake";
+import { effectiveTourStatus } from "@/lib/tour-hold";
 import { nid } from "@/lib/utils";
 
 type LeadRow = {
@@ -52,16 +53,26 @@ type LeadRow = {
   source_kind: string | null;
   source_id: string | null;
   conversation_id: string | null;
-  created_at: string;
+  created_at: string | Date;
   updated_at: string;
   responded_at: string | null;
+  tour_status?: string | null;
+  tour_created_at?: string | Date | null;
+  tour_hold_expires_at?: string | Date | null;
 };
 
 function mapLead(row: LeadRow): LeadRequest {
+  const tourStatus = row.tour_status && row.tour_created_at
+    ? effectiveTourStatus({
+        status: row.tour_status,
+        createdAt: row.tour_created_at,
+        holdExpiresAt: row.tour_hold_expires_at,
+      })
+    : null;
   return {
     id: row.id,
     kind: isLeadKind(row.kind) ? row.kind : "spot_inquiry",
-    status: isLeadStatus(row.status) ? row.status : "requested",
+    status: tourStatus === "expired" ? "declined" : isLeadStatus(row.status) ? row.status : "requested",
     userId: row.user_id,
     parentName: row.parent_name,
     parentEmail: row.parent_email,
@@ -74,7 +85,7 @@ function mapLead(row: LeadRow): LeadRequest {
     sourceKind: (row.source_kind as LeadSourceKind | null) ?? null,
     sourceId: row.source_id,
     conversationId: row.conversation_id,
-    createdAt: String(row.created_at),
+    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
     updatedAt: String(row.updated_at),
     respondedAt: row.responded_at ? String(row.responded_at) : null,
   };
@@ -393,10 +404,13 @@ export const listLeadRequests = createServerFn({ method: "GET" })
              coalesce(u.email, l.contact_email) as parent_email,
              l.parent_phone,
              l.daycare_id, d.name as daycare_name, d.slug, l.message, l.reply_note,
-             l.source_kind, l.source_id, l.conversation_id, l.created_at, l.updated_at, l.responded_at
+             l.source_kind, l.source_id, l.conversation_id, l.created_at, l.updated_at, l.responded_at,
+             t.status as tour_status, t.created_at as tour_created_at, t.hold_expires_at as tour_hold_expires_at
       from lead_requests l
       join daycares d on d.id = l.daycare_id
       left join "user" u on u.id = l.user_id
+      left join tour_requests t on l.source_kind = 'tour_request' and t.id = l.source_id
+        and t.daycare_id = l.daycare_id and t.user_id = l.user_id
       where (
           l.user_id = ${context.userId}
           and ${asParent}
@@ -671,7 +685,12 @@ export const listAdminLeadCounts = createServerFn({ method: "GET" })
     await requireAdmin(context.userId);
     const sql = await getSql();
     const rows = await sql<{ status: string }>`
-      select status from lead_requests
+      select case when t.status = 'expired' or (t.status = 'pending'
+        and coalesce(t.hold_expires_at, t.created_at + interval '48 hours') <= now())
+        then 'declined' else l.status end as status
+      from lead_requests l
+      left join tour_requests t on l.source_kind = 'tour_request' and t.id = l.source_id
+        and t.daycare_id = l.daycare_id and t.user_id = l.user_id
     `.catch(() => []);
     if (!rows.length) return emptyLeadCounts();
     return tallyLeadCounts(rows.map((r) => r.status));

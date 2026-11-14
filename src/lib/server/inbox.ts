@@ -12,6 +12,7 @@ import { splitPhotoList } from "@/lib/listing-photo";
 import { formatAgeLabel } from "@/lib/templates";
 import { isClaimVerified } from "@/lib/trust";
 import { tourSlaRemainingMs } from "@/lib/today-sla";
+import { effectiveTourStatus } from "@/lib/tour-hold";
 import { formatPreferredTimes, parsePreferredTimes } from "@/lib/threads";
 import { customerAlertSummary, sameMailbox } from "@/lib/customer-alert-policy";
 import { QA_TOUR_CENTRE_ID, QA_TOUR_CENTRE_SLUG } from "@/lib/qa-tour-access";
@@ -28,17 +29,29 @@ import {
 } from "./thread-access";
 import type { BookingStatus, Conversation, TourStatus } from "@/lib/types";
 
-async function savedMessageLocale(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<"en" | "fr"> {
+async function savedMessageLocale(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  userId: string,
+): Promise<"en" | "fr"> {
   const rows = await sql<{ locale: string | null }>`
     select locale from profiles where user_id = ${userId} limit 1
   `.catch(() => [] as Array<{ locale: string | null }>);
-  return String(rows[0]?.locale || "").toLowerCase().startsWith("fr") ? "fr" : "en";
+  return String(rows[0]?.locale || "")
+    .toLowerCase()
+    .startsWith("fr")
+    ? "fr"
+    : "en";
 }
 
 export const listInbox = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator((input?: { view?: "family" | "centre" }) => ({
-    view: input?.view === "centre" ? ("centre" as const) : input?.view === "family" ? ("family" as const) : undefined,
+    view:
+      input?.view === "centre"
+        ? ("centre" as const)
+        : input?.view === "family"
+          ? ("family" as const)
+          : undefined,
   }))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
@@ -251,17 +264,31 @@ export const listInbox = createServerFn({ method: "GET" })
     `;
 
     const out: Conversation[] = [];
+    const now = Date.now();
     for (const r of rows) {
       const lastBody = r.last_body ?? "";
       const lastSender = r.last_sender ?? null;
       const isParent = r.parent_user_id === parentId;
       if (data.view === "centre" && isParent) continue;
       if (data.view === "family" && !isParent) continue;
-      const tourStatus = (r.tour_status as TourStatus | null) ?? null;
+      const tourStatus = r.tour_status
+        ? (effectiveTourStatus(
+            {
+              status: r.tour_status as TourStatus,
+              createdAt: r.tour_created_at || "",
+              holdExpiresAt: r.tour_hold_expires_at,
+            },
+            now,
+          ) as TourStatus)
+        : null;
       const times = parsePreferredTimes(r.tour_times);
       const remaining =
         tourStatus === "pending" && r.tour_created_at
-          ? tourSlaRemainingMs(String(r.tour_created_at), Date.now(), r.tour_hold_expires_at ? String(r.tour_hold_expires_at) : null)
+          ? tourSlaRemainingMs(
+              String(r.tour_created_at),
+              now,
+              r.tour_hold_expires_at ? String(r.tour_hold_expires_at) : null,
+            )
           : null;
       const financial = parseFinancialFlags(r.financial_flags);
       const schedules = parseScheduleOptions(r.schedule_options);
@@ -365,7 +392,9 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     }
 
     const sender = access.role === "parent" ? "parent" : "provider";
-    const prior = await sql<{ last_at: string }>`select last_at from conversations where id = ${row.id} limit 1`;
+    const prior = await sql<{
+      last_at: string;
+    }>`select last_at from conversations where id = ${row.id} limit 1`;
     const priorAt = String(prior[0]?.last_at || "");
     const messageId = nid("msg");
     await sql`
@@ -379,7 +408,9 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     const hiddenQa = row.daycare_id === QA_TOUR_CENTRE_ID || row.slug === QA_TOUR_CENTRE_SLUG;
     if (hiddenQa) return { ok: true as const, sender };
     void import("@/lib/server/admin-tools")
-      .then((mod) => mod.maybeQueueSpam({ kind: "message", text: body, email: actor.email, sourceId: row.id }))
+      .then((mod) =>
+        mod.maybeQueueSpam({ kind: "message", text: body, email: actor.email, sourceId: row.id }),
+      )
       .catch(() => undefined);
     void import("@/lib/server/engagement")
       .then((mod) =>
@@ -407,11 +438,15 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
       .catch(() => undefined);
     if (sender === "parent") {
       void import("@/lib/server/sms-notify")
-        .then((mod) => mod.notifyCentreSms({ daycareId: row.daycare_id, body: parentMessageSms(row.name) }))
+        .then((mod) =>
+          mod.notifyCentreSms({ daycareId: row.daycare_id, body: parentMessageSms(row.name) }),
+        )
         .catch(() => undefined);
     } else {
       void import("@/lib/server/sms-notify")
-        .then((mod) => mod.notifyConsentedUserSms({ userId: row.user_id, body: daycareReplySms(row.name) }))
+        .then((mod) =>
+          mod.notifyConsentedUserSms({ userId: row.user_id, body: daycareReplySms(row.name) }),
+        )
         .catch(() => undefined);
     }
 
@@ -438,7 +473,11 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
       for (const r of recipients) {
         if (sameMailbox(actor.email, r.email)) continue;
         const centreLocale = r.userId ? await savedMessageLocale(sql, r.userId) : "en";
-        const centreMail = customerAlertSummary({ kind: "message", centreName: row.name, locale: centreLocale });
+        const centreMail = customerAlertSummary({
+          kind: "message",
+          centreName: row.name,
+          locale: centreLocale,
+        });
         void notifyThreadParty({
           to: r.email,
           name: r.name,
@@ -486,7 +525,11 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
       const parent = await lookupUser(row.user_id);
       if (!sameMailbox(actor.email, parent.email)) {
         const parentLocale = await savedMessageLocale(sql, row.user_id);
-        const parentMail = customerAlertSummary({ kind: "message", centreName: row.name, locale: parentLocale });
+        const parentMail = customerAlertSummary({
+          kind: "message",
+          centreName: row.name,
+          locale: parentLocale,
+        });
         void notifyThreadParty({
           to: parent.email,
           name: parent.name,
@@ -535,7 +578,9 @@ export const saveInboxStaffNote = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { conversationId: string; note: string }) => ({
     conversationId: String(input?.conversationId || "").trim(),
-    note: String(input?.note || "").trim().slice(0, 500),
+    note: String(input?.note || "")
+      .trim()
+      .slice(0, 500),
   }))
   .handler(async ({ context, data }) => {
     const sql = await getSql();

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { effectiveTourStatus } from "@/lib/tour-hold";
 import { assignPipeline, type PipelineCard, type PipelineInput } from "@/lib/crm-pipeline";
 
 export const listCentrePipeline = createServerFn({ method: "GET" })
@@ -12,7 +13,9 @@ export const listCentrePipeline = createServerFn({ method: "GET" })
       union
       select daycare_id from centre_members where user_id = ${context.userId} and status = 'active'
     `.catch(async () =>
-      sql<{ daycare_id: string }>`select daycare_id from provider_daycares where user_id = ${context.userId}`.catch(
+      sql<{
+        daycare_id: string;
+      }>`select daycare_id from provider_daycares where user_id = ${context.userId}`.catch(
         () => [],
       ),
     );
@@ -55,10 +58,11 @@ export const listCentrePipeline = createServerFn({ method: "GET" })
       child_name: string | null;
       status: "pending" | "accepted" | "declined";
       created_at: string;
+      hold_expires_at: string | null;
     }>`
       select t.id, t.conversation_id, t.daycare_id, d.name as daycare_name, d.slug,
              t.user_id as parent_user_id, u.name as parent_name, t.child_name,
-             t.status, t.created_at
+             t.status, t.created_at, t.hold_expires_at
       from tour_requests t
       join daycares d on d.id = t.daycare_id
       left join "user" u on u.id = t.user_id
@@ -103,6 +107,7 @@ export const listCentrePipeline = createServerFn({ method: "GET" })
       limit 80
     `.catch(() => []);
 
+    const now = Date.now();
     const rows: PipelineInput[] = [
       ...conversations.map((r) => ({
         id: r.id,
@@ -115,19 +120,31 @@ export const listCentrePipeline = createServerFn({ method: "GET" })
         parentName: r.parent_name,
         updatedAt: String(r.last_at),
       })),
-      ...tours.map((r) => ({
-        id: r.id,
-        kind: "tour" as const,
-        daycareId: r.daycare_id,
-        daycareName: r.daycare_name,
-        daycareSlug: r.slug,
-        conversationId: r.conversation_id,
-        parentUserId: r.parent_user_id,
-        parentName: r.parent_name,
-        childName: r.child_name,
-        tourStatus: r.status,
-        updatedAt: String(r.created_at),
-      })),
+      ...tours
+        .filter(
+          (r) =>
+            effectiveTourStatus(
+              {
+                status: r.status,
+                createdAt: r.created_at,
+                holdExpiresAt: r.hold_expires_at,
+              },
+              now,
+            ) !== "expired",
+        )
+        .map((r) => ({
+          id: r.id,
+          kind: "tour" as const,
+          daycareId: r.daycare_id,
+          daycareName: r.daycare_name,
+          daycareSlug: r.slug,
+          conversationId: r.conversation_id,
+          parentUserId: r.parent_user_id,
+          parentName: r.parent_name,
+          childName: r.child_name,
+          tourStatus: r.status,
+          updatedAt: String(r.created_at),
+        })),
       ...bookings.map((r) => ({
         id: r.id,
         kind: "booking" as const,

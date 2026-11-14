@@ -1,7 +1,7 @@
 /**
  * Tour inventory + soft-hold SLA.
  *
- * Parent book → pending soft-hold (24–48h). Pending and accepted occupy a seat.
+ * Parent book → pending soft-hold (24–48h). Unexpired pending and accepted occupy a seat.
  * Expired / declined / lost / cancelled free the slot. Not Instant Book placement.
  */
 
@@ -64,6 +64,21 @@ export function isSoftHoldExpired(input: {
   if (input.status !== "pending") return false;
   const remaining = tourHoldRemainingMs(input, input.now ?? Date.now());
   return remaining != null && remaining <= 0;
+}
+
+/** Read-time status only: leaves stored timestamps, notes and messages untouched. */
+export function effectiveTourStatus<T extends string>(
+  input: { status: T; holdExpiresAt?: string | Date | null; createdAt: string | Date },
+  now = Date.now(),
+): T | "expired" {
+  // Database drivers return Date objects; String(Date) drops milliseconds.
+  const iso = (value: string | Date) => value instanceof Date ? value.toISOString() : value;
+  return isSoftHoldExpired({
+    status: input.status,
+    createdAt: iso(input.createdAt),
+    holdExpiresAt: input.holdExpiresAt ? iso(input.holdExpiresAt) : null,
+    now,
+  }) ? "expired" : input.status;
 }
 
 export function declineReasonValid(note: string | null | undefined): boolean {

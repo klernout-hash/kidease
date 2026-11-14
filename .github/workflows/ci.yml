@@ -298,7 +298,7 @@ jobs:
         timeout-minutes: 40
         run: node scripts/e2e-smoke.mjs --start-preview --signed-in
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
           name: signed-in-e2e-artifacts
           path: artifacts/e2e/

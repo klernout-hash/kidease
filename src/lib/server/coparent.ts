@@ -89,7 +89,6 @@ function householdOn() {
 /** Flag off: the signed-in person only. No extra query. */
 export async function familyScopeFor(userId: string): Promise<FamilyScope> {
   if (!householdOn()) return scopeFromLinks(userId, [], false);
-  await ensureCoparentTable();
   return scopeFromLinks(userId, await linksFor(userId), true);
 }
 

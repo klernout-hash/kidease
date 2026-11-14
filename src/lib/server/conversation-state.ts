@@ -4,7 +4,12 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { parsePreferredTimes } from "@/lib/threads";
-import type { ConversationDetails, InboxParticipant, InboxParticipantRole } from "@/lib/inbox-thread-ui";
+import { effectiveTourStatus } from "@/lib/tour-hold";
+import type {
+  ConversationDetails,
+  InboxParticipant,
+  InboxParticipantRole,
+} from "@/lib/inbox-thread-ui";
 import type { BookingStatus } from "@/lib/types";
 import { requireConversationRead } from "./thread-access";
 
@@ -39,7 +44,6 @@ export const getConversationDetails = createServerFn({ method: "GET" })
   .handler(async ({ context, data }): Promise<ConversationDetails | null> => {
     if (!data.conversationId) return null;
     const sql = await getSql();
-    await ensureConversationUserState(sql);
     let access;
     try {
       access = await requireConversationRead(sql, data.conversationId, context.userId);
@@ -53,7 +57,12 @@ export const getConversationDetails = createServerFn({ method: "GET" })
       where u.id = ${conv.user_id}
       limit 1
     `;
-    const members = await sql<{ id: string; name: string | null; image: string | null; role: string }>`
+    const members = await sql<{
+      id: string;
+      name: string | null;
+      image: string | null;
+      role: string;
+    }>`
       select u.id, u.name, u.image, m.role
       from centre_members m
       join "user" u on u.id = m.user_id
@@ -68,7 +77,12 @@ export const getConversationDetails = createServerFn({ method: "GET" })
 
     const people: InboxParticipant[] = [];
     const seen = new Set<string>();
-    const push = (id: string, name: string | null, image: string | null, role: InboxParticipantRole) => {
+    const push = (
+      id: string,
+      name: string | null,
+      image: string | null,
+      role: InboxParticipantRole,
+    ) => {
       if (!id || seen.has(id)) return;
       seen.add(id);
       people.push({ id, name: (name || "").trim() || "KidEase", image: image || null, role });
@@ -106,7 +120,11 @@ export const getConversationDetails = createServerFn({ method: "GET" })
       where r.conversation_id = ${conv.id}
     `.catch(() => []);
 
-    const state = await sql<{ starred: boolean | null; archived_at: string | null; marked_unread: boolean | null }>`
+    const state = await sql<{
+      starred: boolean | null;
+      archived_at: string | null;
+      marked_unread: boolean | null;
+    }>`
       select starred, archived_at, marked_unread
       from conversation_user_state
       where conversation_id = ${conv.id} and user_id = ${context.userId}
@@ -126,8 +144,14 @@ export const getConversationDetails = createServerFn({ method: "GET" })
       order by b.created_at desc
       limit 1
     `;
-    const tour = await sql<{ status: string | null; preferred_times: string | null; child_name: string | null }>`
-      select status, preferred_times, child_name
+    const tour = await sql<{
+      status: string | null;
+      preferred_times: string | null;
+      child_name: string | null;
+      created_at: string;
+      hold_expires_at: string | null;
+    }>`
+      select status, preferred_times, child_name, created_at, hold_expires_at
       from tour_requests
       where conversation_id = ${conv.id}
       order by created_at desc
@@ -142,7 +166,13 @@ export const getConversationDetails = createServerFn({ method: "GET" })
       photo: splitPhotoList(conv.photos)[0] || "",
       childName: booking[0]?.child_name || tour[0]?.child_name || null,
       status: booking[0]?.status ?? null,
-      tourStatus: tour[0]?.status ?? null,
+      tourStatus: tour[0]?.status
+        ? effectiveTourStatus({
+            status: tour[0].status,
+            createdAt: tour[0].created_at,
+            holdExpiresAt: tour[0].hold_expires_at,
+          })
+        : null,
       startDate: booking[0]?.start_date ? String(booking[0].start_date).slice(0, 10) : null,
       preferredTimes: parsePreferredTimes(tour[0]?.preferred_times),
       participants: people,
@@ -153,7 +183,11 @@ export const getConversationDetails = createServerFn({ method: "GET" })
       })),
       phoneAlerts: phoneAlerts
         .filter((row) => row.state === "sent" || row.state === "not_sent")
-        .map((row) => ({ messageId: row.message_id, userId: row.recipient_user_id, state: row.state as "sent" | "not_sent" })),
+        .map((row) => ({
+          messageId: row.message_id,
+          userId: row.recipient_user_id,
+          state: row.state as "sent" | "not_sent",
+        })),
       assignedUserId: assigned[0]?.assigned_user_id || null,
       starred: flag(state[0]?.starred),
       archived: Boolean(state[0]?.archived_at),
@@ -164,7 +198,10 @@ export const getConversationDetails = createServerFn({ method: "GET" })
 export const setConversationUserState = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { conversationId?: string; action?: string }) => {
-    const action = input?.action === "star" || input?.action === "archive" || input?.action === "unread" ? input.action : "";
+    const action =
+      input?.action === "star" || input?.action === "archive" || input?.action === "unread"
+        ? input.action
+        : "";
     return {
       conversationId: String(input?.conversationId || "").trim(),
       action,
@@ -179,7 +216,11 @@ export const setConversationUserState = createServerFn({ method: "POST" })
     } catch {
       return { ok: false as const };
     }
-    const current = await sql<{ starred: boolean | null; archived_at: string | null; marked_unread: boolean | null }>`
+    const current = await sql<{
+      starred: boolean | null;
+      archived_at: string | null;
+      marked_unread: boolean | null;
+    }>`
       select starred, archived_at, marked_unread
       from conversation_user_state
       where conversation_id = ${data.conversationId} and user_id = ${context.userId}
@@ -187,7 +228,8 @@ export const setConversationUserState = createServerFn({ method: "POST" })
     `;
     const starred = data.action === "star" ? !flag(current[0]?.starred) : flag(current[0]?.starred);
     const markedUnread = data.action === "unread" ? true : flag(current[0]?.marked_unread);
-    const archived = data.action === "archive" ? !current[0]?.archived_at : Boolean(current[0]?.archived_at);
+    const archived =
+      data.action === "archive" ? !current[0]?.archived_at : Boolean(current[0]?.archived_at);
     if (archived) {
       await sql`
         insert into conversation_user_state (conversation_id, user_id, starred, marked_unread, archived_at, updated_at)
