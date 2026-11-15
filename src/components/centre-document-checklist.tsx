@@ -4,8 +4,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { centreDocCopy } from "@/lib/centre-documents-copy";
 import type { ChecklistItem, ChecklistScore } from "@/lib/centre-documents";
-import { deleteCentreDocument, listCentreDocumentChecklist, saveCentreDocument } from "@/lib/server/centre-documents";
+import { deleteCentreDocument, listCentreDocumentChecklist } from "@/lib/server/centre-documents";
 import { useCopy } from "@/lib/use-copy";
+
+const MAX_BYTES = 4 * 1024 * 1024;
+const ALLOWED = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
 
 function readFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -14,6 +17,14 @@ function readFile(file: File): Promise<string> {
     reader.onerror = () => reject(new Error("That file was not saved."));
     reader.readAsDataURL(file);
   });
+}
+
+function fileAllowed(file: File): "ok" | "type" | "size" {
+  const named = /\.(pdf|jpe?g|png|webp)$/i.test(file.name);
+  const typed = !file.type || ALLOWED.has(file.type);
+  if (!named || !typed) return "type";
+  if (file.size > MAX_BYTES) return "size";
+  return "ok";
 }
 
 export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
@@ -40,11 +51,23 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file || item.kind === "licence" || item.kind === "screening") return;
+    const allowed = fileAllowed(file);
+    if (allowed === "type") {
+      toast.error(copy.typesOnly);
+      return;
+    }
+    if (allowed === "size") {
+      toast.error(copy.tooBig);
+      return;
+    }
     setBusy(item.id);
     try {
       const dataUrl = await readFile(file);
-      await saveCentreDocument({
-        data: {
+      const response = await fetch("/api/centre-documents/upload", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
           daycareId,
           kind: item.kind,
           policyKey: item.policyKey,
@@ -52,8 +75,13 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
           mime: file.type,
           filename: file.name,
           expiresOn: item.kind === "insurance" ? expiry : null,
-        },
+        }),
       });
+      const body = (await response.json().catch(() => null)) as { ok?: boolean; id?: string; error?: string } | null;
+      if (!response.ok || !body?.ok || !body.id) {
+        toast.error(body?.error || copy.notSaved);
+        return;
+      }
       toast.success(copy.saved);
       await load();
     } catch (err) {
@@ -85,12 +113,14 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
   }
 
   return (
-    <section className="rounded-xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="centre-documents">
-      <h2 className="font-display text-2xl">{copy.title}</h2>
+    <section className="rounded-xl bg-surface p-4 pb-24 shadow-card ring-1 ring-border" data-ke="centre-documents">
+      <h2 className="ke-section-anchor font-display text-2xl">{copy.title}</h2>
       <p className="mt-1 text-sm text-muted">{copy.lead}</p>
+      <p className="mt-2 text-sm text-muted" data-ke="centre-documents-types">{copy.accepted}</p>
       <p className="mt-3 font-medium" data-ke="centre-documents-score">
         {copy.score.replace("{n}", String(checklist.percent))}
       </p>
+      <p className="mt-1 text-sm text-muted" data-ke="centre-documents-score-why">{copy.scoreWhy}</p>
       <ul className="mt-4 space-y-3">
         {checklist.items.map((item) => (
           <li key={item.id} className="rounded-lg bg-bg p-3 ring-1 ring-border" data-ke="centre-document-row">
@@ -127,16 +157,22 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
             ) : null}
             {item.kind !== "licence" && item.kind !== "screening" ? (
               <div className="mt-2 flex flex-wrap gap-2">
-                <label className="inline-flex min-h-11 cursor-pointer items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-fg touch-manipulation">
+                <label
+                  htmlFor={`centre-doc-${item.id}`}
+                  className="inline-flex min-h-11 cursor-pointer items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-fg touch-manipulation"
+                >
                   {item.documentId ? copy.replace : copy.upload}
-                  <input
-                    type="file"
-                    accept="application/pdf,image/jpeg,image/png,image/webp"
-                    className="sr-only"
-                    disabled={busy !== null}
-                    onChange={(event) => void onFile(item, event)}
-                  />
                 </label>
+                <input
+                  id={`centre-doc-${item.id}`}
+                  data-ke="centre-document-file"
+                  data-kind={item.kind}
+                  type="file"
+                  accept="application/pdf,image/jpeg,image/png,image/webp"
+                  className="ke-file-input"
+                  disabled={busy !== null}
+                  onChange={(event) => void onFile(item, event)}
+                />
                 {item.documentId ? (
                   <Button type="button" variant="secondary" size="sm" disabled={busy !== null} onClick={() => void remove(item)}>
                     {copy.remove}

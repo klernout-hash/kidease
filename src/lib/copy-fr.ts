@@ -3572,6 +3572,7 @@ export const fr = {
     stripeCheckoutFailed: "Stripe n’a pas ouvert la caisse.",
     navMenu: "Menu",
     navCalendar: "Calendrier",
+    deskNavCalendarHint: "Places libres par jour",
     menuEarningsMonth: "Gains ce mois-ci",
     menuReviews: "Avis",
     menuCreateListing: "Créer une nouvelle fiche",

@@ -3212,6 +3212,7 @@
   "alertSummary": "{on} sa {total} na alerto ang naka-on",
   "navMenu": "Menu",
   "navCalendar": "Kalendaryo",
+  "deskNavCalendarHint": "Bakanteng puwesto bawat araw",
   "menuEarningsMonth": "Kita ngayong buwan",
   "menuReviews": "Mga review",
   "menuCreateListing": "Gumawa ng bagong listahan",

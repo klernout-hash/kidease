@@ -3557,6 +3557,7 @@ export const en = {
     stripeCheckoutFailed: "Stripe did not open checkout.",
     navMenu: "Menu",
     navCalendar: "Calendar",
+    deskNavCalendarHint: "Open spots by day",
     menuEarningsMonth: "Earnings this month",
     menuReviews: "Reviews",
     menuCreateListing: "Create a new listing",

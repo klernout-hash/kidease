@@ -3212,6 +3212,7 @@
   "alertSummary": "{on} di {total} avvisi attivi",
   "navMenu": "Menu",
   "navCalendar": "Calendario",
+  "deskNavCalendarHint": "Posti liberi per giorno",
   "menuEarningsMonth": "Guadagni di questo mese",
   "menuReviews": "Recensioni",
   "menuCreateListing": "Crea una nuova scheda",

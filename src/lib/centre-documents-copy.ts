@@ -19,6 +19,10 @@ export type CentreDocCopy = {
   saved: string;
   removed: string;
   notSaved: string;
+  accepted: string;
+  typesOnly: string;
+  tooBig: string;
+  scoreWhy: string;
   handbookNote: string;
   licenceHint: string;
   screeningHint: string;
@@ -52,6 +56,10 @@ const en: CentreDocCopy = {
   saved: "Saved. The file is waiting for review.",
   removed: "Removed.",
   notSaved: "That file was not saved.",
+  accepted: "PDF, JPG, PNG or WebP only. Up to 4 MB.",
+  typesOnly: "PDF, JPG, PNG or WebP only",
+  tooBig: "That file is over 4 MB.",
+  scoreWhy: "Each required item counts the same. The score is how many of those items are on file and not expired. An item that expires soon still counts. An expired item does not. Licence and staff screening are counted here, and you add them on their own pages.",
   handbookNote: "The written note on the listing stays. This checklist also needs the PDF.",
   licenceHint: "The licence scan stays on the licence page.",
   screeningHint: "Staff screening stays on the screening page.",
@@ -94,6 +102,10 @@ const fr: CentreDocCopy = {
   saved: "Enregistré. Le fichier attend une révision.",
   removed: "Retiré.",
   notSaved: "Ce fichier n’a pas été enregistré.",
+  accepted: "PDF, JPG, PNG ou WebP seulement. Jusqu’à 4 Mo.",
+  typesOnly: "PDF, JPG, PNG ou WebP seulement",
+  tooBig: "Ce fichier dépasse 4 Mo.",
+  scoreWhy: "Chaque élément demandé compte autant. Le score est le nombre d’éléments au dossier et non expirés. Un élément qui expire bientôt compte encore. Un élément expiré ne compte pas. Le permis et le filtrage du personnel comptent ici, et vous les ajoutez sur leurs propres pages.",
   handbookNote: "La note écrite sur la fiche reste. Cette liste demande aussi le PDF.",
   licenceHint: "Le scan de la licence reste sur la page de la licence.",
   screeningHint: "Le filtrage du personnel reste sur la page de filtrage.",
