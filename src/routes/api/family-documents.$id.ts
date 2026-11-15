@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { isQaSyntheticRef, qaSyntheticFamilyPdf } from "@/lib/qa-family-file";
 import { loadPrivateDoc } from "@/lib/server/private-docs";
 
 function fail(err: unknown) {
@@ -24,7 +23,8 @@ export const Route = createFileRoute("/api/family-documents/$id")({
           const userId = await requireUserId();
           const { loadFamilyDocumentFor } = await import("@/lib/server/family-vault");
           const row = await loadFamilyDocumentFor({ userId, documentId: params.id });
-          if (isQaSyntheticRef(row.storageRef)) {
+          if (String(row.storageRef || "").startsWith("qa-synthetic/")) {
+            const { qaSyntheticFamilyPdf } = await import("@/lib/qa-family-file");
             const body = qaSyntheticFamilyPdf();
             return new Response(new Uint8Array(body), {
               status: 200,
