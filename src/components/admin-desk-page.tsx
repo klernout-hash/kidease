@@ -76,7 +76,7 @@ import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
 import { useCopy } from "@/lib/use-copy";
 import { approvalHealthSummary, approvalClickFeedback } from "@/lib/approve-live";
-import { confirmAction } from "@/lib/success-confirm";
+import { confirmAction, approvalSuccessReady } from "@/lib/success-confirm";
 import { isQueueableClaimStatus } from "@/lib/listing-status";
 import { needsLicenseReview, needsPhotoReview, needsVerification } from "@/lib/admin-verify";
 import {
@@ -465,7 +465,7 @@ export function AdminPage() {
       if (decision === "approve") {
         const feedback = approvalClickFeedback(result);
         setApprovalHealth(result.health ?? null);
-        if (feedback.saved && result.health) {
+        if (approvalSuccessReady(result) && result.health) {
           toast.success(feedback.body);
           confirmAction(t, "daycareApproved", {
             body: approvalHealthSummary(result.health).body,
