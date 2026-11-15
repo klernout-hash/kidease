@@ -12,7 +12,7 @@ import {
 } from "@/lib/centre-documents";
 import { centreDocumentsEnabled } from "@/lib/features";
 import { R2_CENTRE_DOC_PREFIX } from "@/lib/private-docs";
-import { listAccessibleDaycareIds, loadCentreRole } from "@/lib/server/centre-access";
+import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { parsePrivateUpload, persistPrivateDoc } from "@/lib/server/private-docs";
 import { requireAdmin, resolveAdminAccess } from "@/lib/server/roles";
 import { nid } from "@/lib/utils";
@@ -86,10 +86,8 @@ function scoreFor(
 }
 
 async function assertCentreManager(sql: Sql, userId: string, daycareId: string) {
-  const admin = (await resolveAdminAccess(userId)).ok;
-  if (admin) return;
-  const role = await loadCentreRole(sql, userId, daycareId);
-  if (role !== "owner" && role !== "manager") throw new Error("You can only update documents for your centre.");
+  const { assertCanWrite } = await import("@/lib/server/centre-access");
+  await assertCanWrite(sql, userId, daycareId, "document_upload");
 }
 
 export const listCentreDocumentChecklist = createServerFn({ method: "GET" })

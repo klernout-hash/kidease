@@ -72,7 +72,7 @@ test("the checklist stays private and off until the flag is on", () => {
   const server = read("src/lib/server/centre-documents.ts");
   const page = read("src/routes/daycare.$slug.tsx");
   assert.match(read("src/lib/private-docs.ts"), /centre-docs/);
-  assert.match(server, /You can only update documents for your centre/);
+  assert.match(server, /document_upload/);
   assert.match(server, /requireAdmin/);
   assert.doesNotMatch(page, /storage_ref/);
   assert.match(read("src/lib/flags.ts"), /FEATURE_CENTRE_DOCUMENTS: false/);
