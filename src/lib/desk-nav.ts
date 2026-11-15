@@ -90,6 +90,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "learning", label: "Learning", hint: "Goals, stories, and plans", labelKey: "learningNav", hintKey: "learningNavHint", href: "/provider", search: { desk: "learning" } },
     { id: "hours", label: "Hours", hint: "Clock in and clock out", labelKey: "staffHoursNav", hintKey: "staffHoursNavHint", href: "/provider", search: { desk: "hours" } },
     { id: "tools", label: "Centre tools", hint: "Menus, checklists, billing helpers", labelKey: "centreToolsNav", hintKey: "centreToolsNavHint", href: "/provider", search: { desk: "tools" } },
+    { id: "centre-care", label: "Care", hint: "Check-in, logs, and family files", labelKey: "dailyCare", hintKey: "dailyCareHint", href: "/provider", search: { desk: "care" } },
     { id: "money", label: "Earnings", hint: "Payouts, invoices, and payment history", labelKey: "deskNavMoney", hintKey: "deskNavMoneyHint", href: "/provider", search: { desk: "money" } },
     { id: "licence", label: "Licence", hint: "Trust checklist + photo", labelKey: "listingCoachOpenLicence", hintKey: "deskNavLicenceHint", href: "/provider", search: { desk: "licence" } },
     { id: "contract", label: "Contract", hint: "Agreement + enrolment packs", labelKey: "deskNavContract", hintKey: "deskNavContractHint", href: "/provider", search: { desk: "contract" } },
@@ -152,7 +153,8 @@ export type DaycareDesk =
   | "sites"
   | "learning"
   | "hours"
-  | "tools";
+  | "tools"
+  | "care";
 
 export function providerNavSearch(id: string): { desk: DaycareDesk } {
   if (
@@ -170,10 +172,12 @@ export function providerNavSearch(id: string): { desk: DaycareDesk } {
     id === "screening" ||
     id === "learning" ||
     id === "hours" ||
-    id === "tools"
+    id === "tools" ||
+    id === "care"
   ) {
     return { desk: id };
   }
+  if (id === "centre-care") return { desk: "care" };
   if (id === "add") return { desk: "listings" };
   if (id === "requests") return { desk: "requests" };
   return { desk: "today" };
@@ -258,6 +262,8 @@ type DeskNavOpts = {
   centreTools?: string[];
   /** Parent document vault. Hidden until FEATURE_FAMILY_VAULT is on. */
   familyVault?: boolean;
+  /** QR kiosk, logs, news, and the family vault. Off unless one flag is on. */
+  careDesk?: boolean;
   /** Tour calendar page. Hidden until FEATURE_TOUR_CALENDAR is on. */
   tourCalendar?: boolean;
   /** Listing editor calendar. Hidden until FEATURE_HOST_LISTING is on. */
@@ -304,6 +310,7 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.id === "tools") return (opts?.centreTools?.length ?? 0) > 0;
     if (item.id === "centre-tools") return (opts?.centreTools ?? []).some((id) => PARENT_TOOL_IDS.has(id));
     if (item.id === "documents") return opts?.familyVault === true;
+    if (item.id === "centre-care") return opts?.careDesk === true;
     if (item.id === "tour-calendar") return opts?.tourCalendar === true;
     if (item.id === "calendar") return opts?.hostListing === true;
     if (item.id === "tours" && opts?.hostListing === true) return false;
@@ -360,7 +367,7 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
   daycare: [
     { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "listings", "calendar", "insights", "top-rated", "requests", "leads", "tours", "messages"] },
     { id: "business", label: "Business", labelKey: "navBusiness", open: true, itemIds: ["money", "promote"] },
-    { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "hours", "screening", "learning", "tools"] },
+    { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "hours", "screening", "learning", "tools", "centre-care"] },
     { id: "compliance", label: "Compliance", labelKey: "navCompliance", itemIds: ["licence", "contract"] },
     { id: "grow", label: "Grow", labelKey: "navGrow", itemIds: ["post-job", "add", "claim"] },
     { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "subscription", "delete"] },

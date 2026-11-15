@@ -137,6 +137,9 @@ const StaffTimesheetDesk = lazy(() =>
 const CentreToolsDesk = lazy(() =>
   import("@/components/centre-tools-desk").then((m) => ({ default: m.CentreToolsDesk })),
 );
+const ProviderCareDesk = lazy(() =>
+  import("@/components/provider-care-desk").then((m) => ({ default: m.ProviderCareDesk })),
+);
 const ProviderScreeningPanel = lazy(() =>
   import("@/components/provider-screening").then((m) => ({ default: m.ProviderScreeningPanel })),
 );
@@ -156,7 +159,7 @@ const CentreAgreementEditor = lazy(() =>
   import("@/components/parent-agreement-panel").then((m) => ({ default: m.CentreAgreementEditor })),
 );
 
-const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "top-rated", "tours", "calendar", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools"];
+const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "top-rated", "tours", "calendar", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools", "care"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 const DEFAULT_DESK: DaycareDesk = "today";
 const COACH_FOCUS = new Set<ListingCoachFocus>([
@@ -951,6 +954,7 @@ export function ProviderPage() {
       {desk === "staff" ? <StaffSchedulingDesk /> : null}
       {desk === "hours" ? <StaffTimesheetDesk /> : null}
       {desk === "tools" ? <CentreToolsDesk /> : null}
+      {desk === "care" ? <ProviderCareDesk daycareId={listings[0]?.id} owner={centreOwner} /> : null}
       {desk === "staff" ? <EceJobDesk mode="staff" /> : null}
       {desk === "stories" ? <LearningStoriesDesk /> : null}
       {desk === "learning" ? <CurriculumPackDesk /> : null}

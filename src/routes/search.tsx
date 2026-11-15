@@ -16,7 +16,7 @@ import { PioneerFilterRail } from "@/components/pioneer-filter-rail";
 import { InclusiveCareFilters } from "@/components/inclusive-care-filters";
 import { LicenceTypeFilters } from "@/components/licence-type-filters";
 import { careKeysParam, parseCareKeys, type CareDetailKey } from "@/lib/inclusive-search";
-import { type LicenceBucket } from "@/lib/phase1-search";
+import { licenceFromSearch, type LicenceBucket } from "@/lib/phase1-search";
 import { CommuteDetourBar } from "@/components/commute-detour-bar";
 import { SearchCardAgesProvider, SearchCardOriginProvider } from "@/components/search-card-context";
 import { resolveSearchCardOrigin } from "@/lib/search-card-origin";
@@ -257,6 +257,7 @@ export async function searchLoader({ location, abortController }: { location: { 
           needBy: searchRecord.from,
           diet: careKeysParam(parseCareKeys(searchRecord.diet)),
           name: searchRecord.name,
+          licence: licenceFromSearch(searchRecord.licence),
         }),
       },
     };
@@ -323,6 +324,7 @@ export function searchValidateSearch(s: Record<string, unknown>) {
       meals?: "1";
       subsidy?: "1";
       lang?: string;
+      licence?: LicenceBucket;
     } = { ...fields };
     const city = typeof s.city === "string" ? s.city.trim().slice(0, 80) : "";
     if (city) out.city = city;
@@ -349,6 +351,8 @@ export function searchValidateSearch(s: Record<string, unknown>) {
     if (s.favorites === "1" || s.favorites === true) out.favorites = "1";
     const diet = careKeysParam(parseCareKeys(s.diet));
     if (diet) out.diet = diet;
+    const licence = licenceFromSearch(s.licence);
+    if (licence) out.licence = licence;
     const parent = compactParentListingSearch(parseParentListingSearch(s));
     return { ...out, ...parent, ...parsePioneerSearch(s) };
 }
@@ -515,7 +519,10 @@ export function SearchScreen({
   const [inclusive, setInclusive] = useState(false);
   const dietParam = careKeysParam(parseCareKeys(incoming.diet)) || "";
   const [careKeys, setCareKeys] = useState<CareDetailKey[]>(() => parseCareKeys(incoming.diet));
-  const [licence, setLicence] = useState<LicenceBucket | null>(null);
+  const [licence, setLicence] = useState<LicenceBucket | null>(incoming.licence ?? null);
+  useEffect(() => {
+    setLicence(incoming.licence ?? null);
+  }, [incoming.licence]);
   const [extended, setExtended] = useState(false);
   const [infantOnly, setInfantOnly] = useState(false);
   const [catchmentOnly, setCatchmentOnly] = useState(false);
@@ -954,10 +961,15 @@ export function SearchScreen({
       <Button type="button" variant="secondary" size="sm" onClick={retrySearch}>{t("mapRetry")}</Button>
     </div>
   ) : !currentMapResult ? (
-    <p className="text-sm text-muted" role="status">{t("mapLoading")}</p>
+    <p className="text-sm text-muted" role="status">{t("mapLoading")}{resultTotal > 0 ? ` · ${resultTotal}` : ""}</p>
   ) : (
     <div className="text-sm text-muted" role="status" data-ke="search-map-count">
-      <p>{searchMapCount(currentMapResult.pins.length, currentMapResult.total, currentMapResult.evidence, locale)}</p>
+      <p>{searchMapCount(
+        currentMapResult.pins.length > 0 ? currentMapResult.pins.length : resultTotal,
+        Math.max(currentMapResult.total, resultTotal),
+        currentMapResult.evidence,
+        locale,
+      )}</p>
       {mapCoverage.incomplete ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1" data-ke="search-map-coverage">
           <span>{mapCoverage.detail}</span>
@@ -1024,7 +1036,18 @@ export function SearchScreen({
       rank: incoming.rank,
       live: liveSearchParam(liveOn),
       diet: dietParam || undefined,
+      licence: incoming.licence,
       page: page > 1 ? page : undefined,
+    });
+  }
+
+  function writeLicence(next: LicenceBucket | null) {
+    setLicence(next);
+    void navigate({
+      search: {
+        ...listingPageSearch(1),
+        licence: next ?? undefined,
+      },
     });
   }
 
@@ -1821,7 +1844,7 @@ export function SearchScreen({
       {chip(favoritesOnly, t("filterFavorites"), () => setFavoritesOnly((v) => !v))}
     </div>
     <InclusiveCareFilters locale={locale === "fr" ? "fr" : "en"} selected={careKeys} onChange={writeDiet} />
-    <LicenceTypeFilters locale={locale === "fr" ? "fr" : "en"} selected={licence} onChange={setLicence} />
+    <LicenceTypeFilters locale={locale === "fr" ? "fr" : "en"} selected={licence} onChange={writeLicence} />
     </div>
   );
 
@@ -2359,7 +2382,7 @@ export function SearchScreen({
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
                       items={mobileRows}
-                      searchPins={searchMapPins}
+                      searchPins={searchMapPins.length > 0 ? searchMapPins : undefined}
                       origin={mapOrigin}
                       placeLabel={whereLabel || origin.label}
                       secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
@@ -2424,7 +2447,7 @@ export function SearchScreen({
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
                       items={shownList}
-                      searchPins={searchMapPins}
+                      searchPins={searchMapPins.length > 0 ? searchMapPins : undefined}
                       origin={mapOrigin}
                       placeLabel={whereLabel || origin.label}
                       secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}

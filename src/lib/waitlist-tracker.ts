@@ -12,6 +12,7 @@ export const PARENT_WAITLIST_STATUSES = [
   "seen",
   "waitlisted",
   "offered",
+  "enrolled",
   "declined",
   "withdrawn",
 ] as const;
@@ -22,8 +23,8 @@ const STATUS_FROM_BOOKING: Record<string, ParentWaitlistStatus> = {
   requested: "sent",
   under_review: "seen",
   waitlist: "waitlisted",
-  accepted: "offered",
-  active: "offered",
+  accepted: "enrolled",
+  active: "enrolled",
   declined: "declined",
   cancelled: "withdrawn",
 };
@@ -33,6 +34,7 @@ const LABEL_EN: Record<ParentWaitlistStatus, string> = {
   seen: "Seen",
   waitlisted: "Waitlisted",
   offered: "Offered",
+  enrolled: "Enrolled",
   declined: "Declined",
   withdrawn: "Withdrawn",
 };
@@ -42,6 +44,7 @@ const LABEL_FR: Record<ParentWaitlistStatus, string> = {
   seen: "Vue",
   waitlisted: "En attente",
   offered: "Offerte",
+  enrolled: "Inscrit",
   declined: "Refusée",
   withdrawn: "Retirée",
 };
@@ -53,6 +56,12 @@ export function parentWaitlistStatus(raw: unknown): ParentWaitlistStatus | null 
 
 export function canWithdrawWaitlist(status: ParentWaitlistStatus): boolean {
   return status === "sent" || status === "seen" || status === "waitlisted" || status === "offered";
+}
+
+/** An enrolled child is not an open offer. Hide the offer button. */
+export function centreOfferStillOpen(input: { offerStatus?: string | null; enrolled?: boolean }): boolean {
+  if (input.enrolled) return false;
+  return input.offerStatus === "open";
 }
 
 /** Open rows spot alerts may match later. Declined and withdrawn are not a fit. */

@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { govMenuHref, type GovSection } from "@/lib/gov/menu";
 import type { GovDashboard } from "@/lib/gov/aggregate";
 import { feeBucketLabel, govCopy } from "@/lib/gov/copy";
 import { provinceName, regionForCity } from "@/lib/gov/places";
 import { GovFrame } from "@/components/gov/gov-frame";
-import { OVERSIGHT_ITEMS, accessNeed, facilityRisk, govOversightEnabled } from "@/lib/gov/oversight";
+import { OVERSIGHT_ITEMS, facilityRisk, govOversightEnabled } from "@/lib/gov/oversight";
 import { GovJobShortage } from "@/components/ece-job-desk";
 import { CurriculumGovStrip } from "@/components/curriculum-pack";
 import { GovMap } from "@/components/gov/gov-map";
+import { getGovCentre, listGovCentres, type GovCentreDetail, type GovCentreLine } from "@/lib/server/gov-portal";
 
 function show(value: number | null, locale: "en" | "fr", hidden: string): string {
   if (value == null) return hidden;
@@ -329,7 +331,7 @@ export function GovDashboardView({
             <li><a className="underline-offset-4 hover:underline" href={data.locale === "fr" ? "/fr/gov/reports?tab=incidents" : "/gov/reports?tab=incidents"}>{data.locale === "fr" ? "Événements graves ce mois-ci" : "Serious occurrences this month"}</a></li>
           </ul>
         </section>
-        <OversightNote locale={data.locale} spaces={typeof kpis.capacity === "number" ? kpis.capacity : null} />
+        <OversightNote locale={data.locale} ratio={typeof data.childPerSpace === "number" ? data.childPerSpace : null} />
         <GovMap data={data} />
         <section className="mt-6 grid gap-3 lg:grid-cols-2" data-ke="gov-needs-attention" aria-labelledby="gov-needs-title">
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border">
@@ -381,7 +383,15 @@ export function GovDashboardView({
                   .filter((row) => !row.suppressed)
                   .map((row) => (
                     <tr key={row.label} className="border-t border-border">
-                      <td className="py-2 pr-3">{row.label}</td>
+                      <td className="py-2 pr-3">
+                        <button
+                          type="button"
+                          className="min-h-11 text-left font-medium text-primary underline-offset-4 hover:underline"
+                          onClick={() => go({ city: row.label, region: regionForCity(row.label) })}
+                        >
+                          {row.label}
+                        </button>
+                      </td>
                       <td className="py-2 pr-3">{show(row.centres, data.locale, hidden)}</td>
                       <td className="py-2 pr-3">{show(row.capacity, data.locale, hidden)}</td>
                       <td className="py-2">{show(row.openSpots, data.locale, hidden)}</td>
@@ -391,6 +401,7 @@ export function GovDashboardView({
             </table>
           </div>
         </section>
+        <GovCentreDirectory locale={data.locale} province={data.province} city={cityValue} />
         </>
         ) : null}
 
@@ -558,10 +569,10 @@ export function GovDashboardView({
   );
 }
 
-function OversightNote({ locale, spaces }: { locale: "en" | "fr"; spaces: number | null }) {
+function OversightNote({ locale, ratio }: { locale: "en" | "fr"; ratio: number | null }) {
   const fr = locale === "fr";
   const enabled = govOversightEnabled();
-  const need = accessNeed({ spaces, children: null });
+  const need = { childrenPerSpace: ratio };
   const risk = facilityRisk({ enabled, factors: {} });
   return (
     <section className="mt-6 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="gov-oversight">
@@ -597,6 +608,99 @@ function OversightNote({ locale, spaces }: { locale: "en" | "fr"; spaces: number
           ? fr ? "Pointage de risque : non calculé." : "Risk score: not calculated."
           : fr ? `Pointage ${risk.score}.` : `Score ${risk.score}.`}
       </p>
+    </section>
+  );
+}
+
+function GovCentreDirectory({ locale, province, city }: { locale: "en" | "fr"; province: string; city: string }) {
+  const fr = locale === "fr";
+  const centre = useRouterState({
+    select: (state) => {
+      const search = state.location.search as { centre?: string };
+      return typeof search?.centre === "string" ? search.centre : "";
+    },
+  });
+  const [rows, setRows] = useState<GovCentreLine[]>([]);
+  const [detail, setDetail] = useState<GovCentreDetail | null>(null);
+  useEffect(() => {
+    if (!city || city === "ALL") {
+      setRows([]);
+      return;
+    }
+    let live = true;
+    void listGovCentres({ data: { province, city } })
+      .then((next) => {
+        if (live) setRows(next);
+      })
+      .catch(() => {
+        if (live) setRows([]);
+      });
+    return () => {
+      live = false;
+    };
+  }, [province, city]);
+  useEffect(() => {
+    if (!centre) {
+      setDetail(null);
+      return;
+    }
+    let live = true;
+    void getGovCentre({ data: centre })
+      .then((next) => {
+        if (live) setDetail(next);
+      })
+      .catch(() => {
+        if (live) setDetail(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [centre]);
+  const base = fr ? "/fr/gov" : "/gov";
+  return (
+    <section className="mt-8" id="gov-centres" data-ke="gov-centres">
+      <h2 className="font-display text-xl">{fr ? "Centres" : "Centres"}</h2>
+      {!city || city === "ALL" ? (
+        <p className="mt-2 text-sm text-muted">
+          {fr ? "Choisissez une ville dans le tableau pour voir ses centres." : "Choose a city in the table to see its centres."}
+        </p>
+      ) : rows.length ? (
+        <ul className="mt-3 divide-y divide-border text-sm">
+          {rows.map((row) => (
+            <li key={row.slug} className="py-2">
+              <a
+                className="font-medium text-primary underline-offset-4 hover:underline"
+                href={`${base}?province=${encodeURIComponent(province)}&city=${encodeURIComponent(city)}&centre=${encodeURIComponent(row.slug)}#gov-centre`}
+              >
+                {row.name}
+              </a>
+              <span className="text-muted"> · {row.city}{row.licensed ? (fr ? " · permis" : " · licensed") : ""}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-sm text-muted">{fr ? "Aucun centre public dans cette ville." : "No public centre in this city."}</p>
+      )}
+      {detail ? (
+        <article id="gov-centre" className="mt-4 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="gov-centre-detail">
+          <h3 className="font-display text-xl">{detail.name}</h3>
+          <p className="mt-1 text-sm text-muted">{[detail.city, detail.province].filter(Boolean).join(", ")}</p>
+          <dl className="mt-3 space-y-1 text-sm">
+            <div>
+              <dt className="inline font-medium">{fr ? "Permis" : "Licence"}: </dt>
+              <dd className="inline">{detail.licenceNumber || (fr ? "non indiqué" : "not listed")}</dd>
+            </div>
+            <div>
+              <dt className="inline font-medium">{fr ? "Places permises" : "Licensed spaces"}: </dt>
+              <dd className="inline">{detail.capacity == null ? (fr ? "non indiqué" : "not listed") : detail.capacity}</dd>
+            </div>
+            <div>
+              <dt className="inline font-medium">{fr ? "Fiche" : "Listing"}: </dt>
+              <dd className="inline">{detail.claimed ? (fr ? "réclamée" : "claimed") : (fr ? "pas encore réclamée" : "not claimed yet")}</dd>
+            </div>
+          </dl>
+        </article>
+      ) : null}
     </section>
   );
 }

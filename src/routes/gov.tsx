@@ -5,11 +5,15 @@ import { guardGovDesk, govRobotsHead, govRobotsHeaders } from "@/lib/gov/desk-gu
 import { getGovDashboard } from "@/lib/server/gov-portal";
 
 export const Route = createFileRoute("/gov")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    province: typeof search.province === "string" ? search.province : "",
-    region: typeof search.region === "string" ? search.region : "",
-    city: typeof search.city === "string" ? search.city : "",
-  }),
+  validateSearch: (search: Record<string, unknown>) => {
+    const centre = typeof search.centre === "string" ? search.centre.slice(0, 140) : "";
+    return {
+      province: typeof search.province === "string" ? search.province : "",
+      region: typeof search.region === "string" ? search.region : "",
+      city: typeof search.city === "string" ? search.city : "",
+      ...(centre ? { centre } : {}),
+    };
+  },
   beforeLoad: ({ context }) => guardGovDesk("en", Boolean((context as { nativeShell?: boolean }).nativeShell)),
   loaderDeps: ({ search }) => ({
     province: search.province,

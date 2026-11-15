@@ -3519,5 +3519,9 @@
   "careAttendanceUpdated": "最近由{name}喺{time}更新",
   "careCentreStaff": "中心職員",
   "careAttendanceHistory": "呢日嘅記錄",
-  "careAttendanceCorrection": "更正"
+  "careAttendanceCorrection": "更正",
+  "waitlistStatusEnrolled": "已入學",
+  "carePastDays": "之前的日子",
+  "carePastDaysLead": "之前日子的到達同離開。",
+  "carePastEmpty": "冇更早的到達紀錄。"
 }

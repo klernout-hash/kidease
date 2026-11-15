@@ -9,6 +9,7 @@ import { StrictMode, startTransition } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { installServerFnFetchGate } from "./lib/server-fn-client";
 import { ensureFrenchCopy } from "./lib/copy-runtime";
+import { readLocaleCookie } from "./lib/locale-geo";
 import { afterBrowserInstrumentation } from "./lib/sentry-browser-start";
 
 installZodCsp();
@@ -26,7 +27,15 @@ function paint() {
 }
 
 const path = window.location.pathname;
-const french = path === "/fr" || path.startsWith("/fr/");
+function savedFrench(): boolean {
+  if (readLocaleCookie(document.cookie) === "fr") return true;
+  try {
+    return window.localStorage.getItem("kidease-locale") === "fr";
+  } catch {
+    return false;
+  }
+}
+const french = path === "/fr" || path.startsWith("/fr/") || savedFrench();
 const copyReady = french ? ensureFrenchCopy() : null;
 const ready = copyReady ? Promise.all([instrumentationReady, copyReady]) : instrumentationReady;
 afterBrowserInstrumentation(ready, paint);

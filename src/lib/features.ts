@@ -406,6 +406,23 @@ export function familyVaultEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_FAMILY_VAULT", env);
 }
 
+/** Care tools that belong on the daycare desk once their flags are on. */
+export function providerCareDeskEnabled(env?: EnvMap): boolean {
+  return (
+    qrKioskEnabled(env) ||
+    evaluateFeatureFlag("FEATURE_FIRE_KIOSK", env) ||
+    evaluateFeatureFlag("FEATURE_EMERGENCY_ROLL", env) ||
+    dailyLogsEnabled(env) ||
+    evaluateFeatureFlag("FEATURE_TOILETING_LOG", env) ||
+    evaluateFeatureFlag("FEATURE_ALLERGEN_MENU", env) ||
+    evaluateFeatureFlag("FEATURE_FAMILY_NEWSFEED", env) ||
+    evaluateFeatureFlag("FEATURE_MEDIA_CONSENT", env) ||
+    evaluateFeatureFlag("FEATURE_PICKUP_VERIFY", env) ||
+    pickupContactsEnabled(env) ||
+    familyVaultEnabled(env)
+  );
+}
+
 /** Centre email to one or more families. Off. No message is sent. */
 export function familyBulkMailEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_FAMILY_BULK_MAIL", env);

@@ -13,10 +13,8 @@ select
   count(*) filter (where ${PUBLIC_LISTING_SQL})::int as listings_total,
   count(*) filter (
     where ${PUBLIC_LISTING_SQL}
-      and (
-        lower(btrim(coalesce(city, ''))) like '%winnipeg%'
-        or lower(btrim(coalesce(city, ''))) like '%winnpeg%'
-      )
+      and upper(btrim(coalesce(province, ''))) in ('MB', 'MANITOBA')
+      and lower(regexp_replace(btrim(coalesce(city, '')), '[''’.]', '', 'g')) in ('winnipeg', 'wpg', 'winnpeg')
   )::int as winnipeg_total,
   count(*) filter (
     where ${PUBLIC_LISTING_SQL}

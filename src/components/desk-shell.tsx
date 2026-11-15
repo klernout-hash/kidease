@@ -188,6 +188,7 @@ export function DeskShell({
     staffTimesheets: session?.staffTimesheets,
     centreTools: session?.centreTools,
     familyVault: session?.familyVault,
+    careDesk: session?.careDesk,
     tourCalendar: session?.tourCalendar,
     hostListing: session?.hostListing,
     providerInsights: session?.providerInsights,

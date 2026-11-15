@@ -144,7 +144,7 @@ export const attendancePreviewOpen = createServerFn({ method: "GET" }).handler(a
 export const listMyCheckHistory = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    if (!doorOn()) return { enabled: false as const, events: [] };
+    const enabled = doorOn();
     const sql = await getSql();
     const rows = await sql<{
       id: string;
@@ -163,7 +163,7 @@ export const listMyCheckHistory = createServerFn({ method: "GET" })
       limit 40
     `.catch(() => []);
     return {
-      enabled: true as const,
+      enabled,
       events: rows.map((row) => ({
         id: row.id,
         childName: row.child_name,

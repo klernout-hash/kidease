@@ -65,7 +65,7 @@ test("parent to provider booking, tour, and waitlist loop", () => {
   step = offered.state;
   assert.equal(step.booking, "accepted");
   assert.equal(step.tour, "enrolled");
-  assert.equal(step.waitlist, "offered");
+  assert.equal(step.waitlist, "enrolled");
   assert.equal(canAdvanceTour("pending", "enrolled"), false);
   assert.equal(canAdvanceTour("accepted", "completed"), true);
 

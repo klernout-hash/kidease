@@ -3519,5 +3519,9 @@
   "careAttendanceUpdated": "Huling na-update ni {name} nang {time}",
   "careCentreStaff": "Staff ng centre",
   "careAttendanceHistory": "Kasaysayan para sa petsang ito",
-  "careAttendanceCorrection": "Pagwawasto"
+  "careAttendanceCorrection": "Pagwawasto",
+  "waitlistStatusEnrolled": "Naka-enroll",
+  "carePastDays": "Mga nakaraang araw",
+  "carePastDaysLead": "Pagdating at pag-alis mula sa mga naunang araw.",
+  "carePastEmpty": "Walang mas naunang pagdating na naka-save."
 }

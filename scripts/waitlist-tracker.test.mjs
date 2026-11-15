@@ -6,6 +6,7 @@ import test from "node:test";
 import {
   WAITLIST_EVENTS,
   canWithdrawWaitlist,
+  centreOfferStillOpen,
   parentWaitlistStatus,
   waitlistEmailAllowed,
   waitlistEntriesForAlerts,
@@ -21,8 +22,8 @@ test("booking statuses map to the parent words", () => {
   assert.equal(parentWaitlistStatus("requested"), "sent");
   assert.equal(parentWaitlistStatus("under_review"), "seen");
   assert.equal(parentWaitlistStatus("waitlist"), "waitlisted");
-  assert.equal(parentWaitlistStatus("accepted"), "offered");
-  assert.equal(parentWaitlistStatus("active"), "offered");
+  assert.equal(parentWaitlistStatus("accepted"), "enrolled");
+  assert.equal(parentWaitlistStatus("active"), "enrolled");
   assert.equal(parentWaitlistStatus("declined"), "declined");
   assert.equal(parentWaitlistStatus("cancelled"), "withdrawn");
   assert.equal(parentWaitlistStatus("invented"), null);
@@ -33,6 +34,9 @@ test("a parent can withdraw an open request, not a closed one", () => {
   assert.equal(canWithdrawWaitlist("seen"), true);
   assert.equal(canWithdrawWaitlist("waitlisted"), true);
   assert.equal(canWithdrawWaitlist("offered"), true);
+  assert.equal(canWithdrawWaitlist("enrolled"), false);
+  assert.equal(centreOfferStillOpen({ offerStatus: "open", enrolled: false }), true);
+  assert.equal(centreOfferStillOpen({ offerStatus: "open", enrolled: true }), false);
   assert.equal(canWithdrawWaitlist("declined"), false);
   assert.equal(canWithdrawWaitlist("withdrawn"), false);
 });

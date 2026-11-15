@@ -1,6 +1,6 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouteContext, useRouterState } from "@tanstack/react-router";
-import { tx, type CopyKey } from "./copy-runtime";
+import { ensureFrenchCopy, frenchCopyReady, tx, type CopyKey } from "./copy-runtime";
 import { isShippedLocale, type ShippedLocale } from "./languages";
 import { localeFromSearch } from "./locale-geo";
 import { pathLocale } from "./locale-path";
@@ -25,8 +25,20 @@ export function useCopy() {
   const fromQuery = localeFromSearch(searchStr);
   const locale: ShippedLocale =
     fromQuery ?? (pathLocale(pathname) === "fr" ? "fr" : localeLocked ? stored : (fromHint ?? stored));
+  const [frenchReady, setFrenchReady] = useState(frenchCopyReady);
+  useEffect(() => {
+    if (locale !== "fr" || frenchCopyReady()) return;
+    let live = true;
+    void ensureFrenchCopy().then(() => {
+      if (live) setFrenchReady(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, [locale]);
   // A new `t` every render retriggers effects that load server functions
   // (parent desk, listing) until the throttle returns 429.
-  const t = useCallback((key: CopyKey) => tx(locale, key), [locale]);
+  const copyLocale = locale === "fr" && !frenchReady ? "en" : locale;
+  const t = useCallback((key: CopyKey) => tx(copyLocale, key), [copyLocale]);
   return { locale, t };
 }

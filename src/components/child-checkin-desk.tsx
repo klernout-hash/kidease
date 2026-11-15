@@ -5,12 +5,14 @@ import { CustodyCheckoutAlert } from "@/components/phase6-desk";
 import { FirstRunExample } from "@/components/first-run";
 import { Button } from "@/components/ui/button";
 import { attendanceCopy, initialsFor, type AttendanceStatus } from "@/lib/attendance-handoff";
+import { groupCheckHistory } from "@/lib/check-history";
 import { featureCopy } from "@/lib/flagged-feature-copy";
 import { localePath } from "@/lib/locale-path";
 import { centreClockLabel } from "@/lib/parent-arrival";
 import {
   correctChildCheck,
   listDoorRoster,
+  listMyCheckHistory,
   listMyChildAttendance,
   reportMyChildAbsence,
   recordChildCheck,
@@ -264,13 +266,18 @@ export function ChildCheckHistory() {
   const legacy = featureCopy(locale);
   const copy = attendanceCopy(locale);
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listMyChildAttendance>> | null>(null);
+  const [past, setPast] = useState<Awaited<ReturnType<typeof listMyCheckHistory>> | null>(null);
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
   useEffect(() => {
     void listMyChildAttendance()
       .then(setRows)
       .catch(() => setRows({ enabled: false, children: [] }));
+    void listMyCheckHistory()
+      .then(setPast)
+      .catch(() => setPast({ enabled: false, events: [] }));
   }, []);
+  const pastDays = groupCheckHistory(past?.events ?? []);
   if (!rows || (!rows.enabled && !rows.children.length)) return null;
   return (
     <section className="mt-8 w-full" data-ke="child-check-history">
@@ -362,6 +369,37 @@ export function ChildCheckHistory() {
       ) : (
         <p className="mt-3 text-sm text-muted">{legacy.checkNone}</p>
       )}
+      <section className="mt-6" data-ke="care-past-days">
+        <h3 className="text-lg font-semibold">{t("carePastDays")}</h3>
+        <p className="mt-1 max-w-prose text-sm text-muted">{t("carePastDaysLead")}</p>
+        {pastDays.length ? (
+          <ul className="mt-3 space-y-4">
+            {pastDays.map((group) => (
+              <li key={group.day} className="rounded-xl bg-surface p-4 ring-1 ring-border">
+                <p className="font-medium">
+                  <time dateTime={group.day}>{group.day}</time>
+                </p>
+                <ul className="mt-2 divide-y divide-border text-sm">
+                  {group.events.map((event) => (
+                    <li key={event.id} className="py-2">
+                      <span className="font-medium">{event.childName}</span>
+                      {" · "}
+                      {event.daycareName}
+                      {" · "}
+                      {event.action === "check_in" ? legacy.arrived : legacy.left}
+                      {" · "}
+                      {when(event.at, locale, event.timeZone)}
+                      {event.pickupName ? ` · ${event.pickupName}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-muted">{t("carePastEmpty")}</p>
+        )}
+      </section>
       {message ? <p className="mt-3 text-sm" role="status">{message}</p> : null}
     </section>
   );
