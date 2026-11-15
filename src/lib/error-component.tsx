@@ -9,6 +9,7 @@ export function AppErrorComponent({ error }: ErrorComponentProps) {
   const path = typeof window !== "undefined" ? window.location.pathname : "";
   reportError(error, { route: path || "app" });
   const copy = safeErrorCopy(path);
+  const homeHref = path === "/fr" || path.startsWith("/fr/") ? "/fr" : "/";
 
   useEffect(() => {
     if (!isStaleAssetError(error)) return;
@@ -38,13 +39,13 @@ export function AppErrorComponent({ error }: ErrorComponentProps) {
           {copy.retry}
         </button>
         <a
-          href="/"
+          href={homeHref}
           className="inline-flex min-h-11 items-center rounded-full px-5 text-sm font-semibold text-fg ring-1 ring-border"
         >
-          Back to home
+          {copy.home}
         </a>
         <a href={`mailto:${SUPPORT_INBOX_EMAIL}`} className="inline-flex min-h-11 items-center text-sm font-medium text-muted underline-offset-4 hover:underline">
-          Email support
+          {copy.support}
         </a>
       </div>
     </main>
