@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   centreUsesTestStripe,
@@ -73,4 +74,32 @@ test("QA routing refuses the live secret when the test keys are missing", () => 
     STRIPE_PUBLISHABLE_KEY: "pk_live_real",
   });
   assert.deepEqual(keys, { ok: false, mode: "test", reason: "missing_test_key" });
+});
+
+test("centre charges pass the process environment into the helper", () => {
+  const source = readFileSync(new URL("../src/lib/server/connect-payments.ts", import.meta.url), "utf8");
+  assert.match(source, /stripeCredentialsForMode\(mode, process\.env\)/);
+});
+
+test("with no env argument the helper reads the process environment", () => {
+  const names = ["STRIPE_SECRET_KEY", "STRIPE_PUBLISHABLE_KEY", "STRIPE_SECRET_KEY_TEST", "STRIPE_PUBLISHABLE_KEY_TEST"];
+  const previous = new Map(names.map((name) => [name, process.env[name]]));
+  process.env.STRIPE_SECRET_KEY = "sk_live_unused";
+  process.env.STRIPE_PUBLISHABLE_KEY = "pk_live_unused";
+  process.env.STRIPE_SECRET_KEY_TEST = "sk_test_from_env";
+  process.env.STRIPE_PUBLISHABLE_KEY_TEST = "pk_test_from_env";
+  try {
+    const keys = stripeCredentialsForMode("test");
+    assert.equal(keys.ok, true);
+    if (keys.ok) {
+      assert.equal(keys.secret, "sk_test_from_env");
+      assert.equal(keys.publishable, "pk_test_from_env");
+    }
+  } finally {
+    for (const name of names) {
+      const value = previous.get(name);
+      if (value == null) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
 });

@@ -84,7 +84,7 @@ function clean(raw: string | undefined): string {
 /**
  * Test mode never returns a live secret. Live mode never returns a test secret.
  */
-export function stripeCredentialsForMode(mode: PaymentStripeMode, env: StripeRouteEnv = {}): StripeCredentials {
+export function stripeCredentialsForMode(mode: PaymentStripeMode, env: StripeRouteEnv = process.env): StripeCredentials {
   const liveSecret = clean(env.STRIPE_SECRET_KEY);
   const testSecret = clean(env.STRIPE_SECRET_KEY_TEST);
   const livePublishable = clean(env.STRIPE_PUBLISHABLE_KEY);
