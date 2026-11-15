@@ -5,7 +5,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { maxCentreRole } from "@/lib/centre-roles";
+import { canWrite, maxCentreRole } from "@/lib/centre-roles";
 import { getSql } from "@/lib/db";
 import { clampTapTime } from "@/lib/centre-tools";
 import { childCheckinEnabled, centreToolIds } from "@/lib/features";
@@ -61,6 +61,10 @@ export const recordChildCheck = createServerFn({ method: "POST" })
       select daycare_id from bookings where id = ${data.bookingId} limit 1
     `;
     const role = found[0] ? await loadCentreRole(sql, context.userId, found[0].daycare_id) : null;
+    if (role && !canWrite(role, "check_in")) {
+      const { centreActionDenied } = await import("@/lib/centre-roles");
+      throw centreActionDenied("write");
+    }
     const offlineAt =
       data.at && (centreToolIds() as string[]).includes("offline") ? clampTapTime(data.at, Date.now()) : null;
     return commitHandoff(sql, {
