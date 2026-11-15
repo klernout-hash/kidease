@@ -1640,7 +1640,7 @@ export const createListing = createServerFn({ method: "POST" })
     )[0]?.n ?? 0;
     const staffOnly = ownerCount === 0 && (await listAccessibleDaycareIds(sql, context.userId)).length > 0;
     if (!centreCanCreateListing({ ownerCount, memberOnly: staffOnly })) {
-      throw new Error("Only the centre owner can add a listing.");
+      throw Object.assign(new Error("Only the centre owner can add a listing."), { status: 403 });
     }
     try {
       await assertNewListingAllowed({

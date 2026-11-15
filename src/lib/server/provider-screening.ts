@@ -50,6 +50,7 @@ export type ScreeningPersonView = {
   id: string;
   name: string;
   role: ScreeningRole;
+  centreRole: "read_only" | null;
   mine: boolean;
   linkedMember: boolean;
   docs: ScreeningDocView[];
@@ -97,6 +98,7 @@ type PersonRow = {
   screening_role: string;
   display_name: string;
   archived_at: string | null;
+  centre_role?: string | null;
 };
 
 type DocRow = {
@@ -349,6 +351,7 @@ function buildPersonView(input: {
     id: input.person.id,
     name: input.person.display_name,
     role,
+    centreRole: input.person.centre_role === "read_only" ? "read_only" : null,
     mine: Boolean(input.person.user_id && input.person.user_id === input.actorUserId),
     linkedMember: Boolean(input.person.member_id),
     docs,
@@ -376,10 +379,12 @@ async function loadCentreScreening(
   if (!row) return null;
   await syncScreeningPeople(sql, daycareId);
   const people = await sql<PersonRow>`
-    select id, daycare_id, member_id, user_id, screening_role, display_name, archived_at
-    from provider_screening_people
-    where daycare_id = ${daycareId} and archived_at is null
-    order by screening_role, display_name
+    select p.id, p.daycare_id, p.member_id, p.user_id, p.screening_role, p.display_name, p.archived_at,
+           m.role as centre_role
+    from provider_screening_people p
+    left join centre_members m on m.id = p.member_id
+    where p.daycare_id = ${daycareId} and p.archived_at is null
+    order by p.screening_role, p.display_name
   `.catch(() => []);
   const docs = await sql<DocRow>`
     select id, daycare_id, person_id, doc_kind, status, issued_on::text as issued_on,

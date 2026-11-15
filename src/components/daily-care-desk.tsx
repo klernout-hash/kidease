@@ -609,6 +609,7 @@ export function DailyCareDesk({
                 {ops ? (
                   <CareChildOps
                     role={role}
+                    locked={role === "provider" && !staffWrite}
                     row={row}
                     ops={ops}
                     busy={busy}

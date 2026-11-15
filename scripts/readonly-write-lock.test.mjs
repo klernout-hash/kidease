@@ -208,6 +208,8 @@ async function harness() {
     timesheets: load("timesheets", modules),
     "centre-tools": load("centre-tools", modules),
     "family-vault": load("family-vault", modules),
+    "care-floor": load("care-floor", modules),
+    family: load("family", modules),
   };
   return { ...db, files };
 }
@@ -338,6 +340,50 @@ const cases = [
       files["centre-tools"].saveCentreToolRecord({
         context: { userId: READER },
         data: { daycareId: CENTRE, kind: "menu", payload: { title: "Monday lunch" } },
+      }),
+  },
+  {
+    name: "toileting",
+    run: (files) =>
+      files["care-floor"].saveCareFloor({
+        context: { userId: READER },
+        data: { daycareId: CENTRE, action: "toilet", bookingId: BOOKING, payload: { kind: "diaper", note: "dry", child: "Avery" } },
+      }),
+  },
+  {
+    name: "authorised pickup",
+    run: (files) =>
+      files["care-floor"].saveCareFloor({
+        context: { userId: READER },
+        data: { daycareId: CENTRE, action: "pickup", bookingId: BOOKING, payload: { person: "Sam", confirmed: true, signature: "Sam", child: "Avery", allowed: ["Sam"] } },
+      }),
+  },
+  {
+    name: "health screen",
+    run: (files) =>
+      files["care-floor"].saveCareFloor({
+        context: { userId: READER },
+        data: { daycareId: CENTRE, action: "health", bookingId: BOOKING, payload: { checks: { fever: false, rash: false, cough: false, vomiting: false }, child: "Avery" } },
+      }),
+  },
+  {
+    name: "allergen/incident",
+    run: (files) =>
+      files["care-floor"].saveCareFloor({
+        context: { userId: READER },
+        data: { daycareId: CENTRE, action: "event", bookingId: BOOKING, payload: { kind: "allergen", note: "Milk splash", child: "Avery" } },
+      }),
+  },
+  {
+    name: "roll call",
+    run: (files) => files["care-floor"].saveCareFloor({ context: { userId: READER }, data: { daycareId: CENTRE, action: "roll_start", payload: {} } }),
+  },
+  {
+    name: "add a centre",
+    run: (files) =>
+      files.family.createListing({
+        context: { userId: READER },
+        data: { name: "New centre", address: "1 Main", city: "Winnipeg", postalCode: "R3C0A1", licenseNumber: "1", infantMonthly: 0, toddlerMonthly: 0, preschoolMonthly: 0 },
       }),
   },
   {
