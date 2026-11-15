@@ -474,8 +474,13 @@ export function AdminPage() {
           toast.error(feedback.body);
         }
       } else if (decision === "decline") {
+        toast.success("Saved. This listing is not live.");
         confirmAction(t, "unlive");
+      } else if (decision === "needs_docs") {
+        toast.success("Saved. This listing needs a document.");
+        confirmAction(t, "waiting");
       } else {
+        toast.success("Saved. This listing is waiting.");
         confirmAction(t, "waiting");
       }
       await refresh();
@@ -534,9 +539,22 @@ export function AdminPage() {
         reauth.prompt,
       );
       setNote("");
+      toast.success(
+        action === "matched"
+          ? "Saved. This licence is marked registry-matched."
+          : action === "mismatch"
+            ? "Saved. This licence is marked as a mismatch."
+            : action === "expired"
+              ? "Saved. This licence is marked expired."
+              : action === "suspended"
+                ? "Saved. This licence is marked suspended."
+                : "Saved. This licence is unverified.",
+      );
       await refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Could not save that licence review");
+      const message = err instanceof Error ? err.message : "Could not save that licence review";
+      toast.error(message);
+      alert(message);
     } finally {
       setBusy(null);
     }

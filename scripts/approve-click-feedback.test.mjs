@@ -47,6 +47,8 @@ test("approve buttons report success or the reason instead of staying silent", (
   assert.match(desk, /approvalClickFeedback/);
   assert.match(desk, /toast\.error\(feedback\.body\)/);
   assert.match(desk, /toast\.success\(feedback\.body\)/);
+  assert.match(desk, /registry-matched/);
+  assert.match(src("src/components/admin-licence-reads.tsx"), /setSaved/);
   assert.match(screening, /toast\.success\(t\("screeningReviewed"\)\)/);
   assert.match(reviews, /toast\.success/);
   assert.match(provider, /portfolio:incomplete/);
