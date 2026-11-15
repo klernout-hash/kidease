@@ -3526,5 +3526,20 @@
   "waitlistStatusEnrolled": "مسجّل",
   "carePastDays": "الأيام السابقة",
   "carePastDaysLead": "تسجيل الوصول والمغادرة من الأيام السابقة.",
-  "carePastEmpty": "لا يوجد تسجيل وصول أقدم."
+  "carePastEmpty": "لا يوجد تسجيل وصول أقدم.",
+  "adminNavVerify": "الترخيص والصور",
+  "adminNavReviews": "المراجعات",
+  "adminNavScreening": "الفحص",
+  "adminNavRegistries": "السجلات",
+  "adminNavTrustQueue": "قائمة الثقة",
+  "adminNavDaycares": "الحضانات",
+  "adminNavPeople": "الأشخاص",
+  "adminNavBills": "الفواتير",
+  "adminNavContracts": "العقود",
+  "adminNavActivity": "النشاط",
+  "adminNavEmailHealth": "صحة البريد",
+  "adminNavConnect": "Stripe Connect",
+  "adminNavQuickBooks": "QuickBooks",
+  "adminNavPayroll": "الرواتب",
+  "adminNavSubsidy": "الدعم"
 }

@@ -9,6 +9,7 @@ export function AdminLicenceReads() {
   const [ready, setReady] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [saved, setSaved] = useState("");
 
   useEffect(() => {
     let live = true;
@@ -33,6 +34,7 @@ export function AdminLicenceReads() {
 
   async function confirm(id: string) {
     setError("");
+    setSaved("");
     try {
       const result = await confirmLicenceRead({ data: id });
       if (!result.ok || result.approved !== false) {
@@ -41,6 +43,8 @@ export function AdminLicenceReads() {
       }
       setRows((current) => current.filter((row) => row.id !== id));
       setConfirmId(null);
+      setError("");
+      setSaved(t("adminLicenceConfirm"));
     } catch {
       setError(t("adminLicenceConfirmFailed"));
     }
@@ -50,6 +54,11 @@ export function AdminLicenceReads() {
     <section className="mt-8" data-ke="admin-licence-reads">
       <h2 className="font-display text-2xl">{t("adminLicenceTitle")}</h2>
       <p className="mt-2 max-w-prose text-sm text-muted">{t("adminLicenceLead")}</p>
+      {saved ? (
+        <p className="mt-3 text-sm text-ok" role="status">
+          {saved}
+        </p>
+      ) : null}
       {error ? (
         <p className="mt-3 text-sm text-danger" role="alert">
           {error}

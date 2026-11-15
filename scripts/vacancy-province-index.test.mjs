@@ -11,6 +11,7 @@ import {
   freshnessByProvince,
   officialOpeningTotal,
   parseVacancyProvince,
+  vacancyIndexSearch,
   sameVacancySnapshot,
   shouldRecordVacancy,
   VACANCY_AGING_DAYS,
@@ -56,6 +57,8 @@ test("freshness bands use the stored confirm time", () => {
 test("history records a confirm and a real count change only", () => {
   assert.equal(parseVacancyProvince("mb"), "MB");
   assert.equal(parseVacancyProvince("France"), "");
+  assert.deepEqual(vacancyIndexSearch({}), {});
+  assert.deepEqual(vacancyIndexSearch({ province: "mb" }), { province: "MB" });
   assert.equal(sameVacancySnapshot({ infant: 1, toddler: null, preschool: 0 }, { infant: 1, toddler: null, preschool: 0 }), true);
   assert.equal(
     shouldRecordVacancy({
@@ -100,7 +103,7 @@ test("province pages stay behind the flag and keep the national index", () => {
   const server = read("src/lib/server/vacancy-index.ts");
   const history = read("src/lib/server/vacancy-history.ts");
   const claims = read("src/lib/server/claims.ts");
-  assert.match(page, /parseVacancyProvince/);
+  assert.match(page, /vacancyIndexSearch/);
   assert.match(page, /localePath\("\/help", locale\)/);
   assert.match(page, /data-ke="vacancy-history"/);
   assert.match(page, /vacancyIndexTitle/);

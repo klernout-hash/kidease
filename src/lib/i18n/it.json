@@ -3526,5 +3526,20 @@
   "waitlistStatusEnrolled": "Iscritto",
   "carePastDays": "Giorni passati",
   "carePastDaysLead": "Arrivi e uscite dei giorni precedenti.",
-  "carePastEmpty": "Nessun arrivo precedente è salvato."
+  "carePastEmpty": "Nessun arrivo precedente è salvato.",
+  "adminNavVerify": "Licenza e foto",
+  "adminNavReviews": "Recensioni",
+  "adminNavScreening": "Verifiche",
+  "adminNavRegistries": "Registri",
+  "adminNavTrustQueue": "Coda di fiducia",
+  "adminNavDaycares": "Asili",
+  "adminNavPeople": "Persone",
+  "adminNavBills": "Fatture",
+  "adminNavContracts": "Contratti",
+  "adminNavActivity": "Attività",
+  "adminNavEmailHealth": "Stato della posta",
+  "adminNavConnect": "Stripe Connect",
+  "adminNavQuickBooks": "QuickBooks",
+  "adminNavPayroll": "Paghe",
+  "adminNavSubsidy": "Sussidio"
 }

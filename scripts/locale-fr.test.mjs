@@ -95,9 +95,10 @@ test("hreflang includes en, fr, and x-default on paired pages", () => {
 test("sitemap lists shipped FR URLs and omits redirect-only pairs", () => {
   assert.deepEqual(
     SITEMAP_FR_PATHS,
-    sitemapFrenchPaths().filter((path) => path !== "/fr/vacancy-index"),
+    sitemapFrenchPaths().filter((path) => path !== "/fr/plans"),
   );
-  assert.equal(SITEMAP_FR_PATHS.includes("/fr/vacancy-index"), false);
+  assert.equal(SITEMAP_FR_PATHS.includes("/fr/plans"), false);
+  assert.equal(SITEMAP_FR_PATHS.includes("/fr/vacancy-index"), true);
   assert.ok(SITEMAP_FR_PATHS.includes("/fr"));
   assert.ok(SITEMAP_FR_PATHS.includes("/fr/privacy"));
   assert.ok(SITEMAP_FR_PATHS.includes("/fr/search"));

@@ -8,6 +8,7 @@ import { UrgentBroadcastPanel } from "@/components/urgent-broadcast-panel";
 import { needCareFastCopy } from "@/lib/need-care-fast-copy";
 import {
   formatConfirmedDay,
+  needCareFastRouteSearch,
   normalizeNeedCareFastPage,
   parseNeedCareFastSearch,
   streetRadiusNote,
@@ -20,7 +21,7 @@ import { useCopy } from "@/lib/use-copy";
 import { SITEMAP_ORIGIN } from "@/lib/public-url";
 
 export const Route = createFileRoute("/need-care-fast")({
-  validateSearch: parseNeedCareFastSearch,
+  validateSearch: needCareFastRouteSearch,
   loaderDeps: ({ search }) => parseNeedCareFastSearch(search),
   loader: ({ deps }) => loadNeedCareFast({ data: deps }),
   head: () =>

@@ -3526,5 +3526,20 @@
   "waitlistStatusEnrolled": "Naka-enroll",
   "carePastDays": "Mga nakaraang araw",
   "carePastDaysLead": "Pagdating at pag-alis mula sa mga naunang araw.",
-  "carePastEmpty": "Walang mas naunang pagdating na naka-save."
+  "carePastEmpty": "Walang mas naunang pagdating na naka-save.",
+  "adminNavVerify": "Lisensya at mga larawan",
+  "adminNavReviews": "Mga review",
+  "adminNavScreening": "Screening",
+  "adminNavRegistries": "Mga rehistro",
+  "adminNavTrustQueue": "Pila ng tiwala",
+  "adminNavDaycares": "Mga daycare",
+  "adminNavPeople": "Mga tao",
+  "adminNavBills": "Mga bill",
+  "adminNavContracts": "Mga kontrata",
+  "adminNavActivity": "Aktibidad",
+  "adminNavEmailHealth": "Kalusugan ng email",
+  "adminNavConnect": "Stripe Connect",
+  "adminNavQuickBooks": "QuickBooks",
+  "adminNavPayroll": "Payroll",
+  "adminNavSubsidy": "Subsidy"
 }

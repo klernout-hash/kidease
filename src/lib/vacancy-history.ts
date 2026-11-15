@@ -41,6 +41,13 @@ export function parseVacancyProvince(value: unknown): string {
   return found ? found.code : "";
 }
 
+/** Public URL search. A blank province stays off the query string. */
+export function vacancyIndexSearch(search: unknown): { province?: string } {
+  const bag = search && typeof search === "object" ? (search as Record<string, unknown>) : {};
+  const province = parseVacancyProvince(bag.province);
+  return province ? { province } : {};
+}
+
 export function freshnessBand(iso: string | null | undefined, now = Date.now()): FreshnessBand {
   if (!iso) return "unknown";
   const ts = Date.parse(iso);

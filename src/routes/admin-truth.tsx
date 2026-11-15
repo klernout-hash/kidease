@@ -24,10 +24,12 @@ function TruthPage() {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [saved, setSaved] = useState("");
 
   async function approve(id: string) {
     setBusy(true);
     setError("");
+    setSaved("");
     try {
       const result = await approveTruthChange({ data: id });
       if (!result.ok) {
@@ -36,6 +38,8 @@ function TruthPage() {
       }
       setRows((current) => current.filter((row) => row.id !== id));
       setConfirmId(null);
+      setError("");
+      setSaved(t("adminTruthApprove"));
     } catch {
       setError(t("adminTruthApproveFailed"));
     } finally {
@@ -48,6 +52,11 @@ function TruthPage() {
       {error ? (
         <p className="mt-4 text-sm text-danger" role="alert">
           {error}
+        </p>
+      ) : null}
+      {saved ? (
+        <p className="mt-4 text-sm text-ok" role="status">
+          {saved}
         </p>
       ) : null}
       {rows.length ? (
