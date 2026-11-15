@@ -13,6 +13,8 @@ import { currentPeriod, periodLabel, platformFeePercentLabel } from "@/lib/strip
 import { type Bill, type BillParty, billDollars } from "@/lib/bill";
 import { createBill, listBillParties, listProviderBills, sendBill, voidBill } from "@/lib/server/billing";
 import { StripeInvoiceList } from "@/components/stripe-invoice-list";
+import { PayoutStatusCard } from "@/components/payout-status-card";
+import { loadEarningsDesk } from "@/lib/server/earnings-desk";
 import { Field } from "@/components/provider-listing-forms";
 
 export function ProviderMoneyPanel() {
@@ -22,6 +24,7 @@ export function ProviderMoneyPanel() {
   const [stripeLive, setStripeLive] = useState(false);
   const [feeBps, setFeeBps] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
+  const [payouts, setPayouts] = useState<"on" | "off" | "unknown" | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [form, setForm] = useState({
     partyKey: "",
@@ -54,6 +57,11 @@ export function ProviderMoneyPanel() {
 
   useEffect(() => {
     void load().catch(() => undefined);
+    void loadEarningsDesk()
+      .then((desk) => {
+        if (desk.ok) setPayouts(desk.payouts);
+      })
+      .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- first paint only
   }, []);
 
@@ -73,6 +81,11 @@ export function ProviderMoneyPanel() {
         ) : (
           <LedgerHonesty stripeLive={stripeLive} className="mt-2" ready={ready} />
         )}
+        {payouts ? (
+          <div className="mt-4">
+            <PayoutStatusCard status={payouts} />
+          </div>
+        ) : null}
       </div>
 
       <form

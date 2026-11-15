@@ -16,6 +16,11 @@ test("offers split meals from programs and drop harvested fee words", () => {
   assert.equal(listingOfferGroups("", "fr").groups.length, 0);
 });
 
+test("staff screening is a plain label, not the stored token", () => {
+  assert.equal(amenityLabel("staff-screening", "en"), "Staff screening attested");
+  assert.equal(amenityLabel("staff-screening", "fr"), "Vérification du personnel attestée");
+});
+
 test("public amenity labels explain the participation flag without claiming a fee", () => {
   for (const [locale, label] of [["en", "Ask about reduced fees"], ["fr", "Renseignez-vous sur les frais réduits"]]) {
     for (const key of ["cwelcc", "CWELCC", " cwelcc "]) {

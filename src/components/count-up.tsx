@@ -28,10 +28,5 @@ export function CountUp({
     return () => cancelAnimationFrame(frame);
   }, [value]);
 
-  return (
-    <span className={className}>
-      <span className="sr-only">{format(value)}</span>
-      <span aria-hidden>{format(shown)}</span>
-    </span>
-  );
+  return <span className={className}>{format(shown)}</span>;
 }

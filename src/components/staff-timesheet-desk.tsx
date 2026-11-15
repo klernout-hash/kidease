@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { timesheetCopy } from "@/lib/timesheet-copy";
-import { formatToronto, isoToTorontoLocal, torontoLocalToIso } from "@/lib/timesheet";
+import { formatToronto, formatWeekSpan, isoToTorontoLocal, torontoLocalToIso } from "@/lib/timesheet";
 import {
   clockInTimesheet,
   clockOutTimesheet,
@@ -105,7 +105,7 @@ export function StaffTimesheetDesk() {
         <p className="mt-1 text-sm text-muted">{copy.noPay}</p>
         {desk.weekLabel ? (
           <p className="mt-2 text-sm font-medium">
-            {copy.week} {desk.weekLabel}
+            {copy.week} {formatWeekSpan(desk.weekLabel, locale === "fr" ? "fr" : "en")}
           </p>
         ) : null}
       </div>

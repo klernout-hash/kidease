@@ -19,6 +19,7 @@ export function amenityLabel(key: string, locale: string) {
     wool: { en: "Wool layers on site", fr: "Couches de laine sur place" },
     "mud-kitchen": { en: "Mud kitchen", fr: "Cuisine de boue" },
     licensed: { en: "Licensed", fr: "Permis" },
+    "staff-screening": { en: "Staff screening attested", fr: "Vérification du personnel attestée" },
     home: { en: "Home-scale", fr: "Échelle familiale" },
     "group-home": { en: "Group child care home", fr: "Milieu familial de groupe" },
     yard: { en: "Fenced yard", fr: "Cour clôturée" },
