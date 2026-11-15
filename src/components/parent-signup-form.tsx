@@ -7,6 +7,7 @@ import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { continueAfterSignIn } from "@/lib/auth/login-funnel";
 import { parentMobileIssue, smsOptInWasBlocked } from "@/lib/parent-sms-consent";
 import { toast } from "sonner";
+import { stashParentSmsOptIn } from "@/lib/parent-sms-consent";
 import { saveParentSmsOptIn } from "@/lib/server/parent-sms-consent";
 import { setRole } from "@/lib/server/family";
 import { confirmAdultAge } from "@/lib/server/adult-confirm";
@@ -27,6 +28,7 @@ import { ContinueAgeNotice } from "@/components/continue-age-notice";
 import { markAdultConfirmedForSession } from "@/lib/adult-confirm";
 import { nativeSocialPlatform, signInProvidersForDevice } from "@/lib/auth/native-oauth";
 import { type GrokProvider } from "@/lib/auth/providers";
+import { facebookNewUserCallbackPath, socialSignupCallbackPath } from "@/lib/auth/social-callback";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { readClientPlayServices } from "@/lib/native-entitlements";
 import { useNativeHidesAdmin, useStoreChannel } from "@/lib/use-native-shell";
@@ -41,12 +43,12 @@ function rememberToken(data: { token?: string | null } | null | undefined) {
   }
 }
 
-export function ParentSignupForm() {
+export function ParentSignupForm({ providers: initialProviders = [] }: { providers?: GrokProvider[] }) {
   const { t, locale } = useCopy();
   const router = useRouter();
   const storeChannel = useStoreChannel();
   const hideAdmin = useNativeHidesAdmin();
-  const [providers, setProviders] = useState<GrokProvider[]>([]);
+  const [providers, setProviders] = useState<GrokProvider[]>(initialProviders);
   const shownProviders = signInProvidersForDevice(providers, {
     channel: storeChannel,
     playServices: readClientPlayServices(),
@@ -82,11 +84,7 @@ export function ParentSignupForm() {
     onRequired,
   } = useTurnstileToken();
 
-  const title = locale === "fr" ? "Créer un compte parent" : "Create a parent account";
-  const lead =
-    locale === "fr"
-      ? "KidEase aide les parents à trouver une garderie permise au Canada. Enregistrez un centre, puis demandez une visite."
-      : "KidEase helps parents find licensed daycare in Canada. Save a centre, then ask for a tour.";
+  const loginPath = locale === "fr" ? "/fr/login" : "/login";
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -144,10 +142,10 @@ export function ParentSignupForm() {
           <div className="flex justify-center pb-2">
             <BrandMark size="md" />
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl">{title}</h1>
-          <p className="text-sm text-muted">{lead}</p>
+          <h1 className="font-display text-2xl sm:text-3xl">{t("createParentAccount")}</h1>
+          <p className="text-sm text-muted">{t("loginLeadParent")}</p>
           {shownProviders.length ? (
-            <div>
+            <div data-ke="social-sign-in">
               <SocialSignInButtons
                 providers={shownProviders}
                 disabled={busy}
@@ -156,22 +154,45 @@ export function ParentSignupForm() {
                   setError(null);
                   markAdultConfirmedForSession();
                   rememberRole("parent");
+                  stashParentSmsOptIn(phone, smsConsent);
+                  const staged = socialSignupCallbackPath({
+                    intent: "up",
+                    role: "parent",
+                    desk: "parent",
+                    next: "/parent",
+                    loginPath,
+                  });
                   void signIn(providerId, {
-                    callbackURL: "/parent",
-                    errorCallbackURL: "/signup",
+                    callbackURL: staged ?? "/parent",
+                    errorCallbackURL: loginPath,
+                    ...(providerId === "facebook"
+                      ? {
+                          newUserCallbackURL: facebookNewUserCallbackPath({
+                            role: "parent",
+                            desk: "parent",
+                            next: "/parent",
+                            locale,
+                          }),
+                        }
+                      : {}),
                   }).catch((err) => {
                     setError(friendlyAuthError(authClientErrorMessage(err)) || "Sign-in failed");
                     setBusy(false);
                   });
                 }}
               />
+              <div className="mt-3">
+                <ContinueAgeNotice />
+              </div>
               <div className="mt-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
                 <span className="h-px flex-1 bg-border" />
                 {t("orEmail")}
                 <span className="h-px flex-1 bg-border" />
               </div>
             </div>
-          ) : null}
+          ) : (
+            <ContinueAgeNotice />
+          )}
           <label className="block text-sm" htmlFor="parent-signup-name">
             {t("name")}
             <input
@@ -215,7 +236,6 @@ export function ParentSignupForm() {
             consent={smsConsent}
             onConsent={setSmsConsent}
           />
-          <ContinueAgeNotice />
           <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
           {error ? (
             <p className="text-sm text-danger" role="alert" data-ke="auth-error">
