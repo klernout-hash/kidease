@@ -74,12 +74,12 @@ export async function trySendEmployeeInviteEmail(input: {
   roleLabel: string;
   url: string;
   invitedName?: string | null;
-}): Promise<{ mailed: boolean }> {
+}): Promise<{ mailed: boolean; suppressed: boolean }> {
   try {
     const mail = await sendEmployeeInviteEmail(input);
-    return { mailed: mail.status === "sent" };
+    return { mailed: mail.status === "sent", suppressed: mail.reason === "test_listing_suppressed" };
   } catch {
-    return { mailed: false };
+    return { mailed: false, suppressed: false };
   }
 }
 

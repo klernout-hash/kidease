@@ -19,6 +19,7 @@ import {
 } from "./mail-from.ts";
 import { SUPPORT_INBOX_EMAIL } from "./support.ts";
 import { mailboxAddress, titanAppPassword } from "./server/titan-mail.ts";
+import { parseQaAllowlist } from "./qa-send.ts";
 
 export const MAIL_FROM_RESEND_ENV = "MAIL_FROM_RESEND";
 /** Apex From Resend will accept today (kidease.ca is verified). */
@@ -49,7 +50,9 @@ export type TransactionalMailReason =
   | "upstream"
   | "network"
   | "not_configured"
-  | "rejected";
+  | "rejected"
+  | "test_listing_suppressed"
+  | "qa_allowlist_sent";
 
 export type TransactionalMailEvent =
   | "resend_ok"
@@ -90,9 +93,25 @@ export type TransactionalMailInput = {
   unsubscribeUrl?: string;
   /** Structured branded content. Used instead of `html`/`text` when BRANDED_EMAILS=1. */
   branded?: import("./email-layout.ts").BrandedEmailInput;
-  /** Set true when the email is about a test/QA listing; it is never sent. */
+  /** Set true when the email is about a test/QA listing. It is sent only when every recipient is on QA_SEND_ALLOWLIST. */
   aboutTestListing?: boolean;
 };
+
+/** Same address list as qa-send-mail.ts. A star allows every recipient. An empty list allows none. */
+export function testListingRecipientsAllowed(to: string, allowlistRaw: string | null | undefined): boolean {
+  const recipients = [
+    ...new Set(
+      to
+        .split(/[,;]+/)
+        .map((part) => normalizeEmail(part))
+        .filter((email) => email.includes("@")),
+    ),
+  ];
+  if (!recipients.length) return false;
+  const allow = new Set(parseQaAllowlist(allowlistRaw));
+  if (allow.has("*")) return true;
+  return recipients.every((email) => allow.has(email));
+}
 
 export function brandedEmailsEnabled(env: EnvMap = process.env): boolean {
   return env.BRANDED_EMAILS === "1" || env.BRANDED_EMAILS === "true";
@@ -377,10 +396,13 @@ export async function sendTransactionalMail(
     input.aboutTestListing === true ||
     /[([]\s*(qa|test)\s*[)\]]/i.test(blob) ||
     /\bkidease\s+test\b/i.test(blob);
-  if (aboutTestListing) {
-    emit(deps, input.purpose, "logged", { via: "logged", reason: "not_configured" });
-    return { status: "logged", via: "logged", reason: "not_configured" };
+  const qaAllowlistSend = aboutTestListing && testListingRecipientsAllowed(to, env.QA_SEND_ALLOWLIST);
+  if (aboutTestListing && !qaAllowlistSend) {
+    emit(deps, input.purpose, "logged", { via: "logged", reason: "test_listing_suppressed" });
+    return { status: "logged", via: "logged", reason: "test_listing_suppressed" };
   }
+  const sentReason = (reason?: TransactionalMailReason): TransactionalMailReason | undefined =>
+    qaAllowlistSend ? "qa_allowlist_sent" : reason;
   const body = await prepareMailBody(input, env);
   input = { ...input, text: body.text, html: body.html };
 
@@ -407,8 +429,11 @@ export async function sendTransactionalMail(
         },
       );
       if (result.ok) {
-        emit(deps, input.purpose, i === 0 ? "resend_ok" : "resend_retry_apex", { via: "resend" });
-        return { status: "sent", via: "resend" };
+        emit(deps, input.purpose, i === 0 ? "resend_ok" : "resend_retry_apex", {
+          via: "resend",
+          reason: sentReason(),
+        });
+        return { status: "sent", via: "resend", reason: sentReason() };
       }
       lastReason = classifyMailFailure(result.status, result.text);
       emit(deps, input.purpose, "resend_fail", { reason: lastReason, via: "resend", status: result.status });
@@ -440,13 +465,13 @@ export async function sendTransactionalMail(
     if (result.ok) {
       emit(deps, input.purpose, "sendgrid_ok", {
         via: "sendgrid",
-        reason: lastReason,
+        reason: sentReason(lastReason),
       });
       return {
         status: "sent",
         via: "sendgrid",
         fallbackFrom: providers.resendConfigured ? "resend" : undefined,
-        reason: lastReason,
+        reason: sentReason(lastReason),
       };
     }
     lastReason = classifyMailFailure(result.status, result.text);
@@ -471,13 +496,13 @@ export async function sendTransactionalMail(
       });
       emit(deps, input.purpose, "titan_fallback_success", {
         via: "titan",
-        reason: lastReason ?? (resendUnhealthy ? "domain_unverified" : undefined),
+        reason: sentReason(lastReason ?? (resendUnhealthy ? "domain_unverified" : undefined)),
       });
       return {
         status: "sent",
         via: "titan",
         fallbackFrom: providers.resendConfigured ? "resend" : providers.sendgridConfigured ? "sendgrid" : undefined,
-        reason: lastReason,
+        reason: sentReason(lastReason),
       };
     } catch {
       lastReason = lastReason ?? "rejected";
