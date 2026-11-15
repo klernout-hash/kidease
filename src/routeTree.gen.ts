@@ -189,6 +189,7 @@ import { Route as FrReportRouteImport } from './routes/fr.report'
 import { Route as FrResetPasswordRouteImport } from './routes/fr.reset-password'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
 import { Route as FrSecurityRouteImport } from './routes/fr.security'
+import { Route as FrKioskRouteImport } from './routes/fr.kiosk'
 import { Route as FrSignupRouteImport } from './routes/fr.signup'
 import { Route as FrStartADaycareRouteImport } from './routes/fr.start-a-daycare'
 import { Route as FrStatusRouteImport } from './routes/fr.status'
@@ -1244,6 +1245,11 @@ const FrSecurityRoute = FrSecurityRouteImport.update({
   path: '/security',
   getParentRoute: () => FrRoute,
 } as any)
+const FrKioskRoute = FrKioskRouteImport.update({
+  id: '/kiosk',
+  path: '/kiosk',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrSignupRoute = FrSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -2187,6 +2193,7 @@ export interface FileRoutesByFullPath {
   '/fr/reset-password': typeof FrResetPasswordRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/security': typeof FrSecurityRoute
+  '/fr/kiosk': typeof FrKioskRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/status': typeof FrStatusRoute
@@ -2519,6 +2526,7 @@ export interface FileRoutesByTo {
   '/fr/reset-password': typeof FrResetPasswordRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/security': typeof FrSecurityRoute
+  '/fr/kiosk': typeof FrKioskRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/status': typeof FrStatusRoute
@@ -2854,6 +2862,7 @@ export interface FileRoutesById {
   '/fr/reset-password': typeof FrResetPasswordRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/security': typeof FrSecurityRoute
+  '/fr/kiosk': typeof FrKioskRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/status': typeof FrStatusRoute
@@ -3190,6 +3199,7 @@ export interface FileRouteTypes {
     | '/fr/reset-password'
     | '/fr/search'
     | '/fr/security'
+    | '/fr/kiosk'
     | '/fr/signup'
     | '/fr/start-a-daycare'
     | '/fr/status'
@@ -3522,6 +3532,7 @@ export interface FileRouteTypes {
     | '/fr/reset-password'
     | '/fr/search'
     | '/fr/security'
+    | '/fr/kiosk'
     | '/fr/signup'
     | '/fr/start-a-daycare'
     | '/fr/status'
@@ -3856,6 +3867,7 @@ export interface FileRouteTypes {
     | '/fr/reset-password'
     | '/fr/search'
     | '/fr/security'
+    | '/fr/kiosk'
     | '/fr/signup'
     | '/fr/start-a-daycare'
     | '/fr/status'
@@ -5500,6 +5512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrSecurityRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/kiosk': {
+      id: '/fr/kiosk'
+      path: '/kiosk'
+      fullPath: '/fr/kiosk'
+      preLoaderRoute: typeof FrKioskRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/signup': {
       id: '/fr/signup'
       path: '/signup'
@@ -6682,6 +6701,7 @@ interface FrRouteChildren {
   FrResetPasswordRoute: typeof FrResetPasswordRoute
   FrSearchRoute: typeof FrSearchRoute
   FrSecurityRoute: typeof FrSecurityRoute
+  FrKioskRoute: typeof FrKioskRoute
   FrSignupRoute: typeof FrSignupRoute
   FrStartADaycareRoute: typeof FrStartADaycareRoute
   FrStatusRoute: typeof FrStatusRoute
@@ -6769,6 +6789,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrResetPasswordRoute: FrResetPasswordRoute,
   FrSearchRoute: FrSearchRoute,
   FrSecurityRoute: FrSecurityRoute,
+  FrKioskRoute: FrKioskRoute,
   FrSignupRoute: FrSignupRoute,
   FrStartADaycareRoute: FrStartADaycareRoute,
   FrStatusRoute: FrStatusRoute,
