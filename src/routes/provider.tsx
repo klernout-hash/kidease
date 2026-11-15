@@ -7,6 +7,7 @@ import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { canUseOperatorTools } from "@/lib/operator-tools";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
+import { FirstRunExample } from "@/components/first-run";
 import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { DeskShell } from "@/components/desk-shell";
@@ -572,11 +573,11 @@ export function ProviderPage() {
         </>
       ) : null}
       {desk === "requests" ? (
-        <div className="min-w-0 max-w-full space-y-6">
+        <div className="min-w-0 max-w-full space-y-6" data-tour="provider-requests">
         <CentreFamilyDocs />
         <FormSharePreview />
         {leads.length === 0 && tours.length === 0 && pipeline.length === 0 && waiting.length === 0 ? (
-          <EmptyState title={t("enquiriesEmptyTitle")} body={t("enquiriesEmptyLead")} />
+          <EmptyState title={t("enquiriesEmptyTitle")} body={t("enquiriesEmptyLead")} extra={<FirstRunExample id="provider-requests" />} />
         ) : (
         <section className="space-y-8">
           <DaycareLeadInbox items={leads} onChanged={() => void load()} />

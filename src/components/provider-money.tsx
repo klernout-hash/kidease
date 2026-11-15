@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { BillStatusBadge } from "@/components/bill-status";
 import { EmptyState } from "@/components/empty-state";
+import { FirstRunExample } from "@/components/first-run";
 import { useCopy } from "@/lib/use-copy";
 import { money } from "@/lib/utils";
 import type { Locale } from "@/lib/types";
@@ -63,9 +64,9 @@ export function ProviderMoneyPanel() {
   const done = useMemo(() => bills.filter((b) => b.status !== "draft" && b.status !== "sent"), [bills]);
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-8" data-tour="provider-money">
       <div>
-        <h2 className="font-display text-2xl">{t("deskNavMoney")}</h2>
+        <h2 className="font-display text-2xl" data-tour="provider-money-title">{t("deskNavMoney")}</h2>
         <p className="mt-1 text-sm text-muted">{t("moneyDeskLead")}</p>
         {ready && stripeLive ? (
           <p className="mt-2 text-sm text-muted">{t("newBillLiveHint")}</p>
@@ -268,7 +269,7 @@ function BillList({
       <div>
         <h3 className="font-display text-xl">{title}</h3>
         <div className="mt-3">
-          <EmptyState title={t("noPayments")} body={empty} />
+          <EmptyState title={t("noPayments")} body={empty} extra={<FirstRunExample id="provider-money" />} />
         </div>
       </div>
     );

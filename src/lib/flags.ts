@@ -192,6 +192,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_IMMUNIZATION_FILE",
   "FEATURE_CENTRE_MINISITE",
   "FEATURE_ROOM_FORECAST",
+  "FEATURE_FIRST_RUN_ONBOARDING",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -546,6 +547,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_CENTRE_MINISITE: false,
   /** Room opening estimate. Off. Never shown on public search. */
   FEATURE_ROOM_FORECAST: false,
+  /** First-run walkthrough, checklists, and help tours. Off. Nothing is sent. */
+  FEATURE_FIRST_RUN_ONBOARDING: false,
 };
 
 /**
@@ -1331,6 +1334,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_IMMUNIZATION_FILE", defaultOn: false, docs: "docs/flags.md", summary: "Immunization file status. Off. No score and no broadcast." },
   { key: "FEATURE_CENTRE_MINISITE", defaultOn: false, docs: "docs/flags.md", summary: "A page for a claimed centre. Off. KidEase does not certify the centre." },
   { key: "FEATURE_ROOM_FORECAST", defaultOn: false, docs: "docs/flags.md", summary: "Room opening estimate for the centre only. Off. Not a public vacancy." },
+  {
+    key: "FEATURE_FIRST_RUN_ONBOARDING",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "First visit walkthrough, setup checklists, screen tips, and the help guide. Off. Nothing is emailed, texted, or pushed.",
+  },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;

@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
+import { FirstRunExample } from "@/components/first-run";
 import {
   eventsFromTours,
   eventsOnDay,
@@ -128,7 +129,7 @@ export function TourCalendarPage({ audience }: { audience: "parent" | "provider"
   }
 
   return (
-    <section data-ke="tour-calendar" className="space-y-4">
+    <section data-ke="tour-calendar" data-tour="provider-tours" className="space-y-4">
       <div>
         <p className="text-sm font-semibold text-primary">KidEase</p>
         <h1 className="mt-2 font-display text-3xl">{title}</h1>
@@ -179,7 +180,10 @@ export function TourCalendarPage({ audience }: { audience: "parent" | "provider"
       </div>
       {events.length === 0 ? (
         audience === "provider" ? (
-          <p className="text-sm text-muted">{fr ? "Aucune visite ouverte." : "No open visit."}</p>
+          <div>
+            <p className="text-sm text-muted">{fr ? "Aucune visite ouverte." : "No open visit."}</p>
+            <FirstRunExample id="provider-tours" />
+          </div>
         ) : (
           <EmptyState
             title={fr ? "Aucune visite ouverte" : "No open visit"}

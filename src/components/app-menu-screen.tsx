@@ -5,6 +5,7 @@ import { AppStoreStatus } from "@/components/app-store-status";
 import { CountUp } from "@/components/count-up";
 import { KidBlocks, KidStars } from "@/components/kid-art";
 import { LanguageSelect } from "@/components/language-select";
+import { FirstRunMenuLinks } from "@/components/first-run";
 import { HistoryBack } from "@/components/history-back";
 import { MenuGlyph, MenuRow } from "@/components/menu-row";
 import { RoleSwitchPill } from "@/components/role-switch-pill";
@@ -172,6 +173,7 @@ export function AppMenuScreen({
           </>
         ) : null}
         {signedIn ? (
+        <>
         <MenuRow
           to={highlight === "create" || user ? accountDeskPath(pathname) : localePath("/login", locale)}
           search={
@@ -185,7 +187,9 @@ export function AppMenuScreen({
           icon={highlight === "create" || user ? "settings" : "login"}
           marker="account"
         />
+        </>
         ) : null}
+        <FirstRunMenuLinks />
         {signedIn && user ? (
           <MenuRow
             to={menuDeskPath(pathname)}

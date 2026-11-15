@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { EmptyState } from "@/components/empty-state";
+import { FirstRunExample } from "@/components/first-run";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { InboxMessageRow } from "@/components/inbox-row";
 import { PipelineBadge } from "@/components/pipeline-badge";
@@ -79,7 +80,7 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
   if (!user) return <RedirectToSignIn />;
 
   const list = (
-    <div>
+    <div data-tour="desk-messages">
       <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]">{t("messages")}</h2>
       <label className="mt-3 block">
         <span className="sr-only">{t("inboxSearchThreads")}</span>
@@ -90,6 +91,7 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
             onChange={(event) => setQuery(event.target.value)}
             placeholder={view === "centre" ? t("inboxSearchPh") : t("inboxSearchThreads")}
             onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
+            data-tour="inbox-search"
             className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none"
           />
         </span>
@@ -134,9 +136,10 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
                   body={t("noInboxCentreLead")}
                   action={t("emptyProviderInboxCta")}
                   actionTo="/inbox?view=centre"
+                  extra={<FirstRunExample id="provider-messages" />}
                 />
               ) : (
-                <EmptyState title={t("noInbox")} body={t("noInboxLead")} action={t("emptyFindCare")} actionTo="/search" />
+                <EmptyState title={t("noInbox")} body={t("noInboxLead")} action={t("emptyFindCare")} actionTo="/search" extra={<FirstRunExample id="parent-messages" />} />
               )
             ) : (
               <EmptyState

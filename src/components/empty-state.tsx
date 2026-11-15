@@ -14,6 +14,7 @@ export function EmptyState({
   onSecondary,
   icon: Icon = Search,
   art,
+  extra,
 }: {
   title: string;
   body?: string;
@@ -25,6 +26,7 @@ export function EmptyState({
   onSecondary?: () => void;
   icon?: LucideIcon;
   art?: ReactNode;
+  extra?: ReactNode;
 }) {
   return (
     <div className="mx-auto max-w-md px-4 py-6 text-center">
@@ -58,6 +60,7 @@ export function EmptyState({
           ) : null}
         </div>
       ) : null}
+      {extra}
     </div>
   );
 }
