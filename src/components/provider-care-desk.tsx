@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { CareFloorDesk } from "@/components/care-floor-desk";
+import { Phase1Desk } from "@/components/phase1-desk";
 import { KioskTablet } from "@/components/qr-kiosk-panel";
 import { listProviderFamilyDocs } from "@/lib/server/provider-care";
 import { useCopy } from "@/lib/use-copy";

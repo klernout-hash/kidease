@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HEALTH_CHECKS, TOILET_KINDS } from "@/lib/care-floor";
-import { listCareFloor, saveCareFloor } from "@/lib/server/care-floor";
+import { listCareFloor, saveCareFloor, type FloorWrite } from "@/lib/server/care-floor";
 import { useCopy } from "@/lib/use-copy";
 
 type Floor = Awaited<ReturnType<typeof listCareFloor>>;
@@ -72,7 +72,7 @@ export function CareFloorDesk({ daycareId }: { daycareId: string }) {
     void load();
   }, [daycareId]);
 
-  async function run(action: string, payload: Record<string, unknown>, bookingId?: string) {
+  async function run(action: string, payload: Partial<FloorWrite>, bookingId?: string) {
     setBusy(true);
     setError("");
     const result = await saveCareFloor({ data: { daycareId, action, bookingId, payload } }).catch(() => null);
@@ -164,7 +164,7 @@ export function CareFloorDesk({ daycareId }: { daycareId: string }) {
             {key}
           </label>
         ))}
-        <Button type="button" className="mt-2" disabled={busy || !picked} onClick={() => void run("health", { checks: Object.fromEntries(HEALTH_CHECKS.map((key) => [key, checks[key] === true])), child: picked?.name }, picked?.bookingId)}>{t.save}</Button>
+        <Button type="button" className="mt-2" disabled={busy || !picked} onClick={() => void run("health", { checks: { fever: checks.fever === true, rash: checks.rash === true, cough: checks.cough === true, vomiting: checks.vomiting === true }, child: picked?.name }, picked?.bookingId)}>{t.save}</Button>
       </div>
 
       <div className="mt-6" data-ke="care-event">
