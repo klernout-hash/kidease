@@ -166,18 +166,33 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
                 onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
               />
             </label>
-            <label className="block text-sm sm:col-span-2">
-              {t("employeeRole")}
-              <select
-                className="ke-input mt-1 min-h-11"
-                value={form.role}
-                onChange={(e) => setForm((p) => ({ ...p, role: e.target.value }))}
-              >
-                <option value="staff">{t("employeeRoleStaff")}</option>
-                <option value="manager">{t("employeeRoleManager")}</option>
-                <option value="read_only">{t("employeeRoleReadOnly")}</option>
-              </select>
-            </label>
+            <fieldset className="block text-sm sm:col-span-2">
+              <legend className="font-medium">{t("employeeRole")}</legend>
+              <div className="mt-2 grid gap-2">
+                {(
+                  [
+                    ["staff", "employeeRoleStaff", "employeeRoleStaffAccess"],
+                    ["manager", "employeeRoleManager", "employeeRoleManagerAccess"],
+                    ["read_only", "employeeRoleReadOnly", "employeeRoleReadOnlyAccess"],
+                  ] as const
+                ).map(([value, label, summary]) => (
+                  <label key={value} className="flex min-h-11 items-start gap-3 rounded-lg px-1 py-1">
+                    <input
+                      className="mt-1 size-4 shrink-0"
+                      type="radio"
+                      name="employee-role"
+                      value={value}
+                      checked={form.role === value}
+                      onChange={() => setForm((p) => ({ ...p, role: value }))}
+                    />
+                    <span className="min-w-0">
+                      <span className="block font-medium">{t(label)}</span>
+                      <span className="block text-sm text-muted">{t(summary)}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           </div>
           <Button type="submit" className="mt-4 min-h-11" disabled={busy || !form.daycareId}>
             {t("employeeAddSubmit")}

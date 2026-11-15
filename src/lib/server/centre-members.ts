@@ -254,8 +254,10 @@ export const inviteCentreEmployee = createServerFn({ method: "POST" })
       url: employeeInviteUrl(token),
       invitedName: name,
     };
-    let mailed = (await trySendEmployeeInviteEmail(payload)).mailed;
-    if (!mailed) mailed = (await trySendEmployeeInviteEmail(payload)).mailed;
+    const firstSend = await trySendEmployeeInviteEmail(payload);
+    const mailed = firstSend.mailed || firstSend.suppressed
+      ? firstSend.mailed
+      : (await trySendEmployeeInviteEmail(payload)).mailed;
     return {
       ok: true as const,
       inviteId: id,

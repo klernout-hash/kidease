@@ -43,11 +43,18 @@ test("BRANDED_EMAILS on: branded html + one-click List-Unsubscribe", async () =>
   assert.equal(r.headers["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click");
   assert.ok(r.headers["List-Unsubscribe"].includes(base.unsubscribeUrl));
 });
-test("never sends mail about a test listing", async () => {
+test("never sends mail about a test listing unless every recipient is allowlisted", async () => {
   let called = 0;
-  const r = await sendTransactionalMail({ ...input, aboutTestListing: true }, { env: { RESEND_API_KEY: "k" }, fetch: async () => { called++; return new Response("{}"); } });
+  const logs = [];
+  const r = await sendTransactionalMail(
+    { ...input, aboutTestListing: true },
+    { env: { RESEND_API_KEY: "k" }, log: (line) => logs.push(line), fetch: async () => { called++; return new Response("{}"); } },
+  );
   assert.equal(called, 0);
   assert.equal(r.status, "logged");
+  assert.equal(r.reason, "test_listing_suppressed");
+  assert.match(logs.join("\n"), /reason=test_listing_suppressed/);
+  assert.doesNotMatch(logs.join("\n"), /reason=not_configured/);
 });
 test("Resend payload carries headers + branded html when flag on", async () => {
   let body = {};

@@ -17,10 +17,10 @@ test("the admin desk does not auto-start the parent tour", () => {
 
 test("the tour scrim does not block the parent-view link", () => {
   const tour = src("src/components/first-run.tsx");
-  assert.match(tour, /data-ke="first-run-scrim"[^>]*pointer-events-none|pointer-events-none[^>]*data-ke="first-run-scrim"/);
-  assert.match(tour, /data-ke="coach-scrim"/);
-  assert.match(tour, /pointer-events-none fixed inset-0 z-\[66\]/);
-  assert.match(tour, /pointer-events-auto/);
+  assert.match(tour, /pointer-events-none fixed inset-0 z-\[60\]" data-ke="first-run-scrim"/);
+  assert.match(tour, /aria-modal="false"/);
+  assert.match(tour, /pointer-events-auto fixed/);
+  assert.match(tour, /marker="coach-tour"/);
 });
 
 test("support waits for the desk list instead of saying not found", () => {

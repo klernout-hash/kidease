@@ -25,6 +25,10 @@ import {
   serializeOnboardingState,
   shouldAutoShow,
   welcomeSlides,
+  blocksAutoTour,
+  boxesOverlap,
+  placeCoachBubble,
+  presentCoachSteps,
 } from "../src/lib/first-run.ts";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -152,13 +156,33 @@ test("each main screen has one tour, and quiet desks stay quiet", () => {
   assert.equal(onboardingPlace({ pathname: "/inbox", view: "centre" }).tour, "tour:provider:messages");
   assert.equal(onboardingPlace({ pathname: "/login" }).welcome, null);
   assert.equal(onboardingPlace({ pathname: "/admin" }).tour, null);
-  assert.equal(welcomeSlides(WELCOME_PARENT).length >= 3, true);
-  assert.equal(welcomeSlides(WELCOME_PARENT).length <= 5, true);
-  assert.equal(welcomeSlides(WELCOME_PROVIDER).length <= 5, true);
+  assert.equal(onboardingPlace({ pathname: "/admin-chat" }).welcome, null);
+  assert.equal(onboardingPlace({ pathname: "/gov/reports" }).welcome, null);
+  assert.equal(blocksAutoTour("admin"), true);
+  assert.equal(blocksAutoTour("government"), true);
+  assert.equal(blocksAutoTour("parent"), false);
+  assert.equal(welcomeSlides(WELCOME_PARENT).length >= 4, true);
+  assert.equal(welcomeSlides(WELCOME_PROVIDER).length >= 4, true);
   for (const slide of [...welcomeSlides(WELCOME_PARENT), ...welcomeSlides(WELCOME_PROVIDER)]) {
+    assert.ok(slide.anchors.length > 0);
+    assert.ok(slide.body.en.length < 90);
     assert.ok(slide.title.fr.length > 3);
     assert.notEqual(slide.title.fr, slide.title.en);
   }
+});
+
+test("a missing target is skipped and the bubble stays off the target", () => {
+  const slides = welcomeSlides(WELCOME_PARENT);
+  const visible = presentCoachSteps(slides, (selector) => selector.includes("help-button"));
+  assert.equal(visible.length, 1);
+  assert.equal(visible[0]?.title.en, "Help stays here");
+  const target = { top: 20, left: 16, width: 280, height: 56 };
+  const placed = placeCoachBubble(target, { width: 260, height: 150 }, { width: 390, height: 844 });
+  assert.equal(boxesOverlap(target, { ...placed, height: 150 }, 8), false);
+  const low = { top: 700, left: 40, width: 80, height: 64 };
+  const above = placeCoachBubble(low, { width: 260, height: 150 }, { width: 390, height: 844 });
+  assert.equal(above.arrow, "down");
+  assert.equal(boxesOverlap(low, { ...above, height: 150 }, 8), false);
 });
 
 test("help search finds French and English articles", () => {

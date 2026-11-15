@@ -19,13 +19,16 @@ import {
   onboardingPlace,
   parentProgressLabel,
   parentQuickStart,
+  placeCoachBubble,
+  presentCoachSteps,
   pickCopy,
   providerSetup,
   readinessLabel,
   searchGuide,
   shouldAutoShow,
-  stepCounter,
+  stepAnchors,
   welcomeSlides,
+  blocksAutoTour,
   type ChecklistResult,
   type FirstRunLocale,
   type OnboardingKey,
@@ -48,6 +51,7 @@ import {
 } from "@/lib/first-run-client";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { getParentQuickFacts, getProviderSetupFacts } from "@/lib/server/first-run";
+import { useRoleChrome } from "@/components/role-chrome";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -57,48 +61,18 @@ function localeOf(locale: string): FirstRunLocale {
   return locale === "fr" ? "fr" : "en";
 }
 
-function useFocusTrap(open: boolean, onEscape: () => void) {
-  const ref = useRef<HTMLDivElement>(null);
-  const escapeRef = useRef(onEscape);
-  escapeRef.current = onEscape;
-  useEffect(() => {
-    if (!open) return;
-    const node = ref.current;
-    if (!node) return;
-    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    node.focus();
-    function items() {
-      if (!node) return [];
-      return Array.from(node.querySelectorAll<HTMLElement>("button, a[href], input")).filter(
-        (el) => !el.hasAttribute("disabled") && el.tabIndex >= 0,
-      );
+function findTarget(anchors: readonly string[]): HTMLElement | null {
+  for (const selector of anchors) {
+    for (const node of document.querySelectorAll(selector)) {
+      if (!(node instanceof HTMLElement)) continue;
+      const style = getComputedStyle(node);
+      if (style.display === "none" || style.visibility === "hidden") continue;
+      const rect = node.getBoundingClientRect();
+      if (rect.width < 8 || rect.height < 8) continue;
+      return node;
     }
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        escapeRef.current();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const list = items();
-      if (!list.length) return;
-      const first = list[0];
-      const last = list[list.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      previous?.focus();
-    };
-  }, [open]);
-  return ref;
+  }
+  return null;
 }
 
 function CallLink({ locale }: { locale: FirstRunLocale }) {
@@ -115,6 +89,174 @@ function CallLink({ locale }: { locale: FirstRunLocale }) {
   );
 }
 
+export function AnchoredCoach({
+  steps,
+  marker,
+  audience,
+  onClose,
+}: {
+  steps: ReadonlyArray<{ anchor?: string; anchors?: readonly string[]; title: { en: string; fr: string }; body: { en: string; fr: string } }>;
+  marker: string;
+  audience?: "parent" | "provider";
+  onClose: () => void;
+}) {
+  const { locale: raw } = useCopy();
+  const locale = localeOf(raw);
+  const titleId = useId();
+  const bodyId = useId();
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  const scans = useRef(0);
+  const [index, setIndex] = useState(0);
+  const [live, setLive] = useState<typeof steps | null>(null);
+  const [spot, setSpot] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [place, setPlace] = useState<{ top: number; left: number; width: number; arrow: "up" | "down" } | null>(null);
+
+  useEffect(() => {
+    let stop = false;
+    const scan = () => {
+      if (stop) return;
+      scans.current += 1;
+      setLive(presentCoachSteps(steps, (selector) => findTarget([selector]) != null));
+    };
+    scan();
+    const timers = [250, 900].map((ms) => window.setTimeout(scan, ms));
+    window.addEventListener("resize", scan);
+    return () => {
+      stop = true;
+      timers.forEach((id) => window.clearTimeout(id));
+      window.removeEventListener("resize", scan);
+    };
+  }, [steps]);
+
+  useEffect(() => {
+    if (live && live.length === 0 && scans.current >= 3) closeRef.current();
+  }, [live]);
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeRef.current();
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  const shown = live ?? [];
+  const safeIndex = shown.length ? Math.min(index, shown.length - 1) : 0;
+  const step = shown[safeIndex];
+
+  useIsoLayout(() => {
+    if (!step) return;
+    const node = findTarget(stepAnchors(step));
+    if (!node) {
+      setSpot(null);
+      return;
+    }
+    node.scrollIntoView({ block: "center", inline: "nearest" });
+    const rect = node.getBoundingClientRect();
+    const nextSpot = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+    setSpot(nextSpot);
+    const bubble = bubbleRef.current?.getBoundingClientRect();
+    const width = Math.min(280, window.innerWidth - 24);
+    const height = bubble && bubble.height > 40 ? bubble.height : 168;
+    setPlace(placeCoachBubble(nextSpot, { width, height }, { width: window.innerWidth, height: window.innerHeight }));
+  }, [step, safeIndex, live]);
+
+  if (!live || !step || !spot || !place) return null;
+  const last = safeIndex >= shown.length - 1;
+  const arrowX = Math.max(16, Math.min(spot.left + spot.width / 2 - place.left - 8, place.width - 28));
+  return createPortal(
+    <div className="pointer-events-none fixed inset-0 z-[60]" data-ke="first-run-scrim">
+      <div
+        data-ke="coach-hole"
+        className="pointer-events-none fixed rounded-xl"
+        style={{
+          top: Math.max(4, spot.top - 6),
+          left: Math.max(4, spot.left - 6),
+          width: spot.width + 12,
+          height: spot.height + 12,
+          boxShadow: "0 0 0 100vmax color-mix(in srgb, var(--color-fg) 46%, transparent)",
+        }}
+      />
+      <div
+        ref={bubbleRef}
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby={titleId}
+        aria-describedby={bodyId}
+        data-ke={marker}
+        data-audience={audience}
+        data-step={safeIndex + 1}
+        data-steps={shown.length}
+        data-locale={locale}
+        className="pointer-events-auto fixed max-w-[calc(100%-1.5rem)] rounded-xl bg-surface p-3 text-fg shadow-card ring-1 ring-border"
+        style={{ top: place.top, left: place.left, width: place.width }}
+      >
+        <span
+          aria-hidden
+          className="absolute h-0 w-0"
+          style={
+            place.arrow === "up"
+              ? {
+                  left: arrowX,
+                  top: -8,
+                  borderLeft: "8px solid transparent",
+                  borderRight: "8px solid transparent",
+                  borderBottom: "8px solid var(--color-surface)",
+                }
+              : {
+                  left: arrowX,
+                  bottom: -8,
+                  borderLeft: "8px solid transparent",
+                  borderRight: "8px solid transparent",
+                  borderTop: "8px solid var(--color-surface)",
+                }
+          }
+        />
+        <h2 id={titleId} className="text-base font-semibold leading-5 text-balance">
+          {pickCopy(locale, step.title)}
+        </h2>
+        <p id={bodyId} className="mt-1 text-sm leading-5 text-muted">
+          {pickCopy(locale, step.body)}
+        </p>
+        <div className="mt-2 flex items-center gap-1" data-ke="coach-dots" aria-hidden>
+          {shown.map((item, dot) => (
+            <span
+              key={stepAnchors(item)[0] ?? dot}
+              className={dot === safeIndex ? "h-1.5 w-4 rounded-full bg-primary" : "size-1.5 rounded-full bg-border"}
+            />
+          ))}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {safeIndex > 0 ? (
+            <Button type="button" variant="ghost" data-ke="first-run-back" onClick={() => setIndex((n) => Math.max(0, n - 1))}>
+              {pickCopy(locale, UI_COPY.back)}
+            </Button>
+          ) : null}
+          <Button type="button" variant="secondary" data-ke="first-run-skip" onClick={onClose}>
+            {pickCopy(locale, UI_COPY.skip)}
+          </Button>
+          <Button
+            type="button"
+            data-ke="first-run-next"
+            onClick={() => {
+              if (last) onClose();
+              else setIndex((n) => n + 1);
+            }}
+          >
+            {pickCopy(locale, last ? UI_COPY.done : UI_COPY.next)}
+          </Button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export function WelcomeWalkthrough({
   tourKey,
   onClose,
@@ -122,156 +264,18 @@ export function WelcomeWalkthrough({
   tourKey: typeof WELCOME_PARENT | typeof WELCOME_PROVIDER;
   onClose: () => void;
 }) {
-  const { locale: raw } = useCopy();
-  const locale = localeOf(raw);
-  const slides = welcomeSlides(tourKey);
-  const [index, setIndex] = useState(0);
-  const titleId = useId();
-  const bodyId = useId();
-  const ref = useFocusTrap(true, onClose);
-  const slide = slides[index] ?? slides[0];
-  const last = index >= slides.length - 1;
   return (
-    <div className="fixed inset-0 z-[70] grid place-items-end bg-fg/40 p-3 pointer-events-none sm:place-items-center" data-ke="first-run-scrim">
-      <div
-        ref={ref}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={bodyId}
-        tabIndex={-1}
-        data-ke="first-run-welcome"
-        data-audience={tourKey === WELCOME_PROVIDER ? "provider" : "parent"}
-        data-step={index + 1}
-        data-locale={locale}
-        className="pointer-events-auto w-full max-w-md rounded-xl bg-surface p-5 text-fg shadow-card ring-1 ring-border outline-none"
-      >
-        <p className="text-sm font-medium text-primary">{pickCopy(locale, UI_COPY.welcomeLabel)}</p>
-        <p className="mt-2 text-sm text-muted">{stepCounter(locale, index, slides.length)}</p>
-        <h2 id={titleId} className="mt-2 font-display text-2xl text-balance">
-          {pickCopy(locale, slide.title)}
-        </h2>
-        <p id={bodyId} className="mt-3 text-base leading-6 text-muted">
-          {pickCopy(locale, slide.body)}
-        </p>
-        <div className="mt-5 flex flex-col gap-2">
-          <Button
-            type="button"
-            data-ke="first-run-next"
-            className="w-full"
-            onClick={() => {
-              if (last) onClose();
-              else setIndex((n) => n + 1);
-            }}
-          >
-            {pickCopy(locale, last ? UI_COPY.done : UI_COPY.next)}
-          </Button>
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="secondary" data-ke="first-run-skip" className="min-w-0 flex-1" onClick={onClose}>
-              {pickCopy(locale, UI_COPY.skip)}
-            </Button>
-            <Button type="button" variant="ghost" data-ke="first-run-dismiss" className="min-w-0 flex-1" onClick={onClose}>
-              {pickCopy(locale, UI_COPY.dismiss)}
-            </Button>
-          </div>
-        </div>
-        {last ? (
-          <p className="mt-4">
-            <CallLink locale={locale} />
-          </p>
-        ) : null}
-      </div>
-    </div>
+    <AnchoredCoach
+      steps={welcomeSlides(tourKey)}
+      marker="first-run-welcome"
+      audience={tourKey === WELCOME_PROVIDER ? "provider" : "parent"}
+      onClose={onClose}
+    />
   );
 }
 
 export function CoachTour({ tourKey, onClose }: { tourKey: TourKey; onClose: () => void }) {
-  const { locale: raw } = useCopy();
-  const locale = localeOf(raw);
-  const steps = TOURS[tourKey];
-  const [index, setIndex] = useState(0);
-  const [box, setBox] = useState<{ top: number; left: number; width: number } | null>(null);
-  const titleId = useId();
-  const bodyId = useId();
-  const ref = useFocusTrap(true, onClose);
-  const step = steps[index] ?? steps[0];
-  const last = index >= steps.length - 1;
-
-  useIsoLayout(() => {
-    const anchor = document.querySelector(step.anchor);
-    const node = anchor instanceof HTMLElement ? anchor : null;
-    node?.scrollIntoView({ block: "center", inline: "nearest" });
-    if (!node) {
-      setBox(null);
-      return;
-    }
-    const rect = node.getBoundingClientRect();
-    const width = Math.min(22 * 16, window.innerWidth - 24);
-    const left = Math.min(Math.max(12, rect.left), window.innerWidth - width - 12);
-    const below = rect.bottom + 12;
-    const top = below + 180 > window.innerHeight ? Math.max(12, rect.top - 180) : below;
-    setBox({ top, left, width });
-    const previous = node.style.outline;
-    const previousOffset = node.style.outlineOffset;
-    node.style.outline = "2px solid var(--color-primary)";
-    node.style.outlineOffset = "3px";
-    return () => {
-      node.style.outline = previous;
-      node.style.outlineOffset = previousOffset;
-    };
-  }, [step.anchor, index]);
-
-  return (
-    <div className="pointer-events-none fixed inset-0 z-[66]" data-ke="coach-scrim">
-      <div
-        ref={ref}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={bodyId}
-        tabIndex={-1}
-        data-ke="coach-tour"
-        data-tour-key={tourKey}
-        data-step={index + 1}
-        data-locale={locale}
-        className="pointer-events-auto fixed max-w-[calc(100%-1.5rem)] rounded-xl bg-surface p-4 text-fg shadow-card ring-1 ring-border outline-none"
-        style={
-          box
-            ? { top: box.top, left: box.left, width: box.width }
-            : { top: "50%", left: "50%", width: "min(22rem, calc(100% - 1.5rem))", transform: "translate(-50%, -50%)" }
-        }
-      >
-        <p className="text-sm font-medium text-primary">{pickCopy(locale, UI_COPY.tourLabel)}</p>
-        <p className="mt-1 text-sm text-muted">{stepCounter(locale, index, steps.length)}</p>
-        <h2 id={titleId} className="mt-2 text-lg font-semibold text-balance">
-          {pickCopy(locale, step.title)}
-        </h2>
-        <p id={bodyId} className="mt-2 text-sm leading-5 text-muted">
-          {pickCopy(locale, step.body)}
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {index > 0 ? (
-            <Button type="button" variant="ghost" data-ke="coach-back" onClick={() => setIndex((n) => n - 1)}>
-              {pickCopy(locale, UI_COPY.back)}
-            </Button>
-          ) : null}
-          <Button type="button" variant="secondary" data-ke="coach-skip" onClick={onClose}>
-            {pickCopy(locale, UI_COPY.skip)}
-          </Button>
-          <Button
-            type="button"
-            data-ke="coach-next"
-            onClick={() => {
-              if (last) onClose();
-              else setIndex((n) => n + 1);
-            }}
-          >
-            {pickCopy(locale, last ? UI_COPY.done : UI_COPY.next)}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+  return <AnchoredCoach steps={TOURS[tourKey]} marker="coach-tour" onClose={onClose} />;
 }
 
 function ChecklistCard({
@@ -522,12 +526,14 @@ export function FirstRunHost() {
   const { enabled, ready } = useReadyFlag();
   const progress = useOnboardingState();
   const { user } = useCurrentUserState();
+  const chrome = useRoleChrome();
+  const blocked = blocksAutoTour(chrome.role);
+  const screenTourReady = useRef<boolean | null>(null);
   const { locale: raw } = useCopy();
   const locale = localeOf(raw);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const searchStr = useRouterState({ select: (s) => s.location.searchStr });
   const [forced, setForced] = useState<OnboardingKey | null>(null);
-  const [welcomeClosed, setWelcomeClosed] = useState(false);
   const [providerFacts, setProviderFacts] = useState<ChecklistResult | null>(null);
   const [parentFacts, setParentFacts] = useState<ChecklistResult | null>(null);
   const params = new URLSearchParams(searchStr);
@@ -542,10 +548,6 @@ export function FirstRunHost() {
     setOnboardingSignedIn(Boolean(user?.id));
     if (user?.id && enabled === true) void pullOnboarding();
   }, [user?.id, enabled]);
-
-  useEffect(() => {
-    setWelcomeClosed(false);
-  }, [place.welcome, pathname]);
 
   useEffect(() => {
     function onReplay(event: Event) {
@@ -580,17 +582,24 @@ export function FirstRunHost() {
     }
   }, [enabled, user?.id, place.checklist, pathname, searchStr]);
 
+  if (ready && enabled === true && screenTourReady.current === null) {
+    screenTourReady.current = !place.welcome || !shouldAutoShow(progress, place.welcome);
+  }
+
   if (!ready || enabled !== true) return null;
 
   const replayWelcome = forced === WELCOME_PARENT || forced === WELCOME_PROVIDER ? forced : null;
   const replayTour = forced != null && forced in TOURS ? (forced as TourKey) : null;
   const welcomeKey = replayWelcome ?? place.welcome;
-  const showWelcome = replayTour == null && welcomeKey != null && (replayWelcome != null || shouldAutoShow(progress, welcomeKey));
+  const showWelcome =
+    replayTour == null &&
+    welcomeKey != null &&
+    (replayWelcome != null || (!blocked && shouldAutoShow(progress, welcomeKey)));
   const tourKey = replayTour ?? place.tour;
   const showTour =
     tourKey != null &&
     !showWelcome &&
-    (replayTour != null || (shouldAutoShow(progress, tourKey) && (welcomeClosed || !shouldAutoShow(progress, place.welcome))));
+    (replayTour != null || (!blocked && screenTourReady.current === true && shouldAutoShow(progress, tourKey) && !shouldAutoShow(progress, place.welcome)));
 
   const checklist =
     place.checklist === CHECKLIST_PROVIDER
@@ -604,7 +613,6 @@ export function FirstRunHost() {
   function closeWelcome() {
     if (welcomeKey) rememberSeen(welcomeKey);
     setForced(null);
-    setWelcomeClosed(true);
   }
   function closeTour() {
     if (tourKey) rememberSeen(tourKey);
