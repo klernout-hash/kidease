@@ -145,6 +145,10 @@ export type StripeCheckoutInput = {
   /** KidEase service fee in cents. Equals application_fee_amount. Not tax. */
   applicationFeeCents?: number;
   serviceFeeLabel?: string | null;
+  /** QA and hidden centres pass the test secret. Live payments omit it. */
+  secret?: string;
+  /** False keeps a real parent's live customer id during a test-mode charge. */
+  persistCustomer?: boolean;
 };
 
 export type StripeCheckoutSession = {
@@ -372,10 +376,14 @@ export async function createStripeCheckoutSession(input: StripeCheckoutInput): P
     customerId: input.customerId,
     email: input.customerEmail,
     userId: input.userId,
+    secret: input.secret,
+    persist: input.persistCustomer !== false,
   });
   const json = await stripeRequest<StripeCheckoutSession>(
     "/checkout/sessions",
     checkoutSessionBody({ ...input, customerId, customerEmail: null }),
+    "POST",
+    { secret: input.secret },
   );
   if (!json.id) throw new Error("Stripe checkout failed");
   return {

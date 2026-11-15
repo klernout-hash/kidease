@@ -98,6 +98,7 @@ async function stripeCallFor(sql: Sql, userId: string, daycareId?: string | null
       : false,
     liveEnabled: connectLiveEnabled(),
   });
+  if (mode === "live" && !connectLiveEnabled()) return { ok: false, reason: "live" };
   const creds = stripeCredentialsForMode(mode, process.env);
   if (!creds.ok) return { ok: false, reason: "missing" };
   return creds;

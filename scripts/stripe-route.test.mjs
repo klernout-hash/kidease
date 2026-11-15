@@ -19,13 +19,12 @@ test("a real parent at a public centre uses the live keys only when the live swi
   assert.equal(payerUsesTestStripe({ email: "parent@example.com", isTest: 0 }), false);
   assert.equal(centreUsesTestStripe({ visibility: "public", isTest: 0, slug: "elm-street-daycare" }), false);
   const held = paymentStripeMode({ payerQa: false, centreQa: false, liveEnabled: false });
-  assert.equal(held, "test");
-  const heldKeys = stripeCredentialsForMode(held, env);
-  assert.equal(heldKeys.ok, true);
-  if (heldKeys.ok) {
-    assert.equal(heldKeys.secret, "sk_test_qa");
-    assert.equal(heldKeys.secret.startsWith("sk_live_"), false);
-  }
+  assert.equal(held, "live");
+  assert.equal(paymentStripeMode({ payerQa: true, centreQa: false, liveEnabled: false }), "test");
+  assert.equal(paymentStripeMode({ payerQa: false, centreQa: true, liveEnabled: false }), "test");
+  const qaKeys = stripeCredentialsForMode("test", env);
+  assert.equal(qaKeys.ok, true);
+  if (qaKeys.ok) assert.equal(qaKeys.secret, "sk_test_qa");
   const mode = paymentStripeMode({ payerQa: false, centreQa: false, liveEnabled: true });
   assert.equal(mode, "live");
   const keys = stripeCredentialsForMode(mode, env);

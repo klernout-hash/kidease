@@ -3,6 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
 import { connectLiveEnabled, parentChargeQuote } from "@/lib/connect-payments";
+import { centreUsesTestStripe, payerUsesTestStripe, paymentStripeMode, stripeCredentialsForMode } from "@/lib/stripe-route";
 import { currentPeriod, platformFeeBps } from "@/lib/stripe-methods";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import {
@@ -611,16 +612,40 @@ export const createBillCheckout = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const billId = data.billId;
     const sql = await getSql();
-    const row = parentBillCardLive() ? await loadInvoice(sql, billId) : null;
+    const row = await loadInvoice(sql, billId);
     const bill = row ? mapBill(row) : null;
+    const centreRows = bill
+      ? await sql<{
+          id: string;
+          slug: string | null;
+          visibility: string | null;
+          is_test: number | boolean | null;
+          is_demo: number | boolean | null;
+        }>`
+          select id, slug, visibility, is_test, is_demo from daycares where id = ${bill.daycareId} limit 1
+        `.catch(() => [])
+      : [];
+    const centre = centreRows[0];
+    const payerQa = payerUsesTestStripe({ email: bill?.parentEmail });
+    const centreQa = centreUsesTestStripe({
+      id: centre?.id || bill?.daycareId,
+      slug: centre?.slug,
+      visibility: centre?.visibility,
+      isTest: centre?.is_test,
+      isDemo: centre?.is_demo,
+    });
+    const mode = paymentStripeMode({ payerQa, centreQa, liveEnabled: connectLiveEnabled() });
+    const creds = stripeCredentialsForMode(mode, process.env);
+    const qaTestCheckout = mode === "test" && creds.ok;
     const gate = decideBillCheckout({
       actorUserId: context.userId,
       bill: bill ? { parentUserId: bill.parentUserId, status: bill.status } : null,
-      stripeLive: parentBillCardLive(),
+      stripeLive: parentBillCardLive() || qaTestCheckout,
     });
     if (!gate.ok) throw new Error(gate.error);
     if (gate.alreadyPaid) return { url: null as string | null, alreadyPaid: true as const };
     if (!bill) throw new Error("Bill not found");
+    if (!creds.ok) throw new Error(creds.reason);
     const connect = await sql<{ stripe_account_id: string | null; charges_enabled: number }>`
       select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${bill.daycareId} limit 1
     `.catch(() => []);
@@ -647,15 +672,17 @@ export const createBillCheckout = createServerFn({ method: "POST" })
       daycareName: bill.daycareName,
       successUrl: `${origin}/pay/bill/${bill.id}?paid=1`,
       cancelUrl: `${origin}/pay/bill/${bill.id}`,
-      customerId: profile[0]?.stripe_customer_id ?? null,
+      customerId: mode === "live" ? profile[0]?.stripe_customer_id ?? null : null,
       customerEmail: bill.parentEmail,
       userId: context.userId,
       locale,
       destinationAccount: destination,
       applicationFeeCents: destination ? quote.applicationFeeCents : undefined,
       serviceFeeLabel: quote.label,
+      secret: creds.secret,
+      persistCustomer: mode === "live" || payerQa,
     });
-    await rememberStripeCustomer(context.userId, session.customer ?? null);
+    if (mode === "live" || payerQa) await rememberStripeCustomer(context.userId, session.customer ?? null);
     const pi = typeof session.payment_intent === "string" ? session.payment_intent : null;
     await sql`
       update invoices set

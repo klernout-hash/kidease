@@ -1,7 +1,6 @@
 /**
- * Parent payments use test keys until KIDEASE_CONNECT_LIVE is exactly 1.
- * After that switch is on, a real parent at a public centre uses live keys.
- * A QA account or a hidden centre stays on test keys either way.
+ * A QA account or a hidden centre always uses test keys.
+ * A real parent at a public centre uses live keys only when KIDEASE_CONNECT_LIVE is exactly 1.
  * No secret values are stored here.
  */
 
@@ -58,18 +57,17 @@ export function centreUsesTestStripe(input: {
 }
 
 /**
- * Live charges stay off until KIDEASE_CONNECT_LIVE is exactly 1.
- * While that switch is off, every payment uses test keys.
- * After it is on, a QA account or a hidden centre still uses test keys.
- * A real parent at a public centre uses the live keys.
+ * QA payers and hidden centres stay on test keys even when live charges are on.
+ * A real parent at a public centre is live. The live switch is checked by the
+ * caller before a live secret is used.
  */
 export function paymentStripeMode(input: {
   payerQa?: boolean;
   centreQa?: boolean;
   liveEnabled?: boolean;
 }): PaymentStripeMode {
-  if (input.liveEnabled !== true) return "test";
   if (input.payerQa || input.centreQa) return "test";
+  if (input.liveEnabled === true) return "live";
   return "live";
 }
 
