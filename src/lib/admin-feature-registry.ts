@@ -64,6 +64,7 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_DAILY_LOGS: "shared",
   FEATURE_TOUR_CALENDAR: "shared",
   FEATURE_FAMILY_VAULT: "parent",
+  FEATURE_CENTRE_DOCUMENTS: "daycare",
   FEATURE_UNIFIED_INBOX: "daycare",
   FEATURE_VOICE: "shared",
   FEATURE_PICKUP_CONTACTS: "parent",

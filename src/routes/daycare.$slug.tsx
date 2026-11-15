@@ -234,6 +234,7 @@ export function Listing() {
     reviews: Review[];
     availability: AvailabilityRow[];
     familyGuide?: { dropoff: string; bring: string; handbook: string } | null;
+    documentsVerified?: boolean;
     nearby: Card[];
     spaces?: SpaceGroup | null;
     jobs?: CentreJobPost[];
@@ -853,6 +854,11 @@ export function Listing() {
               <div className="flex items-start gap-1">
                 <h1 className="min-w-0 font-display text-[24px] font-semibold leading-[30px] md:text-[30px] md:leading-9">{name}</h1>
                 {verifiedCheck ? <VerifiedCheck className="mt-1 shrink-0" /> : null}
+                {data.documentsVerified ? (
+                  <p className="mt-2 inline-flex min-h-11 items-center rounded-full bg-ok/10 px-3 text-sm font-medium text-ok" data-ke="documents-verified">
+                    {locale === "fr" ? "Documents vérifiés" : "Documents verified"}
+                  </p>
+                ) : null}
               </div>
 
             </div>

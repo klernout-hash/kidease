@@ -43,6 +43,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "daycares", label: "Daycares", hint: "By province", labelKey: "adminNavDaycares" },
     { id: "trust", label: "Registries", hint: "Licensing bodies and parent reports", labelKey: "adminNavRegistries" },
     { id: "screening", label: "Screening", hint: "Document review", labelKey: "adminNavScreening" },
+    { id: "documents", label: "Documents", hint: "Checklist and score" },
     { id: "mail", label: "Messages", hint: "Mail" },
     { id: "contracts", label: "Contracts", hint: "Provider agreement + enrolment packs", labelKey: "adminNavContracts" },
     { id: "money", label: "Bills", hint: "Parent bills and fees", labelKey: "adminNavBills" },
@@ -379,7 +380,7 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
   ],
   admin: [
     { id: "ops", label: "Operations", labelKey: "navOperations", open: true, itemIds: ["queue", "mail"] },
-    { id: "review", label: "Review", labelKey: "navReview", open: true, itemIds: ["verify", "truth", "reviews", "screening", "spam", "trust", "trust-queue"] },
+    { id: "review", label: "Review", labelKey: "navReview", open: true, itemIds: ["verify", "truth", "reviews", "screening", "documents", "spam", "trust", "trust-queue"] },
     { id: "listings-data", label: "Listings data", labelKey: "navListingsData", itemIds: ["daycares", "incomplete", "winnipeg", "vacancies", "ranking", "qc-home"] },
     { id: "support", label: "Support", labelKey: "support", itemIds: ["support", "triage"] },
     { id: "people", label: "People and money", labelKey: "navPeopleMoney", itemIds: ["people", "money", "connect", "quickbooks", "payroll", "subsidy-tool", "contracts", "government"] },

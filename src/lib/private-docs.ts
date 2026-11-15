@@ -12,6 +12,8 @@ export const R2_SCREENING_PREFIX = "screening";
 export const R2_LICENSE_PREFIX = "licenses";
 /** Parent immunization and subsidy files. Never a public listing prefix. */
 export const R2_FAMILY_PREFIX = "family-docs";
+/** Daycare checklist files. Never a public listing prefix. */
+export const R2_CENTRE_DOC_PREFIX = "centre-docs";
 export const SCREENING_DOC_API = "/api/screening-documents";
 export const LICENSE_DOC_API = "/api/license-docs";
 

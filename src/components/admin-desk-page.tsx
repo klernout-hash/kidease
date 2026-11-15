@@ -92,6 +92,7 @@ import {
   tallyAdminCentreStats,
   type AdminStatFilter,
 } from "@/lib/admin-stat-filter";
+import { AdminCentreDocuments } from "@/components/admin-centre-documents";
 import { AdminReviewsPanel } from "@/components/admin-reviews";
 import { compareTimeDesc } from "@/lib/sort-time";
 import { isGhostClaimLabRow, readQaFixtureToggle, withGhostClaimLab, writeQaFixtureToggle } from "@/lib/admin-ghost-fixture";
@@ -921,6 +922,8 @@ export function AdminPage() {
         />
       ) : tab === "money" ? (
         <MoneyPanel ledger={ledger} rows={moneyRows} q={moneyQ} setQ={setMoneyQ} dir={moneyDir} setDir={setMoneyDir} stripeLive={Boolean(session?.stripeLive)} ready={ready} />
+      ) : tab === "documents" ? (
+        <AdminCentreDocuments />
       ) : tab === "reviews" ? (
         <AdminReviewsPanel />
       ) : tab === "people" ? (

@@ -75,6 +75,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_DAILY_LOGS",
   "FEATURE_TOUR_CALENDAR",
   "FEATURE_FAMILY_VAULT",
+  "FEATURE_CENTRE_DOCUMENTS",
   "FEATURE_UNIFIED_INBOX",
   "FEATURE_VOICE",
   "FEATURE_PICKUP_CONTACTS",
@@ -336,6 +337,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_TOUR_CALENDAR: false,
   /** Parent document vault. Off. */
   FEATURE_FAMILY_VAULT: false,
+  /** Daycare document checklist. Off. Files stay private. No email or SMS. */
+  FEATURE_CENTRE_DOCUMENTS: false,
   /** Daycare inbox lists message threads and requests that have no thread yet. Off. */
   FEATURE_UNIFIED_INBOX: false,
   /** In-app voice between a parent and a centre. Off. No call is placed. */
@@ -945,6 +948,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Parent page for immunization records and subsidy forms. Default off. A centre sees a file only after the parent shares it.",
+  },
+  {
+    key: "FEATURE_CENTRE_DOCUMENTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Daycare document checklist with a completion score. Licence, insurance, policies, handbook PDF, and staff screening. Default off. Files stay private. Expiry reminders are in-app only. No email or SMS.",
   },
   {
     key: "FEATURE_UNIFIED_INBOX",
