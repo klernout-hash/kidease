@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { centreDocCopy } from "@/lib/centre-documents-copy";
 import type { ChecklistItem, ChecklistScore } from "@/lib/centre-documents";
 import { deleteCentreDocument, listCentreDocumentChecklist, saveCentreDocument } from "@/lib/server/centre-documents";
+import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 
 function readFile(file: File): Promise<string> {
@@ -18,6 +19,7 @@ function readFile(file: File): Promise<string> {
 
 export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
   const { locale } = useCopy();
+  const canUpload = useCentreWrite("document_upload");
   const copy = centreDocCopy(locale);
   const [checklist, setChecklist] = useState<ChecklistScore | null>(null);
   const [enabled, setEnabled] = useState(false);
@@ -125,7 +127,7 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
                 />
               </label>
             ) : null}
-            {item.kind !== "licence" && item.kind !== "screening" ? (
+            {canUpload && item.kind !== "licence" && item.kind !== "screening" ? (
               <div className="mt-2 flex flex-wrap gap-2">
                 <label className="inline-flex min-h-11 cursor-pointer items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-fg touch-manipulation">
                   {item.documentId ? copy.replace : copy.upload}

@@ -20,10 +20,6 @@ import {
   type SpotCounts,
 } from "@/lib/host-calendar";
 import { EMPTY_GUIDE, type FamilyGuide } from "@/lib/host-listing";
-import {
-  assertCentreCanMutateListing,
-  assertCentreCanMutateVacancies,
-} from "@/lib/server/centre-access";
 import { resolveListingTourTimezone } from "@/lib/tour-calendar";
 import { effectiveTourStatus } from "@/lib/tour-hold";
 import type { Daycare } from "@/lib/types";
@@ -110,7 +106,8 @@ export const loadHostCalendar = createServerFn({ method: "GET" })
   .handler(async ({ context, data }): Promise<HostCalendarPayload> => {
     if (!hostListingEnabled() || !data.daycareId) return emptyPayload(data.month);
     const sql = await getSql();
-    await assertCentreCanMutateVacancies(sql, context.userId, data.daycareId);
+    const { hasCentreDeskAccess } = await import("@/lib/server/centre-access");
+    if (!(await hasCentreDeskAccess(sql, context.userId, data.daycareId))) return emptyPayload(data.month);
     const centre = await centreZone(sql, data.daycareId);
     if (!centre) return emptyPayload(data.month);
     const today = centreDateISO(centre.timezone);
@@ -248,7 +245,8 @@ export const saveHostCalendarDay = createServerFn({ method: "POST" })
       return { ok: false as const, reason: "off" as const, offerNotify: false };
     if (!isIsoDate(data.day)) throw new Error("Pick a real day");
     const sql = await getSql();
-    await assertCentreCanMutateVacancies(sql, context.userId, data.daycareId);
+    const { assertCanWrite } = await import("@/lib/server/centre-access");
+    await assertCanWrite(sql, context.userId, data.daycareId, "calendar");
     const centre = await centreZone(sql, data.daycareId);
     if (!centre) throw new Error("Listing not found");
     const today = centreDateISO(centre.timezone);
@@ -322,7 +320,8 @@ export const loadFamilyGuide = createServerFn({ method: "GET" })
   .handler(async ({ context, data: daycareId }): Promise<FamilyGuide> => {
     if (!hostListingEnabled() || !daycareId) return EMPTY_GUIDE;
     const sql = await getSql();
-    await assertCentreCanMutateListing(sql, context.userId, daycareId);
+    const { hasCentreDeskAccess } = await import("@/lib/server/centre-access");
+    if (!(await hasCentreDeskAccess(sql, context.userId, daycareId))) return EMPTY_GUIDE;
     const rows = await sql<{
       dropoff_note: string | null;
       bring_note: string | null;
@@ -354,7 +353,8 @@ export const saveFamilyGuide = createServerFn({ method: "POST" })
     if (!hostListingEnabled()) return { ok: false as const, reason: "off" as const };
     if (!data.daycareId) throw new Error("Listing not found");
     const sql = await getSql();
-    await assertCentreCanMutateListing(sql, context.userId, data.daycareId);
+    const { assertCanWrite } = await import("@/lib/server/centre-access");
+    await assertCanWrite(sql, context.userId, data.daycareId, "listing");
     await sql`
       insert into daycare_family_guides (daycare_id, dropoff_note, bring_note, handbook_note, updated_at)
       values (${data.daycareId}, ${data.dropoff}, ${data.bring}, ${data.handbook}, now())
