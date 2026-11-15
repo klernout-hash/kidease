@@ -777,6 +777,8 @@ export type SessionDesks = {
   centreTools?: string[];
   /** Document vault nav. Off unless FEATURE_FAMILY_VAULT is on. */
   familyVault?: boolean;
+  /** Care tools nav. Off unless one of the care flags is on. */
+  careDesk?: boolean;
   /** Tour calendar nav. Off unless FEATURE_TOUR_CALENDAR is on. */
   tourCalendar?: boolean;
   /** Listing editor and day calendar. Off unless FEATURE_HOST_LISTING is on. */
