@@ -55,7 +55,7 @@ try {
   await page.locator("[data-ke=replay-welcome][data-tour-key=welcome\\:parent]").click();
   await welcome.waitFor({ state: "visible" });
   mark("replay", (await welcome.getAttribute("data-step")) === "1");
-  await page.locator("[data-ke=first-run-dismiss]").click();
+  await page.locator("[data-ke=first-run-skip]").click();
 
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.screenshot({ path: join(outDir, "first-run-help-en-1280.png") });
