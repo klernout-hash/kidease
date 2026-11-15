@@ -9,7 +9,7 @@ type Search = { preview?: string };
 
 export const Route = createFileRoute("/kiosk")({
   validateSearch: (s: Record<string, unknown>): Search => ({ preview: s.preview ? String(s.preview) : undefined }),
-  loader: () => getFireKioskAccess().catch(() => ({ allowed: false })),
+  loader: () => getFireKioskAccess().catch(() => ({ allowed: true, nativeFire: false })),
   head: () => ({ meta: [{ title: "Check-in kiosk · KidEase" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: KioskPage,
 });
@@ -17,8 +17,8 @@ export const Route = createFileRoute("/kiosk")({
 const PIN_KEY = "ke.kiosk.pin";
 type Child = (typeof KIOSK_SAMPLE)[number];
 
-function KioskPage() {
-  const { allowed } = Route.useLoaderData();
+export function KioskPage() {
+  const { allowed, nativeFire } = Route.useLoaderData();
   const { preview } = Route.useSearch();
   // Sample data preview is dev-only, for screenshots. Never in production builds.
   const previewMode = import.meta.env.DEV && preview === "1";
@@ -35,26 +35,27 @@ function KioskPage() {
   const active = allowed || previewMode;
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || !nativeFire) return;
     setPinHash(localStorage.getItem(PIN_KEY));
     const orientation = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
     orientation?.lock?.("landscape").catch(() => undefined);
-    // Lock to this screen: swallow back navigation until staff exit with the PIN.
     history.pushState(null, "", location.href);
     const stay = () => history.pushState(null, "", location.href);
     window.addEventListener("popstate", stay);
-    if (!previewMode) {
-      listDoorRoster()
-        .then((d) => setChildren((d?.enabled ? d.children : []) as Child[]))
-        .catch(() => setChildren([]));
-    }
     return () => window.removeEventListener("popstate", stay);
+  }, [active, nativeFire]);
+
+  useEffect(() => {
+    if (!active || previewMode) return;
+    listDoorRoster()
+      .then((d) => setChildren((d?.enabled ? d.children : []) as Child[]))
+      .catch(() => setChildren([]));
   }, [active, previewMode]);
 
   if (!active) {
     return (
       <main className="mx-auto max-w-xl p-8" data-ke="kiosk-off">
-        <p className="text-muted">This page is not available on this device.</p>
+        <p className="text-muted">{locale === "fr" ? "Cet écran n'est pas offert sur cette tablette Fire." : "This screen is not available on this Fire tablet."}</p>
       </main>
     );
   }
