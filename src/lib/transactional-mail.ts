@@ -371,7 +371,8 @@ async function defaultSendTitan(input: {
   text: string;
   html?: string;
 }): Promise<{ ok: true; via: "titan" }> {
-  const { sendTitanMail } = await import("./server/titan-mail.server.ts");
+  const titanFile = "./server/" + "titan-mail.server.ts";
+  const { sendTitanMail } = await import(/* @vite-ignore */ titanFile);
   const sent = await sendTitanMail(input);
   return { ok: true, via: sent.via };
 }

@@ -34,6 +34,7 @@ import {
 import { centreToolsCopy, type CentreToolsCopy } from "@/lib/centre-tools-copy";
 import { listCentreTools, saveCentreToolRecord } from "@/lib/server/centre-tools";
 import { listDoorRoster, recordChildCheck } from "@/lib/server/child-checkin";
+import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 
 type Data = Awaited<ReturnType<typeof listCentreTools>>;
@@ -56,6 +57,7 @@ const pretty = (id: string) => id.replace(/_/g, " ");
 
 export function CentreToolsDesk() {
   const { locale } = useCopy();
+  const canSave = useCentreWrite("meal_plan");
   const copy = centreToolsCopy(locale);
   const [data, setData] = useState<Data | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -148,7 +150,7 @@ export function CentreToolsDesk() {
         ))}
       </div>
       <div className="rounded-xl border p-4">
-        {tab === "meals" ? <MealsTool {...props} /> : null}
+        {tab === "meals" ? <MealsTool {...props} canSave={canSave} /> : null}
         {tab === "observations" ? <ObservationsTool {...props} /> : null}
         {tab === "pd" ? <PdTool {...props} /> : null}
         {tab === "maintenance" ? <ChecklistTool {...props} kind="maintenance" /> : null}
@@ -197,7 +199,7 @@ function History({ copy, rows, render }: { copy: CentreToolsCopy; rows: Rec[]; r
   );
 }
 
-function MealsTool({ copy, records, save, locale }: ToolProps & { locale: "en" | "fr" }) {
+function MealsTool({ copy, records, save, locale, canSave }: ToolProps & { locale: "en" | "fr"; canSave: boolean }) {
   const [weekOf, setWeekOf] = useState(new Date().toISOString().slice(0, 10));
   const [items, setItems] = useState<MenuItem[]>([]);
   const [note, setNote] = useState("");
@@ -283,7 +285,7 @@ function MealsTool({ copy, records, save, locale }: ToolProps & { locale: "en" |
         {copy.allergyNote}
         <textarea className={`${field} min-h-20 py-2`} value={note} onChange={(e) => setNote(e.target.value)} />
       </label>
-      <Button className="mt-3 min-h-11" onClick={() => void save("menu", { ...menu, allergens: menuAllergens(menu) })}>{copy.save}</Button>
+      {canSave ? <Button className="mt-3 min-h-11" onClick={() => void save("menu", { ...menu, allergens: menuAllergens(menu) })}>{copy.save}</Button> : null}
       <History copy={copy} rows={records.filter((r) => r.kind === "menu")} render={(r) => `${copy.weekOf} ${String(r.payload.weekOf)} · ${(r.payload.items as unknown[] | undefined)?.length || 0}`} />
     </div>
   );

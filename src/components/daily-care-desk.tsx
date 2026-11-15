@@ -35,6 +35,7 @@ import { CareChildOps } from "@/components/care-child-ops";
 import { ChildCheckHistory } from "@/components/child-checkin-desk";
 import { KioskParentScan, KioskTablet } from "@/components/qr-kiosk-panel";
 import { CareChildRoomSelect, CareOpsPanel } from "@/components/care-ops-panel";
+import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 import { useViewAs } from "@/components/view-as-banner";
 import type { CopyKey } from "@/lib/copy";
@@ -60,6 +61,7 @@ export function DailyCareDesk({
   daycareId?: string;
 }) {
   const { t, locale } = useCopy();
+  const staffWrite = useCentreWrite("care");
   const viewing = useViewAs();
   const day = todayYmd();
   const [items, setItems] = useState<AttendanceRow[]>([]);
@@ -353,7 +355,7 @@ export function DailyCareDesk({
         <p className="mt-2 text-xs text-subtle">{t("careOpsLite")}</p>
         <p className="mt-1 text-xs text-subtle">{t("careLaterOut")}</p>
       </div>
-      {role === "provider" ? <KioskTablet daycareId={daycareId} /> : <KioskParentScan />}
+      {role === "provider" && staffWrite ? <KioskTablet daycareId={daycareId} /> : role === "parent" ? <KioskParentScan /> : null}
       {role === "parent" ? <ChildCheckHistory /> : null}
 
       {ops ? (
@@ -450,7 +452,7 @@ export function DailyCareDesk({
                     ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {role === "provider" ? <>
+                    {role === "provider" && staffWrite ? <>
                     <Button
                       size="sm"
                       disabled={busy !== null || row.status === "arrived"}
@@ -503,6 +505,7 @@ export function DailyCareDesk({
 
                 <DayRecord
                   role={role}
+                  writable={staffWrite}
                   row={row}
                   note={ops?.dayNotes.find((n) => n.daycareId === row.daycareId && n.childName === row.childName) ?? null}
                   split={ops?.splits.find((s) => s.bookingId && s.bookingId === row.bookingId) ?? null}
@@ -550,7 +553,7 @@ export function DailyCareDesk({
                   </div>
                 ) : null}
 
-                {logsOn && role === "provider" ? (
+                {logsOn && role === "provider" && staffWrite ? (
                   <MealNapLog
                     row={row}
                     locale={locale}
@@ -560,7 +563,7 @@ export function DailyCareDesk({
                   />
                 ) : null}
 
-                {logsOn && role === "provider" ? (
+                {logsOn && role === "provider" && staffWrite ? (
                   <div className="mt-4 border-t border-border pt-4">
                     <p className="font-medium">{t("careJournal")}</p>
                     <p className="mt-1 text-sm text-muted">{t("careJournalLead")}</p>
@@ -659,6 +662,7 @@ export function DailyCareDesk({
 
 function DayRecord({
   role,
+  writable = true,
   row,
   note,
   split,
@@ -673,6 +677,7 @@ function DayRecord({
   logsOn,
 }: {
   role: CareDeskRole;
+  writable?: boolean;
   row: AttendanceRow;
   note: { food: string; nap: string; incident: string; photo: string } | null;
   split: { parentDailyCents: number; programDailyCents: number; programKind: string; programLabel: string } | null;
@@ -706,7 +711,7 @@ function DayRecord({
           {note.photo ? <img src={note.photo} alt="" className="mt-2 h-24 w-24 rounded-md object-cover ring-1 ring-border" /> : null}
         </div>
       ) : null}
-      {role === "provider" && marked ? (
+      {role === "provider" && writable && marked ? (
         <div className="mt-2 space-y-2">
           {logsOn ? (
             <>
@@ -741,7 +746,7 @@ function DayRecord({
           </Button>
         </div>
       ) : null}
-      {role === "provider" && row.bookingId ? (
+      {role === "provider" && writable && row.bookingId ? (
         <div className="mt-4 space-y-2">
           <p className="font-medium">{t("careSplitTitle")}</p>
           <p className="text-sm text-muted">{t("careProgramNotCollected")}</p>

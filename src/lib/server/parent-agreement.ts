@@ -3,7 +3,7 @@ import { isHomeDaycare } from "../home-address-privacy.ts";
 import { createServerFn } from "@tanstack/react-start";
 import { getSql, type Sql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { canCentreWriteLeadsFor, listAccessibleDaycareIds } from "@/lib/server/centre-access";
+import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { appOrigin, createCentreEnvelope, docusignConfig, voidCentreEnvelope } from "@/lib/server/docusign";
 import { coparentLinkEnabled, parentAgreementEnabled } from "@/lib/features";
 import { nid } from "@/lib/utils";
@@ -108,7 +108,7 @@ async function centreUserIds(sql: Sql, daycareId: string) {
   `.catch(() => []);
   const members = await sql<{ user_id: string }>`
     select user_id from centre_members
-    where daycare_id = ${daycareId} and status = 'active'
+    where daycare_id = ${daycareId} and status = 'active' and role <> 'read_only'
   `.catch(() => []);
   return [...new Set([...owners, ...members].map((row) => row.user_id).filter(Boolean))];
 }
@@ -171,8 +171,10 @@ export const loadCentreAgreementEditor = createServerFn({ method: "GET" })
     const sql = await getSql();
     const ids = await listAccessibleDaycareIds(sql, context.userId);
     const writable: string[] = [];
+    const { loadCentreRole } = await import("@/lib/server/centre-access");
+    const { centreCanAccessPrivileged } = await import("@/lib/centre-roles");
     for (const id of ids) {
-      if (await canCentreWriteLeadsFor(sql, context.userId, id)) writable.push(id);
+      if (centreCanAccessPrivileged(await loadCentreRole(sql, context.userId, id))) writable.push(id);
     }
     if (!writable.length) return { enabled: true, centres: [] };
     const centres = await sql.query<{ id: string; name: string }>(
@@ -208,8 +210,8 @@ export const saveCentreAgreementTerms = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (!parentAgreementEnabled()) deny("signing_off");
     const sql = await getSql();
-    const allowed = await canCentreWriteLeadsFor(sql, context.userId, data.daycareId);
-    if (!allowed) deny("not_your_centre");
+    const { assertCentreAction } = await import("@/lib/server/centre-access");
+    await assertCentreAction(sql, context.userId, data.daycareId, "contracts");
     const terms = normalizeAgreementTerms(data.terms);
     const problem = termsReady(terms);
     if (problem) deny(problem);
@@ -279,8 +281,8 @@ export const voidParentAgreement = createServerFn({ method: "POST" })
     `;
     const row = rows[0];
     if (!row) deny("not_found");
-    const allowed = await canCentreWriteLeadsFor(sql, context.userId, row.daycare_id);
-    if (!allowed) deny("not_your_centre");
+    const { assertCentreAction } = await import("@/lib/server/centre-access");
+    await assertCentreAction(sql, context.userId, row.daycare_id, "contracts");
     if (row.status === "completed") deny("void_blocked");
     if (row.status === "void") return { ok: true as const, status: "void" as const };
     if (row.envelope_id) {
@@ -316,8 +318,8 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
     `;
     const booking = bookings[0];
     if (!booking) deny("not_found");
-    const allowed = await canCentreWriteLeadsFor(sql, context.userId, booking.daycare_id);
-    if (!allowed) deny("not_your_centre");
+    const { assertCentreAction } = await import("@/lib/server/centre-access");
+    await assertCentreAction(sql, context.userId, booking.daycare_id, "contracts");
     if (!acceptedEnrolmentStatus(booking.status)) deny("not_accepted");
     if (!booking.child_id) deny("child_required");
 

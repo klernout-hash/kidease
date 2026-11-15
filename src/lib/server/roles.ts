@@ -289,6 +289,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
       showPayCtas: showPayCtas(),
       subscriptionsEnabled: subscriptionsEnabled(),
       centreOwner: false,
+      centreRole: null,
       ownsCentre: false,
       centreLinked: false,
       attention: { ...EMPTY_ATTENTION },
@@ -305,6 +306,13 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
   // View-as never files intake or closes an account.
   if (!viewing && (stored === "provider" || owned)) await claimProviderCrmIntake(userId);
   const member = owned ? false : await isActiveCentreMember(sql, userId);
+  const memberRoles = owned
+    ? []
+    : await sql<{ role: string }>`
+        select role from centre_members where user_id = ${userId} and status = 'active'
+      `.catch(() => [] as Array<{ role: string }>);
+  const { maxCentreRole, parseCentreMemberRole } = await import("@/lib/centre-roles");
+  const centreRole = owned ? ("owner" as const) : maxCentreRole(memberRoles.map((row) => parseCentreMemberRole(row.role)));
   const desks = desksFor({ role: stored, ownsCentre: owned || member });
   const { purgeAccountIfExpired, readDeletedAt } = await import("@/lib/server/family");
   const deletedAt = await readDeletedAt(userId);
@@ -340,6 +348,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     showPayCtas: showPayCtas(),
     subscriptionsEnabled: subscriptionsEnabled(),
     centreOwner: owned || stored === "admin" || !member,
+    centreRole: stored === "admin" ? "owner" : centreRole,
     ownsCentre: owned,
     centreLinked: owned || member,
     curriculumPack: curriculumPackEnabled(),

@@ -176,8 +176,9 @@ export const pulseWaitlistSpot = createServerFn({ method: "POST" })
   .validator((input: { daycareId: string }) => ({ daycareId: String(input?.daycareId || "").trim() }))
   .handler(async ({ context, data }) => {
     if (!data.daycareId) throw new Error("Missing listing");
-    await assertOwnsListing(context.userId, data.daycareId);
     const sql = await getSql();
+    const { assertCanWrite } = await import("@/lib/server/centre-access");
+    await assertCanWrite(sql, context.userId, data.daycareId, "waitlist_notify");
     const last = await sql<{ created_at: string | Date }>`
       select created_at from waitlist_pulses
       where daycare_id = ${data.daycareId}

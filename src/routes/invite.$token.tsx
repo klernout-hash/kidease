@@ -6,6 +6,13 @@ import { AcceptEmployeeInvite } from "@/components/centre-employees";
 import { peekCentreInvite } from "@/lib/server/centre-members";
 import { useSettledUser } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import type { CopyKey } from "@/lib/copy";
+
+function inviteRoleKey(role: string): CopyKey {
+  if (role === "manager") return "employeeRoleManager";
+  if (role === "read_only") return "employeeRoleReadOnly";
+  return "employeeRoleStaff";
+}
 
 export const Route = createFileRoute("/invite/$token")({
   head: () => ({
@@ -46,6 +53,9 @@ function InvitePage() {
           <>
             <p className="mt-3 text-muted">
               {t("employeeInviteLead").replace("{centre}", peek.daycareName).replace("{email}", peek.email)}
+            </p>
+            <p className="mt-2 font-medium" data-ke="invite-role">
+              {t("employeeInviteRole").replace("{role}", t(inviteRoleKey(peek.role)))}
             </p>
             {isPending ? (
               <p className="mt-6 text-muted">{t("loading")}</p>

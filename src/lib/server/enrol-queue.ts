@@ -138,20 +138,11 @@ export const decideParentRequest = createServerFn({ method: "POST" })
     const rows = await sql<{ id: string; daycare_id: string }>`
       select b.id, b.daycare_id from bookings b
       where b.id = ${data.bookingId}
-        and (
-          exists (
-            select 1 from provider_daycares p
-            where p.daycare_id = b.daycare_id and p.user_id = ${context.userId}
-          )
-          or exists (
-            select 1 from centre_members m
-            where m.daycare_id = b.daycare_id and m.user_id = ${context.userId}
-              and m.status = 'active' and m.role in ('owner', 'manager', 'staff')
-          )
-        )
       limit 1
     `;
     if (!rows[0]) throw new Error("Request not found for this centre");
+    const { assertCentreAction } = await import("@/lib/server/centre-access");
+    await assertCentreAction(sql, context.userId, rows[0].daycare_id, "write");
     const status: BookingStatus =
       data.decision === "approve" ? "accepted" : data.decision === "decline" ? "declined" : "under_review";
     return updateRequestStatus({ data: { bookingId: data.bookingId, status } });

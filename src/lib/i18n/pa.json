@@ -3542,5 +3542,6 @@
   "adminNavConnect": "Stripe Connect",
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "ਤਨਖਾਹ",
-  "adminNavSubsidy": "ਸਬਸਿਡੀ"
+  "adminNavSubsidy": "ਸਬਸਿਡੀ",
+  "employeeInviteRole": "ਇਹ ਸੱਦਾ {role} ਭੂਮਿਕਾ ਲਈ ਹੈ।"
 }

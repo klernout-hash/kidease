@@ -290,6 +290,9 @@ export function decideScreeningAccess(input: {
   if (!centreCanViewScreening(input.actorRole)) {
     return { ok: false, error: SCREENING_FORBIDDEN };
   }
+  if (input.actorRole === "read_only" && input.action !== "view_all" && input.action !== "view_own") {
+    return { ok: false, error: SCREENING_FORBIDDEN };
+  }
   if (input.action === "view_all" || input.action === "manage" || input.action === "add_person") {
     if (!centreCanManageScreening(input.actorRole)) {
       return { ok: false, error: SCREENING_NOT_OWNER };
