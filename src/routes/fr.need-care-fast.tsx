@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { NeedCareFastView } from "@/routes/need-care-fast";
-import { parseNeedCareFastSearch } from "@/lib/need-care-fast";
+import { needCareFastRouteSearch, parseNeedCareFastSearch } from "@/lib/need-care-fast";
 import { loadNeedCareFast } from "@/lib/server/need-care-fast";
 import { pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/fr/need-care-fast")({
-  validateSearch: parseNeedCareFastSearch,
+  validateSearch: needCareFastRouteSearch,
   loaderDeps: ({ search }) => parseNeedCareFastSearch(search),
   loader: ({ deps }) => loadNeedCareFast({ data: deps }),
   head: () =>

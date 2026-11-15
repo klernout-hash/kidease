@@ -13,6 +13,7 @@ import {
   needCareFastQuery,
   normalizeNeedCareFastPage,
   parseNeedCareFastSearch,
+  needCareFastRouteSearch,
   qualifiesNeedCareFast,
   rankNeedCareFast,
 } from "../src/lib/need-care-fast.ts";
@@ -77,6 +78,9 @@ test("need care fast search from Explore never throws, with or without a city", 
     parseNeedCareFastSearch({ q: "Winnipeg", fac: "centre", page: 1, ages: "infant", open: "1" }),
     { q: "Winnipeg" },
   );
+  assert.deepEqual(needCareFastRouteSearch({}), {});
+  assert.deepEqual(needCareFastRouteSearch({ q: "" }), {});
+  assert.deepEqual(needCareFastRouteSearch({ q: "Toronto" }), { q: "Toronto" });
   assert.equal(needCareFastQuery(undefined), "");
   assert.equal(needCareFastQuery({ q: "Halifax" }), "Halifax");
   const blank = normalizeNeedCareFastPage(undefined);

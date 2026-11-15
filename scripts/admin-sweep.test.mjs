@@ -31,6 +31,23 @@ test("support waits for the desk list instead of saying not found", () => {
   assert.ok(opening > 0 && opening < denied);
 });
 
+test("support sends a signed-out visitor to sign-in before the loading shell", () => {
+  const gate = src("src/lib/server/support-route.ts");
+  assert.match(gate, /raw === "Unauthorized"/);
+  assert.match(gate, /to: dest\.startsWith\("\/fr\/"\) \? "\/fr\/login" : "\/login"/);
+  assert.match(gate, /next: dest/);
+  const page = src("src/routes/security.tsx");
+  assert.match(page, /Security · KidEase/);
+  assert.match(src("src/components/security-page.tsx"), /Accueil/);
+  assert.match(src("src/components/security-page.tsx"), /to=\{fr \? "\/fr" : "\/"\}/);
+  const sitemap = src("public/sitemap.xml");
+  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/how-it-works</);
+  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/forgot-password</);
+  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/security</);
+  assert.doesNotMatch(sitemap, /https:\/\/www\.kidease\.ca\/plans</);
+  assert.doesNotMatch(sitemap, /https:\/\/www\.kidease\.ca\/fr\/plans</);
+});
+
 test("admin nav labels have French keys and the built money tools are linked", () => {
   const nav = src("src/lib/desk-nav.ts");
   for (const key of [

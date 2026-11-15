@@ -48,6 +48,11 @@ export function SecurityPage({ locale }: { locale: "en" | "fr" }) {
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-8 pb-[env(safe-area-inset-bottom)]">
       <p className="text-sm font-semibold text-primary">KidEase</p>
+      <p className="mt-2">
+        <Link to={fr ? "/fr" : "/"} className="inline-flex min-h-11 items-center font-medium text-primary">
+          {fr ? "Accueil" : "Home"}
+        </Link>
+      </p>
       <h1 className="mt-2 font-display text-3xl">{fr ? "Sécurité" : "Security"}</h1>
       {on ? (
         <ul className="mt-4 list-disc space-y-2 pl-5 text-base text-fg">

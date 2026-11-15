@@ -52,6 +52,21 @@ export function formatFastKm(km: number): string {
   return `${Math.round(km)} km`;
 }
 
+/**
+ * Search object for the public URL. An empty place stays off the query
+ * string so /need-care-fast does not bounce to ?q=.
+ */
+export function needCareFastRouteSearch(search: unknown): { q?: string; lat?: number; lng?: number } {
+  const parsed = parseNeedCareFastSearch(search);
+  const out: { q?: string; lat?: number; lng?: number } = {};
+  if (parsed.q) out.q = parsed.q;
+  if (parsed.lat != null && parsed.lng != null) {
+    out.lat = parsed.lat;
+    out.lng = parsed.lng;
+  }
+  return out;
+}
+
 /** Never throws. /search can hand over an empty city, a number, or extra filters. */
 export function parseNeedCareFastSearch(search: unknown): { q: string; lat?: number; lng?: number } {
   const bag = search && typeof search === "object" ? (search as Record<string, unknown>) : {};

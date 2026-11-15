@@ -10,7 +10,7 @@ import type { PublicAgeBand } from "@/lib/public-programs";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { formatCount } from "@/lib/utils";
-import { parseVacancyProvince, type FreshnessCounts } from "@/lib/vacancy-history";
+import { vacancyIndexSearch, type FreshnessCounts } from "@/lib/vacancy-history";
 import { vacancyProvinceCopy } from "@/lib/vacancy-province-copy";
 import { provincialVacancyIndexEnabled } from "@/lib/features";
 
@@ -25,10 +25,8 @@ export const Route = createFileRoute("/vacancy-index")({
   beforeLoad: () => {
     if (!provincialVacancyIndexEnabled()) throw redirect({ to: "/search" });
   },
-  validateSearch: (search: Record<string, unknown>) => ({
-    province: parseVacancyProvince(search.province),
-  }),
-  loaderDeps: ({ search }) => ({ province: search.province }),
+  validateSearch: vacancyIndexSearch,
+  loaderDeps: ({ search }) => ({ province: search.province || "" }),
   loader: ({ deps }) => loadVacancyIndex(deps.province),
   head: () =>
     pageSeoHead({

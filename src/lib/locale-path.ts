@@ -224,8 +224,8 @@ export function sitemapFrenchPaths(enPaths: readonly string[] = LOCALE_PAIRED_PA
   return out;
 }
 
-/** Provincial vacancy index stays off the public sitemap while that flag is off. */
-export const SITEMAP_FR_PATHS = sitemapFrenchPaths().filter((path) => path !== "/fr/vacancy-index");
+/** Plans stay out of the sitemap while subscriptions are off. */
+export const SITEMAP_FR_PATHS = sitemapFrenchPaths().filter((path) => path !== "/fr/plans");
 
 const DESK_OR_AUTH_PREFIXES = [
   "/parent",
