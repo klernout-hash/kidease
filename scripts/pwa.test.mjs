@@ -51,7 +51,7 @@ test("service worker caches chrome only and registers from NativeBoot", () => {
   assert.equal(existsSync(join(root, "public/offline.html")), true);
   const sw = src("public/sw.js");
   assert.match(sw, /\/offline\.html/);
-  assert.match(sw, /kidease-shell-v8/);
+  assert.match(sw, /kidease-shell-v9/);
   assert.match(sw, /caches\.delete\(key\)/);
   assert.doesNotMatch(sw, /signOut|document\.cookie|Clear-Site-Data/);
   assert.match(sw, /navigator\.onLine === false/);
@@ -82,7 +82,7 @@ test("service worker caches chrome only and registers from NativeBoot", () => {
   assert.doesNotMatch(offline, /kyle@kidease\.ca/);
   const native = src("src/lib/native.ts");
   assert.match(native, /registerOfflineShell/);
-  assert.match(native, /\.register\("\/sw\.js\?v=8"/);
+  assert.match(native, /\.register\("\/sw\.js\?v=9"/);
   assert.match(src("src/components/native-boot.tsx"), /registerOfflineShell/);
   const vercel = src("vercel.json");
   assert.match(vercel, /"source": "\/sw\.js"/);
