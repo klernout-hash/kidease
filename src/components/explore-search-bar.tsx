@@ -278,6 +278,7 @@ export function ExploreSearchBar({
         action={locale === "fr" ? "/fr/search" : "/search"}
         className={cn("relative z-[35] w-full overflow-visible", className)}
         aria-label={t("searchBarAria")}
+        data-tour="parent-search"
         onSubmit={(e) => {
           e.preventDefault();
           onSubmit(values.where);
@@ -320,6 +321,7 @@ export function ExploreSearchBar({
       action={locale === "fr" ? "/fr/search" : "/search"}
       className={cn("relative z-[35] w-full overflow-visible", className)}
       aria-label={t("searchBarAria")}
+      data-tour="parent-search"
       data-search-row="where-when-name"
       onSubmit={(e) => {
         e.preventDefault();

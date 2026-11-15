@@ -17,6 +17,7 @@ import { CoparentDesk } from "@/components/coparent-desk";
 import { PortfolioGaps } from "@/components/portfolio-gaps";
 import { ChildAgreementFile } from "@/components/parent-agreement-panel";
 import { EmptyState } from "@/components/empty-state";
+import { FirstRunExample } from "@/components/first-run";
 import { KidNotebook } from "@/components/kid-art";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -669,7 +670,7 @@ export function ParentDesk({
         <div className="mt-6 space-y-6">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="font-display text-2xl">{t("payments")}</h2>
+              <h2 className="font-display text-2xl" data-tour="parent-payments">{t("payments")}</h2>
               {bills.filter((b) => billIsOpen(b.status)).length ? (
                 <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-medium text-primary-fg">
                   {t("pay")} · {bills.filter((b) => billIsOpen(b.status)).length}
@@ -731,7 +732,7 @@ export function ParentDesk({
               payments.length === 0 &&
               bills.filter((b) => billIsOpen(b.status)).length === 0 ? (
                 <li className="p-2">
-                  <EmptyState title={t("noPayments")} body={t(parentPayEmptyKey(plansOn))} action={t("emptyFindCare")} actionTo="/search" />
+                  <EmptyState title={t("noPayments")} body={t(parentPayEmptyKey(plansOn))} action={t("emptyFindCare")} actionTo="/search" extra={<FirstRunExample id="parent-payments" />} />
                 </li>
               ) : (
                 <>

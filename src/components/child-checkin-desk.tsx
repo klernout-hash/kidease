@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { CustodyCheckoutAlert } from "@/components/phase6-desk";
+import { FirstRunExample } from "@/components/first-run";
 import { Button } from "@/components/ui/button";
 import { attendanceCopy, initialsFor, type AttendanceStatus } from "@/lib/attendance-handoff";
 import { groupCheckHistory } from "@/lib/check-history";
@@ -52,7 +53,7 @@ export function ChildCheckinDesk() {
   if (!desk?.enabled) return null;
 
   return (
-    <section className="mt-8 w-full max-w-3xl" data-ke="child-checkin">
+    <section className="mt-8 w-full max-w-3xl" data-ke="child-checkin" data-tour="provider-attendance-roster">
       <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]">{legacy.checkTitle}</h2>
       <p className="mt-2 max-w-prose text-base leading-7 text-muted">{copy.lead}</p>
       <p className="mt-3 text-lg font-semibold tabular-nums" data-ke="attendance-headcount">
@@ -62,6 +63,7 @@ export function ChildCheckinDesk() {
       <p className="mt-2 max-w-prose text-sm text-muted" data-ke="attendance-code-later">
         {copy.codeLater}
       </p>
+      {desk.children.length === 0 ? <FirstRunExample id="provider-attendance" /> : null}
       {desk.children.length ? (
         <ul className="mt-4 space-y-4">
           {desk.children.map((child) => (

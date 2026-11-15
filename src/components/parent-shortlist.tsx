@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { DaycareCard } from "@/components/daycare-card";
 import { EmptyState } from "@/components/empty-state";
+import { FirstRunExample } from "@/components/first-run";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { PipelineBadge } from "@/components/pipeline-badge";
 import { SavedTrack } from "@/components/saved-track";
@@ -84,7 +85,7 @@ export function ParentShortlist({
         : "Saved on this device. Connect again to refresh.";
     return (
       <div className="mt-6 w-full">
-        <h2 className="font-display text-2xl">{t("saved")}</h2>
+        <h2 className="font-display text-2xl" data-tour="parent-saved">{t("saved")}</h2>
         <ul className="mt-4 w-full space-y-2">
           {offline.map((row) => (
             <li key={row.id}>
@@ -103,9 +104,9 @@ export function ParentShortlist({
   if (!items.length) {
     return (
       <div className="mt-6 w-full">
-        <h2 className="font-display text-2xl">{t("saved")}</h2>
+        <h2 className="font-display text-2xl" data-tour="parent-saved">{t("saved")}</h2>
         <div className="mt-4 w-full">
-          <EmptyState title={t("noSaved")} body={t(leadKey)} action={t("emptyFindCare")} actionTo="/search" />
+          <EmptyState title={t("noSaved")} body={t(leadKey)} action={t("emptyFindCare")} actionTo="/search" extra={<FirstRunExample id="parent-saved" />} />
         </div>
       </div>
     );
@@ -115,7 +116,7 @@ export function ParentShortlist({
     <div className="mt-6 space-y-6">
       <div>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-2xl">{t("saved")}</h2>
+          <h2 className="font-display text-2xl" data-tour="parent-saved">{t("saved")}</h2>
           <Button
             type="button"
             variant="secondary"

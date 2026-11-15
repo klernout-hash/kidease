@@ -90,6 +90,11 @@ export function airbnbUiEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_UI_AIRBNB_V1", env);
 }
 
+/** First visit walkthrough, checklists, and help tours. Off until Kyle turns it on. */
+export function firstRunOnboardingEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FIRST_RUN_ONBOARDING", env);
+}
+
 /** Honest copy when SHOW_PAY_CTAS is off. Stripe / plan code stays compiled. */
 export const PLANS_NOT_OFFERED_YET =
   "Plans are not offered on this site yet. Listing and claim stay free.";
