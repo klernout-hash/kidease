@@ -21,6 +21,8 @@ export const CENTRE_INVITE_HOURLY_MAX = 8;
 export const CENTRE_INVITE_DAILY_MAX = 20;
 export const CENTRE_INVITE_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
+export const CENTRE_INVITE_RESEND_GAP_MS = 10 * 60 * 1000;
+export const CENTRE_INVITE_RESEND_WAIT = "Wait 10 minutes, then resend this invite.";
 export const CENTRE_INVITE_RATE_LIMITED =
   "Too many employee invites just now. Wait an hour, then try again.";
 export const CENTRE_INVITE_NOT_OWNER = "Only the centre owner can invite or revoke employees.";
@@ -219,6 +221,30 @@ export function decideRevokeEmployee(input: {
   }
   if (input.targetKind === "member" && input.targetRole === "owner") {
     return { ok: false, error: CENTRE_REVOKE_OWNER };
+  }
+  return { ok: true };
+}
+
+export function decideResendInvite(input: {
+  actorRole: CentreMemberRole | null;
+  inviteStatus: string | null;
+  createdAtMs: number;
+  lastResentAtMs: number | null;
+  nowMs?: number;
+  hourlyCount: number;
+  dailyCount: number;
+}): { ok: true } | { ok: false; error: string } {
+  if (!centreCanInviteRevoke(input.actorRole)) {
+    return { ok: false, error: CENTRE_INVITE_NOT_OWNER };
+  }
+  if (input.inviteStatus !== "pending") return { ok: false, error: CENTRE_INVITE_NOT_FOUND };
+  const now = input.nowMs ?? Date.now();
+  const last = Math.max(input.createdAtMs || 0, input.lastResentAtMs || 0);
+  if (last > 0 && now - last < CENTRE_INVITE_RESEND_GAP_MS) {
+    return { ok: false, error: CENTRE_INVITE_RESEND_WAIT };
+  }
+  if (input.hourlyCount >= CENTRE_INVITE_HOURLY_MAX || input.dailyCount >= CENTRE_INVITE_DAILY_MAX) {
+    return { ok: false, error: CENTRE_INVITE_RATE_LIMITED };
   }
   return { ok: true };
 }

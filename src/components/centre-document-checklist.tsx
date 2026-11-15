@@ -21,6 +21,7 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
   const copy = centreDocCopy(locale);
   const [checklist, setChecklist] = useState<ChecklistScore | null>(null);
   const [enabled, setEnabled] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [expiry, setExpiry] = useState("");
 
@@ -28,13 +29,36 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
     const result = await listCentreDocumentChecklist({ data: daycareId });
     setEnabled(result.enabled);
     setChecklist(result.checklist);
+    setLoaded(true);
   }
 
   useEffect(() => {
-    void load().catch(() => setEnabled(false));
+    void load().catch(() => {
+      setEnabled(false);
+      setLoaded(true);
+    });
   }, [daycareId]);
 
-  if (!enabled || !checklist) return null;
+  if (!loaded) {
+    return (
+      <section className="rounded-xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="centre-documents">
+        <h2 className="font-display text-2xl">{copy.title}</h2>
+        <p className="mt-1 text-sm text-muted">{copy.lead}</p>
+      </section>
+    );
+  }
+
+  if (!enabled || !checklist) {
+    return (
+      <section className="rounded-xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="centre-documents">
+        <h2 className="font-display text-2xl">{copy.title}</h2>
+        <p className="mt-1 text-sm text-muted">{copy.lead}</p>
+        <p className="mt-3 text-sm font-medium text-muted" data-ke="centre-documents-waiting">
+          {locale === "fr" ? "Pas encore en place" : "Not set up yet"}
+        </p>
+      </section>
+    );
+  }
 
   async function onFile(item: ChecklistItem, event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];

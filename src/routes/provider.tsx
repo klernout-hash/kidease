@@ -162,7 +162,7 @@ const CentreAgreementEditor = lazy(() =>
   import("@/components/parent-agreement-panel").then((m) => ({ default: m.CentreAgreementEditor })),
 );
 
-const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "top-rated", "tours", "calendar", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools", "care"];
+const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "top-rated", "tours", "calendar", "licence", "documents", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools", "care"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 const DEFAULT_DESK: DaycareDesk = "today";
 const COACH_FOCUS = new Set<ListingCoachFocus>([
@@ -801,7 +801,21 @@ export function ProviderPage() {
           ) : null}
         </>
       ) : null}
-      {desk === "listings" && listings[0] ? <CentreDocumentChecklist daycareId={listings[0].id} /> : null}
+      {desk === "documents" ? (
+        listings[0] ? (
+          <CentreDocumentChecklist daycareId={(listings.find((row) => row.id === search.centre) || listings[0]).id} />
+        ) : (
+          <EmptyState
+            title={t("deskNavDocuments")}
+            body={t("providerOnboardingLead")}
+            extra={
+              <Button asChild>
+                <Link to="/claim">{t("providerOnboardingClaim")}</Link>
+              </Button>
+            }
+          />
+        )
+      ) : null}
       {desk === "listings" && centreOwner && !(hostListing && listingEditorOpen) ? (
           <details
             id="list-new"

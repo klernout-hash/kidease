@@ -334,6 +334,15 @@ function ChecklistCard({
           </li>
         ))}
       </ul>
+      {provider ? (
+        <a
+          href={localePath("/provider?desk=documents", locale)}
+          data-ke="provider-documents-link"
+          className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {locale === "fr" ? "Documents du centre" : "Centre documents"}
+        </a>
+      ) : null}
       {canDismissChecklist(result.id, result.complete) ? (
         <Button type="button" variant="ghost" className="mt-2" data-ke="checklist-hide" onClick={onHide}>
           {pickCopy(locale, UI_COPY.hideList)}
