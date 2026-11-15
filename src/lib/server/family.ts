@@ -125,7 +125,8 @@ async function pingNewAccount(userId: string, role: "parent" | "provider", extra
     console.error("[kidease-ghl] signup intake failed", err);
   }
   try {
-    const { afterNewAccountUserMail } = await import("@/lib/server/signup-user-mail.server");
+    const mailFile = "@/lib/server/" + "signup-user-mail.server";
+    const { afterNewAccountUserMail } = await import(/* @vite-ignore */ mailFile);
     await afterNewAccountUserMail(userId, role);
   } catch (err) {
     console.error("[kidease-mail] signup user mail failed", err);

@@ -105,6 +105,23 @@ export function centreCanAccessPrivileged(role: CentreMemberRole | null | undefi
   return role === "owner";
 }
 
+export type CentreGate = "write" | "contracts";
+
+export function centreActionAllowed(role: CentreMemberRole | null | undefined, action: CentreGate): boolean {
+  if (action === "contracts") return centreCanAccessPrivileged(role);
+  return centreCanWriteLeads(role);
+}
+
+export function centreActionDenied(action: CentreGate): Error & { status: number } {
+  const message =
+    action === "contracts"
+      ? CENTRE_STAFF_FORBIDDEN
+      : "You can look at this centre. You cannot change it.";
+  const error = new Error(message) as Error & { status: number };
+  error.status = 403;
+  return error;
+}
+
 export function centreCanCreateListing(input: {
   ownerCount: number;
   memberOnly: boolean;

@@ -155,6 +155,10 @@ export const setMessageBlock = createServerFn({ method: "POST" })
     const access = await requireConversationRead(sql, data.conversationId, context.userId);
     const parentUserId = access.conversation.user_id;
     const daycareId = access.conversation.daycare_id;
+    if (context.userId !== parentUserId) {
+      const { assertCentreAction } = await import("@/lib/server/centre-access");
+      await assertCentreAction(sql, context.userId, daycareId, "write");
+    }
     const centres = await centreUserIds(sql, daycareId);
     const viewer = context.userId;
 
@@ -330,8 +334,9 @@ export const setFamilyBlock = createServerFn({ method: "POST" })
     const daycareId = (data.daycareId || "").trim();
     if (!parentUserId || !daycareId) throw new Error("Family not found");
     const sql = await getSql();
-    const { hasCentreDeskAccess } = await import("@/lib/server/centre-access");
+    const { assertCentreAction, hasCentreDeskAccess } = await import("@/lib/server/centre-access");
     if (!(await hasCentreDeskAccess(sql, context.userId, daycareId))) throw new Error("Family not found");
+    await assertCentreAction(sql, context.userId, daycareId, "write");
     if (!data.blocked) {
       await sql`
         delete from safety_blocks

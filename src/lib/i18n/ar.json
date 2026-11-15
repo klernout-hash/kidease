@@ -3541,5 +3541,6 @@
   "adminNavConnect": "Stripe Connect",
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "الرواتب",
-  "adminNavSubsidy": "الدعم"
+  "adminNavSubsidy": "الدعم",
+  "employeeInviteRole": "هذه الدعوة لدور {role}."
 }

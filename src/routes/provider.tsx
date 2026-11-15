@@ -4,6 +4,7 @@ import { privateReturnPath } from "@/lib/role-access";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { centreCanAccessPrivileged, centreCanWriteLeads } from "@/lib/centre-roles";
 import { canUseOperatorTools } from "@/lib/operator-tools";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
@@ -252,6 +253,9 @@ export function ProviderPage() {
   const { t, locale } = useCopy();
   const { session } = useSessionDesks();
   const centreOwner = session?.centreOwner !== false;
+  const centreRole = session?.centreRole;
+  const canWrite = centreRole ? centreCanWriteLeads(centreRole) : centreOwner;
+  const canContracts = centreRole ? centreCanAccessPrivileged(centreRole) : centreOwner;
   const hostListingKnown = session != null && typeof session.hostListing === "boolean";
   const hostListing = session?.hostListing === true;
   const topRated = session?.topRated === true;
@@ -580,13 +584,13 @@ export function ProviderPage() {
       ) : null}
       {desk === "requests" ? (
         <div className="min-w-0 max-w-full space-y-6" data-tour="provider-requests">
-        <CentreFamilyDocs />
-        <FormSharePreview />
+        {canWrite ? <CentreFamilyDocs /> : null}
+        {canWrite ? <FormSharePreview /> : null}
         {leads.length === 0 && tours.length === 0 && pipeline.length === 0 && waiting.length === 0 ? (
           <EmptyState title={t("enquiriesEmptyTitle")} body={t("enquiriesEmptyLead")} extra={<FirstRunExample id="provider-requests" />} />
         ) : (
         <section className="space-y-8">
-          <DaycareLeadInbox items={leads} onChanged={() => void load()} />
+          <DaycareLeadInbox items={leads} onChanged={() => void load()} canWrite={canWrite} />
           {pipeline.length ? <CentrePipeline cards={pipeline} /> : null}
           {tours.length ? (
           <div>
@@ -608,6 +612,8 @@ export function ProviderPage() {
             <RequestList
               items={waiting}
               empty={t("providerRequestsEmpty")}
+              canWrite={canWrite}
+              canContracts={canContracts}
               onDecide={async (id, decision) => {
                 await decideParentRequest({ data: { bookingId: id, decision } });
                 confirmSuccess({
@@ -633,6 +639,8 @@ export function ProviderPage() {
             <RequestList
               items={later}
               empty={t("requestsDecidedEmpty")}
+              canWrite={canWrite}
+              canContracts={canContracts}
               onDecide={async (id, decision) => {
                 await decideParentRequest({ data: { bookingId: id, decision } });
                 confirmSuccess({ variant: "toast", title: t("requestUpdatedToast") });
@@ -1083,12 +1091,16 @@ function RequestList({
   onDecide,
   onChanged,
   locale,
+  canWrite,
+  canContracts,
 }: {
   items: SpotRequest[];
   empty: string;
   onDecide: (id: string, decision: "approve" | "decline" | "waiting") => Promise<void>;
   onChanged?: () => void;
   locale: "en" | "fr" | string;
+  canWrite: boolean;
+  canContracts: boolean;
 }) {
   const { t } = useCopy();
   const agreements = useCentreAgreementChips();
@@ -1120,10 +1132,11 @@ function RequestList({
               </Button>
             ) : null}
           </div>
-          {r.parentUserId ? (
+          {canWrite && r.parentUserId ? (
             <BlockFamilyButton parentUserId={r.parentUserId} daycareId={r.daycareId} />
           ) : null}
           <ChildPacket child={r.child} allergies={r.allergies} epiPen={r.epiPen} note={r.parentNote} />
+          {canWrite ? (
           <div className="mt-3 flex flex-wrap gap-2">
             {["accepted", "declined", "active", "cancelled"].includes(r.status) ? (
               <p className="text-xs text-muted">{t("requestAlready").replace("{status}", requestStatusLabel(r.status, t))}</p>
@@ -1165,7 +1178,9 @@ function RequestList({
               </>
             )}
           </div>
-          <CentreRequestGuard request={r} onChanged={onChanged ?? (() => undefined)} />
+          ) : null}
+          {canWrite ? <CentreRequestGuard request={r} onChanged={onChanged ?? (() => undefined)} /> : null}
+          {canContracts ? (
           <AgreementRequestAction
             bookingId={r.id}
             bookingStatus={r.status}
@@ -1173,6 +1188,7 @@ function RequestList({
             enabled={agreements.enabled}
             onSent={agreements.refresh}
           />
+          ) : null}
         </li>
       ))}
     </ul>

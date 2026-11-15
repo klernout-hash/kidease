@@ -3541,5 +3541,6 @@
   "adminNavConnect": "Stripe Connect",
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "Payroll",
-  "adminNavSubsidy": "Subsidy"
+  "adminNavSubsidy": "Subsidy",
+  "employeeInviteRole": "Ang imbitasyong ito ay para sa papel na {role}."
 }
