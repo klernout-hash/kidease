@@ -571,3 +571,22 @@ export function approvalHealthSummary(health: ApprovalHealth): { title: string; 
       : "A downstream check failed. The centre was not marked Live.",
   };
 }
+
+/** What the Approve click should say. A failed check is not a saved Live listing. */
+export function approvalClickFeedback(
+  result: { ok?: boolean; health?: ApprovalHealth | null } | null | undefined,
+): { saved: boolean; title: string; body: string } {
+  if (result?.ok && result.health?.ok) {
+    const summary = approvalHealthSummary(result.health);
+    return { saved: true, title: summary.title, body: summary.body };
+  }
+  if (result?.health) {
+    const summary = approvalHealthSummary(result.health);
+    return { saved: false, title: summary.title, body: summary.body };
+  }
+  return {
+    saved: false,
+    title: "Approval did not complete",
+    body: "The centre was not marked Live.",
+  };
+}

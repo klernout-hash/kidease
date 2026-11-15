@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,7 @@ export function AdminScreeningQueue({
         reauth.prompt,
       );
       onChanged();
+      toast.success(t("screeningReviewed"));
     } catch (err) {
       alert(err instanceof Error ? err.message : t("screeningReviewed"));
     } finally {

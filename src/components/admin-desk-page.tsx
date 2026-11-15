@@ -1,5 +1,6 @@
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { AdminLicenceReads } from "@/components/admin-licence-reads";
@@ -74,8 +75,8 @@ import { AdminStripeCatalog } from "@/components/admin-stripe-catalog";
 import { PROVINCES } from "@/lib/geo";
 import { money } from "@/lib/utils";
 import { useCopy } from "@/lib/use-copy";
-import { approvalHealthSummary } from "@/lib/approve-live";
-import { approvalSuccessReady, confirmAction } from "@/lib/success-confirm";
+import { approvalHealthSummary, approvalClickFeedback } from "@/lib/approve-live";
+import { confirmAction } from "@/lib/success-confirm";
 import { isQueueableClaimStatus } from "@/lib/listing-status";
 import { needsLicenseReview, needsPhotoReview, needsVerification } from "@/lib/admin-verify";
 import {
@@ -462,11 +463,15 @@ export function AdminPage() {
       );
       setNote("");
       if (decision === "approve") {
+        const feedback = approvalClickFeedback(result);
         setApprovalHealth(result.health ?? null);
-        if (approvalSuccessReady(result) && result.health) {
+        if (feedback.saved && result.health) {
+          toast.success(feedback.body);
           confirmAction(t, "daycareApproved", {
             body: approvalHealthSummary(result.health).body,
           });
+        } else {
+          toast.error(feedback.body);
         }
       } else if (decision === "decline") {
         confirmAction(t, "unlive");
@@ -592,6 +597,11 @@ export function AdminPage() {
           <p className="mt-3 text-sm text-muted">
             Needs complete counts listings that are missing a photo, fee, hours, ages, licence photo, or screening. It is not the pending-claims count.
           </p>
+          {approvalHealth ? (
+            <div className="mt-4">
+              <ApprovalHealthNotice health={approvalHealth} />
+            </div>
+          ) : null}
           <div className="mt-8">
             <AdminIncompleteQueue
               rows={incompleteQueue}
@@ -623,6 +633,11 @@ export function AdminPage() {
             <p className="mt-3 text-xs text-muted">
               {qaCount} QA / Claim Lab fixture{qaCount === 1 ? "" : "s"} hidden from this production queue. Toggle Show QA fixtures to review the ghost listing separately.
             </p>
+          ) : null}
+          {approvalHealth ? (
+            <div className="mt-4">
+              <ApprovalHealthNotice health={approvalHealth} />
+            </div>
           ) : null}
           <section className="mt-10" data-ke="admin-stat-list" data-ke-stat-list={stat}>
             <div className="flex flex-wrap items-end justify-between gap-3">

@@ -143,10 +143,10 @@ export function AdminIncompleteQueue({
                         {t("adminIncompleteOpenScreening")}
                       </Link>
                     </Button>
-                    <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => onDecide(c.daycareId, "waiting")}>
+                    <Button type="button" size="sm" variant="secondary" disabled={busy !== null} onClick={() => onDecide(c.daycareId, "waiting")}>
                       {t("adminIncompleteKeepWaiting")}
                     </Button>
-                    <Button size="sm" disabled={busy !== null} onClick={() => onDecide(c.daycareId, "approve")}>
+                    <Button type="button" size="sm" disabled={busy !== null} onClick={() => onDecide(c.daycareId, "approve")}>
                       {t("adminIncompleteApprove")}
                     </Button>
                   </div>

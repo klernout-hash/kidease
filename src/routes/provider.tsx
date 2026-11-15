@@ -29,6 +29,8 @@ import {
   listingCreateErrorMessage,
 } from "@/lib/listing-identity";
 import { CentreRequestGuard } from "@/components/centre-request-guard";
+import { custodyCopy } from "@/lib/custody-copy";
+import { portfolioCopy } from "@/lib/child-portfolio-copy";
 import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-queue";
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
@@ -1126,10 +1128,21 @@ function RequestList({
             ) : (
               <>
             <Button
+              type="button"
               size="sm"
               variant={r.status === "accepted" ? "primary" : "secondary"}
-              disabled={r.portfolioComplete === false || r.familyBlocked === true}
-              onClick={() => void onDecide(r.id, "approve").catch((err) => toast.error(err instanceof Error ? err.message : t("requestUpdateFailed")))}
+              onClick={() =>
+                void onDecide(r.id, "approve").catch((err) => {
+                  const message = err instanceof Error ? err.message : "";
+                  toast.error(
+                    message === "portfolio:incomplete"
+                      ? portfolioCopy(locale).approveBlocked
+                      : message === "safety_blocked"
+                        ? custodyCopy(locale).blockedFamily
+                        : message || t("requestUpdateFailed"),
+                  );
+                })
+              }
             >
               {t("approveRequest")}
             </Button>

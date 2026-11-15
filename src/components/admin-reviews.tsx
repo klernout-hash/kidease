@@ -47,6 +47,7 @@ export function AdminReviewsPanel() {
       );
       setNote("");
       await load();
+      toast.success(decision === "publish" ? t("reviewApproved") : t("hideReview"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save that decision");
     } finally {

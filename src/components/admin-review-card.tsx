@@ -526,7 +526,7 @@ export function AdminReviewCard({
         ) : (
         <div className="mt-1.5 flex flex-col gap-1.5 sm:flex-row sm:items-center" role="group" aria-label={`Decision for ${centre.name}`}>
           {canOfferApprove(status) ? (
-            <Button className="w-full sm:w-auto sm:min-w-36" disabled={locked} onClick={() => onDecide(centre.daycareId, "approve")}>
+            <Button type="button" className="w-full sm:w-auto sm:min-w-36" disabled={locked} onClick={() => onDecide(centre.daycareId, "approve")}>
               Approve
             </Button>
           ) : (
