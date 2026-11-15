@@ -3541,5 +3541,11 @@
   "adminNavConnect": "Stripe Connect",
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "Nómina",
-  "adminNavSubsidy": "Subsidio"
+  "adminNavSubsidy": "Subsidio",
+  "deskNavDocuments": "Documentos",
+  "deskNavDocumentsHint": "Seguro, normas y guía",
+  "employeeResend": "Reenviar invitación",
+  "employeeResent": "Invitación enviada de nuevo.",
+  "employeeResendHeld": "Esa invitación no se envió por correo.",
+  "employeeResendFailed": "No se pudo reenviar esa invitación."
 }

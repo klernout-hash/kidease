@@ -3541,5 +3541,11 @@
   "adminNavConnect": "Stripe Connect",
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "الرواتب",
-  "adminNavSubsidy": "الدعم"
+  "adminNavSubsidy": "الدعم",
+  "deskNavDocuments": "المستندات",
+  "deskNavDocumentsHint": "التأمين والسياسات والدليل",
+  "employeeResend": "إعادة إرسال الدعوة",
+  "employeeResent": "أُعيد إرسال الدعوة.",
+  "employeeResendHeld": "لم تُرسل تلك الدعوة بالبريد.",
+  "employeeResendFailed": "تعذر إعادة إرسال تلك الدعوة."
 }
