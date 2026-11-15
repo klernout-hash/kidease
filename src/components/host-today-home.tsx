@@ -8,6 +8,7 @@ import { confirmAction } from "@/lib/success-confirm";
 import { fillCount, hostCopy } from "@/lib/host-listing-copy";
 import { refreshVacancy } from "@/lib/server/claims";
 import { getWaitlistPulseStatus } from "@/lib/server/waitlist-api";
+import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 import type { Daycare } from "@/lib/types";
 
@@ -22,6 +23,8 @@ export function HostTodayHome({
   onChanged: () => void;
 }) {
   const { t, locale } = useCopy();
+  const canChange = useCentreWrite("vacancy");
+  const canNotify = useCentreWrite("waitlist_notify");
   const copy = hostCopy(locale);
   const [centreId, setCentreId] = useState(listings[0]?.id ?? "");
   const centre = listings.find((row) => row.id === centreId) ?? listings[0];
@@ -84,8 +87,8 @@ export function HostTodayHome({
           {t("spotsInfant")} {centre.spotsInfant} · {t("spotsToddler")} {centre.spotsToddler} · {t("spotsPreschool")} {centre.spotsPreschool}
         </p>
         <p className="mt-1 text-sm text-muted">{fillCount(copy.spotsCount, spots)}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Button
+        {canChange || canNotify ? <div className="mt-3 flex flex-wrap items-center gap-2">
+          {canChange ? <Button
             type="button"
             disabled={busy}
             onClick={() => {
@@ -100,9 +103,9 @@ export function HostTodayHome({
             }}
           >
             {t("vacancyRefresh")}
-          </Button>
-          <WaitlistPulseButton daycareId={centre.id} compact onPulsed={onChanged} />
-        </div>
+          </Button> : null}
+          {canNotify ? <WaitlistPulseButton daycareId={centre.id} compact onPulsed={onChanged} /> : null}
+        </div> : null}
         <p className="mt-3 text-sm" data-ke="host-waitlist-summary">
           {waiting == null ? "" : waiting > 0 ? fillCount(copy.waitlistSummary, waiting) : copy.waitlistNone}
         </p>

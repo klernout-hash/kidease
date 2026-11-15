@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { centreCanWriteCare } from "@/lib/centre-roles";
+import { assertCanWrite } from "@/lib/server/centre-access";
 import {
   careStatusBody,
   clampRoomCapacity,
@@ -164,8 +165,7 @@ async function actorName(userId: string) {
 
 async function requireStaffWrite(userId: string, daycareId: string) {
   const sql = await getSql();
-  const role = await loadCentreRole(sql, userId, daycareId);
-  if (!centreCanWriteCare(role)) throw new Error("Staff only");
+  await assertCanWrite(sql, userId, daycareId, "care");
   return sql;
 }
 
@@ -1035,6 +1035,10 @@ export const saveCareMedication = createServerFn({ method: "POST" })
     if (!daycareId || !childName) throw new Error("Pick a child");
     if (!medicationPostReady({ name, dosage, times })) throw new Error("Add medicine, dose, and times");
     const centreRole = await loadCentreRole(sql, context.userId, daycareId);
+    if (centreRole === "read_only") {
+      const { centreActionDenied } = await import("@/lib/centre-roles");
+      throw centreActionDenied("write");
+    }
     const staffOk = centreCanWriteCare(centreRole);
     const booking = await loadEnrolledBooking(sql, {
       daycareId,

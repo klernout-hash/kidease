@@ -70,6 +70,12 @@ async function assertCentre(userId: string, daycareId: string) {
   if (!ids.includes(daycareId)) fail("centre");
 }
 
+async function assertClock(userId: string, daycareId: string) {
+  const sql = await getSql();
+  const { assertCanWrite } = await import("@/lib/server/centre-access");
+  await assertCanWrite(sql, userId, daycareId, "clock_in");
+}
+
 function toEntry(row: EntryRow): TimeEntry {
   return {
     id: row.id,
@@ -172,7 +178,7 @@ export const clockInTimesheet = createServerFn({ method: "POST" })
   }))
   .handler(async ({ context, data }) => {
     if (!staffTimesheetsEnabled()) fail("off");
-    await assertCentre(context.userId, data.daycareId);
+    await assertClock(context.userId, data.daycareId);
     await ensureTimesheetTables();
     const sql = await getSql();
     const open = await sql<{ staff_name: string }>`
@@ -201,7 +207,7 @@ export const clockOutTimesheet = createServerFn({ method: "POST" })
   }))
   .handler(async ({ context, data }) => {
     if (!staffTimesheetsEnabled()) fail("off");
-    await assertCentre(context.userId, data.daycareId);
+    await assertClock(context.userId, data.daycareId);
     const sql = await getSql();
     const rows = await sql<EntryRow>`
       select id, staff_name, clock_in_at, clock_out_at
@@ -246,7 +252,7 @@ export const editTimesheet = createServerFn({ method: "POST" })
   }))
   .handler(async ({ context, data }) => {
     if (!staffTimesheetsEnabled()) fail("off");
-    await assertCentre(context.userId, data.daycareId);
+    await assertClock(context.userId, data.daycareId);
     const sql = await getSql();
     const rows = await sql<EntryRow>`
       select id, staff_name, clock_in_at, clock_out_at

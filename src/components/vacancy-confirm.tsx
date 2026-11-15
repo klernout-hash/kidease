@@ -7,6 +7,7 @@ import { vacancyConfirmPriority } from "@/lib/director-nudges";
 import { dedupeConfirmListings } from "@/lib/confirm-listings";
 import { refreshVacancy } from "@/lib/server/claims";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
+import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 import type { Daycare } from "@/lib/types";
 
@@ -43,6 +44,8 @@ export function VacancyConfirmLoop({
   onConfirmed: () => void | Promise<void>;
 }) {
   const { t, locale } = useCopy();
+  const canChange = useCentreWrite("vacancy");
+  const canNotify = useCentreWrite("waitlist_notify");
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const unique = dedupeConfirmListings(listings);
@@ -65,8 +68,8 @@ export function VacancyConfirmLoop({
                 <p className="font-medium">{name}</p>
                 <p className="mt-0.5 text-sm text-muted">{lastConfirmedLabel(d, t, locale)}</p>
               </div>
-              <div className="flex w-full min-w-0 flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-                <Button
+              {canChange || canNotify ? <div className="flex w-full min-w-0 flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                {canChange ? <Button
                   type="button"
                   size="sm"
                   className="w-full whitespace-normal sm:w-auto"
@@ -83,9 +86,9 @@ export function VacancyConfirmLoop({
                   }}
                 >
                   {t("vacancyRefresh")}
-                </Button>
-                <WaitlistPulseButton daycareId={d.id} compact onPulsed={onConfirmed} />
-              </div>
+                </Button> : null}
+                {canNotify ? <WaitlistPulseButton daycareId={d.id} compact onPulsed={onConfirmed} /> : null}
+              </div> : null}
             </li>
           );
         })}

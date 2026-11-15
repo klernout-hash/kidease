@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { centreCanWriteCare } from "@/lib/centre-roles";
+import { assertCanWrite } from "@/lib/server/centre-access";
 import {
   careStatusBody,
   isEnrolledBookingStatus,
@@ -22,7 +22,6 @@ import { dailyLogsEnabled, privateMediaEnabled, privatePhotoFeedEnabled } from "
 import { classroomPhotoAllowed } from "@/lib/private-photo-feed";
 import { carePhotosForViewer, clampPrivateTtl, isPrivateMediaKey, privatePhotoAccepted } from "@/lib/private-media";
 import { nid } from "@/lib/utils";
-import { loadCentreRole } from "./centre-access";
 import { lookupUser, notifyThreadParty } from "./notify";
 import { markConversationRead } from "./thread-access";
 
@@ -207,8 +206,7 @@ export const postDailyJournal = createServerFn({ method: "POST" })
     const daycareId = String(data.daycareId || "").trim();
     const childName = String(data.childName || "").trim();
     if (!daycareId || !childName) throw new Error("Pick a child");
-    const role = await loadCentreRole(sql, context.userId, daycareId);
-    if (!centreCanWriteCare(role)) throw new Error("Staff only");
+    await assertCanWrite(sql, context.userId, daycareId, "care");
 
     const bookingId = String(data.bookingId || "").trim() || null;
     if (bookingId) {
@@ -314,8 +312,7 @@ export const logDailyCare = createServerFn({ method: "POST" })
     const daycareId = String(data.daycareId || "").trim();
     const childName = String(data.childName || "").trim();
     if (!daycareId || !childName) throw new Error("Pick a child");
-    const role = await loadCentreRole(sql, context.userId, daycareId);
-    if (!centreCanWriteCare(role)) throw new Error("Staff only");
+    await assertCanWrite(sql, context.userId, daycareId, "care");
     const locale = data.locale === "fr" ? "fr" : "en";
     let body = "";
     let kind: "meal" | "nap" = "meal";

@@ -21,6 +21,7 @@ import {
 import { fillCount, hostCopy } from "@/lib/host-listing-copy";
 import { calendarCentreId } from "@/lib/qa-fixes";
 import { loadHostCalendar, saveHostCalendarDay, type HostCalendarDay, type HostCalendarPayload } from "@/lib/server/host-calendar";
+import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import type { Daycare } from "@/lib/types";
@@ -53,6 +54,7 @@ export function HostCalendarDesk({
   const [gear, setGear] = useState<Gear | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const canEdit = useCentreWrite("calendar");
 
   const loadedId = centre?.id ?? "";
   useEffect(() => {
@@ -66,7 +68,7 @@ export function HostCalendarDesk({
         if (isIsoMonth(row.month) && row.month !== month) setMonth(row.month);
       })
       .catch(() => {
-        if (live) setError(copy.saveFailed);
+        if (live) setError(copy.loadFailed);
       });
     return () => {
       live = false;
@@ -207,7 +209,7 @@ export function HostCalendarDesk({
         <li className="inline-flex items-center gap-1"><span className="h-1 w-4 rounded-full bg-primary" aria-hidden />{copy.toursBar}</li>
         <li className="inline-flex items-center gap-1"><span className="h-1 w-4 rounded-full bg-danger" aria-hidden />{copy.closureBar}</li>
       </ul>
-      {selected ? (
+      {selected && canEdit ? (
         <DayEditor
           daycareId={centre.id}
           day={selected}
@@ -246,7 +248,7 @@ export function HostCalendarDesk({
             ))}
           </div>
           <div className="mt-4">
-            {gear === "spots" ? (
+            {gear === "spots" && canEdit ? (
               <>
                 <CapacityForm daycare={centre} mode="listing" focus="ages" onSaved={() => void onSaved()} />
                 <AgeOpenSpotsDesk listings={listings.map((row) => ({ id: row.id, name: row.name }))} />
@@ -263,11 +265,11 @@ export function HostCalendarDesk({
                 ))}
               </ul>
             ) : null}
-            {gear === "tours" ? <TourAvailabilityDesk listings={listings} onSaved={() => void onSaved()} /> : null}
+            {gear === "tours" && canEdit ? <TourAvailabilityDesk listings={listings} onSaved={() => void onSaved()} /> : null}
             {gear === "waitlist" ? (
               <div className="space-y-3">
                 <p className="text-sm">{fillCount(copy.waitlistSummary, payload?.waitlistCount ?? 0)}</p>
-                <WaitlistPulseButton daycareId={centre.id} onPulsed={onSaved} />
+                {canEdit ? <WaitlistPulseButton daycareId={centre.id} onPulsed={onSaved} /> : null}
                 <SpotOfferDesk />
               </div>
             ) : null}
