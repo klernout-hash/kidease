@@ -75,7 +75,7 @@ describe("native Google auth (Better Auth socialProviders.google)", () => {
     assert.match(client, /signIn\.social/);
     assert.match(popup, /isNativeSocialProvider/);
     assert.match(popup, /signInSocial/);
-    assert.match(login, /getSignInProviders/);
+    assert.match(login, /loadSignInProviders/);
   });
 
   it("shows one Google button when native OR broker is configured", () => {

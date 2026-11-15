@@ -111,7 +111,7 @@ export const GROUPS = [
         concealed: false,
         vercel: "both",
         required: false,
-        notes: "Show Continue with Google. Default 0 while the Google Cloud project is suspended. Does not replace GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET.",
+        notes: "Show Continue with Google when the client id, secret, and consent screen are in place. Does not replace GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET.",
       },
       {
         name: "FACEBOOK_CLIENT_ID",

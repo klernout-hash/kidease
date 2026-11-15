@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { appleLoginVisible } from "@/lib/auth/apple-login-flag";
 import { facebookLoginVisible, facebookOauthHost } from "@/lib/auth/facebook-idp";
 import { googleSignInOffered } from "@/lib/auth/google-login-flag";
@@ -67,3 +68,12 @@ export const getSignInProviders = createServerFn({ method: "GET" }).handler((): 
     platform: nativeSocialPlatform({ native, channel, userAgent: ua }),
   });
 });
+
+/** First HTML for sign-in and sign-up. An empty list means email only. */
+export function loadSignInProviders(): Promise<{ providers: GrokProvider[]; providersReady: boolean }> {
+  return withTimeoutFallback(
+    getSignInProviders().then((providers) => ({ providers, providersReady: true })),
+    LOADER_SETTLE_MS,
+    { providers: [], providersReady: false },
+  );
+}
