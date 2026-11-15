@@ -52,6 +52,27 @@ export function SupportPage() {
     );
   }
   if (!user) return <RedirectToSignIn />;
+  if (!ready || !session) {
+    return (
+      <Shell>
+        <main className="mx-auto max-w-lg px-4 py-16 text-center" data-ke="support-opening">
+          <h1 className="font-display text-3xl">{isFrPath(pathname) ? "Le soutien s’ouvre" : "Support is opening"}</h1>
+          <p className="mt-3 text-muted">
+            {isFrPath(pathname)
+              ? "Le premier chargement n’a pas fini. Rechargez cette page."
+              : "The first load did not finish. Reload this page."}
+          </p>
+          <button
+            type="button"
+            className="mt-4 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg touch-manipulation"
+            onClick={() => window.location.reload()}
+          >
+            {isFrPath(pathname) ? "Recharger" : "Reload"}
+          </button>
+        </main>
+      </Shell>
+    );
+  }
   if (!allowed) {
     return (
       <Shell>

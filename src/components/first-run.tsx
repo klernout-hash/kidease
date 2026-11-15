@@ -132,7 +132,7 @@ export function WelcomeWalkthrough({
   const slide = slides[index] ?? slides[0];
   const last = index >= slides.length - 1;
   return (
-    <div className="fixed inset-0 z-[70] grid place-items-end bg-fg/40 p-3 sm:place-items-center" data-ke="first-run-scrim">
+    <div className="fixed inset-0 z-[70] grid place-items-end bg-fg/40 p-3 pointer-events-none sm:place-items-center" data-ke="first-run-scrim">
       <div
         ref={ref}
         role="dialog"
@@ -144,7 +144,7 @@ export function WelcomeWalkthrough({
         data-audience={tourKey === WELCOME_PROVIDER ? "provider" : "parent"}
         data-step={index + 1}
         data-locale={locale}
-        className="w-full max-w-md rounded-xl bg-surface p-5 text-fg shadow-card ring-1 ring-border outline-none"
+        className="pointer-events-auto w-full max-w-md rounded-xl bg-surface p-5 text-fg shadow-card ring-1 ring-border outline-none"
       >
         <p className="text-sm font-medium text-primary">{pickCopy(locale, UI_COPY.welcomeLabel)}</p>
         <p className="mt-2 text-sm text-muted">{stepCounter(locale, index, slides.length)}</p>
@@ -222,7 +222,7 @@ export function CoachTour({ tourKey, onClose }: { tourKey: TourKey; onClose: () 
   }, [step.anchor, index]);
 
   return (
-    <div className="fixed inset-0 z-[66]" data-ke="coach-scrim">
+    <div className="pointer-events-none fixed inset-0 z-[66]" data-ke="coach-scrim">
       <div
         ref={ref}
         role="dialog"
@@ -234,7 +234,7 @@ export function CoachTour({ tourKey, onClose }: { tourKey: TourKey; onClose: () 
         data-tour-key={tourKey}
         data-step={index + 1}
         data-locale={locale}
-        className="fixed max-w-[calc(100%-1.5rem)] rounded-xl bg-surface p-4 text-fg shadow-card ring-1 ring-border outline-none"
+        className="pointer-events-auto fixed max-w-[calc(100%-1.5rem)] rounded-xl bg-surface p-4 text-fg shadow-card ring-1 ring-border outline-none"
         style={
           box
             ? { top: box.top, left: box.left, width: box.width }

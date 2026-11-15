@@ -3523,5 +3523,20 @@
   "waitlistStatusEnrolled": "已入学",
   "carePastDays": "过去的日子",
   "carePastDaysLead": "更早几天的到达和离开。",
-  "carePastEmpty": "没有更早的到达记录。"
+  "carePastEmpty": "没有更早的到达记录。",
+  "adminNavVerify": "许可证和照片",
+  "adminNavReviews": "评价",
+  "adminNavScreening": "审查",
+  "adminNavRegistries": "登记处",
+  "adminNavTrustQueue": "信任队列",
+  "adminNavDaycares": "托儿所",
+  "adminNavPeople": "人员",
+  "adminNavBills": "账单",
+  "adminNavContracts": "合同",
+  "adminNavActivity": "活动",
+  "adminNavEmailHealth": "邮件状况",
+  "adminNavConnect": "Stripe Connect",
+  "adminNavQuickBooks": "QuickBooks",
+  "adminNavPayroll": "工资",
+  "adminNavSubsidy": "补贴"
 }

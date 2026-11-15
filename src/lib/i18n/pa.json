@@ -3523,5 +3523,20 @@
   "waitlistStatusEnrolled": "ਦਾਖ਼ਲ",
   "carePastDays": "ਪਿਛਲੇ ਦਿਨ",
   "carePastDaysLead": "ਪਿਛਲੇ ਦਿਨਾਂ ਦੀ ਆਮਦ ਅਤੇ ਰਵਾਨਗੀ।",
-  "carePastEmpty": "ਕੋਈ ਪੁਰਾਣੀ ਆਮਦ ਸੰਭਾਲੀ ਨਹੀਂ।"
+  "carePastEmpty": "ਕੋਈ ਪੁਰਾਣੀ ਆਮਦ ਸੰਭਾਲੀ ਨਹੀਂ।",
+  "adminNavVerify": "ਲਾਇਸੰਸ ਅਤੇ ਫੋਟੋਆਂ",
+  "adminNavReviews": "ਸਮੀਖਿਆਵਾਂ",
+  "adminNavScreening": "ਜਾਂਚ",
+  "adminNavRegistries": "ਰਜਿਸਟਰੀਆਂ",
+  "adminNavTrustQueue": "ਭਰੋਸੇ ਦੀ ਕਤਾਰ",
+  "adminNavDaycares": "ਡੇਅਕੇਅਰ",
+  "adminNavPeople": "ਲੋਕ",
+  "adminNavBills": "ਬਿੱਲ",
+  "adminNavContracts": "ਇਕਰਾਰਨਾਮੇ",
+  "adminNavActivity": "ਸਰਗਰਮੀ",
+  "adminNavEmailHealth": "ਈਮੇਲ ਸਿਹਤ",
+  "adminNavConnect": "Stripe Connect",
+  "adminNavQuickBooks": "QuickBooks",
+  "adminNavPayroll": "ਤਨਖਾਹ",
+  "adminNavSubsidy": "ਸਬਸਿਡੀ"
 }

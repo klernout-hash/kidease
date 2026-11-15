@@ -64,11 +64,22 @@ export type LicenceReadRow = {
 };
 
 async function adminFlagOn(flag: AiFlag): Promise<boolean> {
+  if (envForcesAdminTool(flag)) return true;
   try {
     return await aiFeatureOn(flag, ADMIN_DISTINCT_ID);
   } catch {
     return false;
   }
+}
+
+function envForcesAdminTool(flag: AiFlag): boolean {
+  const name =
+    flag === AI_FLAGS.truthChecker ? "AI_TRUTH_CHECKER" : flag === AI_FLAGS.spamFilter ? "AI_SPAM_FILTER" : "";
+  if (!name) return false;
+  const value = String(process.env[name] || "")
+    .trim()
+    .toLowerCase();
+  return value === "1" || value === "true" || value === "on" || value === "yes";
 }
 
 async function ensureTables(sql: Sql) {

@@ -3523,5 +3523,20 @@
   "waitlistStatusEnrolled": "Eingeschrieben",
   "carePastDays": "Frühere Tage",
   "carePastDaysLead": "Ankunft und Abholung von früheren Tagen.",
-  "carePastEmpty": "Keine frühere Ankunft ist gespeichert."
+  "carePastEmpty": "Keine frühere Ankunft ist gespeichert.",
+  "adminNavVerify": "Lizenz und Fotos",
+  "adminNavReviews": "Bewertungen",
+  "adminNavScreening": "Überprüfung",
+  "adminNavRegistries": "Register",
+  "adminNavTrustQueue": "Vertrauenswarteschlange",
+  "adminNavDaycares": "Kitas",
+  "adminNavPeople": "Personen",
+  "adminNavBills": "Rechnungen",
+  "adminNavContracts": "Verträge",
+  "adminNavActivity": "Aktivität",
+  "adminNavEmailHealth": "E-Mail-Zustand",
+  "adminNavConnect": "Stripe Connect",
+  "adminNavQuickBooks": "QuickBooks",
+  "adminNavPayroll": "Lohn",
+  "adminNavSubsidy": "Zuschuss"
 }

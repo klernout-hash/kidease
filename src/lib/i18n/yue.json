@@ -3523,5 +3523,20 @@
   "waitlistStatusEnrolled": "已入學",
   "carePastDays": "之前的日子",
   "carePastDaysLead": "之前日子的到達同離開。",
-  "carePastEmpty": "冇更早的到達紀錄。"
+  "carePastEmpty": "冇更早的到達紀錄。",
+  "adminNavVerify": "牌照同相片",
+  "adminNavReviews": "評價",
+  "adminNavScreening": "審查",
+  "adminNavRegistries": "登記處",
+  "adminNavTrustQueue": "信任隊列",
+  "adminNavDaycares": "托兒所",
+  "adminNavPeople": "人員",
+  "adminNavBills": "賬單",
+  "adminNavContracts": "合約",
+  "adminNavActivity": "活動",
+  "adminNavEmailHealth": "電郵狀況",
+  "adminNavConnect": "Stripe Connect",
+  "adminNavQuickBooks": "QuickBooks",
+  "adminNavPayroll": "出糧",
+  "adminNavSubsidy": "資助"
 }
