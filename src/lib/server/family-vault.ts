@@ -294,7 +294,7 @@ export async function loadFamilyDocumentFor(input: {
     if (!shareIsOpen(iso(row.revoked_at))) continue;
     if (await hasCentreDeskAccess(sql, input.userId, row.daycare_id)) {
       const { loadCentreRole } = await import("@/lib/server/centre-access");
-      const role = await loadCentreRole(sql, input.userId, row.daycare_id);
+      const role = await loadCentreRole(sql, input.userId, row.daycare_id).catch(() => null);
       if (role === "read_only") {
         const denied = new Error("You can look at this centre. You cannot open family files.") as Error & { status: number };
         denied.status = 403;

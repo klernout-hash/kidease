@@ -124,12 +124,6 @@ async function pingNewAccount(userId: string, role: "parent" | "provider", extra
   } catch (err) {
     console.error("[kidease-ghl] signup intake failed", err);
   }
-  try {
-    const { afterNewAccountUserMail } = await import("@/lib/server/signup-user-mail.server");
-    await afterNewAccountUserMail(userId, role);
-  } catch (err) {
-    console.error("[kidease-mail] signup user mail failed", err);
-  }
   void import("@/lib/server/admin-tools")
     .then((mod) => mod.maybeQueueSignup(userId, extra))
     .catch(() => undefined);

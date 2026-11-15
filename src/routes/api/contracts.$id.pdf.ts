@@ -64,12 +64,7 @@ async function run(_request: Request, contractId: string) {
     if (!parentAgreementEnabled()) return fail(404, "Signing is not open yet.");
     const { parentAgreementReadable } = await import("@/lib/server/parent-agreement");
     const allowed = await parentAgreementReadable(sql, userId, row.id);
-    if (!allowed) {
-      const { loadCentreRole } = await import("@/lib/server/centre-access");
-      const memberRole = await loadCentreRole(sql, userId, row.daycare_id);
-      if (memberRole && memberRole !== "owner") return fail(403, "Staff cannot open contracts.");
-      return fail(401, "Not authorized");
-    }
+    if (!allowed) return fail(401, "Not authorized");
   } else {
     // A historical provider association must not grant a parent access to a
     // provider pack, even if a future query stops enforcing the pack predicate.

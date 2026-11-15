@@ -106,7 +106,11 @@ async function centreUserIds(sql: Sql, daycareId: string) {
   const owners = await sql<{ user_id: string }>`
     select user_id from provider_daycares where daycare_id = ${daycareId}
   `.catch(() => []);
-  return owners.map((row) => row.user_id).filter(Boolean);
+  const members = await sql<{ user_id: string }>`
+    select user_id from centre_members
+    where daycare_id = ${daycareId} and status = 'active' and role <> 'read_only'
+  `.catch(() => []);
+  return [...new Set([...owners, ...members].map((row) => row.user_id).filter(Boolean))];
 }
 
 /** v2: linked co-parents sign too (parallel with parent 1, before the director). */

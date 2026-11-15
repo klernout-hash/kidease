@@ -40,7 +40,7 @@ test("provider writes and private downloads reject the wrong role", () => {
     ["src/lib/server/parent-agreement.ts", /saveCentreAgreementTerms[\s\S]*assertCentreAction\([\s\S]*"contracts"/],
     ["src/lib/server/parent-agreement.ts", /sendParentAgreement[\s\S]*assertCentreAction\([\s\S]*"contracts"/],
     ["src/lib/server/family-vault.ts", /role === "read_only"/],
-    ["src/routes/api/contracts.$id.pdf.ts", /memberRole !== "owner"/],
+    ["src/lib/server/parent-agreement.ts", /role <> 'read_only'/],
     ["src/routes/provider.tsx", /canWrite \? <CentreFamilyDocs/],
     ["src/routes/invite.$token.tsx", /data-ke="invite-role"/],
     ["src/lib/server/centre-members.ts", /canRevoke: false/],
