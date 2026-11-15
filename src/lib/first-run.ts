@@ -459,7 +459,7 @@ export function parentQuickStart(facts: ParentQuickFacts): ChecklistResult {
 
 export const PARENT_SLIDES: readonly Slide[] = [
   {
-    anchors: ['[data-tour="parent-search"]', '[data-ke="search-pill"]'],
+    anchors: ['[data-ke="msv2-pill"]', '[data-tour="parent-search"]', '[data-ke="search-pill"]'],
     title: { en: "Search here", fr: "Cherchez ici" },
     body: { en: "Type a city or a postal code.", fr: "Écrivez une ville ou un code postal." },
   },
@@ -474,7 +474,7 @@ export const PARENT_SLIDES: readonly Slide[] = [
     body: { en: "A few questions narrow the list.", fr: "Quelques questions raccourcissent la liste." },
   },
   {
-    anchors: ['article[data-slug]', '[data-ke="search-result-list"]'],
+    anchors: ['[data-ke="card-view-details"]', 'article[data-slug]', '[data-ke="search-result-list"]'],
     title: { en: "Open a centre", fr: "Ouvrir un centre" },
     body: { en: "A card shows only facts that centre entered.", fr: "Une fiche montre seulement ce que le centre a entré." },
   },
