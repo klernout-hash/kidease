@@ -9,11 +9,11 @@ import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field"
 import { reviewerSignInSkipsTurnstile } from "@/lib/reviewer-accounts";
 import { nativeSocialPlatform, sanitizeNativeOAuthError, signInProvidersForDevice } from "@/lib/auth/native-oauth";
 import { type GrokProvider } from "@/lib/auth/providers";
-import { getSignInProviders } from "@/lib/server/sign-in-providers";
+import { loadSignInProviders } from "@/lib/server/sign-in-providers";
 import { readClientPlayServices } from "@/lib/native-entitlements";
 import { useStoreChannel } from "@/lib/use-native-shell";
 import { isFrPath } from "@/lib/locale-path";
-import { LOADER_SETTLE_MS, withTimeout, withTimeoutFallback } from "@/lib/timeout";
+import { withTimeout, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
 import { SocialSignInButtons } from "@/components/social-sign-in-buttons";
 import { ContinueAgeNotice } from "@/components/continue-age-notice";
@@ -250,12 +250,7 @@ export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
 }
 
 export async function loginLoader() {
-  const loaded = await withTimeoutFallback(
-    getSignInProviders().then((providers) => ({ providers, providersReady: true })),
-    LOADER_SETTLE_MS,
-    { providers: [] as GrokProvider[], providersReady: false },
-  );
-  return loaded;
+  return loadSignInProviders();
 }
 
 export const Route = createFileRoute("/login")({

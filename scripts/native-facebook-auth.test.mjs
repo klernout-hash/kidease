@@ -137,7 +137,7 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.match(popup, /isNativeSocialProvider/);
     assert.match(popup, /signInSocial/);
     assert.match(popup, /"apple" \| "google" \| "facebook"/);
-    assert.match(login, /getSignInProviders/);
+    assert.match(login, /loadSignInProviders/);
     assert.match(login, /SocialSignInButtons/);
     assert.match(read("src/components/social-sign-in-buttons.tsx"), /continueFacebook/);
   });

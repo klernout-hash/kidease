@@ -1,7 +1,6 @@
 /**
- * Continue with Google stays off until GOOGLE_SIGNIN_ENABLED is turned on.
- * The KidEase Google Cloud project is suspended (Error 401 disabled_client).
- * GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET stay in env and are not read here.
+ * Continue with Google stays off until GOOGLE_SIGNIN_ENABLED is turned on
+ * and GOOGLE_CLIENT_ID plus GOOGLE_CLIENT_SECRET are set.
  * Maps keys are a different flag. Not a PostHog product flag.
  */
 

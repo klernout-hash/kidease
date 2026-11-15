@@ -57,8 +57,12 @@ test("sign-up pages show the logo, phone field, and consent, and the schema stor
   const migration = src("migrations/0086_parent_sms_consent.sql");
   const guard = src("scripts/request-guard.mjs");
   const vercel = src("vercel.json");
-  assert.match(signup, /ParentSignupForm/);
-  assert.match(parentSignup, /ParentSignupForm/);
+  assert.match(signup, /loadSignInProviders/);
+  assert.match(parentSignup, /loadSignInProviders/);
+  assert.match(src("src/routes/fr.signup.tsx"), /loadSignInProviders/);
+  assert.match(form, /socialSignupCallbackPath/);
+  assert.match(form, /role: "parent"/);
+  assert.match(form, /stashParentSmsOptIn/);
   assert.match(form, /BrandMark/);
   assert.match(form, /useState\(false\)/);
   assert.match(form, /ParentSmsFields/);
