@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { CareFloorDesk } from "@/components/care-floor-desk";
 import { Phase1Desk } from "@/components/phase1-desk";
 import { KioskTablet } from "@/components/qr-kiosk-panel";
 import { listProviderFamilyDocs } from "@/lib/server/provider-care";
@@ -45,17 +46,18 @@ export function ProviderCareDesk({ daycareId, owner }: { daycareId?: string; own
         <h3 className="font-display text-xl">{fr ? "Tablette Fire" : "Fire tablet"}</h3>
         <p className="mt-1 text-sm text-muted">
           {fr
-            ? "L’écran d’arrivée Fire s’ouvre sur une tablette Amazon. Sur cet ordinateur, la page dit qu’elle n’est pas disponible."
-            : "The Fire check-in screen opens on an Amazon tablet. On this computer the page says it is not available."}
+          ? "L'écran d'arrivée s'ouvre ici dans le navigateur. La tablette Fire garde son propre écran."
+          : "The check-in screen opens here in the browser. A Fire tablet keeps its own screen."}
         </p>
         <Link
-          to="/kiosk"
+          to={fr ? "/fr/kiosk" : "/kiosk"}
           className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
         >
           {fr ? "Ouvrir l’écran d’arrivée" : "Open the check-in screen"}
         </Link>
       </section>
-      <Phase1Desk locale={fr ? "fr" : "en"} role={role} />
+      <Phase1Desk locale={fr ? "fr" : "en"} role={role} omit={["roll", "toilet", "pickup", "allergy", "incident"]} />
+      {daycareId ? <CareFloorDesk daycareId={daycareId} /> : null}
       <Suspense fallback={<div className="ke-skel h-40 rounded-xl" aria-hidden="true" />}>
         <DailyCareDesk role="provider" daycareId={daycareId} />
       </Suspense>

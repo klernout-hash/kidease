@@ -84,7 +84,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "today", label: "Today", hint: "What needs you now", labelKey: "todayHome", hintKey: "deskNavTodayHint", href: "/provider", search: { desk: "today" } },
     { id: "messages", label: "Messages", hint: "Parent inquiries + tours", labelKey: "messages", hintKey: "deskNavMessagesHint", href: "/inbox", search: { view: "centre" } },
     { id: "tours", label: "Tour times", hint: "When families can visit", labelKey: "tourTimes", hintKey: "deskNavToursHint", href: "/provider", search: { desk: "tours" } },
-    { id: "calendar", label: "Calendar", hint: "Open spots by day", labelKey: "navCalendar", href: "/provider", search: { desk: "calendar" } },
+    { id: "calendar", label: "Calendar", hint: "Open spots by day", labelKey: "navCalendar", hintKey: "deskNavCalendarHint", href: "/provider", search: { desk: "calendar" } },
     { id: "listings", label: "Listings", hint: "Spots, photos, fees", labelKey: "deskNavListings", hintKey: "deskNavListingsHint", href: "/provider", search: { desk: "listings" } },
     { id: "insights", label: "Insights", hint: "Views, tours, and spots", labelKey: "deskNavInsights", hintKey: "deskNavInsightsHint", href: "/provider", search: { desk: "insights" } },
     { id: "top-rated", label: "Top Rated", hint: "KidEase mark, not a government rating", labelKey: "deskNavTopRated", hintKey: "deskNavTopRatedHint", href: "/provider", search: { desk: "top-rated" } },

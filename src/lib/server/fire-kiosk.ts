@@ -1,7 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
-import { fireKioskAllowed } from "@/lib/amazon/gate";
+import { amazonBuildOnAmazonDevice, fireKioskAllowed } from "@/lib/amazon/gate";
 
-/** Kiosk only opens in the Amazon Appstore build on an Amazon device with FEATURE_FIRE_KIOSK on. */
+/**
+ * A browser gets the web check-in screen. A Fire tablet still needs the
+ * Amazon build and the Fire kiosk flags.
+ */
 export const getFireKioskAccess = createServerFn({ method: "GET" }).handler(async () => {
   const { getRequest } = await import("@tanstack/react-start/server");
   let userAgent = "";
@@ -10,5 +13,9 @@ export const getFireKioskAccess = createServerFn({ method: "GET" }).handler(asyn
   } catch {
     userAgent = "";
   }
-  return { allowed: fireKioskAllowed(process.env, { userAgent }) };
+  const nativeFire = amazonBuildOnAmazonDevice({ userAgent });
+  return {
+    allowed: nativeFire ? fireKioskAllowed(process.env, { userAgent }) : true,
+    nativeFire,
+  };
 });
