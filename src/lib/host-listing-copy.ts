@@ -82,6 +82,7 @@ export type HostCopy = {
   guideBring: string;
   guideHandbook: string;
   saveFailed: string;
+  loadFailed: string;
   dayLabel: string;
 };
 
@@ -167,6 +168,7 @@ const en: HostCopy = {
   guideBring: "What a family should bring. Leave blank if you have not written it.",
   guideHandbook: "A short note about your parent handbook. This is not a file upload.",
   saveFailed: "Could not save. Try again.",
+  loadFailed: "Could not open the calendar. Try again.",
   dayLabel: "{date}. {detail}",
 };
 
@@ -252,6 +254,7 @@ const fr: HostCopy = {
   guideBring: "Ce qu'une famille doit apporter. Laissez vide si ce n'est pas écrit.",
   guideHandbook: "Une courte note sur le manuel des parents. Ce n'est pas un envoi de fichier.",
   saveFailed: "Enregistrement impossible. Réessayez.",
+  loadFailed: "Impossible d'ouvrir le calendrier. Réessayez.",
   dayLabel: "{date}. {detail}",
 };
 

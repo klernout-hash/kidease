@@ -18,6 +18,7 @@ import {
   recordChildCheck,
 } from "@/lib/server/child-checkin";
 import type { Locale } from "@/lib/types";
+import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 
 function when(iso: string, locale: Locale, timeZone?: string | null) {
@@ -32,6 +33,7 @@ function statusWord(status: AttendanceStatus, copy: ReturnType<typeof attendance
 
 export function ChildCheckinDesk() {
   const { locale } = useCopy();
+  const canCheck = useCentreWrite("check_in");
   const { celebrate } = useSuccessConfirm();
   const legacy = featureCopy(locale);
   const copy = attendanceCopy(locale);
@@ -112,7 +114,7 @@ export function ChildCheckinDesk() {
                   })()}
                 </label>
               ) : null}
-              <Button
+              {canCheck ? <Button
                 type="button"
                 className="mt-4 min-h-11 w-full touch-manipulation sm:w-auto"
                 disabled={busy === child.bookingId}
@@ -147,8 +149,8 @@ export function ChildCheckinDesk() {
                 }}
               >
                 {child.next === "check_in" ? copy.checkIn : copy.checkOut}
-              </Button>
-              {desk.canCorrect ? (
+              </Button> : null}
+              {canCheck && desk.canCorrect ? (
                 <form
                   className="mt-3"
                   data-ke="attendance-correct"

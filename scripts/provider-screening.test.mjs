@@ -132,6 +132,10 @@ test("owner manages the team; staff only act on their own items", () => {
     true,
   );
   assert.equal(
+    decideScreeningAccess({ actorRole: "read_only", actorUserId: "u1", targetUserId: "u1", action: "act_own" }).ok,
+    false,
+  );
+  assert.equal(
     decideScreeningAccess({ actorRole: "staff", actorUserId: "u1", targetUserId: "u2", action: "act_own" }).ok,
     false,
   );

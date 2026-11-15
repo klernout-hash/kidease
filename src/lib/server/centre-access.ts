@@ -1,6 +1,7 @@
 import type { Sql } from "@/lib/db";
 import { LISTING_NOT_YOURS } from "@/lib/access-control";
 import {
+  canWrite,
   centreActionAllowed,
   centreActionDenied,
   centreCanMutateListingDetails,
@@ -9,11 +10,12 @@ import {
   parseCentreMemberRole,
   type CentreGate,
   type CentreMemberRole,
+  type CentreWriteAction,
 } from "@/lib/centre-roles";
 import { nid } from "@/lib/utils";
 
 export type CentreAction = CentreGate;
-export { centreActionAllowed, centreActionDenied };
+export { canWrite, centreActionAllowed, centreActionDenied };
 
 export async function listOwnedDaycareIds(sql: Sql, userId: string): Promise<string[]> {
   const rows = await sql<{ daycare_id: string }>`
@@ -86,6 +88,22 @@ export async function assertCentreAction(
   if (admin) return;
   const role = await loadCentreRole(sql, userId, daycareId);
   if (!centreActionAllowed(role, action)) throw centreActionDenied(action);
+}
+
+/** Read-only is 403. Staff and managers may do floor work. Admins may. */
+export async function assertCanWrite(
+  sql: Sql,
+  userId: string,
+  daycareId: string,
+  action: CentreWriteAction,
+): Promise<void> {
+  const { resolveAdminAccess } = await import("@/lib/server/roles");
+  const admin = await resolveAdminAccess(userId)
+    .then((row) => row.ok)
+    .catch(() => false);
+  if (admin) return;
+  const role = await loadCentreRole(sql, userId, daycareId);
+  if (!canWrite(role, action)) throw centreActionDenied(action === "contracts" ? "contracts" : "write");
 }
 
 export async function canCentreWriteLeadsFor(

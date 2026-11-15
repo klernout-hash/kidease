@@ -489,6 +489,8 @@ export const generateScreeningLetter = createServerFn({ method: "POST" })
     }
     const sql = await getSql();
     const role = await loadCentreRole(sql, context.userId, data.daycareId);
+    const { canWrite, centreActionDenied } = await import("@/lib/centre-roles");
+    if (!canWrite(role, "screening")) throw centreActionDenied("write");
     const person = await sql<PersonRow>`
       select id, daycare_id, member_id, user_id, screening_role, display_name, archived_at
       from provider_screening_people
@@ -554,6 +556,8 @@ export async function saveScreeningUpload(input: {
   if (!parsed.ok) throw new Error(parsed.error);
   const sql = await getSql();
   const role = await loadCentreRole(sql, input.userId, input.daycareId);
+  const { canWrite, centreActionDenied } = await import("@/lib/centre-roles");
+  if (!canWrite(role, "screening")) throw centreActionDenied("write");
   const person = await sql<PersonRow>`
     select id, daycare_id, member_id, user_id, screening_role, display_name, archived_at
     from provider_screening_people

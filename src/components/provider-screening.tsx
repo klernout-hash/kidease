@@ -20,6 +20,7 @@ import {
   SCREENING_DOC_API,
   screeningDocHref,
 } from "@/lib/private-docs";
+import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 import { centrePickerLabel } from "@/lib/centre-label";
 import { isReauthRequiredMessage } from "@/lib/reauth";
@@ -98,6 +99,7 @@ function DocRow({
   doc,
   locale,
   busy,
+  writable = true,
   onLetter,
   onUpload,
 }: {
@@ -106,6 +108,7 @@ function DocRow({
   doc: ScreeningDocView;
   locale: "en" | "fr";
   busy: boolean;
+  writable?: boolean;
   onLetter: () => void;
   onUpload: (file: File, issuedOn: string, expiresOn: string) => void;
 }) {
@@ -144,7 +147,7 @@ function DocRow({
         </label>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        {doc.kind === "vsc" ? (
+        {writable && doc.kind === "vsc" ? (
           <Button type="button" size="sm" variant="secondary" disabled={busy} onClick={onLetter}>
             {t("screeningGenerateLetter")}
           </Button>
@@ -160,7 +163,7 @@ function DocRow({
             {doc.filename ? ` · ${doc.filename}` : ""}
           </Button>
         ) : null}
-        <label className="inline-flex h-11 min-h-11 cursor-pointer items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-fg">
+        {writable ? <label className="inline-flex h-11 min-h-11 cursor-pointer items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-fg">
           {t("screeningUpload")}
           <input
             type="file"
@@ -182,7 +185,7 @@ function DocRow({
               e.target.value = "";
             }}
           />
-        </label>
+        </label> : null}
       </div>
       <UploadLimitHint hint={t("uploadDocHint")} error={fileError} />
     </li>
@@ -191,6 +194,7 @@ function DocRow({
 
 export function ProviderScreeningPanel() {
   const { t, locale } = useCopy();
+  const canScreen = useCentreWrite("screening");
   const loc = locale === "fr" ? "fr" : "en";
   const [centres, setCentres] = useState<ScreeningCentreView[]>([]);
   const [canManage, setCanManage] = useState(false);
@@ -377,6 +381,7 @@ export function ProviderScreeningPanel() {
                         doc={doc}
                         locale={loc}
                         busy={busy}
+                        writable={canScreen}
                         onLetter={() => void onLetter(centre, person)}
                         onUpload={(file, issuedOn, expiresOn) =>
                           onUpload(centre, person, doc, file, issuedOn, expiresOn)

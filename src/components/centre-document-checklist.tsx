@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { centreDocCopy } from "@/lib/centre-documents-copy";
 import type { ChecklistItem, ChecklistScore } from "@/lib/centre-documents";
-import { deleteCentreDocument, listCentreDocumentChecklist } from "@/lib/server/centre-documents";
+import { deleteCentreDocument, listCentreDocumentChecklist, saveCentreDocument } from "@/lib/server/centre-documents";
+import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -29,6 +30,7 @@ function fileAllowed(file: File): "ok" | "type" | "size" {
 
 export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
   const { locale } = useCopy();
+  const canUpload = useCentreWrite("document_upload");
   const copy = centreDocCopy(locale);
   const [checklist, setChecklist] = useState<ChecklistScore | null>(null);
   const [enabled, setEnabled] = useState(false);
@@ -155,7 +157,7 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
                 />
               </label>
             ) : null}
-            {item.kind !== "licence" && item.kind !== "screening" ? (
+            {canUpload && item.kind !== "licence" && item.kind !== "screening" ? (
               <div className="mt-2 flex flex-wrap gap-2">
                 <label
                   htmlFor={`centre-doc-${item.id}`}
