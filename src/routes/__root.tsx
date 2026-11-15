@@ -99,7 +99,7 @@ const GUEST_LOCALE = {
 export const Route = createRootRoute({
   beforeLoad: async ({ location }) => {
     const frenchDoc = location.pathname === "/fr" || location.pathname.startsWith("/fr/");
-    if (frenchDoc) await ensureFrenchCopy();
+    const frenchPack = frenchDoc ? ensureFrenchCopy() : Promise.resolve();
     const barePath =
       location.pathname.length > 1 && location.pathname.endsWith("/")
         ? location.pathname.slice(0, -1)
@@ -111,7 +111,8 @@ export const Route = createRootRoute({
       throw redirect({ href: "/fr/delete-account", statusCode: 301 });
     }
     const search = `${location.searchStr || ""}${location.hash || ""}`;
-    const [roleChrome, visitorLocale, frCa, frAuthQc, storeRead, airbnbUi] = await Promise.all([
+    const [, roleChrome, visitorLocale, frCa, frAuthQc, storeRead, airbnbUi] = await Promise.all([
+      frenchPack,
       getRoleChrome().catch(() => ({
         signedIn: true,
         role: null as null,
@@ -130,6 +131,7 @@ export const Route = createRootRoute({
       readRequestStoreChannel(location.searchStr || ""),
       readAirbnbUi().catch(() => airbnbUiEnabled()),
     ]);
+    if (!frenchDoc && visitorLocale.locale === "fr") await ensureFrenchCopy();
     if (visitorLocale.redirectTo) {
       throw redirect({ href: visitorLocale.redirectTo, statusCode: 302 });
     }

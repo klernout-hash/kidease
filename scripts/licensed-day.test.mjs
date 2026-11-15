@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildMonthLedger,
+  mergeMonthAttendance,
   canWriteDayNote,
   dayBucket,
   dollarsToDailyCents,
@@ -43,6 +44,13 @@ test("a province without a loaded ratio does not invent a staff number", () => {
   assert.equal(room.staffRequired, 0);
   assert.equal(room.overRatio, false);
   assert.equal(room.overGroup, true);
+});
+
+test("a check-in day counts when the attendance table has no row", () => {
+  const days = mergeMonthAttendance([], [{ day: "2026-11-11", action: "check_in" }, { day: "2026-11-11", action: "check_out" }]);
+  const ledger = buildMonthLedger({ statuses: days.map((day) => day.status), parentDailyCents: 0, programDailyCents: 0 });
+  assert.equal(days.length, 1);
+  assert.equal(ledger.present, 1);
 });
 
 test("the month bills days the child was here and leaves sick and vacation off both shares", () => {

@@ -3519,5 +3519,9 @@
   "careAttendanceUpdated": "آخر تحديث بواسطة {name} في {time}",
   "careCentreStaff": "موظفو المركز",
   "careAttendanceHistory": "السجل لهذا التاريخ",
-  "careAttendanceCorrection": "تصحيح"
+  "careAttendanceCorrection": "تصحيح",
+  "waitlistStatusEnrolled": "مسجّل",
+  "carePastDays": "الأيام السابقة",
+  "carePastDaysLead": "تسجيل الوصول والمغادرة من الأيام السابقة.",
+  "carePastEmpty": "لا يوجد تسجيل وصول أقدم."
 }

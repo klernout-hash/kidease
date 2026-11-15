@@ -98,10 +98,14 @@ export function buildContentSecurityPolicy(nonce) {
   if (/['\s;]/.test(token)) throw new Error("CSP nonce contains unsafe characters");
 
   const scriptSrc = ["'self'", `'nonce-${token}'`, "'strict-dynamic'", "'wasm-unsafe-eval'", ...CSP_SCRIPT_HOSTS].join(" ");
+  // script-src-elem does not inherit strict-dynamic. Turnstile and the map
+  // insert <script src> tags. The host list here is what the browser enforces.
+  const scriptElem = ["'self'", `'nonce-${token}'`, ...CSP_SCRIPT_HOSTS].join(" ");
   const styleSrc = ["'self'", `'nonce-${token}'`, ...CSP_STYLE_HOSTS].join(" ");
   return [
     "default-src 'self'",
     `script-src ${scriptSrc}`,
+    `script-src-elem ${scriptElem}`,
     `style-src ${styleSrc}`,
     "style-src-attr 'unsafe-inline'",
     `img-src 'self' data: blob: https: ${CSP_IMG_HOSTS.join(" ")}`,

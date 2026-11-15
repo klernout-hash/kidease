@@ -24,8 +24,29 @@ export function licenceBucket(raw: string | null | undefined): LicenceBucket {
   return "unknown";
 }
 
-export function licenceMatches(stored: string | null | undefined, selected: LicenceBucket): boolean {
-  const bucket = licenceBucket(stored);
+export function licenceFromSearch(value: unknown): LicenceBucket | null {
+  return value === "centre" || value === "home" || value === "unknown" ? value : null;
+}
+
+/** Stored licence text wins. A saved facility class fills the gap. Unknown stays unknown. */
+export function listingLicenceBucket(row: {
+  licenceType?: string | null;
+  facilityType?: string | null;
+}): LicenceBucket {
+  const stored = licenceBucket(row.licenceType);
+  if (row.licenceType && stored !== "unknown") return stored;
+  const facility = String(row.facilityType || "").trim();
+  if (facility === "family_home" || facility === "group_home") return "home";
+  if (facility === "child_care_centre" || facility === "nursery_preschool" || facility === "school_age") return "centre";
+  return stored;
+}
+
+export function licenceMatches(
+  stored: string | null | undefined,
+  selected: LicenceBucket,
+  facilityType?: string | null,
+): boolean {
+  const bucket = listingLicenceBucket({ licenceType: stored, facilityType });
   if (selected === "unknown") return bucket === "unknown";
   if (bucket === "unknown") return false;
   return bucket === selected;

@@ -43,6 +43,8 @@ export type CentreWaitlistRow = {
   offerStatus: string | null;
   offerExpiresAt: string | null;
   place: number | null;
+  /** A child at this centre already has an accepted place. Not an open offer. */
+  enrolled: boolean;
 };
 
 export type AreaWaitlistRow = {
@@ -153,6 +155,11 @@ async function listCentreWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, u
   for (const offer of offers) {
     if (!byWaitlist.has(offer.waitlist_id)) byWaitlist.set(offer.waitlist_id, offer);
   }
+  const enrolledRows = await sql<{ daycare_id: string }>`
+    select daycare_id from bookings
+    where user_id = ${userId} and status in ('accepted', 'active')
+  `.catch(() => [] as { daycare_id: string }[]);
+  const enrolledCentres = new Set(enrolledRows.map((row) => row.daycare_id));
   const ranks = new Map<string, RankRow[]>();
   if (waitlistToolsEnabled()) {
     const ids = [...new Set(entries.map((row) => row.daycare_id))];
@@ -185,6 +192,7 @@ async function listCentreWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, u
       offerStatus: offer?.status ?? null,
       offerExpiresAt: offer?.expires_at ? iso(offer.expires_at) : null,
       place: line ? placeFromRank(line, row.id) : null,
+      enrolled: enrolledCentres.has(row.daycare_id),
     };
   });
 }

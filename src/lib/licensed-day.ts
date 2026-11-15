@@ -168,6 +168,31 @@ export function countsAsPresent(status: string | null | undefined): boolean {
   return dayBucket(status) === "present";
 }
 
+/**
+ * A door check-in is a day the child was here, even when the attendance table
+ * has no row. An existing present mark is kept. Check-out alone does not erase it.
+ */
+export function mergeMonthAttendance(
+  attendance: readonly { day: string; status: string }[],
+  checks: readonly { day: string; action: string }[],
+): { day: string; status: string }[] {
+  const byDay = new Map<string, string>();
+  for (const row of attendance) {
+    const day = String(row.day || "").slice(0, 10);
+    if (!day || byDay.has(day)) continue;
+    byDay.set(day, row.status);
+  }
+  for (const row of checks) {
+    const day = String(row.day || "").slice(0, 10);
+    if (!day) continue;
+    const current = byDay.get(day);
+    if (current && dayBucket(current) === "present") continue;
+    if (row.action === "check_in") byDay.set(day, "arrived");
+    else if (row.action === "check_out" && !current) byDay.set(day, "departed");
+  }
+  return [...byDay.entries()].map(([day, status]) => ({ day, status }));
+}
+
 export type MonthLedger = {
   present: number;
   absent: number;

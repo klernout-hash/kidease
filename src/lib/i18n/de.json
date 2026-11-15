@@ -3519,5 +3519,9 @@
   "careAttendanceUpdated": "Zuletzt von {name} um {time} aktualisiert",
   "careCentreStaff": "Personal des Zentrums",
   "careAttendanceHistory": "Verlauf für dieses Datum",
-  "careAttendanceCorrection": "Korrektur"
+  "careAttendanceCorrection": "Korrektur",
+  "waitlistStatusEnrolled": "Eingeschrieben",
+  "carePastDays": "Frühere Tage",
+  "carePastDaysLead": "Ankunft und Abholung von früheren Tagen.",
+  "carePastEmpty": "Keine frühere Ankunft ist gespeichert."
 }

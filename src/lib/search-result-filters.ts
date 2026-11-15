@@ -145,7 +145,7 @@ export function filterSearchResults<T extends DaycareCard>(rows: readonly T[], s
     if (filters.outdoor && !hasAmenity(row.amenities, "outdoor") && !hasAmenity(row.amenities, "yard")) return false;
     if ((filters.inclusive || pioneer.inclusive) && !hasAmenity(row.amenities, "inclusive")) return false;
     if (care.length && !matchesDeclaredCare(row.amenities, care)) return false;
-    if (filters.licence && !licenceMatches((row as T & { licenceType?: string | null }).licenceType, filters.licence)) return false;
+    if (filters.licence && !licenceMatches((row as T & { licenceType?: string | null }).licenceType, filters.licence, row.facilityType)) return false;
     if (filters.extended && !staysLate(row.hours, row.amenities) && !opensEarly(row.hours)) return false;
     if (filters.infantOnly && !matchesRailAge(row, "infant")) return false;
     if (filters.catchmentOnly && !row.inCatchment) return false;

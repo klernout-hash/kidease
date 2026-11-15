@@ -22,6 +22,9 @@ test("licence filters never guess and never match unknown to a specific type", (
   assert.equal(licenceMatches("unknown", "centre"), false);
   assert.equal(licenceMatches("garderie", "centre"), true);
   assert.equal(licenceMatches(null, "unknown"), true);
+  assert.equal(licenceMatches(null, "centre", "child_care_centre"), true);
+  assert.equal(licenceMatches(null, "home", "family_home"), true);
+  assert.equal(licenceMatches(null, "centre", "family_home"), false);
 });
 
 test("multi-child search stores no names and groups full versus some", () => {

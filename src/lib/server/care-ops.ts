@@ -26,6 +26,7 @@ import {
   dayNoteReady,
   isProgramKind,
   isRatioAgeGroup,
+  mergeMonthAttendance,
   normalizeSplit,
   type ProgramKind,
 } from "@/lib/licensed-day";
@@ -835,6 +836,27 @@ export const getLicensedMonth = createServerFn({ method: "POST" })
           )
         )
     `.catch(() => []);
+    const checks = await sql<{
+      booking_id: string;
+      day: string;
+      action: string;
+    }>`
+      select booking_id, local_day::text as day, action
+      from child_check_events
+      where local_day >= ${start}::date and local_day < (${start}::date + interval '1 month')
+        and (
+          parent_user_id = ${context.userId}
+          or booking_id in (
+            select id from bookings
+            where user_id = ${context.userId} and status in ('accepted', 'active')
+          )
+          or daycare_id in (select daycare_id from provider_daycares where user_id = ${context.userId})
+          or daycare_id in (
+            select daycare_id from centre_members
+            where user_id = ${context.userId} and status = 'active'
+          )
+        )
+    `.catch(() => [] as { booking_id: string; day: string; action: string }[]);
     const splitRows = await sql<{
       booking_id: string;
       daycare_id: string;
@@ -867,9 +889,14 @@ export const getLicensedMonth = createServerFn({ method: "POST" })
         daycareName: kid.daycare_name,
         childName: kid.child_name,
         parentUserId: kid.parent_user_id,
-        days: rows
-          .filter((r) => r.daycare_id === kid.daycare_id && r.child_name === kid.child_name)
-          .map((r) => ({ day: r.day, status: r.status })),
+        days: mergeMonthAttendance(
+          rows
+            .filter((r) => r.daycare_id === kid.daycare_id && r.child_name === kid.child_name)
+            .map((r) => ({ day: r.day, status: r.status })),
+          checks
+            .filter((r) => r.booking_id === kid.booking_id)
+            .map((r) => ({ day: r.day, action: r.action })),
+        ),
         split:
           splitHit && kind
             ? {

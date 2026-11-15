@@ -17,13 +17,14 @@ import {
 } from "@/lib/server/waitlist-tracker";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
-import { canWithdrawWaitlist, waitlistEventProps, type ParentWaitlistStatus } from "@/lib/waitlist-tracker";
+import { canWithdrawWaitlist, centreOfferStillOpen, waitlistEventProps, type ParentWaitlistStatus } from "@/lib/waitlist-tracker";
 
 const STATUS_KEY: Record<ParentWaitlistStatus, CopyKey> = {
   sent: "waitlistStatusSent",
   seen: "waitlistStatusSeen",
   waitlisted: "waitlistStatusWaitlisted",
   offered: "waitlistStatusOffered",
+  enrolled: "waitlistStatusEnrolled",
   declined: "waitlistStatusDeclined",
   withdrawn: "waitlistStatusWithdrawn",
 };
@@ -179,7 +180,7 @@ export function MyWaitlists() {
                       {row.daycareName}
                     </Link>
                     <span className="inline-flex min-h-6 items-center rounded-full bg-surface-2 px-2.5 text-xs ring-1 ring-border">
-                      {centreWaitlistStatus(row.status, locale)}
+                      {row.enrolled ? t("waitlistStatusEnrolled") : centreWaitlistStatus(row.status, locale)}
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-muted">
@@ -188,7 +189,7 @@ export function MyWaitlists() {
                   </p>
                   <p className="mt-1 text-xs text-subtle">{copy.joinedOn.replace("{date}", when(row.joinedAt, locale))}</p>
                   <p className="mt-1 text-sm text-fg" data-ke="waitlist-not-a-spot">{t("waitlistNotASpot")}</p>
-                  {row.offerStatus === "open" && row.offerExpiresAt ? (
+                  {centreOfferStillOpen({ offerStatus: row.offerStatus, enrolled: row.enrolled }) && row.offerExpiresAt ? (
                     <p className="mt-1 text-sm text-muted">
                       {copy.offerOpen.replace("{date}", when(row.offerExpiresAt, locale))}
                       {" · "}
@@ -200,7 +201,7 @@ export function MyWaitlists() {
                     <p className="mt-1 text-xs text-subtle">{copy.noOffer}</p>
                   ) : null}
                 </div>
-                {canLeaveCentre(row.status) ? (
+                {canLeaveCentre(row.status) && !row.enrolled ? (
                   <Button size="sm" variant="secondary" className="min-h-11" disabled={busy === row.id} onClick={() => void leaveCentre(row)}>
                     {copy.withdraw}
                   </Button>
