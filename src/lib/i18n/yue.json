@@ -3541,5 +3541,6 @@
   "adminNavConnect": "Stripe Connect",
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "出糧",
-  "adminNavSubsidy": "資助"
+  "adminNavSubsidy": "資助",
+  "employeeInviteRole": "呢個邀請嘅角色係{role}。"
 }

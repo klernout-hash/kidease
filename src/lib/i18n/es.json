@@ -3541,5 +3541,6 @@
   "adminNavConnect": "Stripe Connect",
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "Nómina",
-  "adminNavSubsidy": "Subsidio"
+  "adminNavSubsidy": "Subsidio",
+  "employeeInviteRole": "Esta invitación es para el rol {role}."
 }
