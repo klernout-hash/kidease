@@ -26,6 +26,7 @@ export function NotificationBell({
       onClick={onClick}
       aria-label={label}
       title={hint}
+      data-ke="notification-bell"
       className={cn(
         "relative grid size-12 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full text-fg hover:bg-surface",
         className,

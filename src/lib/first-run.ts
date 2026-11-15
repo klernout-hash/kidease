@@ -48,9 +48,13 @@ export type OnboardingState = {
 
 export const EMPTY_ONBOARDING: OnboardingState = { seen: [], dismissed: [] };
 
-export type Slide = { title: Localized; body: Localized };
+export type Slide = { title: Localized; body: Localized; anchors: readonly string[] };
 
 export type TourStep = { anchor: string; title: Localized; body: Localized };
+
+export type Box = { top: number; left: number; width: number; height: number };
+
+export type CoachPlacement = { top: number; left: number; width: number; arrow: "up" | "down" };
 
 export type GuideArticle = {
   id: string;
@@ -161,7 +165,58 @@ function barePath(pathname: string): string {
 }
 
 function quiet(path: string): boolean {
+  if (path === "/admin" || path.startsWith("/admin/") || path.startsWith("/admin-")) return true;
+  if (path === "/gov" || path.startsWith("/gov/") || path.startsWith("/gov-")) return true;
   return QUIET_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+}
+
+/** Admin and government desks never auto-open a tour. Replay still works. */
+export function blocksAutoTour(role: string | null | undefined): boolean {
+  return role === "admin" || role === "government";
+}
+
+export function boxesOverlap(a: Box, b: Box, gap = 0): boolean {
+  return !(
+    a.left + a.width + gap <= b.left ||
+    b.left + b.width + gap <= a.left ||
+    a.top + a.height + gap <= b.top ||
+    b.top + b.height + gap <= a.top
+  );
+}
+
+/** Puts the bubble beside the target, never on top of it. */
+export function placeCoachBubble(
+  target: Box,
+  bubble: { width: number; height: number },
+  viewport: { width: number; height: number },
+): CoachPlacement {
+  const margin = 12;
+  const gap = 16;
+  const width = Math.min(bubble.width, Math.max(160, viewport.width - margin * 2));
+  const height = bubble.height;
+  const center = target.left + target.width / 2;
+  const left = Math.max(margin, Math.min(center - width / 2, viewport.width - width - margin));
+  const below = target.top + target.height + gap;
+  const above = target.top - gap - height;
+  const roomBelow = viewport.height - margin - below;
+  const roomAbove = above - margin;
+  const arrow: "up" | "down" = roomBelow >= height || roomBelow >= roomAbove ? "up" : "down";
+  const rawTop = arrow === "up" ? below : above;
+  const top = Math.max(margin, Math.min(rawTop, viewport.height - height - margin));
+  return { top, left, width, arrow };
+}
+
+export function stepAnchors(step: { anchor?: string; anchors?: readonly string[] }): string[] {
+  if (step.anchors && step.anchors.length) return [...step.anchors];
+  return step.anchor ? [step.anchor] : [];
+}
+
+/** Drops a step when none of its targets are on the page. */
+export function presentCoachSteps<T extends { anchor?: string; anchors?: readonly string[] }>(
+  steps: readonly T[],
+  present: (selector: string) => boolean,
+): T[] {
+  return steps.filter((step) => stepAnchors(step).some((selector) => present(selector)));
 }
 
 /** Which auto surfaces belong on this screen. Replay ignores this. */
@@ -404,77 +459,77 @@ export function parentQuickStart(facts: ParentQuickFacts): ChecklistResult {
 
 export const PARENT_SLIDES: readonly Slide[] = [
   {
-    title: { en: "Find care near you", fr: "Trouvez une place près de chez vous" },
-    body: {
-      en: "Search licensed daycares by city. Compare them on one list.",
-      fr: "Cherchez des garderies permises par ville. Comparez-les dans une liste.",
-    },
+    anchors: ['[data-tour="parent-search"]', '[data-ke="search-pill"]'],
+    title: { en: "Search here", fr: "Cherchez ici" },
+    body: { en: "Type a city or a postal code.", fr: "Écrivez une ville ou un code postal." },
   },
   {
-    title: { en: "Save centres you like", fr: "Gardez les centres qui vous plaisent" },
-    body: {
-      en: "Save a centre. Your list stays on this phone and in your account.",
-      fr: "Enregistrez un centre. Votre liste reste sur ce téléphone et dans votre compte.",
-    },
+    anchors: ['[data-ke="home-care-types"]', '[data-ke="airbnb-care-cats"]', '[data-ke="header-care-categories"]'],
+    title: { en: "Pick a type of care", fr: "Choisissez un type" },
+    body: { en: "Centres, home daycares, and school-age.", fr: "Centres, milieux familiaux et scolaire." },
   },
   {
-    title: { en: "Ask for a tour or a spot", fr: "Demandez une visite ou une place" },
-    body: {
-      en: "Send a tour request, or ask about a spot. The centre replies in KidEase.",
-      fr: "Envoyez une demande de visite, ou demandez une place. Le centre répond dans KidEase.",
-    },
+    anchors: ['[data-ke="smart-match-open"]'],
+    title: { en: "Find my match", fr: "Trouver ma garderie" },
+    body: { en: "A few questions narrow the list.", fr: "Quelques questions raccourcissent la liste." },
   },
   {
-    title: { en: "Message the centre", fr: "Écrivez au centre" },
-    body: {
-      en: "Write from your messages. Their reply shows up in the same place.",
-      fr: "Écrivez depuis vos messages. La réponse arrive au même endroit.",
-    },
+    anchors: ['article[data-slug]', '[data-ke="search-result-list"]'],
+    title: { en: "Open a centre", fr: "Ouvrir un centre" },
+    body: { en: "A card shows only facts that centre entered.", fr: "Une fiche montre seulement ce que le centre a entré." },
   },
   {
-    title: { en: "Pay a bill when you have one", fr: "Payez une facture quand vous en avez une" },
-    body: {
-      en: "If a centre sends an invoice, you can pay it here. No invoice means nothing to pay.",
-      fr: "Si un centre envoie une facture, vous pouvez la payer ici. Sans facture, il n’y a rien à payer.",
-    },
+    anchors: ['[data-ke="help-button"]'],
+    title: { en: "Help stays here", fr: "L’aide reste ici" },
+    body: { en: "Replay this tour any time.", fr: "Revoir cette visite en tout temps." },
+  },
+  {
+    anchors: ['[data-ke="notification-bell"]'],
+    title: { en: "Your notices", fr: "Vos avis" },
+    body: { en: "New replies show on the bell.", fr: "Les nouvelles réponses sont sur la cloche." },
+  },
+  {
+    anchors: ['[data-ke="header-avatar"]', '[data-ke="header-login"]'],
+    title: { en: "Your account", fr: "Votre compte" },
+    body: { en: "Sign in to save centres and write to them.", fr: "Connectez-vous pour enregistrer et écrire." },
   },
 ];
 
 export const PROVIDER_SLIDES: readonly Slide[] = [
   {
+    anchors: ['[data-nav="today"]', '[data-tour="provider-attendance"]'],
+    title: { en: "Today", fr: "Aujourd’hui" },
+    body: { en: "Requests, visits, and who is here.", fr: "Demandes, visites et qui est là." },
+  },
+  {
+    anchors: ['[data-nav="listings"]'],
     title: { en: "Your listing", fr: "Votre fiche" },
-    body: {
-      en: "This is the page families see. Add photos, fees, and ages so it is useful.",
-      fr: "C’est la page que les familles voient. Ajoutez des photos, des tarifs et les âges.",
-    },
+    body: { en: "Photos, fees, and ages families can see.", fr: "Photos, tarifs et âges que les familles voient." },
   },
   {
-    title: { en: "Requests and leads", fr: "Demandes" },
-    body: {
-      en: "New families show up here. Open a request and reply.",
-      fr: "Les nouvelles familles arrivent ici. Ouvrez une demande et répondez.",
-    },
+    anchors: ['[data-nav="requests"]'],
+    title: { en: "Requests", fr: "Demandes" },
+    body: { en: "Open a family note and reply.", fr: "Ouvrez une note de famille et répondez." },
   },
   {
-    title: { en: "Tour calendar", fr: "Calendrier des visites" },
-    body: {
-      en: "Post times you can meet. Families pick a time that is still open.",
-      fr: "Affichez vos heures libres. Les familles choisissent une heure encore ouverte.",
-    },
+    anchors: ['[data-nav="calendar"]', '[data-tour="provider-tours"]'],
+    title: { en: "Tour times", fr: "Heures de visite" },
+    body: { en: "Post a time a family can book.", fr: "Affichez une heure qu’une famille peut réserver." },
   },
   {
-    title: { en: "Messages and attendance", fr: "Messages et présences" },
-    body: {
-      en: "Reply to families in messages. Mark who is here today when attendance is turned on for your centre.",
-      fr: "Répondez aux familles dans Messages. Notez qui est là aujourd’hui quand les présences sont activées.",
-    },
+    anchors: ['[data-nav="messages"]', '[data-tour="desk-messages"]'],
+    title: { en: "Messages", fr: "Messages des familles" },
+    body: { en: "Family notes land here. Texts are not on yet.", fr: "Les notes des familles arrivent ici." },
   },
   {
-    title: { en: "Payments and earnings", fr: "Paiements" },
-    body: {
-      en: "Send an invoice, and connect payouts when you are ready to be paid.",
-      fr: "Envoyez une facture et branchez les versements quand vous êtes prêt à être payé.",
-    },
+    anchors: ['[data-ke="help-button"]'],
+    title: { en: "Help stays here", fr: "L’aide reste ici" },
+    body: { en: "Replay this tour any time.", fr: "Revoir cette visite en tout temps." },
+  },
+  {
+    anchors: ['[data-ke="provider-setup"]'],
+    title: { en: "Setup list", fr: "Liste de départ" },
+    body: { en: "A step ticks when that fact is saved.", fr: "Une étape se coche quand c’est enregistré." },
   },
 ];
 
