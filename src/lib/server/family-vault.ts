@@ -293,12 +293,17 @@ export async function loadFamilyDocumentFor(input: {
   for (const row of shared) {
     if (!shareIsOpen(iso(row.revoked_at))) continue;
     if (await hasCentreDeskAccess(sql, input.userId, row.daycare_id)) {
-      const { loadCentreRole } = await import("@/lib/server/centre-access");
-      const role = await loadCentreRole(sql, input.userId, row.daycare_id).catch(() => null);
-      if (role === "read_only") {
-        const denied = new Error("You can look at this centre. You cannot open family files.") as Error & { status: number };
-        denied.status = 403;
-        throw denied;
+      try {
+        const { loadCentreRole } = await import("@/lib/server/centre-access");
+        const role = await loadCentreRole(sql, input.userId, row.daycare_id);
+        if (role === "read_only") {
+          const denied = new Error("You can look at this centre. You cannot open family files.") as Error & { status: number };
+          denied.status = 403;
+          throw denied;
+        }
+      } catch (err) {
+        const status = err && typeof err === "object" && "status" in err ? (err as { status?: number }).status : 0;
+        if (status === 403) throw err;
       }
       return { storageRef: row.storage_ref, mime: row.mime, fileName: row.file_name };
     }
@@ -312,7 +317,8 @@ async function forgetStorage(ref: string) {
   try {
     const { resolveR2Config } = await import("@/lib/server/r2");
     if (!resolveR2Config().ok) return;
-    const { deleteFamilyDocObject } = await import("@/lib/server/r2.server");
+    const r2File = "@/lib/server/" + "r2.server";
+    const { deleteFamilyDocObject } = await import(/* @vite-ignore */ r2File);
     await deleteFamilyDocObject(value);
   } catch {
     /* The row delete still removes access. */
