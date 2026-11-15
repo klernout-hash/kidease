@@ -186,7 +186,7 @@ export function TodayUrgencyHome({
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" data-tour="provider-attendance">
       <div>
         <h2 className="font-display text-2xl">{t("todayHome")}</h2>
         <p className="mt-1 text-sm text-muted">{t("todayHomeLead")}</p>

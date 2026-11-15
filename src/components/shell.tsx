@@ -5,6 +5,7 @@ const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayout
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu } from "lucide-react";
 import { AppTabBar } from "@/components/app-tab-bar";
+import { FirstRunHelpButton, FirstRunHost } from "@/components/first-run";
 import { HeaderAccount } from "@/components/header-account";
 import { useCurrentUserState, useLocallySignedOut } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
@@ -134,7 +135,8 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
             <Link to={homeTo} className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-1">
+              <FirstRunHelpButton />
               <HeaderAccount />
             </div>
           </div>
@@ -177,6 +179,7 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
                   {t("navForDaycares")}
                 </Link>
               ) : null}
+              <FirstRunHelpButton />
               <HeaderAccount />
               <a
                 href={localePath("/menu", locale)}
@@ -263,6 +266,7 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
         </div>
       </div>
       {hideTabs ? null : <AppTabBar />}
+      <FirstRunHost />
     </div>
   );
 }

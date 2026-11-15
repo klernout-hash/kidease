@@ -13,6 +13,7 @@ import { publicFormErrorMessage } from "@/lib/public-form-error";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { companyAddress, PRIVACY_CONTACT_EMAIL } from "@/lib/company";
 import { safetyText } from "@/lib/safety";
+import { HelpGuide } from "@/components/first-run";
 import { ParentHelperPanel } from "@/components/parent-helper";
 import { localePath } from "@/lib/locale-path";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
@@ -81,6 +82,7 @@ export function Help() {
           </Link>
         </p>
         <SafetyContact locale={locale} />
+        <HelpGuide />
         <ParentHelperPanel />
         <FeelBanner src="/photos/cottage.jpg" className="mt-8" />
 

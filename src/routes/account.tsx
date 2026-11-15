@@ -5,6 +5,7 @@ import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
+import { FirstRunMenuLinks } from "@/components/first-run";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
@@ -690,6 +691,7 @@ function ProfilePane() {
   return (
     <AccountDeskFrame desk={desk}>
       <main className={desk ? "max-w-lg pb-6" : "ke-gutter mx-auto max-w-lg pb-10 pt-6"}>
+        <FirstRunMenuLinks />
         {user ? (
           <input
             ref={inputRef}

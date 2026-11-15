@@ -18,7 +18,7 @@ function emailFor(role: "parent" | "provider" | "admin" | "government", paid: bo
 
 async function seed(request: Request) {
   if (!e2eLoopbackFixtureRequest(request)) return new Response("Not found", { status: 404 });
-  let body: { role?: string; paid?: boolean; ownSlug?: string; activity?: boolean; attention?: boolean; unlockHome?: boolean; paidBills?: boolean; engagement?: boolean } = {};
+  let body: { role?: string; paid?: boolean; ownSlug?: string; activity?: boolean; attention?: boolean; unlockHome?: boolean; paidBills?: boolean; engagement?: boolean; markFee?: boolean; resetOnboarding?: boolean } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -63,6 +63,9 @@ async function seed(request: Request) {
   const userId = users[0]?.id;
   if (!userId) {
     return Response.json({ ok: false, error: "seed-user-missing" }, { status: 500 });
+  }
+  if (body.resetOnboarding) {
+    await sql`delete from onboarding_progress where user_id = ${userId}`.catch(() => undefined);
   }
   await sql`
     insert into profiles (user_id, role) values (${userId}, ${role === "admin" ? "admin" : role})
@@ -151,6 +154,9 @@ async function seed(request: Request) {
     if (id) {
       await sql`delete from provider_daycares where user_id = ${userId}`;
       await sql`insert into provider_daycares (user_id, daycare_id) values (${userId}, ${id}) on conflict do nothing`;
+      if (body.markFee) {
+        await sql`update daycares set infant_monthly = 900 where id = ${id}`;
+      }
       if (activity) {
         await sql`
           update daycares
