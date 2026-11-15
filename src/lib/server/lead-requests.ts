@@ -624,12 +624,9 @@ export const updateLeadRequest = createServerFn({ method: "POST" })
     const lead = rows[0];
     if (!lead) throw new Error(ACCESS_NOT_FOUND);
 
-    const { canCentreWriteLeadsFor } = await import("@/lib/server/centre-access");
-    const owned = await canCentreWriteLeadsFor(sql, context.userId, lead.daycare_id);
+    const { assertCentreAction } = await import("@/lib/server/centre-access");
     const admin = await callerIsAdmin();
-    if (!canUpdateLeadStatus({ daycareId: lead.daycare_id, ownedDaycareIds: owned ? [lead.daycare_id] : [], isAdmin: admin })) {
-      throw new Error("Not authorized");
-    }
+    if (!admin) await assertCentreAction(sql, context.userId, lead.daycare_id, "write");
 
     const next = nextLeadStatus(lead.status, data.action);
     if (!next) throw new Error("This request was already answered");

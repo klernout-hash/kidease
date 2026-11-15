@@ -15,9 +15,11 @@ import { useCopy } from "@/lib/use-copy";
 export function DaycareLeadInbox({
   items,
   onChanged,
+  canWrite = true,
 }: {
   items: LeadRequest[];
   onChanged: () => void;
+  canWrite?: boolean;
 }) {
   const { t, locale } = useCopy();
   const waiting = items.filter((row) => isOpenLeadStatus(row.status));
@@ -34,13 +36,13 @@ export function DaycareLeadInbox({
         empty={t("providerRequestsEmpty")}
         onChanged={onChanged}
         locale={locale}
-        canAct
+        canAct={canWrite}
       />
       {later.length ? (
         <div>
           <h3 className="font-display text-xl">{t("leadInboxLater")}</h3>
           <div className="mt-3">
-            <LeadInboxList items={later} empty="" onChanged={onChanged} locale={locale} canAct />
+            <LeadInboxList items={later} empty="" onChanged={onChanged} locale={locale} canAct={canWrite} />
           </div>
         </div>
       ) : null}
@@ -114,7 +116,7 @@ function LeadInboxList({
               </Button>
             ) : null}
           </div>
-          {lead.userId ? <BlockFamilyButton parentUserId={lead.userId} daycareId={lead.daycareId} /> : null}
+          {canAct && lead.userId ? <BlockFamilyButton parentUserId={lead.userId} daycareId={lead.daycareId} /> : null}
           {canAct ? <LeadActions lead={lead} onChanged={onChanged} /> : null}
         </li>
       ))}

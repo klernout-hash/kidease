@@ -3542,10 +3542,11 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "الرواتب",
   "adminNavSubsidy": "الدعم",
-  "deskNavDocuments": "المستندات",
+"deskNavDocuments": "المستندات",
   "deskNavDocumentsHint": "التأمين والسياسات والدليل",
   "employeeResend": "إعادة إرسال الدعوة",
   "employeeResent": "أُعيد إرسال الدعوة.",
   "employeeResendHeld": "لم تُرسل تلك الدعوة بالبريد.",
-  "employeeResendFailed": "تعذر إعادة إرسال تلك الدعوة."
+  "employeeResendFailed": "تعذر إعادة إرسال تلك الدعوة.",
+"employeeInviteRole": "هذه الدعوة لدور {role}."
 }

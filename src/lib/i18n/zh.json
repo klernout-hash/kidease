@@ -3542,10 +3542,11 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "工资",
   "adminNavSubsidy": "补贴",
-  "deskNavDocuments": "文件",
+"deskNavDocuments": "文件",
   "deskNavDocumentsHint": "保险、制度和手册",
   "employeeResend": "再次发送邀请",
   "employeeResent": "邀请已再次发送。",
   "employeeResendHeld": "该邀请没有通过电子邮件发送。",
-  "employeeResendFailed": "无法再次发送该邀请。"
+  "employeeResendFailed": "无法再次发送该邀请。",
+"employeeInviteRole": "此邀请的角色是{role}。"
 }

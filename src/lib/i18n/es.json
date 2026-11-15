@@ -3542,10 +3542,11 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "Nómina",
   "adminNavSubsidy": "Subsidio",
-  "deskNavDocuments": "Documentos",
+"deskNavDocuments": "Documentos",
   "deskNavDocumentsHint": "Seguro, normas y guía",
   "employeeResend": "Reenviar invitación",
   "employeeResent": "Invitación enviada de nuevo.",
   "employeeResendHeld": "Esa invitación no se envió por correo.",
-  "employeeResendFailed": "No se pudo reenviar esa invitación."
+  "employeeResendFailed": "No se pudo reenviar esa invitación.",
+"employeeInviteRole": "Esta invitación es para el rol {role}."
 }

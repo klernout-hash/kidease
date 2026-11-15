@@ -955,7 +955,8 @@ export const refreshVacancy = createServerFn({ method: "POST" })
   .validator((input: { daycareId: string }) => input)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    await assertCentreCanMutateVacancies(sql, context.userId, data.daycareId);
+    const { assertCanWrite } = await import("@/lib/server/centre-access");
+    await assertCanWrite(sql, context.userId, data.daycareId, "vacancy");
     const logged = await recordVacancyEvent({ daycareId: data.daycareId, source: "confirm" });
     if (logged.recorded) {
       return { ok: true as const, lastVacancyUpdatedAt: new Date().toISOString() };

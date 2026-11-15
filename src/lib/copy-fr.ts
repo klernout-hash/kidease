@@ -3102,6 +3102,7 @@ export const fr = {
       "Cet onglet est réservé au propriétaire. Demandez à la direction pour Argent ou le permis.",
     employeeInviteTitle: "Joindre ce centre",
     employeeInviteLead: "Vous êtes invité(e) à {centre}. Connectez-vous avec {email} pour votre propre accès.",
+    employeeInviteRole: "Cette invitation est pour le rôle {role}.",
     employeeInviteCreate: "Créer votre connexion",
     employeeInviteSignIn: "J’ai déjà un compte",
     employeeInviteGone: "Cette invitation n’est plus valide.",

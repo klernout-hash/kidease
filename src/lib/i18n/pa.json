@@ -3542,10 +3542,11 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "ਤਨਖਾਹ",
   "adminNavSubsidy": "ਸਬਸਿਡੀ",
-  "deskNavDocuments": "ਦਸਤਾਵੇਜ਼",
+"deskNavDocuments": "ਦਸਤਾਵੇਜ਼",
   "deskNavDocumentsHint": "ਬੀਮਾ, ਨੀਤੀਆਂ ਅਤੇ ਹੈਂਡਬੁੱਕ",
   "employeeResend": "ਸੱਦਾ ਦੁਬਾਰਾ ਭੇਜੋ",
   "employeeResent": "ਸੱਦਾ ਦੁਬਾਰਾ ਭੇਜਿਆ ਗਿਆ।",
   "employeeResendHeld": "ਉਹ ਸੱਦਾ ਈਮੇਲ ਨਹੀਂ ਕੀਤਾ ਗਿਆ।",
-  "employeeResendFailed": "ਉਹ ਸੱਦਾ ਦੁਬਾਰਾ ਨਹੀਂ ਭੇਜਿਆ ਜਾ ਸਕਿਆ।"
+  "employeeResendFailed": "ਉਹ ਸੱਦਾ ਦੁਬਾਰਾ ਨਹੀਂ ਭੇਜਿਆ ਜਾ ਸਕਿਆ।",
+"employeeInviteRole": "ਇਹ ਸੱਦਾ {role} ਭੂਮਿਕਾ ਲਈ ਹੈ।"
 }

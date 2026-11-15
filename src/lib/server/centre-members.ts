@@ -77,7 +77,7 @@ export const listCentreTeam = createServerFn({ method: "GET" })
     const centres = await ownedCentres(context.userId);
     const canInvite = centres.length > 0;
     const scoped = centres.map((c) => c.id);
-    if (!scoped.length) {
+      if (!scoped.length) {
       const staffCentres = await sql<{ id: string; name: string; role: string }>`
         select d.id, d.name, m.role
         from centre_members m
@@ -85,13 +85,45 @@ export const listCentreTeam = createServerFn({ method: "GET" })
         where m.user_id = ${context.userId} and m.status = 'active'
         order by d.name
       `.catch(() => []);
+      const staffIds = staffCentres.map((row) => row.id);
+      const members = staffIds.length
+        ? await sql.query<{
+            id: string;
+            daycare_id: string;
+            daycare_name: string;
+            role: string;
+            created_at: string;
+            email: string | null;
+            name: string | null;
+          }>(
+            `select m.id, m.daycare_id, d.name as daycare_name, m.role, m.created_at,
+                    u.email, u.name
+             from centre_members m
+             join daycares d on d.id = m.daycare_id
+             left join "user" u on u.id = m.user_id
+             where m.daycare_id = any($1::text[]) and m.status = 'active'
+             order by d.name, u.email`,
+            [staffIds],
+          ).catch(() => [])
+        : [];
       return {
         centres: staffCentres.map((c) => ({
           id: c.id,
           name: centrePickerLabel(c.name, null, c.id),
           role: (c.role as CentreMemberRole) || "staff",
         })),
-        people: [],
+        people: members.map((m) => ({
+          id: m.id,
+          kind: "member" as const,
+          daycareId: m.daycare_id,
+          daycareName: m.daycare_name,
+          email: (m.email || "").trim(),
+          name: m.name,
+          role: (m.role as CentreMemberRole) || "staff",
+          status: "active" as const,
+          createdAt: String(m.created_at),
+          canRevoke: false,
+        })),
         canInvite: false,
       };
     }

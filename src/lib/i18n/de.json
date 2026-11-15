@@ -3542,10 +3542,11 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "Lohn",
   "adminNavSubsidy": "Zuschuss",
-  "deskNavDocuments": "Dokumente",
+"deskNavDocuments": "Dokumente",
   "deskNavDocumentsHint": "Versicherung, Regeln und Handbuch",
   "employeeResend": "Einladung erneut senden",
   "employeeResent": "Einladung erneut gesendet.",
   "employeeResendHeld": "Diese Einladung wurde nicht per E-Mail gesendet.",
-  "employeeResendFailed": "Diese Einladung konnte nicht erneut gesendet werden."
+  "employeeResendFailed": "Diese Einladung konnte nicht erneut gesendet werden.",
+"employeeInviteRole": "Diese Einladung ist für die Rolle {role}."
 }

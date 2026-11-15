@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useRouterState } from "@tanstack/react-router";
 import { CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSessionDesks } from "@/components/session-desks";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
   CHECKLIST_PARENT,
@@ -278,6 +279,13 @@ export function CoachTour({ tourKey, onClose }: { tourKey: TourKey; onClose: () 
   return <AnchoredCoach steps={TOURS[tourKey]} marker="coach-tour" onClose={onClose} />;
 }
 
+function setupStepVisible(role: string | null | undefined, id: string): boolean {
+  if (!role || role === "owner") return true;
+  if (role === "read_only") return false;
+  if (role === "staff") return id === "openings" || id === "tours";
+  return id !== "payouts" && id !== "staff";
+}
+
 function ChecklistCard({
   result,
   onHide,
@@ -286,8 +294,10 @@ function ChecklistCard({
   onHide: () => void;
 }) {
   const { locale: raw } = useCopy();
+  const { session } = useSessionDesks();
   const locale = localeOf(raw);
   const provider = result.id === CHECKLIST_PROVIDER;
+  const steps = provider ? result.steps.filter((step) => setupStepVisible(session?.centreRole, step.id)) : result.steps;
   const title = provider ? readinessLabel(locale, result.percent) : pickCopy(locale, UI_COPY.parentList);
   const lead = provider ? pickCopy(locale, UI_COPY.providerListLead) : pickCopy(locale, UI_COPY.parentListLead);
   const count = provider ? `${result.percent}%` : parentProgressLabel(locale, result.done, result.total);
@@ -317,7 +327,7 @@ function ChecklistCard({
         <div className="h-full rounded-full bg-primary" style={{ width: `${result.percent}%` }} />
       </div>
       <ul className="mt-3 grid gap-2">
-        {result.steps.map((step) => (
+        {steps.map((step) => (
           <li key={step.id}>
             <a
               href={localePath(step.href, locale)}

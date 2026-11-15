@@ -1,13 +1,21 @@
 import type { Sql } from "@/lib/db";
 import { LISTING_NOT_YOURS } from "@/lib/access-control";
 import {
+  canWrite,
+  centreActionAllowed,
+  centreActionDenied,
   centreCanMutateListingDetails,
   centreCanMutateVacancies,
   centreCanWriteLeads,
   parseCentreMemberRole,
+  type CentreGate,
   type CentreMemberRole,
+  type CentreWriteAction,
 } from "@/lib/centre-roles";
 import { nid } from "@/lib/utils";
+
+export type CentreAction = CentreGate;
+export { canWrite, centreActionAllowed, centreActionDenied };
 
 export async function listOwnedDaycareIds(sql: Sql, userId: string): Promise<string[]> {
   const rows = await sql<{ daycare_id: string }>`
@@ -64,6 +72,38 @@ export async function assertCentreCanMutateVacancies(sql: Sql, userId: string, d
 
 export async function hasCentreDeskAccess(sql: Sql, userId: string, daycareId: string): Promise<boolean> {
   return (await loadCentreRole(sql, userId, daycareId)) !== null;
+}
+
+/** Read-only cannot write. Staff and managers cannot open money or contracts. Admins can. */
+export async function assertCentreAction(
+  sql: Sql,
+  userId: string,
+  daycareId: string,
+  action: CentreAction,
+): Promise<void> {
+  const { resolveAdminAccess } = await import("@/lib/server/roles");
+  const admin = await resolveAdminAccess(userId)
+    .then((row) => row.ok)
+    .catch(() => false);
+  if (admin) return;
+  const role = await loadCentreRole(sql, userId, daycareId);
+  if (!centreActionAllowed(role, action)) throw centreActionDenied(action);
+}
+
+/** Read-only is 403. Staff and managers may do floor work. Admins may. */
+export async function assertCanWrite(
+  sql: Sql,
+  userId: string,
+  daycareId: string,
+  action: CentreWriteAction,
+): Promise<void> {
+  const { resolveAdminAccess } = await import("@/lib/server/roles");
+  const admin = await resolveAdminAccess(userId)
+    .then((row) => row.ok)
+    .catch(() => false);
+  if (admin) return;
+  const role = await loadCentreRole(sql, userId, daycareId);
+  if (!canWrite(role, action)) throw centreActionDenied(action === "contracts" ? "contracts" : "write");
 }
 
 export async function canCentreWriteLeadsFor(

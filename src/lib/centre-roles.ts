@@ -107,6 +107,52 @@ export function centreCanAccessPrivileged(role: CentreMemberRole | null | undefi
   return role === "owner";
 }
 
+export type CentreGate = "write" | "contracts";
+
+/**
+ * One check for every provider change.
+ * Staff and managers keep floor work (check-in, care, hours, meals, spots).
+ * Listing documents stay with the owner and manager. Money and contracts stay with the owner.
+ * Read-only never writes.
+ */
+export const CENTRE_WRITE_ACTIONS = [
+  "check_in",
+  "care",
+  "clock_in",
+  "meal_plan",
+  "vacancy",
+  "calendar",
+  "waitlist_notify",
+  "screening",
+  "leads",
+  "document_upload",
+  "listing",
+  "contracts",
+] as const;
+
+export type CentreWriteAction = (typeof CENTRE_WRITE_ACTIONS)[number];
+
+export function canWrite(role: CentreMemberRole | null | undefined, action: CentreWriteAction): boolean {
+  if (action === "contracts") return centreCanAccessPrivileged(role);
+  if (action === "document_upload" || action === "listing") return centreCanMutateListingDetails(role);
+  return centreCanWriteLeads(role);
+}
+
+export function centreActionAllowed(role: CentreMemberRole | null | undefined, action: CentreGate): boolean {
+  if (action === "contracts") return centreCanAccessPrivileged(role);
+  return centreCanWriteLeads(role);
+}
+
+export function centreActionDenied(action: CentreGate): Error & { status: number } {
+  const message =
+    action === "contracts"
+      ? CENTRE_STAFF_FORBIDDEN
+      : "You can look at this centre. You cannot change it.";
+  const error = new Error(message) as Error & { status: number };
+  error.status = 403;
+  return error;
+}
+
 export function centreCanCreateListing(input: {
   ownerCount: number;
   memberOnly: boolean;

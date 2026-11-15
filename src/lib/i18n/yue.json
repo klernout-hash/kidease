@@ -3542,10 +3542,11 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "出糧",
   "adminNavSubsidy": "資助",
-  "deskNavDocuments": "文件",
+"deskNavDocuments": "文件",
   "deskNavDocumentsHint": "保險、守則同手冊",
   "employeeResend": "再寄邀請",
   "employeeResent": "邀請已再寄出。",
   "employeeResendHeld": "呢個邀請冇用電郵寄出。",
-  "employeeResendFailed": "無法再寄呢個邀請。"
+  "employeeResendFailed": "無法再寄呢個邀請。",
+"employeeInviteRole": "呢個邀請嘅角色係{role}。"
 }
