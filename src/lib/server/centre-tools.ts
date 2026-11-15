@@ -5,13 +5,12 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { centreCanWriteCare } from "@/lib/centre-roles";
 import { getSql } from "@/lib/db";
 import { centreToolIds } from "@/lib/features";
 import { KIND_TOOL, PARENT_KINDS, RECORD_KINDS, parentKindsFor, tapToPayDecision, type RecordKind } from "@/lib/centre-tools";
 import { ENROLLED_BOOKING_STATUSES } from "@/lib/review-gate";
 import { nid } from "@/lib/utils";
-import { listAccessibleDaycareIds, loadCentreRole } from "./centre-access";
+import { listAccessibleDaycareIds } from "./centre-access";
 
 type RecordRow = { id: string; kind: string; booking_id: string | null; payload: unknown; created_at: string | Date; daycare_name?: string };
 
@@ -123,8 +122,8 @@ export const saveCentreToolRecord = createServerFn({ method: "POST" })
     const tools = centreToolIds() as string[];
     if (!kindAllowed(data.kind, tools)) return { ok: false as const, reason: "off" as const };
     const sql = await getSql();
-    const role = await loadCentreRole(sql, context.userId, data.daycareId);
-    if (!centreCanWriteCare(role)) throw new Error("That centre is not on this account");
+    const { assertCanWrite } = await import("@/lib/server/centre-access");
+    await assertCanWrite(sql, context.userId, data.daycareId, "meal_plan");
     let bookingId: string | null = null;
     if (data.bookingId) {
       const rows = await sql<{ id: string }>`

@@ -13,6 +13,7 @@ import {
   listTimesheets,
   timesheetStatus,
 } from "@/lib/server/timesheets";
+import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 
 type Desk = Awaited<ReturnType<typeof listTimesheets>>;
@@ -53,6 +54,7 @@ export function TimesheetDeskLink() {
 
 export function StaffTimesheetDesk() {
   const { locale } = useCopy();
+  const canClock = useCentreWrite("clock_in");
   const copy = timesheetCopy(locale);
   const [desk, setDesk] = useState<Desk | null>(null);
   const [daycareId, setDaycareId] = useState("");
@@ -134,7 +136,7 @@ export function StaffTimesheetDesk() {
         </label>
       ) : null}
 
-      <form
+      {canClock ? <form
         className="space-y-3 rounded-xl bg-surface p-4 ring-1 ring-border"
         onSubmit={(event) => {
           event.preventDefault();
@@ -164,7 +166,7 @@ export function StaffTimesheetDesk() {
         <Button type="submit" disabled={busy || !activeId}>
           {copy.clockIn}
         </Button>
-      </form>
+      </form> : null}
 
       <div>
         <h3 className="font-display text-xl">{copy.stillIn}</h3>
@@ -176,7 +178,7 @@ export function StaffTimesheetDesk() {
                 <span className="font-medium">{entry.staffName}</span>
                 <span className="mt-1 block text-sm text-muted">{formatToronto(entry.clockIn)}</span>
               </p>
-              <Button
+              {canClock ? <Button
                 type="button"
                 variant="outline"
                 disabled={busy}
@@ -193,7 +195,7 @@ export function StaffTimesheetDesk() {
                 }}
               >
                 {copy.clockOut}
-              </Button>
+              </Button> : null}
             </li>
           ))}
         </ul>

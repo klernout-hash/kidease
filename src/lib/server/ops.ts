@@ -174,6 +174,10 @@ export const saveAttendance = createServerFn({ method: "POST" })
     const sql = await getSql();
     if (!isAttendanceStatus(data.status)) throw new Error("Invalid attendance status");
     const centreRole = await loadCentreRole(sql, context.userId, data.daycareId);
+    if (centreRole === "read_only") {
+      const { centreActionDenied } = await import("@/lib/centre-roles");
+      throw centreActionDenied("write");
+    }
     const staffOk = centreCanWriteCare(centreRole);
     const parentOk = data.parentUserId === context.userId;
     if (!staffOk && !parentOk) {
