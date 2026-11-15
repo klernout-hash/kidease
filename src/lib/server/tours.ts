@@ -80,11 +80,11 @@ function mapTour(row: TourRow): TourRequest {
     parentUserId: row.user_id,
     preferredTimes: parsePreferredTimes(row.preferred_times),
     parentNote: row.parent_note,
-    status: effectiveTourStatus({
+    status: (String(row.status) === "confirmed" ? "accepted" : effectiveTourStatus({
       status: row.status,
       createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
       holdExpiresAt: row.hold_expires_at instanceof Date ? row.hold_expires_at.toISOString() : row.hold_expires_at ?? null,
-    }),
+    })),
     centreNote: row.centre_note,
     createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
     respondedAt: row.responded_at ? String(row.responded_at) : null,

@@ -1035,6 +1035,7 @@ export const fr = {
     children: "Enfants",
     childrenLimit: "Jusqu’à 4 profils",
     parentStoriesNav: "Histoires d'apprentissage",
+    parentStoriesHint: "Notes de votre garderie",
     shareFamilyNav: "Partager la famille",
     shareFamilyNavHint: "Un autre parent, son propre compte",
     staffHoursNav: "Heures",

@@ -18,6 +18,7 @@ import {
   type CatalogDaycare,
 } from "@/lib/catalog";
 import { filterByDaycareName, readLiveSearchFlag } from "@/lib/explore-search";
+import { listingHasOwnerClaim } from "@/lib/approve-live";
 import { hideListingFromPublicPage, isAdminOnlyListing, isExactSlugDemoListing, isHiddenTestListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsAlongResult, nearbyListingsDualResult, nearbyListingsResult, type NearbyListing } from "./nearby";
@@ -1013,6 +1014,12 @@ export const getDaycare = createServerFn({ method: "GET" })
         limit 1
       `.catch(() => [] as DaycareRow[]);
       const daycare = claimedRow[0] ? mapDaycare(claimedRow[0]) : toDaycare(found);
+      const ownerLink = await sql<{ has_owner: boolean }>`
+        select exists (
+          select 1 from provider_daycares pd where pd.daycare_id = ${daycare.id}
+        ) as has_owner
+      `.catch(() => [] as { has_owner: boolean }[]);
+      if (ownerLink[0]?.has_owner || listingHasOwnerClaim(daycare)) daycare.claimed = true;
       if (!daycare.reviewCount) {
         daycare.ratingX10 = found.ratingX10;
         daycare.reviewCount = found.reviewCount;

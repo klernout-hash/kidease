@@ -1,13 +1,15 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { EmptyState } from "@/components/empty-state";
 import { KidNotebook } from "@/components/kid-art";
 import { LeadKindChip, LeadStatusChip } from "@/components/lead-status-chip";
 import { Button } from "@/components/ui/button";
+import { inboxThreadTo } from "@/lib/desk-nav";
 import type { LeadRequest } from "@/lib/lead-requests";
 import { useCopy } from "@/lib/use-copy";
 
 export function ParentRequestsList({ items }: { items: LeadRequest[] }) {
   const { t, locale } = useCopy();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   if (!items.length) {
     return (
       <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" art={<KidNotebook />} />
@@ -19,7 +21,7 @@ export function ParentRequestsList({ items }: { items: LeadRequest[] }) {
         <li key={lead.id} className="flex flex-wrap items-start justify-between gap-3 p-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <Link to="/daycare/$slug" params={{ slug: lead.daycareSlug }} className="font-medium hover:underline">
+              <Link to={locale === "fr" ? "/fr/daycare/$slug" : "/daycare/$slug"} params={{ slug: lead.daycareSlug }} className="font-medium hover:underline">
                 {lead.daycareName}
               </Link>
               <LeadKindChip kind={lead.kind} />
@@ -40,13 +42,13 @@ export function ParentRequestsList({ items }: { items: LeadRequest[] }) {
           </div>
           {lead.conversationId ? (
             <Button size="sm" variant="secondary" asChild>
-              <Link to="/inbox/$id" params={{ id: lead.conversationId }}>
+              <Link to={inboxThreadTo(pathname)} params={{ id: lead.conversationId }}>
                 {t("openChat")}
               </Link>
             </Button>
           ) : (
             <Button size="sm" variant="secondary" asChild>
-              <Link to="/daycare/$slug" params={{ slug: lead.daycareSlug }}>
+              <Link to={locale === "fr" ? "/fr/daycare/$slug" : "/daycare/$slug"} params={{ slug: lead.daycareSlug }}>
                 {t("viewListing")}
               </Link>
             </Button>

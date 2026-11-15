@@ -1030,6 +1030,7 @@ export const en = {
     children: "Children",
     childrenLimit: "Up to 4 profiles",
     parentStoriesNav: "Learning stories",
+    parentStoriesHint: "Notes from your daycare",
     shareFamilyNav: "Share family",
     shareFamilyNavHint: "Another parent, their own login",
     staffHoursNav: "Hours",
