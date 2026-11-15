@@ -312,7 +312,7 @@ function storeTabActive(id: NativeStoreTabId, pathname: string, tab: string | un
 function MenuTab({ active }: { active: boolean }) {
   const { t } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  return <Tab to={menuDeskPath(pathname)} label={t("navMenu")} icon={Menu} marker="menu" active={active} />;
+  return <Tab to={menuDeskPath(pathname)} search={{}} label={t("navMenu")} icon={Menu} marker="menu" active={active} />;
 }
 
 function Tab({

@@ -182,6 +182,7 @@ export const en = {
     deskNavTodayHint: "What needs you now",
     deskNavMessagesHint: "Parent inquiries + tours",
     deskNavToursHint: "When families can visit",
+    deskNavCalendarHint: "Open spots by day",
     deskNavListings: "Listings",
     deskNavListingsHint: "Spots, photos, fees",
     deskNavInsights: "Insights",
