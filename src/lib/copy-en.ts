@@ -3084,6 +3084,7 @@ export const en = {
     employeeStaffForbidden: "This tab is for the centre owner. Ask the director if you need Money or licence access.",
     employeeInviteTitle: "Join this centre",
     employeeInviteLead: "You're invited to {centre}. Sign in with {email} to get your own staff login.",
+    employeeInviteRole: "This invite is for the {role} role.",
     employeeInviteCreate: "Create your login",
     employeeInviteSignIn: "I already have an account",
     employeeInviteGone: "This invite is no longer valid.",

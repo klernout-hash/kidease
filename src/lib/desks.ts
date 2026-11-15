@@ -762,6 +762,8 @@ export type SessionDesks = {
   subscriptionsEnabled?: boolean;
   /** Owner chrome (Money / claim / invite). False only for staff-only employees. */
   centreOwner?: boolean;
+  /** Highest centre role. Read-only cannot write. Staff and managers cannot open money or contracts. */
+  centreRole?: "owner" | "manager" | "staff" | "read_only" | null;
   /** This user owns a centre (provider_daycares). Not the same as centreOwner. */
   ownsCentre?: boolean;
   /** Owns a centre or is an active centre member. */

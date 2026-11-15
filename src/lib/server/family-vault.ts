@@ -293,6 +293,13 @@ export async function loadFamilyDocumentFor(input: {
   for (const row of shared) {
     if (!shareIsOpen(iso(row.revoked_at))) continue;
     if (await hasCentreDeskAccess(sql, input.userId, row.daycare_id)) {
+      const { loadCentreRole } = await import("@/lib/server/centre-access");
+      const role = await loadCentreRole(sql, input.userId, row.daycare_id);
+      if (role === "read_only") {
+        const denied = new Error("You can look at this centre. You cannot open family files.") as Error & { status: number };
+        denied.status = 403;
+        throw denied;
+      }
       return { storageRef: row.storage_ref, mime: row.mime, fileName: row.file_name };
     }
   }

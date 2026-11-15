@@ -349,8 +349,8 @@ export const verifyCoparent = createServerFn({ method: "POST" })
     if (!data.linkId || !data.daycareId) fail("missing");
     const sql = await getSql();
     const admin = await assertCentreStaff(sql, context.userId, data.daycareId);
-    const { canCentreWriteLeadsFor } = await import("@/lib/server/centre-access");
-    if (!admin && !(await canCentreWriteLeadsFor(sql, context.userId, data.daycareId))) fail("denied");
+    const { assertCentreAction } = await import("@/lib/server/centre-access");
+    if (!admin) await assertCentreAction(sql, context.userId, data.daycareId, "write");
     const links = await sql<{ id: string; status: string }>`
       select id, status from coparent_links where id = ${data.linkId} and status = 'active' limit 1
     `;
@@ -396,8 +396,8 @@ export const saveCustodyRestriction = createServerFn({ method: "POST" })
     if (!data.daycareId || !data.childId || !data.guardianUserId) fail("missing");
     const sql = await getSql();
     const admin = await assertCentreStaff(sql, context.userId, data.daycareId);
-    const { canCentreWriteLeadsFor } = await import("@/lib/server/centre-access");
-    if (!admin && !(await canCentreWriteLeadsFor(sql, context.userId, data.daycareId))) fail("denied");
+    const { assertCentreAction } = await import("@/lib/server/centre-access");
+    if (!admin) await assertCentreAction(sql, context.userId, data.daycareId, "write");
     let documentRef: string | null = null;
     let documentName: string | null = null;
     let documentMime: string | null = null;
@@ -448,8 +448,8 @@ export const liftCustodyRestriction = createServerFn({ method: "POST" })
     const row = rows[0];
     if (!row) fail("missing");
     const admin = await assertCentreStaff(sql, context.userId, row.daycare_id);
-    const { canCentreWriteLeadsFor } = await import("@/lib/server/centre-access");
-    if (!admin && !(await canCentreWriteLeadsFor(sql, context.userId, row.daycare_id))) fail("denied");
+    const { assertCentreAction } = await import("@/lib/server/centre-access");
+    if (!admin) await assertCentreAction(sql, context.userId, row.daycare_id, "write");
     await sql`
       update custody_restrictions
       set lifted_at = now(), lifted_by = ${context.userId}
@@ -482,7 +482,8 @@ export const readCustodyDocument = createServerFn({ method: "POST" })
     `;
     const row = rows[0];
     if (!row?.document_ref) fail("missing");
-    await assertCentreStaff(sql, context.userId, row.daycare_id);
+    const { assertCentreAction } = await import("@/lib/server/centre-access");
+    await assertCentreAction(sql, context.userId, row.daycare_id, "write");
     const { loadPrivateDoc } = await import("@/lib/server/private-docs");
     const file = await loadPrivateDoc(row.document_ref, row.document_mime, row.document_name);
     return {
