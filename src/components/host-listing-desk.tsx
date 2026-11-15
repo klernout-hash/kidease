@@ -201,6 +201,14 @@ export function HostListingsDesk({
           </button>
         </div>
       </div>
+      <button
+        type="button"
+        className="mt-3 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        data-ke="host-add-another"
+        onClick={openAdd}
+      >
+        {copy.addAnother}
+      </button>
       {searchOpen ? (
         <div className="mt-3 flex items-center gap-2">
           <label className="sr-only" htmlFor="host-centre-search">

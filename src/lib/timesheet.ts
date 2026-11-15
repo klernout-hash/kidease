@@ -127,7 +127,7 @@ export function torontoWeek(anchor: Date): {
     endMs: end.getTime(),
     startIso: start.toISOString(),
     endIso: end.toISOString(),
-    label: `${startYmd} to ${addDays(startYmd, 6)}`,
+    label: `${startYmd} – ${addDays(startYmd, 6)}`,
   };
 }
 

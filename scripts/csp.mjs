@@ -6,7 +6,9 @@
  * Content-Security-Policy — browsers enforce every CSP header, and a second
  * static policy without the nonce would block TanStack inline hydration.
  *
- * script-src uses a per-request nonce + 'strict-dynamic' so first-party HTML
+ * script-src and script-src-elem allow blob: and data: because Cloudflare
+ * Turnstile's challenge loads those URLs in the parent page. frame-src and
+ * child-src do the same for the challenge frame. Hosts stay listed.
  * scripts (channel-boot, TanStack <Scripts />) can load Stripe /
  * Turnstile / PostHog. Those SDKs append scripts with createElement.
  * The map script is injected by our nonce'd app code (strict-dynamic). Google
@@ -97,10 +99,10 @@ export function buildContentSecurityPolicy(nonce) {
   if (!token) throw new Error("CSP nonce is required");
   if (/['\s;]/.test(token)) throw new Error("CSP nonce contains unsafe characters");
 
-  const scriptSrc = ["'self'", `'nonce-${token}'`, "'strict-dynamic'", "'wasm-unsafe-eval'", ...CSP_SCRIPT_HOSTS].join(" ");
+  const scriptSrc = ["'self'", `'nonce-${token}'`, "'strict-dynamic'", "'wasm-unsafe-eval'", "blob:", "data:", ...CSP_SCRIPT_HOSTS].join(" ");
   // script-src-elem does not inherit strict-dynamic. Turnstile and the map
   // insert <script src> tags. The host list here is what the browser enforces.
-  const scriptElem = ["'self'", `'nonce-${token}'`, ...CSP_SCRIPT_HOSTS].join(" ");
+  const scriptElem = ["'self'", `'nonce-${token}'`, "blob:", "data:", ...CSP_SCRIPT_HOSTS].join(" ");
   const styleSrc = ["'self'", `'nonce-${token}'`, ...CSP_STYLE_HOSTS].join(" ");
   return [
     "default-src 'self'",
@@ -113,7 +115,8 @@ export function buildContentSecurityPolicy(nonce) {
     `connect-src 'self' data: blob: ${CSP_CONNECT_HOSTS.join(" ")}`,
     "media-src 'self' blob: mediastream:",
     "worker-src 'self' blob: data:",
-    `frame-src ${CSP_FRAME_HOSTS.join(" ")}`,
+    `frame-src blob: data: ${CSP_FRAME_HOSTS.join(" ")}`,
+    "child-src blob: data: https://challenges.cloudflare.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self' https://accounts.google.com",

@@ -118,7 +118,7 @@ function DocRow({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-sm font-medium">{docKindLabel(doc.kind, locale)}</p>
-          <p className="mt-1 text-xs leading-5 text-muted">{screeningPublicNotes(doc.notes)}</p>
+          <p className="mt-1 text-xs leading-5 text-muted">{screeningPublicNotes(doc.notes, locale === "fr" ? "fr" : "en")}</p>
         </div>
         <StatusPill status={screeningPublicStatus(doc)} />
       </div>
@@ -364,7 +364,9 @@ export function ProviderScreeningPanel() {
                 <li key={person.id}>
                   <p className="text-sm font-semibold">
                     {person.name}
-                    <span className="ml-2 text-xs font-normal text-muted">{t(ROLE_COPY[person.role] || "screeningRoleStaff")}</span>
+                    <span className="ml-2 text-xs font-normal text-muted">
+                      {person.deskRole === "read_only" ? t("employeeRoleReadOnly") : t(ROLE_COPY[person.role] || "screeningRoleStaff")}
+                    </span>
                   </p>
                   <ul className="mt-2 space-y-2">
                     {person.docs.map((doc) => (

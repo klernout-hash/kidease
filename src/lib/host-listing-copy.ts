@@ -63,6 +63,7 @@ export type HostCopy = {
   thisMonth: string;
   emptyListings: string;
   addCentre: string;
+  addAnother: string;
   yourCentres: string;
   searchCentres: string;
   searchPlaceholder: string;
@@ -147,6 +148,7 @@ const en: HostCopy = {
   thisMonth: "This month",
   emptyListings: "You have no centre yet. Add one to open the editor.",
   addCentre: "Add a centre",
+  addAnother: "Add another centre",
   yourCentres: "Your centres",
   searchCentres: "Search your centres",
   searchPlaceholder: "Name or city",
@@ -231,6 +233,7 @@ const fr: HostCopy = {
   thisMonth: "Ce mois-ci",
   emptyListings: "Vous n'avez pas encore de centre. Ajoutez-en un pour ouvrir l'éditeur.",
   addCentre: "Ajouter un centre",
+  addAnother: "Ajouter un autre centre",
   yourCentres: "Vos centres",
   searchCentres: "Chercher vos centres",
   searchPlaceholder: "Nom ou ville",

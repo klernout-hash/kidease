@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { isQaSyntheticRef, qaSyntheticFamilyPdf } from "@/lib/qa-family-file";
 import { loadPrivateDoc } from "@/lib/server/private-docs";
 
 function fail(err: unknown) {
@@ -23,6 +24,20 @@ export const Route = createFileRoute("/api/family-documents/$id")({
           const userId = await requireUserId();
           const { loadFamilyDocumentFor } = await import("@/lib/server/family-vault");
           const row = await loadFamilyDocumentFor({ userId, documentId: params.id });
+          if (isQaSyntheticRef(row.storageRef)) {
+            const body = qaSyntheticFamilyPdf();
+            return new Response(new Uint8Array(body), {
+              status: 200,
+              headers: {
+                "Content-Type": "application/pdf",
+                "Content-Disposition": 'attachment; filename="kidease-test-file.pdf"',
+                "Cache-Control": "private, no-store",
+                "X-Content-Type-Options": "nosniff",
+                "X-Robots-Tag": "noindex, nofollow",
+                "Content-Length": String(body.byteLength),
+              },
+            });
+          }
           const file = await loadPrivateDoc(row.storageRef, row.mime, row.fileName);
           const safeName = file.filename.replace(/[^\w.-]+/g, "-") || "document";
           return new Response(new Uint8Array(file.body), {

@@ -466,7 +466,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
             <p className="mt-6 text-sm font-medium">{t("claimCtaSupport")}</p>
             <p className="mt-6 text-sm text-muted">
               {t("claimMissing")}{" "}
-              <Link to="/provider" className="text-primary underline-offset-4 hover:underline">
+              <Link to="/provider" search={{ desk: "listings" }} hash="list-new" className="text-primary underline-offset-4 hover:underline">
                 {t("listCentre")}
               </Link>
             </p>

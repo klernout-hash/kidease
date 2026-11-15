@@ -101,6 +101,7 @@ export function ThreadTranscript({
   phoneAlerts = [],
   peers = [],
   now = new Date(),
+  timeZone,
 }: {
   messages: Message[];
   viewerRole: string;
@@ -111,6 +112,7 @@ export function ThreadTranscript({
   phoneAlerts?: Array<{ messageId?: string; userId: string; state: "sent" | "not_sent" }>;
   peers?: Array<{ id?: string; name: string; image?: string | null; role?: string }>;
   now?: Date;
+  timeZone?: string;
 }) {
   const { t, locale } = useCopy();
   const visible = messages
@@ -122,7 +124,7 @@ export function ThreadTranscript({
   return (
     <ul className="ph-no-capture flex flex-col gap-3" aria-live="polite">
       {visible.map((m) => {
-        const day = messageDayLabel(m.createdAt, now, locale);
+        const day = messageDayLabel(m.createdAt, now, locale, timeZone);
         const dayKey = `${day.today}-${day.yesterday}-${day.text}`;
         const showDay = dayKey !== lastDay;
         lastDay = dayKey;
@@ -142,10 +144,10 @@ export function ThreadTranscript({
               <div className={cn("flex max-w-[85%] items-end gap-2", mine ? "self-end flex-row-reverse" : "self-start")}>
                 {mine ? null : <PersonFace name={peer?.name || senderName} image={peer?.image} />}
                 <div className={cn("flex min-w-0 flex-col", mine ? "items-end" : "items-start")}>
-                {messageClock(m.createdAt, locale) ? (
+                {messageClock(m.createdAt, locale, timeZone) ? (
                   <p className={cn("mb-1 px-1 text-xs text-muted", mine && "text-right")}>
                     {!mine ? <span className="font-medium text-fg">{senderName}</span> : null}
-                    {!mine ? ` · ${messageClock(m.createdAt, locale)}` : messageClock(m.createdAt, locale)}
+                    {!mine ? ` · ${messageClock(m.createdAt, locale, timeZone)}` : messageClock(m.createdAt, locale, timeZone)}
                   </p>
                 ) : null}
                 <p
