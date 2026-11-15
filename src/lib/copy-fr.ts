@@ -183,6 +183,7 @@ export const fr = {
     deskNavTodayHint: "Ce qui vous attend maintenant",
     deskNavMessagesHint: "Demandes des parents et visites",
     deskNavToursHint: "Quand les familles peuvent visiter",
+    deskNavCalendarHint: "Places ouvertes par jour",
     deskNavListings: "Fiches",
     deskNavListingsHint: "Places, photos, tarifs",
     deskNavInsights: "Statistiques",

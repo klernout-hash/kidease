@@ -2652,6 +2652,11 @@ select.ke-lang-select.ke-header-chrome {
   html[data-channel="app"] .ke-split[data-selected="false"] > .ke-split-detail {
     display: none;
   }
+  /* Care journal and meals stay on the phone. The list is above them. */
+  html[data-channel="app"] .ke-split[data-ke="care-split"][data-selected="false"] > .ke-split-detail,
+  html[data-channel="app"] .ke-split[data-ke="care-split"][data-selected="true"] > .ke-split-list {
+    display: block;
+  }
 }
 
 /* On a wide website, messages stay one column: the list, or the open thread. */
@@ -2675,9 +2680,15 @@ select.ke-lang-select.ke-header-chrome {
 html[data-channel="app"] .ke-child-rest {
   display: none;
 }
+html[data-channel="app"] [data-ke="care-split"] .ke-child-rest {
+  display: list-item;
+}
 @media (max-width: 1279px) {
   .ke-child-rest {
     display: none;
+  }
+  [data-ke="care-split"] .ke-child-rest {
+    display: list-item;
   }
 }
 @media (min-width: 1280px) {
