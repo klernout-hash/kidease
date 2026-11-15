@@ -184,3 +184,15 @@ export function documentsVerifiedBadge(input: {
 export function isPolicyKey(value: string | null | undefined): value is PolicyKey {
   return (POLICY_KEYS as readonly string[]).includes((value || "").trim());
 }
+
+/** One file per insurance, handbook, or policy. A new upload replaces that slot. */
+export function upsertStoredDocument(docs: readonly StoredCentreDoc[], next: StoredCentreDoc): StoredCentreDoc[] {
+  return [
+    next,
+    ...docs.filter((row) => {
+      if (row.id === next.id) return false;
+      if (next.kind === "policy") return !(row.kind === "policy" && row.policyKey === next.policyKey);
+      return row.kind !== next.kind;
+    }),
+  ];
+}

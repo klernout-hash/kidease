@@ -12,6 +12,7 @@ import {
   isLeadAction,
   isLeadKind,
   isLeadStatus,
+  leadStatusForTour,
   leadNotifyKind,
   leadReplyPreview,
   nextLeadStatus,
@@ -34,6 +35,7 @@ import { leadNotificationHref, leadTitleKey, notificationSourceKey } from "@/lib
 import { resolveActorUserId } from "@/lib/server/actor-user";
 import { saveParentInAppNotice } from "@/lib/server/parent-notice";
 import type { LeadEntryPoint } from "@/lib/lead-intake";
+import { linkedParentName } from "@/lib/parent-display-name";
 import { effectiveTourStatus } from "@/lib/tour-hold";
 import { nid } from "@/lib/utils";
 
@@ -43,6 +45,8 @@ type LeadRow = {
   status: string;
   user_id: string;
   parent_name: string | null;
+  parent_account?: string | null;
+  parent_given?: string | null;
   parent_email: string | null;
   parent_phone?: string | null;
   daycare_id: string;
@@ -69,12 +73,16 @@ function mapLead(row: LeadRow): LeadRequest {
         holdExpiresAt: row.tour_hold_expires_at,
       })
     : null;
+  const fromTour = leadStatusForTour(tourStatus);
   return {
     id: row.id,
     kind: isLeadKind(row.kind) ? row.kind : "spot_inquiry",
-    status: tourStatus === "expired" ? "declined" : isLeadStatus(row.status) ? row.status : "requested",
+    status: fromTour ?? (isLeadStatus(row.status) ? row.status : "requested"),
     userId: row.user_id,
-    parentName: row.parent_name,
+    parentName: linkedParentName({
+      accountName: row.parent_account ?? row.parent_name,
+      givenName: row.parent_given,
+    }),
     parentEmail: row.parent_email,
     parentPhone: row.parent_phone ?? null,
     daycareId: row.daycare_id,
@@ -400,7 +408,9 @@ export const listLeadRequests = createServerFn({ method: "GET" })
     const asCentre = data.desk !== "parent";
     const rows = await sql<LeadRow>`
       select l.id, l.kind, l.status, l.user_id,
-             coalesce(nullif(btrim(u.name), ''), nullif(btrim(concat_ws(' ', l.parent_first_name, l.parent_last_name)), '')) as parent_name,
+             nullif(btrim(u.name), '') as parent_account,
+             nullif(btrim(concat_ws(' ', l.parent_first_name, l.parent_last_name)), '') as parent_given,
+             nullif(btrim(u.name), '') as parent_name,
              coalesce(u.email, l.contact_email) as parent_email,
              l.parent_phone,
              l.daycare_id, d.name as daycare_name, d.slug, l.message, l.reply_note,

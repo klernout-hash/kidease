@@ -5,6 +5,7 @@
  * scripts/centre-leads.test.mjs loads it in Node.
  */
 import { centreCanWriteLeads, type CentreMemberRole } from "./centre-roles.ts";
+import { linkedParentName } from "./parent-display-name.ts";
 import { quietHourInZone } from "./family-time.ts";
 import { resolveTourCentre, type TourCentreDecision } from "./tour-phase0.ts";
 
@@ -402,10 +403,10 @@ export function factsFromSources(bundle: SourceBundle): LeadFact[] {
     };
     if (!deriveCentreLeadStage(signals)) continue;
     const person = people.get(userId);
-    const name =
-      cleanContact(person?.name) ||
+    const given =
       cleanContact(tours.find((row) => row.name)?.name) ||
       cleanContact(leads.find((row) => row.name)?.name);
+    const name = linkedParentName({ accountName: person?.name, givenName: given });
     const email =
       cleanContact(person?.email, 180) ||
       cleanContact(tours.find((row) => row.email)?.email, 180) ||
