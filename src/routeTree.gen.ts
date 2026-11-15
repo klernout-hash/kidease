@@ -292,6 +292,7 @@ import { Route as ApiFamilyDocumentsIdRouteImport } from './routes/api/family-do
 import { Route as ApiGovExportRouteImport } from './routes/api/gov.export'
 import { Route as ApiGovOpenDataRouteImport } from './routes/api/gov.open-data'
 import { Route as ApiLicenseDocsDaycareIdRouteImport } from './routes/api/license-docs.$daycareId'
+import { Route as ApiCentreDocumentsIdRouteImport } from './routes/api/centre-documents.$id'
 import { Route as ApiPushRegisterRouteImport } from './routes/api/push.register'
 import { Route as ApiScreeningDocumentsIdRouteImport } from './routes/api/screening-documents.$id'
 import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
@@ -1759,6 +1760,11 @@ const ApiLicenseDocsDaycareIdRoute = ApiLicenseDocsDaycareIdRouteImport.update({
   path: '/api/license-docs/$daycareId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCentreDocumentsIdRoute = ApiCentreDocumentsIdRouteImport.update({
+  id: '/api/centre-documents/$id',
+  path: '/api/centre-documents/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPushRegisterRoute = ApiPushRegisterRouteImport.update({
   id: '/api/push/register',
   path: '/api/push/register',
@@ -2279,6 +2285,7 @@ export interface FileRoutesByFullPath {
   '/api/gov/export': typeof ApiGovExportRoute
   '/api/gov/open-data': typeof ApiGovOpenDataRoute
   '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
+  '/api/centre-documents/$id': typeof ApiCentreDocumentsIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
   '/api/sms/inbound': typeof ApiSmsInboundRoute
@@ -2609,6 +2616,7 @@ export interface FileRoutesByTo {
   '/api/gov/export': typeof ApiGovExportRoute
   '/api/gov/open-data': typeof ApiGovOpenDataRoute
   '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
+  '/api/centre-documents/$id': typeof ApiCentreDocumentsIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
   '/api/sms/inbound': typeof ApiSmsInboundRoute
@@ -2942,6 +2950,7 @@ export interface FileRoutesById {
   '/api/gov/export': typeof ApiGovExportRoute
   '/api/gov/open-data': typeof ApiGovOpenDataRoute
   '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
+  '/api/centre-documents/$id': typeof ApiCentreDocumentsIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
   '/api/sms/inbound': typeof ApiSmsInboundRoute
@@ -3276,6 +3285,7 @@ export interface FileRouteTypes {
     | '/api/gov/export'
     | '/api/gov/open-data'
     | '/api/license-docs/$daycareId'
+    | '/api/centre-documents/$id'
     | '/api/push/register'
     | '/api/screening-documents/$id'
     | '/api/sms/inbound'
@@ -3606,6 +3616,7 @@ export interface FileRouteTypes {
     | '/api/gov/export'
     | '/api/gov/open-data'
     | '/api/license-docs/$daycareId'
+    | '/api/centre-documents/$id'
     | '/api/push/register'
     | '/api/screening-documents/$id'
     | '/api/sms/inbound'
@@ -3938,6 +3949,7 @@ export interface FileRouteTypes {
     | '/api/gov/export'
     | '/api/gov/open-data'
     | '/api/license-docs/$daycareId'
+    | '/api/centre-documents/$id'
     | '/api/push/register'
     | '/api/screening-documents/$id'
     | '/api/sms/inbound'
@@ -4198,6 +4210,7 @@ export interface RootRouteChildren {
   ApiGovExportRoute: typeof ApiGovExportRoute
   ApiGovOpenDataRoute: typeof ApiGovOpenDataRoute
   ApiLicenseDocsDaycareIdRoute: typeof ApiLicenseDocsDaycareIdRoute
+  ApiCentreDocumentsIdRoute: typeof ApiCentreDocumentsIdRoute
   ApiPushRegisterRoute: typeof ApiPushRegisterRoute
   ApiSmsInboundRoute: typeof ApiSmsInboundRoute
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
@@ -6196,6 +6209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLicenseDocsDaycareIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/centre-documents/$id': {
+      id: '/api/centre-documents/$id'
+      path: '/api/centre-documents/$id'
+      fullPath: '/api/centre-documents/$id'
+      preLoaderRoute: typeof ApiCentreDocumentsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/push/register': {
       id: '/api/push/register'
       path: '/api/push/register'
@@ -7117,6 +7137,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiGovExportRoute: ApiGovExportRoute,
   ApiGovOpenDataRoute: ApiGovOpenDataRoute,
   ApiLicenseDocsDaycareIdRoute: ApiLicenseDocsDaycareIdRoute,
+  ApiCentreDocumentsIdRoute: ApiCentreDocumentsIdRoute,
   ApiPushRegisterRoute: ApiPushRegisterRoute,
   ApiSmsInboundRoute: ApiSmsInboundRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,

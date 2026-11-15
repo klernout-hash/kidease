@@ -28,6 +28,7 @@ import {
   isDaycareAlreadyListedMessage,
   listingCreateErrorMessage,
 } from "@/lib/listing-identity";
+import { CentreDocumentChecklist } from "@/components/centre-document-checklist";
 import { CentreRequestGuard } from "@/components/centre-request-guard";
 import { custodyCopy } from "@/lib/custody-copy";
 import { portfolioCopy } from "@/lib/child-portfolio-copy";
@@ -800,6 +801,7 @@ export function ProviderPage() {
           ) : null}
         </>
       ) : null}
+      {desk === "listings" && listings[0] ? <CentreDocumentChecklist daycareId={listings[0].id} /> : null}
       {desk === "listings" && centreOwner && !(hostListing && listingEditorOpen) ? (
           <details
             id="list-new"

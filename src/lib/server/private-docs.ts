@@ -7,6 +7,7 @@ import {
   PRIVATE_DOC_FALLBACK_MAX_BYTES,
   PRIVATE_DOC_MAX_BYTES,
   privateDocExt,
+  R2_CENTRE_DOC_PREFIX,
   R2_FAMILY_PREFIX,
   R2_LICENSE_PREFIX,
   R2_SCREENING_PREFIX,
@@ -18,7 +19,8 @@ import { nid } from "@/lib/utils";
 export type PrivateDocPrefix =
   | typeof R2_SCREENING_PREFIX
   | typeof R2_LICENSE_PREFIX
-  | typeof R2_FAMILY_PREFIX;
+  | typeof R2_FAMILY_PREFIX
+  | typeof R2_CENTRE_DOC_PREFIX;
 
 export type LoadedPrivateDoc = {
   body: Buffer;

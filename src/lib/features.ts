@@ -361,6 +361,11 @@ export function childPortfolioGateEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_CHILD_PORTFOLIO_GATE", env);
 }
 
+/** Daycare document checklist. Default off. No email or SMS. */
+export function centreDocumentsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_CENTRE_DOCUMENTS", env);
+}
+
 /** Co-parent email invite, daycare confirm, and custody limits. Default off. */
 export function coparentEmailEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_COPARENT_EMAIL", env);

@@ -376,6 +376,7 @@ export const ADMIN_DESK_TABS = [
   "people",
   "activity",
   "reviews",
+  "documents",
 ] as const;
 
 export type AdminDeskTab = (typeof ADMIN_DESK_TABS)[number];
