@@ -219,7 +219,28 @@ function MealsTool({ copy, records, save, locale, canSave }: ToolProps & { local
         {copy.weekOf}
         <input type="date" className={field} value={weekOf} onChange={(e) => setWeekOf(e.target.value)} />
       </label>
-      <div className="mt-3 overflow-x-auto">
+      <div className="mt-3 space-y-3 md:hidden" data-ke="meal-plan-list">
+        {DAYS.map((day) => (
+          <section key={day} className="rounded-lg bg-bg p-3 ring-1 ring-border">
+            <h4 className="font-medium">{menuLabel(day, locale)}</h4>
+            {MEAL_SLOTS.map((slot) => {
+              const c = cell(day, slot);
+              return (
+                <label key={slot} className="mt-2 block text-sm">
+                  {menuLabel(slot, locale)}
+                  <input
+                    aria-label={`${copy.food} ${day} ${slot}`}
+                    className={field}
+                    value={c?.food || ""}
+                    onChange={(e) => setCell(day, slot, { food: e.target.value })}
+                  />
+                </label>
+              );
+            })}
+          </section>
+        ))}
+      </div>
+      <div className="mt-3 hidden overflow-x-auto md:block">
         <table className="min-w-[720px] text-sm">
           <thead>
             <tr>
