@@ -87,7 +87,7 @@ function keAccessPath(href) {
           for (var i = 0; i < sheets.length; i++) {
             if (!sheets[i].sheet) return;
           }
-          navigator.serviceWorker.register("/sw.js?v=8", { scope: "/", updateViaCache: "none" }).catch(function () {});
+          navigator.serviceWorker.register("/sw.js?v=9", { scope: "/", updateViaCache: "none" }).catch(function () {});
         } catch (e) {
           /* registration is best-effort */
         }

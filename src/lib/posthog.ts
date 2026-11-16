@@ -5,6 +5,7 @@ import {
   shouldStartPostHog,
   type AnalyticsConsent,
 } from "./analytics-consent.ts";
+import { isStaleAssetError, reloadStaleAssetOnce } from "./safe-error.ts";
 import { envFlagOn, envFlagSet } from "./flags.ts";
 import { shouldCaptureException } from "./posthog-errors.ts";
 import { isNative } from "./native.ts";
@@ -442,11 +443,11 @@ export function startPostHog(options?: { captureExceptions?: boolean }): void {
       }
       if (internalQa) syncInternalQa(true);
     })
-    .catch(() => {
+    .catch((error) => {
       client = null;
-      // The Oct 4 split loads this from product-events-lib. A blocked or
-      // missing chunk must not stick, or Allow can never retry on this page.
+      // A blocked or missing chunk must not stick, or Allow can never retry.
       started = false;
+      if (isStaleAssetError(error)) reloadStaleAssetOnce();
     });
 }
 

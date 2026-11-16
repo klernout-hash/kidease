@@ -73,7 +73,13 @@ export function reloadStaleAssetOnce(): boolean {
   } catch {
     return false;
   }
-  window.location.reload();
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("ke_asset", String(Date.now()));
+    window.location.replace(url.toString());
+  } catch {
+    window.location.reload();
+  }
   return true;
 }
 

@@ -164,8 +164,10 @@ test("HTML documents are not cached so they cannot point at deleted asset hashes
   const headers = new Headers({ "content-type": "text/html" });
   applyHtmlDocumentCacheHeaders(headers);
   assert.equal(headers.get("Cache-Control"), HTML_DOCUMENT_CACHE_CONTROL);
-  assert.equal(headers.get("CDN-Cache-Control"), HTML_DOCUMENT_CACHE_CONTROL);
-  assert.match(HTML_DOCUMENT_CACHE_CONTROL, /max-age=0/);
+  assert.equal(headers.get("CDN-Cache-Control"), "no-store");
+  assert.equal(headers.get("Cloudflare-CDN-Cache-Control"), "no-store");
+  assert.match(HTML_DOCUMENT_CACHE_CONTROL, /no-cache/);
+  assert.match(HTML_DOCUMENT_CACHE_CONTROL, /must-revalidate/);
   assert.match(src("server/middleware/csp.ts"), /applyHtmlDocumentCacheHeaders/);
   const vercel = src("vercel.json");
   assert.match(vercel, /"source": "\/"/);
