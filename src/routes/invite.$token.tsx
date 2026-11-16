@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { AcceptEmployeeInvite } from "@/components/centre-employees";
-import { peekCentreInvite } from "@/lib/server/centre-members";
+import { acceptCentreInvite, peekCentreInvite } from "@/lib/server/centre-members";
 import { useSettledUser } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
@@ -28,6 +28,9 @@ function InvitePage() {
   const { token } = Route.useParams();
   const { t } = useCopy();
   const { user, isPending } = useSettledUser();
+  const started = useRef(false);
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState("");
   const [peek, setPeek] = useState<
     | { ok: true; email: string; name: string | null; role: string; daycareName: string }
     | { ok: false; error: string }
@@ -39,6 +42,26 @@ function InvitePage() {
       .then(setPeek)
       .catch(() => setPeek({ ok: false, error: t("employeeInviteGone") }));
   }, [token, t]);
+
+  const sessionEmail = (user?.primaryEmail || "").trim().toLowerCase();
+  const inviteEmail = peek && peek.ok ? peek.email.trim().toLowerCase() : "";
+  const sameMailbox = Boolean(sessionEmail) && sessionEmail === inviteEmail;
+
+  useEffect(() => {
+    if (!sameMailbox || started.current) return;
+    started.current = true;
+    setJoining(true);
+    setJoinError("");
+    void acceptCentreInvite({ data: token })
+      .then(() => {
+        window.location.assign("/provider");
+      })
+      .catch((err) => {
+        started.current = false;
+        setJoining(false);
+        setJoinError(err instanceof Error ? err.message : t("employeeAcceptFailed"));
+      });
+  }, [sameMailbox, t, token]);
 
   return (
     <Shell>
@@ -57,10 +80,15 @@ function InvitePage() {
             <p className="mt-2 font-medium" data-ke="invite-role">
               {t("employeeInviteRole").replace("{role}", t(inviteRoleKey(peek.role)))}
             </p>
-            {isPending ? (
+            {isPending || (user && sameMailbox && joining) ? (
               <p className="mt-6 text-muted">{t("loading")}</p>
             ) : user ? (
               <div className="mt-6">
+                {joinError ? (
+                  <p className="mb-3 text-sm text-destructive" role="alert">
+                    {joinError}
+                  </p>
+                ) : null}
                 <AcceptEmployeeInvite token={token} />
               </div>
             ) : (

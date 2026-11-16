@@ -188,7 +188,7 @@ export function destinationAfterSignIn(input: {
   const home = daycare ? "/provider" : role === "guest" ? "/parent" : homeForRole(role);
   const next = String(input.next || "").trim();
   if (!next.startsWith("/") || next.startsWith("//")) return home;
-  if (daycare && (parentDeskNext(next) || barePath(next).startsWith("/invite/"))) return "/provider";
+  if (daycare && parentDeskNext(next)) return "/provider";
   const decision = guardPrivatePath({
     pathname: next,
     signedIn: true,
