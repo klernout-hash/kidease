@@ -3213,6 +3213,7 @@
   "alertSummary": "{on} من {total} تنبيهات مفعّلة",
   "navMenu": "القائمة",
   "navCalendar": "التقويم",
+  "deskNavCalendarHint": "أماكن شاغرة حسب اليوم",
   "menuEarningsMonth": "أرباح هذا الشهر",
   "menuReviews": "التقييمات",
   "menuCreateListing": "إنشاء ملف جديد",

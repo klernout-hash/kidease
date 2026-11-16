@@ -3213,6 +3213,7 @@
   "alertSummary": "{on} de {total} alertas activas",
   "navMenu": "Menú",
   "navCalendar": "Calendario",
+  "deskNavCalendarHint": "Lugares libres por día",
   "menuEarningsMonth": "Ingresos de este mes",
   "menuReviews": "Reseñas",
   "menuCreateListing": "Crear una ficha nueva",

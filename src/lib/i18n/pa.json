@@ -3213,6 +3213,7 @@
   "alertSummary": "{total} ਵਿੱਚੋਂ {on} ਚੇਤਾਵਨੀਆਂ ਚਾਲੂ ਹਨ",
   "navMenu": "ਮੀਨੂ",
   "navCalendar": "ਕੈਲੰਡਰ",
+  "deskNavCalendarHint": "ਦਿਨ ਅਨੁਸਾਰ ਖਾਲੀ ਥਾਵਾਂ",
   "menuEarningsMonth": "ਇਸ ਮਹੀਨੇ ਦੀ ਕਮਾਈ",
   "menuReviews": "ਸਮੀਖਿਆਵਾਂ",
   "menuCreateListing": "ਨਵੀਂ ਸੂਚੀ ਬਣਾਓ",

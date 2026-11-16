@@ -3213,6 +3213,7 @@
   "alertSummary": "{total} 项提醒中已开启 {on} 项",
   "navMenu": "菜单",
   "navCalendar": "日历",
+  "deskNavCalendarHint": "按天查看空位",
   "menuEarningsMonth": "本月收入",
   "menuReviews": "评价",
   "menuCreateListing": "新建园所简介",

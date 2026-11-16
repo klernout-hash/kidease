@@ -3213,6 +3213,7 @@
   "alertSummary": "{on} von {total} Hinweisen an",
   "navMenu": "Menü",
   "navCalendar": "Kalender",
+  "deskNavCalendarHint": "Freie Plätze nach Tag",
   "menuEarningsMonth": "Einnahmen diesen Monat",
   "menuReviews": "Bewertungen",
   "menuCreateListing": "Neue Einrichtung anlegen",

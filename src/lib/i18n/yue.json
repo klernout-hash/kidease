@@ -3213,6 +3213,7 @@
   "alertSummary": "{total} 項提醒入面開咗 {on} 項",
   "navMenu": "菜單",
   "navCalendar": "日曆",
+  "deskNavCalendarHint": "按日睇空位",
   "menuEarningsMonth": "本月收入",
   "menuReviews": "評價",
   "menuCreateListing": "開新園所簡介",
