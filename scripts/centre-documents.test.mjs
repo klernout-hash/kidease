@@ -5,6 +5,7 @@ import {
   buildCentreChecklist,
   documentsVerifiedBadge,
   requiredPolicyKeys,
+  upsertStoredDocument,
 } from "../src/lib/centre-documents.ts";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -66,6 +67,40 @@ test("the public badge needs an approved licence and unexpired insurance", () =>
     }),
     false,
   );
+});
+
+test("uploading a health policy, reloading, and removing it updates the score", () => {
+  const today = new Date("2026-11-15T00:00:00Z");
+  const base = { province: "MB", licenceOnFile: false, screeningOnFile: false, today };
+  const empty = buildCentreChecklist({ ...base, documents: [] });
+  const health = empty.items.find((item) => item.policyKey === "health");
+  assert.equal(health?.freshness, "missing");
+  assert.equal(empty.percent, 0);
+  const uploaded = upsertStoredDocument([], {
+    id: "doc-health",
+    kind: "policy",
+    policyKey: "health",
+    filename: "health.pdf",
+    expiresOn: null,
+    reviewStatus: "pending",
+    reviewReason: null,
+  });
+  const present = buildCentreChecklist({ ...base, documents: uploaded });
+  const saved = present.items.find((item) => item.policyKey === "health");
+  assert.equal(saved?.freshness, "uploaded");
+  assert.equal(saved?.documentId, "doc-health");
+  assert.ok(present.percent > empty.percent);
+  const removed = buildCentreChecklist({ ...base, documents: upsertStoredDocument(uploaded, uploaded[0]).filter((row) => row.id !== "doc-health") });
+  assert.equal(removed.items.find((item) => item.policyKey === "health")?.freshness, "missing");
+  assert.equal(removed.percent, 0);
+  const server = read("src/lib/server/centre-documents.ts");
+  const ui = read("src/components/centre-document-checklist.tsx");
+  assert.match(server, /select id from centre_documents where id/);
+  assert.match(server, /The file was not saved/);
+  assert.doesNotMatch(server, /from centre_documents\s+where daycare_id[\s\S]{0,180}\.catch\(\(\) => \[\]/);
+  assert.match(ui, /copy\.remove/);
+  assert.match(ui, /saved\.checklist/);
+  assert.match(ui, /removed\.checklist/);
 });
 
 test("the checklist stays private and off until the flag is on", () => {

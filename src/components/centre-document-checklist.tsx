@@ -45,7 +45,7 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
     setBusy(item.id);
     try {
       const dataUrl = await readFile(file);
-      await saveCentreDocument({
+      const saved = await saveCentreDocument({
         data: {
           daycareId,
           kind: item.kind,
@@ -57,7 +57,8 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
         },
       });
       toast.success(copy.saved);
-      await load();
+      if (saved.checklist) setChecklist(saved.checklist);
+      else await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : copy.notSaved);
     } finally {
@@ -69,9 +70,10 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
     if (!item.documentId) return;
     setBusy(item.id);
     try {
-      await deleteCentreDocument({ data: { daycareId, documentId: item.documentId } });
+      const removed = await deleteCentreDocument({ data: { daycareId, documentId: item.documentId } });
       toast.success(copy.removed);
-      await load();
+      if (removed.checklist) setChecklist(removed.checklist);
+      else await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : copy.notSaved);
     } finally {

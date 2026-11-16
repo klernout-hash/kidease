@@ -50,11 +50,11 @@ function toStored(row: DocRow): StoredCentreDoc | null {
 
 async function rowsFor(sql: Sql, daycareId: string): Promise<StoredCentreDoc[]> {
   const rows = await sql<DocRow>`
-    select id, daycare_id, kind, policy_key, filename, mime, storage_ref, expires_on, review_status, review_reason
+    select id, daycare_id, kind, policy_key, filename, mime, storage_ref, expires_on::text as expires_on, review_status, review_reason
     from centre_documents
     where daycare_id = ${daycareId}
-    order by created_at desc
-  `.catch(() => [] as DocRow[]);
+    order by id desc
+  `;
   return rows.map(toStored).filter((row): row is StoredCentreDoc => Boolean(row));
 }
 
@@ -160,7 +160,14 @@ export const saveCentreDocument = createServerFn({ method: "POST" })
         now()
       )
     `;
-    return { ok: true as const, id };
+    const saved = await sql<{ id: string }>`
+      select id from centre_documents where id = ${id} and daycare_id = ${data.daycareId} limit 1
+    `;
+    if (!saved[0]) throw new Error("The file was not saved. Try again.");
+    const centre = await centreFacts(sql, data.daycareId);
+    if (!centre) throw new Error("Centre not found");
+    const documents = await rowsFor(sql, data.daycareId);
+    return { ok: true as const, id, checklist: scoreFor(centre, documents) };
   });
 
 export const deleteCentreDocument = createServerFn({ method: "POST" })
@@ -176,7 +183,10 @@ export const deleteCentreDocument = createServerFn({ method: "POST" })
       returning id
     `;
     if (!removed[0]) throw new Error("File not found");
-    return { ok: true as const };
+    const centre = await centreFacts(sql, data.daycareId);
+    if (!centre) throw new Error("Centre not found");
+    const documents = await rowsFor(sql, data.daycareId);
+    return { ok: true as const, checklist: scoreFor(centre, documents) };
   });
 
 export type AdminDocumentCentre = {

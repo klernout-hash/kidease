@@ -60,6 +60,16 @@ export type LeadCounts = {
 
 const OPEN_STATUSES: LeadStatus[] = ["requested", "received"];
 
+/** One status for the parent Requests tab and the provider desk. The tour row wins. */
+export function leadStatusForTour(tourStatus: string | null | undefined): LeadStatus | null {
+  const status = String(tourStatus || "").trim().toLowerCase();
+  if (status === "accepted" || status === "confirmed") return "confirmed";
+  if (status === "pending" || status === "requested") return "requested";
+  if (status === "declined" || status === "lost" || status === "expired" || status === "no_show") return "declined";
+  if (status === "completed" || status === "enrolled") return "closed";
+  return null;
+}
+
 export function isLeadKind(value: string | null | undefined): value is LeadKind {
   return LEAD_KINDS.includes(value as LeadKind);
 }
