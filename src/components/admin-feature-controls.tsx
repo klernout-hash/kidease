@@ -43,6 +43,12 @@ const COPY = {
     readOnly: "Read only",
     empty: "No feature matches.",
     counts: "{readable} readable. {writable} writable.",
+    envCounts: "{readable} features. On or off comes from site settings (source: env). A PostHog override is optional, so none are editable here.",
+    source: "Source",
+    sourceEnv: "env",
+    sourceRemote: "PostHog",
+    sourceCode: "code default",
+    notSet: "Not set in site settings",
   },
   fr: {
     search: "Chercher une fonction",
@@ -69,6 +75,12 @@ const COPY = {
     readOnly: "Lecture seule",
     empty: "Aucune fonction.",
     counts: "{readable} lisibles. {writable} modifiables.",
+    envCounts: "{readable} fonctions. Oui ou non vient des réglages du site (source : env). Un remplacement PostHog est facultatif, donc aucune n’est modifiable ici.",
+    source: "Source",
+    sourceEnv: "env",
+    sourceRemote: "PostHog",
+    sourceCode: "valeur du code",
+    notSet: "Pas dans les réglages du site",
   },
 } as const;
 
@@ -78,6 +90,24 @@ const ROLE_LABEL = {
 } as const;
 
 function lines(reading: ControlReading, copy: (typeof COPY)[keyof typeof COPY]): string[] {
+  const source =
+    reading.effectiveSource === "env"
+      ? copy.sourceEnv
+      : reading.effectiveSource === "remote"
+        ? copy.sourceRemote
+        : reading.effectiveSource === "code-default"
+          ? copy.sourceCode
+          : copy.unverified;
+  const effective =
+    reading.effective === "partial"
+      ? copy.partial
+      : reading.effective === "on"
+        ? copy.on
+        : reading.effective === "off"
+          ? copy.off
+          : reading.effectiveSource === "code-default"
+            ? copy.notSet
+            : copy.unverified;
   const saved =
     reading.savedControl === "unverified"
       ? copy.unverified
@@ -86,20 +116,13 @@ function lines(reading: ControlReading, copy: (typeof COPY)[keyof typeof COPY]):
         : reading.savedControl === "on"
           ? copy.on
           : copy.off;
-  const out = [`${copy.saved}: ${saved}`];
+  const out = [`${copy.effective}: ${effective}`, `${copy.source}: ${source}`, `${copy.saved}: ${saved}`];
   if (reading.rolloutPercent == null) out.push(`${copy.rollout}: ${copy.unverified}`);
   else out.push(`${copy.rollout}: ${reading.rolloutPercent}%`);
   if (reading.codeDefault == null) out.push(`${copy.codeDefault}: ${copy.unverified}`);
   else out.push(`${copy.codeDefault}: ${reading.codeDefault ? copy.on : copy.off}. ${copy.notLive}`);
-  if (reading.effective === "unverified" || reading.effectiveSource === "code-default") {
-    out.unshift(`${copy.effective}: ${copy.unverified}`);
-  } else if (reading.effective === "partial") {
-    out.unshift(`${copy.effective}: ${copy.partial}`);
-  } else {
-    out.unshift(`${copy.effective}: ${reading.effective === "on" ? copy.on : copy.off}`);
-  }
   if (reading.error) out.push(reading.error);
-  if (reading.deploymentConfigurationRequired) out.push(copy.deployment);
+  if (reading.deploymentConfigurationRequired && reading.effectiveSource === "unverified") out.push(copy.deployment);
   return out;
 }
 
@@ -132,7 +155,11 @@ export function AdminFeatureControls({
 
   return (
     <div data-ke="feature-controls">
-      <p className="mt-3 text-sm text-muted">{copy.counts.replace("{readable}", String(controls.length)).replace("{writable}", String(writable))}</p>
+      <p className="mt-3 max-w-prose text-sm leading-6 text-muted" data-ke="feature-counts">
+        {writable === 0
+          ? copy.envCounts.replace("{readable}", String(controls.length))
+          : copy.counts.replace("{readable}", String(controls.length)).replace("{writable}", String(writable))}
+      </p>
       <label className="mt-4 block text-sm">
         <span className="sr-only">{copy.search}</span>
         <input

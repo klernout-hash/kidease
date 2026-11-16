@@ -50,7 +50,6 @@ export function AdminMailPanel() {
       .then((next) => {
         setStatus(next);
         if (!next.titanLinked) {
-          setInboxError(next.setupMessage);
           setInboxLoading(false);
           return;
         }
@@ -123,6 +122,25 @@ export function AdminMailPanel() {
     }
   }
 
+  if (status && !status.titanLinked) {
+    return (
+      <div className="rounded-2xl bg-surface px-5 py-4 ring-1 ring-border" data-ke="admin-mail-unconfigured">
+        <h2 className="font-display text-2xl">Messages</h2>
+        <p className="mt-2 max-w-prose text-sm leading-6 text-muted">
+          Mail inside KidEase is not connected on this site. Open Titan webmail to read this mailbox. The rest of the admin desk is unchanged.
+        </p>
+        <a
+          href={inboxUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium ring-1 ring-border"
+        >
+          Open Titan webmail
+        </a>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -173,11 +191,7 @@ export function AdminMailPanel() {
         </div>
       </div>
 
-      {status && !status.titanLinked ? (
-        <p className="mb-6 rounded-2xl bg-surface px-5 py-4 text-sm text-muted ring-1 ring-border" data-ke="admin-mail-unconfigured">
-          Mail inside KidEase is not connected yet. Use Titan webmail for this mailbox. Nothing else on the admin desk changes.
-        </p>
-      ) : inboxError ? (
+      {inboxError ? (
         <p className="mb-6 rounded-2xl bg-surface px-5 py-4 text-sm text-muted ring-1 ring-border" data-ke="admin-mail-error">
           {inboxError} Use Titan webmail if you need the mailbox now.
         </p>

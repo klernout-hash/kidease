@@ -373,6 +373,7 @@ export const ADMIN_DESK_TABS = [
   "mail",
   "contracts",
   "money",
+  "payouts",
   "people",
   "activity",
   "reviews",

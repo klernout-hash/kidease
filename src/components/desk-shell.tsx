@@ -211,7 +211,7 @@ export function DeskShell({
   return (
     <DeskMenuProvider value={{ desk, items: allItems, active, pathname, onSelect }}>
       <Shell fitViewport={fitViewport} pageClassName={pageClassName}>
-        <div className={cn("ke-dense mx-auto flex flex-col gap-3 px-3 py-2 md:py-3", wide ? "max-w-[90rem]" : "max-w-6xl", fitViewport && "min-h-0 w-full flex-1")}>
+        <div className={cn("ke-dense mx-auto flex min-w-0 flex-col gap-3 px-3 py-2 md:py-3", desk === "admin" && "ke-admin-wrap", wide ? "max-w-[90rem]" : "max-w-6xl", fitViewport && "min-h-0 w-full flex-1")}>
           <div className={cn("flex flex-col gap-3 md:flex-row md:items-start md:gap-4", fitViewport && "min-h-0 flex-1 md:items-stretch")}>
             <aside className={cn("md:sticky md:top-14 md:w-44 md:shrink-0", fitViewport && "shrink-0 md:static md:min-h-0 md:overflow-y-auto")}>
               <p className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-subtle md:block">{eyebrow}</p>
