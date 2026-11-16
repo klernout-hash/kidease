@@ -163,7 +163,7 @@ export function SaveListingButton({
         <Heart className={appearance === "photo" ? "size-7 text-current" : "size-4"} />
       </a>
       {sheet ? (
-        <div className="fixed inset-0 z-50 grid place-items-end bg-fg/40 p-4" role="presentation" data-ke="save-signin-sheet">
+        <div className="fixed inset-0 z-[70] grid place-items-end bg-fg/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" role="presentation" data-ke="save-signin-sheet">
           <div role="dialog" aria-modal="true" aria-labelledby="save-signin-title" className="w-full max-w-md rounded-xl border border-border bg-surface p-4">
             <h2 id="save-signin-title" className="font-display text-xl">{t("signIn")}</h2>
             <p className="mt-2 text-sm text-muted">{t("signupWhySave")}</p>

@@ -939,7 +939,7 @@ async function runRoleFixture(page, base) {
       const slug = listingHref.split("/daycare/")[1]?.split(/[?#]/)[0] || "";
       await page.setViewportSize({ width: 1280, height: 900 });
       await page.goto(listingUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-      await page.getByRole("button", { name: /^Essential$/ }).click().catch(() => {});
+      await page.locator('[data-ke="cookie-essential"]').click().catch(() => {});
       await page.locator('[data-ke="listing-parent-actions"]:visible').first().waitFor({ timeout: timeoutMs }).catch(() => {});
       const guestActions = await page.locator('[data-ke="listing-parent-actions"]:visible').count();
       const save = page.getByRole("link", { name: /^save$/i }).or(page.getByRole("button", { name: /^save$/i }));
@@ -1139,6 +1139,7 @@ async function clientHandlerSmoke(page, base) {
     await save.waitFor({ timeout: timeoutMs });
     const saveHref = (await save.getAttribute("href")) || "";
     record("save-opens-login", /\/login/.test(saveHref) && /why=save/.test(saveHref), { note: "href" });
+    await page.locator('[data-ke="cookie-essential"]').click().catch(() => {});
     await save.click();
     const saveSheet = page.locator('[data-ke="save-signin-sheet"]');
     if (await saveSheet.count()) await saveSheet.getByRole("button", { name: /^sign in$/i }).click();
