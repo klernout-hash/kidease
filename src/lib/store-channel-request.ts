@@ -35,6 +35,8 @@ export type ServerStoreRead = {
   huaweiAppLinking?: true;
   huaweiReview?: true;
   huaweiGallery?: true;
+  /** Present only when the Amazon deep-link flag is on. Omitted while the flag is off. */
+  amazonDeepLink?: true;
 };
 
 function requestIsHttps(url: string | undefined, forwardedProto: string | null): boolean {
@@ -80,6 +82,7 @@ export const readServerStoreChannel = createServerFn({ method: "GET" })
       const { microsoftPlatformContext } = await import("@/lib/microsoft/platform");
       const { samsungPlatformContext } = await import("@/lib/samsung/platform");
       const { huaweiPlatformContext } = await import("@/lib/huawei/platform");
+      const { amazonPlatformContext } = await import("@/lib/amazon/store-link");
       return {
         channel: storeChannelFromSignals(signals),
         setCookie: microsoftStoreCookieHeader(signals, {
@@ -91,6 +94,7 @@ export const readServerStoreChannel = createServerFn({ method: "GET" })
         ...microsoftPlatformContext(process.env),
         ...samsungPlatformContext(process.env),
         ...huaweiPlatformContext(process.env),
+        ...amazonPlatformContext(process.env),
       };
     } catch {
       return {

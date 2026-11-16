@@ -78,10 +78,13 @@ function onAmazonClick(event: MouseEvent<HTMLAnchorElement>) {
   if (openAmazonListing(web, ua)) event.preventDefault();
 }
 
-export function StoreBadges({ huaweiHref = null }: { huaweiHref?: string | null }) {
+export function StoreBadges({
+  huaweiHref = null,
+  amazonHref,
+}: { huaweiHref?: string | null; amazonHref?: string | null } = {}) {
   const { t, locale } = useCopy();
   const lang = locale as ShippedLocale;
-  const amazonUrl = AMAZON_APPSTORE_URL();
+  const amazonUrl = amazonHref === undefined ? AMAZON_APPSTORE_URL() : amazonHref;
   const names = {
     amazon: t("storeAmazonName"),
     apple: t("appStore"),

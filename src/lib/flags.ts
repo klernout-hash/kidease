@@ -220,6 +220,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_HUAWEI_APP_LINKING",
   "FEATURE_HUAWEI_IN_APP_REVIEW",
   "FEATURE_HUAWEI_APPGALLERY_LINK",
+  "FEATURE_AMAZON_STORE_DEEP_LINK",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -630,6 +631,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_HUAWEI_IN_APP_REVIEW: false,
   /** AppGallery listing link on Get the app. Off. */
   FEATURE_HUAWEI_APPGALLERY_LINK: false,
+  /** Amazon package deep link when no https listing is set. Off. Does not send ADM. */
+  FEATURE_AMAZON_STORE_DEEP_LINK: false,
 };
 
 /**
@@ -1485,6 +1488,12 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_HUAWEI_APP_LINKING", defaultOn: false, docs: "docs/flags.md", summary: "AppGallery and kidease.ca links open an in-app path. Off." },
   { key: "FEATURE_HUAWEI_IN_APP_REVIEW", defaultOn: false, docs: "docs/flags.md", summary: "AppGallery review page. Off. Play review stays blocked." },
   { key: "FEATURE_HUAWEI_APPGALLERY_LINK", defaultOn: false, docs: "docs/flags.md", summary: "AppGallery listing on Get the app. Off until this is on." },
+  {
+    key: "FEATURE_AMAZON_STORE_DEEP_LINK",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Amazon package link and amzn:// deep link when no https listing is set. Off. ADM stays on FEATURE_AMAZON_ADM.",
+  },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;

@@ -240,6 +240,7 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_HUAWEI_APP_LINKING` | AppGallery and kidease.ca links open an in-app path. Default off. |
 | `FEATURE_HUAWEI_IN_APP_REVIEW` | AppGallery review page. Default off. Play in-app review stays blocked on Huawei. |
 | `FEATURE_HUAWEI_APPGALLERY_LINK` | Listing link on Get the app. Default off. The URL is the public AppGallery page. |
+| `FEATURE_AMAZON_STORE_DEEP_LINK` | Package page and `amzn://` link when no https listing is set. Default off. A verified listing still wins. ADM stays on `FEATURE_AMAZON_ADM`. |
 | `BRANDED_EMAILS` | Env only, not a PostHog flag. Default off. When `1`, notification email uses the KidEase layout (logo, button, plain-text part, one-click unsubscribe). Unset keeps today's bodies. Do not turn on until `send.kidease.ca` mail DNS is confirmed. |
 
 ## What is wired
