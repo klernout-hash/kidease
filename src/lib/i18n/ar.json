@@ -3582,5 +3582,7 @@
   "tourAssistantConfirm": "أرسل طلب الزيارة هذا",
   "tourAssistantSent": "أُرسل الطلب. سيراه المركز في الطلبات.",
   "tourAssistantSignIn": "سجّل الدخول بحساب ولي أمر لإرسال هذه الزيارة.",
-  "tourAssistantSlotGone": "هذا الوقت لم يعد متاحًا. اختر وقتًا منشورًا آخر."
+  "tourAssistantSlotGone": "هذا الوقت لم يعد متاحًا. اختر وقتًا منشورًا آخر.",
+  "ontarioCapFee": "حتى 22 دولارًا في اليوم (سقف أونتاريو)",
+  "parentRequestTourAsked": "تم طلب الزيارة"
 }

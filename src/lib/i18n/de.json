@@ -3582,5 +3582,7 @@
   "tourAssistantConfirm": "Diese Besichtigungsanfrage senden",
   "tourAssistantSent": "Die Anfrage ist gesendet. Die Einrichtung sieht sie unter Anfragen.",
   "tourAssistantSignIn": "Melde dich mit einem Elternkonto an, um diese Besichtigung zu senden.",
-  "tourAssistantSlotGone": "Diese Zeit ist nicht mehr frei. Wähle eine andere angegebene Zeit."
+  "tourAssistantSlotGone": "Diese Zeit ist nicht mehr frei. Wähle eine andere angegebene Zeit.",
+  "ontarioCapFee": "Bis zu 22 $ pro Tag (Obergrenze Ontario)",
+  "parentRequestTourAsked": "Besichtigung angefragt"
 }

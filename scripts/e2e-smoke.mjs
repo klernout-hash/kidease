@@ -83,6 +83,14 @@ const HEADER_MENU_SELECTOR = 'header [aria-controls="ke-nav-drawer"]';
 const results = [];
 let previewChild = null;
 
+async function dismissCookieBar(page) {
+  const bar = page.locator('[data-ke="cookie-consent"]');
+  if ((await bar.count()) === 0) return;
+  await page.locator('[data-ke="cookie-essential"]').click({ timeout: 5000 }).catch(() => {});
+  const hidden = await bar.waitFor({ state: "hidden", timeout: 3000 }).then(() => true).catch(() => false);
+  if (!hidden) await page.evaluate(() => document.querySelector('[data-ke="cookie-consent"]')?.remove());
+}
+
 async function settleMockCheckout(page) {
   // The panel assigns the mock Checkout URL. Wait until that navigation commits
   // so the next page.goto is not interrupted. The script never pays.
@@ -939,13 +947,15 @@ async function runRoleFixture(page, base) {
       const slug = listingHref.split("/daycare/")[1]?.split(/[?#]/)[0] || "";
       await page.setViewportSize({ width: 1280, height: 900 });
       await page.goto(listingUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-      await page.getByRole("button", { name: /^Essential$/ }).click().catch(() => {});
+      await dismissCookieBar(page);
       await page.locator('[data-ke="listing-parent-actions"]:visible').first().waitFor({ timeout: timeoutMs }).catch(() => {});
       const guestActions = await page.locator('[data-ke="listing-parent-actions"]:visible').count();
       const save = page.getByRole("link", { name: /^save$/i }).or(page.getByRole("button", { name: /^save$/i }));
       const tour = page.getByRole("button", { name: /book a tour/i });
       if (await save.count()) await save.first().click();
       else if (await tour.count()) await tour.first().click();
+      const guestSheet = page.locator('[data-ke="save-signin-sheet"]');
+      if (await guestSheet.count()) await guestSheet.getByRole("button", { name: /^sign in$/i }).click();
       await page.waitForURL(/\/login/i, { timeout: timeoutMs }).catch(() => {});
       record("listing-guest-signin", guestActions > 0 && /\/login/i.test(page.url()), {
         note: `actions=${guestActions} save=${await save.count()} tour=${await tour.count()} url=${page.url()}`,
@@ -1137,7 +1147,10 @@ async function clientHandlerSmoke(page, base) {
     await save.waitFor({ timeout: timeoutMs });
     const saveHref = (await save.getAttribute("href")) || "";
     record("save-opens-login", /\/login/.test(saveHref) && /why=save/.test(saveHref), { note: "href" });
+    await dismissCookieBar(page);
     await save.click();
+    const saveSheet = page.locator('[data-ke="save-signin-sheet"]');
+    if (await saveSheet.count()) await saveSheet.getByRole("button", { name: /^sign in$/i }).click();
     await page.waitForURL(/\/login/i, { timeout: timeoutMs }).catch(() => {});
     record("save-click-login", /\/login/i.test(page.url()) && /why=save/.test(page.url()), { note: "login" });
 

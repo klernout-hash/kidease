@@ -3582,5 +3582,7 @@
   "tourAssistantConfirm": "Ipadala ang kahilingang ito sa tour",
   "tourAssistantSent": "Naipadala na ang kahilingan. Makikita ito ng sentro sa Mga kahilingan.",
   "tourAssistantSignIn": "Mag-sign in gamit ang account ng magulang para ipadala ang tour na ito.",
-  "tourAssistantSlotGone": "Hindi na bukas ang oras na iyon. Pumili ng ibang nakapaskil na oras."
+  "tourAssistantSlotGone": "Hindi na bukas ang oras na iyon. Pumili ng ibang nakapaskil na oras.",
+  "ontarioCapFee": "Hanggang $22 sa isang araw (limitasyon ng Ontario)",
+  "parentRequestTourAsked": "Hiniling ang tour"
 }

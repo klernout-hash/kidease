@@ -3582,5 +3582,7 @@
   "tourAssistantConfirm": "ਇਹ ਦੌਰਾ ਬੇਨਤੀ ਭੇਜੋ",
   "tourAssistantSent": "ਬੇਨਤੀ ਭੇਜੀ ਗਈ। ਕੇਂਦਰ ਇਸਨੂੰ ਬੇਨਤੀਆਂ ਵਿੱਚ ਵੇਖੇਗਾ।",
   "tourAssistantSignIn": "ਇਹ ਦੌਰਾ ਭੇਜਣ ਲਈ ਮਾਪੇ ਖਾਤੇ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ।",
-  "tourAssistantSlotGone": "ਇਹ ਸਮਾਂ ਹੁਣ ਖੁੱਲ੍ਹਾ ਨਹੀਂ। ਕੋਈ ਹੋਰ ਪ੍ਰਕਾਸ਼ਿਤ ਸਮਾਂ ਚੁਣੋ।"
+  "tourAssistantSlotGone": "ਇਹ ਸਮਾਂ ਹੁਣ ਖੁੱਲ੍ਹਾ ਨਹੀਂ। ਕੋਈ ਹੋਰ ਪ੍ਰਕਾਸ਼ਿਤ ਸਮਾਂ ਚੁਣੋ।",
+  "ontarioCapFee": "ਦਿਨ ਵਿੱਚ $22 ਤੱਕ (ਓਨਟਾਰੀਓ ਸੀਮਾ)",
+  "parentRequestTourAsked": "ਦੌਰੇ ਦੀ ਬੇਨਤੀ"
 }

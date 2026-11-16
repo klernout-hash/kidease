@@ -2126,6 +2126,7 @@ export const en = {
     leadStatusAnswered: "Answered",
     leadStatusClosed: "Closed",
     parentRequestWaiting: "Waiting on centre",
+    parentRequestTourAsked: "Tour requested",
     parentRequestConfirmed: "Confirmed",
     parentRequestDeclined: "Declined",
     parentRequestEnrolled: "Enrolled",
@@ -2256,6 +2257,7 @@ export const en = {
     featuredBody:
       "Licensed centres within your search radius. A paid Featured placement is marked Sponsored. A photo is shown only when the centre has one on file.",
     viewDetails: "View Details",
+    ontarioCapFee: "Up to $22 a day (Ontario cap)",
     kmAway: "km away",
     bandWalk: "walkable",
     bandNearby: "nearby",
