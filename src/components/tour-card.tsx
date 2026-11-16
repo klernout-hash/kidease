@@ -138,7 +138,7 @@ export function TourCard({
     <div className="rounded-xl bg-surface p-4 ring-1 ring-border" id={`tour-${tour.id}`}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-subtle">
+          <p className="text-xs font-medium text-subtle">
             {tour.status === "pending" ? t("tourSoftHold") : t("tourRequest")}
           </p>
           <p className="mt-1 font-medium">

@@ -73,7 +73,8 @@ test("Daycare desk chrome is keyed for EN and FR", () => {
   assert.match(copy, /inboxEmptyNeedYouCta: "Voir les demandes entrantes"/);
   assert.match(copy, /inboxStageNewInquiry: "New inquiry"/);
   assert.match(copy, /inboxStageNewInquiry: "Nouvelle demande"/);
-  assert.match(copy, /inboxSoftHold: "Soft-hold"/);
+  assert.match(copy, /inboxSoftHold: "Waiting for the centre"/);
+  assert.match(copy, /inboxSoftHold: "En attente du centre"/);
   assert.match(copy, /todayActionRequired: "Action required"/);
   assert.match(copy, /todayActionRequired: "Action requise"/);
   for (const item of DESK_NAV.daycare) {

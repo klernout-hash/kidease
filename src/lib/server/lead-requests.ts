@@ -11,8 +11,7 @@ import {
   emptyLeadCounts,
   isLeadAction,
   isLeadKind,
-  isLeadStatus,
-  leadStatusForTour,
+  displayedLeadStatus,
   leadNotifyKind,
   leadReplyPreview,
   nextLeadStatus,
@@ -36,7 +35,8 @@ import { resolveActorUserId } from "@/lib/server/actor-user";
 import { saveParentInAppNotice } from "@/lib/server/parent-notice";
 import type { LeadEntryPoint } from "@/lib/lead-intake";
 import { linkedParentName } from "@/lib/parent-display-name";
-import { effectiveTourStatus } from "@/lib/tour-hold";
+import { declineReasonValid, effectiveTourStatus } from "@/lib/tour-hold";
+import { nextTourStatus } from "@/lib/threads";
 import { nid } from "@/lib/utils";
 
 type LeadRow = {
@@ -73,11 +73,10 @@ function mapLead(row: LeadRow): LeadRequest {
         holdExpiresAt: row.tour_hold_expires_at,
       })
     : null;
-  const fromTour = leadStatusForTour(tourStatus);
   return {
     id: row.id,
     kind: isLeadKind(row.kind) ? row.kind : "spot_inquiry",
-    status: fromTour ?? (isLeadStatus(row.status) ? row.status : "requested"),
+    status: displayedLeadStatus(row.status, tourStatus),
     userId: row.user_id,
     parentName: linkedParentName({
       accountName: row.parent_account ?? row.parent_name,
@@ -619,13 +618,19 @@ export const updateLeadRequest = createServerFn({ method: "POST" })
     const rows = await sql<{
       id: string;
       status: string;
+      kind: string;
       user_id: string;
       daycare_id: string;
       daycare_name: string;
       slug: string;
+      visibility: string | null;
+      is_test: boolean | number | null;
       conversation_id: string | null;
+      source_kind: string | null;
+      source_id: string | null;
     }>`
-      select l.id, l.status, l.user_id, l.daycare_id, d.name as daycare_name, d.slug, l.conversation_id
+      select l.id, l.status, l.kind, l.user_id, l.daycare_id, d.name as daycare_name, d.slug,
+             d.visibility, d.is_test, l.conversation_id, l.source_kind, l.source_id
       from lead_requests l
       join daycares d on d.id = l.daycare_id
       where l.id = ${data.leadId}
@@ -642,6 +647,16 @@ export const updateLeadRequest = createServerFn({ method: "POST" })
     if (!next) throw new Error("This request was already answered");
 
     const note = (data.note || "").trim() || null;
+    if ((data.action === "confirm" || data.action === "decline") && (lead.kind === "tour" || lead.source_kind === "tour_request")) {
+      await applyLeadDecisionToTour(sql, {
+        userId: context.userId,
+        parentUserId: lead.user_id,
+        daycareId: lead.daycare_id,
+        sourceId: lead.source_id,
+        action: data.action,
+        note,
+      });
+    }
     await sql`
       update lead_requests
       set status = ${next},
@@ -657,7 +672,7 @@ export const updateLeadRequest = createServerFn({ method: "POST" })
     const reply = leadReplyMail(next, lead.daycare_name);
     const noteLine = (note || "").trim();
     const preview = noteLine ? `${reply.preview} ${noteLine}` : reply.preview;
-    await notifyThreadParty({
+    const mailed = await notifyThreadParty({
       to: parent.email,
       name: parent.name,
       subject: reply.subject,
@@ -666,7 +681,14 @@ export const updateLeadRequest = createServerFn({ method: "POST" })
       preheader: reply.preview,
       threadUrl: `${origin}${PARENT_REQUESTS_HREF}`,
       daycareName: lead.daycare_name,
-    }).catch(() => undefined);
+      aboutTestListing: isAdminOnlyListing({
+        name: lead.daycare_name,
+        slug: lead.slug,
+        visibility: lead.visibility,
+        isTest: lead.is_test,
+      }),
+    }).catch(() => ({ status: "failed" as const }));
+    const emailed = mailed.status === "sent";
 
     try {
       const actor = await lookupUser(context.userId);
@@ -683,8 +705,74 @@ export const updateLeadRequest = createServerFn({ method: "POST" })
       /* admin mail is best-effort */
     }
 
-    return { ok: true as const, status: next };
+    return { ok: true as const, status: next, emailed };
   });
+
+/** Confirm or decline the parent's tour row so the lead, the parent page, and the pipeline agree. */
+async function applyLeadDecisionToTour(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  input: {
+    userId: string;
+    parentUserId: string;
+    daycareId: string;
+    sourceId: string | null;
+    action: "confirm" | "decline";
+    note: string | null;
+  },
+) {
+  const tours = await sql<{
+    id: string;
+    status: string;
+    created_at: string | Date;
+    hold_expires_at: string | Date | null;
+  }>`
+    select id, status, created_at, hold_expires_at
+    from tour_requests
+    where daycare_id = ${input.daycareId}
+      and user_id = ${input.parentUserId}
+      and (
+        id = ${input.sourceId || ""}
+        or status = 'pending'
+      )
+    order by created_at desc
+    limit 5
+  `.catch(() => []);
+  const tour = tours.find((row) => input.sourceId && row.id === input.sourceId) || tours.find((row) => row.status === "pending");
+  if (!tour) return;
+  const effective = effectiveTourStatus({
+    status: tour.status,
+    createdAt: tour.created_at,
+    holdExpiresAt: tour.hold_expires_at,
+  });
+  if (effective === "expired") throw new Error("This tour request expired");
+  const tourNext = input.action === "confirm" ? "accepted" : "declined";
+  if (effective === tourNext) return;
+  if (!nextTourStatus(effective, tourNext)) throw new Error("This request was already answered");
+  if (tourNext === "declined" && !declineReasonValid(input.note)) {
+    throw new Error("Add a reason so the parent knows why this tour was declined");
+  }
+  const updated = await sql<{ id: string }>`
+    update tour_requests
+    set status = ${tourNext},
+        centre_note = ${input.note},
+        responded_by = ${input.userId},
+        responded_at = now(),
+        hold_expires_at = null
+    where id = ${tour.id} and status = ${tour.status}
+      and (status <> 'pending' or coalesce(hold_expires_at, created_at + interval '48 hours') > now())
+    returning id
+  `;
+  if (!updated[0]) throw new Error("This tour request was already answered or expired");
+  await sql`
+    update lead_requests
+    set source_kind = 'tour_request',
+        source_id = ${tour.id}
+    where user_id = ${input.parentUserId}
+      and daycare_id = ${input.daycareId}
+      and kind = 'tour'
+      and source_id is null
+  `;
+}
 
 export const listAdminLeadCounts = createServerFn({ method: "GET" })
   .middleware([authMiddleware])

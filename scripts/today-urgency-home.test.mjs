@@ -175,7 +175,7 @@ test("provider default desk is Today and clutter stays off that path", () => {
   const home = src("src/components/today-urgency-home.tsx");
   const shell = src("src/components/desk-shell.tsx");
   assert.match(provider, /DEFAULT_DESK: DaycareDesk = "today"/);
-  assert.match(provider, /search\.desk \?\? DEFAULT_DESK/);
+  assert.match(provider, /providerDeskFromQuery\(search\.desk, searchStr\)/);
   assert.match(provider, /TodayUrgencyHome/);
   assert.match(provider, /desk === "today"/);
   assert.match(provider, /desk !== "today"/);

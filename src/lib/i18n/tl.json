@@ -92,7 +92,7 @@
   "deskNavTodayHint": "Ano ang kailangang asikasuhin ngayon",
   "deskNavMessagesHint": "Mga tanong ng magulang + mga tour",
   "deskNavToursHint": "Kailan puwedeng bumisita ang mga pamilya",
-  "deskNavCalendarHint": "Open spots by day",
+  "deskNavCalendarHint": "Bakanteng puwesto bawat araw",
   "deskNavListings": "Mga listing ko",
   "deskNavListingsHint": "Mga spot, larawan, at bayad",
   "deskNavInsights": "Mga istatistika",
@@ -3213,7 +3213,6 @@
   "alertSummary": "{on} sa {total} na alerto ang naka-on",
   "navMenu": "Menu",
   "navCalendar": "Kalendaryo",
-  "deskNavCalendarHint": "Bakanteng puwesto bawat araw",
   "menuEarningsMonth": "Kita ngayong buwan",
   "menuReviews": "Mga review",
   "menuCreateListing": "Gumawa ng bagong listahan",
@@ -3551,5 +3550,13 @@
   "employeeResend": "Ipadala muli ang imbitasyon",
   "employeeResent": "Naipadala muli ang imbitasyon.",
   "employeeResendHeld": "Hindi na-email ang imbitasyong iyon.",
-  "employeeResendFailed": "Hindi maipadala muli ang imbitasyong iyon."
+  "employeeResendFailed": "Hindi maipadala muli ang imbitasyong iyon.",
+  "parentRequestWaiting": "Hinihintay ang sentro",
+  "parentRequestConfirmed": "Nakumpirma",
+  "parentRequestDeclined": "Tinanggihan",
+  "parentRequestEnrolled": "Naka-enrol",
+  "parentRequestCancelled": "Kinansela",
+  "parentRequestEnrolment": "Pag-enrol",
+  "parentRequestSentOn": "Naipadala",
+  "parentRequestVisitOn": "Petsa ng tour"
 }

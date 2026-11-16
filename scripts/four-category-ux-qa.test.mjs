@@ -56,7 +56,7 @@ test("Guest: live vs all counts, empty-search lead, and listing login handoff", 
 
 test("Parent: request empty copy, inbox subtitle, and search ↔ child wayfinding", () => {
   const parent = src("src/components/parent-desk.tsx");
-  assert.match(parent, /title=\{t\("noRequests"\)\} body=\{t\("noRequestsLead"\)\}/);
+  assert.match(src("src/components/parent-requests.tsx"), /title=\{t\("noRequests"\)\} body=\{t\("noRequestsLead"\)\}/);
   assert.match(parent, /sendChildProfile/);
   const inbox = src("src/components/inbox-list.tsx");
   assert.match(inbox, /inboxHasThreads/);
