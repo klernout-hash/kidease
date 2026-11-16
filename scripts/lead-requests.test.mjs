@@ -21,7 +21,10 @@ import {
   parseListingAsk,
   tallyLeadCounts,
   tourStatusToLead,
+  displayedLeadStatus,
+  leadsBesideTours,
 } from "../src/lib/lead-requests.ts";
+import { providerDeskFromQuery } from "../src/lib/desk-nav.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -218,4 +221,39 @@ test("admin can see lead counts; no GHL and no FCM in this track PR", () => {
   assert.match(server, /notifyThreadParty/);
   assert.doesNotMatch(server, /gohighlevel|leadconnector|firebase|fcm|sendEachForMulticast/i);
   assert.doesNotMatch(src("src/lib/lead-requests.ts"), /FEATURE_PUSH|sendEachForMulticast/);
+});
+
+test("confirming a tour lead keeps the decision after the tour is still pending", () => {
+  assert.equal(displayedLeadStatus("confirmed", "pending"), "confirmed");
+  assert.equal(displayedLeadStatus("declined", "pending"), "declined");
+  assert.equal(displayedLeadStatus("requested", "pending"), "requested");
+  assert.equal(displayedLeadStatus("requested", "accepted"), "confirmed");
+  const server = src("src/lib/server/lead-requests.ts");
+  assert.match(server, /applyLeadDecisionToTour/);
+  assert.match(server, /update tour_requests/);
+  assert.match(server, /const emailed = mailed\.status === "sent"/);
+  const inbox = src("src/components/daycare-lead-inbox.tsx");
+  assert.match(inbox, /saved\?\.emailed \? t\("leadUpdated"\) : t\("requestUpdatedToast"\)/);
+  assert.doesNotMatch(inbox, /confirmSuccess\(\{ variant: "toast", title: t\("leadUpdated"\) \}\)/);
+});
+
+test("a tour already listed under Tour requests is not repeated under My requests", () => {
+  const leads = [
+    { id: "lead-1", kind: "tour", daycareId: "centre", sourceKind: "tour_request", sourceId: "tour-1" },
+    { id: "lead-2", kind: "waitlist", daycareId: "centre", sourceKind: null, sourceId: null },
+  ];
+  const shown = leadsBesideTours(leads, [{ id: "tour-1", daycareId: "centre" }]);
+  assert.deepEqual(shown.map((row) => row.id), ["lead-2"]);
+  assert.match(src("src/components/parent-desk.tsx"), /leadsBesideTours\(leads, tours\)/);
+  assert.equal(src("src/lib/copy-en.ts").includes('tourSoftHold: "Waiting for the centre"'), true);
+  assert.equal(src("src/lib/copy-fr.ts").includes('tourSoftHold: "En attente du centre"'), true);
+  assert.doesNotMatch(src("src/components/tour-card.tsx"), /uppercase tracking-\[0\.16em\].*\n\s*\{tour\.status === "pending" \? t\("tourSoftHold"\)/);
+});
+
+test("a direct /provider?desk=requests load stays on Requests", () => {
+  assert.equal(providerDeskFromQuery(undefined, "?desk=requests"), "requests");
+  assert.equal(providerDeskFromQuery("requests", ""), "requests");
+  assert.equal(providerDeskFromQuery(undefined, "?desk=overview"), "today");
+  assert.equal(providerDeskFromQuery(undefined, ""), "today");
+  assert.match(src("src/routes/provider.tsx"), /providerDeskFromQuery\(search\.desk, searchStr\)/);
 });

@@ -24,9 +24,9 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily } from "@/lib/server/family";
 import { acceptShortlistShare } from "@/lib/server/parent-tracker";
 import { dismissUpgradeCard } from "@/lib/server/upgrade-card";
+import { leadsBesideTours, type LeadRequest } from "@/lib/lead-requests";
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
-import type { LeadRequest } from "@/lib/lead-requests";
 import { listParentBills } from "@/lib/server/billing";
 import { StripeInvoiceList } from "@/components/stripe-invoice-list";
 import { shareChildWithCentres } from "@/lib/server/enrol-queue";
@@ -560,19 +560,24 @@ export function ParentDesk({
 
       {contentTab === "bookings" ? (
         <div className="mt-6 space-y-8">
+        {(() => {
+          const requestLeads = leadsBesideTours(leads, tours);
+          if (requestLeads.length === 0 && bookings.length === 0 && tours.length === 0) {
+            return <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" art={<KidNotebook />} />;
+          }
+          if (!requestLeads.length) return null;
+          return (
         <section>
           <h2 className="font-display text-2xl">{t("myRequests")}</h2>
           <p className="mt-1 text-sm text-muted">{t("myRequestsLead")}</p>
           <div className="mt-4">
-            {leads.length === 0 && bookings.length === 0 && tours.length === 0 ? (
-              <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" art={<KidNotebook />} />
-            ) : leads.length ? (
             <Suspense fallback={<div className="ke-skel h-24 rounded-xl" aria-hidden="true" />}>
-              <ParentRequestsList items={leads} />
+              <ParentRequestsList items={requestLeads} />
             </Suspense>
-            ) : null}
           </div>
         </section>
+          );
+        })()}
         {tours.length ? (
           <section>
             <h2 className="font-display text-2xl">{t("pendingTours")}</h2>

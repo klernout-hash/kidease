@@ -134,8 +134,8 @@ function LeadActions({ lead, onChanged }: { lead: LeadRequest; onChanged: () => 
   async function decide(action: LeadAction) {
     setBusy(action);
     try {
-      await updateLeadRequest({ data: { leadId: lead.id, action, note: note.trim() || undefined } });
-      confirmSuccess({ variant: "toast", title: t("leadUpdated") });
+      const saved = await updateLeadRequest({ data: { leadId: lead.id, action, note: note.trim() || undefined } });
+      confirmSuccess({ variant: "toast", title: saved?.emailed ? t("leadUpdated") : t("requestUpdatedToast") });
       setNote("");
       onChanged();
     } catch (err) {
