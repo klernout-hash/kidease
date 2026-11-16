@@ -3583,5 +3583,6 @@
   "tourAssistantSent": "La richiesta è inviata. Il centro la vedrà in Richieste.",
   "tourAssistantSignIn": "Accedi con un account genitore per inviare questa visita.",
   "tourAssistantSlotGone": "Quell’orario non è più libero. Scegline un altro tra quelli pubblicati.",
-  "ontarioCapFee": "Fino a 22 $ al giorno (tetto dell'Ontario)"
+  "ontarioCapFee": "Fino a 22 $ al giorno (tetto dell'Ontario)",
+  "parentRequestTourAsked": "Visita richiesta"
 }

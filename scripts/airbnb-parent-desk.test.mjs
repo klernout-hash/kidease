@@ -14,4 +14,7 @@ test("the parent home has one search step and jobs stay folded", () => {
   assert.match(desk, /findDaycareJobs/);
   assert.match(desk, /EceJobDesk mode="parent"/);
   assert.match(desk, /<details/);
+  assert.match(src("src/components/app-tab-bar.tsx"), /search=\{\{ tab: "requests" \}\}/);
+  assert.match(src("src/components/parent-requests.tsx"), /parentRequestTourAsked/);
+  assert.doesNotMatch(src("src/components/parent-requests.tsx"), /SOFT-HOLD/);
 });
