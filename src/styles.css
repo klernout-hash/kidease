@@ -3976,12 +3976,7 @@ html[data-look="clean"] .ke-visual-card [data-ke="card-view-details"] {
   display: none;
 }
 /* Cards: keep name, place, ages, open spots and fee. The rest is on the listing page. */
-html[data-look="clean"] .ke-visual-card :is(
-    [data-ke="parent-fit"],
-    [data-ke="vacancy-confirmed"],
-    [data-ke="kidease-approved-marker"],
-    [data-ke="provincial-openings"]
-  ) {
+html[data-look="clean"] .ke-visual-card :is([data-ke="parent-fit"], [data-ke="vacancy-confirmed"], [data-ke="kidease-approved-marker"], [data-ke="provincial-openings"]) {
   display: none;
 }
 html[data-look="clean"] .ke-visual-card [data-ke="card-age-range"],
@@ -4021,7 +4016,8 @@ html[data-look="clean"] .ke-visual-card [data-ke="card-name"] h3 {
 }
 /* Cards: the age list stays on one line. */
 html[data-look="clean"] .ke-visual-card [data-ke="card-age-range"] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
