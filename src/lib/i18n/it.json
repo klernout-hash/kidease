@@ -3558,5 +3558,22 @@
   "parentRequestCancelled": "Annullata",
   "parentRequestEnrolment": "Iscrizione",
   "parentRequestSentOn": "Inviata",
-  "parentRequestVisitOn": "Data della visita"
+  "parentRequestVisitOn": "Data della visita",
+  "attentionTitle": "Richiede la tua attenzione",
+  "attentionDone": "Fatto",
+  "attentionEmpty": "In questo momento non serve nulla da te.",
+  "attentionDismiss": "Non ora",
+  "attentionTourUpdate": "Aggiornamento della visita da vedere",
+  "attentionSpotOffer": "Offerta di posto a cui rispondere",
+  "attentionFormDue": "Modulo o documento da completare",
+  "attentionInvoiceDue": "Fattura da pagare",
+  "attentionPaymentFailed": "Pagamento non riuscito",
+  "attentionUnreadMessage": "Messaggio non letto dal centro",
+  "attentionUnreadParent": "Messaggio non letto da un genitore",
+  "attentionNewRequest": "Nuova richiesta a cui rispondere",
+  "attentionMissingDoc": "Documento mancante",
+  "attentionOfferWaiting": "Offerta di posto in attesa del genitore",
+  "attentionOverdueInvoice": "Fattura scaduta",
+  "attentionStaffCert": "Certificato del personale in scadenza",
+  "attentionListingGap": "Passo della scheda da completare"
 }

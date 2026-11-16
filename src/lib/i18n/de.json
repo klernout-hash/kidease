@@ -3558,5 +3558,22 @@
   "parentRequestCancelled": "Storniert",
   "parentRequestEnrolment": "Anmeldung",
   "parentRequestSentOn": "Gesendet",
-  "parentRequestVisitOn": "Besichtigungsdatum"
+  "parentRequestVisitOn": "Besichtigungsdatum",
+  "attentionTitle": "Braucht deine Aufmerksamkeit",
+  "attentionDone": "Erledigt",
+  "attentionEmpty": "Gerade braucht es dich nicht.",
+  "attentionDismiss": "Nicht jetzt",
+  "attentionTourUpdate": "Besichtigungsupdate ansehen",
+  "attentionSpotOffer": "Platzangebot beantworten",
+  "attentionFormDue": "Formular oder Dokument fertigstellen",
+  "attentionInvoiceDue": "Rechnung bezahlen",
+  "attentionPaymentFailed": "Zahlung fehlgeschlagen",
+  "attentionUnreadMessage": "Ungelesene Nachricht der Einrichtung",
+  "attentionUnreadParent": "Ungelesene Nachricht eines Elternteils",
+  "attentionNewRequest": "Neue Anfrage beantworten",
+  "attentionMissingDoc": "Fehlendes Dokument",
+  "attentionOfferWaiting": "Platzangebot wartet auf die Eltern",
+  "attentionOverdueInvoice": "Überfällige Rechnung",
+  "attentionStaffCert": "Mitarbeiterzertifikat läuft ab",
+  "attentionListingGap": "Schritt im Eintrag noch offen"
 }
