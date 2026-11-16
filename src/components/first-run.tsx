@@ -26,6 +26,7 @@ import {
   pickCopy,
   providerSetup,
   readinessLabel,
+  showProviderSetupCard,
   replayDecision,
   replayOpens,
   searchGuide,
@@ -588,6 +589,7 @@ export function FirstRunHost() {
   const { enabled, ready } = useReadyFlag();
   const progress = useOnboardingState();
   const { user } = useCurrentUserState();
+  const { session } = useSessionDesks();
   const chrome = useRoleChrome();
   const blocked = blocksAutoTour(chrome.role);
   const screenTourReady = useRef<boolean | null>(null);
@@ -660,7 +662,13 @@ export function FirstRunHost() {
     if (enabled !== true || !user?.id) return;
     if (place.checklist === CHECKLIST_PROVIDER) {
       void getProviderSetupFacts()
-        .then((facts) => setProviderFacts(providerSetup(facts)))
+        .then((facts) => {
+          if (!showProviderSetupCard(session?.centreRole, facts.hasCentre === true)) {
+            setProviderFacts(null);
+            return;
+          }
+          setProviderFacts(providerSetup(facts));
+        })
         .catch(() => setProviderFacts(null));
     }
     if (place.checklist === CHECKLIST_PARENT) {
@@ -668,7 +676,7 @@ export function FirstRunHost() {
         .then((facts) => setParentFacts(parentQuickStart(facts)))
         .catch(() => setParentFacts(null));
     }
-  }, [enabled, user?.id, place.checklist, pathname, searchStr]);
+  }, [enabled, user?.id, place.checklist, pathname, searchStr, session?.centreRole]);
 
   if (ready && enabled === true && screenTourReady.current === null) {
     const welcomeCanOpen =
@@ -766,7 +774,9 @@ function ChecklistPortal({ page, children }: { page: HTMLElement; children: Reac
   useIsoLayout(() => {
     const el = document.createElement("div");
     el.dataset.ke = "first-run-checklist-slot";
-    page.insertBefore(el, page.firstChild);
+    const reserve = page.querySelector<HTMLElement>("[data-ke=provider-setup-reserve]");
+    if (reserve) reserve.replaceChildren(el);
+    else page.insertBefore(el, page.firstChild);
     host.current = el;
     setNode(el);
     return () => {

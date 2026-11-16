@@ -149,6 +149,17 @@ export function stepCounter(locale: FirstRunLocale, index: number, total: number
   return locale === "fr" ? `Étape ${n} sur ${total}` : `Step ${n} of ${total}`;
 }
 
+/**
+ * The setup card is owner work. Staff and a daycare with no centre do not see it.
+ * A missing role waits, so the card does not flash in before the desk is known.
+ */
+export function showProviderSetupCard(role: string | null | undefined, hasCentre: boolean): boolean {
+  if (!hasCentre) return false;
+  if (role == null || role === "") return false;
+  if (role === "staff" || role === "read_only") return false;
+  return true;
+}
+
 export function readinessLabel(locale: FirstRunLocale, percent: number): string {
   const n = Math.max(0, Math.min(100, Math.round(percent)));
   return locale === "fr" ? `Votre centre est prêt à ${n} %` : `Your centre is ${n}% ready`;

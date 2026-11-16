@@ -36,7 +36,7 @@ export function ChildHealthLog() {
   }, []);
 
   return (
-    <section className="rounded-xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="child-health-log">
+    <section className="min-h-44 rounded-xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="child-health-log">
       <h2 className="font-display text-xl">{fr ? "Santé de l'enfant" : "Child health"}</h2>
       <p className="mt-2 text-sm">
         {fr

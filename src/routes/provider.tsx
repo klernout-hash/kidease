@@ -261,6 +261,7 @@ export function ProviderPage() {
   const canBills = centreOwner || (session?.centreGrants != null && session.centreGrants.bills !== "none");
   const canEditBills = centreOwner || session?.centreGrants?.bills === "edit";
   const canInviteStaff = centreOwner || session?.centreCanInvite === true;
+  const staffDesk = centreRole === "staff" || centreRole === "read_only";
   const canWrite = centreRole ? centreCanWriteLeads(centreRole) : centreOwner;
   const canContracts = centreRole ? centreCanAccessPrivileged(centreRole) : centreOwner;
   const canDocuments = centreRole ? centreCanMutateListingDetails(centreRole) : centreOwner;
@@ -546,17 +547,7 @@ export function ProviderPage() {
       {desk === "insights" ? <ProviderInsightsDesk /> : null}
       {desk === "top-rated" ? <TopRatedDesk on={topRated} /> : null}
       {deskSettled && deskListings.length === 0 && centreOwner && desk !== "insights" ? (
-        <ProviderOnboarding
-          onShowForm={() => {
-            setDesk("listings");
-            setCreateListingOpen(true);
-            queueMicrotask(() => {
-              const el = document.getElementById("list-new");
-              if (el instanceof HTMLDetailsElement) el.open = true;
-              el?.scrollIntoView({ behavior: "smooth", block: "start" });
-            });
-          }}
-        />
+        <ProviderOnboarding />
       ) : null}
       {desk !== "today" && search.claimed && listings[0] ? (
         <section className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20">
@@ -564,8 +555,8 @@ export function ProviderPage() {
           <p className="mt-2 text-sm text-muted">{t("claimSuccessLead")}</p>
         </section>
       ) : null}
-      {desk === "today" ? (
-        <Phase5Desk locale={locale === "fr" ? "fr" : "en"} role={centreOwner ? "owner" : "staff"} slug={deskListings[0]?.slug} actionsOnly />
+      {desk === "today" && deskListings.length > 0 ? (
+        <Phase5Desk locale={locale === "fr" ? "fr" : "en"} role={staffDesk ? "staff" : "owner"} slug={deskListings[0]?.slug} actionsOnly />
       ) : null}
       {focusedId ? (
         <p className="mb-4 text-sm">
@@ -575,10 +566,28 @@ export function ProviderPage() {
           </Link>
         </p>
       ) : null}
-      {desk === "today" && hostListing && deskListings.length > 0 ? (
+      {desk === "today" && deskListings.length > 0 && !staffDesk ? (
+        <div data-ke="provider-setup-reserve" className="mb-4 min-h-[28rem]" />
+      ) : null}
+      {desk === "today" && deskListings.length > 0 && staffDesk ? (
+        <div data-ke="staff-today">
+          <ChildCheckinDesk />
+          <p className="mt-4">
+            <Link
+              to="/provider"
+              search={{ desk: "hours" }}
+              data-ke="staff-hours-link"
+              className="inline-flex min-h-11 items-center font-medium text-primary"
+            >
+              {locale === "fr" ? "Vos heures" : "Your hours"}
+            </Link>
+          </p>
+        </div>
+      ) : null}
+      {desk === "today" && hostListing && deskListings.length > 0 && !staffDesk ? (
         <HostTodayHome listings={deskListings} stats={stats} onChanged={() => void load()} />
       ) : null}
-      {desk === "today" && !hostListing && deskListings.length > 0 ? (
+      {desk === "today" && !hostListing && deskListings.length > 0 && !staffDesk ? (
         <>
         <DaycareDeskHome
           listings={deskListings}
@@ -614,9 +623,9 @@ export function ProviderPage() {
         </>
       ) : null}
       {/* What needs doing first, then check-in, then records and settings folded under one heading. */}
-      {desk === "today" && centreOwner ? <FamilyInviteGap /> : null}
-      {desk === "today" ? <ChildCheckinDesk /> : null}
-      {desk === "today" ? (
+      {desk === "today" && centreOwner && !staffDesk && deskListings.length > 0 ? <FamilyInviteGap /> : null}
+      {desk === "today" && !staffDesk && deskListings.length > 0 ? <ChildCheckinDesk /> : null}
+      {desk === "today" && !staffDesk && deskListings.length > 0 ? (
         <TodayMore locale={locale === "fr" ? "fr" : "en"}>
           <AuditDeskLink locale={locale === "fr" ? "fr" : "en"} />
           <StoriesDeskLink />
@@ -1162,24 +1171,16 @@ export function ProviderPage() {
   );
 }
 
-function ProviderOnboarding({ onShowForm }: { onShowForm: () => void }) {
+function ProviderOnboarding() {
   const { t } = useCopy();
   return (
-    <section className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20">
+    <section className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20" data-ke="provider-claim-only">
       <h2 className="font-display text-2xl">{t("providerOnboardingTitle")}</h2>
       <p className="mt-2 text-sm text-muted">{t("providerOnboardingLead")}</p>
       <p className="mt-2 text-sm font-medium">{t("listingStayFree")}</p>
-      <ol className="mt-4 space-y-2 text-sm">
-        <li>{t("providerOnboardingStep1")}</li>
-        <li>{t("providerOnboardingStep2")}</li>
-        <li>{t("providerOnboardingStep3")}</li>
-      </ol>
-      <div className="mt-5 flex flex-wrap gap-3">
+      <div className="mt-5">
         <Button asChild>
           <Link to="/claim">{t("providerOnboardingClaim")}</Link>
-        </Button>
-        <Button type="button" variant="secondary" onClick={onShowForm}>
-          {t("providerOnboardingListNew")}
         </Button>
       </div>
     </section>
