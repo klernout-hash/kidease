@@ -24,6 +24,7 @@ public class MainActivity extends BridgeActivity {
     protected void load() {
         // Register before the bridge is created. Capacitor copies initial plugins in super.load().
         registerPlugin(PasskeyPlugin.class);
+        registerPlugin(SecureSessionPlugin.class);
         StorePlugins.register(this);
         super.load();
         MessageChannel.ensure(this);

@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { deleteChild } from "@/lib/server/family";
+import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 import { useCopy } from "@/lib/use-copy";
 
 export function DeleteChildControl({
@@ -12,6 +13,7 @@ export function DeleteChildControl({
   onDeleted: () => void;
 }) {
   const { t } = useCopy();
+  const reauth = useReauthPrompt();
   const titleId = useId();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -21,7 +23,7 @@ export function DeleteChildControl({
     if (busy) return;
     setBusy(true);
     try {
-      await deleteChild({ data: { id: child.id } });
+      await withReauth(() => deleteChild({ data: { id: child.id } }), reauth.prompt);
       toast.success(t("deleteChildSuccess"));
       setOpen(false);
       onDeleted();
@@ -34,6 +36,7 @@ export function DeleteChildControl({
 
   return (
     <>
+      {reauth.dialog}
       <Button
         type="button"
         size="sm"

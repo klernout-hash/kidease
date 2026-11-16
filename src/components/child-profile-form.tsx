@@ -9,6 +9,7 @@ import { childBirthdateMessage, childBirthdateProblem } from "@/lib/child-birthd
 import { fieldErrorClass, RequiredMark } from "@/components/required-field";
 import { focusFirstInvalid } from "@/lib/profile-form";
 import { addChild, updateChild } from "@/lib/server/family";
+import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 import { DeleteChildControl } from "@/components/delete-child-control";
 import { useCopy } from "@/lib/use-copy";
 import type { Child } from "@/lib/types";
@@ -27,6 +28,7 @@ export function ChildProfileForm({
   focus?: string | null;
 }) {
   const { t, locale } = useCopy();
+  const reauth = useReauthPrompt();
   const [draft, setDraft] = useState<Draft>(initial ?? emptyChild());
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -84,8 +86,10 @@ export function ChildProfileForm({
     try {
       const added = !draft.id;
       const payload = pickupOn ? { ...draft, pickupPeople: formatPickupContacts(contacts) } : draft;
-      if (draft.id) await updateChild({ data: { ...(payload as Child), id: draft.id } });
-      else await addChild({ data: payload });
+      await withReauth(async () => {
+        if (draft.id) await updateChild({ data: { ...(payload as Child), id: draft.id } });
+        else await addChild({ data: payload });
+      }, reauth.prompt);
       confirmAction(t, added ? "childAdded" : "childSaved");
       setSaved(true);
       onSaved();
@@ -98,6 +102,7 @@ export function ChildProfileForm({
 
   return (
     <form ref={formRef} onSubmit={submit} className="space-y-6 ph-no-capture">
+      {reauth.dialog}
       <p className="text-sm text-muted" data-ke="child-share-note">
         {french
           ? "Un centre voit ces détails seulement après une inscription ou un partage que vous confirmez. Vous pouvez effacer ce profil."

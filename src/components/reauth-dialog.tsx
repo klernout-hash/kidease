@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { PasswordField } from "@/components/password-field";
 import {
@@ -38,10 +38,14 @@ export function ReauthDialog({
   open,
   onClose,
   onVerified,
+  showBiometric = false,
+  onBiometric,
 }: {
   open: boolean;
   onClose: () => void;
   onVerified: () => void;
+  showBiometric?: boolean;
+  onBiometric?: () => Promise<boolean>;
 }) {
   const [mode, setMode] = useState<"password" | "otp">("password");
   const [password, setPassword] = useState("");
@@ -55,6 +59,21 @@ export function ReauthDialog({
   const { t, locale } = useCopy();
 
   if (!open) return null;
+
+  async function onBiometricClick() {
+    if (!onBiometric) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const ok = await onBiometric();
+      if (!ok) throw new Error("Use your password instead.");
+      onVerified();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not confirm.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function onPassword(e: React.FormEvent) {
     e.preventDefault();
@@ -143,6 +162,11 @@ export function ReauthDialog({
             <Button type="submit" className="w-full" disabled={busy || !password || (turnstileRequired && !token.trim())}>
               {busy ? t("reauthChecking") : t("reauthConfirmPassword")}
             </Button>
+            {showBiometric ? (
+              <Button type="button" variant="secondary" className="w-full min-h-11" disabled={busy} onClick={() => void onBiometricClick()}>
+                {t("reauthPhoneLock")}
+              </Button>
+            ) : null}
           </form>
         ) : (
           <form onSubmit={onOtp} className="mt-4 space-y-3 ph-no-capture">
@@ -200,7 +224,21 @@ export function ReauthDialog({
 
 export function useReauthPrompt() {
   const [open, setOpen] = useState(false);
+  const [showBiometric, setShowBiometric] = useState(false);
   const [waiter, setWaiter] = useState<{ resolve: (ok: boolean) => void } | null>(null);
+
+  useEffect(() => {
+    let cancel = false;
+    void import("@/lib/persistent-session-client")
+      .then((mod) => mod.biometricStepUpAvailable())
+      .then((ok) => {
+        if (!cancel) setShowBiometric(ok);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancel = true;
+    };
+  }, []);
 
   function prompt(): Promise<boolean> {
     return new Promise((resolve) => {
@@ -212,6 +250,11 @@ export function useReauthPrompt() {
   const dialog: ReactNode = (
     <ReauthDialog
       open={open}
+      showBiometric={showBiometric}
+      onBiometric={async () => {
+        const { confirmBiometricStepUp } = await import("@/lib/persistent-session-client");
+        return confirmBiometricStepUp();
+      }}
       onClose={() => {
         setOpen(false);
         waiter?.resolve(false);

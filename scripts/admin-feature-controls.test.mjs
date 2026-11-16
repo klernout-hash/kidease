@@ -19,15 +19,15 @@ import { FEATURE_FLAG_KEYS, FLAG_DEFAULTS } from "../src/lib/flags.ts";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("the registry is the 204 product flags and the 14 switches, not routes", () => {
+test("the registry is the 205 product flags and the 14 switches, not routes", () => {
   const flags = productFlagRows();
   const switches = switchRows();
-  assert.equal(flags.length, 204);
-  assert.equal(FEATURE_FLAG_KEYS.length, 204);
+  assert.equal(flags.length, 205);
+  assert.equal(FEATURE_FLAG_KEYS.length, 205);
   assert.equal(switches.length, 14);
   assert.equal(FEATURE_SWITCHES.length, 14);
-  assert.equal(featureControlRegistry().length, 218);
-  assert.equal(new Set(flags.map((row) => row.key)).size, 204);
+  assert.equal(featureControlRegistry().length, 219);
+  assert.equal(new Set(flags.map((row) => row.key)).size, 205);
   assert.equal(flags.every((row) => row.writable === false && row.control === "deployment-configuration-required"), true);
   assert.equal(switches.every((row) => row.writable === true && row.control === "posthog-rollout"), true);
   assert.equal(flags.filter((row) => row.category === "government").map((row) => row.key).sort().join(","), "FEATURE_GOV_PORTAL,FEATURE_GOV_SCOPES,FEATURE_PROVINCE_REPORTS");

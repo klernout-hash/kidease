@@ -32,6 +32,9 @@ export const SHARED_TWO_FACTOR_COOKIE = "__Secure-kidease.2fa";
 /** 30-day trusted device — survives sign-out. Not expired with the session. */
 export const TWO_FACTOR_DEVICE_COOKIE = "__Host-kidease.2fa.device";
 export const SHARED_TWO_FACTOR_DEVICE_COOKIE = "__Secure-kidease.2fa.device";
+/** Rotating refresh for a phone or a 30-day website sign-in. HttpOnly. */
+export const REFRESH_TOKEN_COOKIE = "__Host-kidease.refresh";
+export const SHARED_REFRESH_TOKEN_COOKIE = "__Secure-kidease.refresh";
 
 /** Registrable domain only — never `www.kidease.ca` (that would not share with apex). */
 export const KIDEASE_COOKIE_DOMAIN = "kidease.ca";
@@ -44,6 +47,7 @@ const SESSION_HOST_TO_SHARED: Record<string, string> = {
   [TWO_FACTOR_COOKIE]: SHARED_TWO_FACTOR_COOKIE,
   [REAUTH_COOKIE]: SHARED_REAUTH_COOKIE,
   [ADMIN_IDLE_COOKIE]: SHARED_ADMIN_IDLE_COOKIE,
+  [REFRESH_TOKEN_COOKIE]: SHARED_REFRESH_TOKEN_COOKIE,
 };
 
 const DEVICE_HOST_TO_SHARED: Record<string, string> = {

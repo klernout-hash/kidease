@@ -228,6 +228,7 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_PLAY_IN_APP_UPDATES` | Play flexible in-app update. Default off. No update check until this is on. |
 | `FEATURE_PLAY_APP_SHORTCUTS` | Play home-screen shortcuts for search, saved centres, and help. Default off. |
 | `FEATURE_PLAY_INTEGRITY` | Play Integrity. Default off. Needs the Play Console cloud project number. The token is not shown and not logged. |
+| `FEATURE_PERSISTENT_SESSIONS` | Phone stays signed in until Sign out. Website sign-in adds an unticked 30-day choice. Default off. Set to 1 on the server. Admin sign-in is unchanged. |
 | `FEATURE_MS_SHARE_TARGET` | Microsoft share sheet opens search. Default off. The static manifest is unchanged. |
 | `FEATURE_MS_PROTOCOL_HANDLERS` | `web+kidease` opens search. Default off. |
 | `FEATURE_MS_WIDGETS` | Microsoft search widget. Default off. No centre names or fees. |

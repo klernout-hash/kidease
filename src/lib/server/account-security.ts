@@ -46,13 +46,20 @@ export const changeAccountPassword = createServerFn({ method: "POST" })
       throw new Error("Choose a new password that is different from the current one.");
     }
     await setUserPasswordHash(context.userId, data.newPassword);
+    const { persistentSessionsEnabled, revokePlan } = await import("@/lib/persistent-session");
+    if (revokePlan("password_change", persistentSessionsEnabled(process.env)).allSessions) {
+      const { forgetUserSessions } = await import("./persistent-session.server");
+      await forgetUserSessions(context.userId, "password_change");
+      assertRecentReauth(context.userId);
+      return { ok: true as const, signedOut: true as const };
+    }
     const sql = await getSql();
     const token = (await import("@/lib/auth/server")).readSessionToken();
     if (token) {
       await sql`delete from "session" where "userId" = ${context.userId} and token <> ${token}`.catch(() => undefined);
     }
     assertRecentReauth(context.userId);
-    return { ok: true as const };
+    return { ok: true as const, signedOut: false as const };
   });
 
 export const changeAccountEmail = createServerFn({ method: "POST" })

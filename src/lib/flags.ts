@@ -221,6 +221,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_HUAWEI_IN_APP_REVIEW",
   "FEATURE_HUAWEI_APPGALLERY_LINK",
   "FEATURE_AMAZON_STORE_DEEP_LINK",
+  "FEATURE_PERSISTENT_SESSIONS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -633,6 +634,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_HUAWEI_APPGALLERY_LINK: false,
   /** Amazon package deep link when no https listing is set. Off. Does not send ADM. */
   FEATURE_AMAZON_STORE_DEEP_LINK: false,
+  /** Stay signed in on the phone, and a 30-day choice on the website. Off. */
+  FEATURE_PERSISTENT_SESSIONS: false,
 };
 
 /**
@@ -1493,6 +1496,12 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Amazon package link and amzn:// deep link when no https listing is set. Off. ADM stays on FEATURE_AMAZON_ADM.",
+  },
+  {
+    key: "FEATURE_PERSISTENT_SESSIONS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Stay signed in on the phone until Sign out, and a 30-day choice on the website. Off. Admin sign-in is unchanged.",
   },
 ];
 

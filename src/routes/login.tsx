@@ -58,7 +58,8 @@ import {
 } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { canContinueAdminSession } from "@/lib/server/reauth";
-import { isNative } from "@/lib/native";
+import { isNative, isStandalone } from "@/lib/native";
+import { showKeepMeSignedIn } from "@/lib/persistent-session";
 import { nativeAccountDest } from "@/lib/native-admin";
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { useCopy } from "@/lib/use-copy";
@@ -352,6 +353,8 @@ export function LoginScreen({
   const parentSignup = mode === "up" && !operator && role !== "provider";
   const askEmailOnly = emailFirst && emailStep === "email" && !operator;
   const restHidden = askEmailOnly;
+  const [persistentOn, setPersistentOn] = useState(false);
+  const [keepMe, setKeepMe] = useState(false);
   const [phone, setPhone] = useState("");
   const [smsConsent, setSmsConsent] = useState(false);
   const [error, setError] = useState<string | null>(() => oauthErrorText(search.error));
@@ -362,6 +365,28 @@ export function LoginScreen({
   const attempt = useRef(0);
   const [stalled, setStalled] = useState(false);
   const [passkeyOffer, setPasskeyOffer] = useState(false);
+
+  const appShell = isNative() || isStandalone() || storeChannel !== "web";
+  const showKeepMe = showKeepMeSignedIn({
+    flagOn: persistentOn,
+    operator,
+    adminLogin: urlOperator,
+    shell: appShell,
+    mode,
+  });
+
+  useEffect(() => {
+    let cancel = false;
+    void import("@/lib/persistent-session-client")
+      .then((mod) => mod.persistentSessionsOn())
+      .then((on) => {
+        if (!cancel) setPersistentOn(on);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancel = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (role === "parent" || role === "provider") rememberRole(role);
@@ -489,6 +514,10 @@ export function LoginScreen({
   async function finish(method: "email" | "session" = "email") {
     const session = await waitForSignedInSession(() => authClient.getSession());
     if (session?.data?.user) clearLocalSignedOut();
+    if (!operator && !urlOperator && persistentOn && (mode === "in" || appShell)) {
+      const { enrollAfterSignIn } = await import("@/lib/persistent-session-client");
+      await enrollAfterSignIn({ remember: appShell ? true : keepMe, shell: appShell }).catch(() => undefined);
+    }
     if (mode === "up" && (role === "parent" || role === "provider")) {
       await withTimeoutFallback(setRole({ data: role }), LOGIN_CONTINUE_MS, undefined);
     }
@@ -716,7 +745,12 @@ export function LoginScreen({
         confirmAction(t, "accountCreated");
       } else {
         const res = await withTimeout(
-          authClient.signIn.email({ email, password, fetchOptions: turnstileFetchOptions(challenge) }),
+          authClient.signIn.email({
+            email,
+            password,
+            ...(persistentOn && !operator && !urlOperator && !appShell ? { rememberMe: keepMe } : {}),
+            fetchOptions: turnstileFetchOptions(challenge),
+          }),
           LOGIN_POST_MS,
           "sign-in-timeout",
         );
@@ -748,6 +782,10 @@ export function LoginScreen({
     if (role === "parent" || role === "provider") rememberRole(role);
     if (parentSignup) stashParentSmsOptIn(phone, smsConsent);
     try {
+      if (!operator && !urlOperator && persistentOn) {
+        const { markPendingEnroll } = await import("@/lib/persistent-session-client");
+        markPendingEnroll({ remember: keepMe, shell: appShell });
+      }
       captureLoginFunnel({ step: "submitted", method: "social", native: isNative() });
       if (search.why && providerId.includes("google")) {
         capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("google_continue", { source: "login" }));
@@ -1000,6 +1038,20 @@ export function LoginScreen({
             {mode === "in" && reviewerSignIn ? null : (
               <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
             )}
+            {showKeepMe && !restHidden ? (
+              <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm touch-manipulation" data-ke="keep-signed-in">
+                <input
+                  type="checkbox"
+                  className="mt-1 size-4 accent-primary"
+                  checked={keepMe}
+                  onChange={(event) => setKeepMe(event.target.checked)}
+                />
+                <span>
+                  <span className="font-medium">{t("keepSignedIn")}</span>
+                  <span className="mt-0.5 block text-[13px] text-muted">{t("keepSignedInHint")}</span>
+                </span>
+              </label>
+            ) : null}
             {error ? <p className="text-sm text-danger" role="alert" data-ke="auth-error">{presentAuthCopy(locale, error)}</p> : null}
             {stalled || error ? (
               <div className="flex flex-wrap gap-3 text-sm" data-ke="login-recovery">

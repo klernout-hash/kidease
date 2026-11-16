@@ -38,7 +38,12 @@ export function AccountSecurity({ email }: { email: string }) {
     setBusy("password");
     setPasswordError(null);
     try {
-      await changeAccountPassword({ data: { currentPassword, newPassword } });
+      const changed = await changeAccountPassword({ data: { currentPassword, newPassword } });
+      if (changed.signedOut) {
+        const { signOut } = await import("@/lib/auth/client");
+        await signOut("/login");
+        return;
+      }
       setCurrentPassword("");
       setNewPassword("");
       setConfirm("");

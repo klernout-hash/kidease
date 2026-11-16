@@ -293,6 +293,8 @@ export const createConnectAccountSession = createServerFn({ method: "POST" })
     return id;
   })
   .handler(async ({ context, data: daycareId }) => {
+    const { assertPersistentStepUp } = await import("./persistent-session.server");
+    await assertPersistentStepUp(context.userId, "payout_bank");
     const sql = await getSql();
     const routed = await stripeCallFor(sql, context.userId, daycareId);
     if (!("secret" in routed)) return { ok: false as const, reason: routed.reason, clientSecret: null as string | null };

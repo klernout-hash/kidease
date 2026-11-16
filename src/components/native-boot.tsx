@@ -151,6 +151,16 @@ export function NativeBoot() {
     registerOfflineShell();
     void paintStatusBar();
     void hideNativeSplash();
+    const persistentMark = /(?:^|; )kidease-persistent=1(?:;|$)/.test(document.cookie);
+    let pendingEnroll = false;
+    try {
+      pendingEnroll = sessionStorage.getItem("ke-persistent-enroll") != null;
+    } catch {
+      pendingEnroll = false;
+    }
+    if (isNative() || isStandalone() || persistentMark || pendingEnroll) {
+      void import("@/lib/persistent-session-client").then((mod) => mod.bootPersistentSession());
+    }
     if (!isNative()) return;
     let stop = () => {};
     void import("@/lib/auth/native-oauth-client").then((mod) => {
