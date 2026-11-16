@@ -28,6 +28,7 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(AppleSignInPlugin())
         bridge?.registerPluginInstance(ApplePlatformPlugin())
         bridge?.registerPluginInstance(AuthSessionPlugin())
+        bridge?.registerPluginInstance(SecureSessionPlugin())
         bridge?.registerPluginInstance(CallKitVoipPlugin())
         bridge?.registerPluginInstance(AdminWebOnlyPlugin())
         if let controller = webView?.configuration.userContentController {

@@ -4,7 +4,8 @@ import { KidBlocks } from "@/components/kid-art";
 import { Button } from "@/components/ui/button";
 import type { EarningsResult } from "@/lib/earnings-desk";
 import { useCopy } from "@/lib/use-copy";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 import { createConnectAccountSession, listCentreIdsForPayouts } from "@/lib/server/connect-payments";
 import { loadConnectInstance } from "@/lib/stripe-browser";
 
@@ -53,6 +54,9 @@ function ConnectPayouts({
   centres: { id: string; name: string }[];
 }) {
   const { t } = useCopy();
+  const reauth = useReauthPrompt();
+  const promptRef = useRef(reauth.prompt);
+  promptRef.current = reauth.prompt;
   const [centres, setCentres] = useState(initialCentres);
   const [daycareId, setDaycareId] = useState(initialCentres[0]?.id ?? "");
   const [started, setStarted] = useState(false);
@@ -82,11 +86,13 @@ function ConnectPayouts({
     const node = document.getElementById("connect-payouts-mount");
     if (!node) return;
     let dead = false;
-    void loadConnectInstance(publishableKey, async () => {
-      const session = await createConnectAccountSession({ data: daycareId });
-      if (!session.ok || !session.clientSecret) throw new Error("missing");
-      return session.clientSecret;
-    })
+    void loadConnectInstance(publishableKey, async () =>
+      withReauth(async () => {
+        const session = await createConnectAccountSession({ data: daycareId });
+        if (!session.ok || !session.clientSecret) throw new Error("missing");
+        return session.clientSecret;
+      }, () => promptRef.current()),
+    )
       .then((instance) => {
         if (!instance || dead) return;
         node.replaceChildren(instance.create("account-onboarding"), instance.create("payouts"));
@@ -102,6 +108,7 @@ function ConnectPayouts({
   if (!enabled) return null;
   return (
     <section className="mt-6 rounded-[1.25rem] bg-surface p-5 ring-1 ring-border" data-ke="connect-payouts">
+      {reauth.dialog}
       <h2 className="font-display text-xl">{t("connectPayouts")}</h2>
       <p className="mt-2 text-sm leading-6 text-muted">{t("connectEmbedded")}</p>
       {blockedLive ? <p className="mt-3 text-sm">{t("walletTestOnly")}</p> : null}

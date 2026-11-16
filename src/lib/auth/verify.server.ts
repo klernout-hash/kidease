@@ -87,10 +87,18 @@ export async function getVerifiedAuthSession(
   );
   if (!session?.user) return null;
   const rawToken = typeof session.session?.token === "string" ? session.session.token : null;
+  const token = unsignedSessionToken(rawToken);
+  const persistentFlag = String(process.env.FEATURE_PERSISTENT_SESSIONS || "")
+    .trim()
+    .toLowerCase();
+  if (persistentFlag === "1" || persistentFlag === "true" || persistentFlag === "on" || persistentFlag === "yes") {
+    const { enforcePersistentSession } = await import("@/lib/server/persistent-session.server");
+    if (!(await enforcePersistentSession(token))) return null;
+  }
   return {
     id: session.user.id,
     email: session.user.email ?? null,
-    token: unsignedSessionToken(rawToken),
+    token,
     createdAtMs: parseTimestampMs(session.session?.createdAt),
   };
 }

@@ -9,7 +9,8 @@ import { useCopy } from "@/lib/use-copy";
 export function SignedInDevices() {
   const { t, locale } = useCopy();
   const [devices, setDevices] = useState<SignedInDevice[] | null>(null);
-  const [busy, setBusy] = useState<"this" | "others" | null>(null);
+  const [persistent, setPersistent] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
 
@@ -20,7 +21,60 @@ export function SignedInDevices() {
 
   useEffect(() => {
     void refresh().catch(() => setLoadFailed(true));
+    void import("@/lib/persistent-session-client")
+      .then((mod) => mod.persistentSessionsOn())
+      .then(setPersistent)
+      .catch(() => setPersistent(false));
   }, []);
+
+  async function dropThisPhone() {
+    const { releasePushOnSignOut } = await import("@/lib/push-client");
+    await releasePushOnSignOut().catch(() => undefined);
+  }
+
+  async function revokeOne(row: SignedInDevice) {
+    if (!window.confirm(t("devicesSignOutOneConfirm"))) return;
+    setBusy(row.id);
+    setError(null);
+    try {
+      if (row.current) await dropThisPhone();
+      const res = await revokeSignedInDevice({ data: { id: row.id } });
+      if (res.signedOut) {
+        const { endPersistentSession } = await import("@/lib/persistent-session-client");
+        await endPersistentSession().catch(() => undefined);
+        toast.success(t("devicesSignedOutOne"));
+        await signOut("/login");
+        return;
+      }
+      toast.success(t("devicesSignedOutOne"));
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("devicesRevokeFailed"));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function revokeEverywhere() {
+    if (!window.confirm(t("devicesSignOutEverywhereConfirm"))) return;
+    setBusy("everywhere");
+    setError(null);
+    try {
+      await dropThisPhone();
+      const res = await revokeSignedInDevice({ data: { everywhere: true } });
+      if (res.signedOut) {
+        const { endPersistentSession } = await import("@/lib/persistent-session-client");
+        await endPersistentSession().catch(() => undefined);
+        toast.success(t("devicesSignedOutEverywhere"));
+        await signOut("/login");
+        return;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("devicesRevokeFailed"));
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function revoke(scope: "this" | "others") {
     if (scope === "this" && !window.confirm(t("devicesRevokeThisConfirm"))) return;
@@ -62,11 +116,29 @@ export function SignedInDevices() {
               {t("devicesLastSeen").replace("{when}", formatDeviceTime(row.lastSeen, locale) || t("devicesUnknownTime"))}
               {row.ip ? ` · ${row.ip}` : ""}
             </p>
+            {persistent ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="mt-2 min-h-11"
+                disabled={busy !== null}
+                onClick={() => void revokeOne(row)}
+              >
+                {busy === row.id ? t("devicesRevoking") : t("devicesSignOutOne")}
+              </Button>
+            ) : null}
           </li>
         ))}
         {devices && devices.length === 0 ? <li className="text-sm text-muted">{t("devicesEmpty")}</li> : null}
         {devices === null && !error ? <li className="text-sm text-muted">{t("devicesLoading")}</li> : null}
       </ul>
+      {persistent ? (
+        <div className="mt-4">
+          <Button type="button" variant="secondary" className="min-h-11 w-full" disabled={busy !== null} onClick={() => void revokeEverywhere()}>
+            {busy === "everywhere" ? t("devicesRevoking") : t("devicesSignOutEverywhere")}
+          </Button>
+        </div>
+      ) : persistent === false ? (
       <div className="mt-4 flex flex-col gap-2">
         <Button type="button" variant="secondary" disabled={busy !== null} onClick={() => void revoke("this")}>
           {busy === "this" ? t("devicesRevoking") : t("devicesRevokeThis")}
@@ -75,6 +147,7 @@ export function SignedInDevices() {
           {busy === "others" ? t("devicesRevoking") : t("devicesRevokeOthers")}
         </Button>
       </div>
+      ) : null}
     </section>
   );
 }

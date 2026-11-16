@@ -89,6 +89,7 @@ import { EMAIL_STATUS_MAX, EMAIL_STATUS_WINDOW_S, emailStatusPlugin } from "./em
 import { AUTH_FORGOT_MAX, AUTH_LOGIN_MAX, AUTH_SIGNUP_MAX } from "@/lib/auth-rate-limit";
 import { passkeyPlugin } from "./passkey-plugin";
 import { PASSKEY_RATE_MAX } from "@/lib/passkey-policy";
+import { persistentSessionsEnabled, WEB_REMEMBER_SEC } from "@/lib/persistent-session";
 
 // Kick (and share) PGLite bootstrap as soon as the auth server module loads.
 void ensureDbReady();
@@ -331,6 +332,11 @@ const storeOAuthConfigs = [huaweiOAuth, amazonOAuth].filter((row) => row != null
 const storeOAuthPlugin = storeOAuthConfigs.length > 0 ? genericOAuth({ config: storeOAuthConfigs }) : null;
 
 const betterAuthSecret = env("BETTER_AUTH_SECRET");
+
+/** Same secret Better Auth uses to sign the session cookie. */
+export function authSigningSecret(): string {
+  return betterAuthSecret ?? previewAuthSecret();
+}
 if (process.env.VERCEL && !betterAuthSecret) {
   console.error(
     "[auth] Production must set BETTER_AUTH_SECRET (Vercel server env). " +
@@ -433,7 +439,9 @@ export const auth = betterAuth({
   // limit (494 REQUEST_HEADER_TOO_LARGE) in Safari.
   session: {
     cookieCache: { enabled: false },
-    expiresIn: 60 * 60 * 24 * 7,
+    // Flag off: 7 days, same as before. Flag on: 30 days so "Keep me signed in"
+    // matches the cookie Better Auth rewrites. Admin idle stays 30 minutes.
+    expiresIn: persistentSessionsEnabled(process.env) ? WEB_REMEMBER_SEC : 60 * 60 * 24 * 7,
     updateAge: 60 * 10,
   },
 

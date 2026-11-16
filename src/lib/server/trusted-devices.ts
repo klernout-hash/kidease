@@ -186,10 +186,38 @@ export const listSignedInDevices = createServerFn({ method: "GET" })
 
 export const revokeSignedInDevice = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { scope: "this" | "others" }) => ({
-    scope: input?.scope === "others" ? ("others" as const) : ("this" as const),
-  }))
+  .validator((input: { scope?: "this" | "others"; id?: string; everywhere?: boolean }) => {
+    if (input?.everywhere === true) return { everywhere: true as const };
+    const id = String(input?.id || "");
+    if (id.startsWith("session:") || id.startsWith("trusted:")) return { id };
+    return { scope: input?.scope === "others" ? ("others" as const) : ("this" as const) };
+  })
   .handler(async ({ context, data }) => {
+    if ("everywhere" in data || "id" in data) {
+      const { persistentSessionsEnabled } = await import("@/lib/persistent-session");
+      if (!persistentSessionsEnabled(process.env)) throw new Error("That choice is not on yet.");
+      const { revokePersistentDevice } = await import("./persistent-session.server");
+      if ("everywhere" in data) {
+        const res = await revokePersistentDevice({ userId: context.userId, everywhere: true });
+        return { ok: true as const, signedOut: res.signedOut };
+      }
+      const deviceKey = data.id || "";
+      if (!deviceKey) throw new Error("That device is not on this account.");
+      if (deviceKey.startsWith("trusted:")) {
+        const deviceId = deviceKey.slice("trusted:".length);
+        const sql = await getSql();
+        await sql`
+          update trusted_devices set revoked_at = now()
+          where user_id = ${context.userId} and device_id = ${deviceId} and revoked_at is null
+        `;
+        return { ok: true as const, signedOut: false as const };
+      }
+      const res = await revokePersistentDevice({
+        userId: context.userId,
+        sessionId: deviceKey.slice("session:".length),
+      });
+      return { ok: true as const, signedOut: res.signedOut };
+    }
     await ensureTrustedDeviceTables();
     const sql = await getSql();
     const { readSessionToken } = await import("@/lib/auth/server");

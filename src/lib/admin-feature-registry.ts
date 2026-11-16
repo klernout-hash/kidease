@@ -210,6 +210,7 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_HUAWEI_IN_APP_REVIEW: "shared",
   FEATURE_HUAWEI_APPGALLERY_LINK: "shared",
   FEATURE_AMAZON_STORE_DEEP_LINK: "shared",
+  FEATURE_PERSISTENT_SESSIONS: "shared",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
@@ -280,6 +281,7 @@ const SENSITIVE = new Set<string>([
   "FEATURE_LOGIN_AMAZON",
   "FEATURE_FR_AUTH_QC",
   "FEATURE_RANKING_V2",
+  "FEATURE_PERSISTENT_SESSIONS",
   "spot-alerts",
   "ranking-best-match",
 ]);

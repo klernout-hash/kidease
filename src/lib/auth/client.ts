@@ -357,6 +357,12 @@ async function releaseThisPhone(): Promise<void> {
   } catch {
     /* sign-out still proceeds */
   }
+  try {
+    const { endPersistentSession } = await import("@/lib/persistent-session-client");
+    await endPersistentSession();
+  } catch {
+    /* keychain clear is best-effort */
+  }
 }
 
 export async function dropExistingSession(): Promise<void> {

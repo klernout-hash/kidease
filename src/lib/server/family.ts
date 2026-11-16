@@ -473,6 +473,12 @@ export const updateChild = createServerFn({ method: "POST" })
     if (!f.name || !f.birthdate) throw new Error("Name and birthdate are required");
     const birthProblem = childBirthdateProblem(f.birthdate);
     if (birthProblem) throw new Error(childBirthdateMessage(birthProblem));
+    const beforePickup = (previous[0]?.pickup_people || "").trim();
+    const afterPickup = (f.pickupPeople || "").trim();
+    if (beforePickup !== afterPickup) {
+      const { assertPersistentStepUp } = await import("./persistent-session.server");
+      await assertPersistentStepUp(context.userId, "pickup_people");
+    }
     const rows = await sql<{ id: string }>`
       update children set
         name = ${f.name},
@@ -508,9 +514,7 @@ export const updateChild = createServerFn({ method: "POST" })
     `;
     if (!rows[0]) throw new Error("Child not found");
     await logChildProfileAccess(sql, { childId: rows[0].id, actorId: context.userId, action: "write" });
-    const before = (previous[0]?.pickup_people || "").trim();
-    const after = (f.pickupPeople || "").trim();
-    if (before !== after) {
+    if (beforePickup !== afterPickup) {
       const { notifyPickupChange } = await import("@/lib/server/coparent-email");
       await notifyPickupChange(sql, home.dataUserId, context.userId, rows[0].id).catch(() => undefined);
     }
@@ -523,6 +527,8 @@ export const deleteChild = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const id = String(data.id || "").trim();
     if (!id) throw new Error("Child not found");
+    const { assertPersistentStepUp } = await import("./persistent-session.server");
+    await assertPersistentStepUp(context.userId, "child_delete");
     const home = await familyWrite(context.userId);
     const sql = await getSql();
     await sql`
@@ -2007,6 +2013,7 @@ export async function purgeAccountData(uid: string): Promise<boolean> {
   await purgeFamilyDocuments(uid);
   await sql`delete from profiles where user_id = ${uid}`;
   await sql`delete from "session" where "userId" = ${uid}`;
+  await sql`update device_sessions set revoked_at = now(), revoke_reason = 'account_delete' where user_id = ${uid}`.catch(() => undefined);
   await sql`delete from "account" where "userId" = ${uid}`;
   await sql`delete from "user" where "id" = ${uid}`;
   return true;
@@ -2051,6 +2058,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
       on conflict (user_id) do update set deleted_at = now()
     `;
     await sql`delete from "session" where "userId" = ${uid}`;
+    await sql`update device_sessions set revoked_at = now(), revoke_reason = 'account_delete' where user_id = ${uid}`.catch(() => undefined);
     const { ACCOUNT_RESTORE_DAYS } = await import("@/lib/account-delete");
     return { ok: true as const, restoreDays: ACCOUNT_RESTORE_DAYS };
   });

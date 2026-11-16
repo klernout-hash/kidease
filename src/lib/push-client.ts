@@ -101,6 +101,59 @@ async function rememberPushToken(token: string): Promise<void> {
   }
 }
 
+/**
+ * Send the saved token again on app open and when the system rotates it.
+ * Does not ask for permission and does not delete the token.
+ */
+export async function reregisterStoredPush(): Promise<string | null> {
+  if (typeof window === "undefined" || !isNative()) return null;
+  let token = "";
+  try {
+    const { Preferences } = await import("@capacitor/preferences");
+    const saved = await Preferences.get({ key: PUSH_TOKEN_KEY });
+    token = String(saved.value || "").trim();
+  } catch {
+    token = "";
+  }
+  const platform = nativePlatform();
+  if (platform !== "ios" && platform !== "android") return null;
+  const amazon = amazonBuildOnAmazonDevice({ userAgent: navigator.userAgent });
+  const provider = amazon ? "adm" : platform === "ios" ? "apns" : "fcm";
+  if (token && (amazon || !googleServicesHidden(readClientStoreChannel()))) {
+    try {
+      const { registerPushToken } = await import("@/lib/server/push-api");
+      await registerPushToken({
+        data: { token, platform, provider, locale: currentPushLocale() },
+      });
+    } catch {
+      /* the saved token stays on this phone */
+    }
+  }
+  if (amazon || googleServicesHidden(readClientStoreChannel())) return token || null;
+  try {
+    const { PushNotifications } = await import("@capacitor/push-notifications");
+    const current = await PushNotifications.checkPermissions();
+    if (current.receive !== "granted") return token || null;
+    if (!registrationListening) {
+      registrationListening = true;
+      await PushNotifications.addListener("registration", (event) => {
+        const next = String(event?.value || "").trim();
+        if (!next) return;
+        void rememberPushToken(next);
+        void import("@/lib/server/push-api").then(({ registerPushToken }) =>
+          registerPushToken({
+            data: { token: next, platform, provider, locale: currentPushLocale() },
+          }),
+        );
+      });
+    }
+    await PushNotifications.register();
+  } catch {
+    /* this binary has no push plugin yet */
+  }
+  return token || null;
+}
+
 /** Drop this phone's token while the session still exists. Other phones stay. */
 export async function releasePushOnSignOut(): Promise<void> {
   if (typeof window === "undefined") return;
