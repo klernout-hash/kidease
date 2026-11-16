@@ -227,3 +227,15 @@ test("flags wrap the live surfaces and do not send", () => {
   const voice = src("src/lib/server/voice.ts");
   assert.doesNotMatch(voice, /FEATURE_VOICE/);
 });
+
+test("a daycare with no centre keeps the claim step and hides the rest of the desk", () => {
+  const ids = visibleDeskNav("daycare", { centreOwner: true, centreLinked: false }).map((item) => item.id);
+  assert.deepEqual(ids.filter((id) => id === "claim" || id === "today").sort(), ["claim", "today"]);
+  for (const hidden of ["messages", "listings", "requests", "money", "employees", "licence", "add"]) {
+    assert.equal(ids.includes(hidden), false, hidden);
+  }
+  assert.equal(ids.includes("profile"), true);
+  const linked = visibleDeskNav("daycare", { centreOwner: true, centreLinked: true }).map((item) => item.id);
+  assert.equal(linked.includes("messages"), true);
+  assert.equal(linked.includes("listings"), true);
+});
