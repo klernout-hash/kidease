@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, Download, Laptop, MapPinned, ShieldCheck, Smartphone, Wallet } from "lucide-react";
 import { useEffect, useId, useState, type ReactNode } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { BrandMark } from "@/components/brand-mark";
 import { FeelBanner } from "@/components/building-photo";
@@ -16,6 +17,7 @@ import {
 } from "@/lib/native";
 import { STORE } from "@/lib/store-listing";
 import { AMAZON_APPSTORE_URL } from "@/lib/amazon-appstore";
+import { huaweiGalleryUrl } from "@/lib/huawei/platform";
 import { featPayBodyKey } from "@/lib/copy-keys";
 import { useRoleChrome } from "@/components/role-chrome";
 import { localePath } from "@/lib/locale-path";
@@ -60,6 +62,10 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
   const plansOn = useRoleChrome().subscriptionsEnabled === true;
   const storeChannel = useStoreChannel();
   const showStores = showStoreComingSoon(storeChannel);
+  const huaweiGallery = useRouterState({
+    select: (state) => state.matches.some((match) => (match.context as { huaweiGallery?: boolean }).huaweiGallery === true),
+  });
+  const huaweiHref = huaweiGalleryUrl(huaweiGallery);
   const amazonUrl = AMAZON_APPSTORE_URL();
   const showDev = dev === "1";
   const [canPrompt, setCanPrompt] = useState(false);
@@ -98,7 +104,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
             <AppStoreStatus />
             {showStores && amazonUrl ? (
               <div data-ke="store-coming-soon">
-                <StoreBadges />
+                <StoreBadges huaweiHref={huaweiHref} />
               </div>
             ) : null}
             <div className="mt-6 flex flex-wrap items-center gap-3 max-[430px]:pr-[4.75rem]">
@@ -130,7 +136,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
             </div>
             {showStores && !amazonUrl ? (
               <div data-ke="store-coming-soon">
-                <StoreBadges />
+                <StoreBadges huaweiHref={huaweiHref} />
               </div>
             ) : null}
             {!showStores ? (

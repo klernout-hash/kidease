@@ -61,6 +61,12 @@ export function NativeBoot() {
   const msBadging = useRouterState({
     select: (s) => s.matches.some((match) => (match.context as { msBadging?: boolean }).msBadging === true),
   });
+  const huaweiAppLinking = useRouterState({
+    select: (s) => s.matches.some((match) => (match.context as { huaweiAppLinking?: boolean }).huaweiAppLinking === true),
+  });
+  const huaweiAlertPush = useRouterState({
+    select: (s) => s.matches.some((match) => (match.context as { huaweiAlertPush?: boolean }).huaweiAlertPush === true),
+  });
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);
   const setAnchorMode = useAppStore((s) => s.setAnchorMode);
@@ -209,6 +215,28 @@ export function NativeBoot() {
     if (msBadging !== true) return;
     void import("@/lib/microsoft/platform-client").then((mod) => mod.applyMicrosoftBadge(true, null, navigator));
   }, [msBadging]);
+
+  useEffect(() => {
+    if (huaweiAppLinking !== true && huaweiAlertPush !== true) return;
+    let remove = () => {};
+    if (huaweiAlertPush === true) {
+      void import("@/lib/huawei/platform-client").then((mod) => mod.registerHuaweiAlertPush(true));
+    }
+    if (huaweiAppLinking !== true) return () => remove();
+    void import("@capacitor/app").then(({ App }) =>
+      App.addListener("appUrlOpen", (event) => {
+        void import("@/lib/huawei/platform").then(({ huaweiAppLinkPath }) => {
+          const path = huaweiAppLinkPath(true, event.url);
+          if (path) window.location.assign(path);
+        });
+      }).then((handle) => {
+        remove = () => {
+          void handle.remove();
+        };
+      }),
+    );
+    return () => remove();
+  }, [huaweiAppLinking, huaweiAlertPush]);
 
   useLayoutEffect(() => {
     const stop = startChannelListener();

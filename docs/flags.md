@@ -236,6 +236,10 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_MS_STORE_LINK` | Microsoft Store link. Default off. Needs `MICROSOFT_STORE_PRODUCT_ID`. No id is invented. |
 | `FEATURE_SAMSUNG_STORE_LINK` | Galaxy Store https link and `samsungapps://` deep link. Default off. Does not say the listing is available. |
 | `FEATURE_SAMSUNG_PUSH_FALLBACK` | On a Galaxy Store phone with no Play services, skip FCM. Default off. No new push vendor and no message is sent. |
+| `FEATURE_HUAWEI_ALERT_PUSH` | Read an HMS token on the AppGallery build. Default off. The token is not uploaded and nothing is sent. |
+| `FEATURE_HUAWEI_APP_LINKING` | AppGallery and kidease.ca links open an in-app path. Default off. |
+| `FEATURE_HUAWEI_IN_APP_REVIEW` | AppGallery review page. Default off. Play in-app review stays blocked on Huawei. |
+| `FEATURE_HUAWEI_APPGALLERY_LINK` | Listing link on Get the app. Default off. The URL is the public AppGallery page. |
 | `BRANDED_EMAILS` | Env only, not a PostHog flag. Default off. When `1`, notification email uses the KidEase layout (logo, button, plain-text part, one-click unsubscribe). Unset keeps today's bodies. Do not turn on until `send.kidease.ca` mail DNS is confirmed. |
 
 ## What is wired

@@ -78,7 +78,7 @@ function onAmazonClick(event: MouseEvent<HTMLAnchorElement>) {
   if (openAmazonListing(web, ua)) event.preventDefault();
 }
 
-export function StoreBadges() {
+export function StoreBadges({ huaweiHref = null }: { huaweiHref?: string | null }) {
   const { t, locale } = useCopy();
   const lang = locale as ShippedLocale;
   const amazonUrl = AMAZON_APPSTORE_URL();
@@ -134,7 +134,7 @@ export function StoreBadges() {
         </li>
         {TILES.filter((store) => store !== "amazon").map((store) => {
           const configured = APP_STORES.find((row) => row.id === store);
-          const href = configured?.live ? configured.url : null;
+          const href = store === "huawei" && huaweiHref ? huaweiHref : configured?.live ? configured.url : null;
           return (
             <li key={store} className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border" aria-disabled={href ? undefined : "true"}>
               {href ? (

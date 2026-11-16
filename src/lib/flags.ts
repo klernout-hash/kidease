@@ -216,6 +216,10 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_MS_STORE_LINK",
   "FEATURE_SAMSUNG_STORE_LINK",
   "FEATURE_SAMSUNG_PUSH_FALLBACK",
+  "FEATURE_HUAWEI_ALERT_PUSH",
+  "FEATURE_HUAWEI_APP_LINKING",
+  "FEATURE_HUAWEI_IN_APP_REVIEW",
+  "FEATURE_HUAWEI_APPGALLERY_LINK",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -618,6 +622,14 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_SAMSUNG_STORE_LINK: false,
   /** Skip FCM on a Galaxy Store phone with no Play services. Off. FCM stays when this is off. */
   FEATURE_SAMSUNG_PUSH_FALLBACK: false,
+  /** HMS alert token read. Off. The token is not uploaded and nothing is sent. */
+  FEATURE_HUAWEI_ALERT_PUSH: false,
+  /** AppGallery app linking into KidEase paths. Off. */
+  FEATURE_HUAWEI_APP_LINKING: false,
+  /** AppGallery review page. Off. Play in-app review stays blocked on Huawei. */
+  FEATURE_HUAWEI_IN_APP_REVIEW: false,
+  /** AppGallery listing link on Get the app. Off. */
+  FEATURE_HUAWEI_APPGALLERY_LINK: false,
 };
 
 /**
@@ -1469,6 +1481,10 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_MS_STORE_LINK", defaultOn: false, docs: "docs/flags.md", summary: "Microsoft Store link. Off until a real product id is set." },
   { key: "FEATURE_SAMSUNG_STORE_LINK", defaultOn: false, docs: "docs/flags.md", summary: "Galaxy Store deep link. Off. Does not say the listing is available." },
   { key: "FEATURE_SAMSUNG_PUSH_FALLBACK", defaultOn: false, docs: "docs/flags.md", summary: "Skip FCM when a Galaxy Store phone has no Play services. Off. No new push vendor." },
+  { key: "FEATURE_HUAWEI_ALERT_PUSH", defaultOn: false, docs: "docs/flags.md", summary: "HMS alert token read. Off. The token is not uploaded and nothing is sent." },
+  { key: "FEATURE_HUAWEI_APP_LINKING", defaultOn: false, docs: "docs/flags.md", summary: "AppGallery and kidease.ca links open an in-app path. Off." },
+  { key: "FEATURE_HUAWEI_IN_APP_REVIEW", defaultOn: false, docs: "docs/flags.md", summary: "AppGallery review page. Off. Play review stays blocked." },
+  { key: "FEATURE_HUAWEI_APPGALLERY_LINK", defaultOn: false, docs: "docs/flags.md", summary: "AppGallery listing on Get the app. Off until this is on." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;
