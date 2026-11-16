@@ -462,10 +462,15 @@ export function planApproval(
   suppressClaimIds: string[];
   suppressDaycareIds: string[];
   next: ApprovalCentre | null;
+  /** Screening or trust was not required because this row is a QA fixture. */
+  qaGateBypass: boolean;
 } {
   const number = officialLicenceNumber(centre.licenseNumber, centreId(centre));
   const licenceOk = hasApprovalLicence(centre);
-  const screeningOk = hasApprovalScreening(centre);
+  const qaFixture = isAdminOnlyListing(centre);
+  const screeningRecorded = hasApprovalScreening(centre);
+  const screeningBypass = qaFixture && !screeningRecorded;
+  const screeningOk = screeningRecorded || screeningBypass;
   const chosen = selectCanonicalClaim(claims);
   const point = verifiedSearchPoint(centre);
   const next: ApprovalCentre = {
@@ -483,7 +488,6 @@ export function planApproval(
   };
   const city = geocode((centre.city || "").trim());
   const origin = city ?? (point.eligible ? point : null);
-  const qaFixture = isAdminOnlyListing(centre);
   const searchOk = Boolean(
     origin &&
       liveSearchHit({
@@ -493,7 +497,10 @@ export function planApproval(
         centre: next,
       }),
   );
-  const trustOk = publicApprovalEligible(next);
+  const trustRecorded = publicApprovalEligible(next);
+  const trustBypass = qaFixture && !trustRecorded;
+  const trustOk = trustRecorded || trustBypass;
+  const qaGateBypass = screeningBypass || trustBypass;
   const blockers: ApprovalCheck[] = [
     {
       id: "licence",
@@ -503,7 +510,11 @@ export function planApproval(
     {
       id: "screening",
       ok: screeningOk,
-      detail: screeningOk ? "Screening requirement met" : "Screening is not attested",
+      detail: screeningBypass
+        ? "QA fixture: screening attestation was not required. A missing storefront photo does not block this approval. This centre stays off public search."
+        : screeningOk
+          ? "Screening requirement met"
+          : "Screening is not attested",
     },
     {
       id: "canonical_claim",
@@ -524,7 +535,11 @@ export function planApproval(
     {
       id: "trust",
       ok: trustOk,
-      detail: trustOk ? "Public trust fields match" : "Trust fields are not eligible",
+      detail: trustBypass
+        ? "QA fixture: trust eligibility was not required. This centre stays off public search."
+        : trustOk
+          ? "Public trust fields match"
+          : "Trust fields are not eligible",
     },
   ];
   const suppressDaycareIds = duplicateDaycareIds(centre, duplicates);
@@ -536,6 +551,7 @@ export function planApproval(
       suppressClaimIds: [],
       suppressDaycareIds: [],
       next: null,
+      qaGateBypass: false,
     };
   }
   const checks: ApprovalCheck[] = [
@@ -558,6 +574,7 @@ export function planApproval(
     suppressClaimIds: chosen.suppressIds,
     suppressDaycareIds,
     next,
+    qaGateBypass,
   };
 }
 
