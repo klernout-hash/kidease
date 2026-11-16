@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import {
   centreUsesTestStripe,
   payerUsesTestStripe,
   paymentStripeMode,
+  qaLiveChargeBlocked,
   stripeCredentialsForMode,
 } from "../src/lib/stripe-route.ts";
 
@@ -73,4 +75,15 @@ test("QA routing refuses the live secret when the test keys are missing", () => 
     STRIPE_PUBLISHABLE_KEY: "pk_live_real",
   });
   assert.deepEqual(keys, { ok: false, mode: "test", reason: "missing_test_key" });
+});
+
+test("an is_test centre or QA account can never be handed a live secret", () => {
+  assert.equal(qaLiveChargeBlocked("sk_live_real", true), true);
+  assert.equal(qaLiveChargeBlocked("sk_test_qa", true), false);
+  assert.equal(qaLiveChargeBlocked("sk_live_real", false), false);
+  const billing = readFileSync(new URL("../src/lib/server/billing.ts", import.meta.url), "utf8");
+  const checkout = readFileSync(new URL("../src/lib/server/stripe-checkout.ts", import.meta.url), "utf8");
+  assert.match(billing, /if \(qa && !qaSecret\) throw new Error\("missing_test_key"\)/);
+  assert.match(billing, /secret: qaSecret/);
+  assert.match(checkout, /QA charges cannot use live Stripe/);
 });
