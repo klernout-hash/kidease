@@ -209,6 +209,7 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_HUAWEI_APP_LINKING: "shared",
   FEATURE_HUAWEI_IN_APP_REVIEW: "shared",
   FEATURE_HUAWEI_APPGALLERY_LINK: "shared",
+  FEATURE_AMAZON_STORE_DEEP_LINK: "shared",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {

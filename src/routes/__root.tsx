@@ -180,6 +180,7 @@ export const Route = createRootRoute({
       ...(storeRead.huaweiAppLinking ? { huaweiAppLinking: true as const } : {}),
       ...(storeRead.huaweiReview ? { huaweiReview: true as const } : {}),
       ...(storeRead.huaweiGallery ? { huaweiGallery: true as const } : {}),
+      ...(storeRead.amazonDeepLink ? { amazonDeepLink: true as const } : {}),
     };
   },
   errorComponent: (props) => {
