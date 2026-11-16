@@ -21,6 +21,7 @@ export const MENU_LEAF_PATHS = [
   "/claim",
   "/jobs",
   "/jobs/post",
+  "/blog",
   "/help",
   "/faq",
   "/privacy",
