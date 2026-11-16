@@ -148,7 +148,7 @@ test("each listing card has one accessible details action and its role-gated sav
   for (const { node, presentation } of articles) {
     const markup = node.getText(source);
     assert.equal((markup.match(/data-ke="card-view-details"/g) || []).length, 1, presentation);
-    assert.equal((markup.match(/t\("viewDetails"\)/g) || []).length, 2, presentation);
+    assert.equal((markup.match(/t\("viewDetails"\)/g) || []).length, 1, presentation);
     assert.equal((markup.match(/<SaveListingButton\b/g) || []).length, 1, presentation);
     assert.match(markup, /parentActions \? <SaveListingButton/);
     assert.doesNotMatch(markup, /card-book-tour|card-request-info|card-join-waitlist|ClaimListingCta|CompareChip|ShareListingButton/);

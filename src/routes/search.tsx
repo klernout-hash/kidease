@@ -2378,7 +2378,7 @@ export function SearchScreen({
               ) : mapEnabled ? (
                 <div className="mt-3 space-y-2">
                 {mapStatus}
-                <div className="h-[46dvh] min-h-52 overflow-hidden rounded-2xl ring-1 ring-border" data-ke="msv2-map">
+                <div className="h-[min(40dvh,28rem)] min-h-52 overflow-hidden rounded-2xl ring-1 ring-border" data-ke="msv2-map">
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
                       items={mobileRows}
@@ -2437,13 +2437,13 @@ export function SearchScreen({
         >
           {view === "map" ? (
             storeChannel === "huawei" ? (
-              <div className="mt-4 h-[min(72dvh,36rem)] min-h-[18rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(62vh,34rem)]">
+              <div className="mt-4 h-[min(40dvh,28rem)] min-h-[18rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(40dvh,28rem)]">
                 <StoreMapFallback />
               </div>
             ) : mapEnabled ? (
               <div className="mt-4 space-y-3">
                 {mapStatus}
-                <div className="h-[min(72dvh,36rem)] min-h-[18rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(62vh,34rem)]">
+                <div className="h-[min(40dvh,28rem)] min-h-[18rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(40dvh,28rem)]">
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
                       items={shownList}

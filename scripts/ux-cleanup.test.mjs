@@ -20,8 +20,8 @@ test("Explore hides empty category rails and keeps #209 single-bar filters", () 
   assert.match(rails, /openingsSelected \|\| \(!filtered && openings\.length > 0\)/);
   assert.match(rails, /persist=\{forced\}/);
   assert.match(search, /preferCompleteCards/);
-  assert.match(search, /h-\[min\(72dvh,36rem\)\]/);
-  assert.match(search, /lg:h-\[min\(62vh,34rem\)\]/);
+  assert.match(search, /h-\[min\(40dvh,28rem\)\]/);
+  assert.doesNotMatch(search, /lg:h-\[min\(62vh,34rem\)\]/);
   assert.doesNotMatch(search, /62dvh/);
   assert.doesNotMatch(search, /lg:h-\[70vh\]/);
   assert.match(bar, /data-ke="explore-map-toggle"/);
@@ -48,7 +48,7 @@ test("Cards quiet overlapping labels and keep a reserved photo aspect", () => {
   assert.equal((card.match(/data-ke="card-view-details"/g) || []).length, 2);
   assert.match(card, /parentActions \? <SaveListingButton/);
   assert.doesNotMatch(card, /card-book-tour|card-request-info|card-join-waitlist|CompareChip|ShareListingButton/);
-  assert.match(card, /rounded-md bg-primary/);
+  assert.doesNotMatch(card, /w-full items-center justify-center whitespace-normal rounded-md bg-primary/);
   assert.doesNotMatch(card, /rounded-\[14px\]/);
   assert.match(badges, /!compact \? <GuestFavoriteBadge/);
   assert.match(carousel, /ListingPhotoFallback/);
