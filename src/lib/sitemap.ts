@@ -8,6 +8,7 @@
 
 import { isPublicListing, type ListingVisibilityInput } from "./listing-visibility.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
+import { blogArticlePaths } from "./blog-posts.ts";
 import { SITEMAP_FR_PATHS } from "./locale-path.ts";
 
 import { SITEMAP_ORIGIN, sitemapListingPath, isSafeSitemapSlug } from "./public-url.ts";
@@ -40,6 +41,7 @@ export const SITEMAP_STATIC_PATHS = [
   "/team",
   "/benefits",
   "/faq",
+  "/blog",
   "/tour-checklist",
   "/get-app",
   "/how-it-works",
@@ -73,7 +75,7 @@ export const SITEMAP_STATIC_PATHS = [
 ] as const;
 
 function sitemapBasePaths() {
-  return [...SITEMAP_STATIC_PATHS, ...SITEMAP_FR_PATHS];
+  return [...SITEMAP_STATIC_PATHS, ...SITEMAP_FR_PATHS, ...blogArticlePaths()];
 }
 
 /** Marketing pages plus generated city hubs. Hubs are passed in by write-sitemap. */

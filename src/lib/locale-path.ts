@@ -34,6 +34,7 @@ export const LOCALE_PAIRED_PATHS = [
   "/about",
   "/donate",
   "/faq",
+  "/blog",
   "/how-it-works",
   "/get-app",
   "/benefits",
@@ -150,11 +151,18 @@ export function isFamilyWelcomePath(pathname: string | null | undefined): boolea
   return /^\/welcome\/[a-hjkmnp-z2-9]{8}$/.test(bare);
 }
 
+/** `/blog` and `/blog/:slug` have French URLs. */
+export function isBlogDocumentPath(pathname: string | null | undefined): boolean {
+  const bare = stripLocalePrefix(pathname);
+  return bare === "/blog" || /^\/blog\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(bare);
+}
+
 export function isPairedPath(pathname: string | null | undefined): boolean {
   return (
     PAIRED.has(stripLocalePrefix(pathname)) ||
     isAuthFrPath(pathname) ||
     isCatalogueDocumentPath(pathname) ||
+    isBlogDocumentPath(pathname) ||
     isQcHomePath(pathname) ||
     isFamilyWelcomePath(pathname)
   );
@@ -203,7 +211,7 @@ export function localePath(enPath: string, locale: string): string {
   if (bare === "/explore") return (locale === "fr" ? frenchPath("/search") : "/search") + rest;
   if (
     locale === "fr" &&
-    (PAIRED.has(bare) || isAuthFrPath(bare) || isCatalogueDocumentPath(bare) || isQcHomePath(bare) || isFrenchDeskPath(bare) || isFamilyWelcomePath(bare))
+    (PAIRED.has(bare) || isAuthFrPath(bare) || isCatalogueDocumentPath(bare) || isBlogDocumentPath(bare) || isQcHomePath(bare) || isFrenchDeskPath(bare) || isFamilyWelcomePath(bare))
   ) {
     return frenchPath(bare) + rest;
   }

@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
-import { Route as AppRouteImport } from './routes/app'
 import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -38,9 +37,11 @@ import { Route as AdminTriageRouteImport } from './routes/admin-triage'
 import { Route as AdminTrustRouteImport } from './routes/admin-trust'
 import { Route as AdminTruthRouteImport } from './routes/admin-truth'
 import { Route as AdminVacanciesRouteImport } from './routes/admin-vacancies'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as AppAdminUnavailableRouteImport } from './routes/app-admin-unavailable'
 import { Route as AppIconRouteImport } from './routes/app-icon'
 import { Route as BenefitsRouteImport } from './routes/benefits'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as CalculatorRouteImport } from './routes/calculator'
 import { Route as CentreComplianceRouteImport } from './routes/centre-compliance'
 import { Route as CentreFeeCapsRouteImport } from './routes/centre-fee-caps'
@@ -124,6 +125,7 @@ import { Route as ApiCentreLeadAlertsRouteImport } from './routes/api/centre-lea
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
 import { Route as ApiFamilyDocumentsRouteImport } from './routes/api/family-documents'
+import { Route as ApiGhlLeadReconcileRouteImport } from './routes/api/ghl-lead-reconcile'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiOnCallRouteImport } from './routes/api/on-call'
@@ -136,8 +138,8 @@ import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiSpotOffersRouteImport } from './routes/api/spot-offers'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
-import { Route as ApiGhlLeadReconcileRouteImport } from './routes/api/ghl-lead-reconcile'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
+import { Route as BlogSlugRouteImport } from './routes/blog_.$slug'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as CallConversationIdRouteImport } from './routes/call.$conversationId'
@@ -148,6 +150,7 @@ import { Route as FrIndexRouteImport } from './routes/fr.index'
 import { Route as FrAboutRouteImport } from './routes/fr.about'
 import { Route as FrAccountRouteImport } from './routes/fr.account'
 import { Route as FrBenefitsRouteImport } from './routes/fr.benefits'
+import { Route as FrBlogRouteImport } from './routes/fr.blog'
 import { Route as FrCalculatorRouteImport } from './routes/fr.calculator'
 import { Route as FrChildcareBenefitsProgramRouteImport } from './routes/fr.childcare-benefits-program'
 import { Route as FrCitiesRouteImport } from './routes/fr.cities'
@@ -174,6 +177,7 @@ import { Route as FrHowItWorksRouteImport } from './routes/fr.how-it-works'
 import { Route as FrInboxRouteImport } from './routes/fr.inbox'
 import { Route as FrInvoicesRouteImport } from './routes/fr.invoices'
 import { Route as FrJobsRouteImport } from './routes/fr.jobs'
+import { Route as FrKioskRouteImport } from './routes/fr.kiosk'
 import { Route as FrLoginRouteImport } from './routes/fr.login'
 import { Route as FrMeetTheTeamRouteImport } from './routes/fr.meet-the-team'
 import { Route as FrMenuRouteImport } from './routes/fr.menu'
@@ -189,7 +193,6 @@ import { Route as FrReportRouteImport } from './routes/fr.report'
 import { Route as FrResetPasswordRouteImport } from './routes/fr.reset-password'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
 import { Route as FrSecurityRouteImport } from './routes/fr.security'
-import { Route as FrKioskRouteImport } from './routes/fr.kiosk'
 import { Route as FrSignupRouteImport } from './routes/fr.signup'
 import { Route as FrStartADaycareRouteImport } from './routes/fr.start-a-daycare'
 import { Route as FrStatusRouteImport } from './routes/fr.status'
@@ -279,6 +282,7 @@ import { Route as ApiAdminPushDryRunRouteImport } from './routes/api/admin.push-
 import { Route as ApiAdminSentryTestRouteImport } from './routes/api/admin.sentry-test'
 import { Route as ApiAdminStripeCatalogRouteImport } from './routes/api/admin.stripe-catalog'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiCentreDocumentsIdRouteImport } from './routes/api/centre-documents.$id'
 import { Route as ApiComplianceAuditRouteImport } from './routes/api/compliance.audit'
 import { Route as ApiComplianceCalendarRouteImport } from './routes/api/compliance.calendar'
 import { Route as ApiComplianceComplaintsRouteImport } from './routes/api/compliance.complaints'
@@ -294,7 +298,6 @@ import { Route as ApiFamilyDocumentsIdRouteImport } from './routes/api/family-do
 import { Route as ApiGovExportRouteImport } from './routes/api/gov.export'
 import { Route as ApiGovOpenDataRouteImport } from './routes/api/gov.open-data'
 import { Route as ApiLicenseDocsDaycareIdRouteImport } from './routes/api/license-docs.$daycareId'
-import { Route as ApiCentreDocumentsIdRouteImport } from './routes/api/centre-documents.$id'
 import { Route as ApiPushRegisterRouteImport } from './routes/api/push.register'
 import { Route as ApiScreeningDocumentsIdRouteImport } from './routes/api/screening-documents.$id'
 import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
@@ -306,6 +309,7 @@ import { Route as ApiVoiceRecordingRouteImport } from './routes/api/voice.record
 import { Route as ApiWebhooksResendRouteImport } from './routes/api/webhooks.resend'
 import { Route as DaycareCityAgeRouteImport } from './routes/daycare.$city.$age'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
+import { Route as FrBlogSlugRouteImport } from './routes/fr.blog_.$slug'
 import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
 import { Route as FrGovAnalyticsRouteImport } from './routes/fr.gov_.analytics'
 import { Route as FrGovAuditRouteImport } from './routes/fr.gov_.audit'
@@ -346,11 +350,6 @@ import { Route as ApiV1CentreLeadsIdNotesRouteImport } from './routes/api/v1.cen
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppRoute = AppRouteImport.update({
-  id: '/app',
-  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -488,6 +487,11 @@ const AdminVacanciesRoute = AdminVacanciesRouteImport.update({
   path: '/admin-vacancies',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppAdminUnavailableRoute = AppAdminUnavailableRouteImport.update({
   id: '/app-admin-unavailable',
   path: '/app-admin-unavailable',
@@ -501,6 +505,11 @@ const AppIconRoute = AppIconRouteImport.update({
 const BenefitsRoute = BenefitsRouteImport.update({
   id: '/benefits',
   path: '/benefits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CalculatorRoute = CalculatorRouteImport.update({
@@ -919,6 +928,11 @@ const ApiFamilyDocumentsRoute = ApiFamilyDocumentsRouteImport.update({
   path: '/api/family-documents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGhlLeadReconcileRoute = ApiGhlLeadReconcileRouteImport.update({
+  id: '/api/ghl-lead-reconcile',
+  path: '/api/ghl-lead-reconcile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
@@ -979,14 +993,14 @@ const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
   path: '/api/tour-holds',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiGhlLeadReconcileRoute = ApiGhlLeadReconcileRouteImport.update({
-  id: '/api/ghl-lead-reconcile',
-  path: '/api/ghl-lead-reconcile',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiUnsubscribeRoute = ApiUnsubscribeRouteImport.update({
   id: '/api/unsubscribe',
   path: '/api/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog_/$slug',
+  path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BookSlugRoute = BookSlugRouteImport.update({
@@ -1037,6 +1051,11 @@ const FrAccountRoute = FrAccountRouteImport.update({
 const FrBenefitsRoute = FrBenefitsRouteImport.update({
   id: '/benefits',
   path: '/benefits',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrBlogRoute = FrBlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
   getParentRoute: () => FrRoute,
 } as any)
 const FrCalculatorRoute = FrCalculatorRouteImport.update({
@@ -1170,6 +1189,11 @@ const FrJobsRoute = FrJobsRouteImport.update({
   path: '/jobs',
   getParentRoute: () => FrRoute,
 } as any)
+const FrKioskRoute = FrKioskRouteImport.update({
+  id: '/kiosk',
+  path: '/kiosk',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrLoginRoute = FrLoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -1243,11 +1267,6 @@ const FrSearchRoute = FrSearchRouteImport.update({
 const FrSecurityRoute = FrSecurityRouteImport.update({
   id: '/security',
   path: '/security',
-  getParentRoute: () => FrRoute,
-} as any)
-const FrKioskRoute = FrKioskRouteImport.update({
-  id: '/kiosk',
-  path: '/kiosk',
   getParentRoute: () => FrRoute,
 } as any)
 const FrSignupRoute = FrSignupRouteImport.update({
@@ -1697,6 +1716,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCentreDocumentsIdRoute = ApiCentreDocumentsIdRouteImport.update({
+  id: '/api/centre-documents/$id',
+  path: '/api/centre-documents/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiComplianceAuditRoute = ApiComplianceAuditRouteImport.update({
   id: '/api/compliance/audit',
   path: '/api/compliance/audit',
@@ -1772,11 +1796,6 @@ const ApiLicenseDocsDaycareIdRoute = ApiLicenseDocsDaycareIdRouteImport.update({
   path: '/api/license-docs/$daycareId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiCentreDocumentsIdRoute = ApiCentreDocumentsIdRouteImport.update({
-  id: '/api/centre-documents/$id',
-  path: '/api/centre-documents/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPushRegisterRoute = ApiPushRegisterRouteImport.update({
   id: '/api/push/register',
   path: '/api/push/register',
@@ -1831,6 +1850,11 @@ const DaycareCityCityRoute = DaycareCityCityRouteImport.update({
   id: '/daycare/city/$city',
   path: '/daycare/city/$city',
   getParentRoute: () => rootRouteImport,
+} as any)
+const FrBlogSlugRoute = FrBlogSlugRouteImport.update({
+  id: '/blog_/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => FrRoute,
 } as any)
 const FrDaycareSlugRoute = FrDaycareSlugRouteImport.update({
   id: '/daycare/$slug',
@@ -2015,7 +2039,6 @@ const ApiV1CentreLeadsIdNotesRoute = ApiV1CentreLeadsIdNotesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
   '/account': typeof AccountRoute
@@ -2043,9 +2066,11 @@ export interface FileRoutesByFullPath {
   '/admin-trust': typeof AdminTrustRoute
   '/admin-truth': typeof AdminTruthRoute
   '/admin-vacancies': typeof AdminVacanciesRoute
+  '/app': typeof AppRoute
   '/app-admin-unavailable': typeof AppAdminUnavailableRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
+  '/blog': typeof BlogRoute
   '/calculator': typeof CalculatorRoute
   '/centre-compliance': typeof CentreComplianceRoute
   '/centre-fee-caps': typeof CentreFeeCapsRoute
@@ -2129,6 +2154,7 @@ export interface FileRoutesByFullPath {
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
+  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/on-call': typeof ApiOnCallRoute
@@ -2141,8 +2167,8 @@ export interface FileRoutesByFullPath {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
-  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/c/$slug': typeof CSlugRoute
   '/call/$conversationId': typeof CallConversationIdRoute
@@ -2152,6 +2178,7 @@ export interface FileRoutesByFullPath {
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
   '/fr/benefits': typeof FrBenefitsRoute
+  '/fr/blog': typeof FrBlogRoute
   '/fr/calculator': typeof FrCalculatorRoute
   '/fr/childcare-benefits-program': typeof FrChildcareBenefitsProgramRoute
   '/fr/cities': typeof FrCitiesRoute
@@ -2178,6 +2205,7 @@ export interface FileRoutesByFullPath {
   '/fr/inbox': typeof FrInboxRouteWithChildren
   '/fr/invoices': typeof FrInvoicesRouteWithChildren
   '/fr/jobs': typeof FrJobsRoute
+  '/fr/kiosk': typeof FrKioskRoute
   '/fr/login': typeof FrLoginRoute
   '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/menu': typeof FrMenuRoute
@@ -2193,7 +2221,6 @@ export interface FileRoutesByFullPath {
   '/fr/reset-password': typeof FrResetPasswordRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/security': typeof FrSecurityRoute
-  '/fr/kiosk': typeof FrKioskRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/status': typeof FrStatusRoute
@@ -2284,6 +2311,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/centre-documents/$id': typeof ApiCentreDocumentsIdRoute
   '/api/compliance/audit': typeof ApiComplianceAuditRoute
   '/api/compliance/calendar': typeof ApiComplianceCalendarRoute
   '/api/compliance/complaints': typeof ApiComplianceComplaintsRoute
@@ -2299,7 +2327,6 @@ export interface FileRoutesByFullPath {
   '/api/gov/export': typeof ApiGovExportRoute
   '/api/gov/open-data': typeof ApiGovOpenDataRoute
   '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
-  '/api/centre-documents/$id': typeof ApiCentreDocumentsIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
   '/api/sms/inbound': typeof ApiSmsInboundRoute
@@ -2311,6 +2338,7 @@ export interface FileRoutesByFullPath {
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/fr/blog/$slug': typeof FrBlogSlugRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/gov/analytics': typeof FrGovAnalyticsRoute
   '/fr/gov/audit': typeof FrGovAuditRoute
@@ -2350,7 +2378,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
   '/account': typeof AccountRoute
@@ -2378,9 +2405,11 @@ export interface FileRoutesByTo {
   '/admin-trust': typeof AdminTrustRoute
   '/admin-truth': typeof AdminTruthRoute
   '/admin-vacancies': typeof AdminVacanciesRoute
+  '/app': typeof AppRoute
   '/app-admin-unavailable': typeof AppAdminUnavailableRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
+  '/blog': typeof BlogRoute
   '/calculator': typeof CalculatorRoute
   '/centre-compliance': typeof CentreComplianceRoute
   '/centre-fee-caps': typeof CentreFeeCapsRoute
@@ -2462,6 +2491,7 @@ export interface FileRoutesByTo {
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
+  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/on-call': typeof ApiOnCallRoute
@@ -2474,8 +2504,8 @@ export interface FileRoutesByTo {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
-  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/c/$slug': typeof CSlugRoute
   '/call/$conversationId': typeof CallConversationIdRoute
@@ -2485,6 +2515,7 @@ export interface FileRoutesByTo {
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
   '/fr/benefits': typeof FrBenefitsRoute
+  '/fr/blog': typeof FrBlogRoute
   '/fr/calculator': typeof FrCalculatorRoute
   '/fr/childcare-benefits-program': typeof FrChildcareBenefitsProgramRoute
   '/fr/cities': typeof FrCitiesRoute
@@ -2511,6 +2542,7 @@ export interface FileRoutesByTo {
   '/fr/inbox': typeof FrInboxRouteWithChildren
   '/fr/invoices': typeof FrInvoicesRouteWithChildren
   '/fr/jobs': typeof FrJobsRoute
+  '/fr/kiosk': typeof FrKioskRoute
   '/fr/login': typeof FrLoginRoute
   '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/menu': typeof FrMenuRoute
@@ -2526,7 +2558,6 @@ export interface FileRoutesByTo {
   '/fr/reset-password': typeof FrResetPasswordRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/security': typeof FrSecurityRoute
-  '/fr/kiosk': typeof FrKioskRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/status': typeof FrStatusRoute
@@ -2617,6 +2648,7 @@ export interface FileRoutesByTo {
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/centre-documents/$id': typeof ApiCentreDocumentsIdRoute
   '/api/compliance/audit': typeof ApiComplianceAuditRoute
   '/api/compliance/calendar': typeof ApiComplianceCalendarRoute
   '/api/compliance/complaints': typeof ApiComplianceComplaintsRoute
@@ -2632,7 +2664,6 @@ export interface FileRoutesByTo {
   '/api/gov/export': typeof ApiGovExportRoute
   '/api/gov/open-data': typeof ApiGovOpenDataRoute
   '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
-  '/api/centre-documents/$id': typeof ApiCentreDocumentsIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
   '/api/sms/inbound': typeof ApiSmsInboundRoute
@@ -2644,6 +2675,7 @@ export interface FileRoutesByTo {
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/fr/blog/$slug': typeof FrBlogSlugRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/gov/analytics': typeof FrGovAnalyticsRoute
   '/fr/gov/audit': typeof FrGovAuditRoute
@@ -2684,7 +2716,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
   '/account': typeof AccountRoute
@@ -2712,9 +2743,11 @@ export interface FileRoutesById {
   '/admin-trust': typeof AdminTrustRoute
   '/admin-truth': typeof AdminTruthRoute
   '/admin-vacancies': typeof AdminVacanciesRoute
+  '/app': typeof AppRoute
   '/app-admin-unavailable': typeof AppAdminUnavailableRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
+  '/blog': typeof BlogRoute
   '/calculator': typeof CalculatorRoute
   '/centre-compliance': typeof CentreComplianceRoute
   '/centre-fee-caps': typeof CentreFeeCapsRoute
@@ -2798,6 +2831,7 @@ export interface FileRoutesById {
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
+  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/on-call': typeof ApiOnCallRoute
@@ -2810,8 +2844,8 @@ export interface FileRoutesById {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
-  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
+  '/blog_/$slug': typeof BlogSlugRoute
   '/book/$slug': typeof BookSlugRoute
   '/c/$slug': typeof CSlugRoute
   '/call/$conversationId': typeof CallConversationIdRoute
@@ -2821,6 +2855,7 @@ export interface FileRoutesById {
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
   '/fr/benefits': typeof FrBenefitsRoute
+  '/fr/blog': typeof FrBlogRoute
   '/fr/calculator': typeof FrCalculatorRoute
   '/fr/childcare-benefits-program': typeof FrChildcareBenefitsProgramRoute
   '/fr/cities': typeof FrCitiesRoute
@@ -2847,6 +2882,7 @@ export interface FileRoutesById {
   '/fr/inbox': typeof FrInboxRouteWithChildren
   '/fr/invoices': typeof FrInvoicesRouteWithChildren
   '/fr/jobs': typeof FrJobsRoute
+  '/fr/kiosk': typeof FrKioskRoute
   '/fr/login': typeof FrLoginRoute
   '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/menu': typeof FrMenuRoute
@@ -2862,7 +2898,6 @@ export interface FileRoutesById {
   '/fr/reset-password': typeof FrResetPasswordRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/security': typeof FrSecurityRoute
-  '/fr/kiosk': typeof FrKioskRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/status': typeof FrStatusRoute
@@ -2953,6 +2988,7 @@ export interface FileRoutesById {
   '/api/admin/sentry-test': typeof ApiAdminSentryTestRoute
   '/api/admin/stripe-catalog': typeof ApiAdminStripeCatalogRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/centre-documents/$id': typeof ApiCentreDocumentsIdRoute
   '/api/compliance/audit': typeof ApiComplianceAuditRoute
   '/api/compliance/calendar': typeof ApiComplianceCalendarRoute
   '/api/compliance/complaints': typeof ApiComplianceComplaintsRoute
@@ -2968,7 +3004,6 @@ export interface FileRoutesById {
   '/api/gov/export': typeof ApiGovExportRoute
   '/api/gov/open-data': typeof ApiGovOpenDataRoute
   '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
-  '/api/centre-documents/$id': typeof ApiCentreDocumentsIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
   '/api/sms/inbound': typeof ApiSmsInboundRoute
@@ -2980,6 +3015,7 @@ export interface FileRoutesById {
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/fr/blog_/$slug': typeof FrBlogSlugRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/gov_/analytics': typeof FrGovAnalyticsRoute
   '/fr/gov_/audit': typeof FrGovAuditRoute
@@ -3021,7 +3057,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/app'
     | '/about'
     | '/accessibility'
     | '/account'
@@ -3049,9 +3084,11 @@ export interface FileRouteTypes {
     | '/admin-trust'
     | '/admin-truth'
     | '/admin-vacancies'
+    | '/app'
     | '/app-admin-unavailable'
     | '/app-icon'
     | '/benefits'
+    | '/blog'
     | '/calculator'
     | '/centre-compliance'
     | '/centre-fee-caps'
@@ -3135,6 +3172,7 @@ export interface FileRouteTypes {
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/family-documents'
+    | '/api/ghl-lead-reconcile'
     | '/api/health'
     | '/api/inngest'
     | '/api/on-call'
@@ -3147,8 +3185,8 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/spot-offers'
     | '/api/tour-holds'
-    | '/api/ghl-lead-reconcile'
     | '/api/unsubscribe'
+    | '/blog/$slug'
     | '/book/$slug'
     | '/c/$slug'
     | '/call/$conversationId'
@@ -3158,6 +3196,7 @@ export interface FileRouteTypes {
     | '/fr/about'
     | '/fr/account'
     | '/fr/benefits'
+    | '/fr/blog'
     | '/fr/calculator'
     | '/fr/childcare-benefits-program'
     | '/fr/cities'
@@ -3184,6 +3223,7 @@ export interface FileRouteTypes {
     | '/fr/inbox'
     | '/fr/invoices'
     | '/fr/jobs'
+    | '/fr/kiosk'
     | '/fr/login'
     | '/fr/meet-the-team'
     | '/fr/menu'
@@ -3199,7 +3239,6 @@ export interface FileRouteTypes {
     | '/fr/reset-password'
     | '/fr/search'
     | '/fr/security'
-    | '/fr/kiosk'
     | '/fr/signup'
     | '/fr/start-a-daycare'
     | '/fr/status'
@@ -3290,6 +3329,7 @@ export interface FileRouteTypes {
     | '/api/admin/sentry-test'
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
+    | '/api/centre-documents/$id'
     | '/api/compliance/audit'
     | '/api/compliance/calendar'
     | '/api/compliance/complaints'
@@ -3305,7 +3345,6 @@ export interface FileRouteTypes {
     | '/api/gov/export'
     | '/api/gov/open-data'
     | '/api/license-docs/$daycareId'
-    | '/api/centre-documents/$id'
     | '/api/push/register'
     | '/api/screening-documents/$id'
     | '/api/sms/inbound'
@@ -3317,6 +3356,7 @@ export interface FileRouteTypes {
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
+    | '/fr/blog/$slug'
     | '/fr/daycare/$slug'
     | '/fr/gov/analytics'
     | '/fr/gov/audit'
@@ -3356,7 +3396,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/app'
     | '/about'
     | '/accessibility'
     | '/account'
@@ -3384,9 +3423,11 @@ export interface FileRouteTypes {
     | '/admin-trust'
     | '/admin-truth'
     | '/admin-vacancies'
+    | '/app'
     | '/app-admin-unavailable'
     | '/app-icon'
     | '/benefits'
+    | '/blog'
     | '/calculator'
     | '/centre-compliance'
     | '/centre-fee-caps'
@@ -3468,6 +3509,7 @@ export interface FileRouteTypes {
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/family-documents'
+    | '/api/ghl-lead-reconcile'
     | '/api/health'
     | '/api/inngest'
     | '/api/on-call'
@@ -3480,8 +3522,8 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/spot-offers'
     | '/api/tour-holds'
-    | '/api/ghl-lead-reconcile'
     | '/api/unsubscribe'
+    | '/blog/$slug'
     | '/book/$slug'
     | '/c/$slug'
     | '/call/$conversationId'
@@ -3491,6 +3533,7 @@ export interface FileRouteTypes {
     | '/fr/about'
     | '/fr/account'
     | '/fr/benefits'
+    | '/fr/blog'
     | '/fr/calculator'
     | '/fr/childcare-benefits-program'
     | '/fr/cities'
@@ -3517,6 +3560,7 @@ export interface FileRouteTypes {
     | '/fr/inbox'
     | '/fr/invoices'
     | '/fr/jobs'
+    | '/fr/kiosk'
     | '/fr/login'
     | '/fr/meet-the-team'
     | '/fr/menu'
@@ -3532,7 +3576,6 @@ export interface FileRouteTypes {
     | '/fr/reset-password'
     | '/fr/search'
     | '/fr/security'
-    | '/fr/kiosk'
     | '/fr/signup'
     | '/fr/start-a-daycare'
     | '/fr/status'
@@ -3623,6 +3666,7 @@ export interface FileRouteTypes {
     | '/api/admin/sentry-test'
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
+    | '/api/centre-documents/$id'
     | '/api/compliance/audit'
     | '/api/compliance/calendar'
     | '/api/compliance/complaints'
@@ -3638,7 +3682,6 @@ export interface FileRouteTypes {
     | '/api/gov/export'
     | '/api/gov/open-data'
     | '/api/license-docs/$daycareId'
-    | '/api/centre-documents/$id'
     | '/api/push/register'
     | '/api/screening-documents/$id'
     | '/api/sms/inbound'
@@ -3650,6 +3693,7 @@ export interface FileRouteTypes {
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
+    | '/fr/blog/$slug'
     | '/fr/daycare/$slug'
     | '/fr/gov/analytics'
     | '/fr/gov/audit'
@@ -3689,7 +3733,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/app'
     | '/about'
     | '/accessibility'
     | '/account'
@@ -3717,9 +3760,11 @@ export interface FileRouteTypes {
     | '/admin-trust'
     | '/admin-truth'
     | '/admin-vacancies'
+    | '/app'
     | '/app-admin-unavailable'
     | '/app-icon'
     | '/benefits'
+    | '/blog'
     | '/calculator'
     | '/centre-compliance'
     | '/centre-fee-caps'
@@ -3803,6 +3848,7 @@ export interface FileRouteTypes {
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/family-documents'
+    | '/api/ghl-lead-reconcile'
     | '/api/health'
     | '/api/inngest'
     | '/api/on-call'
@@ -3815,8 +3861,8 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/spot-offers'
     | '/api/tour-holds'
-    | '/api/ghl-lead-reconcile'
     | '/api/unsubscribe'
+    | '/blog_/$slug'
     | '/book/$slug'
     | '/c/$slug'
     | '/call/$conversationId'
@@ -3826,6 +3872,7 @@ export interface FileRouteTypes {
     | '/fr/about'
     | '/fr/account'
     | '/fr/benefits'
+    | '/fr/blog'
     | '/fr/calculator'
     | '/fr/childcare-benefits-program'
     | '/fr/cities'
@@ -3852,6 +3899,7 @@ export interface FileRouteTypes {
     | '/fr/inbox'
     | '/fr/invoices'
     | '/fr/jobs'
+    | '/fr/kiosk'
     | '/fr/login'
     | '/fr/meet-the-team'
     | '/fr/menu'
@@ -3867,7 +3915,6 @@ export interface FileRouteTypes {
     | '/fr/reset-password'
     | '/fr/search'
     | '/fr/security'
-    | '/fr/kiosk'
     | '/fr/signup'
     | '/fr/start-a-daycare'
     | '/fr/status'
@@ -3958,6 +4005,7 @@ export interface FileRouteTypes {
     | '/api/admin/sentry-test'
     | '/api/admin/stripe-catalog'
     | '/api/auth/$'
+    | '/api/centre-documents/$id'
     | '/api/compliance/audit'
     | '/api/compliance/calendar'
     | '/api/compliance/complaints'
@@ -3973,7 +4021,6 @@ export interface FileRouteTypes {
     | '/api/gov/export'
     | '/api/gov/open-data'
     | '/api/license-docs/$daycareId'
-    | '/api/centre-documents/$id'
     | '/api/push/register'
     | '/api/screening-documents/$id'
     | '/api/sms/inbound'
@@ -3985,6 +4032,7 @@ export interface FileRouteTypes {
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
+    | '/fr/blog_/$slug'
     | '/fr/daycare/$slug'
     | '/fr/gov_/analytics'
     | '/fr/gov_/audit'
@@ -4025,7 +4073,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRoute
   AboutRoute: typeof AboutRoute
   AccessibilityRoute: typeof AccessibilityRoute
   AccountRoute: typeof AccountRoute
@@ -4053,9 +4100,11 @@ export interface RootRouteChildren {
   AdminTrustRoute: typeof AdminTrustRoute
   AdminTruthRoute: typeof AdminTruthRoute
   AdminVacanciesRoute: typeof AdminVacanciesRoute
+  AppRoute: typeof AppRoute
   AppAdminUnavailableRoute: typeof AppAdminUnavailableRoute
   AppIconRoute: typeof AppIconRoute
   BenefitsRoute: typeof BenefitsRoute
+  BlogRoute: typeof BlogRoute
   CalculatorRoute: typeof CalculatorRoute
   CentreComplianceRoute: typeof CentreComplianceRoute
   CentreFeeCapsRoute: typeof CentreFeeCapsRoute
@@ -4137,6 +4186,7 @@ export interface RootRouteChildren {
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
   ApiFamilyDocumentsRoute: typeof ApiFamilyDocumentsRouteWithChildren
+  ApiGhlLeadReconcileRoute: typeof ApiGhlLeadReconcileRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
   ApiOnCallRoute: typeof ApiOnCallRoute
@@ -4149,8 +4199,8 @@ export interface RootRouteChildren {
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   ApiSpotOffersRoute: typeof ApiSpotOffersRoute
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
-  ApiGhlLeadReconcileRoute: typeof ApiGhlLeadReconcileRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   BookSlugRoute: typeof BookSlugRoute
   CSlugRoute: typeof CSlugRoute
   CallConversationIdRoute: typeof CallConversationIdRoute
@@ -4220,6 +4270,7 @@ export interface RootRouteChildren {
   ApiAdminSentryTestRoute: typeof ApiAdminSentryTestRoute
   ApiAdminStripeCatalogRoute: typeof ApiAdminStripeCatalogRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiCentreDocumentsIdRoute: typeof ApiCentreDocumentsIdRoute
   ApiComplianceAuditRoute: typeof ApiComplianceAuditRoute
   ApiComplianceCalendarRoute: typeof ApiComplianceCalendarRoute
   ApiComplianceComplaintsRoute: typeof ApiComplianceComplaintsRoute
@@ -4234,7 +4285,6 @@ export interface RootRouteChildren {
   ApiGovExportRoute: typeof ApiGovExportRoute
   ApiGovOpenDataRoute: typeof ApiGovOpenDataRoute
   ApiLicenseDocsDaycareIdRoute: typeof ApiLicenseDocsDaycareIdRoute
-  ApiCentreDocumentsIdRoute: typeof ApiCentreDocumentsIdRoute
   ApiPushRegisterRoute: typeof ApiPushRegisterRoute
   ApiSmsInboundRoute: typeof ApiSmsInboundRoute
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
@@ -4257,13 +4307,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -4455,6 +4498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVacanciesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app-admin-unavailable': {
       id: '/app-admin-unavailable'
       path: '/app-admin-unavailable'
@@ -4474,6 +4524,13 @@ declare module '@tanstack/react-router' {
       path: '/benefits'
       fullPath: '/benefits'
       preLoaderRoute: typeof BenefitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/calculator': {
@@ -5057,6 +5114,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiFamilyDocumentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ghl-lead-reconcile': {
+      id: '/api/ghl-lead-reconcile'
+      path: '/api/ghl-lead-reconcile'
+      fullPath: '/api/ghl-lead-reconcile'
+      preLoaderRoute: typeof ApiGhlLeadReconcileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/health': {
       id: '/api/health'
       path: '/api/health'
@@ -5141,18 +5205,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTourHoldsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/ghl-lead-reconcile': {
-      id: '/api/ghl-lead-reconcile'
-      path: '/api/ghl-lead-reconcile'
-      fullPath: '/api/ghl-lead-reconcile'
-      preLoaderRoute: typeof ApiGhlLeadReconcileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/unsubscribe': {
       id: '/api/unsubscribe'
       path: '/api/unsubscribe'
       fullPath: '/api/unsubscribe'
       preLoaderRoute: typeof ApiUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog_/$slug': {
+      id: '/blog_/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/book/$slug': {
@@ -5223,6 +5287,13 @@ declare module '@tanstack/react-router' {
       path: '/benefits'
       fullPath: '/fr/benefits'
       preLoaderRoute: typeof FrBenefitsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/blog': {
+      id: '/fr/blog'
+      path: '/blog'
+      fullPath: '/fr/blog'
+      preLoaderRoute: typeof FrBlogRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/calculator': {
@@ -5407,6 +5478,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrJobsRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/kiosk': {
+      id: '/fr/kiosk'
+      path: '/kiosk'
+      fullPath: '/fr/kiosk'
+      preLoaderRoute: typeof FrKioskRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/login': {
       id: '/fr/login'
       path: '/login'
@@ -5510,13 +5588,6 @@ declare module '@tanstack/react-router' {
       path: '/security'
       fullPath: '/fr/security'
       preLoaderRoute: typeof FrSecurityRouteImport
-      parentRoute: typeof FrRoute
-    }
-    '/fr/kiosk': {
-      id: '/fr/kiosk'
-      path: '/kiosk'
-      fullPath: '/fr/kiosk'
-      preLoaderRoute: typeof FrKioskRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/signup': {
@@ -6142,6 +6213,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/centre-documents/$id': {
+      id: '/api/centre-documents/$id'
+      path: '/api/centre-documents/$id'
+      fullPath: '/api/centre-documents/$id'
+      preLoaderRoute: typeof ApiCentreDocumentsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/compliance/audit': {
       id: '/api/compliance/audit'
       path: '/api/compliance/audit'
@@ -6247,13 +6325,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLicenseDocsDaycareIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/centre-documents/$id': {
-      id: '/api/centre-documents/$id'
-      path: '/api/centre-documents/$id'
-      fullPath: '/api/centre-documents/$id'
-      preLoaderRoute: typeof ApiCentreDocumentsIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/push/register': {
       id: '/api/push/register'
       path: '/api/push/register'
@@ -6330,6 +6401,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/daycare/city/$city'
       preLoaderRoute: typeof DaycareCityCityRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/fr/blog_/$slug': {
+      id: '/fr/blog_/$slug'
+      path: '/blog/$slug'
+      fullPath: '/fr/blog/$slug'
+      preLoaderRoute: typeof FrBlogSlugRouteImport
+      parentRoute: typeof FrRoute
     }
     '/fr/daycare/$slug': {
       id: '/fr/daycare/$slug'
@@ -6660,6 +6738,7 @@ interface FrRouteChildren {
   FrAboutRoute: typeof FrAboutRoute
   FrAccountRoute: typeof FrAccountRoute
   FrBenefitsRoute: typeof FrBenefitsRoute
+  FrBlogRoute: typeof FrBlogRoute
   FrCalculatorRoute: typeof FrCalculatorRoute
   FrChildcareBenefitsProgramRoute: typeof FrChildcareBenefitsProgramRoute
   FrCitiesRoute: typeof FrCitiesRoute
@@ -6686,6 +6765,7 @@ interface FrRouteChildren {
   FrInboxRoute: typeof FrInboxRouteWithChildren
   FrInvoicesRoute: typeof FrInvoicesRouteWithChildren
   FrJobsRoute: typeof FrJobsRoute
+  FrKioskRoute: typeof FrKioskRoute
   FrLoginRoute: typeof FrLoginRoute
   FrMeetTheTeamRoute: typeof FrMeetTheTeamRoute
   FrMenuRoute: typeof FrMenuRoute
@@ -6701,7 +6781,6 @@ interface FrRouteChildren {
   FrResetPasswordRoute: typeof FrResetPasswordRoute
   FrSearchRoute: typeof FrSearchRoute
   FrSecurityRoute: typeof FrSecurityRoute
-  FrKioskRoute: typeof FrKioskRoute
   FrSignupRoute: typeof FrSignupRoute
   FrStartADaycareRoute: typeof FrStartADaycareRoute
   FrStatusRoute: typeof FrStatusRoute
@@ -6717,6 +6796,7 @@ interface FrRouteChildren {
   FrVerify2faRoute: typeof FrVerify2faRoute
   FrWaitlistRoute: typeof FrWaitlistRoute
   FrIndexRoute: typeof FrIndexRoute
+  FrBlogSlugRoute: typeof FrBlogSlugRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrGovAnalyticsRoute: typeof FrGovAnalyticsRoute
   FrGovAuditRoute: typeof FrGovAuditRoute
@@ -6748,6 +6828,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrAboutRoute: FrAboutRoute,
   FrAccountRoute: FrAccountRoute,
   FrBenefitsRoute: FrBenefitsRoute,
+  FrBlogRoute: FrBlogRoute,
   FrCalculatorRoute: FrCalculatorRoute,
   FrChildcareBenefitsProgramRoute: FrChildcareBenefitsProgramRoute,
   FrCitiesRoute: FrCitiesRoute,
@@ -6774,6 +6855,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrInboxRoute: FrInboxRouteWithChildren,
   FrInvoicesRoute: FrInvoicesRouteWithChildren,
   FrJobsRoute: FrJobsRoute,
+  FrKioskRoute: FrKioskRoute,
   FrLoginRoute: FrLoginRoute,
   FrMeetTheTeamRoute: FrMeetTheTeamRoute,
   FrMenuRoute: FrMenuRoute,
@@ -6789,7 +6871,6 @@ const FrRouteChildren: FrRouteChildren = {
   FrResetPasswordRoute: FrResetPasswordRoute,
   FrSearchRoute: FrSearchRoute,
   FrSecurityRoute: FrSecurityRoute,
-  FrKioskRoute: FrKioskRoute,
   FrSignupRoute: FrSignupRoute,
   FrStartADaycareRoute: FrStartADaycareRoute,
   FrStatusRoute: FrStatusRoute,
@@ -6805,6 +6886,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrVerify2faRoute: FrVerify2faRoute,
   FrWaitlistRoute: FrWaitlistRoute,
   FrIndexRoute: FrIndexRoute,
+  FrBlogSlugRoute: FrBlogSlugRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrGovAnalyticsRoute: FrGovAnalyticsRoute,
   FrGovAuditRoute: FrGovAuditRoute,
@@ -6970,7 +7052,6 @@ const ApiV1CentreLeadsRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRoute,
   AboutRoute: AboutRoute,
   AccessibilityRoute: AccessibilityRoute,
   AccountRoute: AccountRoute,
@@ -6998,9 +7079,11 @@ const rootRouteChildren: RootRouteChildren = {
   AdminTrustRoute: AdminTrustRoute,
   AdminTruthRoute: AdminTruthRoute,
   AdminVacanciesRoute: AdminVacanciesRoute,
+  AppRoute: AppRoute,
   AppAdminUnavailableRoute: AppAdminUnavailableRoute,
   AppIconRoute: AppIconRoute,
   BenefitsRoute: BenefitsRoute,
+  BlogRoute: BlogRoute,
   CalculatorRoute: CalculatorRoute,
   CentreComplianceRoute: CentreComplianceRoute,
   CentreFeeCapsRoute: CentreFeeCapsRoute,
@@ -7082,6 +7165,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,
   ApiFamilyDocumentsRoute: ApiFamilyDocumentsRouteWithChildren,
+  ApiGhlLeadReconcileRoute: ApiGhlLeadReconcileRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
   ApiOnCallRoute: ApiOnCallRoute,
@@ -7094,8 +7178,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   ApiSpotOffersRoute: ApiSpotOffersRoute,
   ApiTourHoldsRoute: ApiTourHoldsRoute,
-  ApiGhlLeadReconcileRoute: ApiGhlLeadReconcileRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
+  BlogSlugRoute: BlogSlugRoute,
   BookSlugRoute: BookSlugRoute,
   CSlugRoute: CSlugRoute,
   CallConversationIdRoute: CallConversationIdRoute,
@@ -7165,6 +7249,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminSentryTestRoute: ApiAdminSentryTestRoute,
   ApiAdminStripeCatalogRoute: ApiAdminStripeCatalogRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiCentreDocumentsIdRoute: ApiCentreDocumentsIdRoute,
   ApiComplianceAuditRoute: ApiComplianceAuditRoute,
   ApiComplianceCalendarRoute: ApiComplianceCalendarRoute,
   ApiComplianceComplaintsRoute: ApiComplianceComplaintsRoute,
@@ -7179,7 +7264,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiGovExportRoute: ApiGovExportRoute,
   ApiGovOpenDataRoute: ApiGovOpenDataRoute,
   ApiLicenseDocsDaycareIdRoute: ApiLicenseDocsDaycareIdRoute,
-  ApiCentreDocumentsIdRoute: ApiCentreDocumentsIdRoute,
   ApiPushRegisterRoute: ApiPushRegisterRoute,
   ApiSmsInboundRoute: ApiSmsInboundRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,

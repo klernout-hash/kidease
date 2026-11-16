@@ -40,6 +40,7 @@ export const FOOTER_KIDEASE: FooterLinkDef[] = [
   copyLink("/team", "team"),
   copyLink("/donate", "donateToKids", { localePaired: true }),
   copyLink("/get-app", "getApp"),
+  { to: "/blog", localePaired: true, labelEn: "Blog", labelFr: "Blogue" },
 ];
 
 /** Support column. Legal links sit on the bottom row. */

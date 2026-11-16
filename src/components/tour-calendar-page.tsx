@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { FirstRunExample } from "@/components/first-run";
+import { TourCountSummary } from "@/components/tour-count-summary";
 import {
   eventsFromTours,
   eventsOnDay,
@@ -16,6 +17,8 @@ import { buildTourIcs } from "@/lib/tour-ics";
 import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import { listTourRequests } from "@/lib/server/tours";
 import { saveTourVisitReminder } from "@/lib/server/tour-calendar";
+import { summarizeTourCounts, tourCountLine } from "@/lib/tour-counts";
+import type { TourRequest } from "@/lib/types";
 import { useCopy } from "@/lib/use-copy";
 
 const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -51,6 +54,8 @@ export function TourCalendarPage({ audience }: { audience: "parent" | "provider"
   const fr = locale === "fr";
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [tours, setTours] = useState<TourRequest[]>([]);
+  const [toursReady, setToursReady] = useState(false);
   const [cursor, setCursor] = useState(() => new Date());
   const [picked, setPicked] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -64,8 +69,16 @@ export function TourCalendarPage({ audience }: { audience: "parent" | "provider"
   useEffect(() => {
     if (!enabled) return;
     void listTourRequests({ data: { desk: audience === "provider" ? "centre" : "parent" } })
-      .then((rows) => setEvents(eventsFromTours(rows)))
-      .catch(() => setEvents([]));
+      .then((rows) => {
+        setTours(rows);
+        setEvents(eventsFromTours(rows));
+        setToursReady(true);
+      })
+      .catch(() => {
+        setTours([]);
+        setEvents([]);
+        setToursReady(true);
+      });
   }, [audience, enabled]);
 
   const year = cursor.getFullYear();
@@ -141,6 +154,14 @@ export function TourCalendarPage({ audience }: { audience: "parent" | "provider"
         <p className="mt-2 text-sm text-muted">
           {fr ? "KidEase n’envoie pas de courriel, de texto ou d’appel." : "KidEase does not email, text, or call."}
         </p>
+        {toursReady ? (
+          <div className="mt-4">
+            <TourCountSummary
+              counts={summarizeTourCounts({ requests: tours.map((tour) => ({ status: tour.status, kind: "tour" })) })}
+              locale={locale}
+            />
+          </div>
+        ) : null}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-display text-xl capitalize">{monthLabel}</h2>
@@ -160,20 +181,27 @@ export function TourCalendarPage({ audience }: { audience: "parent" | "provider"
       </div>
       <div className="grid grid-cols-7 gap-1">
         {cells.map((cell) => {
-          const count = eventsOnDay(events, cell.day).length;
+          const dayEvents = eventsOnDay(events, cell.day);
+          const count = dayEvents.length;
           const on = cell.day === picked;
+          const dayCounts = summarizeTourCounts({
+            requests: [...new Map(dayEvents.map((event) => [event.tourId, event.status])).entries()].map(([, status]) => ({
+              status,
+              kind: "tour" as const,
+            })),
+          });
           return (
             <button
               key={cell.day}
               type="button"
-              aria-label={tourCalendarDayLabel(cell.day, count, locale)}
+              aria-label={`${tourCalendarDayLabel(cell.day, count, locale)}. ${tourCountLine(dayCounts, locale)}`}
               aria-pressed={on}
               aria-current={cell.day === today ? "date" : undefined}
               className={`min-h-11 rounded-lg text-sm ${cell.inMonth ? "text-fg" : "text-subtle"} ${on ? "bg-primary text-primary-fg" : "bg-surface ring-1 ring-border"}`}
               onClick={() => setPicked(cell.day)}
             >
               {Number(cell.day.slice(-2))}
-              {count ? <span className="mt-0.5 block text-[10px]">{count}</span> : null}
+              {count ? <span aria-hidden="true" className="mx-auto mt-0.5 block h-1.5 w-1.5 rounded-full bg-current" /> : null}
             </button>
           );
         })}
