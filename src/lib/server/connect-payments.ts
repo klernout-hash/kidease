@@ -109,6 +109,7 @@ async function stripeCallFor(sql: Sql, userId: string, daycareId?: string | null
           isDemo: centre.is_demo,
         })),
   );
+  if (!qa && mode === "live" && !connectLiveEnabled()) return { ok: false, reason: "live" };
   const creds = stripeCredentialsForMode(qa ? "test" : mode, process.env);
   if (!creds.ok) return { ok: false, reason: "missing" };
   if (qa && creds.secret.startsWith("sk_live_")) return { ok: false, reason: "missing" };

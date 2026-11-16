@@ -646,6 +646,7 @@ export const createBillCheckout = createServerFn({ method: "POST" })
     if (!gate.ok) throw new Error(gate.error);
     if (gate.alreadyPaid) return { url: null as string | null, alreadyPaid: true as const };
     if (!bill) throw new Error("Bill not found");
+    if (!creds.ok) throw new Error(creds.reason);
     const connect = await sql<{ stripe_account_id: string | null; charges_enabled: number }>`
       select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${bill.daycareId} limit 1
     `.catch(() => []);

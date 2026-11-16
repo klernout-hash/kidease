@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import test from "node:test";
 import { readFileSync } from "node:fs";
+import test from "node:test";
 import {
   centreUsesTestStripe,
   payerUsesTestStripe,
@@ -20,13 +20,12 @@ test("a real parent at a public centre uses the live keys only when the live swi
   assert.equal(payerUsesTestStripe({ email: "parent@example.com", isTest: 0 }), false);
   assert.equal(centreUsesTestStripe({ visibility: "public", isTest: 0, slug: "elm-street-daycare" }), false);
   const held = paymentStripeMode({ payerQa: false, centreQa: false, liveEnabled: false });
-  assert.equal(held, "test");
-  const heldKeys = stripeCredentialsForMode(held, env);
-  assert.equal(heldKeys.ok, true);
-  if (heldKeys.ok) {
-    assert.equal(heldKeys.secret, "sk_test_qa");
-    assert.equal(heldKeys.secret.startsWith("sk_live_"), false);
-  }
+  assert.equal(held, "live");
+  assert.equal(paymentStripeMode({ payerQa: true, centreQa: false, liveEnabled: false }), "test");
+  assert.equal(paymentStripeMode({ payerQa: false, centreQa: true, liveEnabled: false }), "test");
+  const qaKeys = stripeCredentialsForMode("test", env);
+  assert.equal(qaKeys.ok, true);
+  if (qaKeys.ok) assert.equal(qaKeys.secret, "sk_test_qa");
   const mode = paymentStripeMode({ payerQa: false, centreQa: false, liveEnabled: true });
   assert.equal(mode, "live");
   const keys = stripeCredentialsForMode(mode, env);
@@ -75,6 +74,34 @@ test("QA routing refuses the live secret when the test keys are missing", () => 
     STRIPE_PUBLISHABLE_KEY: "pk_live_real",
   });
   assert.deepEqual(keys, { ok: false, mode: "test", reason: "missing_test_key" });
+});
+
+test("centre charges pass the process environment into the helper", () => {
+  const source = readFileSync(new URL("../src/lib/server/connect-payments.ts", import.meta.url), "utf8");
+  assert.match(source, /stripeCredentialsForMode\(qa \? "test" : mode, process\.env\)/);
+});
+
+test("with no env argument the helper reads the process environment", () => {
+  const names = ["STRIPE_SECRET_KEY", "STRIPE_PUBLISHABLE_KEY", "STRIPE_SECRET_KEY_TEST", "STRIPE_PUBLISHABLE_KEY_TEST"];
+  const previous = new Map(names.map((name) => [name, process.env[name]]));
+  process.env.STRIPE_SECRET_KEY = "sk_live_unused";
+  process.env.STRIPE_PUBLISHABLE_KEY = "pk_live_unused";
+  process.env.STRIPE_SECRET_KEY_TEST = "sk_test_from_env";
+  process.env.STRIPE_PUBLISHABLE_KEY_TEST = "pk_test_from_env";
+  try {
+    const keys = stripeCredentialsForMode("test");
+    assert.equal(keys.ok, true);
+    if (keys.ok) {
+      assert.equal(keys.secret, "sk_test_from_env");
+      assert.equal(keys.publishable, "pk_test_from_env");
+    }
+  } finally {
+    for (const name of names) {
+      const value = previous.get(name);
+      if (value == null) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
 });
 
 test("an is_test centre or QA account can never be handed a live secret", () => {
