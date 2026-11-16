@@ -20,6 +20,7 @@ import * as listingVisibility from "../src/lib/listing-visibility.ts";
 import * as privateDocs from "../src/lib/private-docs.ts";
 import * as providerScreening from "../src/lib/provider-screening.ts";
 import * as utils from "../src/lib/utils.ts";
+import * as runtimeSwitches from "../src/lib/runtime-switches.ts";
 
 const READER = "reader-1";
 const CENTRE = "centre-1";
@@ -165,6 +166,7 @@ function modulesFor(sql, privateDocsServer, centreAccess) {
     "@/lib/features": features,
     "@/lib/flags": flags,
     "@/lib/utils": utils,
+    "@/lib/runtime-switches": runtimeSwitches,
     "@/lib/daily-care": dailyCare,
     "@/lib/centre-tools": centreTools,
     "@/lib/centre-documents": centreDocuments,

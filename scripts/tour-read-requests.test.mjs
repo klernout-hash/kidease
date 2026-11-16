@@ -8,6 +8,7 @@ import * as threads from "../src/lib/threads.ts";
 import * as calendar from "../src/lib/tour-calendar.ts";
 import * as leads from "../src/lib/lead-requests.ts";
 import * as parentNames from "../src/lib/parent-display-name.ts";
+import * as runtimeSwitches from "../src/lib/runtime-switches.ts";
 
 const source = (path) => readFileSync(new URL(`../src/lib/server/${path}.ts`, import.meta.url), "utf8");
 
@@ -24,6 +25,7 @@ function handlers(path, sql, effects) {
     "@/lib/tour-calendar": calendar,
     "@/lib/lead-requests": leads,
     "@/lib/parent-display-name": parentNames,
+    "@/lib/runtime-switches": runtimeSwitches,
     "@/lib/server/safety": { omitHiddenParents: async (_sql, rows) => rows },
     "@/lib/server/coparent": { familyScopeFor: async (id) => ({ dataUserId: id }) },
     "@/lib/features": { tourCalendarEnabled: () => false },
