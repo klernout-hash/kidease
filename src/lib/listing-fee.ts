@@ -5,6 +5,7 @@
 
 import { confirmedStoredFeeProgram, listingSubsidy, CATALOGUE_MONTHLY_FEE_GUESS } from "./fee-program.ts";
 import { BILLING_DAYS_PER_MONTH, type CostAgeBand } from "./net-cost-engine.ts";
+import { ONTARIO_DAILY_CAP_CENTS } from "./cwelcc.ts";
 
 export type ListingFeeInput = {
   infantMonthly?: number | null;
@@ -36,6 +37,19 @@ export function isDerivedFromDailyCap(amount: number | null | undefined, daily: 
   return Math.abs(amount - derived) <= 0.51 || Math.round(amount) === Math.round(derived);
 }
 
+/**
+ * True when a monthly figure falls where a province's daily cap times
+ * 20 to 22 billing days lands (Ontario's $22 a day gives about $440 to $484).
+ * Such a figure is the cap, not a fee the centre posted.
+ */
+export function looksLikeProvinceCap(amount: number | null | undefined, province: string | null | undefined): boolean {
+  if (amount == null || !Number.isFinite(amount) || amount <= 0) return false;
+  const code = String(province || "").trim().toUpperCase();
+  if (code !== "ON") return false;
+  const daily = ONTARIO_DAILY_CAP_CENTS / 100;
+  return amount >= daily * 20 - 0.51 && amount <= daily * 22 + 0.51;
+}
+
 /** $10 or $9.65 when this listing's public fee line is a daily cap. */
 export function dailyCapDollars(listing: ListingFeeInput): number | null {
   if (confirmedStoredFeeProgram(listing) === "mb-10-day") return 10;
@@ -58,6 +72,7 @@ export function publicMonthlyFee(amount: number | null | undefined, listing: Lis
   const centre = String(listing.feeConfidence || "").trim().toLowerCase() === "centre";
   const daily = dailyCapDollars(listing);
   if (!centre && daily != null && isDerivedFromDailyCap(real, daily)) return null;
+  if (!centre && looksLikeProvinceCap(real, listing.province)) return null;
   return real;
 }
 

@@ -44,6 +44,7 @@ import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { parentRatingShown } from "@/lib/review-reports";
 import { listingSubsidy } from "@/lib/fee-program";
+import { publicMonthlyFee } from "@/lib/listing-fee";
 import { SubsidyPill } from "@/components/subsidy-pill";
 import { CardMicroPills } from "@/components/card-micro-pills";
 import { SponsoredMark } from "@/components/sponsored-mark";
@@ -254,7 +255,10 @@ export const DaycareCard = memo(function DaycareCard({
   const rawKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
   const distanceKm = isDoorPin(item.lat, item.lng) ? rawKm : null;
   const subsidy = listingSubsidy(item);
-  const feeOk = item.fromPrice > 0 && (live || Boolean(item.feeConfirmed) || Boolean(subsidy));
+  const feeOk =
+    item.fromPrice > 0 &&
+    (live || Boolean(item.feeConfirmed) || Boolean(subsidy)) &&
+    publicMonthlyFee(item.fromPrice, item) != null;
   const gaps = liveLookingGaps(item);
   const vacancy = honestVacancy(item);
   const freshness = vacancyLine(item, t, locale);

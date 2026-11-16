@@ -99,7 +99,7 @@ export function AnchoredCoach({
   steps: ReadonlyArray<{ anchor?: string; anchors?: readonly string[]; title: { en: string; fr: string }; body: { en: string; fr: string } }>;
   marker: string;
   audience?: "parent" | "provider";
-  onClose: () => void;
+  onClose: (reason?: "skip" | "done") => void;
 }) {
   const { locale: raw } = useCopy();
   const locale = localeOf(raw);
@@ -139,7 +139,7 @@ export function AnchoredCoach({
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.preventDefault();
-        closeRef.current();
+        closeRef.current("skip");
       }
     }
     document.addEventListener("keydown", onKey);
@@ -149,6 +149,7 @@ export function AnchoredCoach({
   const shown = live ?? [];
   const safeIndex = shown.length ? Math.min(index, shown.length - 1) : 0;
   const step = shown[safeIndex];
+  const scrolledFor = useRef<number | null>(null);
 
   useIsoLayout(() => {
     if (!step) return;
@@ -157,7 +158,11 @@ export function AnchoredCoach({
       setSpot(null);
       return;
     }
-    node.scrollIntoView({ block: "center", inline: "nearest" });
+    // Scroll once per step. Rescans (timers, phone toolbar resize) must not yank the page mid-scroll.
+    if (scrolledFor.current !== safeIndex) {
+      scrolledFor.current = safeIndex;
+      node.scrollIntoView({ block: "center", inline: "nearest" });
+    }
     const rect = node.getBoundingClientRect();
     const nextSpot = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
     setSpot(nextSpot);
@@ -238,14 +243,14 @@ export function AnchoredCoach({
               {pickCopy(locale, UI_COPY.back)}
             </Button>
           ) : null}
-          <Button type="button" variant="secondary" data-ke="first-run-skip" onClick={onClose}>
+          <Button type="button" variant="secondary" data-ke="first-run-skip" onClick={() => onClose("skip")}>
             {pickCopy(locale, UI_COPY.skip)}
           </Button>
           <Button
             type="button"
             data-ke="first-run-next"
             onClick={() => {
-              if (last) onClose();
+              if (last) onClose("done");
               else setIndex((n) => n + 1);
             }}
           >
@@ -263,7 +268,7 @@ export function WelcomeWalkthrough({
   onClose,
 }: {
   tourKey: typeof WELCOME_PARENT | typeof WELCOME_PROVIDER;
-  onClose: () => void;
+  onClose: (reason?: "skip" | "done") => void;
 }) {
   return (
     <AnchoredCoach
@@ -275,7 +280,7 @@ export function WelcomeWalkthrough({
   );
 }
 
-export function CoachTour({ tourKey, onClose }: { tourKey: TourKey; onClose: () => void }) {
+export function CoachTour({ tourKey, onClose }: { tourKey: TourKey; onClose: (reason?: "skip" | "done") => void }) {
   return <AnchoredCoach steps={TOURS[tourKey]} marker="coach-tour" onClose={onClose} />;
 }
 
@@ -629,12 +634,18 @@ export function FirstRunHost() {
   const showChecklist =
     checklist != null && (forcedChecklist() === checklist.id || checklistOpen(progress, checklist.id));
 
-  function closeWelcome() {
+  // Skip means skip: no other tour pops up later on this device.
+  function skipAllTours() {
+    for (const key of Object.keys(TOURS)) rememberSeen(key);
+  }
+  function closeWelcome(reason?: "skip" | "done") {
     if (welcomeKey) rememberSeen(welcomeKey);
+    if (reason === "skip") skipAllTours();
     setForced(null);
   }
-  function closeTour() {
+  function closeTour(reason?: "skip" | "done") {
     if (tourKey) rememberSeen(tourKey);
+    if (reason === "skip") skipAllTours();
     setForced(null);
   }
 

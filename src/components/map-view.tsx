@@ -1,3 +1,4 @@
+import { publicMonthlyFee } from "@/lib/listing-fee";
 import { FEATURE_SPONSORED_LISTINGS } from "@/lib/sponsored-flag";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { LocateFixed, Minus, Navigation, Plus, X } from "lucide-react";
@@ -1237,7 +1238,9 @@ function MapPinPopup({
   const facts = [
     ages,
     vacancy.kind === "open" && vacancy.spots > 0 ? `${vacancy.spots} ${t("spots")}` : "",
-    item.live && item.fromPrice > 0 ? `${money(item.fromPrice, locale)}${t("month")}` : "",
+    item.live && item.fromPrice > 0 && publicMonthlyFee(item.fromPrice, item) != null
+      ? `${money(item.fromPrice, locale)}${t("month")}`
+      : "",
   ]
     .filter(Boolean)
     .join(" · ");
