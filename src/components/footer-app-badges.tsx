@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Smartphone } from "lucide-react";
 import { BadgeImage } from "@/components/store-badges";
+import { huaweiBadgeAlt } from "@/lib/huawei-badge-alt";
 import { appStoreById, liveAppStores } from "@/lib/app-stores";
 import type { ShippedLocale } from "@/lib/languages";
 import { localePath } from "@/lib/locale-path";
@@ -20,21 +21,24 @@ export function FooterAppBadges() {
       <ul className="ke-footer-store-row">
         {stores.map((store) => {
           const name = locale === "fr" ? store.nameFr : store.nameEn;
+          const label = store.id === "huawei" ? huaweiBadgeAlt(locale) : `${t("appStoresDownload")} · ${name}`;
           return (
             <li key={store.id}>
               <a
                 href={store.url!}
                 className="ke-footer-store-badge"
-                aria-label={`${t("appStoresDownload")} · ${name}`}
+                aria-label={label}
                 target={store.id === "huawei" ? "_blank" : undefined}
                 rel="noopener noreferrer"
                 data-ke={`footer-store-${store.id}`}
               >
-                {store.id === "huawei" ? name : (
-                  <span className="ke-footer-store-art">
-                    <BadgeImage store={store.id} locale={locale as ShippedLocale} compact />
-                  </span>
-                )}
+                <span className="ke-footer-store-art">
+                  <BadgeImage
+                    store={store.id}
+                    locale={locale as ShippedLocale}
+                    alt={store.id === "huawei" ? label : ""}
+                  />
+                </span>
               </a>
             </li>
           );

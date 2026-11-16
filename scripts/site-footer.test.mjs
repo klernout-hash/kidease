@@ -207,11 +207,14 @@ test("footer has one app row and no fabricated Huawei download destination", () 
   assert.match(badges, /liveAppStores\(\)/);
   assert.match(badges, /href=\{store\.url!\}/);
   assert.match(badges, /<span className="ke-footer-store-name" data-ke="footer-store-huawei"/);
+  assert.match(badges, /huaweiBadgeAlt\(locale\)/);
+  assert.match(badges, /<BadgeImage/);
+  assert.doesNotMatch(badges, /store\.id === "huawei" \? name/);
   assert.doesNotMatch(badges, /comingSoon|unavailable|appgallery\.huawei\.com|<ShareKidEaseButton/);
   assert.match(badges, /to=\{localePath\("\/get-app", locale\)\}/);
   assert.doesNotMatch(src("src/routes/index.tsx"), /<AppStoreStatus/);
-  assert.match(css, /\.ke-footer-store-badge,\s*\.ke-footer-store-name \{[^}]*width: var\(--ke-footer-store-width\);[^}]*height: 3\.15rem;/);
-  assert.match(css, /\.ke-footer-store-art img \{[^}]*object-fit: contain;/);
+  assert.match(css, /\.ke-footer-store-badge,\s*\.ke-footer-store-name \{[^}]*width: auto;[^}]*height: 3\.15rem;[^}]*border: 1px solid var\(--color-border\);[^}]*border-radius: 0\.5rem;/);
+  assert.match(css, /\.ke-footer-store-art img \{[^}]*height: 100%;[^}]*object-fit: contain;/);
 });
 
 test("EN footer labels stay in use order", () => {

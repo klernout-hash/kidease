@@ -2,20 +2,24 @@ import type { MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { APP_STORES } from "@/lib/app-stores";
 import { AMAZON_APPSTORE_URL, openAmazonListing } from "@/lib/amazon-appstore";
+import { huaweiBadgeAlt } from "@/lib/huawei-badge-alt";
 import type { ShippedLocale } from "@/lib/languages";
 import { useCopy } from "@/lib/use-copy";
 
 /**
  * Official store badges. Files are the artwork each store publishes.
  * Languages without an official badge use the English file.
- * Huawei AppGallery does not publish a badge until a listing exists in
- * AppGallery Connect, so that tile is the store name, not a redrawn mark.
+ * AppGallery's public black badge is English ("EXPLORE IT ON AppGallery").
+ * Huawei also prints a French lockup, but that SVG is not in the public kit,
+ * so French uses the English file. The alt string is still French.
  */
 const BADGES: Record<
-  "amazon" | "apple" | "play" | "samsung" | "microsoft",
-  { src: Partial<Record<ShippedLocale, string>> & { en: string } }
+  "amazon" | "apple" | "play" | "samsung" | "microsoft" | "huawei",
+  { src: Partial<Record<ShippedLocale, string>> & { en: string }; width: number; height: number }
 > = {
   amazon: {
+    width: 572,
+    height: 168,
     src: {
       en: "/store/badges/amazon-en.png",
       fr: "/store/badges/amazon-fr.png",
@@ -25,6 +29,8 @@ const BADGES: Record<
     },
   },
   apple: {
+    width: 120,
+    height: 40,
     src: {
       en: "/store/badges/apple-en.svg",
       fr: "/store/badges/apple-fr.svg",
@@ -36,6 +42,8 @@ const BADGES: Record<
     },
   },
   play: {
+    width: 646,
+    height: 250,
     src: {
       en: "/store/badges/play-en.png",
       fr: "/store/badges/play-fr.png",
@@ -48,12 +56,16 @@ const BADGES: Record<
     },
   },
   samsung: {
+    width: 652,
+    height: 177,
     src: {
       en: "/store/badges/samsung-en.png",
       es: "/store/badges/samsung-es.png",
     },
   },
   microsoft: {
+    width: 161,
+    height: 44,
     src: {
       en: "/store/badges/microsoft-en.svg",
       fr: "/store/badges/microsoft-fr.png",
@@ -63,6 +75,11 @@ const BADGES: Record<
       zh: "/store/badges/microsoft-zh.svg",
       yue: "/store/badges/microsoft-yue.svg",
     },
+  },
+  huawei: {
+    width: 564,
+    height: 168,
+    src: { en: "/store/badges/huawei-en.svg" },
   },
 };
 
@@ -143,10 +160,10 @@ export function StoreBadges({
             <li key={store} className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border" aria-disabled={tileHref ? undefined : "true"}>
               {tileHref ? (
                 <a href={tileHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center" data-ke={`store-link-${store}`}>
-                  {store === "huawei" ? null : <BadgeImage store={store} locale={lang} />}
+                  <BadgeImage store={store} locale={lang} alt={store === "huawei" ? huaweiBadgeAlt(lang) : ""} />
                 </a>
-              ) : store === "huawei" ? null : (
-                <BadgeImage store={store} locale={lang} muted />
+              ) : (
+                <BadgeImage store={store} locale={lang} muted alt={store === "huawei" ? huaweiBadgeAlt(lang) : ""} />
               )}
               <p className={store === "huawei" && !tileHref ? "text-sm font-medium" : "mt-2 text-sm font-medium"}>{names[store]}</p>
               <p className="text-sm text-muted">{configured?.live ? t("storeAvailableNow") : t("storeComingSoon")}</p>
@@ -163,17 +180,22 @@ export function BadgeImage({
   locale,
   muted,
   compact = false,
+  alt = "",
 }: {
   store: keyof typeof BADGES;
   locale: ShippedLocale;
   muted?: boolean;
   compact?: boolean;
+  alt?: string;
 }) {
+  const box = BADGES[store];
   return (
     <img
       src={badgeSrc(store, locale)}
-      alt=""
-      className={`${compact ? "h-8" : "h-10"} w-auto max-w-full${muted ? " opacity-60 grayscale" : ""}`}
+      alt={alt}
+      width={box.width}
+      height={box.height}
+      className={`ke-store-badge ${compact ? "h-8" : "h-10"} w-auto max-w-none${muted ? " opacity-60 grayscale" : ""}`}
       decoding="async"
     />
   );
