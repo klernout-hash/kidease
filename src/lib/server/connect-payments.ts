@@ -98,9 +98,21 @@ async function stripeCallFor(sql: Sql, userId: string, daycareId?: string | null
       : false,
     liveEnabled: connectLiveEnabled(),
   });
-  if (mode === "live" && !connectLiveEnabled()) return { ok: false, reason: "live" };
-  const creds = stripeCredentialsForMode(mode, process.env);
+  const qa = Boolean(
+    payerUsesTestStripe({ email: payer?.email, isTest: payer?.is_test }) ||
+      (centre &&
+        centreUsesTestStripe({
+          id: centre.id,
+          slug: centre.slug,
+          visibility: centre.visibility,
+          isTest: centre.is_test,
+          isDemo: centre.is_demo,
+        })),
+  );
+  if (!qa && mode === "live" && !connectLiveEnabled()) return { ok: false, reason: "live" };
+  const creds = stripeCredentialsForMode(qa ? "test" : mode, process.env);
   if (!creds.ok) return { ok: false, reason: "missing" };
+  if (qa && creds.secret.startsWith("sk_live_")) return { ok: false, reason: "missing" };
   return creds;
 }
 

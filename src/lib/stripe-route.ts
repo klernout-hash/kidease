@@ -106,3 +106,8 @@ export function stripeCredentialsForMode(mode: PaymentStripeMode, env: StripeRou
   }
   return { ok: true, mode, secret: liveSecret, publishable: livePublishable };
 }
+
+/** A QA account or is_test centre must never be handed a live secret. */
+export function qaLiveChargeBlocked(secret: string, qa: boolean): boolean {
+  return qa && secret.trim().startsWith("sk_live_");
+}

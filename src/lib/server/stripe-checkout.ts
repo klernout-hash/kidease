@@ -145,10 +145,10 @@ export type StripeCheckoutInput = {
   /** KidEase service fee in cents. Equals application_fee_amount. Not tax. */
   applicationFeeCents?: number;
   serviceFeeLabel?: string | null;
-  /** QA and hidden centres pass the test secret. Live payments omit it. */
+  /** Test secret for a QA account or is_test centre. Live payments omit it. */
   secret?: string;
-  /** False keeps a real parent's live customer id during a test-mode charge. */
-  persistCustomer?: boolean;
+  /** When set, a live secret is refused before any Stripe call. */
+  qa?: boolean;
 };
 
 export type StripeCheckoutSession = {
@@ -333,15 +333,16 @@ export async function stripeRequest<T>(
   path: string,
   body: Record<string, unknown>,
   method: "POST" | "GET" = "POST",
-  opts?: { idempotencyKey?: string; secret?: string },
+  opts?: { idempotencyKey?: string; secret?: string; qa?: boolean },
 ): Promise<T> {
   if (method !== "GET") {
     // No @/ import: node tests load this file without the Vite alias.
     // The view-as frame installs this hook before a signed-in request runs.
     (globalThis as { __kideaseViewAsSideEffect__?: (action: "payment") => void }).__kideaseViewAsSideEffect__?.("payment");
   }
-  const key = (opts?.secret || process.env.STRIPE_SECRET_KEY || "").trim();
+  const key = (opts?.secret || (opts?.qa ? process.env.STRIPE_SECRET_KEY_TEST : process.env.STRIPE_SECRET_KEY) || "").trim();
   if (!key) throw new Error("Stripe is not configured");
+  if (opts?.qa && key.startsWith("sk_live_")) throw new Error("QA charges cannot use live Stripe");
   const url = path.startsWith("http") ? path : `https://api.stripe.com/v1${path}`;
   const headers: Record<string, string> = {
     Authorization: `Bearer ${key}`,
@@ -377,13 +378,13 @@ export async function createStripeCheckoutSession(input: StripeCheckoutInput): P
     email: input.customerEmail,
     userId: input.userId,
     secret: input.secret,
-    persist: input.persistCustomer !== false,
+    persist: !input.qa,
   });
   const json = await stripeRequest<StripeCheckoutSession>(
     "/checkout/sessions",
     checkoutSessionBody({ ...input, customerId, customerEmail: null }),
     "POST",
-    { secret: input.secret },
+    { secret: input.secret, qa: input.qa },
   );
   if (!json.id) throw new Error("Stripe checkout failed");
   return {

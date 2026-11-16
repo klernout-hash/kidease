@@ -5,6 +5,7 @@ import {
   centreUsesTestStripe,
   payerUsesTestStripe,
   paymentStripeMode,
+  qaLiveChargeBlocked,
   stripeCredentialsForMode,
 } from "../src/lib/stripe-route.ts";
 
@@ -77,7 +78,7 @@ test("QA routing refuses the live secret when the test keys are missing", () => 
 
 test("centre charges pass the process environment into the helper", () => {
   const source = readFileSync(new URL("../src/lib/server/connect-payments.ts", import.meta.url), "utf8");
-  assert.match(source, /stripeCredentialsForMode\(mode, process\.env\)/);
+  assert.match(source, /stripeCredentialsForMode\(qa \? "test" : mode, process\.env\)/);
 });
 
 test("with no env argument the helper reads the process environment", () => {
@@ -101,4 +102,15 @@ test("with no env argument the helper reads the process environment", () => {
       else process.env[name] = value;
     }
   }
+});
+
+test("an is_test centre or QA account can never be handed a live secret", () => {
+  assert.equal(qaLiveChargeBlocked("sk_live_real", true), true);
+  assert.equal(qaLiveChargeBlocked("sk_test_qa", true), false);
+  assert.equal(qaLiveChargeBlocked("sk_live_real", false), false);
+  const billing = readFileSync(new URL("../src/lib/server/billing.ts", import.meta.url), "utf8");
+  const checkout = readFileSync(new URL("../src/lib/server/stripe-checkout.ts", import.meta.url), "utf8");
+  assert.match(billing, /if \(qa && !qaSecret\) throw new Error\("missing_test_key"\)/);
+  assert.match(billing, /secret: qaSecret/);
+  assert.match(checkout, /QA charges cannot use live Stripe/);
 });
