@@ -18,6 +18,7 @@ export const AI_REMOTE_FLAGS = [
   AI_FLAGS.parentHelper,
   AI_FLAGS.translate,
   AI_FLAGS.reviewSummary,
+  AI_FLAGS.tourAssistant,
 ] as const;
 
 /** Admin tools. Missing or unreachable stays off. Not part of the 50% split. */

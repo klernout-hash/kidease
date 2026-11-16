@@ -3575,5 +3575,12 @@
   "attentionOfferWaiting": "Platzangebot wartet auf die Eltern",
   "attentionOverdueInvoice": "Überfällige Rechnung",
   "attentionStaffCert": "Mitarbeiterzertifikat läuft ab",
-  "attentionListingGap": "Schritt im Eintrag noch offen"
+  "attentionListingGap": "Schritt im Eintrag noch offen",
+  "tourAssistantTitle": "Frage zu dieser Einrichtung",
+  "tourAssistantPrompt": "Frage nach den angegebenen Gebühren, Zeiten, Altern oder einem offenen Besichtigungstermin.",
+  "tourAssistantSend": "Fragen",
+  "tourAssistantConfirm": "Diese Besichtigungsanfrage senden",
+  "tourAssistantSent": "Die Anfrage ist gesendet. Die Einrichtung sieht sie unter Anfragen.",
+  "tourAssistantSignIn": "Melde dich mit einem Elternkonto an, um diese Besichtigung zu senden.",
+  "tourAssistantSlotGone": "Diese Zeit ist nicht mehr frei. Wähle eine andere angegebene Zeit."
 }

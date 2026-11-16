@@ -13,6 +13,7 @@ export const AI_FLAGS = {
   parentHelper: "parent-helper",
   translate: "ai-translate",
   reviewSummary: "ai-review-summary",
+  tourAssistant: "ai-tour-assistant",
   truthChecker: "ai-truth-checker",
   licenceReader: "ai-licence-reader",
   spamFilter: "ai-spam-filter",
@@ -38,6 +39,7 @@ const FALLBACK_OFF = new Set<AiFlag>([
   AI_FLAGS.parentHelper,
   AI_FLAGS.translate,
   AI_FLAGS.reviewSummary,
+  AI_FLAGS.tourAssistant,
 ]);
 
 export function aiFlagRolloutPercent(flag: AiFlag): number {

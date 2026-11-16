@@ -3575,5 +3575,12 @@
   "attentionOfferWaiting": "Alok ng puwesto na hinihintay ang magulang",
   "attentionOverdueInvoice": "Lampas na ang invoice",
   "attentionStaffCert": "Mag-e-expire ang sertipiko ng staff",
-  "attentionListingGap": "Hakbang sa listahan na tatapusin"
+  "attentionListingGap": "Hakbang sa listahan na tatapusin",
+  "tourAssistantTitle": "Magtanong tungkol sa sentrong ito",
+  "tourAssistantPrompt": "Magtanong tungkol sa nakapaskil na bayad, oras, edad, o bukas na oras ng tour.",
+  "tourAssistantSend": "Magtanong",
+  "tourAssistantConfirm": "Ipadala ang kahilingang ito sa tour",
+  "tourAssistantSent": "Naipadala na ang kahilingan. Makikita ito ng sentro sa Mga kahilingan.",
+  "tourAssistantSignIn": "Mag-sign in gamit ang account ng magulang para ipadala ang tour na ito.",
+  "tourAssistantSlotGone": "Hindi na bukas ang oras na iyon. Pumili ng ibang nakapaskil na oras."
 }

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { TourAssistant } from "@/components/tour-assistant";
+import { tourAssistantFactsFromListing } from "@/lib/ai/tour-assistant";
 import { Button } from "@/components/ui/button";
 import { listPublicTourSlots } from "@/lib/server/tour-calendar";
 import { useCopy } from "@/lib/use-copy";
@@ -89,6 +91,28 @@ export function ListingTourTimes({
           {t("requestTour")}
         </Button>
       ) : null}
+      <TourAssistant
+        daycareId={daycare.id}
+        facts={tourAssistantFactsFromListing({
+          centre: daycare.name,
+          locale: loc,
+          hours: loc === "fr" ? daycare.hoursFr || daycare.hours : daycare.hours,
+          ageMinMonths: daycare.ageMinMonths,
+          ageMaxMonths: daycare.ageMaxMonths,
+          infantMonthly: daycare.infantMonthly,
+          toddlerMonthly: daycare.toddlerMonthly,
+          preschoolMonthly: daycare.preschoolMonthly,
+          slots: slots
+            .filter((slot) => slot.remaining > 0)
+            .map((slot) => ({
+              id: slot.id,
+              label: formatTourSlotRange(slot, loc),
+              remaining: slot.remaining,
+              date: slot.date,
+              time: slot.startTime,
+            })),
+        })}
+      />
     </section>
   );
 }

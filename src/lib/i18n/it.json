@@ -3575,5 +3575,12 @@
   "attentionOfferWaiting": "Offerta di posto in attesa del genitore",
   "attentionOverdueInvoice": "Fattura scaduta",
   "attentionStaffCert": "Certificato del personale in scadenza",
-  "attentionListingGap": "Passo della scheda da completare"
+  "attentionListingGap": "Passo della scheda da completare",
+  "tourAssistantTitle": "Chiedi di questo centro",
+  "tourAssistantPrompt": "Chiedi delle tariffe, degli orari, delle età pubblicate o di un orario di visita aperto.",
+  "tourAssistantSend": "Chiedi",
+  "tourAssistantConfirm": "Invia questa richiesta di visita",
+  "tourAssistantSent": "La richiesta è inviata. Il centro la vedrà in Richieste.",
+  "tourAssistantSignIn": "Accedi con un account genitore per inviare questa visita.",
+  "tourAssistantSlotGone": "Quell’orario non è più libero. Scegline un altro tra quelli pubblicati."
 }
