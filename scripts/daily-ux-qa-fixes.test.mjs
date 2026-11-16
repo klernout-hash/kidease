@@ -244,7 +244,7 @@ test("shortlist chips wrap; phone desk nav is the hamburger, not a wrapping pill
 test("search map stays deferred and loader respects typed city q", () => {
   const search = src("src/routes/search.tsx");
   assert.match(search, /lazy\(\(\) => import\("@\/components\/map-view"\)/);
-  assert.match(search, /if \(view === "map"\) setMapEnabled\(true\)/);
+  assert.match(search, /if \(view === "map" \|\| showSplitMap\) setMapEnabled\(true\)/);
   assert.match(search, /mapEnabled \? \(/);
   assert.match(search, /const \[mapEnabled, setMapEnabled\] = useState\(false\)/);
 });

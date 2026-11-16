@@ -4078,3 +4078,7 @@ html[data-look="clean"]:has([data-ke="notification-bell"]) [data-ke="menu-trigge
     white-space: nowrap;
   }
 }
+/* Search with the map beside it: the list keeps two columns so cards stay a good size. */
+html[data-look="clean"] [data-ke="search-split"]:has(> [data-ke="search-split-map"]) .ke-result-stack {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
