@@ -92,7 +92,7 @@
   "deskNavTodayHint": "现在需要您处理的事",
   "deskNavMessagesHint": "家长咨询与参观",
   "deskNavToursHint": "家庭可以参观的时间",
-  "deskNavCalendarHint": "Open spots by day",
+  "deskNavCalendarHint": "按天查看空位",
   "deskNavListings": "我的列表",
   "deskNavListingsHint": "名额、照片、费用",
   "deskNavInsights": "统计",
@@ -3213,7 +3213,6 @@
   "alertSummary": "{total} 项提醒中已开启 {on} 项",
   "navMenu": "菜单",
   "navCalendar": "日历",
-  "deskNavCalendarHint": "按天查看空位",
   "menuEarningsMonth": "本月收入",
   "menuReviews": "评价",
   "menuCreateListing": "新建园所简介",
@@ -3551,5 +3550,13 @@
   "employeeResend": "再次发送邀请",
   "employeeResent": "邀请已再次发送。",
   "employeeResendHeld": "该邀请没有通过电子邮件发送。",
-  "employeeResendFailed": "无法再次发送该邀请。"
+  "employeeResendFailed": "无法再次发送该邀请。",
+  "parentRequestWaiting": "等待中心",
+  "parentRequestConfirmed": "已确认",
+  "parentRequestDeclined": "已拒绝",
+  "parentRequestEnrolled": "已入读",
+  "parentRequestCancelled": "已取消",
+  "parentRequestEnrolment": "报名",
+  "parentRequestSentOn": "发送于",
+  "parentRequestVisitOn": "参观日期"
 }

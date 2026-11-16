@@ -565,6 +565,20 @@ export function ParentDesk({
                 <ParentRequestsList items={parentRequestRows({ leads, tours, bookings })} />
               </Suspense>
             </div>
+            {bookings
+              .filter((b) => b.status === "accepted" && b.monthlyAmount > 0 && b.paymentStatus !== "paid" && desks?.stripeLive)
+              .filter((b) => !bills.some((bill) => bill.bookingId === b.id && billIsOpen(bill.status)))
+              .map((b) => (
+                <div key={b.id} className="mt-3 max-w-prose rounded-xl border border-border bg-surface p-4">
+                  <p className="text-sm font-medium">{b.daycareName}</p>
+                  <p className="mt-1 text-sm text-muted">{t("awaitingCentreBill")}</p>
+                  <Button size="sm" variant="secondary" className="mt-3 min-h-11" asChild>
+                    <Link to={parentDeskPath(pathname)} search={{ tab: "payments" }}>
+                      {t("payUseBill")}
+                    </Link>
+                  </Button>
+                </div>
+              ))}
           </section>
         </div>
       ) : null}

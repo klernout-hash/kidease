@@ -92,7 +92,7 @@
   "deskNavTodayHint": "ما يتطلب اهتمامك الآن",
   "deskNavMessagesHint": "استفسارات أولياء الأمور + الجولات",
   "deskNavToursHint": "متى يمكن للأسر الزيارة",
-  "deskNavCalendarHint": "Open spots by day",
+  "deskNavCalendarHint": "أماكن شاغرة حسب اليوم",
   "deskNavListings": "قوائمي",
   "deskNavListingsHint": "الأماكن والصور والرسوم",
   "deskNavInsights": "الإحصاءات",
@@ -3213,7 +3213,6 @@
   "alertSummary": "{on} من {total} تنبيهات مفعّلة",
   "navMenu": "القائمة",
   "navCalendar": "التقويم",
-  "deskNavCalendarHint": "أماكن شاغرة حسب اليوم",
   "menuEarningsMonth": "أرباح هذا الشهر",
   "menuReviews": "التقييمات",
   "menuCreateListing": "إنشاء ملف جديد",
@@ -3551,5 +3550,13 @@
   "employeeResend": "إعادة إرسال الدعوة",
   "employeeResent": "أُعيد إرسال الدعوة.",
   "employeeResendHeld": "لم تُرسل تلك الدعوة بالبريد.",
-  "employeeResendFailed": "تعذر إعادة إرسال تلك الدعوة."
+  "employeeResendFailed": "تعذر إعادة إرسال تلك الدعوة.",
+  "parentRequestWaiting": "بانتظار المركز",
+  "parentRequestConfirmed": "مؤكّد",
+  "parentRequestDeclined": "مرفوض",
+  "parentRequestEnrolled": "مسجّل",
+  "parentRequestCancelled": "ملغى",
+  "parentRequestEnrolment": "تسجيل",
+  "parentRequestSentOn": "أُرسلت",
+  "parentRequestVisitOn": "تاريخ الزيارة"
 }

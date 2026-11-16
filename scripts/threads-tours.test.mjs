@@ -146,7 +146,7 @@ test("migration and wiring: tour table, ungated send, listing + desks", () => {
 
   const parent = src("src/components/parent-desk.tsx");
   assert.match(parent, /listTourRequests/);
-  assert.match(parent, /TourCard/);
+  assert.match(parent, /ParentRequestsList/);
 
   const notify = src("src/lib/server/notify.ts");
   assert.match(notify, /tour_request/);
