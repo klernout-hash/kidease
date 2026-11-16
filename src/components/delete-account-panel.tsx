@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
+import { localePath } from "@/lib/locale-path";
 import { signOut } from "@/lib/auth/client";
 import { DELETE_CONFIRM_PHRASE } from "@/lib/account-delete";
 import { deleteAccount } from "@/lib/server/family";
@@ -20,12 +21,15 @@ export function DeleteAccountPanel({ signedIn }: { signedIn: boolean }) {
       <div className="mt-8 space-y-4 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
         <p className="text-sm text-muted">{t("deleteAccountGuestLead")}</p>
         <Button size="lg" className="h-14 min-h-14 w-full px-7 text-base" asChild>
-          <Link to="/login" search={parentLoginSearch("/account?tab=profile&section=delete")}>
+          <Link
+            to={locale === "fr" ? "/fr/login" : "/login"}
+            search={parentLoginSearch(locale === "fr" ? "/fr/account?tab=profile&section=delete" : "/account?tab=profile&section=delete")}
+          >
             {t("deleteAccountSignIn")}
           </Link>
         </Button>
         <p className="text-xs text-subtle">
-          <Link to="/unsubscribe" search={{ token: undefined, channel: undefined }} className="underline-offset-4 hover:underline">
+          <Link to={localePath("/unsubscribe", locale)} search={{ token: undefined, channel: undefined }} className="underline-offset-4 hover:underline">
             {t("unsubscribe")}
           </Link>
         </p>

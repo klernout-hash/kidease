@@ -17,6 +17,8 @@ test("PIPEDA / store-review delete-account URL is a real public route", () => {
   assert.equal(existsSync(join(root, "src/routes/delete-account.tsx")), true);
   assert.equal(existsSync(join(root, "src/components/delete-account-panel.tsx")), true);
   assert.match(src("src/routes/delete-account.tsx"), /createFileRoute\("\/delete-account"\)/);
+  assert.match(src("src/routes/delete-account.tsx"), /accountDeskPath/);
+  assert.doesNotMatch(src("src/routes/delete-account.tsx"), /Navigate to="\/account"/);
   assert.match(src("src/routeTree.gen.ts"), /id: '\/delete-account'/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /deleteAccountGuestLead:/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /deleteAccountSignIn:/);

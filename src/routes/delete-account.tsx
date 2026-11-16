@@ -1,7 +1,8 @@
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { accountDeskPath } from "@/lib/desk-nav";
 import { localePath } from "@/lib/locale-path";
 import { pageSeoHead, withNoindex } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
@@ -18,9 +19,10 @@ export const Route = createFileRoute("/delete-account")({
 export function DeleteAccountPage() {
   const { t, locale } = useCopy();
   const { user, isPending } = useCurrentUserState();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   if (!isPending && user) {
-    return <Navigate to="/account" search={{ tab: "profile", section: "delete" }} />;
+    return <Navigate to={accountDeskPath(pathname)} search={{ tab: "profile", section: "delete" }} />;
   }
 
   return (

@@ -8,6 +8,7 @@ import { staffTimesheetsEnabled } from "../src/lib/features.ts";
 import { visibleDeskNav } from "../src/lib/desk-nav.ts";
 import {
   formatToronto,
+  formatWeekSpan,
   planClockIn,
   planClockOut,
   planTimesheetEdit,
@@ -78,6 +79,9 @@ test("weekly totals use a Monday week in Toronto and the CSV has no pay columns"
   assert.equal(week.startIso, "2026-11-02T05:00:00.000Z");
   assert.equal(week.endIso, "2026-11-09T05:00:00.000Z");
   assert.equal(week.label, "2026-11-02 – 2026-11-08");
+  assert.equal(formatWeekSpan(week.label, "fr"), "2 nov. 2026 – 8 nov. 2026");
+  assert.match(formatWeekSpan(week.label, "en"), /Nov/);
+  assert.doesNotMatch(formatWeekSpan(week.label, "fr"), /\bto\b/);
   assert.equal(formatToronto("2026-11-02T13:00:00.000Z"), "2026-11-02 08:00");
   assert.equal(torontoLocalToIso("2026-11-02T08:00"), "2026-11-02T13:00:00.000Z");
   const entries = [

@@ -378,7 +378,7 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
     { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "listings", "calendar", "insights", "top-rated", "requests", "leads", "tours", "messages"] },
     { id: "business", label: "Business", labelKey: "navBusiness", open: true, itemIds: ["money", "promote"] },
     { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "hours", "screening", "learning", "tools", "centre-care"] },
-    { id: "compliance", label: "Compliance", labelKey: "navCompliance", itemIds: ["licence", "centre-documents", "contract"] },
+    { id: "compliance", label: "Compliance", labelKey: "navCompliance", open: true, itemIds: ["licence", "centre-documents", "contract"] },
     { id: "grow", label: "Grow", labelKey: "navGrow", itemIds: ["post-job", "add", "claim"] },
     { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "subscription", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },
