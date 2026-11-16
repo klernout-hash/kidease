@@ -1758,6 +1758,9 @@ export const en = {
     jobsLead: "KidEase is not a job board yet. We do not list openings we cannot verify.",
     jobsHonesty:
       "Leave a note if you work in licensed child care in Canada. When a centre sends an opening we can share, we email people who asked. This page has no invented job inventory.",
+    jobsLeadLive: "Open roles from licensed centres in Canada are listed here.",
+    jobsHonestyLive: "KidEase only shows a role a centre posted. If the list is empty, no centre has posted one.",
+    jobsEmptyLive: "No openings are posted yet.",
     jobsCity: "City",
     jobsRole: "Role you want",
     jobsNote: "Note",

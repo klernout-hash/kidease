@@ -249,8 +249,14 @@ export function inclusiveFiltersEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_INCLUSIVE_FILTERS", env);
 }
 
-/** ECE post, apply, and applicants. Default OFF. No charge. */
+/**
+ * ECE post, apply, and applicants. Default OFF. No charge.
+ * An explicit env value wins. PostHog cannot turn off FEATURE_ECE_JOBS=1.
+ */
 export function eceJobsEnabled(env?: EnvMap): boolean {
+  const mapped = env ?? (typeof process !== "undefined" ? (process.env as EnvMap) : {});
+  const raw = mapped.FEATURE_ECE_JOBS;
+  if (raw != null && String(raw).trim() !== "") return envFlagOn(String(raw));
   return evaluateFeatureFlag("FEATURE_ECE_JOBS", env);
 }
 

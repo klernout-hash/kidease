@@ -15,10 +15,11 @@ export function supportValidateSearch(s: Record<string, unknown>) {
   return {};
 }
 
-export function supportHead() {
+export function supportHead({ matches }: { matches?: Array<{ pathname: string }> } = {}) {
+  const french = (matches ?? []).some((item) => item.pathname.startsWith("/fr"));
   return {
     meta: [
-      { title: "Support · KidEase" },
+      { title: french ? "Soutien · KidEase" : "Support · KidEase" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   };

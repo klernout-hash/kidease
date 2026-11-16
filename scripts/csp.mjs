@@ -42,6 +42,7 @@ export const CSP_SCRIPT_HOSTS = [
   "https://maps.gstatic.com",
   "https://js.stripe.com",
   "https://challenges.cloudflare.com",
+  "https://*.challenges.cloudflare.com",
   "https://us.i.posthog.com",
   "https://us-assets.i.posthog.com",
 ];
@@ -56,6 +57,7 @@ export const CSP_CONNECT_HOSTS = [
   "https://*.kidease.ca",
   "https://kidease.ca",
   "https://challenges.cloudflare.com",
+  "https://*.challenges.cloudflare.com",
   "https://us.i.posthog.com",
   "https://us-assets.i.posthog.com",
   "https://*.ingest.sentry.io",
@@ -69,6 +71,7 @@ export const CSP_FRAME_HOSTS = [
   "https://js.stripe.com",
   "https://hooks.stripe.com",
   "https://challenges.cloudflare.com",
+  "https://*.challenges.cloudflare.com",
 ];
 
 /** Public listing photos. Production is media.kidease.ca; r2.dev is optional/dev. */
@@ -116,7 +119,7 @@ export function buildContentSecurityPolicy(nonce) {
     "media-src 'self' blob: mediastream:",
     "worker-src 'self' blob: data:",
     `frame-src blob: data: ${CSP_FRAME_HOSTS.join(" ")}`,
-    "child-src blob: data: https://challenges.cloudflare.com",
+    "child-src blob: data: https://challenges.cloudflare.com https://*.challenges.cloudflare.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self' https://accounts.google.com",

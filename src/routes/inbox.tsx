@@ -22,10 +22,23 @@ export const inboxBeforeLoad = ({
 
 export const inboxValidateSearch = (s: Record<string, unknown>) => parseInboxSearch(s);
 
-export function inboxHead({ match }: { match: { search: { view?: string } } }) {
+export function inboxHead({
+  match,
+}: {
+  match: { pathname?: string; search: { view?: string } };
+}) {
+  const french = String(match.pathname || "").startsWith("/fr");
+  const family = match.search.view === "family";
+  const title = french
+    ? family
+      ? "Messages de la famille · KidEase"
+      : "Messages · KidEase"
+    : family
+      ? "Family messages · KidEase"
+      : "Messages · KidEase";
   return {
     meta: [
-      { title: match.search.view === "family" ? "Family messages · KidEase" : "Messages · KidEase" },
+      { title },
       { name: "robots", content: "noindex, nofollow" },
     ],
   };

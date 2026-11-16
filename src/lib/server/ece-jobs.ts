@@ -18,7 +18,7 @@ import { listAccessibleDaycareIds } from "./centre-access";
 
 export const eceJobsFlag = createServerFn({ method: "GET" }).handler(async () => eceJobsEnabled());
 
-export const listPublicEceJobs = createServerFn({ method: "GET" }).handler(async () => {
+export async function publicEceJobRows() {
   if (!eceJobsEnabled()) return [];
   const sql = await getSql();
   const rows = await sql<{
@@ -68,7 +68,9 @@ export const listPublicEceJobs = createServerFn({ method: "GET" }).handler(async
     slug: row.slug,
     city: row.city || "",
   }));
-});
+}
+
+export const listPublicEceJobs = createServerFn({ method: "GET" }).handler(async () => publicEceJobRows());
 
 export const postEceJob = createServerFn({ method: "POST" })
   .middleware([authMiddleware])

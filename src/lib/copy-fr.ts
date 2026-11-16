@@ -1764,6 +1764,9 @@ export const fr = {
     jobsLead: "KidEase n’est pas encore un babillard d’emplois. Nous n’affichons pas de postes que nous ne pouvons pas vérifier.",
     jobsHonesty:
       "Laissez une note si vous travaillez en garde permise au Canada. Lorsqu’un centre envoie une ouverture que nous pouvons partager, nous écrivons aux personnes qui ont demandé. Cette page n’invente aucun inventaire de postes.",
+    jobsLeadLive: "Les postes ouverts des centres autorisés au Canada sont ici.",
+    jobsHonestyLive: "KidEase montre seulement un poste qu’un centre a publié. Si la liste est vide, aucun centre n’en a publié.",
+    jobsEmptyLive: "Aucun poste n’est publié pour le moment.",
     jobsCity: "Ville",
     jobsRole: "Poste recherché",
     jobsNote: "Note",

@@ -58,13 +58,19 @@ export function EceJobApply({ jobId }: { jobId: string }) {
   );
 }
 
-export function EceJobBoard() {
+export function EceJobBoard({
+  initialEnabled = false,
+  initialJobs = [],
+}: {
+  initialEnabled?: boolean;
+  initialJobs?: PublicJob[];
+} = {}) {
   const { locale } = useCopy();
   const { celebrate } = useSuccessConfirm();
   const lang = locale === "fr" ? "fr" : "en";
   const copy = eceJobCopy(lang);
-  const [enabled, setEnabled] = useState(false);
-  const [jobs, setJobs] = useState<PublicJob[]>([]);
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [jobs, setJobs] = useState<PublicJob[]>(initialJobs);
   const [centres, setCentres] = useState<{ id: string; name: string }[]>([]);
   const [daycareId, setDaycareId] = useState("");
   const [role, setRole] = useState("");
@@ -73,22 +79,37 @@ export function EceJobBoard() {
   const [applicants, setApplicants] = useState<{ id: string; role: string; name: string; email: string; note: string }[]>([]);
 
   useEffect(() => {
+    let live = true;
+    const load = async (on: boolean) => {
+      if (!live) return;
+      setEnabled(on);
+      if (!on) return;
+      const [open, mine, people] = await Promise.all([
+        listPublicEceJobs().catch(() => initialJobs),
+        listMyCentresForJobs().catch(() => []),
+        listMyEceApplicants().catch(() => []),
+      ]);
+      if (!live) return;
+      setJobs(open);
+      setCentres(mine);
+      setDaycareId(mine[0]?.id || "");
+      setApplicants(people);
+    };
+    if (initialEnabled) {
+      void load(true);
+      return () => {
+        live = false;
+      };
+    }
     void eceJobsFlag()
-      .then(async (on) => {
-        setEnabled(Boolean(on));
-        if (!on) return;
-        const [open, mine, people] = await Promise.all([
-          listPublicEceJobs(),
-          listMyCentresForJobs().catch(() => []),
-          listMyEceApplicants().catch(() => []),
-        ]);
-        setJobs(open);
-        setCentres(mine);
-        setDaycareId(mine[0]?.id || "");
-        setApplicants(people);
-      })
-      .catch(() => setEnabled(false));
-  }, []);
+      .then((on) => load(Boolean(on)))
+      .catch(() => {
+        if (live) setEnabled(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [initialEnabled]);
 
   if (!enabled) return null;
 
@@ -113,7 +134,7 @@ export function EceJobBoard() {
           ))}
         </ul>
       ) : (
-        <p className="mt-3 text-sm text-muted">{copy.empty}</p>
+        <p className="mt-3 text-sm text-muted" data-ke="ece-jobs-empty">{copy.openEmpty}</p>
       )}
       {centres.length ? (
         <form
