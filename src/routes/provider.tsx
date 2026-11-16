@@ -41,7 +41,7 @@ import { CentreFamilyDocs } from "@/components/family-vault";
 import { FamilyEmailPreview, FormSharePreview, TourFollowupPreview } from "@/components/phase0-mail-preview";
 import { EmptyState } from "@/components/empty-state";
 import { TodayUrgencyHome } from "@/components/today-urgency-home";
-import { providerDeskPath, type DaycareDesk } from "@/lib/desk-nav";
+import { providerDeskFromQuery, providerDeskPath, type DaycareDesk } from "@/lib/desk-nav";
 import { capturePostHogEvent } from "@/lib/posthog";
 import type { LeadRequest } from "@/lib/lead-requests";
 import { listCentrePipeline } from "@/lib/server/crm-pipeline";
@@ -269,13 +269,15 @@ export function ProviderPage() {
   const search = useSearch({ strict: false }) as ReturnType<typeof providerValidateSearch>;
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const searchStr = useRouterState({ select: (s) => s.location.searchStr });
   const deskPath = providerDeskPath(pathname);
+  const urlDesk = providerDeskFromQuery(search.desk, searchStr);
   // Pages nested under this one (provider.<name>.tsx). Each must show its own
   // screen through the outlet, not the Today desk.
   const childRoute = ["/provider/subscription", "/provider/leads", "/provider/families"].some(
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
-  const [desk, setDesk] = useState<DaycareDesk>(search.desk ?? DEFAULT_DESK);
+  const [desk, setDesk] = useState<DaycareDesk>(urlDesk);
   const [listings, setListings] = useState<Daycare[]>([]);
   const [showTestListings, setShowTestListings] = useState(false);
   const [stats, setStats] = useState<
@@ -364,14 +366,14 @@ export function ProviderPage() {
 
   useEffect(() => {
     if (childRoute) return;
-    const next = search.desk ?? DEFAULT_DESK;
+    const next = providerDeskFromQuery(search.desk, searchStr);
     if (OWNER_DESKS.has(next) && deskSettled && !centreOwner) {
       setDesk(DEFAULT_DESK);
       void navigate({ to: deskPath, search: { desk: "today" }, replace: true });
       return;
     }
     setDesk(next);
-  }, [search.desk, centreOwner, deskSettled, navigate, childRoute, deskPath]);
+  }, [search.desk, searchStr, centreOwner, deskSettled, navigate, childRoute, deskPath]);
 
   useEffect(() => {
     const focus = search.focus;

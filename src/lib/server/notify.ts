@@ -723,6 +723,7 @@ export async function notifyThreadParty(p: {
   preheader?: string | null;
   threadUrl: string;
   daycareName: string;
+  aboutTestListing?: boolean;
 }) {
   const to = (p.to || "").trim();
   if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
@@ -760,7 +761,7 @@ export async function notifyThreadParty(p: {
 </body></html>`;
   try {
     const status = await deliverEmail(p.subject, text, html, to, ADMIN_EMAIL, {
-      aboutTestListing: isAdminOnlyListing({ name: p.daycareName }),
+      aboutTestListing: p.aboutTestListing === true || isAdminOnlyListing({ name: p.daycareName }),
       branded: brandedNotice({
         heading: p.subject,
         text,

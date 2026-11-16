@@ -92,7 +92,7 @@
   "deskNavTodayHint": "而家有咩要你處理",
   "deskNavMessagesHint": "家長查詢 + 參觀",
   "deskNavToursHint": "家庭幾時可以嚟參觀",
-  "deskNavCalendarHint": "Open spots by day",
+  "deskNavCalendarHint": "按日睇空位",
   "deskNavListings": "我啲刊登",
   "deskNavListingsHint": "名額、相片、費用",
   "deskNavInsights": "統計",
@@ -3213,7 +3213,6 @@
   "alertSummary": "{total} 項提醒入面開咗 {on} 項",
   "navMenu": "菜單",
   "navCalendar": "日曆",
-  "deskNavCalendarHint": "按日睇空位",
   "menuEarningsMonth": "本月收入",
   "menuReviews": "評價",
   "menuCreateListing": "開新園所簡介",
@@ -3551,5 +3550,13 @@
   "employeeResend": "再寄邀請",
   "employeeResent": "邀請已再寄出。",
   "employeeResendHeld": "呢個邀請冇用電郵寄出。",
-  "employeeResendFailed": "無法再寄呢個邀請。"
+  "employeeResendFailed": "無法再寄呢個邀請。",
+  "parentRequestWaiting": "等緊中心",
+  "parentRequestConfirmed": "已確認",
+  "parentRequestDeclined": "已拒絕",
+  "parentRequestEnrolled": "已入學",
+  "parentRequestCancelled": "已取消",
+  "parentRequestEnrolment": "報名",
+  "parentRequestSentOn": "已送出",
+  "parentRequestVisitOn": "參觀日期"
 }

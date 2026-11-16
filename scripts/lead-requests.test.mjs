@@ -21,7 +21,10 @@ import {
   parseListingAsk,
   tallyLeadCounts,
   tourStatusToLead,
+  displayedLeadStatus,
 } from "../src/lib/lead-requests.ts";
+import { providerDeskFromQuery } from "../src/lib/desk-nav.ts";
+import { parentRequestRows, parentRequestStatusKey } from "../src/lib/parent-request-rows.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -218,4 +221,92 @@ test("admin can see lead counts; no GHL and no FCM in this track PR", () => {
   assert.match(server, /notifyThreadParty/);
   assert.doesNotMatch(server, /gohighlevel|leadconnector|firebase|fcm|sendEachForMulticast/i);
   assert.doesNotMatch(src("src/lib/lead-requests.ts"), /FEATURE_PUSH|sendEachForMulticast/);
+});
+
+test("confirming a tour lead keeps the decision after the tour is still pending", () => {
+  assert.equal(displayedLeadStatus("confirmed", "pending"), "confirmed");
+  assert.equal(displayedLeadStatus("declined", "pending"), "declined");
+  assert.equal(displayedLeadStatus("requested", "pending"), "requested");
+  assert.equal(displayedLeadStatus("requested", "accepted"), "confirmed");
+  const server = src("src/lib/server/lead-requests.ts");
+  assert.match(server, /applyLeadDecisionToTour/);
+  assert.match(server, /update tour_requests/);
+  assert.match(server, /const emailed = mailed\.status === "sent"/);
+  const inbox = src("src/components/daycare-lead-inbox.tsx");
+  assert.match(inbox, /saved\?\.emailed \? t\("leadUpdated"\) : t\("requestUpdatedToast"\)/);
+  assert.doesNotMatch(inbox, /confirmSuccess\(\{ variant: "toast", title: t\("leadUpdated"\) \}\)/);
+});
+
+test("My requests is one list with a plain status", () => {
+  const rows = parentRequestRows({
+    leads: [
+      {
+        id: "lead-1",
+        kind: "tour",
+        status: "requested",
+        daycareId: "centre",
+        daycareName: "Elm",
+        daycareSlug: "elm",
+        sourceKind: "tour_request",
+        sourceId: "tour-1",
+        conversationId: "cv-1",
+        createdAt: "2026-11-01T00:00:00.000Z",
+      },
+      {
+        id: "lead-2",
+        kind: "waitlist",
+        status: "requested",
+        daycareId: "centre",
+        daycareName: "Elm",
+        daycareSlug: "elm",
+        sourceKind: null,
+        sourceId: null,
+        conversationId: "cv-2",
+        createdAt: "2026-11-02T00:00:00.000Z",
+      },
+    ],
+    tours: [
+      {
+        id: "tour-1",
+        daycareId: "centre",
+        daycareName: "Elm",
+        daycareSlug: "elm",
+        status: "accepted",
+        createdAt: "2026-11-01T00:00:00.000Z",
+        conversationId: "cv-1",
+        preferredTimes: [{ date: "2026-11-20" }],
+      },
+    ],
+    bookings: [
+      {
+        id: "book-1",
+        daycareId: "other",
+        daycareName: "Oak",
+        daycareSlug: "oak",
+        status: "accepted",
+        createdAt: "2026-11-03T00:00:00.000Z",
+        conversationId: "cv-3",
+      },
+    ],
+  });
+  assert.deepEqual(rows.map((row) => row.kind), ["enrolment", "waitlist", "tour"]);
+  assert.equal(rows.find((row) => row.kind === "tour")?.status, "confirmed");
+  assert.equal(rows.find((row) => row.kind === "tour")?.tourDate, "2026-11-20");
+  assert.equal(rows.find((row) => row.kind === "enrolment")?.status, "enrolled");
+  assert.equal(parentRequestStatusKey("waiting"), "parentRequestWaiting");
+  assert.equal(src("src/lib/copy-en.ts").includes('parentRequestWaiting: "Waiting on centre"'), true);
+  assert.equal(src("src/lib/copy-fr.ts").includes('parentRequestWaiting: "En attente du centre"'), true);
+  assert.match(src("src/components/parent-desk.tsx"), /parentRequestRows\(\{ leads, tours, bookings \}\)/);
+  assert.doesNotMatch(src("src/components/parent-desk.tsx"), /pendingTours/);
+  assert.match(src("src/components/parent-requests.tsx"), /id=\{row\.kind === "tour" \? `tour-\$\{row\.id\}` : undefined\}/);
+  assert.match(src("src/components/parent-requests.tsx"), /parentRequestStatusKey/);
+  assert.match(src("src/components/parent-requests.tsx"), /openChat/);
+});
+
+test("a direct /provider?desk=requests load stays on Requests", () => {
+  assert.equal(providerDeskFromQuery(undefined, "?desk=requests"), "requests");
+  assert.equal(providerDeskFromQuery("requests", ""), "requests");
+  assert.equal(providerDeskFromQuery(undefined, "?desk=overview"), "today");
+  assert.equal(providerDeskFromQuery(undefined, ""), "today");
+  assert.match(src("src/routes/provider.tsx"), /providerDeskFromQuery\(search\.desk, searchStr\)/);
 });

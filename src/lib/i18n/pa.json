@@ -92,7 +92,7 @@
   "deskNavTodayHint": "ਹੁਣ ਤੁਹਾਨੂੰ ਕੀ ਚਾਹੀਦਾ ਹੈ",
   "deskNavMessagesHint": "ਮਾਪਿਆਂ ਦੀਆਂ ਪੁੱਛਗਿੱਛਾਂ + ਟੂਰ",
   "deskNavToursHint": "ਪਰਿਵਾਰ ਕਦੋਂ ਆ ਸਕਦੇ ਹਨ",
-  "deskNavCalendarHint": "Open spots by day",
+  "deskNavCalendarHint": "ਦਿਨ ਅਨੁਸਾਰ ਖਾਲੀ ਥਾਵਾਂ",
   "deskNavListings": "ਮੇਰੀਆਂ ਲਿਸਟਿੰਗਾਂ",
   "deskNavListingsHint": "ਥਾਵਾਂ, ਫੋਟੋਆਂ, ਫੀਸਾਂ",
   "deskNavInsights": "ਅੰਕੜੇ",
@@ -3213,7 +3213,6 @@
   "alertSummary": "{total} ਵਿੱਚੋਂ {on} ਚੇਤਾਵਨੀਆਂ ਚਾਲੂ ਹਨ",
   "navMenu": "ਮੀਨੂ",
   "navCalendar": "ਕੈਲੰਡਰ",
-  "deskNavCalendarHint": "ਦਿਨ ਅਨੁਸਾਰ ਖਾਲੀ ਥਾਵਾਂ",
   "menuEarningsMonth": "ਇਸ ਮਹੀਨੇ ਦੀ ਕਮਾਈ",
   "menuReviews": "ਸਮੀਖਿਆਵਾਂ",
   "menuCreateListing": "ਨਵੀਂ ਸੂਚੀ ਬਣਾਓ",
@@ -3551,5 +3550,13 @@
   "employeeResend": "ਸੱਦਾ ਦੁਬਾਰਾ ਭੇਜੋ",
   "employeeResent": "ਸੱਦਾ ਦੁਬਾਰਾ ਭੇਜਿਆ ਗਿਆ।",
   "employeeResendHeld": "ਉਹ ਸੱਦਾ ਈਮੇਲ ਨਹੀਂ ਕੀਤਾ ਗਿਆ।",
-  "employeeResendFailed": "ਉਹ ਸੱਦਾ ਦੁਬਾਰਾ ਨਹੀਂ ਭੇਜਿਆ ਜਾ ਸਕਿਆ।"
+  "employeeResendFailed": "ਉਹ ਸੱਦਾ ਦੁਬਾਰਾ ਨਹੀਂ ਭੇਜਿਆ ਜਾ ਸਕਿਆ।",
+  "parentRequestWaiting": "ਕੇਂਦਰ ਦੀ ਉਡੀਕ",
+  "parentRequestConfirmed": "ਪੁਸ਼ਟੀ ਹੋਈ",
+  "parentRequestDeclined": "ਇਨਕਾਰ",
+  "parentRequestEnrolled": "ਦਾਖ਼ਲ",
+  "parentRequestCancelled": "ਰੱਦ",
+  "parentRequestEnrolment": "ਦਾਖ਼ਲਾ",
+  "parentRequestSentOn": "ਭੇਜੀ",
+  "parentRequestVisitOn": "ਦੌਰੇ ਦੀ ਤਾਰੀਖ"
 }

@@ -92,7 +92,7 @@
   "deskNavTodayHint": "Lo que necesita tu atención ahora",
   "deskNavMessagesHint": "Consultas de padres y visitas",
   "deskNavToursHint": "Cuándo pueden visitar las familias",
-  "deskNavCalendarHint": "Open spots by day",
+  "deskNavCalendarHint": "Lugares libres por día",
   "deskNavListings": "Mis fichas",
   "deskNavListingsHint": "Cupos, fotos, tarifas",
   "deskNavInsights": "Estadísticas",
@@ -3213,7 +3213,6 @@
   "alertSummary": "{on} de {total} alertas activas",
   "navMenu": "Menú",
   "navCalendar": "Calendario",
-  "deskNavCalendarHint": "Lugares libres por día",
   "menuEarningsMonth": "Ingresos de este mes",
   "menuReviews": "Reseñas",
   "menuCreateListing": "Crear una ficha nueva",
@@ -3551,5 +3550,13 @@
   "employeeResend": "Reenviar invitación",
   "employeeResent": "Invitación enviada de nuevo.",
   "employeeResendHeld": "Esa invitación no se envió por correo.",
-  "employeeResendFailed": "No se pudo reenviar esa invitación."
+  "employeeResendFailed": "No se pudo reenviar esa invitación.",
+  "parentRequestWaiting": "En espera del centro",
+  "parentRequestConfirmed": "Confirmada",
+  "parentRequestDeclined": "Rechazada",
+  "parentRequestEnrolled": "Inscrito",
+  "parentRequestCancelled": "Cancelada",
+  "parentRequestEnrolment": "Inscripción",
+  "parentRequestSentOn": "Enviada",
+  "parentRequestVisitOn": "Fecha de la visita"
 }
