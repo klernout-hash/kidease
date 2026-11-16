@@ -250,7 +250,7 @@ export function TodayUrgencyHome({
         />
       ) : null}
       <div>
-        <h2 className="font-display text-2xl">{t("todayHome")}</h2>
+        <h2 className="font-display text-2xl" data-tour="provider-today">{t("todayHome")}</h2>
         <p className="mt-1 text-sm text-muted">{t("todayHomeLead")}</p>
       </div>
       <SetupProgress listings={coachListings} />

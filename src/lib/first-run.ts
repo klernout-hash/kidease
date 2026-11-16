@@ -211,12 +211,103 @@ export function stepAnchors(step: { anchor?: string; anchors?: readonly string[]
   return step.anchor ? [step.anchor] : [];
 }
 
-/** Drops a step when none of its targets are on the page. */
+/** A target big enough to point at. Hidden and zero-size nodes are not targets. */
+export function targetBoxUsable(
+  rect: { width: number; height: number },
+  style: { display: string; visibility: string },
+): boolean {
+  if (style.display === "none" || style.visibility === "hidden") return false;
+  return rect.width >= 8 && rect.height >= 8;
+}
+
+/** The closing "help stays here" step. It is not a place a tour can start. */
+export function isHelpCoda(step: { anchor?: string; anchors?: readonly string[] }): boolean {
+  return stepAnchors(step).some((selector) => selector.includes("help-button"));
+}
+
+/**
+ * Drops a step when none of its targets are on the page.
+ * If the only matches are the help coda, the tour does not open there.
+ */
 export function presentCoachSteps<T extends { anchor?: string; anchors?: readonly string[] }>(
   steps: readonly T[],
   present: (selector: string) => boolean,
 ): T[] {
-  return steps.filter((step) => stepAnchors(step).some((selector) => present(selector)));
+  const visible = steps.filter((step) => stepAnchors(step).some((selector) => present(selector)));
+  if (!visible.some((step) => !isHelpCoda(step))) return [];
+  return visible;
+}
+
+/** First real step's anchor that is on the page. The help coda does not count. */
+export function openingAnchor(
+  steps: readonly { anchor?: string; anchors?: readonly string[] }[],
+  present: (selector: string) => boolean,
+): string | null {
+  const first = steps.find((step) => !isHelpCoda(step));
+  if (!first) return null;
+  return stepAnchors(first).find((selector) => present(selector)) ?? null;
+}
+
+/** Page a replay opens when its first step is not on the current screen. */
+export function replayPath(key: OnboardingKey): string {
+  switch (key) {
+    case WELCOME_PARENT:
+      return "/";
+    case WELCOME_PROVIDER:
+    case CHECKLIST_PROVIDER:
+    case "tour:provider:attendance":
+      return "/provider?desk=today";
+    case CHECKLIST_PARENT:
+      return "/parent";
+    case "tour:parent:search":
+      return "/search";
+    case "tour:parent:saved":
+      return "/parent?tab=saved";
+    case "tour:parent:messages":
+      return "/inbox";
+    case "tour:parent:payments":
+      return "/parent?tab=payments";
+    case "tour:provider:requests":
+      return "/provider?desk=requests";
+    case "tour:provider:tours":
+      return "/provider?desk=tours";
+    case "tour:provider:messages":
+      return "/inbox?view=centre";
+    case "tour:provider:money":
+      return "/provider?desk=money";
+    default:
+      return "/";
+  }
+}
+
+/** True when this URL is already the replay page. French `/fr` counts as the same page. */
+export function sameReplayPlace(pathname: string, search: string, dest: string): boolean {
+  const cut = dest.indexOf("?");
+  const path = cut === -1 ? dest : dest.slice(0, cut);
+  const query = cut === -1 ? "" : dest.slice(cut + 1);
+  if (barePath(pathname) !== barePath(path)) return false;
+  const want = new URLSearchParams(query);
+  const have = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  for (const [key, value] of want) {
+    const got = have.get(key) ?? "";
+    if (key === "desk" && value === "today" && (got === "" || got === "today")) continue;
+    if (got !== value) return false;
+  }
+  return true;
+}
+
+export function replayDecision(
+  key: OnboardingKey,
+  pathname: string,
+  search: string,
+  firstStepPresent: boolean,
+): { action: "play" } | { action: "go"; path: string } {
+  if (firstStepPresent && key !== CHECKLIST_PARENT && key !== CHECKLIST_PROVIDER) return { action: "play" };
+  const path = replayPath(key);
+  if (sameReplayPlace(pathname, search, path) && key !== CHECKLIST_PARENT && key !== CHECKLIST_PROVIDER) {
+    return { action: "play" };
+  }
+  return { action: "go", path };
 }
 
 /** Which auto surfaces belong on this screen. Replay ignores this. */
@@ -320,6 +411,13 @@ export function reopenChecklist(state: OnboardingState, key: string): Onboarding
 export function shouldAutoShow(state: OnboardingState, key: string | null): boolean {
   if (!key || !isOnboardingKey(key)) return false;
   return !state.seen.includes(key);
+}
+
+/** Manual replay plays from step 1 even when this device has already seen the tour. */
+export function replayOpens(key: string | null, forced: boolean, state: OnboardingState): boolean {
+  if (!key || !isOnboardingKey(key)) return false;
+  if (forced) return true;
+  return shouldAutoShow(state, key);
 }
 
 export function canDismissChecklist(id: ChecklistKey, complete: boolean): boolean {
@@ -459,9 +557,12 @@ export function parentQuickStart(facts: ParentQuickFacts): ChecklistResult {
   return pack(steps, CHECKLIST_PARENT);
 }
 
+/** City or postal code field. Not the whole search bar. */
+export const SEARCH_WHERE_ANCHOR = '[data-tour="search-where"]';
+
 export const PARENT_SLIDES: readonly Slide[] = [
   {
-    anchors: ['[data-ke="msv2-pill"]', '[data-tour="parent-search"]', '[data-ke="search-pill"]'],
+    anchors: [SEARCH_WHERE_ANCHOR],
     title: { en: "Search here", fr: "Cherchez ici" },
     body: { en: "Type a city or a postal code.", fr: "Écrivez une ville ou un code postal." },
   },
@@ -476,14 +577,9 @@ export const PARENT_SLIDES: readonly Slide[] = [
     body: { en: "A few questions narrow the list.", fr: "Quelques questions raccourcissent la liste." },
   },
   {
-    anchors: ['[data-ke="card-view-details"]', 'article[data-slug]', '[data-ke="search-result-list"]'],
+    anchors: ['[data-ke="card-view-details"]', '[data-slug]', '[data-ke="search-result-list"]'],
     title: { en: "Open a centre", fr: "Ouvrir un centre" },
     body: { en: "A card shows only facts that centre entered.", fr: "Une fiche montre seulement ce que le centre a entré." },
-  },
-  {
-    anchors: ['[data-ke="help-button"]'],
-    title: { en: "Help stays here", fr: "L’aide reste ici" },
-    body: { en: "Replay this tour any time.", fr: "Revoir cette visite en tout temps." },
   },
   {
     anchors: ['[data-ke="notification-bell"]'],
@@ -495,11 +591,16 @@ export const PARENT_SLIDES: readonly Slide[] = [
     title: { en: "Your account", fr: "Votre compte" },
     body: { en: "Sign in to save centres and write to them.", fr: "Connectez-vous pour enregistrer et écrire." },
   },
+  {
+    anchors: ['[data-ke="help-button"]'],
+    title: { en: "Help stays here", fr: "L’aide reste ici" },
+    body: { en: "Replay this tour any time.", fr: "Revoir cette visite en tout temps." },
+  },
 ];
 
 export const PROVIDER_SLIDES: readonly Slide[] = [
   {
-    anchors: ['[data-nav="today"]', '[data-tour="provider-attendance"]'],
+    anchors: ['[data-nav="today"]', '[data-tour="provider-today"]'],
     title: { en: "Today", fr: "Aujourd’hui" },
     body: { en: "Requests, visits, and who is here.", fr: "Demandes, visites et qui est là." },
   },
@@ -514,24 +615,24 @@ export const PROVIDER_SLIDES: readonly Slide[] = [
     body: { en: "Open a family note and reply.", fr: "Ouvrez une note de famille et répondez." },
   },
   {
-    anchors: ['[data-nav="calendar"]', '[data-tour="provider-tours"]'],
+    anchors: ['[data-nav="calendar"]', '[data-tour="provider-tours-title"]'],
     title: { en: "Tour times", fr: "Heures de visite" },
     body: { en: "Post a time a family can book.", fr: "Affichez une heure qu’une famille peut réserver." },
   },
   {
-    anchors: ['[data-nav="messages"]', '[data-tour="desk-messages"]'],
+    anchors: ['[data-nav="messages"]', '[data-tour="inbox-heading"]'],
     title: { en: "Messages", fr: "Messages des familles" },
     body: { en: "Family notes land here. Texts are not on yet.", fr: "Les notes des familles arrivent ici." },
-  },
-  {
-    anchors: ['[data-ke="help-button"]'],
-    title: { en: "Help stays here", fr: "L’aide reste ici" },
-    body: { en: "Replay this tour any time.", fr: "Revoir cette visite en tout temps." },
   },
   {
     anchors: ['[data-ke="provider-setup"]'],
     title: { en: "Setup list", fr: "Liste de départ" },
     body: { en: "A step ticks when that fact is saved.", fr: "Une étape se coche quand c’est enregistré." },
+  },
+  {
+    anchors: ['[data-ke="help-button"]'],
+    title: { en: "Help stays here", fr: "L’aide reste ici" },
+    body: { en: "Replay this tour any time.", fr: "Revoir cette visite en tout temps." },
   },
 ];
 
@@ -547,9 +648,9 @@ const tip = (anchor: string, enTitle: string, enBody: string, frTitle: string, f
 
 export const TOURS: Record<TourKey, readonly TourStep[]> = {
   "tour:parent:search": [
-    tip("[data-tour=parent-search]", "Search here", "Type a city or a postal code.", "Cherchez ici", "Écrivez une ville ou un code postal."),
+    tip(SEARCH_WHERE_ANCHOR, "Search here", "Type a city or a postal code.", "Cherchez ici", "Écrivez une ville ou un code postal."),
     tip("[data-ke=search-submit]", "See the list", "This starts the search.", "Voir la liste", "Ce bouton lance la recherche."),
-    tip("[data-ke=search-count]", "Real results", "A fee or an open spot shows only when the centre entered it.", "Des résultats vrais", "Un tarif ou une place s’affiche seulement si le centre l’a entré."),
+    tip('[data-ke="search-count"], [data-ke="msv2-count"]', "Real results", "A fee or an open spot shows only when the centre entered it.", "Des résultats vrais", "Un tarif ou une place s’affiche seulement si le centre l’a entré."),
     tip("[data-ke=sort-row]", "Sort the list", "Pick nearest, or another order, when you want a shorter list.", "Trier la liste", "Choisissez le plus près, ou un autre ordre, pour une liste plus courte."),
   ],
   "tour:parent:saved": [
@@ -558,7 +659,7 @@ export const TOURS: Record<TourKey, readonly TourStep[]> = {
     tip("[data-tour=parent-saved]", "Ask next", "Open a centre to request a tour or a spot.", "La prochaine étape", "Ouvrez un centre pour demander une visite ou une place."),
   ],
   "tour:parent:messages": [
-    tip("[data-tour=desk-messages]", "Your messages", "Replies from centres land here.", "Vos messages", "Les réponses des centres arrivent ici."),
+    tip("[data-tour=inbox-heading]", "Your messages", "Replies from centres land here.", "Vos messages", "Les réponses des centres arrivent ici."),
     tip("[data-tour=inbox-search]", "Find a thread", "Search by the centre name.", "Trouver une conversation", "Cherchez le nom du centre."),
     tip("[data-ke=inbox-stage-filters]", "Filter", "Show only the threads you need.", "Filtrer", "Montrez seulement les conversations utiles."),
   ],
@@ -573,26 +674,32 @@ export const TOURS: Record<TourKey, readonly TourStep[]> = {
     tip("[data-tour=provider-requests]", "Nothing yet", "An empty list means no one has written. It is not an error.", "Rien pour l’instant", "Une liste vide veut dire que personne n’a écrit. Ce n’est pas une erreur."),
   ],
   "tour:provider:tours": [
-    tip("[data-tour=provider-tours]", "Tour calendar", "Days with a visit are marked.", "Calendrier des visites", "Les jours avec une visite sont marqués."),
+    tip("[data-tour=provider-tours-title]", "Tour calendar", "Days with a visit are marked.", "Calendrier des visites", "Les jours avec une visite sont marqués."),
     tip("[data-ke=tour-calendar]", "Open times", "Post a time you can meet a family.", "Heures ouvertes", "Affichez une heure où vous pouvez rencontrer une famille."),
     tip("[data-tour=provider-tours]", "Empty day", "A blank day means no visit is booked. Add a time if you want requests.", "Jour vide", "Un jour vide veut dire qu’aucune visite n’est réservée. Ajoutez une heure si vous voulez des demandes."),
   ],
   "tour:provider:messages": [
-    tip("[data-tour=desk-messages]", "Centre inbox", "Family messages for your centre are here.", "Boîte du centre", "Les messages des familles pour votre centre sont ici."),
+    tip("[data-tour=inbox-heading]", "Centre inbox", "Family messages for your centre are here.", "Boîte du centre", "Les messages des familles pour votre centre sont ici."),
     tip("[data-tour=inbox-search]", "Search", "Find a family by name.", "Chercher", "Trouvez une famille par son nom."),
     tip("[data-ke=inbox-stage-filters]", "Stages", "Filter so you can answer the newest notes first.", "Étapes", "Filtrez pour répondre d’abord aux plus récents."),
   ],
   "tour:provider:attendance": [
-    tip("[data-tour=provider-attendance]", "Today", "This is your home for the day: requests, visits, and what needs a reply.", "Aujourd’hui", "C’est votre accueil du jour : demandes, visites et réponses à faire."),
+    tip("[data-tour=provider-today]", "Today", "This is your home for the day: requests, visits, and what needs a reply.", "Aujourd’hui", "C’est votre accueil du jour : demandes, visites et réponses à faire."),
     tip("[data-ke=child-checkin]", "Who is here", "When attendance is on, mark a child here or picked up.", "Qui est là", "Quand les présences sont activées, notez qu’un enfant est là ou parti."),
-    tip("[data-tour=provider-attendance]", "No children yet", "An empty attendance list means no enrolled child is on file for today.", "Aucun enfant", "Une liste vide veut dire qu’aucun enfant inscrit n’est au dossier pour aujourd’hui."),
+    tip("[data-tour=provider-today]", "No children yet", "An empty attendance list means no enrolled child is on file for today.", "Aucun enfant", "Une liste vide veut dire qu’aucun enfant inscrit n’est au dossier pour aujourd’hui."),
   ],
   "tour:provider:money": [
-    tip("[data-tour=provider-money]", "Money", "Invoices you send, and what has been paid, show here.", "Argent", "Les factures que vous envoyez, et ce qui est payé, s’affichent ici."),
+    tip("[data-tour=provider-money-title]", "Money", "Invoices you send, and what has been paid, show here.", "Argent", "Les factures que vous envoyez, et ce qui est payé, s’affichent ici."),
     tip("[data-tour=provider-money-title]", "Payouts", "Connect a payout account before card payments can be sent to your centre.", "Versements", "Branchez un compte de versement avant que les paiements par carte aillent à votre centre."),
-    tip("[data-tour=provider-money]", "No bills yet", "An empty list means you have not sent an invoice.", "Aucune facture", "Une liste vide veut dire que vous n’avez pas envoyé de facture."),
+    tip("[data-tour=provider-money-title]", "No bills yet", "An empty list means you have not sent an invoice.", "Aucune facture", "Une liste vide veut dire que vous n’avez pas envoyé de facture."),
   ],
 };
+
+export function coachSteps(key: OnboardingKey): readonly { anchor?: string; anchors?: readonly string[] }[] {
+  if (key === WELCOME_PARENT || key === WELCOME_PROVIDER) return welcomeSlides(key);
+  if ((TOUR_KEYS as readonly string[]).includes(key)) return TOURS[key as TourKey];
+  return [];
+}
 
 export const GUIDE_ARTICLES: readonly GuideArticle[] = [
   {

@@ -50,11 +50,35 @@ try {
   await page.waitForTimeout(800);
   mark("reload-hides", (await welcome.count()) === 0);
 
+  await page.addInitScript(() => {
+    const raw = window.localStorage.getItem("kidease-first-run");
+    const state = raw ? JSON.parse(raw) : { seen: [], dismissed: [] };
+    if (!state.seen.includes("welcome:parent")) state.seen.push("welcome:parent");
+    window.localStorage.setItem("kidease-first-run", JSON.stringify(state));
+  });
   await page.goto(`${base}/help`, { waitUntil: "domcontentloaded" });
   await page.locator("[data-ke=help-guide-search]").waitFor({ state: "visible" });
   await page.locator("[data-ke=replay-welcome][data-tour-key=welcome\\:parent]").click();
+  await page.waitForURL((url) => url.pathname === "/" || url.pathname === "");
   await welcome.waitFor({ state: "visible" });
-  mark("replay", (await welcome.getAttribute("data-step")) === "1");
+  const replayText = await welcome.innerText();
+  const replayStep = await welcome.getAttribute("data-step");
+  const replayAnchor = await welcome.getAttribute("data-anchor");
+  const hole = await page.locator("[data-ke=coach-hole]").boundingBox();
+  const where = await page.locator("[data-tour=search-where]").first().boundingBox();
+  const overlaps = Boolean(
+    hole &&
+      where &&
+      hole.x < where.x + where.width &&
+      hole.x + hole.width > where.x &&
+      hole.y < where.y + where.height &&
+      hole.y + hole.height > where.y,
+  );
+  mark(
+    "replay",
+    replayStep === "1" && replayText.includes("Search here") && replayAnchor === '[data-tour="search-where"]' && overlaps,
+    replayText.slice(0, 40),
+  );
   await page.locator("[data-ke=first-run-skip]").click();
 
   await page.setViewportSize({ width: 1280, height: 800 });

@@ -270,7 +270,7 @@ export function CentreInboxDesk({
   const listPane = (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto border-border lg:border-r">
       <div className="shrink-0 space-y-3 p-3">
-        <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]">{t("messages")}</h2>
+        <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]" data-tour="inbox-heading">{t("messages")}</h2>
         <p className="text-sm text-muted">{t("inboxCentreTitle")}</p>
         <SupportDeskBar open={supportOpen} onOpen={setSupportOpen} />
         <label className="relative block">
@@ -279,6 +279,7 @@ export function CentreInboxDesk({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("inboxSearchPh")}
+            data-tour="inbox-search"
             className="h-11 w-full rounded-md border border-border bg-surface pl-9 pr-3 text-sm"
           />
         </label>

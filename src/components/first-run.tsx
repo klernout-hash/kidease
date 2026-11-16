@@ -18,6 +18,7 @@ import {
   checklistOpen,
   isOnboardingKey,
   onboardingPlace,
+  openingAnchor,
   parentProgressLabel,
   parentQuickStart,
   placeCoachBubble,
@@ -25,9 +26,13 @@ import {
   pickCopy,
   providerSetup,
   readinessLabel,
+  replayDecision,
+  replayOpens,
   searchGuide,
   shouldAutoShow,
+  coachSteps,
   stepAnchors,
+  targetBoxUsable,
   welcomeSlides,
   blocksAutoTour,
   type ChecklistResult,
@@ -47,6 +52,9 @@ import {
   rememberSeen,
   requestReplay,
   setOnboardingSignedIn,
+  clearStashedReplay,
+  peekStashedReplay,
+  stashReplay,
   useFirstRunFlag,
   useOnboardingState,
 } from "@/lib/first-run-client";
@@ -62,18 +70,21 @@ function localeOf(locale: string): FirstRunLocale {
   return locale === "fr" ? "fr" : "en";
 }
 
-function findTarget(anchors: readonly string[]): HTMLElement | null {
+function findTarget(anchors: readonly string[]): { node: HTMLElement; selector: string } | null {
   for (const selector of anchors) {
     for (const node of document.querySelectorAll(selector)) {
       if (!(node instanceof HTMLElement)) continue;
       const style = getComputedStyle(node);
-      if (style.display === "none" || style.visibility === "hidden") continue;
       const rect = node.getBoundingClientRect();
-      if (rect.width < 8 || rect.height < 8) continue;
-      return node;
+      if (!targetBoxUsable(rect, style)) continue;
+      return { node, selector };
     }
   }
   return null;
+}
+
+function anchorIsPresent(selector: string): boolean {
+  return findTarget([selector]) != null;
 }
 
 function CallLink({ locale }: { locale: FirstRunLocale }) {
@@ -112,6 +123,7 @@ export function AnchoredCoach({
   const [index, setIndex] = useState(0);
   const [live, setLive] = useState<typeof steps | null>(null);
   const [spot, setSpot] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [anchor, setAnchor] = useState<string | null>(null);
   const [place, setPlace] = useState<{ top: number; left: number; width: number; arrow: "up" | "down" } | null>(null);
 
   useEffect(() => {
@@ -119,7 +131,7 @@ export function AnchoredCoach({
     const scan = () => {
       if (stop) return;
       scans.current += 1;
-      setLive(presentCoachSteps(steps, (selector) => findTarget([selector]) != null));
+      setLive(presentCoachSteps(steps, anchorIsPresent));
     };
     scan();
     const timers = [250, 900].map((ms) => window.setTimeout(scan, ms));
@@ -153,11 +165,14 @@ export function AnchoredCoach({
 
   useIsoLayout(() => {
     if (!step) return;
-    const node = findTarget(stepAnchors(step));
-    if (!node) {
+    const found = findTarget(stepAnchors(step));
+    if (!found) {
       setSpot(null);
+      setAnchor(null);
       return;
     }
+    const node = found.node;
+    setAnchor(found.selector);
     // Scroll once per step. Rescans (timers, phone toolbar resize) must not yank the page mid-scroll.
     if (scrolledFor.current !== safeIndex) {
       scrolledFor.current = safeIndex;
@@ -198,6 +213,7 @@ export function AnchoredCoach({
         data-audience={audience}
         data-step={safeIndex + 1}
         data-steps={shown.length}
+        data-anchor={anchor ?? undefined}
         data-locale={locale}
         className="pointer-events-auto fixed max-w-[calc(100%-1.5rem)] rounded-xl bg-surface p-3 text-fg shadow-card ring-1 ring-border"
         style={{ top: place.top, left: place.left, width: place.width }}
@@ -580,6 +596,7 @@ export function FirstRunHost() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const searchStr = useRouterState({ select: (s) => s.location.searchStr });
   const [forced, setForced] = useState<OnboardingKey | null>(null);
+  const [anchorTick, setAnchorTick] = useState(0);
   const [providerFacts, setProviderFacts] = useState<ChecklistResult | null>(null);
   const [parentFacts, setParentFacts] = useState<ChecklistResult | null>(null);
   const params = new URLSearchParams(searchStr);
@@ -596,23 +613,48 @@ export function FirstRunHost() {
   }, [user?.id, enabled]);
 
   useEffect(() => {
+    const pending = peekStashedReplay();
+    if (!pending || !isOnboardingKey(pending)) return;
+    // A sign-in page can sit between the click and the real screen. Keep the
+    // replay stored until the first step is actually on the page.
+    if (openingAnchor(coachSteps(pending), anchorIsPresent) == null) return;
+    setForced(pending);
+  }, [pathname, searchStr, anchorTick]);
+
+  useEffect(() => {
+    if (!forced) return;
+    if (openingAnchor(coachSteps(forced), anchorIsPresent) == null) return;
+    const id = window.setTimeout(() => clearStashedReplay(), 500);
+    return () => window.clearTimeout(id);
+  }, [forced, pathname, anchorTick]);
+
+  useEffect(() => {
+    // Re-check after paint. The city field can arrive a moment after the shell.
+    const id = window.setTimeout(() => setAnchorTick(1), 350);
+    return () => window.clearTimeout(id);
+  }, [pathname, searchStr, forced]);
+
+  useEffect(() => {
     function onReplay(event: Event) {
       const key = (event as CustomEvent<string>).detail;
       if (!isOnboardingKey(key)) return;
       if (key !== CHECKLIST_PARENT && key !== CHECKLIST_PROVIDER && key !== WELCOME_PARENT && key !== WELCOME_PROVIDER && !(key in TOURS)) {
         return;
       }
-      if (key === CHECKLIST_PARENT || key === CHECKLIST_PROVIDER) {
-        forceChecklist(key);
-        const next = key === CHECKLIST_PROVIDER ? "/provider?desk=today" : "/parent";
-        window.location.assign(localePath(next, locale));
+      const steps = coachSteps(key);
+      const present = openingAnchor(steps, anchorIsPresent) != null;
+      const decision = replayDecision(key, pathname, searchStr, present);
+      if (decision.action === "go") {
+        if (key === CHECKLIST_PARENT || key === CHECKLIST_PROVIDER) forceChecklist(key);
+        else stashReplay(key);
+        window.location.assign(localePath(decision.path, locale));
         return;
       }
       setForced(key);
     }
     window.addEventListener(REPLAY_EVENT, onReplay);
     return () => window.removeEventListener(REPLAY_EVENT, onReplay);
-  }, [locale]);
+  }, [locale, pathname, searchStr]);
 
   useEffect(() => {
     if (enabled !== true || !user?.id) return;
@@ -629,7 +671,10 @@ export function FirstRunHost() {
   }, [enabled, user?.id, place.checklist, pathname, searchStr]);
 
   if (ready && enabled === true && screenTourReady.current === null) {
-    screenTourReady.current = !place.welcome || !shouldAutoShow(progress, place.welcome);
+    const welcomeCanOpen =
+      place.welcome != null && openingAnchor(welcomeSlides(place.welcome), anchorIsPresent) != null;
+    // A welcome that cannot start here must not block the screen's own tour.
+    screenTourReady.current = !welcomeCanOpen || !shouldAutoShow(progress, place.welcome);
   }
 
   if (!ready || enabled !== true) return null;
@@ -637,15 +682,27 @@ export function FirstRunHost() {
   const replayWelcome = forced === WELCOME_PARENT || forced === WELCOME_PROVIDER ? forced : null;
   const replayTour = forced != null && forced in TOURS ? (forced as TourKey) : null;
   const welcomeKey = replayWelcome ?? place.welcome;
+  const welcomeSteps = welcomeKey === WELCOME_PARENT || welcomeKey === WELCOME_PROVIDER ? welcomeSlides(welcomeKey) : [];
+  const welcomeOpening =
+    anchorTick >= 0 && welcomeSteps.length > 0 && openingAnchor(welcomeSteps, anchorIsPresent) != null;
   const showWelcome =
+    welcomeOpening &&
     replayTour == null &&
     welcomeKey != null &&
-    (replayWelcome != null || (!blocked && shouldAutoShow(progress, welcomeKey)));
+    replayOpens(welcomeKey, replayWelcome != null, progress) &&
+    (replayWelcome != null || !blocked);
   const tourKey = replayTour ?? place.tour;
+  const tourOpening = anchorTick >= 0 && tourKey != null && openingAnchor(TOURS[tourKey], anchorIsPresent) != null;
   const showTour =
+    tourOpening &&
     tourKey != null &&
     !showWelcome &&
-    (replayTour != null || (!blocked && screenTourReady.current === true && shouldAutoShow(progress, tourKey) && !shouldAutoShow(progress, place.welcome)));
+    (replayTour != null
+      ? replayOpens(tourKey, true, progress)
+      : !blocked &&
+        screenTourReady.current === true &&
+        replayOpens(tourKey, false, progress) &&
+        !shouldAutoShow(progress, place.welcome));
 
   const checklist =
     place.checklist === CHECKLIST_PROVIDER
@@ -687,9 +744,9 @@ export function FirstRunHost() {
     <>
       {checklistNode ? <ChecklistSlot>{checklistNode}</ChecklistSlot> : null}
       {showWelcome && welcomeKey && (welcomeKey === WELCOME_PARENT || welcomeKey === WELCOME_PROVIDER) ? (
-        <WelcomeWalkthrough tourKey={welcomeKey} onClose={closeWelcome} />
+        <WelcomeWalkthrough key={welcomeKey} tourKey={welcomeKey} onClose={closeWelcome} />
       ) : null}
-      {showTour && tourKey ? <CoachTour tourKey={tourKey} onClose={closeTour} /> : null}
+      {showTour && tourKey ? <CoachTour key={tourKey} tourKey={tourKey} onClose={closeTour} /> : null}
     </>
   );
 }
