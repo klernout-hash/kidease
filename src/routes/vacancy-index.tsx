@@ -13,6 +13,9 @@ import { formatCount } from "@/lib/utils";
 import { vacancyIndexSearch, type FreshnessCounts } from "@/lib/vacancy-history";
 import { vacancyProvinceCopy } from "@/lib/vacancy-province-copy";
 import { provincialVacancyIndexEnabled } from "@/lib/features";
+import { RuntimePaused } from "@/components/runtime-paused";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
+import type { RuntimeSwitches } from "@/lib/runtime-switches";
 
 const BAND_LABEL: Record<PublicAgeBand, CopyKey> = {
   infant: "infant",
@@ -22,7 +25,9 @@ const BAND_LABEL: Record<PublicAgeBand, CopyKey> = {
 };
 
 export const Route = createFileRoute("/vacancy-index")({
-  beforeLoad: () => {
+  beforeLoad: ({ context }) => {
+    const switches = (context as { switches?: RuntimeSwitches }).switches;
+    if (switches && switches.vacancyIndex === false) return;
     if (!provincialVacancyIndexEnabled()) throw redirect({ to: "/search" });
   },
   validateSearch: vacancyIndexSearch,
@@ -84,7 +89,17 @@ function ProvinceFreshness({ counts, locale }: { counts: FreshnessCounts; locale
 }
 
 export function VacancyIndexView({ data }: { data: VacancyIndexData }) {
+  const vacancyOn = useRuntimeSwitches().vacancyIndex;
   const { t, locale } = useCopy();
+  if (!vacancyOn) {
+    return (
+      <Shell>
+        <main className="ke-gutter mx-auto w-full max-w-3xl py-12" data-ke="vacancy-paused">
+          <RuntimePaused id="vacancyIndex" />
+        </main>
+      </Shell>
+    );
+  }
   const lang = locale === "fr" ? "fr" : "en";
   const extra = vacancyProvinceCopy(lang);
   const focus = data.focus ? jurisdiction(data.focus) : null;

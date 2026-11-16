@@ -205,6 +205,8 @@ export const startClaim = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_CLAIM_LISTING");
     const listed = await catalogByIdGet(daycareId);
     if (listed && ((listed.mergedInto || "").trim() || (listed.importFault || "").trim())) {
       throw new Error("Listing not found");

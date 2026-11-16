@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { listPublicTourSlots } from "@/lib/server/tour-calendar";
 import { summarizeTourCounts } from "@/lib/tour-counts";
 import { useCopy } from "@/lib/use-copy";
+import { RuntimePaused } from "@/components/runtime-paused";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import {
   formatTourSlotRange,
   timezoneLabel,
@@ -24,6 +26,7 @@ export function ListingTourTimes({
   canBook?: boolean;
 }) {
   const { t, locale } = useCopy();
+  const tourBooking = useRuntimeSwitches().tourBooking;
   const loc = locale === "fr" ? "fr" : "en";
   const [slots, setSlots] = useState<PublicTourSlot[]>([]);
   const [ready, setReady] = useState(false);
@@ -96,7 +99,8 @@ export function ListingTourTimes({
           ))}
         </ul>
       )}
-      {canBook ? (
+      {canBook && !tourBooking ? <div className="mt-3"><RuntimePaused id="tourBooking" compact /></div> : null}
+      {canBook && tourBooking ? (
         <Button className="mt-3" variant="secondary" onClick={onBook}>
           {t("requestTour")}
         </Button>

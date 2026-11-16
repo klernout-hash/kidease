@@ -280,6 +280,8 @@ export const joinDaycareWaitlist = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { daycareId?: string; ageGroup?: string; childLabel?: string; note?: string; fee?: unknown }) => input)
   .handler(async ({ context, data }) => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_WAITLIST_SPOTS");
     const blocked = rejectWaitlistFee(data);
     if (blocked) throw new Error(blocked);
     const daycareId = String(data.daycareId || "").trim();
@@ -531,6 +533,8 @@ export const sendCentreSpotOffer = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { waitlistId?: string; fee?: unknown }) => input)
   .handler(async ({ context, data }) => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_WAITLIST_SPOTS");
     const blocked = rejectWaitlistFee(data);
     if (blocked) throw new Error(blocked);
     const waitlistId = String(data.waitlistId || "").trim();
@@ -574,6 +578,8 @@ export const respondMySpotOffer = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { offerId?: string; decision?: string }) => input)
   .handler(async ({ context, data }) => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_WAITLIST_SPOTS");
     const offerId = String(data.offerId || "").trim();
     const decision = data.decision === "accept" || data.decision === "decline" ? data.decision : null;
     if (!offerId || !decision) throw new Error("This offer has ended.");

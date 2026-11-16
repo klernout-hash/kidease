@@ -54,6 +54,8 @@ export const listInbox = createServerFn({ method: "GET" })
           : undefined,
   }))
   .handler(async ({ context, data }) => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_INBOX");
     const sql = await getSql();
     const { familyScopeFor } = await import("@/lib/server/coparent");
     const parentId = (await familyScopeFor(context.userId)).dataUserId;
@@ -368,6 +370,8 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ context, data }) => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_INBOX");
     const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
     blockViewAsSideEffect("message");
     const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");

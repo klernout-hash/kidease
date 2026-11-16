@@ -845,6 +845,7 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
     phone?: string;
     city?: string;
     turnstileToken?: string;
+    intent?: string;
   }) => {
     const name = input.name.trim();
     const email = input.email.trim();
@@ -861,9 +862,14 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
       phone: (input.phone || "").trim().slice(0, 40),
       city: (input.city || "").trim().slice(0, 80),
       turnstileToken: String(input.turnstileToken || ""),
+      intent: input.intent === "job-interest" ? ("job-interest" as const) : undefined,
     };
   })
   .handler(async ({ data }) => {
+    if (data.intent === "job-interest") {
+      const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+      assertRuntimeSwitch("FEATURE_JOB_INTEREST");
+    }
     const { assertTurnstileToken } = await import("@/lib/server/turnstile");
     await assertTurnstileToken(data.turnstileToken);
     const title =
