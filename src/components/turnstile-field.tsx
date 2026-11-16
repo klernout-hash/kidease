@@ -165,11 +165,10 @@ export const TurnstileField = memo(function TurnstileField({
             onTokenRef.current("");
             setLoadError(tx(copyLocale, "turnstileExpired"));
           },
-          "error-callback": () => {
+          "error-callback": (code?: string) => {
             onTokenRef.current("");
             setLoadError(tx(copyLocale, "turnstileFailed"));
-            // A 401 or a blocked widget must not leave Sign in disabled on "Loading".
-            onRequired?.(false);
+            if (code) console.error("[kidease-turnstile] widget error", String(code).slice(0, 40));
           },
         });
       })

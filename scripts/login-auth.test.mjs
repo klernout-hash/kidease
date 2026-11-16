@@ -158,6 +158,7 @@ describe("password sign-in errors", () => {
     assert.doesNotMatch(login, /explainEmailSignInFailure/);
     assert.match(login, /resetTurnstile/);
     assert.match(login, /turnstileRequired && !challenge && !reviewerBypass/);
+    assert.match(login, /disabled=\{busy \|\| \(turnstileRequired && !token\.trim\(\)\)\}/);
     assert.doesNotMatch(login, /data-ke="turnstile-status"/);
     assert.match(read("src/lib/auth/login-stall.ts"), /www\.kidease\.ca\/login/);
     assert.match(login, /releaseStuckLogin\("open-failed"\)/);
