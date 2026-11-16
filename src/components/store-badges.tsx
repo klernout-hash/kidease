@@ -134,25 +134,18 @@ export function StoreBadges({ huaweiHref = null }: { huaweiHref?: string | null 
         </li>
         {TILES.filter((store) => store !== "amazon").map((store) => {
           const configured = APP_STORES.find((row) => row.id === store);
-          const href = store === "huawei" && huaweiHref ? huaweiHref : configured?.live ? configured.url : null;
+          const href = configured?.live ? configured.url : null;
+          const tileHref = store === "huawei" && huaweiHref ? huaweiHref : href;
           return (
-            <li key={store} className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border" aria-disabled={href ? undefined : "true"}>
-              {href ? (
-                <a
-                  href={href}
-                  target={store === "huawei" ? "_blank" : undefined}
-                  rel="noopener noreferrer"
-                  className={store === "huawei" ? "inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" : "inline-flex min-h-11 items-center"}
-                  data-ke={`store-link-${store}`}
-                >
-                  {store === "huawei" ? names.huawei : <BadgeImage store={store} locale={lang} />}
+            <li key={store} className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border" aria-disabled={tileHref ? undefined : "true"}>
+              {tileHref ? (
+                <a href={tileHref} rel="noopener noreferrer" className="inline-flex min-h-11 items-center" data-ke={`store-link-${store}`}>
+                  {store === "huawei" ? null : <BadgeImage store={store} locale={lang} />}
                 </a>
               ) : store === "huawei" ? null : (
                 <BadgeImage store={store} locale={lang} muted />
               )}
-              {store === "huawei" && href ? null : (
-                <p className={store === "huawei" && !href ? "text-sm font-medium" : "mt-2 text-sm font-medium"}>{names[store]}</p>
-              )}
+              <p className={store === "huawei" && !tileHref ? "text-sm font-medium" : "mt-2 text-sm font-medium"}>{names[store]}</p>
               <p className="text-sm text-muted">{configured?.live ? t("storeAvailableNow") : t("storeComingSoon")}</p>
             </li>
           );
