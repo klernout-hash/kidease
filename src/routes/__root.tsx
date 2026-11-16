@@ -73,8 +73,13 @@ const APP_NAME = "KidEase";
 const ICON_VER = "20";
 const APP_ICON = `/icon-512.png?v=${ICON_VER}`;
 
-function manifestHref(channel: StoreChannel | undefined): string {
-  const file = channel === "microsoft" ? "/manifest.microsoft.webmanifest" : "/manifest.webmanifest";
+function manifestHref(channel: StoreChannel | undefined, dynamicMicrosoft = false): string {
+  const file =
+    channel === "microsoft" && dynamicMicrosoft
+      ? "/api/microsoft-manifest"
+      : channel === "microsoft"
+        ? "/manifest.microsoft.webmanifest"
+        : "/manifest.webmanifest";
   return `${file}?v=${ICON_VER}`;
 }
 
@@ -163,6 +168,12 @@ export const Route = createRootRoute({
       ...(storeRead.playUpdates ? { playUpdates: true as const } : {}),
       ...(storeRead.playShortcuts ? { playShortcuts: true as const } : {}),
       ...(storeRead.playIntegrity ? { playIntegrity: true as const } : {}),
+      ...(storeRead.msShareTarget ? { msShareTarget: true as const } : {}),
+      ...(storeRead.msProtocol ? { msProtocol: true as const } : {}),
+      ...(storeRead.msWidgets ? { msWidgets: true as const } : {}),
+      ...(storeRead.msShortcuts ? { msShortcuts: true as const } : {}),
+      ...(storeRead.msBadging ? { msBadging: true as const } : {}),
+      ...(storeRead.msStoreUrl ? { msStoreUrl: storeRead.msStoreUrl } : {}),
     };
   },
   errorComponent: (props) => {
@@ -217,7 +228,16 @@ export const Route = createRootRoute({
       },
       { rel: "icon", type: "image/png", sizes: "512x512", href: APP_ICON },
       { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: manifestHref(match.context.storeChannel) },
+      {
+        rel: "manifest",
+        href: manifestHref(
+          match.context.storeChannel,
+          match.context.msShareTarget === true ||
+            match.context.msProtocol === true ||
+            match.context.msWidgets === true ||
+            match.context.msShortcuts === true,
+        ),
+      },
       { rel: "apple-touch-icon", sizes: "180x180", href: `/apple-touch-icon.png?v=${ICON_VER}` },
       { rel: "apple-touch-icon", sizes: "512x512", href: APP_ICON },
       { rel: "apple-touch-icon", href: APP_ICON },

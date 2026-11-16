@@ -58,6 +58,9 @@ export function NativeBoot() {
   const playIntegrity = useRouterState({
     select: (s) => s.matches.some((match) => (match.context as { playIntegrity?: boolean }).playIntegrity === true),
   });
+  const msBadging = useRouterState({
+    select: (s) => s.matches.some((match) => (match.context as { msBadging?: boolean }).msBadging === true),
+  });
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);
   const setAnchorMode = useAppStore((s) => s.setAnchorMode);
@@ -201,6 +204,11 @@ export function NativeBoot() {
       if (playIntegrity === true) void mod.requestPlayIntegrity(true);
     });
   }, [playUpdates, playShortcuts, playIntegrity]);
+
+  useEffect(() => {
+    if (msBadging !== true) return;
+    void import("@/lib/microsoft/platform-client").then((mod) => mod.applyMicrosoftBadge(true, null, navigator));
+  }, [msBadging]);
 
   useLayoutEffect(() => {
     const stop = startChannelListener();

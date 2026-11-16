@@ -20,6 +20,13 @@ export type ServerStoreRead = {
   playUpdates?: true;
   playShortcuts?: true;
   playIntegrity?: true;
+  /** Present only when that Microsoft flag is on. Omitted while the flag is off. */
+  msShareTarget?: true;
+  msProtocol?: true;
+  msWidgets?: true;
+  msShortcuts?: true;
+  msBadging?: true;
+  msStoreUrl?: string;
 };
 
 function requestIsHttps(url: string | undefined, forwardedProto: string | null): boolean {
@@ -62,6 +69,7 @@ export const readServerStoreChannel = createServerFn({ method: "GET" })
       };
       const { applePlatformContext } = await import("@/lib/apple/platform");
       const { playPlatformContext } = await import("@/lib/google/platform");
+      const { microsoftPlatformContext } = await import("@/lib/microsoft/platform");
       return {
         channel: storeChannelFromSignals(signals),
         setCookie: microsoftStoreCookieHeader(signals, {
@@ -70,6 +78,7 @@ export const readServerStoreChannel = createServerFn({ method: "GET" })
         hideAdmin: nativeShellHidesAdmin(signals),
         ...applePlatformContext(process.env),
         ...playPlatformContext(process.env),
+        ...microsoftPlatformContext(process.env),
       };
     } catch {
       return {
