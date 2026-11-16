@@ -259,7 +259,8 @@ export function ProviderAttention({
             .map((row) => ({
               id: row.id,
               daycareId: row.daycareId,
-              title: (row.parentName || row.daycareName || "").trim(),
+              // Centre inbox puts the parent's name in daycareName.
+              title: row.daycareName.trim(),
               unread: true,
             })),
         );

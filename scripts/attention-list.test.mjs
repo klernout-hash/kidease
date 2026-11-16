@@ -95,6 +95,7 @@ test("the list is on the parent home and the provider Today desk", () => {
   const list = readFileSync(new URL("../src/components/attention-list.tsx", import.meta.url), "utf8");
   assert.match(list, /listCentreWaitlist/);
   assert.match(list, /view: "centre"/);
+  assert.match(list, /title: row\.daycareName\.trim\(\)/);
   assert.match(readFileSync(new URL("../src/lib/copy-fr.ts", import.meta.url), "utf8"), /attentionUnreadParent: "Message parent non lu"/);
   assert.match(readFileSync(new URL("../src/lib/copy-en.ts", import.meta.url), "utf8"), /attentionUnreadParent: "Unread parent message"/);
   assert.match(list, /listChildAgreements/);
