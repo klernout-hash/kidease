@@ -990,7 +990,7 @@ export function LoginScreen({
               size="lg"
               className="w-full min-h-12"
               data-ke="email-primary"
-              disabled={busy}
+              disabled={busy || (turnstileRequired && !token.trim())}
             >
               {busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
