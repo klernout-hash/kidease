@@ -80,7 +80,8 @@ test("shared icon markup is decorative, dimensioned and uses a static original",
     assert.match(html, /<span class="ke-category-art" aria-hidden="true"/);
     assert.match(html, /<img class="ke-category-icon"/);
     assert.ok(html.includes(`src="/photos/care-icons/${file}"`));
-    assert.match(html, /alt="" width="256" height="256"/);
+    assert.match(html, /<source srcSet="\/photos\/care-icons\/[^"]+\.webp" type="image\/webp"/);
+    assert.match(html, /alt="" width="128" height="128"/);
     assert.match(html, /decoding="async" draggable="false"/);
     assert.doesNotMatch(html, /\.gif|ke-care-gif|ke-care-still/);
   });
