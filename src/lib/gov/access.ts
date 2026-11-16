@@ -104,8 +104,9 @@ export function roleMayEnterZone(role: string | null | undefined, zone: GovApiZo
   return false;
 }
 
-export function showGovFooterLink(input: { enabled: boolean; native: boolean }): boolean {
-  return input.enabled === true && input.native !== true;
+/** Public pages never link to this desk. A direct visit to /gov/login still works. */
+export function showGovFooterLink(_input?: { enabled?: boolean; native?: boolean }): boolean {
+  return false;
 }
 
 /** Native shells do not open this desk. The website does. */

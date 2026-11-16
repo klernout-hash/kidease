@@ -21,7 +21,6 @@ import {
   type FooterColumnId,
   type FooterLinkDef,
 } from "@/lib/site-footer-nav";
-import { showGovFooterLink } from "@/lib/gov/access";
 
 function Item({
   to,
@@ -181,11 +180,6 @@ export function SiteFooter() {
               <button type="button" data-ke="cookie-settings-link" className="ke-footer-link touch-manipulation" onClick={openCookieSettings}>
                 {t("cookieSettings")}
               </button>
-              {showGovFooterLink({ enabled: chrome.govPortalLink, native: hideCommerce }) ? (
-                <Link to={fr ? "/fr/gov/login" : "/gov/login"} className="ke-footer-link">
-                  {fr ? "Connexion gouvernement" : "Government sign-in"}
-                </Link>
-              ) : null}
             </nav>
             <LanguageSelect pill />
           </div>

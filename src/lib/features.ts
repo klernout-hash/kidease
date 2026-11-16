@@ -285,7 +285,7 @@ export function privatePhotoFeedEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PRIVATE_PHOTO_FEED", env);
 }
 
-/** Government desk and footer link. Default off. /gov and /gov/login redirect home. */
+/** Government desk. Default off. /gov and /gov/login redirect home. Public pages do not link here. */
 export function govPortalFooterEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_GOV_PORTAL", env);
 }
