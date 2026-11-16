@@ -32,9 +32,10 @@ test("shortcuts and a nonce appear only when that flag is on", () => {
   assert.deepEqual(playPlatformContext({ FEATURE_PLAY_INTEGRITY: "1" }), { playIntegrity: true });
 });
 
-test("Play libraries stay on the play flavour and the version code is unchanged", () => {
+test("Play libraries stay on the play flavour and the store build is 1.0.2", () => {
   const gradle = src("android/app/build.gradle");
-  assert.match(gradle, /versionCode 5/);
+  assert.match(gradle, /versionCode 6/);
+  assert.match(gradle, /versionName "1\.0\.2"/);
   assert.match(gradle, /playImplementation "com\.google\.android\.play:app-update:2\.1\.0"/);
   assert.match(gradle, /playImplementation "com\.google\.android\.play:integrity:1\.4\.0"/);
   assert.doesNotMatch(gradle, /huaweiImplementation "com\.google\.android\.play/);
