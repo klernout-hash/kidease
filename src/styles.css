@@ -839,7 +839,6 @@
     text-decoration: none;
   }
   .ke-footer-store-row {
-    --ke-footer-store-width: min(9rem, calc((100vw - 4rem) / 3));
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -857,7 +856,7 @@
   .ke-footer-store-badge,
   .ke-footer-store-name {
     display: inline-flex;
-    width: var(--ke-footer-store-width);
+    width: auto;
     height: 3.15rem;
     min-height: 3.15rem;
     min-width: 44px;
@@ -873,13 +872,15 @@
   }
   .ke-footer-store-art {
     display: flex;
-    width: 100%;
+    width: auto;
     height: 100%;
     align-items: center;
     justify-content: center;
   }
   .ke-footer-store-art img {
-    max-width: 100%;
+    height: 100%;
+    width: auto;
+    max-width: none;
     max-height: 100%;
     object-fit: contain;
     object-position: center;
@@ -2908,6 +2909,19 @@ html[data-cookie-banner="open"] body {
   html[data-cookie-banner="open"]:has([data-ke="listing-sticky-bar"]) body {
     padding-bottom: calc(24rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
   }
+}
+
+/*
+  Footer badges share one height. This sits outside @layer so it beats h-10
+  and max-w-full, and the artwork is not cropped or squeezed.
+*/
+.ke-footer-store-art img {
+  height: 100%;
+  width: auto;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  object-position: center;
 }
 
 /*
