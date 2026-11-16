@@ -8,10 +8,17 @@ import type { QboAccountMap } from "@/lib/qbo-sync";
 
 const EMPTY_ACCOUNTS: QboAccountMap = { parent_fees: "", stripe_clearing: "", platform_fee: "", gst_itc: "" };
 
+type MoneySearch = {
+  qboCode?: string;
+  qboState?: string;
+  realmId?: string;
+};
+
 export function QboPanel({ daycareId }: { daycareId: string }) {
   const { locale } = useCopy();
   const fr = locale === "fr";
-  const search = useSearch({ from: "/provider" });
+  // /fr/provider is a different route. Reading search from "/provider" throws there.
+  const search = useSearch({ strict: false }) as MoneySearch;
   const navigate = useNavigate();
   const [missing, setMissing] = useState<string[]>([]);
   const [connected, setConnected] = useState(false);
@@ -55,7 +62,7 @@ export function QboPanel({ daycareId }: { daycareId: string }) {
         if (!live) return;
         setBusy(false);
         void load();
-        void navigate({ to: "/provider", search: { desk: "money" }, replace: true });
+        void navigate({ to: fr ? "/fr/provider" : "/provider", search: { desk: "money" }, replace: true });
       });
     return () => {
       live = false;
