@@ -11,6 +11,7 @@ import { ActionRequiredBanner } from "@/components/listing-readiness-coach";
 import {
   buildTodayRows,
   collectActionRequired,
+  listingNeedsCompleteness,
   formatSlaCountdown,
   todayEmptyTruth,
   type TodayHref,
@@ -21,6 +22,9 @@ import { listingVerifiedCoach } from "@/lib/listing-verified";
 import { DailyCareDesk } from "@/components/daily-care-desk";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible } from "@/lib/approve-live";
+import { AttentionList } from "@/components/attention-list";
+import { providerAttentionFacts } from "@/lib/attention-list";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import type { Conversation, Daycare, TourRequest } from "@/lib/types";
@@ -104,6 +108,7 @@ export function TodayUrgencyHome({
   onOpenDesk: (desk: "listings" | "tours" | "licence" | "screening" | "requests") => void;
 }) {
   const { t, locale } = useCopy();
+  const { user } = useCurrentUserState();
   const [threads, setThreads] = useState<Conversation[]>([]);
   const [screening, setScreening] = useState<Array<{ daycareId: string; daycareName: string; screeningOnFile: boolean; people: Array<{ docs: Array<{ status: string }> }> }>>([]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -187,6 +192,53 @@ export function TodayUrgencyHome({
 
   return (
     <section className="space-y-6" data-tour="provider-attendance">
+      {user?.id ? (
+        <AttentionList
+          userId={user.id}
+          facts={providerAttentionFacts({
+            requests: [
+              ...leads
+                .filter((lead) => lead.status === "requested" || lead.status === "received")
+                .map((lead) => ({
+                  id: lead.id,
+                  daycareId: lead.daycareId,
+                  title: lead.parentName || lead.daycareName,
+                  status: lead.status,
+                })),
+              ...tours
+                .filter((tour) => tour.status === "pending")
+                .map((tour) => ({
+                  id: tour.id,
+                  daycareId: tour.daycareId,
+                  title: tour.parentName || tour.daycareName,
+                  status: "pending",
+                })),
+            ],
+            messages: threads
+              .filter((thread) => thread.unread && thread.daycareId)
+              .map((thread) => ({
+                id: thread.id,
+                daycareId: thread.daycareId,
+                title: thread.daycareName,
+                unread: true,
+              })),
+            documents: screening
+              .filter((centre) => centre.people.some((person) => person.docs.some((doc) => doc.status === "missing")))
+              .map((centre) => ({
+                id: centre.daycareId,
+                daycareId: centre.daycareId,
+                title: centre.daycareName,
+                status: "missing",
+              })),
+            listingGaps: listings.filter(listingNeedsCompleteness).map((listing) => ({
+              id: listing.id,
+              daycareId: listing.id,
+              title: listing.name,
+              open: true,
+            })),
+          })}
+        />
+      ) : null}
       <div>
         <h2 className="font-display text-2xl">{t("todayHome")}</h2>
         <p className="mt-1 text-sm text-muted">{t("todayHomeLead")}</p>
