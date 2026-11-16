@@ -77,7 +77,13 @@
 
   function reloadFresh() {
     var reload = function () {
-      location.reload();
+      try {
+        var url = new URL(location.href);
+        url.searchParams.set("ke_asset", String(Date.now()));
+        location.replace(url.toString());
+      } catch (err) {
+        location.reload();
+      }
     };
     var jobs = [];
     if ("serviceWorker" in navigator) {
@@ -125,7 +131,7 @@
       .then(function (res) {
         var type = (res.headers.get("content-type") || "").toLowerCase();
         if (res.ok && (type.indexOf("javascript") !== -1 || type.indexOf("text/css") !== -1)) {
-          location.reload();
+          reloadFresh();
           return;
         }
         reloadFresh();
@@ -191,4 +197,18 @@
     if (chunkReloadPending()) return;
     clearFlag();
   });
+
+  // Errors that fired before this file ran (a stale document loads it late)
+  // still show up as 404 resource entries. One hard navigation, then stop.
+  if (typeof performance !== "undefined" && performance.getEntriesByType) {
+    var seen = performance.getEntriesByType("resource");
+    for (var n = 0; n < seen.length; n++) {
+      var entry = seen[n];
+      if (!entry || entry.responseStatus !== 404 || isBlockedAnalytics(entry.name)) continue;
+      if (!isHashedAsset(entry.name) || !/\.(?:js|css)(?:$|\?)/i.test(entry.name)) continue;
+      markChunk();
+      recover();
+      break;
+    }
+  }
 })();

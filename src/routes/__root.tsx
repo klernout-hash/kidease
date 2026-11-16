@@ -327,12 +327,13 @@ function RootDocument() {
         <link rel="preload" href={appCss} as="style" />
         <link rel="preconnect" href="https://media.kidease.ca" />
         {/* Route preloads (home hero) start before the blocking boot scripts. */}
+        {/* Before route modules, so a missing chunk can reload once. */}
+        <script src="/asset-recover.js?v=2" />
         <HeadContent />
         <script src="/channel-boot.js?v=10" />
         <script src="/theme-boot.js" />
         {/* Versioned: the edge keeps boot scripts for a long time. Bump v when look-boot.js changes. */}
         <script src="/look-boot.js?v=1" />
-        <script defer src="/asset-recover.js" />
       </head>
       <body className="flex min-h-[100dvh] w-full min-w-0 flex-col overflow-x-clip">
         <SkipLink enabled={a11yPass} />
