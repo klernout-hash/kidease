@@ -3971,10 +3971,6 @@ html[data-look="clean"] :is(input, select, textarea).border:not([class*="border-
 }
 
 /* Airbnb comparison, batch 1. Clean look only. */
-/* Cards: the whole card opens the listing, so the extra button per card goes. */
-html[data-look="clean"] .ke-visual-card [data-ke="card-view-details"] {
-  display: none;
-}
 /* Cards: keep name, place, ages, open spots and fee. The rest is on the listing page. */
 html[data-look="clean"] .ke-visual-card :is([data-ke="parent-fit"], [data-ke="vacancy-confirmed"], [data-ke="kidease-approved-marker"], [data-ke="provincial-openings"]) {
   display: none;

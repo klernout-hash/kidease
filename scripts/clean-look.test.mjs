@@ -113,3 +113,9 @@ test("each care type keeps the same original artwork in Classic and Clean", () =
   assert.match(src("src/components/facility-type-rails.tsx"), /<CareCategoryIcon id=\{type\}/);
   assert.match(src("src/components/airbnb-screens.tsx"), /<CareCategoryIcon id=\{cat\.id\}/);
 });
+
+test("the clean look never hides the card's text link", () => {
+  const css = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  // The View Details button is gone; its marker now sits on the card's name and details link.
+  assert.doesNotMatch(css, /\[data-ke="card-view-details"\]\s*\{\s*display:\s*none/);
+});
