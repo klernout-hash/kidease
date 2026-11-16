@@ -61,8 +61,15 @@ test("iOS social login stays in an auth sheet and offers Apple or email only", (
   const google = [{ idp: "google" }, { idp: "facebook" }];
   assert.deepEqual(providersForNativeShell(google, { native: true, platform: "ios" }), []);
   assert.deepEqual(
-    providersForNativeShell([{ idp: "apple" }, ...google], { native: true, platform: "ios" }).map((row) => row.idp),
-    ["apple", "google", "facebook"],
+    providersForNativeShell([{ idp: "huawei" }, { idp: "amazon" }], { native: true, platform: "ios" }),
+    [],
+  );
+  assert.deepEqual(
+    providersForNativeShell(
+      [{ idp: "apple" }, ...google, { idp: "huawei" }, { idp: "amazon" }],
+      { native: true, platform: "ios" },
+    ).map((row) => row.idp),
+    ["apple", "google", "facebook", "huawei", "amazon"],
   );
   assert.deepEqual(providersForNativeShell(google, { native: true, platform: "android" }).map((row) => row.idp), [
     "google",

@@ -7,10 +7,14 @@
  */
 
 export const HUAWEI_SIGNIN_FLAG = "FEATURE_SIGNIN_HUAWEI";
+export const LOGIN_HUAWEI_FLAG = "FEATURE_LOGIN_HUAWEI";
 export const AMAZON_SIGNIN_FLAG = "FEATURE_SIGNIN_AMAZON";
+/** FEATURE_LOGIN_AMAZON is the button flag. On an Amazon build the button also needs an Amazon device (lib/amazon/gate.ts). */
+export const LOGIN_AMAZON_FLAG = "FEATURE_LOGIN_AMAZON";
 
 type StoreSignInEnv = {
   FEATURE_SIGNIN_HUAWEI?: string;
+  FEATURE_LOGIN_HUAWEI?: string;
   FEATURE_SIGNIN_AMAZON?: string;
   FEATURE_LOGIN_AMAZON?: string;
   HUAWEI_APP_ID?: string;
@@ -61,15 +65,39 @@ export function amazonApiKey(env: StoreSignInEnv = process.env): string | undefi
   return trimmed(env.AMAZON_API_KEY);
 }
 
-/** Button and Better Auth provider. Default off. */
+/** Button and Better Auth provider. Default off. Either flag works. Keys are required. */
 export function huaweiSignInVisible(env: StoreSignInEnv = process.env): boolean {
-  return Boolean(huaweiAppId(env) && huaweiAppSecret(env) && flagOn(env.FEATURE_SIGNIN_HUAWEI));
+  return Boolean(
+    huaweiAppId(env) &&
+      huaweiAppSecret(env) &&
+      (flagOn(env.FEATURE_SIGNIN_HUAWEI) || flagOn(env.FEATURE_LOGIN_HUAWEI)),
+  );
 }
 
 /** Button and Better Auth provider. Default off. The API key is not required to start. */
 export function amazonSignInVisible(env: StoreSignInEnv = process.env): boolean {
-  return Boolean(amazonClientId(env) && amazonClientSecret(env) && (flagOn(env.FEATURE_SIGNIN_AMAZON) || flagOn(env.FEATURE_LOGIN_AMAZON)));
+  return Boolean(
+    amazonClientId(env) &&
+      amazonClientSecret(env) &&
+      (flagOn(env.FEATURE_SIGNIN_AMAZON) || flagOn(env.FEATURE_LOGIN_AMAZON)),
+  );
 }
 
-/** FEATURE_LOGIN_AMAZON is the button flag. The button also needs the Amazon build on an Amazon device (lib/amazon/gate.ts). */
-export const LOGIN_AMAZON_FLAG = "FEATURE_LOGIN_AMAZON";
+/** Website, iPhone, and Microsoft can offer Login with Amazon. Play, Galaxy, and Huawei cannot. */
+const AMAZON_OPEN_CHANNELS = new Set(["web", "apple", "ios", "microsoft"]);
+
+/**
+ * Website, iPhone, and Microsoft: flag plus client id and secret.
+ * Amazon Appstore build: those, plus an Amazon device (`deviceAllowed` from loginWithAmazonAllowed).
+ * Play, Galaxy Store, and the Huawei build: never.
+ */
+export function amazonLoginButtonReady(
+  env: StoreSignInEnv = process.env,
+  channel: string,
+  deviceAllowed: boolean,
+): boolean {
+  if (!amazonSignInVisible(env)) return false;
+  const key = String(channel || "web").trim().toLowerCase() || "web";
+  if (key === "amazon") return deviceAllowed;
+  return AMAZON_OPEN_CHANNELS.has(key);
+}

@@ -145,7 +145,8 @@ export function providersForNativeShell<T extends { idp: string }>(
 ): T[] {
   if (!input.native || input.platform !== "ios") return orderSocialSignIn(providers);
   if (providers.some((provider) => provider.idp === "apple")) return orderSocialSignIn(providers);
-  return orderSocialSignIn(providers.filter((provider) => provider.idp !== "google" && provider.idp !== "facebook"));
+  // Guideline 4.8: no Google, Facebook, Huawei, or Amazon button until Apple is beside it.
+  return [];
 }
 
 /** Store matrix, then the iOS rule that keeps email only until Apple is configured. */

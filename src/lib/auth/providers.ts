@@ -75,7 +75,7 @@ export function isNativeSocialProvider(providerId: string): boolean {
   );
 }
 
-/** Apple, then Google, then Facebook. Huawei ID and Login with Amazon follow. */
+/** Apple, then Google, then Facebook. Huawei and Amazon follow on the screens that list them. */
 export const SOCIAL_SIGN_IN_ORDER = ["apple", "google", "facebook"] as const;
 
 const EXTRA_SIGN_IN_ORDER = ["huawei", "amazon"] as const;
@@ -87,15 +87,15 @@ export type SignInChoice = "apple" | "google" | "facebook" | "huawei" | "amazon"
  * Flags and missing keys still hide a button. This list is the ceiling.
  */
 const SIGN_IN_MATRIX: Record<string, readonly SignInChoice[]> = {
-  ios: ["apple", "google", "facebook", "email"],
-  apple: ["apple", "google", "facebook", "email"],
+  ios: ["apple", "google", "facebook", "huawei", "amazon", "email"],
+  apple: ["apple", "google", "facebook", "huawei", "amazon", "email"],
   play: ["google", "facebook", "email"],
   google: ["google", "facebook", "email"],
   samsung: ["google", "facebook", "email"],
   huawei: ["huawei", "facebook", "email"],
   amazon: ["amazon", "facebook", "email"],
-  microsoft: ["apple", "google", "facebook", "email"],
-  web: ["apple", "google", "facebook", "email"],
+  microsoft: ["apple", "google", "facebook", "huawei", "amazon", "email"],
+  web: ["apple", "google", "facebook", "huawei", "amazon", "email"],
 };
 
 export function socialSignInRank(idp: string): number {

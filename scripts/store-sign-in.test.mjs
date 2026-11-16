@@ -3,8 +3,8 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { mapAmazonProfile } from "../src/lib/auth/amazon-idp.ts";
-import { mapHuaweiProfile } from "../src/lib/auth/huawei-idp.ts";
+import { amazonOAuthConfig, mapAmazonProfile } from "../src/lib/auth/amazon-idp.ts";
+import { huaweiOAuthConfig, mapHuaweiProfile } from "../src/lib/auth/huawei-idp.ts";
 import { helpLauncherVisible } from "../src/lib/help-launcher.ts";
 import {
   googlePlayServicesAvailable,
@@ -15,10 +15,11 @@ import {
 } from "../src/lib/native-entitlements.ts";
 import { brokerOAuthCallbackPath } from "../src/lib/auth/preview.ts";
 import {
+  providersForStore,
   signInChoicesForChannel,
   visibleSignInProviders,
 } from "../src/lib/auth/providers.ts";
-import { amazonSignInVisible, huaweiSignInVisible } from "../src/lib/auth/store-signin-flags.ts";
+import { amazonLoginButtonReady, amazonSignInVisible, huaweiSignInVisible } from "../src/lib/auth/store-signin-flags.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -26,16 +27,17 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
+const WITH_STORE_OAUTH = ["apple", "google", "facebook", "huawei", "amazon", "email"];
 const MATRIX = {
-  ios: ["apple", "google", "facebook", "email"],
-  apple: ["apple", "google", "facebook", "email"],
+  ios: WITH_STORE_OAUTH,
+  apple: WITH_STORE_OAUTH,
   play: ["google", "facebook", "email"],
   google: ["google", "facebook", "email"],
   samsung: ["google", "facebook", "email"],
   huawei: ["huawei", "facebook", "email"],
   amazon: ["amazon", "facebook", "email"],
-  microsoft: ["apple", "google", "facebook", "email"],
-  web: ["apple", "google", "facebook", "email"],
+  microsoft: WITH_STORE_OAUTH,
+  web: WITH_STORE_OAUTH,
 };
 
 test("each store shows only the sign-ins that work there, in order", () => {
@@ -45,9 +47,9 @@ test("each store shows only the sign-ins that work there, in order", () => {
   }
   assert.deepEqual(signInChoicesForChannel("play", { playServices: false }), ["facebook", "email"]);
   assert.deepEqual(signInChoicesForChannel("samsung", { playServices: false }), ["facebook", "email"]);
-  assert.deepEqual(signInChoicesForChannel("ios", { playServices: false }), ["apple", "facebook", "email"]);
-  assert.deepEqual(signInChoicesForChannel("web", { playServices: false }), ["apple", "facebook", "email"]);
-  assert.deepEqual(signInChoicesForChannel("microsoft", { playServices: false }), ["apple", "facebook", "email"]);
+  assert.deepEqual(signInChoicesForChannel("ios", { playServices: false }), ["apple", "facebook", "huawei", "amazon", "email"]);
+  assert.deepEqual(signInChoicesForChannel("web", { playServices: false }), ["apple", "facebook", "huawei", "amazon", "email"]);
+  assert.deepEqual(signInChoicesForChannel("microsoft", { playServices: false }), ["apple", "facebook", "huawei", "amazon", "email"]);
   assert.deepEqual(signInChoicesForChannel("huawei", { playServices: true }), ["huawei", "facebook", "email"]);
   assert.deepEqual(signInChoicesForChannel("amazon"), ["amazon", "facebook", "email"]);
   assert.deepEqual(signInChoicesForChannel(""), MATRIX.web);
@@ -61,14 +63,35 @@ test("Huawei ID and Login with Amazon stay off until the flag and keys are set",
   assert.equal(huaweiSignInVisible({ FEATURE_SIGNIN_HUAWEI: "1" }), false);
   assert.equal(huaweiSignInVisible({ ...huaweiKeys, FEATURE_SIGNIN_HUAWEI: "1" }), true);
   assert.equal(huaweiSignInVisible({ HUAWEI_CLIENT_ID: "app", HUAWEI_CLIENT_SECRET: "secret", FEATURE_SIGNIN_HUAWEI: "1" }), true);
+  assert.equal(huaweiSignInVisible({ ...huaweiKeys, FEATURE_LOGIN_HUAWEI: "1" }), true);
+  assert.equal(huaweiSignInVisible({ ...huaweiKeys, FEATURE_LOGIN_HUAWEI: "0", FEATURE_SIGNIN_HUAWEI: "0" }), false);
   assert.equal(amazonSignInVisible({ ...amazonKeys, FEATURE_SIGNIN_AMAZON: "0" }), false);
   assert.equal(amazonSignInVisible({ ...amazonKeys, AMAZON_API_KEY: "key", FEATURE_SIGNIN_AMAZON: "0" }), false);
   assert.equal(amazonSignInVisible({ ...amazonKeys, FEATURE_SIGNIN_AMAZON: "1" }), true);
+  assert.equal(amazonSignInVisible({ ...amazonKeys, FEATURE_LOGIN_AMAZON: "1" }), true);
+  assert.equal(amazonLoginButtonReady({ ...amazonKeys, FEATURE_LOGIN_AMAZON: "1" }, "web", false), true);
+  assert.equal(amazonLoginButtonReady({ ...amazonKeys, FEATURE_LOGIN_AMAZON: "1" }, "play", false), false);
+  assert.equal(amazonLoginButtonReady({ ...amazonKeys, FEATURE_LOGIN_AMAZON: "1" }, "huawei", false), false);
+  assert.equal(amazonLoginButtonReady({ ...amazonKeys, FEATURE_LOGIN_AMAZON: "1" }, "amazon", false), false);
+  assert.equal(amazonLoginButtonReady({ ...amazonKeys, FEATURE_LOGIN_AMAZON: "1" }, "amazon", true), true);
+  assert.equal(amazonLoginButtonReady({ ...amazonKeys }, "web", false), false);
+  const huaweiOAuth = huaweiOAuthConfig({ ...huaweiKeys, FEATURE_LOGIN_HUAWEI: "1" });
+  assert.equal(huaweiOAuth?.authorizationUrl, "https://oauth-login.cloud.huawei.com/oauth2/v3/authorize");
+  assert.deepEqual(huaweiOAuth?.scopes, ["openid", "profile", "email"]);
+  assert.equal(huaweiOAuthConfig({ FEATURE_LOGIN_HUAWEI: "1" }), null);
+  const amazonOAuth = amazonOAuthConfig({ ...amazonKeys, FEATURE_LOGIN_AMAZON: "1" });
+  assert.equal(amazonOAuth?.authorizationUrl, "https://www.amazon.com/ap/oa");
+  assert.deepEqual(amazonOAuth?.scopes, ["profile"]);
+  assert.equal(amazonOAuthConfig({ ...amazonKeys }), null);
   const example = src(".env.example");
   assert.match(example, /^FEATURE_SIGNIN_HUAWEI=0$/m);
+  assert.match(example, /^FEATURE_LOGIN_HUAWEI=0$/m);
   assert.match(example, /^FEATURE_SIGNIN_AMAZON=0$/m);
+  assert.match(example, /^FEATURE_LOGIN_AMAZON=0$/m);
   assert.doesNotMatch(example, /^FEATURE_SIGNIN_HUAWEI=1$/m);
+  assert.doesNotMatch(example, /^FEATURE_LOGIN_HUAWEI=1$/m);
   assert.doesNotMatch(example, /^FEATURE_SIGNIN_AMAZON=1$/m);
+  assert.doesNotMatch(example, /^FEATURE_LOGIN_AMAZON=1$/m);
   assert.doesNotMatch(example, /^HUAWEI_APP_SECRET=\S/m);
   assert.doesNotMatch(example, /^AMAZON_CLIENT_SECRET=\S/m);
   assert.doesNotMatch(example, /^AMAZON_API_KEY=\S/m);
@@ -78,8 +101,28 @@ test("new providers are hidden until asked, then sort after Facebook", () => {
   const base = { nativeGoogle: true, nativeFacebook: true, nativeApple: true, broker: false };
   const current = visibleSignInProviders(base).map((row) => row.idp);
   assert.deepEqual(current, ["apple", "google", "facebook"]);
-  const withStores = visibleSignInProviders({ ...base, nativeHuawei: true, nativeAmazon: true }).map((row) => row.idp);
-  assert.deepEqual(withStores, ["apple", "google", "facebook", "huawei", "amazon"]);
+  const withStores = visibleSignInProviders({ ...base, nativeHuawei: true, nativeAmazon: true });
+  assert.deepEqual(withStores.map((row) => row.idp), ["apple", "google", "facebook", "huawei", "amazon"]);
+  assert.deepEqual(providersForStore(withStores, "web").map((row) => row.idp), ["apple", "google", "facebook", "huawei", "amazon"]);
+  assert.deepEqual(providersForStore(withStores, "google").map((row) => row.idp), ["google", "facebook"]);
+  assert.deepEqual(providersForStore(withStores, "samsung").map((row) => row.idp), ["google", "facebook"]);
+  assert.deepEqual(providersForStore(withStores, "huawei").map((row) => row.idp), ["facebook", "huawei"]);
+  assert.deepEqual(providersForStore(withStores, "amazon").map((row) => row.idp), ["facebook", "amazon"]);
+});
+
+test("social profiles do not carry a role", () => {
+  const huawei = mapHuaweiProfile({ openID: "hw-1", email: "parent@example.ca", displayName: "Ada" });
+  const amazon = mapAmazonProfile({ user_id: "amzn1.account.1", email: "parent@example.ca", name: "Ada" });
+  assert.equal(Object.hasOwn(huawei, "role"), false);
+  assert.equal(Object.hasOwn(amazon, "emailVerified"), true);
+  assert.equal(Object.hasOwn(amazon, "role"), false);
+  assert.match(src("src/lib/auth/server.ts"), /"huawei"/);
+  assert.match(src("src/lib/auth/server.ts"), /"amazon"/);
+  assert.match(src("src/lib/copy-en.ts"), /continueHuawei: "Continue with Huawei"/);
+  assert.match(src("src/lib/copy-en.ts"), /continueAmazon: "Continue with Amazon"/);
+  assert.match(src("src/lib/copy-fr.ts"), /continueHuawei: "Continuer avec Huawei"/);
+  assert.match(src("src/lib/copy-fr.ts"), /continueAmazon: "Continuer avec Amazon"/);
+  assert.match(src("src/lib/server/roles.ts"), /roleFlipAllowed/);
 });
 
 test("a verified email can link, and an unverified Huawei email cannot", () => {

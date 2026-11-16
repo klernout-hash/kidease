@@ -8,6 +8,7 @@ import {
   unsignedSessionToken,
 } from "./cookies";
 import { googleSignInEnabled } from "./google-login-flag";
+import { amazonSignInVisible, huaweiSignInVisible } from "./store-signin-flags";
 import {
   nativeAuthFinishUrl,
   nativeOAuthProvider,
@@ -54,7 +55,12 @@ export async function handleNativeAuthStart(request: Request): Promise<Response>
   const next = safeInAppPath(url.searchParams.get("next"));
   const errorNext = safeInAppPath(url.searchParams.get("errorNext") || next);
   const newUser = url.searchParams.get("newUser");
-  if (!provider || (provider === "google" && !googleSignInEnabled(process.env))) {
+  if (
+    !provider ||
+    (provider === "google" && !googleSignInEnabled(process.env)) ||
+    (provider === "huawei" && !huaweiSignInVisible(process.env)) ||
+    (provider === "amazon" && !amazonSignInVisible(process.env))
+  ) {
     return redirect(nativeAuthFinishUrl({ next: errorNext, error: "oauth_provider_not_found" }));
   }
   try {

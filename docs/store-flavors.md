@@ -4,13 +4,13 @@ Each store gets its own build. A build only has its own store's SDKs. The websit
 
 | Target | How it is built | `STORE` constant | Push | Sign-in extras | Forbidden in the build |
 | --- | --- | --- | --- | --- | --- |
-| Website | Vite / Vercel | none (channel `web`) | none | Apple, Facebook | any store SDK, Amazon UI |
+| Website | Vite / Vercel | none (channel `web`) | none | Apple, Facebook, plus Huawei and Amazon when their flags and keys are set | any store SDK, Fire kiosk, ADM |
 | Google Play | `assemblePlayRelease` / `bundlePlayRelease` | `play` | FCM | Google (hidden), Apple, Facebook | LWA, ADM, HMS |
 | Samsung Galaxy Store | `assembleSamsungRelease` | `samsung` | FCM | Apple, Facebook | LWA, ADM, HMS |
-| Huawei AppGallery | `assembleHuaweiRelease` / `bundleHuaweiRelease` | `huawei` | HMS Push (`FEATURE_CALL_PUSH`, off) | Apple, Facebook. Google hidden. Huawei ID off | LWA, ADM, GMS, FCM |
-| Amazon Appstore | `assembleAmazonRelease` | `amazon` | ADM (`FEATURE_AMAZON_ADM`) | Login with Amazon (`FEATURE_LOGIN_AMAZON`) | GMS, FCM, HMS |
-| iOS App Store | Xcode | iOS UA, no Android flavour | APNs | Sign in with Apple | LWA, ADM, GMS, HMS |
-| Microsoft Store | PWA / MSIX (`KidEaseStoreMicrosoft`) | `microsoft` UA | none | Apple, Facebook | LWA, ADM |
+| Huawei AppGallery | `assembleHuaweiRelease` / `bundleHuaweiRelease` | `huawei` | HMS Push (`FEATURE_CALL_PUSH`, off) | Apple, Facebook. Google hidden. Huawei ID when `FEATURE_LOGIN_HUAWEI` or `FEATURE_SIGNIN_HUAWEI` is on | LWA, ADM, GMS, FCM, HMS Account Kit |
+| Amazon Appstore | `assembleAmazonRelease` | `amazon` | ADM (`FEATURE_AMAZON_ADM`) | Login with Amazon (`FEATURE_LOGIN_AMAZON`, Amazon device) | GMS, FCM, HMS |
+| iOS App Store | Xcode | iOS UA, no Android flavour | APNs | Sign in with Apple, plus Huawei and Amazon when Apple and their flags are on | LWA SDK, ADM, GMS, HMS |
+| Microsoft Store | PWA / MSIX (`KidEaseStoreMicrosoft`) | `microsoft` UA | none | Apple, Facebook, plus Huawei and Amazon when their flags and keys are set | LWA SDK, ADM |
 
 ## The STORE constant
 
@@ -18,12 +18,12 @@ Each store gets its own build. A build only has its own store's SDKs. The websit
 
 ## Amazon features: two gates
 
-Login with Amazon, ADM push and the Fire kiosk need **both**:
+ADM push and the Fire kiosk need **both**:
 
 1. **Build gate:** the amazon flavour (`KidEaseStoreAmazon` token, `BuildConfig.STORE == "amazon"`).
 2. **Device gate:** `Build.MANUFACTURER` equals `Amazon` at runtime. Only then does the shell add `KidEaseAmazonDevice` (`MainActivity.withAmazonDeviceToken`).
 
-Plus the feature flag. A Silk browser or a Fire UA on the website is never enough. See `src/lib/amazon/gate.ts`.
+Plus the feature flag. A Silk browser or a Fire UA on the website is never enough for ADM or the kiosk. Continue with Amazon on the website uses the flag and the Login with Amazon keys only. The Amazon Appstore button still needs this device gate. See `src/lib/amazon/gate.ts`.
 
 ## SDK stripping
 
@@ -40,7 +40,7 @@ Plus the feature flag. A Silk browser or a Fire UA on the website is never enoug
 1. Runs the Android unit tests for every flavour.
 2. Runs `assemble{Play,Samsung,Huawei,Amazon}Debug`.
 3. Runs `node scripts/check-store-isolation.mjs`. It unzips each APK and scans `classes*.dex` and `AndroidManifest.xml` for forbidden strings (the `FORBIDDEN` table in the script). A missing APK fails the job too. An amazon APK must contain `AmazonAdmPlugin`. A huawei APK must contain `KidEaseHmsMessageService`. The same script scans the iOS project and the Microsoft manifest for Huawei, Amazon, and Firebase files.
-4. Runs `scripts/store-isolation.test.mjs`. For each store it asserts the sign-in buttons and Amazon UI that the server returns: no other store's buttons, and no Amazon UI off the Amazon build or off Amazon hardware.
+4. Runs `scripts/store-isolation.test.mjs`. Play, Galaxy, Huawei, and Amazon builds do not show another store's sign-in. The website, iPhone, and Microsoft may list Huawei and Amazon. Fire kiosk and ADM stay off unless the Amazon build is on an Amazon device.
 5. `ci.yml` also runs `bundleHuaweiRelease` and `assembleHuaweiRelease` and uploads the AAB and APK. Pull requests do not have the upload keystore, so that artifact is unsigned. `android-release.yml` signs the Play AAB, then signs `assembleAmazonRelease` and uploads it as `app-amazon-release`, then signs the Huawei artifact when `AGCONNECT_SERVICES_JSON` is set. A missing AppGallery secret skips Huawei only.
 
 Adding a store: add a flavour with `buildConfigField STORE`, a `StorePlugins.java` in its source set, a row in `FORBIDDEN`, and a row above.

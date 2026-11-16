@@ -4,12 +4,12 @@ import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { appleLoginVisible } from "@/lib/auth/apple-login-flag";
 import { facebookLoginVisible, facebookOauthHost } from "@/lib/auth/facebook-idp";
 import { googleSignInOffered } from "@/lib/auth/google-login-flag";
-import { amazonSignInVisible, huaweiSignInVisible } from "@/lib/auth/store-signin-flags";
+import { amazonLoginButtonReady, huaweiSignInVisible } from "@/lib/auth/store-signin-flags";
 import { nativeShellHidesAdmin } from "@/lib/native-admin";
 import { googlePlayServicesAvailable, storeChannelFromSignals } from "@/lib/native-entitlements";
 import { nativeSocialPlatform, signInProvidersForDevice } from "@/lib/auth/native-oauth";
 import { loginWithAmazonAllowed } from "@/lib/amazon/gate";
-import { NATIVE_AMAZON, visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers";
+import { visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers";
 
 /**
  * Sign-in buttons the login page should render.
@@ -20,6 +20,10 @@ import { NATIVE_AMAZON, visibleSignInProviders, type GrokProvider } from "@/lib/
  * Apple only when APPLE_CLIENT_ID + APPLE_TEAM_ID + APPLE_KEY_ID +
  * APPLE_PRIVATE_KEY are set AND FEATURE_APPLE_LOGIN is on. Do not import
  * apple-idp.ts (node:crypto) into this module.
+ * Huawei when FEATURE_LOGIN_HUAWEI or FEATURE_SIGNIN_HUAWEI is on and the
+ * app id and secret are set. Amazon when FEATURE_LOGIN_AMAZON or
+ * FEATURE_SIGNIN_AMAZON is on and the client id and secret are set.
+ * Play and Galaxy never show those two. The Amazon build also needs an Amazon device.
  */
 export const getSignInProviders = createServerFn({ method: "GET" }).handler((): GrokProvider[] => {
   const google = googleSignInOffered(process.env);
@@ -35,15 +39,6 @@ export const getSignInProviders = createServerFn({ method: "GET" }).handler((): 
   const nativeApple = appleLoginVisible(process.env);
   const broker = google.broker;
   const preferNative = Boolean(process.env.VERCEL);
-  const list = visibleSignInProviders({
-    nativeGoogle,
-    nativeFacebook,
-    nativeApple,
-    nativeHuawei: huaweiSignInVisible(process.env),
-    nativeAmazon: false,
-    broker,
-    preferNativeGoogle: preferNative,
-  });
   let ua = "";
   let cookie = "";
   try {
@@ -57,10 +52,15 @@ export const getSignInProviders = createServerFn({ method: "GET" }).handler((): 
   const signals = { userAgent: ua, cookie, search: "" };
   const native = nativeShellHidesAdmin(signals);
   const channel = storeChannelFromSignals(signals);
-  // Login with Amazon: Amazon Appstore build on an Amazon device only (see lib/amazon/gate.ts).
-  if (amazonSignInVisible(process.env) && loginWithAmazonAllowed(process.env, signals)) {
-    list.push(NATIVE_AMAZON);
-  }
+  const list = visibleSignInProviders({
+    nativeGoogle,
+    nativeFacebook,
+    nativeApple,
+    nativeHuawei: huaweiSignInVisible(process.env),
+    nativeAmazon: amazonLoginButtonReady(process.env, channel, loginWithAmazonAllowed(process.env, signals)),
+    broker,
+    preferNativeGoogle: preferNative,
+  });
   return signInProvidersForDevice(list, {
     channel,
     playServices: googlePlayServicesAvailable(ua),

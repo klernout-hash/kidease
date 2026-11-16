@@ -72,6 +72,8 @@ const SOCIAL_LABEL: Record<string, string> = {
   apple: "Apple",
   facebook: "Facebook",
   "grok-google": "Google",
+  huawei: "Huawei",
+  amazon: "Amazon",
 };
 
 export function socialProviderLabels(providers: string[]): string[] {

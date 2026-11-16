@@ -1,15 +1,21 @@
 /**
  * Login with Amazon (Login with Amazon OAuth, not Amazon Pay).
  *
- * Shown only when FEATURE_SIGNIN_AMAZON is on and the security-profile
- * client id and secret are set. Default off. Callback `/api/auth/callback/amazon`.
+ * Shown only when FEATURE_SIGNIN_AMAZON or FEATURE_LOGIN_AMAZON is on and
+ * the security-profile client id and secret are set. Default off.
+ * Callback `/api/auth/callback/amazon`.
+ *
+ * Website, iPhone, and Microsoft show the button from the flag and keys.
+ * The Amazon Appstore build also needs an Amazon device. Play, Galaxy,
+ * and Huawei builds never show it. There is no Login with Amazon SDK.
  *
  * Server env only. Never `VITE_*`. Never commit the secret or the API key.
  *
  *   AMAZON_CLIENT_ID       Security profile client id
  *   AMAZON_CLIENT_SECRET   Security profile client secret
  *   AMAZON_API_KEY         API key for package ca.kidease.app (not used in this exchange)
- *   FEATURE_SIGNIN_AMAZON  1 to turn the button on
+ *   FEATURE_SIGNIN_AMAZON  1 to turn the provider on
+ *   FEATURE_LOGIN_AMAZON   same switch, either flag is enough
  */
 import { amazonClientId, amazonClientSecret, amazonSignInVisible } from "./store-signin-flags.ts";
 import type { LinkedProfile } from "./huawei-idp.ts";

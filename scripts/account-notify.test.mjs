@@ -126,6 +126,7 @@ test("auth method labels never leak tokens and map known providers", () => {
   assert.equal(summarizeAuthMethods(["credential"]), "email/password");
   assert.equal(summarizeAuthMethods(["google", "grok-google"]), "Google");
   assert.equal(summarizeAuthMethods(["apple", "facebook"]), "Apple, Facebook");
+  assert.equal(summarizeAuthMethods(["huawei", "amazon"]), "Huawei, Amazon");
   assert.equal(summarizeAuthMethods(["credential", "google"]), "email/password, Google");
   assert.equal(summarizeAuthMethods([null, "", "unknown-secret"]), "");
 });
