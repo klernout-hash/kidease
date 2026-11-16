@@ -64,7 +64,7 @@ export function AdminCentreDocuments() {
   return (
     <section data-ke="admin-centre-documents">
       <h2 className="font-display text-2xl">{copy.title}</h2>
-      <p className="mt-1 max-w-prose text-sm text-muted">{copy.lead}</p>
+      <p className="mt-1 max-w-prose text-sm text-muted">{copy.adminLead}</p>
       <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label={copy.title}>
         {filters.map((item) => (
           <button
