@@ -4061,3 +4061,20 @@ html[data-look="clean"] .ke-listing-jump {
 html[data-look="clean"] .ke-listing-page section[id] {
   scroll-margin-top: calc(var(--ke-header-h, 4.5rem) + 3.5rem);
 }
+
+/* Airbnb comparison, batch 5. Clean look only. */
+/* One badge: the bell carries the count, so the menu icon does not repeat it. */
+html[data-look="clean"]:has([data-ke="notification-bell"]) [data-ke="menu-trigger"] [data-ke="menu-badge"] {
+  display: none;
+}
+/* Phone home: the search bar already says what to do, so the big heading steps aside for listings. */
+@media (max-width: 767px) {
+  html[data-look="clean"] .ke-home > h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

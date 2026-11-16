@@ -1737,7 +1737,7 @@ export function SearchScreen({
   const nameSearch = Boolean(nameQuery.trim());
   const centreCount = resultTotal;
   const licensedCount = coverage.incomplete ? coverage.count(centreCount) : centreCount === 1
-    ? t("searchLicensedCountOne") : t("searchLicensedCount").replace("{n}", String(centreCount));
+    ? t("searchLicensedCountOne") : t("searchLicensedCount").replace("{n}", new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA").format(centreCount));
   const browseHint = splitLiveBrowseHint(t("exploreBrowseHint").replace("{n}", String(fabric.live)));
   const placeBits = (whereLabel || origin.label).split(",").map((part) => part.trim());
   const browseHub = cityHubDefForPlace(placeBits[0], normalizeProvinceCode(placeBits[1]) || placeBits[1]);
