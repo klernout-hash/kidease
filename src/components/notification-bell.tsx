@@ -12,7 +12,7 @@ export function NotificationBell({
   className?: string;
   onClick?: () => void;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const { session } = useSessionDesks();
   const unread = failClosedUnread(session?.notificationUnread);
   const badge = formatUnreadBadge(unread);
@@ -22,7 +22,7 @@ export function NotificationBell({
 
   return (
     <Link
-      to={NOTIFICATIONS_PATH}
+      to={locale === "fr" ? "/fr/notifications" : NOTIFICATIONS_PATH}
       onClick={onClick}
       aria-label={label}
       title={hint}

@@ -79,6 +79,7 @@ export function CentreInboxDesk({
   const [stateBusy, setStateBusy] = useState(false);
   const [videoSurface, setVideoSurface] = useState(false);
   const [voiceReady, setVoiceReady] = useState(false);
+  const [timeZone, setTimeZone] = useState("");
 
   const visible = useMemo(
     () => (items ? filterInboxList(items, { filter, query, bodyMatchIds: new Set(bodyMatchIds) }) : []),
@@ -120,6 +121,7 @@ export function CentreInboxDesk({
     setCanWrite(res.canWrite !== false);
     setVideoSurface(Boolean(res.videoSurfaceEnabled));
     setVoiceReady(Boolean(res.voiceReady));
+    setTimeZone(res.timeZone || "");
     setThreadReady(true);
     const meta = await getConversationDetails({ data: { conversationId: id } }).catch(() => null);
     setDetails(meta);
@@ -465,6 +467,7 @@ export function CentreInboxDesk({
                 reads={details?.reads || []}
                 phoneAlerts={details?.phoneAlerts || []}
                 peers={details?.participants || []}
+                timeZone={timeZone || undefined}
               />
             )}
           </div>

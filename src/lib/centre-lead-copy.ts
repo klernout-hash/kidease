@@ -25,6 +25,7 @@ export const LEAD_COPY = {
     age: "Age group",
     start: "Wanted start",
     anyAge: "Any age",
+    schoolAge: "School age",
     infant: "Infant",
     toddler: "Toddler",
     preschool: "Preschool",
@@ -140,6 +141,7 @@ export const LEAD_COPY = {
     age: "Groupe d’âge",
     start: "Début souhaité",
     anyAge: "Tous les âges",
+    schoolAge: "Âge scolaire",
     infant: "Nourrisson",
     toddler: "Tout-petit",
     preschool: "Préscolaire",
@@ -296,3 +298,39 @@ export const API_DOC_SECTIONS = {
     },
   ],
 } as const;
+
+const LEAD_RULES: Record<string, { en: string; fr: string }> = {
+  enrolled_booking: { en: "A booking was accepted", fr: "Une inscription a été acceptée" },
+  enrolled_tour: { en: "The tour is marked enrolled", fr: "La visite est marquée inscrite" },
+  enrolled_agreement: { en: "The agreement is signed", fr: "L’entente est signée" },
+  enrolled_offer: { en: "The offer was accepted", fr: "L’offre a été acceptée" },
+  enrolled_waitlist: { en: "A waitlist spot was accepted", fr: "Une place de liste d’attente a été acceptée" },
+  tour_completed: { en: "The tour is done", fr: "La visite est terminée" },
+  booking_accepted: { en: "The booking was accepted", fr: "La demande a été acceptée" },
+  tour_accepted: { en: "The tour is booked", fr: "La visite est réservée" },
+  open_application: { en: "An application is open", fr: "Une demande est ouverte" },
+  open_offer: { en: "An offer is open", fr: "Une offre est ouverte" },
+  waitlist_row: { en: "On the waitlist", fr: "Sur la liste d’attente" },
+  waitlist_booking: { en: "On the waitlist", fr: "Sur la liste d’attente" },
+  inquiry: { en: "A new inquiry", fr: "Une nouvelle demande" },
+  manual: { en: "A staff member moved this family", fr: "Un membre du personnel a déplacé cette famille" },
+};
+
+export function leadChangeLabel(ruleId: string, locale: string): string {
+  const key = String(ruleId || "").replace(/^intake:/, "");
+  const row = LEAD_RULES[key];
+  if (row) return locale === "fr" ? row.fr : row.en;
+  return locale === "fr" ? "Mise à jour" : "Updated";
+}
+
+export function leadAgeLabel(
+  value: string,
+  copy: { infant: string; toddler: string; preschool: string; schoolAge: string },
+): string {
+  if (value === "infant") return copy.infant;
+  if (value === "toddler") return copy.toddler;
+  if (value === "preschool") return copy.preschool;
+  if (value === "school-age" || value === "school_age") return copy.schoolAge;
+  if (/^[a-z0-9_-]+$/.test(value)) return "";
+  return value;
+}

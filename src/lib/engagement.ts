@@ -119,6 +119,7 @@ export function nextInboxAction(input: {
   const tour = String(input.tourStatus || "").toLowerCase();
   const booking = String(input.bookingStatus || "").toLowerCase();
   if (booking === "waitlist" || tour === "enrolled") return "waitlist";
+  if (booking === "accepted" || booking === "enrolled" || booking === "active") return "none";
   if (tour === "pending") return "tour";
   if (tour === "completed" || tour === "declined" || tour === "lost" || tour === "expired" || tour === "no_show") {
     return "follow_up";

@@ -15,7 +15,7 @@ function todayIso() {
 
 export async function screeningGate(daycareId: string, staffName: string) {
   const mode = screeningMode(process.env);
-  if (mode === "off") return { allow: true, warn: false, block: false };
+  if (mode === "off") return { allow: true, warn: false, block: false, status: "current" as const };
   const sql = await sqlClient();
   const rows = await sql<{ expires_on: string | null }>`
     select expires_on::text as expires_on
@@ -34,7 +34,7 @@ export async function screeningGate(daycareId: string, staffName: string) {
   if (decision.log) {
     logPractice("FEATURE_STAFF_SCREENING", { action: "shift_gate", daycareId, status: worst, block: decision.block, mode });
   }
-  return decision;
+  return { ...decision, status: worst };
 }
 
 export const loadCentreScreening = createServerFn({ method: "GET" })

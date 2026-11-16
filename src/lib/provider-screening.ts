@@ -205,12 +205,25 @@ export function screeningPublicStatus(doc: {
   return doc.status;
 }
 
-export function screeningPublicNotes(notes: string): string {
+export function screeningPublicNotes(notes: string, locale: "en" | "fr" = "en"): string {
   const text = notes.trim();
-  if (/^stub pack\b/i.test(text)) {
-    return "Vulnerable Sector Check is required for this role. KidEase does not issue police checks. Local police or the RCMP do.";
-  }
-  return notes;
+  const english = /^stub pack\b/i.test(text)
+    ? "Vulnerable Sector Check is required for this role. KidEase does not issue police checks. Local police or the RCMP do."
+    : text;
+  if (locale !== "fr") return english;
+  const french: Record<string, string> = {
+    "Criminal Record Check with Vulnerable Sector Search. Issued only by local police or RCMP: KidEase cannot run or stamp this check. Required at 18+.":
+      "Vérification du casier judiciaire avec recherche du secteur vulnérable. Seuls la police locale ou la GRC la délivrent. KidEase ne peut pas la faire ni la tamponner. Obligatoire à partir de 18 ans.",
+    "Manitoba Child Abuse Registry Check. KidEase records the certificate; it does not search the registry itself.":
+      "Vérification du registre des mauvais traitements du Manitoba. KidEase conserve le certificat. KidEase ne consulte pas le registre.",
+    "Prior Contact Check (Child and Family Services) for home-based licensees and adult household residents where the regulation applies.":
+      "Vérification des contacts antérieurs (services à l’enfant et à la famille) pour les responsables en milieu familial et les adultes de la maison, lorsque le règlement l’exige.",
+    "Vulnerable Sector Check is required for this role. More provincial checks will be added later. KidEase does not issue police checks.":
+      "La vérification du secteur vulnérable est exigée pour ce rôle. D’autres vérifications provinciales viendront plus tard. KidEase ne délivre pas de vérifications policières.",
+    "Vulnerable Sector Check is required for this role. KidEase does not issue police checks. Local police or the RCMP do.":
+      "La vérification du secteur vulnérable est exigée pour ce rôle. KidEase ne délivre pas de vérifications policières. La police locale ou la GRC le fait.",
+  };
+  return french[english] || french[text] || english;
 }
 
 export function effectiveDocStatus(

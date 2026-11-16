@@ -420,7 +420,8 @@ async function pageFor(userId: string, daycareId: string) {
       ).catch(() => [])
     : [];
   if (isHiddenLeadCentre(daycareId)) return { enabled: true as const, hidden: true as const };
-  const resolved = resolveLeadCentre(daycareId, accessible);
+  const picked = String(daycareId || "").trim() || (accessible.length === 1 ? accessible[0] || "" : "");
+  const resolved = resolveLeadCentre(picked, accessible);
   if (!resolved.ok) {
     return {
       enabled: true as const,
@@ -439,10 +440,12 @@ async function pageFor(userId: string, daycareId: string) {
   if (!access.ok) return { enabled: true as const, denied: true as const, needsCentre: false as const, centres: [] };
   const leads = await syncCentre(sql, resolved.centreId);
   await recordAlerts(sql, resolved.centreId, leads);
-  const notes = await sql<{ lead_id: string; id: string; body: string; created_at: string }>`
-    select lead_id, id, body, created_at from centre_lead_notes
-    where daycare_id = ${resolved.centreId}
-    order by created_at desc limit 400
+  const notes = await sql<{ lead_id: string; id: string; body: string; created_at: string; author_name: string | null }>`
+    select n.lead_id, n.id, n.body, n.created_at, u.name as author_name
+    from centre_lead_notes n
+    left join "user" u on u.id = n.author_user_id
+    where n.daycare_id = ${resolved.centreId}
+    order by n.created_at desc limit 400
   `.catch(() => []);
   const events = await sql<{
     lead_id: string;
@@ -526,6 +529,7 @@ async function pageFor(userId: string, daycareId: string) {
       leadId: note.lead_id,
       body: note.body,
       createdAt: iso(note.created_at),
+      authorName: note.author_name || "",
     })),
     history: events.map((event) => ({
       leadId: event.lead_id,

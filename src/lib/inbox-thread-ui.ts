@@ -172,26 +172,51 @@ export function inboxTimeLabel(iso: string, now = new Date(), locale = "en"): st
   return d.toLocaleDateString(loc, sameYear ? { month: "short", day: "numeric" } : { month: "short", day: "numeric", year: "numeric" });
 }
 
-export function messageClock(iso: string, locale = "en"): string {
+export function messageClock(iso: string, locale = "en", timeZone?: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString(locale === "fr" ? "fr-CA" : "en-CA", { hour: "numeric", minute: "2-digit" });
+  return d.toLocaleTimeString(locale === "fr" ? "fr-CA" : "en-CA", {
+    hour: "numeric",
+    minute: "2-digit",
+    ...(timeZone ? { timeZone } : {}),
+  });
+}
+
+function zoneDay(iso: string, timeZone: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+  const pick = (type: string) => parts.find((part) => part.type === type)?.value || "";
+  return `${pick("year")}-${pick("month")}-${pick("day")}`;
 }
 
 export function messageDayLabel(
   iso: string,
   now = new Date(),
   locale = "en",
+  timeZone?: string,
 ): { today: boolean; yesterday: boolean; text: string } {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return { today: false, yesterday: false, text: "" };
-  const start = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-  const diff = Math.round((start(now) - start(d)) / 86_400_000);
   const text = d.toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
     month: "short",
     day: "numeric",
     year: d.getFullYear() === now.getFullYear() ? undefined : "numeric",
+    ...(timeZone ? { timeZone } : {}),
   });
+  if (timeZone) {
+    const today = zoneDay(now.toISOString(), timeZone);
+    const day = zoneDay(iso, timeZone);
+    const yesterdayDate = new Date(now.getTime() - 86_400_000);
+    return { today: day === today, yesterday: day === zoneDay(yesterdayDate.toISOString(), timeZone), text };
+  }
+  const start = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const diff = Math.round((start(now) - start(d)) / 86_400_000);
   return { today: diff === 0, yesterday: diff === 1, text };
 }
 

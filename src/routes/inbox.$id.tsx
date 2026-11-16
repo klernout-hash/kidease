@@ -99,6 +99,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
   const replyDraftsOn = useAiFeatureFlag(AI_FLAGS.replyDrafts);
   const [videoSurface, setVideoSurface] = useState(false);
   const [voiceReady, setVoiceReady] = useState(false);
+  const [timeZone, setTimeZone] = useState("");
   const [details, setDetails] = useState<ConversationDetails | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   useEffect(() => {
@@ -174,6 +175,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
     setCanWrite(res.canWrite !== false);
     setVideoSurface(Boolean(res.videoSurfaceEnabled));
     setVoiceReady(Boolean(res.voiceReady));
+    setTimeZone(res.timeZone || "");
     if (res.isParent && next) {
       const billed = await listParentBills().catch(() => ({ bills: [] as Bill[] }));
       const match = billed.bills.find((bill) => bill.bookingId === next.id && billIsOpen(bill.status)) ?? null;
@@ -439,6 +441,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
               reads={details?.reads ?? []}
               phoneAlerts={details?.phoneAlerts || []}
               peers={details?.participants || []}
+              timeZone={timeZone || undefined}
             />
           ) : null}
         </div>

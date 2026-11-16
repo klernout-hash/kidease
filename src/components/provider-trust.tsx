@@ -122,6 +122,18 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
                 onChange={(e) => setCapacity(e.target.value)}
               />
             </label>
+            {!daycare.licensedCapacity ? (
+              <div className="sm:col-span-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  data-ke="set-capacity"
+                  onClick={() => document.getElementById("listing-health-capacity")?.querySelector("input")?.focus()}
+                >
+                  {locale === "fr" ? "Indiquer la capacité" : "Set capacity"}
+                </Button>
+              </div>
+            ) : null}
             <div className="sm:col-span-3 flex flex-wrap items-center gap-3">
               <Button type="submit" size="sm" disabled={busy !== null}>
                 {t("saveChanges")}

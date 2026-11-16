@@ -16,6 +16,16 @@ import { useCopy } from "@/lib/use-copy";
 
 type Desk = Awaited<ReturnType<typeof listStaffDesk>>;
 
+function shiftWhen(startIso: string, endIso: string, locale: string): string {
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "";
+  const loc = locale === "fr" ? "fr-CA" : "en-CA";
+  const day = start.toLocaleString(loc, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  const endTime = end.toLocaleTimeString(loc, { hour: "numeric", minute: "2-digit" });
+  return locale === "fr" ? `${day} à ${endTime}` : `${day} to ${endTime}`;
+}
+
 export function StaffDeskLink() {
   const { locale } = useCopy();
   const copy = staffCopy(locale);
@@ -50,6 +60,7 @@ export function StaffSchedulingDesk() {
   const [ratioBand, setRatioBand] = useState("preschool");
   const [ratio, setRatio] = useState<null | { staffOnShift: number; staffToChildren: number; maxGroup: number; status: string }>(null);
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<null | { kind: "saved" | "error"; text: string }>(null);
 
   function load(id = daycareId) {
     void listStaffDesk({ data: { daycareId: id } })
@@ -58,7 +69,11 @@ export function StaffSchedulingDesk() {
         if (row.enabled && row.daycareId && row.daycareId !== id) setDaycareId(row.daycareId);
         else if (row.enabled && row.centres[0] && !id) setDaycareId(row.centres[0].id);
       })
-      .catch(() => setDesk({ enabled: false, centres: [], shifts: [], certs: [], province: "", daycareId: "" }));
+      .catch((err) => {
+        const text = err instanceof Error && err.message ? err.message : copy.bad;
+        setNotice({ kind: "error", text });
+        setDesk((current) => current ?? { enabled: true, centres: [], shifts: [], certs: [], province: "", daycareId: "" });
+      });
   }
 
   useEffect(() => {
@@ -105,13 +120,24 @@ export function StaffSchedulingDesk() {
         onSubmit={(e) => {
           e.preventDefault();
           setBusy(true);
+          setNotice(null);
           void saveStaffShift({ data: { daycareId: activeId, ...shift } })
-            .then(() => {
+            .then((result) => {
+              if (!result?.ok || !result.id) {
+                const text = result && "error" in result && result.error ? result.error : copy.bad;
+                setNotice({ kind: "error", text });
+                return;
+              }
+              setNotice({ kind: "saved", text: copy.saved });
               toast.success(copy.saved);
               setShift({ staffName: "", role: "ece", roomBand: "preschool", startsAt: "", endsAt: "" });
               load(activeId);
             })
-            .catch(() => toast.error(copy.bad))
+            .catch((err) => {
+              const text = err instanceof Error && err.message ? err.message : copy.bad;
+              setNotice({ kind: "error", text });
+              toast.error(text);
+            })
             .finally(() => setBusy(false));
         }}
       >
@@ -147,6 +173,11 @@ export function StaffSchedulingDesk() {
           </label>
         </div>
         <Button type="submit" disabled={busy}>{copy.saveShift}</Button>
+        {notice ? (
+          <p role={notice.kind === "error" ? "alert" : "status"} className={notice.kind === "error" ? "text-sm text-danger" : "text-sm text-fg"} data-ke="shift-notice">
+            {notice.text}
+          </p>
+        ) : null}
       </form>
 
       {desk.shifts.length === 0 ? <p className="text-sm text-muted">{copy.noShifts}</p> : (
@@ -154,8 +185,12 @@ export function StaffSchedulingDesk() {
           {desk.shifts.map((row) => (
             <li key={row.id} className="px-4 py-3 text-sm">
               <p className="font-medium">{row.staffName}</p>
-              <p className="text-muted">
-                {copy.rooms[row.roomBand as keyof typeof copy.rooms] || row.roomBand} · {row.startsAt.slice(0, 16).replace("T", " ")} to {row.endsAt.slice(11, 16)}
+              <p className="text-muted" data-ke="shift-label">
+                {copy.roles[row.role as keyof typeof copy.roles] || row.role}
+                {" · "}
+                {copy.rooms[row.roomBand as keyof typeof copy.rooms] || row.roomBand}
+                {" · "}
+                {shiftWhen(row.startsAt, row.endsAt, locale)}
               </p>
             </li>
           ))}

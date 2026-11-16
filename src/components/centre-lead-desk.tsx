@@ -2,7 +2,7 @@ import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { DeskShell } from "@/components/desk-shell";
 import { Button } from "@/components/ui/button";
-import { leadCopy, type LeadCopy } from "@/lib/centre-lead-copy";
+import { leadAgeLabel, leadChangeLabel, leadCopy, type LeadCopy } from "@/lib/centre-lead-copy";
 import {
   CENTRE_LEAD_STAGES,
   LEAD_SOURCES,
@@ -42,7 +42,7 @@ type Lead = {
   autoRule: string | null;
   noteText: string;
 };
-type Note = { id: string; leadId: string; body: string; createdAt: string };
+type Note = { id: string; leadId: string; body: string; createdAt: string; authorName: string };
 type History = { leadId: string; fromStage: string | null; toStage: string; ruleId: string; automatic: boolean; at: string };
 type KeyRow = { id: string; name: string; prefix: string; scopes: string[]; revokedAt: string | null; lastUsedAt: string | null };
 type Report = {
@@ -424,7 +424,10 @@ function LeadButton({ copy, lead, onOpen }: { copy: LeadCopy; lead: Lead; onOpen
       <span className="text-sm text-muted">
         {stage}
         {lead.childLabel ? ` · ${lead.childLabel}` : ""}
-        {lead.ageGroup ? ` · ${lead.ageGroup}` : ""}
+        {lead.ageGroup ? (() => {
+          const age = leadAgeLabel(lead.ageGroup, copy);
+          return age ? ` · ${age}` : "";
+        })() : ""}
         {lead.desiredStart ? ` · ${lead.desiredStart}` : ""}
         {lead.source ? ` · ${copy.sources[lead.source as keyof typeof copy.sources] || lead.source}` : ""}
       </span>
@@ -511,6 +514,7 @@ function LeadEditor({
   onClose: () => void;
   onSave: (task: () => Promise<{ ok: boolean; error?: string }>, okText: string) => Promise<void>;
 }) {
+  const { locale } = useCopy();
   const [stage, setStage] = useState(lead.stage);
   const [reason, setReason] = useState(lead.lostReason || "");
   const [note, setNote] = useState("");
@@ -588,18 +592,27 @@ function LeadEditor({
       <ul className="mt-3 flex flex-col gap-2">
         {notes.map((item) => (
           <li key={item.id} className="text-sm">
-            {item.body}
+            <p>{item.body}</p>
+            <p className="text-xs text-subtle">
+              {[item.authorName, item.createdAt ? new Date(item.createdAt).toLocaleString(locale === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium", timeStyle: "short" }) : ""]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
           </li>
         ))}
       </ul>
       <h3 className="mt-4 text-sm font-semibold">{copy.history}</h3>
       <ul className="mt-2 flex flex-col gap-1 text-sm text-muted">
         {history.length === 0 ? <li>{copy.noneYet}</li> : null}
-        {history.map((item, index) => (
-          <li key={`${item.at}-${index}`}>
-            {(item.automatic ? copy.automatic : copy.staff) + `: ${item.fromStage || copy.stages.inquiry} → ${item.toStage} (${item.ruleId})`}
-          </li>
-        ))}
+        {history.map((item, index) => {
+          const fromKey = item.fromStage && item.fromStage in copy.stages ? (item.fromStage as CentreLeadStage) : "inquiry";
+          const toKey = item.toStage in copy.stages ? (item.toStage as CentreLeadStage) : null;
+          return (
+            <li key={`${item.at}-${index}`}>
+              {`${item.automatic ? copy.automatic : copy.staff}: ${copy.stages[fromKey]} → ${toKey ? copy.stages[toKey] : leadChangeLabel("", locale)}. ${leadChangeLabel(item.ruleId, locale)}`}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

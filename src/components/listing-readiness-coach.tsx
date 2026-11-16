@@ -76,7 +76,7 @@ export function ListingReadinessCoach({
   item: ListingVerifiedInput;
   variant?: "card" | "editor";
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const coach = listingVerifiedCoach(item);
 
   return (
@@ -97,9 +97,9 @@ export function ListingReadinessCoach({
             <span className="mr-2 tabular-nums">{row.done ? "✓" : "–"}</span>
             {t(BLOCKER_KEY[row.id as VerifiedBlocker])}
             {row.done ? null : (
-              <CoachLink href={row.href} className="ml-2 text-primary underline-offset-4 hover:underline">
-                {t(DESK_KEY[row.href.desk])}
-              </CoachLink>
+            <CoachLink href={row.href} className="ml-2 inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline">
+              {row.id === "capacity" ? (locale === "fr" ? "Indiquer la capacité" : "Set capacity") : t(DESK_KEY[row.href.desk])}
+            </CoachLink>
             )}
           </li>
         ))}
