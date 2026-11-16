@@ -402,6 +402,11 @@ export function reviewRepliesEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_REVIEW_REPLIES", env);
 }
 
+/** Compare fee parents pay, and distance from a saved commute. Default on. */
+export function compareParentFeeEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_COMPARE_PARENT_FEE", env);
+}
+
 /** Enrolment e-sign, sign page, and signed PDF. Default off. */
 export function enrolmentEsignEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_ENROLMENT_ESIGN", env);

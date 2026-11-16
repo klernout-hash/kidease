@@ -271,6 +271,8 @@ These are env-only. Unset means the feature stays on. Set the value to `0` to pa
 
 A paused screen says what is off and offers a way to search.
 
+`FEATURE_COMPARE_PARENT_FEE` is on. Compare shows the fee parents pay and the distance from a saved commute address. A centre with no confirmed fee says “Ask the centre”. Nothing is sent.
+
 ## Later (not this PR)
 
 - Per-user or % rollouts (today the server uses one distinct id).

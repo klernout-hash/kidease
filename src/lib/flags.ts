@@ -224,6 +224,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_HUAWEI_APPGALLERY_LINK",
   "FEATURE_AMAZON_STORE_DEEP_LINK",
   "FEATURE_PERSISTENT_SESSIONS",
+  "FEATURE_COMPARE_PARENT_FEE",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -642,6 +643,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_AMAZON_STORE_DEEP_LINK: false,
   /** Stay signed in on the phone, and a 30-day choice on the website. Off. */
   FEATURE_PERSISTENT_SESSIONS: false,
+  /** Compare shows the parent fee and distance from a saved commute. On. No messages. */
+  FEATURE_COMPARE_PARENT_FEE: true,
 };
 
 /**
@@ -1520,6 +1523,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Stay signed in on the phone until Sign out, and a 30-day choice on the website. Off. Admin sign-in is unchanged.",
+  },
+  {
+    key: "FEATURE_COMPARE_PARENT_FEE",
+    defaultOn: true,
+    docs: "docs/flags.md",
+    summary:
+      "Compare shows the fee parents pay and distance from a saved commute address. On. A missing fee stays “Ask the centre”. No messages.",
   },
 ];
 

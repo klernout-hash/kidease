@@ -16,6 +16,9 @@ import {
 } from "@/lib/now-loops";
 import { hasRealPhoto } from "@/lib/listing-readiness";
 import { parentListingFeesVisible, parentListingMonthlyFee } from "@/lib/public-fees";
+import { compareDistanceKm, compareDistancePoint, compareFeeAfterSubsidy } from "@/lib/compare-parent-fields";
+import { readDualAnchorPrefs, type AnchorPoint } from "@/lib/dual-anchor";
+import { compareParentFeeFlag } from "@/lib/server/compare-fields";
 import { compareEmptyKey } from "@/lib/copy-keys";
 import { useCopy } from "@/lib/use-copy";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -72,11 +75,28 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
   const workOrigin = useAppStore((s) => s.workOrigin);
   const commuteMode = useAppStore((s) => s.commuteMode);
   const located = useAppStore((s) => s.located);
+  const [savedCommute, setSavedCommute] = useState<AnchorPoint | null>(null);
+  const [parentFeeOn, setParentFeeOn] = useState(true);
   const radiusKm = useAppStore((s) => s.radiusKm);
   const ageGroup = useAppStore((s) => s.ageGroup);
   const incoming = { slugs };
   const [items, setItems] = useState<DaycareCard[]>([]);
   const [reportReviews, setReportReviews] = useState(false);
+  const commutePoint = compareDistancePoint({
+    home: origin,
+    commute: workOrigin?.label ? workOrigin : savedCommute,
+    located,
+  });
+
+  useEffect(() => {
+    setSavedCommute(readDualAnchorPrefs().work);
+  }, []);
+
+  useEffect(() => {
+    void compareParentFeeFlag()
+      .then((on) => setParentFeeOn(Boolean(on)))
+      .catch(() => setParentFeeOn(true));
+  }, []);
 
   useEffect(() => {
     void reviewReportFlag()
@@ -203,11 +223,21 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                 />
                 <Row label={t("hours")} values={items.map((d) => d.hours || t("noneListed"))} />
                 <Row
-                  label={t("compareDistance")}
+                  mark="compare-commute-distance"
+                  label={
+                    parentFeeOn && commutePoint?.from === "commute"
+                      ? locale === "fr"
+                        ? "Depuis votre trajet"
+                        : "From your commute"
+                      : t("compareDistance")
+                  }
                   values={items.map((d) => {
-                    const km = doorDistanceKm(origin, { lat: d.lat, lng: d.lng });
+                    const km = parentFeeOn
+                      ? compareDistanceKm(commutePoint, { lat: d.lat, lng: d.lng })
+                      : doorDistanceKm(origin, { lat: d.lat, lng: d.lng });
                     return (
-                      parentDistanceLabel({ km, away: t("kmAway"), show: located }) || t("noneListed")
+                      parentDistanceLabel({ km, away: t("kmAway"), show: parentFeeOn ? Boolean(commutePoint) : located }) ||
+                      t("noneListed")
                     );
                   })}
                 />
@@ -221,8 +251,10 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                 />
                 {feesOn ? (
                 <Row
-                  label={t("compareFeesCwelcc")}
+                  mark="compare-fee-after"
+                  label={parentFeeOn ? (locale === "fr" ? "Tarif après le programme" : "Fee after the program") : t("compareFeesCwelcc")}
                   values={items.map((d) => {
+                    if (parentFeeOn) return compareFeeAfterSubsidy(d, locale === "fr" ? "fr" : "en");
                     const subsidy = listingSubsidy(d);
                     if (subsidy) return subsidyLabel(subsidy, locale);
                     const monthly = parentListingMonthlyFee(d);
@@ -323,9 +355,9 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
   );
 }
 
-function Row({ label, values }: { label: string; values: string[] }) {
+function Row({ label, values, mark }: { label: string; values: string[]; mark?: string }) {
   return (
-    <tr className="border-t border-border">
+    <tr className="border-t border-border" data-ke={mark}>
       <th className="p-2 font-medium text-fg">{label}</th>
       {values.map((v, i) => (
         <td key={i} className="p-2">{v}</td>
