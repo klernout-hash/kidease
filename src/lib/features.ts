@@ -133,6 +133,11 @@ export function showPayCtas(env?: EnvMap): boolean {
   return evaluateFeatureFlag("SHOW_PAY_CTAS", env);
 }
 
+/** Download the government table that is on screen, with the current filters. Default on. */
+export function govFilteredExportEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_GOV_FILTERED_EXPORT", env);
+}
+
 /** Email when a saved search matches a newly posted open spot. Default off. */
 export function openSpotAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_OPEN_SPOT_ALERTS", env);

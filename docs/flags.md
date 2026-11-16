@@ -271,6 +271,8 @@ These are env-only. Unset means the feature stays on. Set the value to `0` to pa
 
 A paused screen says what is off and offers a way to search.
 
+`FEATURE_GOV_FILTERED_EXPORT` is on. A government table can download CSV or PDF of the rows on screen, after the province, city, and search filters already applied. The older summary download stays.
+
 ## Later (not this PR)
 
 - Per-user or % rollouts (today the server uses one distinct id).
