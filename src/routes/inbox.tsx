@@ -9,6 +9,8 @@ import { useSessionDesks } from "@/components/session-desks";
 import { parseInboxSearch, resolveInboxView } from "@/lib/inbox-view";
 import { useRoleChrome } from "@/components/role-chrome";
 import { useCopy } from "@/lib/use-copy";
+import { RuntimePaused } from "@/components/runtime-paused";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 
 export const inboxBeforeLoad = ({
   context,
@@ -41,6 +43,7 @@ export function InboxDesk({
   onParent: (id: string) => void;
 }) {
   const { t } = useCopy();
+  const inboxOn = useRuntimeSwitches().inbox;
   const { sticky } = useSessionDesks();
   const chrome = useRoleChrome();
   const forced = chrome.role === "provider" ? "centre" : chrome.role === "parent" ? "family" : null;
@@ -50,6 +53,13 @@ export function InboxDesk({
     ? decodeURIComponent(pathname.slice(threadPrefix.length).split("/")[0] || "")
     : undefined;
   const onThread = Boolean(selectedId);
+  if (!inboxOn) {
+    return (
+      <DeskShell desk={view === "centre" ? "daycare" : "parent"} active="messages" onSelect={() => undefined}>
+        <RuntimePaused id="inbox" />
+      </DeskShell>
+    );
+  }
   if (view === "centre") {
     return (
       <CentreInboxDesk

@@ -943,6 +943,8 @@ export const createSpotRequest = createServerFn({ method: "POST" })
 export const listInbox = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_INBOX");
     const home = await familyHome(context.userId);
     const sql = await getSql();
     const rows = await sql<{

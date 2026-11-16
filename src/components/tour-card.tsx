@@ -10,6 +10,8 @@ import { formatPreferredTimes } from "@/lib/threads";
 import { PipelineBadge } from "@/components/pipeline-badge";
 import { BlockFamilyButton } from "@/components/block-user";
 import { useCopy } from "@/lib/use-copy";
+import { RuntimePaused } from "@/components/runtime-paused";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { canCancelTour, canProposeTourTime, declineReasonValid } from "@/lib/tour-hold";
 import { formatTourSlotRange, type PublicTourSlot } from "@/lib/tour-calendar";
 import type { TourRequest, TourStatus } from "@/lib/types";
@@ -29,6 +31,7 @@ export function TourCard({
   onChanged?: () => void;
 }) {
   const { t, locale } = useCopy();
+  const tourBooking = useRuntimeSwitches().tourBooking;
   const loc = locale === "fr" ? "fr" : "en";
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -165,7 +168,8 @@ export function TourCard({
           {t("tourCentreNote")}: {tour.centreNote}
         </p>
       ) : null}
-      {canRespond && (tour.status === "pending" || tour.status === "accepted" || tour.status === "completed") ? (
+      {canRespond && !tourBooking ? <RuntimePaused id="tourBooking" compact /> : null}
+      {tourBooking && canRespond && (tour.status === "pending" || tour.status === "accepted" || tour.status === "completed") ? (
         <div className="mt-3 space-y-2">
           <textarea
             rows={2}

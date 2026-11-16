@@ -13,6 +13,8 @@ import {
   type CentreWaitlistCard,
 } from "@/lib/server/spot-offers";
 import { useCopy } from "@/lib/use-copy";
+import { RuntimePaused } from "@/components/runtime-paused";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { useRoleChrome } from "@/components/role-chrome";
 
 function when(iso: string, locale: string) {
@@ -37,6 +39,7 @@ function saveWaitlistCsv(csv: string, filename: string) {
 
 export function SpotOfferDesk({ includeTest = false }: { includeTest?: boolean }) {
   const { locale } = useCopy();
+  const waitlistOn = useRuntimeSwitches().waitlistSpots;
   const plansOn = useRoleChrome().subscriptionsEnabled === true;
   const copy = spotOfferCopy(locale);
   const [centres, setCentres] = useState<CentreWaitlistCard[] | null>(null);
@@ -73,6 +76,7 @@ export function SpotOfferDesk({ includeTest = false }: { includeTest?: boolean }
     };
   }, [includeTest]);
 
+  if (!waitlistOn) return <RuntimePaused id="waitlistSpots" compact />;
   if (!centres) return <p className="mt-4 text-sm text-muted">{copy.deskTitle}</p>;
   if (!centres.length) return null;
 

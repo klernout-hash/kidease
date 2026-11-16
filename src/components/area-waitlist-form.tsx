@@ -11,6 +11,8 @@ import { showsParentBrowseActions } from "@/lib/role-access";
 import { joinAreaWaitlist } from "@/lib/server/area-waitlist";
 import { trackProductEvent } from "@/lib/track-product-event";
 import { useCopy } from "@/lib/use-copy";
+import { RuntimePaused } from "@/components/runtime-paused";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 
 const DRAFT_KEY = "kidease-area-waitlist-draft";
 
@@ -48,6 +50,7 @@ export function AreaWaitlistForm({
   onJoined?: () => void;
 }) {
   const { locale } = useCopy();
+  const waitlistOn = useRuntimeSwitches().waitlistSpots;
   const copy = areaWaitlistCopy(locale);
   const chrome = useRoleChrome();
   const navigate = useNavigate();
@@ -112,6 +115,8 @@ export function AreaWaitlistForm({
       .catch(() => setError(copy.placeMiss))
       .finally(() => setBusy(false));
   }
+
+  if (!waitlistOn) return <RuntimePaused id="waitlistSpots" compact />;
 
   return (
     <form onSubmit={onSubmit} className="mt-4 grid w-full min-w-0 max-w-full gap-3 overflow-x-hidden rounded-xl bg-surface p-4 ring-1 ring-border contain-inline-size" data-ke="area-waitlist-form">

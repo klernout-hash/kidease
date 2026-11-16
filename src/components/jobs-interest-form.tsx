@@ -4,6 +4,8 @@ import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { useCopy } from "@/lib/use-copy";
+import { RuntimePaused } from "@/components/runtime-paused";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { submitPublicMessage } from "@/lib/server/notify";
 import { publicFormErrorMessage } from "@/lib/public-form-error";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
@@ -12,6 +14,7 @@ type JobsInterestVariant = "caregiver" | "centre";
 
 export function JobsInterestForm({ variant }: { variant: JobsInterestVariant }) {
   const { t } = useCopy();
+  const jobInterest = useRuntimeSwitches().jobInterest;
   const centreMode = variant === "centre";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -47,6 +50,7 @@ export function JobsInterestForm({ variant }: { variant: JobsInterestVariant }) 
       await submitPublicMessage({
         data: {
           kind: "contact",
+          intent: "job-interest",
           name,
           email,
           subject,
@@ -72,6 +76,8 @@ export function JobsInterestForm({ variant }: { variant: JobsInterestVariant }) 
       setBusy(false);
     }
   }
+
+  if (!jobInterest) return <RuntimePaused id="jobInterest" />;
 
   if (sent) {
     return (

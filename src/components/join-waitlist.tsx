@@ -7,10 +7,13 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { spotOfferCopy } from "@/lib/spot-offer-copy";
 import { joinDaycareWaitlist, listMySpotOffers, withdrawDaycareWaitlist } from "@/lib/server/spot-offers";
 import { useCopy } from "@/lib/use-copy";
+import { RuntimePaused } from "@/components/runtime-paused";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { useRoleChrome } from "@/components/role-chrome";
 
 export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: string }) {
   const { locale } = useCopy();
+  const waitlistOn = useRuntimeSwitches().waitlistSpots;
   const plansOn = useRoleChrome().subscriptionsEnabled === true;
   const copy = spotOfferCopy(locale);
   const navigate = useNavigate();
@@ -96,6 +99,8 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
       })
       .finally(() => setBusy(false));
   }
+
+  if (!waitlistOn) return <RuntimePaused id="waitlistSpots" compact />;
 
   return (
     <section id="join-waitlist" tabIndex={-1} className="mt-4 scroll-mt-24 rounded-lg bg-surface p-4 ring-1 ring-border" data-ke="join-waitlist">

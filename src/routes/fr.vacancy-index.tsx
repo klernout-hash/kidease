@@ -1,12 +1,15 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { provincialVacancyIndexEnabled } from "@/lib/features";
+import type { RuntimeSwitches } from "@/lib/runtime-switches";
 import { pageSeoHead } from "@/lib/page-seo";
 import { vacancyIndexSearch } from "@/lib/vacancy-history";
 import { loadVacancyIndex } from "@/lib/server/vacancy-index";
 import { VacancyIndexView } from "@/routes/vacancy-index";
 
 export const Route = createFileRoute("/fr/vacancy-index")({
-  beforeLoad: () => {
+  beforeLoad: ({ context }) => {
+    const switches = (context as { switches?: RuntimeSwitches }).switches;
+    if (switches && switches.vacancyIndex === false) return;
     if (!provincialVacancyIndexEnabled()) throw redirect({ to: "/fr/search" });
   },
   validateSearch: vacancyIndexSearch,

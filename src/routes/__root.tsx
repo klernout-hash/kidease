@@ -44,6 +44,8 @@ const SuccessConfirmHost = lazy(() =>
 import { SafeRouteError } from "@/components/safe-error-boundary";
 import { installStaleChunkReload, safeErrorCopy } from "@/lib/safe-error";
 import { getRoleChrome } from "@/lib/server/role-route";
+import { readRuntimeSwitches } from "@/lib/server/runtime-switches";
+import { runtimeSwitchSnapshot } from "@/lib/runtime-switches";
 import { automationLiveEnv, automationMode } from "@/lib/automations";
 import { airbnbUiEnabled, posthogErrorsEnabled } from "@/lib/features";
 import { readAirbnbUi } from "@/lib/airbnb-ui-flag";
@@ -109,7 +111,7 @@ export const Route = createRootRoute({
       throw redirect({ href: "/fr/delete-account", statusCode: 301 });
     }
     const search = `${location.searchStr || ""}${location.hash || ""}`;
-    const [, roleChrome, visitorLocale, frCa, frAuthQc, storeRead, airbnbUi] = await Promise.all([
+    const [, roleChrome, visitorLocale, frCa, frAuthQc, storeRead, airbnbUi, switches] = await Promise.all([
       frenchPack,
       getRoleChrome().catch(() => ({
         signedIn: true,
@@ -128,6 +130,7 @@ export const Route = createRootRoute({
       readFrAuthQc().catch(() => false),
       readRequestStoreChannel(location.searchStr || ""),
       readAirbnbUi().catch(() => airbnbUiEnabled()),
+      readRuntimeSwitches().catch(() => runtimeSwitchSnapshot()),
     ]);
     if (!frenchDoc && visitorLocale.locale === "fr") await ensureFrenchCopy();
     if (visitorLocale.redirectTo) {
@@ -153,6 +156,7 @@ export const Route = createRootRoute({
       frCa: frCa === true,
       frAuthQc: frAuthQc === true,
       airbnbUi,
+      switches,
     };
   },
   errorComponent: (props) => {

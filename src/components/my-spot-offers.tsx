@@ -8,6 +8,8 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { spotOfferCopy } from "@/lib/spot-offer-copy";
 import { listMySpotOffers, respondMySpotOffer, type MySpotOfferRow } from "@/lib/server/spot-offers";
 import { useCopy } from "@/lib/use-copy";
+import { RuntimePaused } from "@/components/runtime-paused";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 
 function when(iso: string, locale: string) {
   const date = new Date(iso);
@@ -17,6 +19,7 @@ function when(iso: string, locale: string) {
 
 export function MySpotOffers() {
   const { locale } = useCopy();
+  const waitlistOn = useRuntimeSwitches().waitlistSpots;
   const copy = spotOfferCopy(locale);
   const { user, isPending } = useCurrentUserState();
   const [rows, setRows] = useState<MySpotOfferRow[] | null>(null);
@@ -43,6 +46,16 @@ export function MySpotOffers() {
       live = false;
     };
   }, [user, isPending]);
+
+  if (!waitlistOn) {
+    return (
+      <Shell>
+        <main className="ke-gutter mx-auto w-full max-w-3xl py-8">
+          <RuntimePaused id="waitlistSpots" />
+        </main>
+      </Shell>
+    );
+  }
 
   if (isPending) {
     return (

@@ -64,6 +64,8 @@ import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { useAppStore, type SortKey } from "@/lib/store";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
+import { RuntimePaused } from "@/components/runtime-paused";
 import { cn } from "@/lib/utils";
 import { parsePioneerSearch, type PioneerSearch } from "@/lib/pioneer-filters";
 import { ChipButton } from "@/components/chip";
@@ -557,6 +559,7 @@ export function SearchScreen({
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
   const [askLocation, setAskLocation] = useState(false);
   const [mapEnabled, setMapEnabled] = useState(false);
+  const publicMap = useRuntimeSwitches().publicMap;
   const storeChannel = useStoreChannel();
   const [searchFailed, setSearchFailed] = useState(false);
   const [mapResult, setMapResult] = useState<SearchMapResult | null>(null);
@@ -2379,6 +2382,10 @@ export function SearchScreen({
             {view === "map" ? (
               storeChannel === "huawei" ? (
                 <div className="mt-3 overflow-hidden rounded-2xl ring-1 ring-border"><StoreMapFallback /></div>
+              ) : !publicMap ? (
+                <div className="mt-3">
+                  <RuntimePaused id="publicMap" onContinue={() => setView("list")} continueLabel={locale === "fr" ? "Voir la liste" : "Show the list"} />
+                </div>
               ) : mapEnabled ? (
                 <div className="mt-3 space-y-2">
                 {mapStatus}
@@ -2447,6 +2454,10 @@ export function SearchScreen({
             storeChannel === "huawei" ? (
               <div className="mt-4 h-[min(40dvh,28rem)] min-h-[18rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(40dvh,28rem)]">
                 <StoreMapFallback />
+              </div>
+            ) : !publicMap ? (
+              <div className="mt-4">
+                <RuntimePaused id="publicMap" onContinue={() => setView("list")} continueLabel={locale === "fr" ? "Voir la liste" : "Show the list"} />
               </div>
             ) : mapEnabled ? (
               <div className="mt-4 space-y-3">

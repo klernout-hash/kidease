@@ -12,6 +12,8 @@ import { trackProductEvent } from "@/lib/track-product-event";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/lib/signup-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { RuntimePaused } from "@/components/runtime-paused";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { subsidyEstimatorUrl } from "@/lib/licensing";
 import { PARENT_REQUESTS_SEARCH } from "@/lib/lead-requests";
 
@@ -27,6 +29,7 @@ export function WaitlistOptIn({
   province?: string;
 }) {
   const { t } = useCopy();
+  const waitlistOn = useRuntimeSwitches().waitlistSpots;
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
   const [optedIn, setOptedIn] = useState(false);
@@ -78,6 +81,8 @@ export function WaitlistOptIn({
   }
 
   const official = province ? subsidyEstimatorUrl(province) : "";
+
+  if (!waitlistOn) return <RuntimePaused id="waitlistSpots" compact />;
 
   return (
     <div id="waitlist-opt-in" className="rounded-lg bg-surface p-4 ring-1 ring-border">

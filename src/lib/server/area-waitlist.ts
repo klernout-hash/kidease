@@ -16,6 +16,8 @@ export const joinAreaWaitlist = createServerFn({ method: "POST" })
     startDate: input?.startDate,
   }))
   .handler(async ({ context, data }) => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_WAITLIST_SPOTS");
     const { assertFamilyWrite } = await import("@/lib/server/coparent");
     const homeId = (await assertFamilyWrite(context.userId)).dataUserId;
     const { joinAreaWaitlistForUser } = await import("./area-waitlist-job");

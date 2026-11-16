@@ -15,7 +15,9 @@ import {
 import { useCopy } from "@/lib/use-copy";
 import { useStoreChannel } from "@/lib/use-native-shell";
 import { MapUnavailable } from "@/components/map-unavailable";
+import { RuntimePaused } from "@/components/runtime-paused";
 import { StoreMapFallback } from "@/components/store-map-fallback";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 
 /** Same smiling teardrop as search MapView. */
 const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" aria-hidden="true">
@@ -39,6 +41,8 @@ type Props = {
 /** Listing preview. Google Maps by default, loaded when this box is on screen. */
 export function ListingMap(props: Props) {
   const channel = useStoreChannel();
+  const publicMap = useRuntimeSwitches().publicMap;
+  if (!publicMap) return <RuntimePaused id="publicMap" compact />;
   if (channel === "huawei") return <StoreMapFallback compact />;
   return <OsmListingMap {...props} />;
 }

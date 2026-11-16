@@ -225,6 +225,22 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 - Client `isPostHogFlagEnabled` is analytics-only. Server flags are the source of truth for SMS / push / video send gates.
 - Web session replay uses a separate client flag, `session-replay-web` (kill switch). See `docs/posthog.md`.
 
+## Runtime kill switches
+
+These are env-only. Unset means the feature stays on. Set the value to `0` to pause it. The server reads the value on each request, so a new code deploy is not required. PostHog does not override them.
+
+| Flag | What pauses |
+| --- | --- |
+| `FEATURE_PUBLIC_MAP` | The public map on search, a listing, and saved centres. The list stays. |
+| `FEATURE_INBOX` | Parent and daycare messages at `/inbox`. |
+| `FEATURE_TOUR_BOOKING` | Asking for a tour, and confirming or declining one. |
+| `FEATURE_WAITLIST_SPOTS` | Waitlist joins and in-app spot offers. |
+| `FEATURE_CLAIM_LISTING` | Claiming a listing. Search stays. |
+| `FEATURE_VACANCY_INDEX` | The open-spot index. Search stays. |
+| `FEATURE_JOB_INTEREST` | The job interest form. |
+
+A paused screen says what is off and offers a way to search.
+
 ## Later (not this PR)
 
 - Per-user or % rollouts (today the server uses one distinct id).

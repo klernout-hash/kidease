@@ -77,6 +77,8 @@ export const setWaitlistInterest = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ context, data }): Promise<WaitlistInterest | null> => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_WAITLIST_SPOTS");
     if (!data.daycareId) throw new Error("Missing listing");
     await assertPublicListing(data.daycareId);
     const { assertFamilyWrite } = await import("@/lib/server/coparent");
@@ -175,6 +177,8 @@ export const pulseWaitlistSpot = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { daycareId: string }) => ({ daycareId: String(input?.daycareId || "").trim() }))
   .handler(async ({ context, data }) => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_WAITLIST_SPOTS");
     if (!data.daycareId) throw new Error("Missing listing");
     const sql = await getSql();
     const { assertCanWrite } = await import("@/lib/server/centre-access");

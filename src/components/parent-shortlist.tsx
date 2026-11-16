@@ -19,6 +19,8 @@ import { useAppStore } from "@/lib/store";
 import type { Booking, DaycareCard as Card, TourRequest } from "@/lib/types";
 import { parentListingFeesVisible, parentListingMonthlyFee } from "@/lib/public-fees";
 import { useCopy } from "@/lib/use-copy";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
+import { RuntimePaused } from "@/components/runtime-paused";
 import { useStoreChannel } from "@/lib/use-native-shell";
 import { StoreMapFallback } from "@/components/store-map-fallback";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
@@ -53,6 +55,7 @@ export function ParentShortlist({
     ? rawItems.map((item) => ({ ...item, fromPrice: parentListingMonthlyFee(item) ?? 0 }))
     : []), [rawItems]);
   const { t, locale } = useCopy();
+  const publicMap = useRuntimeSwitches().publicMap;
   const feesOn = parentListingFeesVisible();
   const storeChannel = useStoreChannel();
   const { plusOpen } = useParentPlusAccess();
@@ -237,7 +240,9 @@ export function ParentShortlist({
 
       <MultiApplyPanel centres={visible} returnTo="/parent?tab=saved" />
 
-      {mapOn ? (
+      {mapOn && !publicMap ? (
+        <RuntimePaused id="publicMap" compact onContinue={() => setMapOn(false)} continueLabel={locale === "fr" ? "Voir la liste" : "Show the list"} />
+      ) : mapOn ? (
         <div className="h-[min(72dvh,36rem)] min-h-[18rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border">
           {storeChannel === "huawei" ? (
             <StoreMapFallback />

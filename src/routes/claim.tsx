@@ -16,6 +16,8 @@ import { ClaimVerifyWizard, type ClaimDeliveryView } from "@/components/claim-wi
 import { isClaimProduction } from "@/lib/claim-contact";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { RuntimePaused } from "@/components/runtime-paused";
+import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
@@ -80,6 +82,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
   const [selected, setSelected] = useState<{ id: string; name: string; city: string; province: string } | null>(null);
   const [selectedMiss, setSelectedMiss] = useState(false);
   const { t, locale } = useCopy();
+  const claimOn = useRuntimeSwitches().claimListing;
   const nativeShell = useInNativeShell();
   const showPayCtas = useShowPayCtas();
   const { user, isPending } = useCurrentUserState();
@@ -399,6 +402,16 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     // In-app payments perk only when SHOW_PAY_CTAS is on (off today) and never in native shells.
     .filter((entry) => !((nativeShell || !showPayCtas) && entry[1] === "perkPayLive"))
     .filter((entry) => !(nativeShell && entry[1] === "perkMobile"));
+
+  if (!claimOn) {
+    return (
+      <Shell>
+        <main className="ke-gutter mx-auto w-full max-w-3xl py-12" data-ke="claim-paused">
+          <RuntimePaused id="claimListing" />
+        </main>
+      </Shell>
+    );
+  }
 
   return (
     <Shell>

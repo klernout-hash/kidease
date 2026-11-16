@@ -140,6 +140,8 @@ export const createTourRequest = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ context, data }) => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_TOUR_BOOKING");
     const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
     await assertFacebookContactEmail(context.userId);
     const { assertFamilyWrite } = await import("@/lib/server/coparent");
@@ -362,6 +364,8 @@ export const respondTourRequest = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { tourId: string; status: "accepted" | "declined"; note?: string }) => input)
   .handler(async ({ context, data }) => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_TOUR_BOOKING");
     const sql = await getSql();
     const rows = await sql<{
       id: string;
