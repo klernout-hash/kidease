@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -68,7 +68,8 @@ test("a Laval pin in Winnipeg is far, and a same-name town in another province i
   assert.equal(pinIsFar(49.842245, -97.093046, "Winnipeg", "MB"), false);
   assert.equal(pinIsFar(43.4675, -79.6877, "Oakville", "MB"), false);
   assert.equal(cityCentre("Lavallee", "MB"), null);
-  const sql = readFileSync(join(root, "migrations/0207_laval_pin_drift.sql"), "utf8");
+  const sql = readFileSync(join(root, "scripts/manual-sql/0207_laval_pin_drift.sql"), "utf8");
+  assert.equal(existsSync(join(root, "migrations/0207_laval_pin_drift.sql")), false);
   assert.match(sql, /lower\(btrim\(city\)\) = 'laval'/);
   assert.match(sql, /does not invent a street/);
   assert.doesNotMatch(sql, /49\.842245/);

@@ -1,6 +1,10 @@
 -- Reviewed data fix. Apply by hand. Do not run this from CI or against
 -- production from a pull request.
 --
+-- This file stays out of migrations/ on purpose. The production build
+-- checks that every file there is already recorded, and this update is
+-- not part of that check.
+--
 -- A centre saved as Laval, QC whose pin is more than about 80 km from the
 -- Laval city centre (45.6066, -73.7124) is cleared. This does not invent a street
 -- coordinate. The bundled catalogue has no Laval, QC row
