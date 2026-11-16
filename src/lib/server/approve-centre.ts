@@ -10,7 +10,7 @@ import { planApproval, type ApprovalCentre, type ApprovalClaim, type ApprovalHea
 import { subscriptionsEnabled } from "@/lib/features";
 import { PROTECTED_LISTING_ID } from "@/lib/founding-period";
 import { normalizeCentreName } from "@/lib/listing-identity";
-import { listingVisibilityForOwners } from "@/lib/listing-visibility";
+import { isAdminOnlyListing, listingVisibilityForOwners } from "@/lib/listing-visibility";
 import type { Sql } from "@/lib/db";
 import { resetNeonCatalogCache } from "@/lib/server/catalog-neon";
 import { flushSearchMemo } from "@/lib/server/search-memo";
@@ -209,6 +209,17 @@ export async function runApproval(
   }
 
   const next = plan.next;
+  const keepHidden = isAdminOnlyListing({
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    licenseNumber: row.license_number,
+    address: row.address,
+    visibility: flags.visibility,
+    isTest: flags.isTest,
+  });
+  const visibility = keepHidden ? "admin_only" : flags.visibility;
+  const isTest = keepHidden ? 1 : flags.isTest;
   const markFounding = !subscriptionsEnabled() && row.id !== PROTECTED_LISTING_ID;
   try {
     await sql`
@@ -223,11 +234,27 @@ export async function runApproval(
           registry_match_state = 'matched',
           license_verification_source = ${next.licenseVerificationSource || "admin"},
           license_verified_at = coalesce(license_verified_at, now()),
-          visibility = ${flags.visibility},
-          is_test = ${flags.isTest}
+          visibility = ${visibility},
+          is_test = ${isTest}
       where id = ${row.id}
     `;
     await syncVerifiedLocation(sql, row.id, Number(next.lat), Number(next.lng));
+    if (plan.qaGateBypass) {
+      const { writeTrustEvent } = await import("@/lib/server/trust");
+      await writeTrustEvent(sql, {
+        daycareId: row.id,
+        actorUserId: input.actorUserId,
+        kind: "qa_approve_bypass",
+        note: "QA fixture approved without screening attestation or trust eligibility. A missing storefront photo did not block it. It stays off public search, the map, sitemaps, and parent booking.",
+        payload: JSON.stringify({
+          screening: false,
+          trust: false,
+          photos: "not_required",
+          visibility,
+          isTest,
+        }),
+      });
+    }
     if (plan.canonicalClaimId) {
       await sql`
         update listing_claims
