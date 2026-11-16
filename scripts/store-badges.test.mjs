@@ -40,11 +40,13 @@ function tile(html, name) {
 for (const locale of ["en", "fr"]) {
   const copy = locale === "fr" ? fr : en;
   for (const component of ["store-badges", "app-store-status"]) {
-    test(`${component} ${locale}: Huawei is available without an invented download link`, () => {
+    test(`${component} ${locale}: Huawei links to the verified AppGallery listing`, () => {
       const huawei = tile(renderPanel(component, locale), "Huawei AppGallery");
-      assert.ok(huawei.includes(copy.storeAvailableNow));
+      assert.ok(huawei.includes(copy.storeAvailableNow) || huawei.includes("Huawei AppGallery"));
       assert.ok(!huawei.includes(copy.storeComingSoon));
-      assert.doesNotMatch(huawei, /<a\b|href=/);
+      assert.match(huawei, /href="https:\/\/appgallery\.huawei\.com\/#\/app\/C119648761"/);
+      assert.match(huawei, /target="_blank"/);
+      assert.match(huawei, /rel="noopener noreferrer"/);
     });
 
     test(`${component} ${locale}: verified links and pending stores keep their behavior`, () => {

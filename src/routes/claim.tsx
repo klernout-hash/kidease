@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { confirmAction, confirmSuccess } from "@/lib/success-confirm";
 import { FeelBanner } from "@/components/building-photo";
 import { officialLicenceNumber } from "@/lib/licensing";
-import { LISTING_PLACEHOLDER } from "@/lib/listing-photo";
+import { LISTING_PLACEHOLDER, isFailedPhotoUrl, rememberFailedPhoto } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
@@ -28,9 +28,14 @@ import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload } from "@/lib/signup-funnel";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
 import { isListingPhotoTooBig } from "@/lib/upload-limits";
 
+function claimPhotoSrc(photo: string) {
+  if (!photo || !isRealListingPhoto(photo) || isFailedPhotoUrl(photo)) return LISTING_PLACEHOLDER;
+  return photo;
+}
+
 function ClaimHitPhoto({ photo, name, compact = false }: { photo: string; name: string; compact?: boolean }) {
   const size = compact ? 40 : 48;
-  const src = isRealListingPhoto(photo) ? photo : LISTING_PLACEHOLDER;
+  const [src, setSrc] = useState(() => claimPhotoSrc(photo));
   return (
     <img
       src={src}
@@ -38,6 +43,11 @@ function ClaimHitPhoto({ photo, name, compact = false }: { photo: string; name: 
       width={size}
       height={size}
       className={`mt-0.5 shrink-0 rounded-md object-cover ${compact ? "size-10" : "size-12"}`}
+      onError={() => {
+        if (src === LISTING_PLACEHOLDER) return;
+        rememberFailedPhoto(src);
+        setSrc(LISTING_PLACEHOLDER);
+      }}
     />
   );
 }
@@ -100,22 +110,32 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     if (term.length < 2) {
       setHits([]);
       setOpen(false);
+      setBusy(false);
       return;
     }
+    let live = true;
+    setHits([]);
     const tmr = window.setTimeout(() => {
       setBusy(true);
       void searchClaimable({ data: term })
         .then((rows) => {
+          if (!live) return;
           setHits(rows);
           setOpen(true);
         })
         .catch(() => {
+          if (!live) return;
           setHits([]);
           setOpen(true);
         })
-        .finally(() => setBusy(false));
+        .finally(() => {
+          if (live) setBusy(false);
+        });
     }, 180);
-    return () => window.clearTimeout(tmr);
+    return () => {
+      live = false;
+      window.clearTimeout(tmr);
+    };
   }, [q]);
 
   useEffect(() => {
@@ -179,13 +199,18 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
       if (term.length < 2) setEnrollHits([]);
       return;
     }
+    let live = true;
     const tmr = window.setTimeout(() => {
       void searchClaimable({ data: term }).then((rows) => {
+        if (!live) return;
         setEnrollHits(rows);
         setEnrollOpen(true);
       });
     }, 180);
-    return () => window.clearTimeout(tmr);
+    return () => {
+      live = false;
+      window.clearTimeout(tmr);
+    };
   }, [enroll.centre, enrollManual]);
 
   useEffect(() => {
@@ -454,7 +479,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
               {open && q.trim().length >= 2 ? (
                 <ul className="z-20 mt-2 max-h-[min(60vh,28rem)] w-full overflow-y-auto rounded-xl bg-surface py-1 shadow-card ring-1 ring-border">
                   {hits.length === 0 && !busy ? (
-                    <li className="px-4 py-6 text-center text-sm text-muted">{t("claimNoMatch")}</li>
+                    <li className="px-4 py-6 text-center text-sm text-muted" role="status">{t("claimNoMatch")}</li>
                   ) : (
                     hits.map((h) => (
                       <li key={h.id}>

@@ -13,7 +13,7 @@ import { type GrokProvider } from "@/lib/auth/providers";
 import { loadSignInProviders } from "@/lib/server/sign-in-providers";
 import { readClientPlayServices } from "@/lib/native-entitlements";
 import { useStoreChannel } from "@/lib/use-native-shell";
-import { isFrPath } from "@/lib/locale-path";
+import { isFrPath, localePath } from "@/lib/locale-path";
 import { withTimeout, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
 import { SocialSignInButtons } from "@/components/social-sign-in-buttons";
@@ -1102,16 +1102,20 @@ export function LoginScreen({
               {t("back")}
             </a>
             {" · "}
-            <Link to="/privacy" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline-offset-4 hover:underline">
+            <Link to={localePath("/privacy", locale)} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline-offset-4 hover:underline">
               {t("privacy")}
             </Link>
             {" · "}
-            <Link to="/terms" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline-offset-4 hover:underline">
+            <Link to={localePath("/terms", locale)} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline-offset-4 hover:underline">
               {t("terms")}
             </Link>
             {" · "}
-            <Link to="/cookies" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline-offset-4 hover:underline">
+            <Link to={localePath("/cookies", locale)} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline-offset-4 hover:underline">
               {t("cookies")}
+            </Link>
+            {" · "}
+            <Link to={localePath("/terms", locale)} hash="sms" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline-offset-4 hover:underline">
+              {locale === "fr" ? "Conditions des textos" : "SMS terms"}
             </Link>
           </p>
           </div>

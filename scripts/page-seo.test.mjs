@@ -91,8 +91,17 @@ test("Organization and SoftwareApplication stay honest", () => {
   assert.equal("aggregateRating" in org, false);
   const app = softwareApplicationJsonLd();
   assert.equal(app.offers.price, "0");
+  assert.match(app.description, /Google Play/);
+  assert.match(app.description, /Huawei AppGallery/);
+  assert.ok(app.sameAs.includes("https://appgallery.huawei.com/#/app/C119648761"));
+  assert.match(app.description, /Not available yet: .*App Store/);
+  assert.doesNotMatch(app.description, /Google Play are not approved|not approved yet/);
   assert.doesNotMatch(JSON.stringify(app), /download/);
   assert.doesNotMatch(JSON.stringify(app), /aggregateRating/);
+  const fr = softwareApplicationJsonLd("fr");
+  assert.match(fr.description, /Huawei AppGallery/);
+  assert.match(fr.description, /Pas encore offert/);
+  assert.doesNotMatch(fr.description, /not approved/);
   const graph = organizationGraphJsonLd();
   assert.equal(graph["@graph"].length, 2);
   const home = src("src/routes/index.tsx");

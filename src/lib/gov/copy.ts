@@ -36,6 +36,7 @@ const EN = {
   map: "Map of areas with at least 5 centres",
   mapNote: "Dots are city totals, not a single centre.",
   mapEmpty: "No city on this filter has 5 or more centres, so the map stays blank on purpose.",
+  mapLoading: "Loading the map.",
   mapFailed: "The map did not load. The city table below still has the counts.",
   childRatio: "Children 0 to 5 per licensed space",
   childRatioNote:
@@ -172,6 +173,7 @@ const FR = {
   map: "Carte des zones avec au moins 5 centres",
   mapNote: "Un point est le total d’une ville, pas un seul centre.",
   mapEmpty: "Aucune ville de ce filtre n’a 5 centres ou plus, donc la carte reste vide exprès.",
+  mapLoading: "Chargement de la carte.",
   mapFailed: "La carte n’a pas chargé. Le tableau des villes a quand même les totaux.",
   childRatio: "Enfants de 0 à 5 ans par place permise",
   childRatioNote:

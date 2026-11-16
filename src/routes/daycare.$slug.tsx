@@ -1263,7 +1263,9 @@ export function Listing() {
               </p>
             </section>
           ) : null}
-              <p className="mt-2 max-w-prose text-sm text-muted">{t("licenceRecordLead")}</p>
+              <p className="mt-2 max-w-prose text-sm text-muted">
+                {licensed ? t("licenceRecordLead") : t("licenceRecordUnverified")}
+              </p>
               <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm">
                 {licensed && !approved ? (
                   <Meta label={t("licenseStatus")} value={t(licensed.labelKey as CopyKey)} />

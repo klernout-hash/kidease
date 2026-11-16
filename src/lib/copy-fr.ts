@@ -2161,7 +2161,7 @@ export const fr = {
     waitlistRequestSaved: "Vous êtes sur cette liste d’attente. Suivez-la dans Mes demandes.",
     directions: "Itinéraire",
     getDirections: "Obtenir l’itinéraire",
-    hiddenFromPublic: "Caché du public",
+    hiddenFromPublic: "Pas dans la recherche. Toute personne qui a ce lien peut ouvrir cette page.",
     dayMon: "Lun",
     dayTue: "Mar",
     dayWed: "Mer",
@@ -2572,6 +2572,11 @@ export const fr = {
     licenceRecord: "Permis et inspections",
     licenceRecordLead:
       "Ce centre est au registre provincial ou territorial. KidEase ne remplace pas le dossier officiel : ouvrez-le pour voir les inspections, les plaintes et les corrections.",
+    licenceRecordUnverified:
+      "KidEase n’a pas de permis vérifié pour ce centre. Vérifiez le registre officiel de la province ou du territoire.",
+    listingBadgeWaiting: "En attente",
+    listingBadgeLive: "En ligne",
+    listingBadgeDeclined: "Refusé",
     lastInspection: "Inspections",
     seeOfficialRecord: "Voir le dossier officiel",
     viewLicenceRecord: "Ouvrir le registre public",

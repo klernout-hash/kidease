@@ -19,20 +19,36 @@ export const PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${S
 /** Package link the Amazon helper already accepts. Not a made-up product page. */
 export const AMAZON_STORE_URL = `https://www.amazon.com/gp/mas/dl/android?p=${STORE.playPackageName}`;
 
-/**
- * Kyle confirmed Huawei is live on 12 Nov 2026. Its public listing URL has
- * not been verified, so show availability without inventing a download link.
- */
+/** Kyle confirmed this AppGallery listing on 16 Nov 2026. */
+export const HUAWEI_STORE_URL = "https://appgallery.huawei.com/#/app/C119648761";
+
 export const APP_STORES: readonly AppStoreTile[] = [
   { id: "play", live: true, url: PLAY_STORE_URL, nameEn: "Google Play", nameFr: "Google Play" },
   { id: "amazon", live: true, url: AMAZON_STORE_URL, nameEn: "Amazon Appstore", nameFr: "Amazon Appstore" },
-  { id: "huawei", live: true, url: null, nameEn: "Huawei AppGallery", nameFr: "Huawei AppGallery" },
+  { id: "huawei", live: true, url: HUAWEI_STORE_URL, nameEn: "Huawei AppGallery", nameFr: "Huawei AppGallery" },
   { id: "apple", live: false, url: null, nameEn: "App Store", nameFr: "App Store" },
   { id: "samsung", live: false, url: null, nameEn: "Galaxy Store", nameFr: "Galaxy Store" },
   { id: "microsoft", live: false, url: null, nameEn: "Microsoft Store", nameFr: "Microsoft Store" },
 ];
 
 export const APP_SHARE_PATH = "/app";
+
+function storeList(names: string[]): string {
+  return names.join(", ");
+}
+
+/**
+ * One sentence for JSON-LD and page descriptions.
+ * Live and not-live come from APP_STORES, the same list the download tiles use.
+ */
+export function appAvailabilitySentence(locale: "en" | "fr" = "en", stores: readonly AppStoreTile[] = APP_STORES): string {
+  const live = stores.filter((store) => store.live).map((store) => (locale === "fr" ? store.nameFr : store.nameEn));
+  const waiting = stores.filter((store) => !store.live).map((store) => (locale === "fr" ? store.nameFr : store.nameEn));
+  if (locale === "fr") {
+    return `Recherche gratuite de garderies permises au Canada. Offert : ${storeList(live)}. Pas encore offert : ${storeList(waiting)}.`;
+  }
+  return `Free search for licensed Canadian child care listings. Monthly fees, open spots, and enrolment. Available: ${storeList(live)}. Not available yet: ${storeList(waiting)}.`;
+}
 
 export function liveAppStores(stores: readonly AppStoreTile[] = APP_STORES): AppStoreTile[] {
   return stores.filter((store) => store.live && Boolean(store.url));

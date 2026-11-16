@@ -10,13 +10,14 @@ export function GovMap({ data }: { data: GovDashboard }) {
   const copy = govCopy(data.locale);
   const host = useRef<HTMLDivElement>(null);
   const channel = useStoreChannel();
-  const [failed, setFailed] = useState(false);
+  const [phase, setPhase] = useState<"loading" | "ready" | "failed">("loading");
   const view = dashboardView(data.province);
   const points = data.map;
 
   useEffect(() => {
     const el = host.current;
     if (channel === "huawei" || !el || points.length === 0) return;
+    setPhase("loading");
     let dead = false;
     let map: { destroy: () => void } | null = null;
     const circles: { setMap: (value: null) => void }[] = [];
@@ -52,9 +53,9 @@ export function GovMap({ data }: { data: GovDashboard }) {
             }),
           );
         }
-        if (!created.tilesReady) setFailed(true);
+        if (!dead) setPhase(created.tilesReady ? "ready" : "failed");
       } catch {
-        if (!dead) setFailed(true);
+        if (!dead) setPhase("failed");
       }
     })();
     return () => {
@@ -76,11 +77,16 @@ export function GovMap({ data }: { data: GovDashboard }) {
           <StoreMapFallback />
         </div>
       ) : points.length === 0 ? (
-        <p className="mt-3 text-sm text-muted" data-ke="gov-map-empty">{copy.mapEmpty}</p>
-      ) : failed ? (
-        <p className="mt-3 text-sm text-muted" data-ke="gov-map-failed">{copy.mapFailed}</p>
+        <p className="mt-3 text-sm text-muted" role="status" data-ke="gov-map-empty">{copy.mapEmpty}</p>
+      ) : phase === "failed" ? (
+        <p className="mt-3 text-sm text-muted" role="alert" data-ke="gov-map-failed">{copy.mapFailed}</p>
       ) : (
         <div className="relative mt-3 h-[min(70dvh,28rem)] w-full overflow-hidden rounded-2xl bg-surface-2">
+          {phase === "loading" ? (
+            <p className="absolute inset-x-0 top-3 z-10 px-3 text-center text-sm text-muted" role="status" data-ke="gov-map-loading">
+              {copy.mapLoading}
+            </p>
+          ) : null}
           <div ref={host} style={mapHostStyle} role="img" aria-label={copy.map} />
         </div>
       )}

@@ -57,12 +57,22 @@ export function ParentSmsFields({
           <span className="pt-2.5">{parentSmsConsentText(locale)}</span>
         </label>
         <p id="parent-sms-links" className="mt-1 flex flex-wrap items-center gap-x-2 pl-2 text-sm">
-          <a
-            href={PARENT_SMS_TERMS_URL}
-            className="inline-flex min-h-11 items-center font-medium text-primary underline underline-offset-4"
-          >
-            {t("terms")}
-          </a>
+          {locale === "fr" ? (
+            <Link
+              to="/fr/terms"
+              hash="sms"
+              className="inline-flex min-h-11 items-center font-medium text-primary underline underline-offset-4"
+            >
+              Conditions des textos
+            </Link>
+          ) : (
+            <a
+              href={PARENT_SMS_TERMS_URL}
+              className="inline-flex min-h-11 items-center font-medium text-primary underline underline-offset-4"
+            >
+              SMS terms
+            </a>
+          )}
           <span aria-hidden="true" className="text-subtle">
             ·
           </span>
