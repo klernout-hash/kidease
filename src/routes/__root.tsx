@@ -176,6 +176,10 @@ export const Route = createRootRoute({
       ...(storeRead.msStoreUrl ? { msStoreUrl: storeRead.msStoreUrl } : {}),
       ...(storeRead.samsungStore ? { samsungStore: true as const } : {}),
       ...(storeRead.samsungPush ? { samsungPush: true as const } : {}),
+      ...(storeRead.huaweiAlertPush ? { huaweiAlertPush: true as const } : {}),
+      ...(storeRead.huaweiAppLinking ? { huaweiAppLinking: true as const } : {}),
+      ...(storeRead.huaweiReview ? { huaweiReview: true as const } : {}),
+      ...(storeRead.huaweiGallery ? { huaweiGallery: true as const } : {}),
     };
   },
   errorComponent: (props) => {
@@ -314,6 +318,7 @@ function RootDocument() {
   const a11yPass = Route.useRouteContext({ select: (s) => Boolean(s.a11yPass) });
   const posthogErrors = Route.useRouteContext({ select: (s) => Boolean(s.posthogErrors) });
   const airbnbUi = Route.useRouteContext({ select: (s) => s.airbnbUi === true });
+  const huaweiReview = Route.useRouteContext({ select: (s) => s.huaweiReview === true });
   const { locale } = useCopy();
   const lang =
     pathLocale(pathname) === "fr" || locale === "fr" ? "fr-CA" : locale === "en" ? "en" : localeTag(locale);
@@ -328,6 +333,7 @@ function RootDocument() {
       data-theme="dark"
       data-resolved-theme="dark"
       data-ui={airbnbUi ? "airbnb-v1" : undefined}
+      data-huawei-review={huaweiReview ? "1" : undefined}
       suppressHydrationWarning
     >
       <head>

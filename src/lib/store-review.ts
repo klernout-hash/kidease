@@ -249,8 +249,17 @@ export async function openWriteReview(platform: NativePlatform = nativePlatform(
  * Web → caller should send the user to /get-app. Never a fake rating UI.
  * Logged-out www.kidease.ca home uses this same path — Rate KidEase is not Account-only.
  */
+function huaweiReviewRequested(): boolean {
+  return typeof document !== "undefined" && document.documentElement.dataset.huaweiReview === "1";
+}
+
 export async function rateKidEaseFromMenu(): Promise<RateKidEaseResult> {
   if (isNative()) {
+    if (readClientStoreChannel() === "huawei" && huaweiReviewRequested()) {
+      const { huaweiReviewUrl } = await import("./huawei/platform");
+      const url = huaweiReviewUrl(true);
+      if (url && (await openExternalUrl(url))) return "store";
+    }
     if (await openWriteReview()) return "store";
     if (await requestInAppReview({ force: true })) return "in-app";
   }

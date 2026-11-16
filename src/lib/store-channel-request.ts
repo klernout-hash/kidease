@@ -30,6 +30,11 @@ export type ServerStoreRead = {
   /** Present only when that Galaxy Store flag is on. Omitted while the flag is off. */
   samsungStore?: true;
   samsungPush?: true;
+  /** Present only when that AppGallery flag is on. Omitted while the flag is off. */
+  huaweiAlertPush?: true;
+  huaweiAppLinking?: true;
+  huaweiReview?: true;
+  huaweiGallery?: true;
 };
 
 function requestIsHttps(url: string | undefined, forwardedProto: string | null): boolean {
@@ -74,6 +79,7 @@ export const readServerStoreChannel = createServerFn({ method: "GET" })
       const { playPlatformContext } = await import("@/lib/google/platform");
       const { microsoftPlatformContext } = await import("@/lib/microsoft/platform");
       const { samsungPlatformContext } = await import("@/lib/samsung/platform");
+      const { huaweiPlatformContext } = await import("@/lib/huawei/platform");
       return {
         channel: storeChannelFromSignals(signals),
         setCookie: microsoftStoreCookieHeader(signals, {
@@ -84,6 +90,7 @@ export const readServerStoreChannel = createServerFn({ method: "GET" })
         ...playPlatformContext(process.env),
         ...microsoftPlatformContext(process.env),
         ...samsungPlatformContext(process.env),
+        ...huaweiPlatformContext(process.env),
       };
     } catch {
       return {
