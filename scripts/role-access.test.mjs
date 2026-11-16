@@ -69,6 +69,11 @@ test("sign-in lands on the stored role home unless the next path is allowed", ()
   assert.equal(destinationAfterSignIn({ role: "provider", next: "/search" }), "/search");
   assert.equal(destinationAfterSignIn({ role: "parent", ownsCentre: true }), "/provider");
   assert.equal(destinationAfterSignIn({ role: "parent", ownsCentre: true, next: "/parent" }), "/provider");
+  assert.equal(
+    destinationAfterSignIn({ role: "parent", ownsCentre: true, next: "/invite/tok" }),
+    "/provider",
+  );
+  assert.equal(destinationAfterSignIn({ role: "parent", next: "/invite/tok" }), "/invite/tok");
   assert.equal(destinationAfterSignIn({ role: "admin", next: "/parent" }), "/parent");
   assert.equal(destinationAfterSignIn({ role: "admin", ownsCentre: true, next: "/parent" }), "/parent");
   assert.equal(homeForRole("support"), "/support");

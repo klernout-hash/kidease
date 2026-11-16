@@ -13,6 +13,7 @@ import { useCopy } from "@/lib/use-copy";
 import { BrandMark } from "@/components/brand-mark";
 import { CountBadge } from "@/components/count-badge";
 import { restoreMyAccount } from "@/lib/server/family";
+import { StaffInviteBanner } from "@/components/staff-invite-banner";
 import { MenuLeafBack } from "@/components/menu-leaf-back";
 import { isMenuLeafPath } from "@/lib/menu-leaf";
 import { NavDrawer } from "@/components/nav-drawer";
@@ -247,6 +248,7 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
           </button>
         </div>
       ) : null}
+      <StaffInviteBanner />
       <FacebookRoleBoot />
       <FacebookEmailPrompt />
       <NavDrawer

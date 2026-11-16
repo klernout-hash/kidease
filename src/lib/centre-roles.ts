@@ -235,6 +235,32 @@ export function decideInviteEmployee(input: {
   return { ok: true, role: input.inviteRole };
 }
 
+export type ClaimableInvite = {
+  id: string;
+  daycareId: string;
+  email: string;
+  role: string;
+  status: string;
+  expiresAtMs: number;
+};
+
+/** Pending staff invites for this mailbox. Owner is never granted from an invite. */
+export function invitesToClaim(input: {
+  email: string;
+  nowMs?: number;
+  invites: ClaimableInvite[];
+}): ClaimableInvite[] {
+  const email = (input.email || "").trim().toLowerCase();
+  const now = input.nowMs ?? Date.now();
+  if (!email.includes("@")) return [];
+  return input.invites.filter((row) => {
+    if ((row.status || "").trim() !== "pending") return false;
+    if (!Number.isFinite(row.expiresAtMs) || row.expiresAtMs < now) return false;
+    if ((row.email || "").trim().toLowerCase() !== email) return false;
+    return isCentreInviteRole(row.role);
+  });
+}
+
 export function decideAcceptInvite(input: {
   inviteStatus: string | null;
   inviteEmail: string;
