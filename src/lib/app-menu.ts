@@ -16,6 +16,7 @@ const GROUP: Record<string, MenuGroupId> = {
   "/team": "resources",
   "/donate": "resources",
   "/get-app": "resources",
+  "/blog": "resources",
   "/search": "guides",
   "/cities": "guides",
   "/compare": "guides",
