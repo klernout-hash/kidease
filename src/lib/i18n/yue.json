@@ -3575,5 +3575,12 @@
   "attentionOfferWaiting": "學位邀請仲等緊家長",
   "attentionOverdueInvoice": "帳單已過期",
   "attentionStaffCert": "員工證書就快到期",
-  "attentionListingGap": "園所資料仲有一步要完成"
+  "attentionListingGap": "園所資料仲有一步要完成",
+  "tourAssistantTitle": "問呢間中心",
+  "tourAssistantPrompt": "問已公布嘅收費、時間、年齡，或者一個開放嘅參觀時段。",
+  "tourAssistantSend": "問",
+  "tourAssistantConfirm": "送出呢次參觀申請",
+  "tourAssistantSent": "申請已送出。中心會喺申請見到。",
+  "tourAssistantSignIn": "請用家長帳戶登入先送出呢次參觀。",
+  "tourAssistantSlotGone": "呢個時間已經冇位。請另選一個已公布嘅時間。"
 }
