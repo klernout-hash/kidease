@@ -234,6 +234,8 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_MS_SHORTCUTS` | Microsoft taskbar shortcuts. Default off. |
 | `FEATURE_MS_BADGING` | Taskbar badge. Default off. A missing count does not call the badge API. |
 | `FEATURE_MS_STORE_LINK` | Microsoft Store link. Default off. Needs `MICROSOFT_STORE_PRODUCT_ID`. No id is invented. |
+| `FEATURE_SAMSUNG_STORE_LINK` | Galaxy Store https link and `samsungapps://` deep link. Default off. Does not say the listing is available. |
+| `FEATURE_SAMSUNG_PUSH_FALLBACK` | On a Galaxy Store phone with no Play services, skip FCM. Default off. No new push vendor and no message is sent. |
 | `BRANDED_EMAILS` | Env only, not a PostHog flag. Default off. When `1`, notification email uses the KidEase layout (logo, button, plain-text part, one-click unsubscribe). Unset keeps today's bodies. Do not turn on until `send.kidease.ca` mail DNS is confirmed. |
 
 ## What is wired

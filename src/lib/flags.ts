@@ -214,6 +214,8 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_MS_SHORTCUTS",
   "FEATURE_MS_BADGING",
   "FEATURE_MS_STORE_LINK",
+  "FEATURE_SAMSUNG_STORE_LINK",
+  "FEATURE_SAMSUNG_PUSH_FALLBACK",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -612,6 +614,10 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_MS_BADGING: false,
   /** Microsoft Store product link. Off. No product id is invented. */
   FEATURE_MS_STORE_LINK: false,
+  /** Galaxy Store link. Off. Does not say the listing is available. */
+  FEATURE_SAMSUNG_STORE_LINK: false,
+  /** Skip FCM on a Galaxy Store phone with no Play services. Off. FCM stays when this is off. */
+  FEATURE_SAMSUNG_PUSH_FALLBACK: false,
 };
 
 /**
@@ -1461,6 +1467,8 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_MS_SHORTCUTS", defaultOn: false, docs: "docs/flags.md", summary: "Microsoft taskbar shortcuts. Off." },
   { key: "FEATURE_MS_BADGING", defaultOn: false, docs: "docs/flags.md", summary: "Microsoft app badge. Off. No count is invented." },
   { key: "FEATURE_MS_STORE_LINK", defaultOn: false, docs: "docs/flags.md", summary: "Microsoft Store link. Off until a real product id is set." },
+  { key: "FEATURE_SAMSUNG_STORE_LINK", defaultOn: false, docs: "docs/flags.md", summary: "Galaxy Store deep link. Off. Does not say the listing is available." },
+  { key: "FEATURE_SAMSUNG_PUSH_FALLBACK", defaultOn: false, docs: "docs/flags.md", summary: "Skip FCM when a Galaxy Store phone has no Play services. Off. No new push vendor." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;

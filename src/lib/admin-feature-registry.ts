@@ -203,6 +203,8 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_MS_SHORTCUTS: "shared",
   FEATURE_MS_BADGING: "shared",
   FEATURE_MS_STORE_LINK: "shared",
+  FEATURE_SAMSUNG_STORE_LINK: "shared",
+  FEATURE_SAMSUNG_PUSH_FALLBACK: "shared",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {

@@ -25,6 +25,7 @@ import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
 import { HomeScreenGuide } from "@/components/home-screen-guide";
 import { AppStoreStatus } from "@/components/app-store-status";
 import { MicrosoftStoreLink } from "@/components/microsoft-store-link";
+import { SamsungStoreLink } from "@/components/samsung-store-link";
 import { StoreBadges } from "@/components/store-badges";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
@@ -93,6 +94,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
             <h1 className="mt-3 font-display text-4xl md:text-5xl">{t("getApp")}</h1>
             <p className="mt-4 max-w-md text-muted">{t("getAppLead")}</p>
             <MicrosoftStoreLink />
+            <SamsungStoreLink />
             <AppStoreStatus />
             {showStores && amazonUrl ? (
               <div data-ke="store-coming-soon">
