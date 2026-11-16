@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   ATTENTION_HISTORY_MS,
+  attentionInboxHref,
   parentAttentionFacts,
   providerAttentionFacts,
   readAttentionDismissals,
@@ -62,13 +63,40 @@ test("dismissals are stored per person", () => {
   assert.deepEqual(readAttentionDismissals(raw, "user-b"), []);
 });
 
+test("unread parent threads open the centre inbox and leave when read", () => {
+  const open = providerAttentionFacts({
+    now,
+    locale: "fr",
+    messages: [{ id: "m-parent", daycareId: "c1", title: "Jonny Doey", unread: true }],
+  });
+  assert.equal(open[0]?.detail, "unreadParent");
+  assert.equal(open[0]?.title, "Jonny Doey");
+  assert.equal(open[0]?.href, attentionInboxHref("m-parent", "centre", "fr"));
+  const read = providerAttentionFacts({
+    now,
+    messages: [{ id: "m-parent", daycareId: "c1", title: "Jonny Doey", unread: false, readAt: "2026-11-16T11:00:00.000Z" }],
+  });
+  const buckets = splitAttention(read, { now });
+  assert.equal(buckets.open.length, 0);
+  assert.equal(buckets.done[0]?.id, "centre-message:m-parent");
+  const parent = parentAttentionFacts({
+    locale: "fr",
+    messages: [{ id: "m-centre", daycareId: "c1", daycareName: "Elm", unread: true }],
+  });
+  assert.equal(parent[0]?.href, "/fr/inbox/m-centre?view=family");
+});
+
 test("the list is on the parent home and the provider Today desk", () => {
   const parent = readFileSync(new URL("../src/components/parent-desk.tsx", import.meta.url), "utf8");
   const today = readFileSync(new URL("../src/components/today-urgency-home.tsx", import.meta.url), "utf8");
   assert.match(parent, /ParentAttention/);
   assert.match(today, /ProviderAttention/);
   assert.match(parent, /childIds=/);
-  assert.match(readFileSync(new URL("../src/components/attention-list.tsx", import.meta.url), "utf8"), /listCentreWaitlist/);
-  assert.match(readFileSync(new URL("../src/components/attention-list.tsx", import.meta.url), "utf8"), /listChildAgreements/);
+  const list = readFileSync(new URL("../src/components/attention-list.tsx", import.meta.url), "utf8");
+  assert.match(list, /listCentreWaitlist/);
+  assert.match(list, /view: "centre"/);
+  assert.match(readFileSync(new URL("../src/lib/copy-fr.ts", import.meta.url), "utf8"), /attentionUnreadParent: "Message parent non lu"/);
+  assert.match(readFileSync(new URL("../src/lib/copy-en.ts", import.meta.url), "utf8"), /attentionUnreadParent: "Unread parent message"/);
+  assert.match(list, /listChildAgreements/);
   assert.match(readFileSync(new URL("../src/lib/copy-fr.ts", import.meta.url), "utf8"), /attentionTitle: "À faire"/);
 });

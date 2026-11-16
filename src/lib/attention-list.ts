@@ -9,6 +9,7 @@ export const ATTENTION_DETAILS = [
   "invoiceDue",
   "paymentFailed",
   "unreadMessage",
+  "unreadParent",
   "newRequest",
   "missingDoc",
   "offerWaiting",
@@ -70,7 +71,13 @@ export function splitAttention(
   return { open, done };
 }
 
+export function attentionInboxHref(id: string, view: "family" | "centre", locale: "en" | "fr" = "en"): string {
+  const path = locale === "fr" ? `/fr/inbox/${id}` : `/inbox/${id}`;
+  return `${path}?view=${view}`;
+}
+
 export function parentAttentionFacts(input: {
+  locale?: "en" | "fr";
   tours?: readonly { id: string; daycareId: string; daycareName: string; status: string; respondedAt?: string | null }[];
   offers?: readonly { id: string; daycareId: string; daycareName: string; status: string; expiresAt?: string | null; resolvedAt?: string | null }[];
   bills?: readonly { id: string; daycareId: string; daycareName: string; number: string; status: string; dueAt?: string | null; paidAt?: string | null }[];
@@ -133,7 +140,7 @@ export function parentAttentionFacts(input: {
       centreId: message.daycareId,
       title: message.daycareName,
       detail: "unreadMessage",
-      href: `/inbox/${message.id}`,
+      href: attentionInboxHref(message.id, "family", input.locale),
       resolvedAt: message.unread ? null : message.readAt ?? null,
       dismissible: false,
     });
@@ -158,6 +165,7 @@ export function parentAttentionFacts(input: {
 
 export function providerAttentionFacts(input: {
   now?: number;
+  locale?: "en" | "fr";
   requests?: readonly { id: string; daycareId: string; title: string; status: string; respondedAt?: string | null }[];
   offers?: readonly { id: string; daycareId: string; title: string; status: string; expiresAt?: string | null; resolvedAt?: string | null }[];
   bills?: readonly { id: string; daycareId: string; title: string; status: string; dueAt?: string | null; paidAt?: string | null }[];
@@ -220,8 +228,8 @@ export function providerAttentionFacts(input: {
       role: "provider",
       centreId: message.daycareId,
       title: message.title,
-      detail: "unreadMessage",
-      href: `/inbox/${message.id}`,
+      detail: "unreadParent",
+      href: attentionInboxHref(message.id, "centre", input.locale),
       resolvedAt: message.unread ? null : message.readAt ?? null,
       dismissible: false,
     });

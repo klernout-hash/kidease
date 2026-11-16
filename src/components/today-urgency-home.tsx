@@ -221,14 +221,6 @@ export function TodayUrgencyHome({
                 status: "pending",
               })),
           ]}
-          messages={threads
-            .filter((thread) => thread.unread && thread.daycareId)
-            .map((thread) => ({
-              id: thread.id,
-              daycareId: thread.daycareId,
-              title: thread.daycareName,
-              unread: true,
-            }))}
           documents={screening
             .filter((centre) => centre.people.some((person) => person.docs.some((doc) => doc.status === "missing")))
             .map((centre) => ({

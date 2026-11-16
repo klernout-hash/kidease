@@ -24,6 +24,7 @@ const DETAIL_KEY: Record<AttentionDetail, CopyKey> = {
   invoiceDue: "attentionInvoiceDue",
   paymentFailed: "attentionPaymentFailed",
   unreadMessage: "attentionUnreadMessage",
+  unreadParent: "attentionUnreadParent",
   newRequest: "attentionNewRequest",
   missingDoc: "attentionMissingDoc",
   offerWaiting: "attentionOfferWaiting",
@@ -72,9 +73,9 @@ export function AttentionList({
       {buckets.open.length === 0 ? <p className="text-sm text-muted">{t("attentionEmpty")}</p> : null}
       <ul className="space-y-2">
         {buckets.open.map((item) => (
-          <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface p-4 ring-1 ring-border">
+          <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4">
             <div className="min-w-0">
-              <a href={item.href} className="font-medium underline-offset-4 hover:underline">
+              <a href={item.href} className="inline-flex min-h-11 items-center font-medium underline-offset-4 hover:underline">
                 {item.title}
               </a>
               <p className="text-sm text-muted">{t(DETAIL_KEY[item.detail])}</p>
@@ -100,7 +101,7 @@ export function AttentionList({
           {showDone ? (
             <ul className="mt-2 space-y-2">
               {buckets.done.map((item) => (
-                <li key={item.id} className="rounded-xl bg-surface-2 p-4 text-sm text-muted">
+                <li key={item.id} className="rounded-xl border border-border bg-surface-2 p-4 text-sm text-muted">
                   <span className="font-medium text-fg">{item.title}</span>
                   <span> · {t(DETAIL_KEY[item.detail])}</span>
                 </li>
@@ -124,6 +125,7 @@ export function ParentAttention({
   bills: readonly { id: string; daycareId: string; daycareName: string; number: string; status: string; dueAt?: string | null; paidAt?: string | null }[];
   childIds?: readonly string[];
 }) {
+  const { locale } = useCopy();
   const [offers, setOffers] = useState<NonNullable<Parameters<typeof parentAttentionFacts>[0]["offers"]>>([]);
   const [messages, setMessages] = useState<NonNullable<Parameters<typeof parentAttentionFacts>[0]["messages"]>>([]);
   const [forms, setForms] = useState<NonNullable<Parameters<typeof parentAttentionFacts>[0]["forms"]>>([]);
@@ -186,8 +188,8 @@ export function ParentAttention({
     };
   }, [userId, childIds.join("|")]);
   const facts = useMemo(
-    () => parentAttentionFacts({ tours, bills, offers, messages, forms }),
-    [tours, bills, offers, messages, forms],
+    () => parentAttentionFacts({ locale: locale === "fr" ? "fr" : "en", tours, bills, offers, messages, forms }),
+    [locale, tours, bills, offers, messages, forms],
   );
   return <AttentionList userId={userId} facts={facts} />;
 }
@@ -195,20 +197,20 @@ export function ParentAttention({
 export function ProviderAttention({
   userId,
   requests,
-  messages,
   documents,
   listings,
   certs = [],
 }: {
   userId: string;
   requests: readonly { id: string; daycareId: string; title: string; status: string; respondedAt?: string | null }[];
-  messages: readonly { id: string; daycareId: string; title: string; unread: boolean; readAt?: string | null }[];
   documents: readonly { id: string; daycareId: string; title: string; status: string }[];
   listings: readonly { id: string; name: string; open: boolean }[];
   certs?: readonly { id: string; daycareId: string; title: string; expiresAt: string }[];
 }) {
+  const { locale } = useCopy();
   const [bills, setBills] = useState<Parameters<typeof providerAttentionFacts>[0]["bills"]>([]);
   const [offers, setOffers] = useState<Parameters<typeof providerAttentionFacts>[0]["offers"]>([]);
+  const [messages, setMessages] = useState<Parameters<typeof providerAttentionFacts>[0]["messages"]>([]);
   useEffect(() => {
     let live = true;
     void listProviderBills()
@@ -248,6 +250,23 @@ export function ProviderAttention({
       .catch(() => {
         if (live) setOffers([]);
       });
+    void listInbox({ data: { view: "centre" } })
+      .then((rows) => {
+        if (!live) return;
+        setMessages(
+          rows
+            .filter((row) => row.unread && row.daycareId)
+            .map((row) => ({
+              id: row.id,
+              daycareId: row.daycareId,
+              title: (row.parentName || row.daycareName || "").trim(),
+              unread: true,
+            })),
+        );
+      })
+      .catch(() => {
+        if (live) setMessages([]);
+      });
     return () => {
       live = false;
     };
@@ -255,6 +274,7 @@ export function ProviderAttention({
   const facts = useMemo(
     () =>
       providerAttentionFacts({
+        locale: locale === "fr" ? "fr" : "en",
         requests,
         messages,
         documents,
@@ -263,7 +283,7 @@ export function ProviderAttention({
         certs,
         listingGaps: listings.map((row) => ({ id: row.id, daycareId: row.id, title: row.name, open: row.open })),
       }),
-    [requests, messages, documents, bills, offers, certs, listings],
+    [locale, requests, messages, documents, bills, offers, certs, listings],
   );
   return <AttentionList userId={userId} facts={facts} />;
 }
