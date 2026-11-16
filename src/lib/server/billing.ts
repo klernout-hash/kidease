@@ -110,15 +110,6 @@ function mapBill(row: InvoiceRow): Bill {
   };
 }
 
-async function ownsCentre(sql: Sql, userId: string, daycareId: string) {
-  const rows = await sql<{ user_id: string }>`
-    select user_id from provider_daycares
-    where user_id = ${userId} and daycare_id = ${daycareId}
-    limit 1
-  `;
-  return Boolean(rows[0]);
-}
-
 async function loadInvoice(sql: Sql, id: string): Promise<InvoiceRow | null> {
   const found = await sql.query<InvoiceRow>(
     `select ${INVOICE_SELECT}
@@ -313,24 +304,39 @@ async function findBillForStripe(
   return null;
 }
 
+/** Owner centres stay on provider_daycares. A staff login needs a bills grant. */
+async function billsScope(sql: Sql, userId: string) {
+  const { explainBillsList, staffAreaError } = await import("@/lib/server/centre-access");
+  const decision = await explainBillsList(sql, userId);
+  if (!decision.ok) {
+    if (decision.reason === "permission") throw staffAreaError(decision);
+    return [] as string[];
+  }
+  return decision.daycareIds;
+}
+
 export const listProviderBills = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
-    const rows = await sql.query<InvoiceRow>(
-      `select ${INVOICE_SELECT}
+    const daycareIds = await billsScope(sql, context.userId);
+    const rows = daycareIds.length
+      ? await sql.query<InvoiceRow>(
+          `select ${INVOICE_SELECT}
        from invoices i
        join daycares d on d.id = i.daycare_id
        left join children ch on ch.id = i.child_id
        left join "user" u on u.id = i.parent_user_id
-       where exists (
-         select 1 from provider_daycares p
-         where p.user_id = $1 and p.daycare_id = i.daycare_id
-       )
+       where i.daycare_id = any($2::text[])
+          or exists (
+            select 1 from provider_daycares p
+            where p.user_id = $1 and p.daycare_id = i.daycare_id
+          )
        order by i.created_at desc
        limit 200`,
-      [context.userId],
-    ).catch(() => []);
+          [context.userId, daycareIds],
+        ).catch(() => [])
+      : [];
     return {
       stripeLive: parentBillCardLive(),
       platformFeeBps: platformFeeBps(),
@@ -367,6 +373,9 @@ export const listBillParties = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
+    const { daycareIdsForArea } = await import("@/lib/server/centre-access");
+    const daycareIds = await daycareIdsForArea(sql, context.userId, "bills", "edit");
+    if (!daycareIds.length) return [];
     const rows = await sql<{
       user_id: string;
       name: string | null;
@@ -384,10 +393,7 @@ export const listBillParties = createServerFn({ method: "GET" })
       join daycares d on d.id = b.daycare_id
       join "user" u on u.id = b.user_id
       left join children ch on ch.id = b.child_id
-      where exists (
-        select 1 from provider_daycares p
-        where p.user_id = ${context.userId} and p.daycare_id = b.daycare_id
-      )
+      where b.daycare_id = any(${daycareIds}::text[])
       order by u.name, d.name, b.created_at desc
     `.catch(() => []);
     const map = new Map<string, BillParty>();
@@ -436,7 +442,9 @@ export const createBill = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    if (!(await ownsCentre(sql, context.userId, data.daycareId)) || !canCreateBillForCentre([data.daycareId], data.daycareId)) {
+    const { assertStaffArea } = await import("@/lib/server/centre-access");
+    await assertStaffArea(sql, context.userId, data.daycareId, "bills", "edit");
+    if (!canCreateBillForCentre([data.daycareId], data.daycareId)) {
       throw new Error("Not your listing");
     }
     const amountCad = Math.round(Number(data.amountCad));
@@ -519,7 +527,8 @@ export const sendBill = createServerFn({ method: "POST" })
     const sql = await getSql();
     const row = await loadInvoice(sql, billId);
     if (!row) throw new Error("Bill not found");
-    if (!(await ownsCentre(sql, context.userId, row.daycare_id))) throw new Error("Not your listing");
+    const { assertStaffArea } = await import("@/lib/server/centre-access");
+    await assertStaffArea(sql, context.userId, row.daycare_id, "bills", "edit");
     const current = parseBillStatus(row.status);
     if (current === "paid" || current === "void" || current === "refunded") {
       throw new Error("This bill can no longer be sent");
@@ -560,7 +569,8 @@ export const voidBill = createServerFn({ method: "POST" })
     const sql = await getSql();
     const row = await loadInvoice(sql, billId);
     if (!row) throw new Error("Bill not found");
-    if (!(await ownsCentre(sql, context.userId, row.daycare_id))) throw new Error("Not your listing");
+    const { assertStaffArea } = await import("@/lib/server/centre-access");
+    await assertStaffArea(sql, context.userId, row.daycare_id, "bills", "edit");
     const current = parseBillStatus(row.status);
     if (current === "paid" || current === "refunded") throw new Error("Paid bills cannot be voided");
     await sql`
@@ -577,7 +587,10 @@ export const getBill = createServerFn({ method: "GET" })
     const row = await loadInvoice(sql, billId);
     if (!row) throw new Error("Bill not found");
     const bill = mapBill(row);
-    const provider = await ownsCentre(sql, context.userId, bill.daycareId);
+    const { explainStaffArea, staffAreaError } = await import("@/lib/server/centre-access");
+    const billAccess = await explainStaffArea(sql, context.userId, bill.daycareId, "bills", "view");
+    if (!billAccess.ok && billAccess.reason !== "absent" && row.parent_user_id !== context.userId) throw staffAreaError(billAccess);
+    const provider = billAccess.ok;
     const access = canReadBill({
       actorUserId: context.userId,
       parentUserId: bill.parentUserId,

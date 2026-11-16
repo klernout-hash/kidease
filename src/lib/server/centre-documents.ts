@@ -12,7 +12,6 @@ import {
 } from "@/lib/centre-documents";
 import { centreDocumentsEnabled } from "@/lib/features";
 import { R2_CENTRE_DOC_PREFIX } from "@/lib/private-docs";
-import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { parsePrivateUpload, persistPrivateDoc } from "@/lib/server/private-docs";
 import { requireAdmin, resolveAdminAccess } from "@/lib/server/roles";
 import { nid } from "@/lib/utils";
@@ -96,9 +95,15 @@ export const listCentreDocumentChecklist = createServerFn({ method: "GET" })
   .handler(async ({ context, data: daycareId }) => {
     if (!centreDocumentsEnabled()) return { enabled: false as const, checklist: null };
     const sql = await getSql();
-    const access = await listAccessibleDaycareIds(sql, context.userId);
+    const { explainStaffArea, staffAreaError } = await import("@/lib/server/centre-access");
     const admin = (await resolveAdminAccess(context.userId)).ok;
-    if (!admin && !access.includes(daycareId)) throw new Error("You can only open documents for your centre.");
+    if (!admin) {
+      const decision = await explainStaffArea(sql, context.userId, daycareId, "documents", "view");
+      if (!decision.ok) {
+        if (decision.reason === "absent") throw new Error("You can only open documents for your centre.");
+        throw staffAreaError(decision);
+      }
+    }
     const centre = await centreFacts(sql, daycareId);
     if (!centre) throw new Error("Centre not found");
     const documents = await rowsFor(sql, daycareId);
@@ -344,8 +349,12 @@ export async function authorizeCentreDocument(input: { userId: string; documentI
   if (!row?.storage_ref) throw new Error("File not found");
   const admin = (await resolveAdminAccess(input.userId)).ok;
   if (!admin) {
-    const access = await listAccessibleDaycareIds(sql, input.userId);
-    if (!access.includes(row.daycare_id)) throw new Error("You can only open documents for your centre.");
+    const { explainStaffArea, staffAreaError } = await import("@/lib/server/centre-access");
+    const decision = await explainStaffArea(sql, input.userId, row.daycare_id, "documents", "view");
+    if (!decision.ok) {
+      if (decision.reason === "absent") throw new Error("You can only open documents for your centre.");
+      throw staffAreaError(decision);
+    }
   }
   return row;
 }

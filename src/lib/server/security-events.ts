@@ -30,6 +30,7 @@ export type SecurityKind =
   | "employee_invite"
   | "employee_accept"
   | "employee_revoke"
+  | "employee_permissions"
   | "open_spots_checkin_denied"
   | "open_spots_checkin_run"
   | "automation_denied"

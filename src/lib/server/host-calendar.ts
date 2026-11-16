@@ -106,8 +106,17 @@ export const loadHostCalendar = createServerFn({ method: "GET" })
   .handler(async ({ context, data }): Promise<HostCalendarPayload> => {
     if (!hostListingEnabled() || !data.daycareId) return emptyPayload(data.month);
     const sql = await getSql();
-    const { hasCentreDeskAccess } = await import("@/lib/server/centre-access");
-    if (!(await hasCentreDeskAccess(sql, context.userId, data.daycareId))) return emptyPayload(data.month);
+    const { hasCentreDeskAccess, explainStaffArea, staffAreaError } = await import("@/lib/server/centre-access");
+    if (!(await hasCentreDeskAccess(sql, context.userId, data.daycareId))) {
+      const decision = await explainStaffArea(sql, context.userId, data.daycareId, "calendar", "view");
+      if (!decision.ok && decision.reason !== "absent") throw staffAreaError(decision);
+      return emptyPayload(data.month);
+    }
+    const decision = await explainStaffArea(sql, context.userId, data.daycareId, "calendar", "view");
+    if (!decision.ok) {
+      if (decision.reason === "absent") return emptyPayload(data.month);
+      throw staffAreaError(decision);
+    }
     const centre = await centreZone(sql, data.daycareId);
     if (!centre) return emptyPayload(data.month);
     const today = centreDateISO(centre.timezone);
@@ -320,8 +329,12 @@ export const loadFamilyGuide = createServerFn({ method: "GET" })
   .handler(async ({ context, data: daycareId }): Promise<FamilyGuide> => {
     if (!hostListingEnabled() || !daycareId) return EMPTY_GUIDE;
     const sql = await getSql();
-    const { hasCentreDeskAccess } = await import("@/lib/server/centre-access");
-    if (!(await hasCentreDeskAccess(sql, context.userId, daycareId))) return EMPTY_GUIDE;
+    const { explainStaffArea, staffAreaError } = await import("@/lib/server/centre-access");
+    const decision = await explainStaffArea(sql, context.userId, daycareId, "listing", "view");
+    if (!decision.ok) {
+      if (decision.reason === "absent") return EMPTY_GUIDE;
+      throw staffAreaError(decision);
+    }
     const rows = await sql<{
       dropoff_note: string | null;
       bring_note: string | null;

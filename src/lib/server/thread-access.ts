@@ -52,7 +52,25 @@ export async function resolveConversationAccess(
       .catch(() => false),
     import("@/lib/server/coparent").then((mod) => mod.familyScopeFor(userId)),
   ]);
-  const write = centreCanWriteInbox(role);
+  const { explainStaffArea } = await import("@/lib/server/centre-access");
+  const messages = role
+    ? await explainStaffArea(sql, userId, conversation.daycare_id, "messages", "view")
+    : { ok: false as const };
+  if (role && !messages.ok) {
+    const access = resolveThreadAccess({
+      userId,
+      parentUserId: conversation.user_id,
+      isCentreOwner: false,
+      isCentreReader: false,
+      isAdmin: admin,
+      householdParent: scope.access !== "owner" && scope.dataUserId === conversation.user_id && scope.dataUserId !== userId,
+      householdCanWrite: scope.canWrite,
+    });
+    return { ...access, conversation };
+  }
+  const write = messages.ok && centreCanWriteInbox(role)
+    ? (await explainStaffArea(sql, userId, conversation.daycare_id, "messages", "edit")).ok
+    : false;
   const access = resolveThreadAccess({
     userId,
     parentUserId: conversation.user_id,

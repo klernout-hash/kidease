@@ -265,12 +265,19 @@ export const listInbox = createServerFn({ method: "GET" })
       limit 50
     `;
 
+    const messageCentres =
+      data.view === "family"
+        ? null
+        : new Set(
+            await (await import("@/lib/server/centre-access")).daycareIdsForArea(sql, context.userId, "messages", "view"),
+          );
     const out: Conversation[] = [];
     const now = Date.now();
     for (const r of rows) {
       const lastBody = r.last_body ?? "";
       const lastSender = r.last_sender ?? null;
       const isParent = r.parent_user_id === parentId;
+      if (messageCentres && !isParent && !messageCentres.has(r.daycare_id)) continue;
       if (data.view === "centre" && isParent) continue;
       if (data.view === "family" && !isParent) continue;
       const tourStatus = r.tour_status

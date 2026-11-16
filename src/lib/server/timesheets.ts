@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { staffTimesheetsEnabled } from "@/lib/features";
 import {
   planClockIn,
@@ -66,8 +65,9 @@ async function ensureTimesheetTables() {
 
 async function assertCentre(userId: string, daycareId: string) {
   const sql = await getSql();
-  const ids = await listAccessibleDaycareIds(sql, userId);
-  if (!ids.includes(daycareId)) fail("centre");
+  const { explainStaffArea } = await import("@/lib/server/centre-access");
+  const decision = await explainStaffArea(sql, userId, daycareId, "schedule", "view");
+  if (!decision.ok) fail(decision.reason === "cross_centre" ? "centre" : "centre");
 }
 
 async function assertClock(userId: string, daycareId: string) {
@@ -110,7 +110,8 @@ export const listTimesheets = createServerFn({ method: "GET" })
     }
     const sql = await getSql();
     await ensureTimesheetTables();
-    const ids = await listAccessibleDaycareIds(sql, context.userId);
+    const { daycareIdsForArea } = await import("@/lib/server/centre-access");
+    const ids = await daycareIdsForArea(sql, context.userId, "schedule", "view");
     if (!ids.length) {
       return { enabled: true as const, centres: [], daycareId: "", weekLabel: "", open: [], week: [], totals: [], edits: [] };
     }

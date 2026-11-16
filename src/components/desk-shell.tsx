@@ -182,6 +182,8 @@ export function DeskShell({
     subscriptionsEnabled: chrome.subscriptionsEnabled,
     centreOwner: session?.centreOwner,
     centreLinked: session?.centreLinked,
+    centreGrants: session?.centreGrants,
+    centreCanInvite: session?.centreCanInvite,
     curriculumPack: session?.curriculumPack,
     coparentLink: session?.coparentLink,
     coparentEmail: session?.coparentEmail,

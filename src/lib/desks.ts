@@ -768,6 +768,10 @@ export type SessionDesks = {
   ownsCentre?: boolean;
   /** Owns a centre or is an active centre member. */
   centreLinked?: boolean;
+  /** What a staff login may open. Empty for an owner, who sees the full desk. */
+  centreGrants?: import("./staff-permissions.ts").StaffGrants | null;
+  /** True when this person may invite Staff and Lead. */
+  centreCanInvite?: boolean;
   /** Province learning pack nav. Off unless FEATURE_CURRICULUM_PACK is on. */
   curriculumPack?: boolean;
   /** Co-parent invite. Off unless FEATURE_COPARENT_LINK or FEATURE_COPARENT_EMAIL is on. */

@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { centreCanWriteCare } from "@/lib/centre-roles";
-import { listAccessibleDaycareIds, loadCentreRole } from "@/lib/server/centre-access";
+import { loadCentreRole } from "@/lib/server/centre-access";
 import { staffSchedulingEnabled } from "@/lib/features";
 import {
   parseChildrenPresent,
@@ -52,14 +52,15 @@ async function ensureStaffTables() {
 
 async function assertCentre(userId: string, daycareId: string) {
   const sql = await getSql();
-  const ids = await listAccessibleDaycareIds(sql, userId);
-  if (!ids.includes(daycareId)) throw new Error("This centre is not yours.");
+  const { assertStaffArea } = await import("@/lib/server/centre-access");
+  await assertStaffArea(sql, userId, daycareId, "schedule", "view");
 }
 
 /** A read-only member can look. They cannot add a shift or a certificate. */
 async function assertCentreWrite(userId: string, daycareId: string) {
-  await assertCentre(userId, daycareId);
   const sql = await getSql();
+  const { assertStaffArea } = await import("@/lib/server/centre-access");
+  await assertStaffArea(sql, userId, daycareId, "schedule", "edit");
   const role = await loadCentreRole(sql, userId, daycareId);
   if (!centreCanWriteCare(role)) throw new Error("You can view this centre. You cannot change it.");
 }
@@ -77,7 +78,8 @@ export const listStaffDesk = createServerFn({ method: "GET" })
     }
     const sql = await getSql();
     await ensureStaffTables();
-    const ids = await listAccessibleDaycareIds(sql, context.userId);
+    const { daycareIdsForArea } = await import("@/lib/server/centre-access");
+    const ids = await daycareIdsForArea(sql, context.userId, "schedule", "view");
     if (!ids.length) return { enabled: true as const, centres: [], shifts: [], certs: [], province: "", daycareId: "" };
     const centres = await sql.query<{ id: string; name: string; province: string }>(
       `select id, name, province from daycares where id = any($1::text[]) order by name`,

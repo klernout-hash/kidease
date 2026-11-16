@@ -258,6 +258,9 @@ export function ProviderPage() {
   const { session } = useSessionDesks();
   const centreOwner = session?.centreOwner !== false;
   const centreRole = session?.centreRole;
+  const canBills = centreOwner || (session?.centreGrants != null && session.centreGrants.bills !== "none");
+  const canEditBills = centreOwner || session?.centreGrants?.bills === "edit";
+  const canInviteStaff = centreOwner || session?.centreCanInvite === true;
   const canWrite = centreRole ? centreCanWriteLeads(centreRole) : centreOwner;
   const canContracts = centreRole ? centreCanAccessPrivileged(centreRole) : centreOwner;
   const canDocuments = centreRole ? centreCanMutateListingDetails(centreRole) : centreOwner;
@@ -373,13 +376,15 @@ export function ProviderPage() {
   useEffect(() => {
     if (childRoute) return;
     const next = providerDeskFromQuery(search.desk, searchStr);
-    if (OWNER_DESKS.has(next) && deskSettled && !centreOwner) {
+    const blockedDesk =
+      OWNER_DESKS.has(next) && deskSettled && !centreOwner && !(next === "money" && canBills);
+    if (blockedDesk) {
       setDesk(DEFAULT_DESK);
       void navigate({ to: deskPath, search: { desk: "today" }, replace: true });
       return;
     }
     setDesk(next);
-  }, [search.desk, searchStr, centreOwner, deskSettled, navigate, childRoute, deskPath]);
+  }, [search.desk, searchStr, centreOwner, canBills, deskSettled, navigate, childRoute, deskPath]);
 
   useEffect(() => {
     const focus = search.focus;
@@ -498,7 +503,7 @@ export function ProviderPage() {
           });
           return;
         }
-        if (OWNER_DESKS.has(id as DaycareDesk) && !centreOwner) {
+        if (OWNER_DESKS.has(id as DaycareDesk) && !centreOwner && !(id === "money" && canBills)) {
           setDesk(DEFAULT_DESK);
           return;
         }
@@ -1055,7 +1060,9 @@ export function ProviderPage() {
           </details>
       ) : null}
 
-      {desk === "employees" ? <CentreEmployeesPanel canInvite={centreOwner} /> : null}
+      {desk === "employees" ? (
+        <CentreEmployeesPanel canInvite={canInviteStaff} canEditPermissions={centreOwner} />
+      ) : null}
       {desk === "employees" ? <EceJobDesk mode="staff" /> : null}
       {desk === "staff" ? <StaffSchedulingDesk /> : null}
       {desk === "hours" ? <StaffTimesheetDesk /> : null}
@@ -1096,10 +1103,10 @@ export function ProviderPage() {
       ) : null}
 
       {desk === "money" ? (
-        centreOwner ? (
+        canBills ? (
           <div className="space-y-6">
-            <ProviderMoneyPanel />
-            {moneyChoice.needsPick ? (
+            <ProviderMoneyPanel showPayouts={centreOwner} canEdit={canEditBills} />
+            {centreOwner && moneyChoice.needsPick ? (
               <section className="rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="money-centre-pick">
                 <h2 className="font-display text-xl">{locale === "fr" ? "Choisissez un centre" : "Pick a centre"}</h2>
                 <p className="mt-2 text-sm text-muted">
@@ -1121,14 +1128,14 @@ export function ProviderPage() {
                   ))}
                 </ul>
               </section>
-            ) : moneyListing ? (
+            ) : centreOwner && moneyListing ? (
               <div data-ke="money-centre-name">
                 <p className="text-sm text-muted">{storedCentreName(moneyListing.name, moneyListing.nameFr)}</p>
                 <QboPanel daycareId={moneyListing.id} />
               </div>
             ) : null}
-            <CwelccPanel />
-            <TaxReceiptStudio desk="centre" />
+            {centreOwner ? <CwelccPanel /> : null}
+            {centreOwner ? <TaxReceiptStudio desk="centre" /> : null}
           </div>
         ) : (
           <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>

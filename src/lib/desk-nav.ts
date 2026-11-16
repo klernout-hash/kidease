@@ -1,4 +1,5 @@
 import type { CopyKey } from "./copy.ts";
+import { navGrantAllows, type StaffGrants } from "./staff-permissions.ts";
 import type { ParentUrlTab } from "./parent-tab.ts";
 import { CENTRE_TOOLS } from "./centre-tools.ts";
 import { frenchPath, isFrenchDeskPath, isFrPath, stripLocalePrefix } from "./locale-path.ts";
@@ -319,6 +320,10 @@ type DeskNavOpts = {
   centreOwner?: boolean;
   /** Active centre member. Owner-only items stay hidden for staff unless this is true. */
   centreLinked?: boolean;
+  /** Merged grants for a staff login. Owners leave this empty and see the full desk. */
+  centreGrants?: StaffGrants | null;
+  /** Manager preset may invite Staff and Lead. */
+  centreCanInvite?: boolean;
   /** Province learning pack. Hidden until FEATURE_CURRICULUM_PACK is on. */
   curriculumPack?: boolean;
   /** Second parent invite. Hidden until FEATURE_COPARENT_LINK or FEATURE_COPARENT_EMAIL is on. */
@@ -390,7 +395,12 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.id === "top-rated") return opts?.topRated === true;
     if (item.id === "promote" || item.id === "subscription") return false;
     if (item.id === "upgrade") return opts?.subscriptionsEnabled === true;
-    if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) return false;
+    if (opts?.centreGrants && !navGrantAllows(opts.centreGrants, item.id)) return false;
+    if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) {
+      if (item.id === "money" && opts.centreGrants && opts.centreGrants.bills !== "none") return true;
+      if (item.id === "employees" && opts.centreCanInvite) return true;
+      return false;
+    }
     return true;
   });
 }

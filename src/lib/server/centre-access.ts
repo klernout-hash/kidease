@@ -6,12 +6,20 @@ import {
   centreActionDenied,
   centreCanMutateListingDetails,
   centreCanMutateVacancies,
-  centreCanWriteLeads,
   parseCentreMemberRole,
   type CentreGate,
   type CentreMemberRole,
   type CentreWriteAction,
 } from "@/lib/centre-roles";
+import {
+  STAFF_AREA_DENIED,
+  areaForWriteAction,
+  decideBillsList,
+  decideStaffArea,
+  type AreaDenial,
+  type MemberAccess,
+  type StaffArea,
+} from "@/lib/staff-permissions";
 import { nid } from "@/lib/utils";
 
 export type CentreAction = CentreGate;
@@ -74,6 +82,118 @@ export async function hasCentreDeskAccess(sql: Sql, userId: string, daycareId: s
   return (await loadCentreRole(sql, userId, daycareId)) !== null;
 }
 
+export async function listMemberGrants(sql: Sql, userId: string): Promise<MemberAccess[]> {
+  const rich = await sql<{
+    daycare_id: string;
+    role: string;
+    permission_preset: string | null;
+    permissions: unknown;
+  }>`
+    select daycare_id, role, permission_preset, permissions
+    from centre_members
+    where user_id = ${userId} and status = 'active'
+  `.catch(() => null);
+  if (rich) {
+    return rich.map((row) => ({
+      daycareId: row.daycare_id,
+      role: row.role,
+      preset: row.permission_preset,
+      permissions: row.permissions,
+    }));
+  }
+  const plain = await sql<{ daycare_id: string; role: string }>`
+    select daycare_id, role from centre_members
+    where user_id = ${userId} and status = 'active'
+  `.catch(() => []);
+  return plain.map((row) => ({
+    daycareId: row.daycare_id,
+    role: row.role,
+    preset: null,
+    permissions: null,
+  }));
+}
+
+async function centreActor(sql: Sql, userId: string, daycareId: string) {
+  const [owned, memberships, admin] = await Promise.all([
+    listOwnedDaycareIds(sql, userId),
+    listMemberGrants(sql, userId),
+    import("@/lib/server/roles").then((mod) => mod.resolveAdminAccess(userId).then((row) => row.ok).catch(() => false)),
+  ]);
+  return {
+    isAdmin: admin,
+    ownsTarget: owned.includes(daycareId),
+    membership: memberships.find((row) => row.daycareId === daycareId) ?? null,
+    hasOtherCentre: owned.some((id) => id !== daycareId) || memberships.some((row) => row.daycareId !== daycareId),
+  };
+}
+
+export function staffAreaError(decision: AreaDenial): Error & { status: number } {
+  const error = new Error(STAFF_AREA_DENIED) as Error & { status: number };
+  error.status = decision.status;
+  return error;
+}
+
+/** 403 when this person cannot view or edit the area at this centre. */
+export async function explainStaffArea(
+  sql: Sql,
+  userId: string,
+  daycareId: string,
+  area: StaffArea,
+  need: "view" | "edit",
+) {
+  const actor = await centreActor(sql, userId, daycareId);
+  return decideStaffArea({ ...actor, area, need });
+}
+
+export async function assertStaffArea(
+  sql: Sql,
+  userId: string,
+  daycareId: string,
+  area: StaffArea,
+  need: "view" | "edit",
+): Promise<void> {
+  const decision = await explainStaffArea(sql, userId, daycareId, area, need);
+  if (!decision.ok) throw staffAreaError(decision);
+}
+
+/** Centres where this person may see an area. Owners are included for every grantable area. */
+export async function daycareIdsForArea(
+  sql: Sql,
+  userId: string,
+  area: StaffArea,
+  need: "view" | "edit",
+): Promise<string[]> {
+  const [owned, memberships, admin] = await Promise.all([
+    listOwnedDaycareIds(sql, userId),
+    listMemberGrants(sql, userId),
+    import("@/lib/server/roles").then((mod) => mod.resolveAdminAccess(userId).then((row) => row.ok).catch(() => false)),
+  ]);
+  if (admin) return [...new Set([...owned, ...memberships.map((row) => row.daycareId)])];
+  const decision = decideBillsList({ ownedIds: owned, memberships });
+  if (area === "bills") return decision.ok ? decision.daycareIds : [];
+  const ids = new Set<string>(owned);
+  for (const row of memberships) {
+    const gate = decideStaffArea({
+      ownsTarget: false,
+      membership: row,
+      hasOtherCentre: false,
+      area,
+      need,
+    });
+    if (gate.ok) ids.add(row.daycareId);
+  }
+  return [...ids];
+}
+
+export async function explainBillsList(sql: Sql, userId: string) {
+  const [owned, memberships, admin] = await Promise.all([
+    listOwnedDaycareIds(sql, userId),
+    listMemberGrants(sql, userId),
+    import("@/lib/server/roles").then((mod) => mod.resolveAdminAccess(userId).then((row) => row.ok).catch(() => false)),
+  ]);
+  return decideBillsList({ isAdmin: admin, ownedIds: owned, memberships });
+}
+
 /** Read-only cannot write. Staff and managers cannot open money or contracts. Admins can. */
 export async function assertCentreAction(
   sql: Sql,
@@ -102,8 +222,18 @@ export async function assertCanWrite(
     .then((row) => row.ok)
     .catch(() => false);
   if (admin) return;
+  if (action === "contracts") {
+    const role = await loadCentreRole(sql, userId, daycareId);
+    if (!canWrite(role, action)) throw centreActionDenied("contracts");
+    return;
+  }
+  const area = areaForWriteAction(action);
+  if (area) {
+    await assertStaffArea(sql, userId, daycareId, area, "edit");
+    return;
+  }
   const role = await loadCentreRole(sql, userId, daycareId);
-  if (!canWrite(role, action)) throw centreActionDenied(action === "contracts" ? "contracts" : "write");
+  if (!canWrite(role, action)) throw centreActionDenied("write");
 }
 
 export async function canCentreWriteLeadsFor(
@@ -111,7 +241,8 @@ export async function canCentreWriteLeadsFor(
   userId: string,
   daycareId: string,
 ): Promise<boolean> {
-  return centreCanWriteLeads(await loadCentreRole(sql, userId, daycareId));
+  const decision = await explainStaffArea(sql, userId, daycareId, "requests", "edit");
+  return decision.ok;
 }
 
 export async function isActiveCentreMember(sql: Sql, userId: string): Promise<boolean> {
