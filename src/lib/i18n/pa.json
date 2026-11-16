@@ -3558,5 +3558,22 @@
   "parentRequestCancelled": "ਰੱਦ",
   "parentRequestEnrolment": "ਦਾਖ਼ਲਾ",
   "parentRequestSentOn": "ਭੇਜੀ",
-  "parentRequestVisitOn": "ਦੌਰੇ ਦੀ ਤਾਰੀਖ"
+  "parentRequestVisitOn": "ਦੌਰੇ ਦੀ ਤਾਰੀਖ",
+  "attentionTitle": "ਤੁਹਾਡੇ ਧਿਆਨ ਦੀ ਲੋੜ",
+  "attentionDone": "ਹੋ ਗਿਆ",
+  "attentionEmpty": "ਹੁਣ ਤੁਹਾਨੂੰ ਕੁਝ ਨਹੀਂ ਕਰਨਾ।",
+  "attentionDismiss": "ਹੁਣ ਨਹੀਂ",
+  "attentionTourUpdate": "ਦੌਰੇ ਦੀ ਤਾਜ਼ਾ ਜਾਣਕਾਰੀ ਦੇਖੋ",
+  "attentionSpotOffer": "ਜਗ੍ਹਾ ਦੀ ਪੇਸ਼ਕਸ਼ ਦਾ ਜਵਾਬ ਦਿਓ",
+  "attentionFormDue": "ਫਾਰਮ ਜਾਂ ਦਸਤਾਵੇਜ਼ ਪੂਰਾ ਕਰੋ",
+  "attentionInvoiceDue": "ਬਿਲ ਭਰੋ",
+  "attentionPaymentFailed": "ਭੁਗਤਾਨ ਅਸਫਲ",
+  "attentionUnreadMessage": "ਕੇਂਦਰ ਤੋਂ ਨਾ-ਪੜ੍ਹਿਆ ਸੁਨੇਹਾ",
+  "attentionUnreadParent": "ਮਾਪੇ ਤੋਂ ਨਾ-ਪੜ੍ਹਿਆ ਸੁਨੇਹਾ",
+  "attentionNewRequest": "ਨਵੀਂ ਬੇਨਤੀ ਦਾ ਜਵਾਬ ਦਿਓ",
+  "attentionMissingDoc": "ਦਸਤਾਵੇਜ਼ ਗੁੰਮ",
+  "attentionOfferWaiting": "ਜਗ੍ਹਾ ਦੀ ਪੇਸ਼ਕਸ਼ ਮਾਪੇ ਦੀ ਉਡੀਕ ਵਿੱਚ",
+  "attentionOverdueInvoice": "ਬਿਲ ਦੀ ਮਿਆਦ ਲੰਘ ਗਈ",
+  "attentionStaffCert": "ਸਟਾਫ਼ ਦਾ ਸਰਟੀਫਿਕੇਟ ਖਤਮ ਹੋ ਰਿਹਾ ਹੈ",
+  "attentionListingGap": "ਸੂਚੀ ਦਾ ਇੱਕ ਕਦਮ ਬਾਕੀ ਹੈ"
 }

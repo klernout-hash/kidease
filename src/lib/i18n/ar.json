@@ -3558,5 +3558,22 @@
   "parentRequestCancelled": "ملغى",
   "parentRequestEnrolment": "تسجيل",
   "parentRequestSentOn": "أُرسلت",
-  "parentRequestVisitOn": "تاريخ الزيارة"
+  "parentRequestVisitOn": "تاريخ الزيارة",
+  "attentionTitle": "يحتاج انتباهك",
+  "attentionDone": "تم",
+  "attentionEmpty": "لا شيء يحتاجك الآن.",
+  "attentionDismiss": "ليس الآن",
+  "attentionTourUpdate": "تحديث زيارة للمراجعة",
+  "attentionSpotOffer": "عرض مكان للرد",
+  "attentionFormDue": "نموذج أو مستند لإكماله",
+  "attentionInvoiceDue": "فاتورة للدفع",
+  "attentionPaymentFailed": "فشل الدفع",
+  "attentionUnreadMessage": "رسالة غير مقروءة من المركز",
+  "attentionUnreadParent": "رسالة غير مقروءة من ولي أمر",
+  "attentionNewRequest": "طلب جديد للرد",
+  "attentionMissingDoc": "مستند ناقص",
+  "attentionOfferWaiting": "عرض المكان بانتظار ولي الأمر",
+  "attentionOverdueInvoice": "فاتورة متأخرة",
+  "attentionStaffCert": "شهادة موظف على وشك الانتهاء",
+  "attentionListingGap": "خطوة في الملف لإكمالها"
 }

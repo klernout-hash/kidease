@@ -3558,5 +3558,22 @@
   "parentRequestCancelled": "已取消",
   "parentRequestEnrolment": "報名",
   "parentRequestSentOn": "已送出",
-  "parentRequestVisitOn": "參觀日期"
+  "parentRequestVisitOn": "參觀日期",
+  "attentionTitle": "需要你處理",
+  "attentionDone": "完成",
+  "attentionEmpty": "而家冇需要你處理嘅事。",
+  "attentionDismiss": "遲啲",
+  "attentionTourUpdate": "有參觀更新要睇",
+  "attentionSpotOffer": "有學位邀請要回覆",
+  "attentionFormDue": "有表格或文件要完成",
+  "attentionInvoiceDue": "有帳單要付",
+  "attentionPaymentFailed": "付款失敗",
+  "attentionUnreadMessage": "中心有未讀訊息",
+  "attentionUnreadParent": "家長有未讀訊息",
+  "attentionNewRequest": "有新申請要回覆",
+  "attentionMissingDoc": "缺少文件",
+  "attentionOfferWaiting": "學位邀請仲等緊家長",
+  "attentionOverdueInvoice": "帳單已過期",
+  "attentionStaffCert": "員工證書就快到期",
+  "attentionListingGap": "園所資料仲有一步要完成"
 }

@@ -3558,5 +3558,22 @@
   "parentRequestCancelled": "Kinansela",
   "parentRequestEnrolment": "Pag-enrol",
   "parentRequestSentOn": "Naipadala",
-  "parentRequestVisitOn": "Petsa ng tour"
+  "parentRequestVisitOn": "Petsa ng tour",
+  "attentionTitle": "Kailangan ng iyong pansin",
+  "attentionDone": "Tapos na",
+  "attentionEmpty": "Walang kailangan sa iyo ngayon.",
+  "attentionDismiss": "Hindi muna",
+  "attentionTourUpdate": "Update ng tour na rerepasuhin",
+  "attentionSpotOffer": "Alok ng puwesto na sasagutin",
+  "attentionFormDue": "Form o dokumento na tatapusin",
+  "attentionInvoiceDue": "Invoice na babayaran",
+  "attentionPaymentFailed": "Nabigo ang bayad",
+  "attentionUnreadMessage": "Hindi pa nababasang mensahe mula sa sentro",
+  "attentionUnreadParent": "Hindi pa nababasang mensahe mula sa magulang",
+  "attentionNewRequest": "Bagong kahilingan na sasagutin",
+  "attentionMissingDoc": "Kulang na dokumento",
+  "attentionOfferWaiting": "Alok ng puwesto na hinihintay ang magulang",
+  "attentionOverdueInvoice": "Lampas na ang invoice",
+  "attentionStaffCert": "Mag-e-expire ang sertipiko ng staff",
+  "attentionListingGap": "Hakbang sa listahan na tatapusin"
 }
