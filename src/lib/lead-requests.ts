@@ -60,7 +60,29 @@ export type LeadCounts = {
 
 const OPEN_STATUSES: LeadStatus[] = ["requested", "received"];
 
-/** One status for the parent Requests tab and the provider desk. The tour row wins. */
+/** A centre decision on the lead wins. A still-pending tour must not paint Requested over it. */
+export function displayedLeadStatus(stored: string | null | undefined, tourStatus: string | null | undefined): LeadStatus {
+  const saved = isLeadStatus(stored) ? stored : "requested";
+  if (saved === "confirmed" || saved === "declined" || saved === "answered" || saved === "closed") return saved;
+  return leadStatusForTour(tourStatus) ?? saved;
+}
+
+/** The parent page lists the tour once. The matching lead row is the same request. */
+export function leadsBesideTours<T extends {
+  kind: string;
+  daycareId: string;
+  sourceKind: string | null;
+  sourceId: string | null;
+}>(leads: readonly T[], tours: readonly { id: string; daycareId: string }[]): T[] {
+  const tourIds = new Set(tours.map((tour) => tour.id));
+  const centres = new Set(tours.map((tour) => tour.daycareId));
+  return leads.filter((lead) => {
+    if (lead.sourceKind === "tour_request" && lead.sourceId && tourIds.has(lead.sourceId)) return false;
+    if (lead.kind === "tour" && centres.has(lead.daycareId)) return false;
+    return true;
+  });
+}
+
 export function leadStatusForTour(tourStatus: string | null | undefined): LeadStatus | null {
   const status = String(tourStatus || "").trim().toLowerCase();
   if (status === "accepted" || status === "confirmed") return "confirmed";

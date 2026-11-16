@@ -92,7 +92,7 @@
   "deskNavTodayHint": "Was jetzt Ihre Aufmerksamkeit braucht",
   "deskNavMessagesHint": "Elternanfragen + Besichtigungen",
   "deskNavToursHint": "Wann Familien besuchen können",
-  "deskNavCalendarHint": "Open spots by day",
+  "deskNavCalendarHint": "Freie Plätze nach Tag",
   "deskNavListings": "Meine Einträge",
   "deskNavListingsHint": "Plätze, Fotos, Gebühren",
   "deskNavInsights": "Statistik",
@@ -3213,7 +3213,6 @@
   "alertSummary": "{on} von {total} Hinweisen an",
   "navMenu": "Menü",
   "navCalendar": "Kalender",
-  "deskNavCalendarHint": "Freie Plätze nach Tag",
   "menuEarningsMonth": "Einnahmen diesen Monat",
   "menuReviews": "Bewertungen",
   "menuCreateListing": "Neue Einrichtung anlegen",
@@ -3551,5 +3550,13 @@
   "employeeResend": "Einladung erneut senden",
   "employeeResent": "Einladung erneut gesendet.",
   "employeeResendHeld": "Diese Einladung wurde nicht per E-Mail gesendet.",
-  "employeeResendFailed": "Diese Einladung konnte nicht erneut gesendet werden."
+  "employeeResendFailed": "Diese Einladung konnte nicht erneut gesendet werden.",
+  "parentRequestWaiting": "Wartet auf die Kita",
+  "parentRequestConfirmed": "Bestätigt",
+  "parentRequestDeclined": "Abgelehnt",
+  "parentRequestEnrolled": "Angemeldet",
+  "parentRequestCancelled": "Storniert",
+  "parentRequestEnrolment": "Anmeldung",
+  "parentRequestSentOn": "Gesendet",
+  "parentRequestVisitOn": "Besichtigungsdatum"
 }

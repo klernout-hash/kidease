@@ -35,6 +35,7 @@ test("nonce CSP drops script-src unsafe-inline and keeps product hosts", () => {
   assert.match(csp, /style-src 'self' 'nonce-abc\+123\/XYZ='/);
   assert.match(csp, /style-src-attr 'unsafe-inline'/);
   assert.match(csp, /connect-src 'self' data:/);
+  assert.match(csp, /connect-src[^;]*\bdata:/, "Turnstile fetches data: URLs");
   assert.match(csp, /connect-src[^;]*blob:/);
   assert.match(csp, /connect-src[^;]*https:\/\/tiles\.openfreemap\.org/);
   assert.match(csp, /connect-src[^;]*https:\/\/tiles\.maps\.eox\.at/);

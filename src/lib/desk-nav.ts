@@ -165,6 +165,49 @@ export type DaycareDesk =
   | "documents"
   | "contracts";
 
+const PROVIDER_DESK_IDS: readonly DaycareDesk[] = [
+  "today",
+  "requests",
+  "money",
+  "listings",
+  "insights",
+  "top-rated",
+  "tours",
+  "calendar",
+  "licence",
+  "documents",
+  "contract",
+  "contracts",
+  "promote",
+  "employees",
+  "screening",
+  "staff",
+  "stories",
+  "sites",
+  "learning",
+  "hours",
+  "tools",
+  "care",
+];
+
+/** Direct /provider?desk=requests stays on Requests even if the router search is empty on first paint. */
+export function providerDeskFromQuery(validated: string | null | undefined, searchStr: string | null | undefined): DaycareDesk {
+  const chosen = normalizeProviderDesk(validated) ?? normalizeProviderDesk(deskParam(searchStr));
+  return chosen ?? "today";
+}
+
+function deskParam(searchStr: string | null | undefined): string {
+  const raw = String(searchStr || "");
+  const query = raw.startsWith("?") ? raw.slice(1) : raw;
+  return new URLSearchParams(query).get("desk") || "";
+}
+
+function normalizeProviderDesk(value: string | null | undefined): DaycareDesk | null {
+  const raw = String(value || "").trim();
+  const desk = raw === "overview" ? "today" : raw;
+  return (PROVIDER_DESK_IDS as readonly string[]).includes(desk) ? (desk as DaycareDesk) : null;
+}
+
 export function providerNavSearch(id: string): { desk: DaycareDesk } {
   if (
     id === "today" ||
