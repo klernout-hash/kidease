@@ -109,7 +109,7 @@ test("provider desk requests redirects and public pages do not preload vacancy o
   assert.match(stripped, /index-a\.js/);
   assert.doesNotMatch(stripped, /vacancy-index/);
   assert.doesNotMatch(stripped, /gov-admin/);
-  assert.match(src("src/routes/__root.tsx"), /defer src="\/asset-recover.js"/);
+  assert.match(src("src/routes/__root.tsx"), /src="\/asset-recover.js\?v=2"/);
   const inbox = src("src/lib/server/inbox.ts");
   assert.match(inbox, /left join lateral/);
   assert.match(inbox, /limit 50/);

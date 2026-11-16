@@ -211,11 +211,17 @@ export function isHtmlResponse(contentType) {
   return /text\/html/i.test(String(contentType ?? ""));
 }
 
-/** Documents must revalidate so HTML never points at deleted hashed /assets/*. */
-export const HTML_DOCUMENT_CACHE_CONTROL = "public, max-age=0, must-revalidate";
+/**
+ * Documents must revalidate so HTML never points at deleted hashed /assets/*.
+ * Shared caches (Vercel and Cloudflare) must not keep a copy: a stale document
+ * is what leaves an open tab requesting the previous release's chunk names.
+ */
+export const HTML_DOCUMENT_CACHE_CONTROL = "no-cache, must-revalidate";
+export const HTML_DOCUMENT_CDN_CACHE_CONTROL = "no-store";
 
 export function applyHtmlDocumentCacheHeaders(headers) {
   headers.set("Cache-Control", HTML_DOCUMENT_CACHE_CONTROL);
-  headers.set("CDN-Cache-Control", HTML_DOCUMENT_CACHE_CONTROL);
-  headers.set("Cloudflare-CDN-Cache-Control", HTML_DOCUMENT_CACHE_CONTROL);
+  headers.set("CDN-Cache-Control", HTML_DOCUMENT_CDN_CACHE_CONTROL);
+  headers.set("Cloudflare-CDN-Cache-Control", HTML_DOCUMENT_CDN_CACHE_CONTROL);
+  headers.set("Vercel-CDN-Cache-Control", HTML_DOCUMENT_CDN_CACHE_CONTROL);
 }

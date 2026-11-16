@@ -127,7 +127,7 @@ export function GetAlertsPrompt() {
         setOpen(false);
         return;
       }
-      await navigator.serviceWorker.register("/sw.js?v=8", { scope: "/", updateViaCache: "none" });
+      await navigator.serviceWorker.register("/sw.js?v=9", { scope: "/", updateViaCache: "none" });
       const ready = await navigator.serviceWorker.ready;
       const sub = await ready.pushManager.subscribe({
         userVisibleOnly: true,
