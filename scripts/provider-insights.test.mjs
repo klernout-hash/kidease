@@ -93,8 +93,10 @@ test("insights is a sibling of today and listings, hidden until the flag is on",
   const group = visibleDeskGroups("daycare", shown).find((row) => row.group.id === "desk");
   const ids = group.items.map((item) => item.id);
   assert.ok(ids.indexOf("today") < ids.indexOf("listings"));
-  assert.ok(ids.indexOf("listings") < ids.indexOf("insights"));
   assert.equal(ids.includes("calendar"), false);
+  // Insights sits with Earnings under Business; the top group is the five daily places.
+  const business = visibleDeskGroups("daycare", shown).find((row) => row.group.id === "business");
+  assert.ok(business.items.some((item) => item.id === "insights"));
   assert.equal(shown.find((item) => item.id === "insights")?.search?.desk, "insights");
 });
 

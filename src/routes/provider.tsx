@@ -41,7 +41,8 @@ import { CentreFamilyDocs } from "@/components/family-vault";
 import { FamilyEmailPreview, FormSharePreview, TourFollowupPreview } from "@/components/phase0-mail-preview";
 import { EmptyState } from "@/components/empty-state";
 import { TodayUrgencyHome } from "@/components/today-urgency-home";
-import { providerDeskFromQuery, providerDeskPath, type DaycareDesk } from "@/lib/desk-nav";
+import { TodayMore } from "@/components/today-more";
+import { providerDeskAlias, providerDeskFromQuery, providerDeskPath, type DaycareDesk } from "@/lib/desk-nav";
 import { capturePostHogEvent } from "@/lib/posthog";
 import type { LeadRequest } from "@/lib/lead-requests";
 import { listCentrePipeline } from "@/lib/server/crm-pipeline";
@@ -212,7 +213,7 @@ export function providerValidateSearch(s: Record<string, unknown>) {
       realmId?: string;
     } = {};
     const deskRaw = typeof s.desk === "string" ? s.desk : "";
-    const desk = deskRaw === "overview" ? "today" : deskRaw;
+    const desk = providerDeskAlias(deskRaw);
     if (DESKS.includes(desk as DaycareDesk)) out.desk = desk as DaycareDesk;
     if (s.preview === "support") out.preview = "support";
     if (s.claimed === true || s.claimed === "1" || s.claimed === "true") out.claimed = true;
@@ -553,13 +554,9 @@ export function ProviderPage() {
           <p className="mt-2 text-sm text-muted">{t("claimSuccessLead")}</p>
         </section>
       ) : null}
-      {desk === "today" ? <AuditDeskLink locale={locale === "fr" ? "fr" : "en"} /> : null}
       {desk === "today" ? (
         <Phase5Desk locale={locale === "fr" ? "fr" : "en"} role={centreOwner ? "owner" : "staff"} slug={deskListings[0]?.slug} actionsOnly />
       ) : null}
-      {desk === "today" ? <StoriesDeskLink /> : null}
-      {desk === "today" ? <CurriculumDeskLink /> : null}
-      {desk === "today" ? <OrgDeskLink /> : null}
       {focusedId ? (
         <p className="mb-4 text-sm">
           {gap.orgShowing} {deskListings[0]?.name}.{" "}
@@ -568,12 +565,6 @@ export function ProviderPage() {
           </Link>
         </p>
       ) : null}
-      {desk === "today" && centreOwner ? <SafeArrivalPanel /> : null}
-      {desk === "today" && centreOwner ? <CertExpiryPanel /> : null}
-      {desk === "today" && centreOwner ? <FamilyInviteGap /> : null}
-      {desk === "today" && centreOwner ? <ChildHealthLog /> : null}
-      {desk === "today" ? <ChildCheckinDesk /> : null}
-      {desk === "today" ? <EceJobDesk mode={centreOwner ? "daycare" : "staff"} /> : null}
       {desk === "today" && hostListing && deskListings.length > 0 ? (
         <HostTodayHome listings={deskListings} stats={stats} onChanged={() => void load()} />
       ) : null}
@@ -611,6 +602,21 @@ export function ProviderPage() {
         />
         <FamilyEmailPreview centreName={listings[0]?.name || ""} />
         </>
+      ) : null}
+      {/* What needs doing first, then check-in, then records and settings folded under one heading. */}
+      {desk === "today" && centreOwner ? <FamilyInviteGap /> : null}
+      {desk === "today" ? <ChildCheckinDesk /> : null}
+      {desk === "today" ? (
+        <TodayMore locale={locale === "fr" ? "fr" : "en"}>
+          <AuditDeskLink locale={locale === "fr" ? "fr" : "en"} />
+          <StoriesDeskLink />
+          <CurriculumDeskLink />
+          <OrgDeskLink />
+          {centreOwner ? <SafeArrivalPanel /> : null}
+          {centreOwner ? <CertExpiryPanel /> : null}
+          {centreOwner ? <ChildHealthLog /> : null}
+          <EceJobDesk mode={centreOwner ? "daycare" : "staff"} />
+        </TodayMore>
       ) : null}
       {desk === "requests" ? (
         <div className="min-w-0 max-w-full space-y-6" data-tour="provider-requests">

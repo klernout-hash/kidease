@@ -106,3 +106,32 @@ export type BillParty = {
   children: Array<{ id: string; name: string }>;
   bookings: Array<{ id: string; childName: string | null; monthlyAmount: number }>;
 };
+
+export type EarningsSummary = {
+  /** Sent and not yet paid, in cents. */
+  owedCents: number;
+  owedCount: number;
+  /** Paid this calendar month (by paid date), net of the KidEase fee, in cents. */
+  paidThisMonthCents: number;
+  draftCount: number;
+};
+
+/** Totals for the top of the Earnings tab. Only real bill rows count. */
+export function earningsSummary(bills: readonly Pick<Bill, "status" | "amountCents" | "netCents" | "paidAt">[], now = new Date()): EarningsSummary {
+  const month = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+  let owedCents = 0;
+  let owedCount = 0;
+  let paidThisMonthCents = 0;
+  let draftCount = 0;
+  for (const bill of bills) {
+    if (bill.status === "sent") {
+      owedCents += Math.max(0, bill.amountCents);
+      owedCount += 1;
+    } else if (bill.status === "draft") {
+      draftCount += 1;
+    } else if (bill.status === "paid" && bill.paidAt && bill.paidAt.slice(0, 7) === month) {
+      paidThisMonthCents += Math.max(0, bill.netCents);
+    }
+  }
+  return { owedCents, owedCount, paidThisMonthCents, draftCount };
+}

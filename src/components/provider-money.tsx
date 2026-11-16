@@ -10,7 +10,7 @@ import { useCopy } from "@/lib/use-copy";
 import { money } from "@/lib/utils";
 import type { Locale } from "@/lib/types";
 import { currentPeriod, periodLabel, platformFeePercentLabel } from "@/lib/stripe-methods";
-import { type Bill, type BillParty, billDollars } from "@/lib/bill";
+import { type Bill, type BillParty, billDollars, earningsSummary } from "@/lib/bill";
 import { createBill, listBillParties, listProviderBills, sendBill, voidBill } from "@/lib/server/billing";
 import { StripeInvoiceList } from "@/components/stripe-invoice-list";
 import { PayoutStatusCard } from "@/components/payout-status-card";
@@ -70,6 +70,8 @@ export function ProviderMoneyPanel() {
 
   const open = useMemo(() => bills.filter((b) => b.status === "draft" || b.status === "sent"), [bills]);
   const done = useMemo(() => bills.filter((b) => b.status !== "draft" && b.status !== "sent"), [bills]);
+  const summary = useMemo(() => earningsSummary(bills), [bills]);
+  const fr = locale === "fr";
 
   return (
     <section className="space-y-8" data-tour="provider-money">
@@ -81,6 +83,31 @@ export function ProviderMoneyPanel() {
         ) : (
           <LedgerHonesty stripeLive={stripeLive} className="mt-2" ready={ready} />
         )}
+        {ready ? (
+          <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3" data-ke="earnings-summary">
+            <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
+              <dt className="text-sm text-muted">{fr ? "À recevoir" : "Owed to you"}</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums">{money(summary.owedCents / 100, locale)}</dd>
+              <dd className="text-xs text-muted">
+                {fr ? `${summary.owedCount} facture(s) envoyée(s)` : `${summary.owedCount} sent ${summary.owedCount === 1 ? "bill" : "bills"}`}
+              </dd>
+            </div>
+            <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
+              <dt className="text-sm text-muted">{fr ? "Payé ce mois-ci" : "Paid this month"}</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums">{money(summary.paidThisMonthCents / 100, locale)}</dd>
+              <dd className="text-xs text-muted">{fr ? "Après les frais KidEase" : "After the KidEase fee"}</dd>
+            </div>
+            <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
+              <dt className="text-sm text-muted">{fr ? "Brouillons" : "Drafts"}</dt>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums">{summary.draftCount}</dd>
+              <dd>
+                <a href="#new-bill" className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline">
+                  {fr ? "Nouvelle facture" : "New bill"}
+                </a>
+              </dd>
+            </div>
+          </dl>
+        ) : null}
         {payouts ? (
           <div className="mt-4">
             <PayoutStatusCard status={payouts} />
@@ -89,7 +116,8 @@ export function ProviderMoneyPanel() {
       </div>
 
       <form
-        className="rounded-xl bg-surface p-5 ring-1 ring-border"
+        id="new-bill"
+        className="scroll-mt-24 rounded-xl bg-surface p-5 ring-1 ring-border"
         onSubmit={(e) => {
           e.preventDefault();
           if (!party) {
