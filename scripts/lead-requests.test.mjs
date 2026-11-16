@@ -22,9 +22,9 @@ import {
   tallyLeadCounts,
   tourStatusToLead,
   displayedLeadStatus,
-  leadsBesideTours,
 } from "../src/lib/lead-requests.ts";
 import { providerDeskFromQuery } from "../src/lib/desk-nav.ts";
+import { parentRequestRows, parentRequestStatusKey } from "../src/lib/parent-request-rows.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -237,17 +237,69 @@ test("confirming a tour lead keeps the decision after the tour is still pending"
   assert.doesNotMatch(inbox, /confirmSuccess\(\{ variant: "toast", title: t\("leadUpdated"\) \}\)/);
 });
 
-test("a tour already listed under Tour requests is not repeated under My requests", () => {
-  const leads = [
-    { id: "lead-1", kind: "tour", daycareId: "centre", sourceKind: "tour_request", sourceId: "tour-1" },
-    { id: "lead-2", kind: "waitlist", daycareId: "centre", sourceKind: null, sourceId: null },
-  ];
-  const shown = leadsBesideTours(leads, [{ id: "tour-1", daycareId: "centre" }]);
-  assert.deepEqual(shown.map((row) => row.id), ["lead-2"]);
-  assert.match(src("src/components/parent-desk.tsx"), /leadsBesideTours\(leads, tours\)/);
-  assert.equal(src("src/lib/copy-en.ts").includes('tourSoftHold: "Waiting for the centre"'), true);
-  assert.equal(src("src/lib/copy-fr.ts").includes('tourSoftHold: "En attente du centre"'), true);
-  assert.doesNotMatch(src("src/components/tour-card.tsx"), /uppercase tracking-\[0\.16em\].*\n\s*\{tour\.status === "pending" \? t\("tourSoftHold"\)/);
+test("My requests is one list with a plain status", () => {
+  const rows = parentRequestRows({
+    leads: [
+      {
+        id: "lead-1",
+        kind: "tour",
+        status: "requested",
+        daycareId: "centre",
+        daycareName: "Elm",
+        daycareSlug: "elm",
+        sourceKind: "tour_request",
+        sourceId: "tour-1",
+        conversationId: "cv-1",
+        createdAt: "2026-11-01T00:00:00.000Z",
+      },
+      {
+        id: "lead-2",
+        kind: "waitlist",
+        status: "requested",
+        daycareId: "centre",
+        daycareName: "Elm",
+        daycareSlug: "elm",
+        sourceKind: null,
+        sourceId: null,
+        conversationId: "cv-2",
+        createdAt: "2026-11-02T00:00:00.000Z",
+      },
+    ],
+    tours: [
+      {
+        id: "tour-1",
+        daycareId: "centre",
+        daycareName: "Elm",
+        daycareSlug: "elm",
+        status: "accepted",
+        createdAt: "2026-11-01T00:00:00.000Z",
+        conversationId: "cv-1",
+        preferredTimes: [{ date: "2026-11-20" }],
+      },
+    ],
+    bookings: [
+      {
+        id: "book-1",
+        daycareId: "other",
+        daycareName: "Oak",
+        daycareSlug: "oak",
+        status: "accepted",
+        createdAt: "2026-11-03T00:00:00.000Z",
+        conversationId: "cv-3",
+      },
+    ],
+  });
+  assert.deepEqual(rows.map((row) => row.kind), ["enrolment", "waitlist", "tour"]);
+  assert.equal(rows.find((row) => row.kind === "tour")?.status, "confirmed");
+  assert.equal(rows.find((row) => row.kind === "tour")?.tourDate, "2026-11-20");
+  assert.equal(rows.find((row) => row.kind === "enrolment")?.status, "enrolled");
+  assert.equal(parentRequestStatusKey("waiting"), "parentRequestWaiting");
+  assert.equal(src("src/lib/copy-en.ts").includes('parentRequestWaiting: "Waiting on centre"'), true);
+  assert.equal(src("src/lib/copy-fr.ts").includes('parentRequestWaiting: "En attente du centre"'), true);
+  assert.match(src("src/components/parent-desk.tsx"), /parentRequestRows\(\{ leads, tours, bookings \}\)/);
+  assert.doesNotMatch(src("src/components/parent-desk.tsx"), /pendingTours/);
+  assert.match(src("src/components/parent-requests.tsx"), /parentRequestStatusKey/);
+  assert.match(src("src/components/parent-requests.tsx"), /openChat/);
 });
 
 test("a direct /provider?desk=requests load stays on Requests", () => {

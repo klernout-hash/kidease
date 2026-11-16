@@ -6,7 +6,6 @@ import type { UpgradeSearch } from "@/components/checkout-return";
 import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { ParentShortlist } from "@/components/parent-shortlist";
-import { StatusBadge } from "@/components/status-badge";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { ChildHealthLog } from "@/components/child-health-log";
@@ -24,7 +23,8 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily } from "@/lib/server/family";
 import { acceptShortlistShare } from "@/lib/server/parent-tracker";
 import { dismissUpgradeCard } from "@/lib/server/upgrade-card";
-import { leadsBesideTours, type LeadRequest } from "@/lib/lead-requests";
+import type { LeadRequest } from "@/lib/lead-requests";
+import { parentRequestRows } from "@/lib/parent-request-rows";
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import { listParentBills } from "@/lib/server/billing";
@@ -32,7 +32,7 @@ import { StripeInvoiceList } from "@/components/stripe-invoice-list";
 import { shareChildWithCentres } from "@/lib/server/enrol-queue";
 import { parentPayEmptyKey } from "@/lib/copy-keys";
 import { useCopy } from "@/lib/use-copy";
-import { ageGroupFromMonths, asList, formatMonth, money, monthsBetween } from "@/lib/utils";
+import { ageGroupFromMonths, asList, money, monthsBetween } from "@/lib/utils";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import type { Booking, Child, DaycareCard as Card, Payment, TourRequest } from "@/lib/types";
@@ -47,7 +47,7 @@ import { useAppStore } from "@/lib/store";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
-import { inboxThreadTo, parentDeskPath, parentNavSearch } from "@/lib/desk-nav";
+import { parentDeskPath, parentNavSearch } from "@/lib/desk-nav";
 import { MAX_CHILDREN_PER_PARENT } from "@/lib/children-limit";
 import { parentDeskTabOrDefault } from "@/lib/parent-tab";
 import { useStoreShell } from "@/lib/use-native-shell";
@@ -73,9 +73,6 @@ const ChildProfileForm = lazy(() =>
 );
 const ParentDeskRails = lazy(() =>
   import("@/components/parent-desk-rails").then((m) => ({ default: m.ParentDeskRails })),
-);
-const TourCard = lazy(() =>
-  import("@/components/tour-card").then((m) => ({ default: m.TourCard })),
 );
 const ParentRequestsList = lazy(() =>
   import("@/components/parent-requests").then((m) => ({ default: m.ParentRequestsList })),
@@ -560,93 +557,15 @@ export function ParentDesk({
 
       {contentTab === "bookings" ? (
         <div className="mt-6 space-y-8">
-        {(() => {
-          const requestLeads = leadsBesideTours(leads, tours);
-          if (requestLeads.length === 0 && bookings.length === 0 && tours.length === 0) {
-            return <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" art={<KidNotebook />} />;
-          }
-          if (!requestLeads.length) return null;
-          return (
-        <section>
-          <h2 className="font-display text-2xl">{t("myRequests")}</h2>
-          <p className="mt-1 text-sm text-muted">{t("myRequestsLead")}</p>
-          <div className="mt-4">
-            <Suspense fallback={<div className="ke-skel h-24 rounded-xl" aria-hidden="true" />}>
-              <ParentRequestsList items={requestLeads} />
-            </Suspense>
-          </div>
-        </section>
-          );
-        })()}
-        {tours.length ? (
           <section>
-            <h2 className="font-display text-2xl">{t("pendingTours")}</h2>
-            <ul className="mt-4 space-y-3">
-              {tours.map((tour) => (
-                <li key={tour.id}>
-                  <Suspense fallback={<div className="ke-skel h-24 rounded-xl" aria-hidden="true" />}>
-                    <TourCard tour={tour} />
-                  </Suspense>
-                </li>
-              ))}
-            </ul>
+            <h2 className="font-display text-2xl">{t("myRequests")}</h2>
+            <p className="mt-1 text-sm text-muted">{t("myRequestsLead")}</p>
+            <div className="mt-4">
+              <Suspense fallback={<div className="ke-skel h-24 rounded-xl" aria-hidden="true" />}>
+                <ParentRequestsList items={parentRequestRows({ leads, tours, bookings })} />
+              </Suspense>
+            </div>
           </section>
-        ) : null}
-        {bookings.length === 0 ? null : (
-        <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
-          {bookings.map((b) => (
-              <li key={b.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link to="/daycare/$slug" params={{ slug: b.daycareSlug }} className="font-medium hover:underline">
-                      {b.daycareName}
-                    </Link>
-                    <StatusBadge status={b.status} />
-                  </div>
-                  <p className="text-sm text-muted">
-                    {b.childName ? `${b.childName} · ` : ""}
-                    {b.startDate ?? formatMonth(b.startMonth, locale)} · {String(b.ageGroup) === "any" ? (locale === "fr" ? "Tout âge" : "Any age") : t(b.ageGroup)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {b.conversationId ? (
-                    <Button size="sm" variant="secondary" asChild>
-                      <Link to={inboxThreadTo(pathname)} params={{ id: b.conversationId }}>
-                        {t("openChat")}
-                      </Link>
-                    </Button>
-                  ) : null}
-                  {(() => {
-                    const openBill = bills.find((bill) => bill.bookingId === b.id && billIsOpen(bill.status));
-                    if (openBill) {
-                      return (
-                        <Button size="sm" asChild>
-                          <Link to="/pay/bill/$billId" params={{ billId: openBill.id }} search={{}} data-ke="native-checkout">
-                            {t("pay")}
-                          </Link>
-                        </Button>
-                      );
-                    }
-                    if (b.status === "accepted" && b.monthlyAmount > 0 && b.paymentStatus !== "paid" && desks?.stripeLive) {
-                      return (
-                        <div className="max-w-[14rem] text-right">
-                          <p className="text-xs text-muted">{t("awaitingCentreBill")}</p>
-                          <Button size="sm" variant="secondary" className="mt-2" asChild>
-                            <Link to={parentDeskPath(pathname)} search={{ tab: "payments" }}>
-                              {t("payUseBill")}
-                            </Link>
-                          </Button>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                </div>
-              </li>
-            ))
-          }
-        </ul>
-        )}
         </div>
       ) : null}
 
