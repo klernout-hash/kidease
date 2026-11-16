@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { AdminLicenceReads } from "@/components/admin-licence-reads";
+import { useCleanLook } from "@/lib/use-clean-look";
 import { CatalogueHealthStrip } from "@/components/catalogue-health-strip";
 import { DeskShell } from "@/components/desk-shell";
 import { LedgerHonesty } from "@/components/listing-status-badge";
@@ -197,6 +198,7 @@ export function AdminPage() {
   }, []);
   const [showQaPeople, setShowQaPeople] = useState(false);
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
+  const cleanLook = useCleanLook();
   const [jurisdictions, setJurisdictions] = useState<Awaited<ReturnType<typeof listJurisdictions>>>([]);
   const [reports, setReports] = useState<AdminReportRow[]>([]);
   const [coverage, setCoverage] = useState<LicenceCoverageRow[]>([]);
@@ -854,11 +856,12 @@ export function AdminPage() {
                   />
                 ) : (
                   byProvince.filter((group) => stat === "all" || group.rows.length > 0).map((group) => {
-                    const open = openProv[group.code] !== false;
+                    // Clean look: provinces start folded, so 288 centres read as a short list of places.
+                    const open = openProv[group.code] ?? !cleanLook;
                     const queued = group.rows.filter((c) => isQueued(c.claimStatus)).length;
                     return (
                       <div key={group.code} className="overflow-hidden rounded-xl bg-surface ring-1 ring-border">
-                        <button type="button" className="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left" onClick={() => setOpenProv((s) => ({ ...s, [group.code]: !open }))}>
+                        <button type="button" aria-expanded={open} className="flex min-h-11 w-full items-center justify-between gap-3 px-5 py-3.5 text-left" onClick={() => setOpenProv((s) => ({ ...s, [group.code]: !open }))}>
                           <span className="font-display text-lg">
                             {group.name}
                             <span className="ml-2 text-sm font-sans font-normal text-muted">{group.code}</span>
@@ -1023,7 +1026,7 @@ export function AdminPage() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-xs uppercase tracking-wide text-subtle">{r.kind}</p>
+                      <p className="text-xs font-medium text-subtle">{activityKindChipLabel(r.kind)}</p>
                       {badge ? <RoleBadge label={badge} /> : null}
                       {mailFailed ? (
                         <span className="rounded-full bg-danger/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-danger">
@@ -1271,6 +1274,7 @@ function MoneyPanel({
   stripeLive: boolean;
   ready?: boolean;
 }) {
+  const cleanLook = useCleanLook();
   const { t } = useCopy();
   return (
     <>
@@ -1286,7 +1290,17 @@ function MoneyPanel({
             The internal row is a projection of signed webhooks: do not mark paid by hand.
           </p>
         ) : null}
-        <AdminStripeCatalog />
+        {cleanLook ? (
+          // Clean look: plans and prices fold away so the money totals come first.
+          <details className="mt-4 rounded-xl ring-1 ring-border" data-ke="admin-stripe-catalog-fold">
+            <summary className="flex min-h-11 cursor-pointer items-center px-4 text-sm font-medium">Stripe catalogue: plans and prices</summary>
+            <div className="px-2 pb-3">
+              <AdminStripeCatalog />
+            </div>
+          </details>
+        ) : (
+          <AdminStripeCatalog />
+        )}
       </div>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <CashStat label="In (paid)" value={ledger.inPaid} />
