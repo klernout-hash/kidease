@@ -3543,5 +3543,6 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "الرواتب",
   "adminNavSubsidy": "الدعم",
-  "employeeInviteRole": "هذه الدعوة لدور {role}."
+  "employeeInviteRole": "هذه الدعوة لدور {role}.",
+  "parentStoriesHint": "ملاحظات من دار الحضانة"
 }

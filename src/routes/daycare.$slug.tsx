@@ -41,7 +41,7 @@ import {
 import { ListingCultureCard } from "@/components/listing-culture-card";
 import { SaveListingButton } from "@/components/save-listing-button";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
-import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
+import { listingHasOwnerClaim, publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import { listingOfferGroups } from "@/lib/listing-offers";
 import { safetyLabel } from "@/lib/parent-listing";
 import { ListingRoomRail } from "@/components/listing-room-rail";
@@ -654,9 +654,11 @@ export function Listing() {
   const offerClaim = chrome.role !== "government" && showPublicClaimPrompt(d);
   const cityHub = cityHubDefForPlace(d.city, d.province);
   const heroBack = cityHub ? { to: "/daycare/city/$city" as const, city: cityHub.slug } : { to: "/search" as const };
-  const primaryLabel = live ? t("requestTour") : t("requestInfo");
-  const primaryAction = live ? onTour : onInfo;
-  const nextStepLead = live
+  const claimed = listingHasOwnerClaim(d);
+  const tourReady = Boolean(live || claimed);
+  const primaryLabel = tourReady ? t("requestTour") : t("requestInfo");
+  const primaryAction = tourReady ? onTour : onInfo;
+  const nextStepLead = tourReady
     ? locale === "fr" ? "Consultez les heures de visite ou demandez au centre de vous renseigner." : "See posted tour times, or ask the daycare about a visit."
     : locale === "fr" ? "Demandez des renseignements à cette garderie. Une réponse n’est pas garantie." : "Ask this daycare for information. A reply isn’t guaranteed.";
 
@@ -681,7 +683,7 @@ export function Listing() {
   function ListingOverflowItems() {
     return (
       <>
-        {parentActions && !live ? <ListingMoreItem onClick={onTour} data-ke="listing-sticky-tour">{locale === "fr" ? "Demander une visite" : "Ask about a visit"}</ListingMoreItem> : null}
+        {parentActions && !tourReady ? <ListingMoreItem onClick={onTour} data-ke="listing-sticky-tour">{locale === "fr" ? "Demander une visite" : "Ask about a visit"}</ListingMoreItem> : null}
         {parentActions && live ? <ListingMoreItem onClick={onRequest}>{t("requestSpotCta")}</ListingMoreItem> : null}
         {parentActions ? (
           <>
@@ -1236,7 +1238,7 @@ export function Listing() {
             inspections={data.inspections}
             compact
           />
-            {!live ? (
+            {!tourReady ? (
               <p className="text-sm text-muted">
                 {t("unclaimedNotice")}{" "}
                 <Link
@@ -1396,7 +1398,7 @@ export function Listing() {
       <RequestTourSheet
         daycare={d}
         open={tourOpen}
-        unclaimed={!live}
+        unclaimed={!tourReady}
         onClose={() => setTourOpen(false)}
         onRequestInfo={() => setInfoOpen(true)}
       />

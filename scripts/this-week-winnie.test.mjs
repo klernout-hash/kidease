@@ -57,8 +57,8 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
   assert.match(readiness, /Boolean\(d\.feeConfirmed\) \|\| hasListedFees\(d\)/);
 
   assert.match(listing, /requestInfo/);
-  assert.match(listing, /const primaryLabel = live \? t\("requestTour"\) : t\("requestInfo"\)/);
-  assert.match(listing, /const primaryAction = live \? onTour : onInfo/);
+  assert.match(listing, /const primaryLabel = tourReady \? t\("requestTour"\) : t\("requestInfo"\)/);
+  assert.match(listing, /const primaryAction = tourReady \? onTour : onInfo/);
   assert.match(listing, /RequestTourSheet/);
   assert.match(listing, /claimFreeListing/);
   assert.match(listing, /unclaimedRequestNote|listing_request_started/);

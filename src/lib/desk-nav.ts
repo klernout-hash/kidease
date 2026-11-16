@@ -133,7 +133,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "email-sms", label: "Email and SMS", labelKey: "emailAndSms", href: "/account", search: { tab: "profile", section: "email-sms", desk: "parent" } },
     { id: "centre-tools", label: "From your daycare", hint: "Menus, notes, and bills", labelKey: "parentCentreToolsNav", hintKey: "parentCentreToolsNavHint", href: "/parent", search: { tab: "centre" } },
     { id: "documents", label: "Documents", hint: "Immunization records and subsidy forms", labelKey: "familyDocs", hintKey: "familyDocsHint", href: "/parent", search: { tab: "documents" } },
-    { id: "stories", label: "Learning stories", hint: "Notes from your daycare", labelKey: "parentStoriesNav", href: "/parent", search: { tab: "stories" } },
+    { id: "stories", label: "Learning stories", hint: "Notes from your daycare", labelKey: "parentStoriesNav", hintKey: "parentStoriesHint", href: "/parent", search: { tab: "stories" } },
     { id: "tour-calendar", label: "Tour calendar", hint: "Visit times and a notice reminder", labelKey: "inboxTourCalendar", hintKey: "deskNavToursHint", href: "/parent", search: { tab: "tours" } },
     { id: "account", label: "Account", hint: "Family profile and alerts", labelKey: "account", hintKey: "deskNavParentAccountHint", href: "/account", search: { tab: "profile", desk: "parent" } },
   ],

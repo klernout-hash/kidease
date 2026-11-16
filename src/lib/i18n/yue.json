@@ -3543,5 +3543,6 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "出糧",
   "adminNavSubsidy": "資助",
-  "employeeInviteRole": "呢個邀請嘅角色係{role}。"
+  "employeeInviteRole": "呢個邀請嘅角色係{role}。",
+  "parentStoriesHint": "來自托兒所的筆記"
 }

@@ -3543,5 +3543,6 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "Nómina",
   "adminNavSubsidy": "Subsidio",
-  "employeeInviteRole": "Esta invitación es para el rol {role}."
+  "employeeInviteRole": "Esta invitación es para el rol {role}.",
+  "parentStoriesHint": "Notas de su guardería"
 }
