@@ -28,8 +28,8 @@ function Kpi({ label, value }: { label: string; value: string }) {
 function TileInfo({ text, locale }: { text: string; locale: "en" | "fr" }) {
   return (
     <details className="mt-2">
-      <summary className="inline-flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-full text-sm font-semibold ring-1 ring-border" aria-label={locale === "fr" ? "Détail" : "Detail"}>
-        i
+      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center text-sm font-medium text-primary underline-offset-4 hover:underline">
+        {locale === "fr" ? "Comment c’est compté" : "How this is counted"}
       </summary>
       <p className="mt-2 text-sm leading-6 text-muted">{text}</p>
     </details>
@@ -332,7 +332,7 @@ export function GovDashboardView({
           </ul>
         </section>
         <OversightNote locale={data.locale} ratio={typeof data.childPerSpace === "number" ? data.childPerSpace : null} />
-        <section className="mt-6 grid gap-3 lg:grid-cols-2" data-ke="gov-needs-attention" aria-labelledby="gov-needs-title">
+        <section className="mt-6" data-ke="gov-needs-attention" aria-labelledby="gov-needs-title">
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border">
             <h2 id="gov-needs-title" className="font-display text-xl">{copy.needsTitle}</h2>
             <ul className="mt-3 space-y-2 text-base leading-6">
@@ -343,7 +343,6 @@ export function GovDashboardView({
               <li>{copy.needStale}</li>
             </ul>
           </div>
-          <p className="self-end text-base leading-6">{copy.mapNote}</p>
         </section>
         <LicenceFlags data={data} />
         {data.hiddenAreas > 0 ? (

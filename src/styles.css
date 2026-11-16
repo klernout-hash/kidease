@@ -4145,3 +4145,18 @@ html[data-look="clean"] [data-ke="search-split"]:has(> [data-ke="search-split-ma
     display: none;
   }
 }
+
+/* Government desk on phones, clean look: the filter bar scrolls away instead of holding half the
+   screen, the locked province (already named in the organisation line) steps aside, and region
+   and city sit side by side. */
+@media (max-width: 767px) {
+  html[data-look="clean"] [data-ke="gov-filters"] {
+    position: static;
+  }
+  html[data-look="clean"] [data-ke="gov-filters"] label:has(> [data-ke="gov-province-lock"]) {
+    display: none;
+  }
+  html[data-look="clean"] [data-ke="gov-filters"] form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
