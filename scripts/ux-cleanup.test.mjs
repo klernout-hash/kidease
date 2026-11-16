@@ -20,8 +20,8 @@ test("Explore hides empty category rails and keeps #209 single-bar filters", () 
   assert.match(rails, /openingsSelected \|\| \(!filtered && openings\.length > 0\)/);
   assert.match(rails, /persist=\{forced\}/);
   assert.match(search, /preferCompleteCards/);
-  assert.match(search, /h-\[min\(72dvh,36rem\)\]/);
-  assert.match(search, /lg:h-\[min\(62vh,34rem\)\]/);
+  assert.match(search, /h-\[min\(40dvh,28rem\)\]/);
+  assert.doesNotMatch(search, /lg:h-\[min\(62vh,34rem\)\]/);
   assert.doesNotMatch(search, /62dvh/);
   assert.doesNotMatch(search, /lg:h-\[70vh\]/);
   assert.match(bar, /data-ke="explore-map-toggle"/);
