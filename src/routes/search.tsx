@@ -1,3 +1,4 @@
+import { useSplitMap } from "@/lib/use-split-map";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -568,9 +569,12 @@ export function SearchScreen({
   const mapAbort = useRef<AbortController | null>(null);
   useLivePresence(locationConsent === "granted");
 
+  const splitMap = useSplitMap() && storeChannel !== "huawei";
+  const showSplitMap = splitMap && view !== "map";
+
   useEffect(() => {
-    if (view === "map") setMapEnabled(true);
-  }, [view]);
+    if (view === "map" || showSplitMap) setMapEnabled(true);
+  }, [view, showSplitMap]);
 
   useEffect(() => {
     const place = (incoming.q || "").trim() || (incoming.city || "").trim();
@@ -2428,6 +2432,10 @@ export function SearchScreen({
         ) : null}
 
         <div
+          data-ke="search-split"
+          className={cn(showSplitMap && "grid grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] items-start gap-6")}
+        >
+        <div
           className={cn(
             "ke-search-results relative z-0 mt-2 contain-layout",
             view !== "map" && "min-h-[10rem]",
@@ -2554,6 +2562,29 @@ export function SearchScreen({
               ) : null}
             </div>
           ) : null}
+        </div>
+        {showSplitMap && mapEnabled ? (
+          <aside
+            data-ke="search-split-map"
+            aria-label={t("map")}
+            className="sticky top-[calc(var(--ke-header-h,4.5rem)+1rem)] mt-2 h-[calc(100dvh-var(--ke-header-h,4.5rem)-2rem)] min-h-[24rem] overflow-hidden rounded-2xl ring-1 ring-border"
+          >
+            <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
+              <MapView
+                items={shownList}
+                origin={mapOrigin}
+                placeLabel={whereLabel || origin.label}
+                secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
+                radiusKm={radiusKm}
+                activeSlug={active}
+                onSelect={(slug) => setActive(slug)}
+                onRelocate={(pos) => followDevice(pos)}
+                onLocate={() => void geo()}
+                onFallback={() => undefined}
+              />
+            </Suspense>
+          </aside>
+        ) : null}
         </div>
         <details className="mt-6 rounded-xl bg-surface px-3 ring-1 ring-border" data-ke="area-waitlist">
           <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold">
