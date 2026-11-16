@@ -1926,7 +1926,21 @@ export const updateCapacity = createServerFn({ method: "POST" })
       .catch(() => undefined);
     if (nextTotal > prevTotal) {
       void import("@/lib/server/alert-fanout")
-        .then((mod) => mod.notifySavedSpotOpened({ daycareId: data.daycareId }))
+        .then((mod) =>
+          mod.notifySavedSpotOpened({
+            daycareId: data.daycareId,
+            before: {
+              infant: Number(before[0]?.spots_infant) || 0,
+              toddler: Number(before[0]?.spots_toddler) || 0,
+              preschool: Number(before[0]?.spots_preschool) || 0,
+            },
+            after: {
+              infant: data.spotsInfant,
+              toddler: data.spotsToddler,
+              preschool: data.spotsPreschool,
+            },
+          }),
+        )
         .catch(() => undefined);
       try {
         const { pulseRateLimited } = await import("@/lib/waitlist-pulse");

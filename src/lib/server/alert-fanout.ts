@@ -17,6 +17,13 @@ import {
   winnipegDayKey,
   type ListingWatchFacts,
 } from "@/lib/alert-rules";
+import { openSpotAlertsEnabled, savedCentreAgeAlertsEnabled } from "@/lib/features";
+import {
+  ageMonthsFromBirthdate,
+  bandsThatOpened,
+  planSavedCentreAgeAlerts,
+  type SpotCounts,
+} from "@/lib/saved-centre-age-alert";
 
 const ENSURE_SQL = [
   "alter table daycares add column if not exists first_aid_expiry date",
@@ -94,9 +101,44 @@ export async function readListingWatch(sql: Sql, daycareId: string): Promise<Lis
   };
 }
 
+async function childMonthsFor(sql: Sql, userIds: string[]): Promise<Map<string, number[] | null>> {
+  const map = new Map<string, number[] | null>();
+  for (const id of userIds) map.set(id, null);
+  if (!userIds.length) return map;
+  const rows = await sql
+    .query<{ user_id: string; birthdate: string | null }>(
+      "select user_id, birthdate from children where user_id = any($1::text[])",
+      [userIds],
+    )
+    .catch(() => [] as { user_id: string; birthdate: string | null }[]);
+  for (const row of rows) {
+    const months = ageMonthsFromBirthdate(String(row.birthdate || ""));
+    if (months == null) continue;
+    const current = map.get(row.user_id);
+    if (current == null) map.set(row.user_id, [months]);
+    else current.push(months);
+  }
+  return map;
+}
+
+async function spotAlertsSentToday(sql: Sql, now: Date): Promise<Array<{ userId: string }>> {
+  const day = winnipegDayKey(now);
+  const rows = await sql
+    .query<{ user_id: string; created_at: string | Date }>(
+      "select user_id, created_at from notification_outbox where category = 'spot_opened' and created_at >= $1 limit 400",
+      [new Date(now.getTime() - 36 * 60 * 60 * 1000).toISOString()],
+    )
+    .catch(() => [] as { user_id: string; created_at: string | Date }[]);
+  return rows
+    .filter((row) => winnipegDayKey(new Date(row.created_at)) === day)
+    .map((row) => ({ userId: row.user_id }));
+}
+
 /** Parents who saved this centre, when the open-spot count goes up. Prefs and quiet hours stay in dispatch. */
 export async function notifySavedSpotOpened(input: {
   daycareId: string;
+  before?: SpotCounts;
+  after?: SpotCounts;
   now?: Date;
 }): Promise<number> {
   const sql = await getSql();
@@ -108,15 +150,29 @@ export async function notifySavedSpotOpened(input: {
   const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
   const href = centre.slug ? `/daycare/${centre.slug}` : "/search";
   const day = winnipegDayKey(now);
+  const ageOn = savedCentreAgeAlertsEnabled();
+  const opened = input.before && input.after ? bandsThatOpened(input.before, input.after) : [];
+  const ages = ageOn ? await childMonthsFor(sql, parents) : new Map<string, number[] | null>();
+  const plan = planSavedCentreAgeAlerts({
+    enabled: ageOn,
+    opened,
+    priorToday: ageOn ? await spotAlertsSentToday(sql, now) : [],
+    parents: parents.map((userId) => ({ userId, childMonths: ages.get(userId) ?? null })),
+  });
+  const matched = new Set(plan.matches.map((row) => row.userId));
+  const held = new Set([...plan.skipped, ...plan.capped]);
+  const mailAge = openSpotAlertsEnabled();
   let sent = 0;
   for (const userId of parents) {
+    if (ageOn && opened.length > 0 && held.has(userId)) continue;
+    const forChild = ageOn && matched.has(userId);
     const result = await dispatchCustomerAlert({
       userId,
       category: "spot_opened",
-      vars: { name: centre.name },
+      vars: { name: centre.name, status: forChild ? "child_age" : "" },
       href,
-      dedupeKey: `saved-spot:${centre.id}:${userId}:${day}`.slice(0, 180),
-      emailFallback: true,
+      dedupeKey: `saved-spot:${centre.id}:${userId}:${forChild ? "age:" : ""}${day}`.slice(0, 180),
+      emailFallback: forChild ? mailAge : true,
       now,
     }).catch(() => null);
     if (result && result.status !== "skipped") sent += 1;

@@ -138,6 +138,14 @@ export function openSpotAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_OPEN_SPOT_ALERTS", env);
 }
 
+/**
+ * In-app note when a saved centre posts an opening for the child's age.
+ * Default on. Email still needs FEATURE_OPEN_SPOT_ALERTS. Push still needs FEATURE_PUSH.
+ */
+export function savedCentreAgeAlertsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_SAVED_CENTRE_AGE_ALERTS", env);
+}
+
 /** Email a parent when a daycare offers a spot. Default OFF. The offer still shows in the account. */
 export function spotOfferMailEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_SPOT_OFFER_MAIL", env);

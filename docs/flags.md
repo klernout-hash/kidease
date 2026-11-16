@@ -271,6 +271,8 @@ These are env-only. Unset means the feature stays on. Set the value to `0` to pa
 
 A paused screen says what is off and offers a way to search.
 
+`FEATURE_SAVED_CENTRE_AGE_ALERTS` is on. A parent who saved a centre gets an in-app note when that centre posts an opening for their child's age. Three notes a day. Email still needs `FEATURE_OPEN_SPOT_ALERTS`. Push still needs `FEATURE_PUSH`. A child whose age does not fit is not told it is for them.
+
 ## Later (not this PR)
 
 - Per-user or % rollouts (today the server uses one distinct id).
