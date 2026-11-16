@@ -80,7 +80,7 @@ public class SecureSessionPlugin extends Plugin {
             return;
         }
         try {
-            JSONObject all = load();
+            JSONObject all = readSessions();
             all.remove(key);
             save(all);
             call.resolve();
@@ -148,7 +148,7 @@ public class SecureSessionPlugin extends Plugin {
             byte[] packed = new byte[iv.length + enc.length];
             System.arraycopy(iv, 0, packed, 0, iv.length);
             System.arraycopy(enc, 0, packed, iv.length, enc.length);
-            JSONObject all = load();
+            JSONObject all = readSessions();
             all.put(key, Base64.encodeToString(packed, Base64.NO_WRAP));
             save(all);
             return true;
@@ -159,7 +159,7 @@ public class SecureSessionPlugin extends Plugin {
 
     private String read(String key, boolean stepUp) {
         try {
-            String packed = load().optString(key, "");
+            String packed = readSessions().optString(key, "");
             if (packed.isEmpty()) return null;
             byte[] raw = Base64.decode(packed, Base64.NO_WRAP);
             if (raw.length < 13) return null;
@@ -201,7 +201,7 @@ public class SecureSessionPlugin extends Plugin {
         return new File(getContext().getFilesDir(), "kidease-session.bin");
     }
 
-    private JSONObject load() {
+    private JSONObject readSessions() {
         File target = file();
         if (target == null || !target.exists()) return new JSONObject();
         try (FileInputStream in = new FileInputStream(target)) {
