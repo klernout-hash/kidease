@@ -7,7 +7,7 @@ async function run(request: Request) {
   if (!centreLeadTrackerEnabled()) return Response.json({ ok: true, skipped: true, reason: "flag" });
   if (!cronAuthorized(request)) return new Response("Unauthorized", { status: 401 });
   const result = await runCentreLeadJobs();
-  return Response.json(result);
+  return Response.json(result, { status: result.ok ? 200 : 503 });
 }
 
 export const Route = createFileRoute("/api/centre-lead-alerts")({
