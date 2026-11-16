@@ -3584,5 +3584,8 @@
   "tourAssistantSignIn": "请用家长账户登录后再发送这次参观。",
   "tourAssistantSlotGone": "这个时间已经没有空位。请另选一个已公布的时间。",
   "ontarioCapFee": "每天最多 22 加元（安大略上限）",
-  "parentRequestTourAsked": "已申请参观"
+  "parentRequestTourAsked": "已申请参观",
+  "moreTools": "更多工具",
+  "setupReady": "已完成 {n}%",
+  "setupNextFees": "下一步：填写费用"
 }

@@ -182,7 +182,7 @@ test("provider default desk is Today and clutter stays off that path", () => {
   assert.match(home, /todayAllSet/);
   assert.match(home, /collectActionRequired/);
   assert.match(home, /actionRequired \? null : todayEmptyTruth/);
-  assert.match(home, /ActionRequiredBanner/);
+  assert.match(home, /SetupProgress/);
   assert.match(home, /acceptTour/);
   assert.match(home, /todayProposeTime/);
   assert.match(home, /declineTour/);

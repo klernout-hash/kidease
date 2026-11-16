@@ -3584,5 +3584,8 @@
   "tourAssistantSignIn": "Mag-sign in gamit ang account ng magulang para ipadala ang tour na ito.",
   "tourAssistantSlotGone": "Hindi na bukas ang oras na iyon. Pumili ng ibang nakapaskil na oras.",
   "ontarioCapFee": "Hanggang $22 sa isang araw (limitasyon ng Ontario)",
-  "parentRequestTourAsked": "Hiniling ang tour"
+  "parentRequestTourAsked": "Hiniling ang tour",
+  "moreTools": "Iba pang mga tool",
+  "setupReady": "{n}% handa",
+  "setupNextFees": "Susunod: ilagay ang bayad"
 }

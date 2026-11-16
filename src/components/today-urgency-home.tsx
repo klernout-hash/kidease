@@ -7,7 +7,7 @@ import { respondTourRequest } from "@/lib/server/tours";
 import { listInbox } from "@/lib/server/inbox";
 import { listProviderScreening } from "@/lib/server/provider-screening";
 import type { LeadRequest } from "@/lib/lead-requests";
-import { ActionRequiredBanner } from "@/components/listing-readiness-coach";
+import { SetupProgress } from "@/components/listing-readiness-coach";
 import {
   buildTodayRows,
   collectActionRequired,
@@ -253,7 +253,7 @@ export function TodayUrgencyHome({
         <h2 className="font-display text-2xl">{t("todayHome")}</h2>
         <p className="mt-1 text-sm text-muted">{t("todayHomeLead")}</p>
       </div>
-      <ActionRequiredBanner listings={coachListings} />
+      <SetupProgress listings={coachListings} />
       {coachListings.filter((listing) => publicApprovalEligible(listing)).map((listing) => (
         <div key={listing.id}>
           <p className="font-medium">{listing.name}</p>
