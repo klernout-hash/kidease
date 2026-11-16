@@ -4020,6 +4020,7 @@ html[data-look="clean"] .ke-visual-card [data-ke="card-age-range"] {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
   overflow: hidden;
+}
 
 /* Airbnb comparison, batch 4. Clean look only. */
 /* Listing: the section links stay under the header while you read. */
