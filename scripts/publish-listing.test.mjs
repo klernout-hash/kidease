@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { provinceFromPostalCode } from "../src/lib/geo.ts";
 import { listingPublishMissing, mergeListingDraft } from "../src/lib/listing-publish.ts";
 import { tx } from "../src/lib/copy.ts";
 
@@ -16,6 +17,7 @@ const empty = {
   name: "",
   address: "",
   city: "Winnipeg",
+  province: "MB",
   postalCode: "",
   licenseNumber: "",
   infantMonthly: 1200,
@@ -44,6 +46,20 @@ test("publish reads filled fields from the form when React state is still empty"
   assert.equal(next.toddlerMonthly, 1100);
   assert.deepEqual(listingPublishMissing(next), []);
   assert.deepEqual(listingPublishMissing(empty), ["name", "address", "postalCode", "licenseNumber"]);
+});
+
+test("a Winnipeg postal code fills Manitoba until the provider picks a province", () => {
+  const next = mergeListingDraft({ ...empty, province: "" }, (() => {
+    const dom = new FormData();
+    dom.set("postalCode", "R2P 2V9");
+    return dom;
+  })());
+  assert.equal(provinceFromPostalCode("R2P 2V9"), "MB");
+  assert.equal(provinceFromPostalCode("M5V 2T6"), "ON");
+  assert.equal(provinceFromPostalCode("X0A 0H0"), "NU");
+  assert.equal(provinceFromPostalCode("90210"), null);
+  assert.equal(next.province, "MB");
+  assert.deepEqual(listingPublishMissing({ ...empty, province: "CA" }), ["name", "address", "province", "postalCode", "licenseNumber"]);
 });
 
 test("publish keeps a typed React value when the matching form field is blank", () => {
@@ -76,7 +92,7 @@ test("Publish listing stays clickable and reports inline status", () => {
   assert.match(provider, /name="postalCode"/);
   assert.equal(
     tx("en", "publishListingMissing"),
-    "Add the centre name, licence number, address, city, and postal code, then publish again.",
+    "Add the centre name, licence number, address, city, province, and postal code, then publish again.",
   );
   assert.match(tx("fr", "publishListingDone"), /Fiche publiée/);
   assert.doesNotMatch(tx("fr", "publishListingMissing"), /Add the centre/);

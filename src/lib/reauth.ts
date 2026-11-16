@@ -194,6 +194,40 @@ export function parseReauthProof(raw: string | null | undefined, secret: string)
   return { kind: "legacy", userId: legacy.userId, exp: legacy.exp };
 }
 
+/** True when any cookie value is a still-valid step-up for this person. A stale host cookie must not hide a good shared one. */
+export function anyReauthProofAllows(
+  raws: Array<string | null | undefined>,
+  userId: string,
+  klass: StepUpClass,
+  secret: string,
+  nowMs = Date.now(),
+  graceMs = ADMIN_REAUTH_GRACE_DEFAULT_MS,
+): boolean {
+  for (const raw of raws) {
+    if (!raw) continue;
+    if (reauthProofAllows(parseReauthProof(raw, secret), userId, klass, nowMs, graceMs)) return true;
+  }
+  return false;
+}
+
+export class ReauthRequiredError extends Error {
+  constructor() {
+    super(REAUTH_REQUIRED_MESSAGE);
+    this.name = "ReauthRequiredError";
+  }
+}
+
+export function reauthMessageOf(err: unknown): string {
+  if (!err) return "";
+  if (typeof err === "string") return err.trim();
+  if (err instanceof Error) return err.message.trim();
+  if (typeof err === "object" && "message" in err) {
+    const message = (err as { message: unknown }).message;
+    if (typeof message === "string") return message.trim();
+  }
+  return "";
+}
+
 export function reauthProofAllows(
   proof: ReauthProof | null,
   userId: string,

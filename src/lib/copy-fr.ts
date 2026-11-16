@@ -1468,7 +1468,7 @@ export const fr = {
     centreName: "Nom du centre",
     licenceNo: "Numéro de permis",
     createListing: "Publier la fiche",
-    publishListingMissing: "Ajoutez le nom du centre, le numéro de permis, l’adresse, la ville et le code postal, puis publiez de nouveau.",
+    publishListingMissing: "Ajoutez le nom du centre, le numéro de permis, l’adresse, la ville, la province et le code postal, puis publiez de nouveau.",
     publishListingWorking: "Publication…",
     publishListingDone: "Fiche publiée. Elle attend la révision.",
     daycareAlreadyListed: "Garderie déjà inscrite",

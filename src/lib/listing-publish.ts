@@ -1,8 +1,11 @@
+import { isCanadianProvinceCode, provinceFromPostalCode } from "./geo.ts";
+
 /** Fields the publish form can read from the DOM when React state is still empty. */
 export type ListingPublishDraft = {
   name: string;
   address: string;
   city: string;
+  province: string;
   postalCode: string;
   licenseNumber: string;
   infantMonthly: number;
@@ -14,7 +17,7 @@ export type ListingPublishDraft = {
   culturalTeamNote: string;
 };
 
-const REQUIRED = ["name", "address", "city", "postalCode", "licenseNumber"] as const;
+const REQUIRED = ["name", "address", "city", "province", "postalCode", "licenseNumber"] as const;
 
 export type ListingPublishRequired = (typeof REQUIRED)[number];
 
@@ -38,12 +41,16 @@ function feeField(dom: FormData, key: string, fallback: number): number {
  * Culture chips and the photo data URL stay on the React draft.
  */
 export function mergeListingDraft(state: ListingPublishDraft, dom: FormData): ListingPublishDraft {
+  const postalCode = textField(dom, "postalCode", state.postalCode);
+  const chosen = textField(dom, "province", state.province).trim().toUpperCase();
+  const province = isCanadianProvinceCode(chosen) ? chosen : provinceFromPostalCode(postalCode) || "";
   return {
     ...state,
     name: textField(dom, "name", state.name),
     address: textField(dom, "address", state.address),
     city: textField(dom, "city", state.city),
-    postalCode: textField(dom, "postalCode", state.postalCode),
+    province,
+    postalCode,
     licenseNumber: textField(dom, "licenseNumber", state.licenseNumber),
     infantMonthly: feeField(dom, "infantMonthly", state.infantMonthly),
     toddlerMonthly: feeField(dom, "toddlerMonthly", state.toddlerMonthly),
@@ -53,5 +60,10 @@ export function mergeListingDraft(state: ListingPublishDraft, dom: FormData): Li
 }
 
 export function listingPublishMissing(draft: ListingPublishDraft): ListingPublishRequired[] {
-  return REQUIRED.filter((key) => !String(draft[key] ?? "").trim());
+  return REQUIRED.filter((key) => {
+    const value = String(draft[key] ?? "").trim();
+    if (!value) return true;
+    if (key === "province") return !isCanadianProvinceCode(value);
+    return false;
+  });
 }

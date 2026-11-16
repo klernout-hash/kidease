@@ -63,11 +63,28 @@ test("an allowlisted QA invite is sent once and logged as qa_allowlist_sent", as
   assert.match(logs.join("\n"), /reason=qa_allowlist_sent/);
 });
 
+test("a staff invite still sends when the centre name looks like a QA fixture", async () => {
+  let called = 0;
+  const result = await sendTransactionalMail(
+    { ...qaInvite, to: "info@openroadoutlet.ca", directInvite: true },
+    {
+      env: { RESEND_API_KEY: "k", QA_SEND_ALLOWLIST: "" },
+      fetch: async () => {
+        called += 1;
+        return new Response("{}", { status: 200 });
+      },
+    },
+  );
+  assert.equal(called, 1);
+  assert.equal(result.status, "sent");
+  assert.notEqual(result.reason, "test_listing_suppressed");
+  assert.match(src("src/lib/server/invite-mail.ts"), /directInvite: true/);
+});
+
 test("a deliberate QA suppression is not tried a second time", () => {
   const members = src("src/lib/server/centre-members.ts");
   assert.match(members, /firstSend\.suppressed/);
   assert.doesNotMatch(members, /if \(!mailed\) mailed = \(await trySendEmployeeInviteEmail/);
-  assert.match(src("src/lib/server/invite-mail.ts"), /test_listing_suppressed/);
 });
 
 test("each invite role shows what that person can open", () => {
