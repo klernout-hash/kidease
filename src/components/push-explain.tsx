@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { shouldShowAnalyticsConsentBanner } from "@/lib/analytics-consent";
@@ -19,6 +20,9 @@ export function PushExplain() {
   const { t } = useCopy();
   const { user } = useCurrentUserState();
   const [open, setOpen] = useState(false);
+  const samsungPush = useRouterState({
+    select: (state) => state.matches.some((match) => (match.context as { samsungPush?: boolean }).samsungPush === true),
+  });
 
   useEffect(() => {
     if (!isNative() || !user?.id) return;
@@ -45,18 +49,20 @@ export function PushExplain() {
         pushExplain: step === "explain",
       });
       if (showPush === "push") setOpen(true);
-      if (step === "register") await registerPushDevice({ enabled: true });
+      if (step === "register") {
+        await registerPushDevice({ enabled: true, ...(samsungPush ? { samsungFallback: true } : {}) });
+      }
     })().catch(() => undefined);
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, samsungPush]);
 
   async function choose(value: "yes" | "no") {
     setOpen(false);
     const { Preferences } = await import("@capacitor/preferences");
     await Preferences.set({ key: CHOICE_KEY, value });
-    if (value === "yes") await registerPushDevice({ enabled: true });
+    if (value === "yes") await registerPushDevice({ enabled: true, ...(samsungPush ? { samsungFallback: true } : {}) });
   }
 
   useEffect(() => {

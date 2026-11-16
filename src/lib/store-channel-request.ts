@@ -27,6 +27,9 @@ export type ServerStoreRead = {
   msShortcuts?: true;
   msBadging?: true;
   msStoreUrl?: string;
+  /** Present only when that Galaxy Store flag is on. Omitted while the flag is off. */
+  samsungStore?: true;
+  samsungPush?: true;
 };
 
 function requestIsHttps(url: string | undefined, forwardedProto: string | null): boolean {
@@ -70,6 +73,7 @@ export const readServerStoreChannel = createServerFn({ method: "GET" })
       const { applePlatformContext } = await import("@/lib/apple/platform");
       const { playPlatformContext } = await import("@/lib/google/platform");
       const { microsoftPlatformContext } = await import("@/lib/microsoft/platform");
+      const { samsungPlatformContext } = await import("@/lib/samsung/platform");
       return {
         channel: storeChannelFromSignals(signals),
         setCookie: microsoftStoreCookieHeader(signals, {
@@ -79,6 +83,7 @@ export const readServerStoreChannel = createServerFn({ method: "GET" })
         ...applePlatformContext(process.env),
         ...playPlatformContext(process.env),
         ...microsoftPlatformContext(process.env),
+        ...samsungPlatformContext(process.env),
       };
     } catch {
       return {

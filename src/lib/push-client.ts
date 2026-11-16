@@ -1,7 +1,8 @@
 import { PUSH_DISABLED_MESSAGE, PUSH_SCAFFOLD_MESSAGE, PUSH_WEB_BLOCKED_MESSAGE } from "@/lib/push";
 import { isNative, nativePlatform } from "@/lib/native";
 import { amazonBuildOnAmazonDevice } from "@/lib/amazon/gate";
-import { googleServicesHidden, readClientStoreChannel } from "@/lib/native-entitlements";
+import { googleServicesHidden, readClientPlayServices, readClientStoreChannel } from "@/lib/native-entitlements";
+import { SAMSUNG_PUSH_FALLBACK_MESSAGE, samsungPushFallback } from "@/lib/samsung/platform";
 import { pushOpenPath, pushPermissionDecision, pushRegisterLocale } from "@/lib/push-lifecycle";
 
 const PUSH_TOKEN_KEY = "ke-push-token";
@@ -16,12 +17,15 @@ let registrationListening = false;
  * Native Capacitor registration. No-ops on www and when the caller has not
  * confirmed FEATURE_PUSH is on. Safe to call from NativeBoot.
  */
-export async function registerPushDevice(opts?: { enabled?: boolean }): Promise<PushRegisterResult> {
+export async function registerPushDevice(opts?: { enabled?: boolean; samsungFallback?: boolean }): Promise<PushRegisterResult> {
   if (opts?.enabled !== true) {
     return { ok: false, reason: "disabled", error: PUSH_DISABLED_MESSAGE };
   }
   if (typeof window === "undefined" || !isNative()) {
     return { ok: false, reason: "disabled", error: PUSH_WEB_BLOCKED_MESSAGE };
+  }
+  if (samsungPushFallback(opts.samsungFallback === true, readClientStoreChannel(), readClientPlayServices()) === "skip") {
+    return { ok: false, reason: "disabled", error: SAMSUNG_PUSH_FALLBACK_MESSAGE };
   }
   // Amazon Appstore build on an Amazon device: ADM (FEATURE_AMAZON_ADM is checked on the server).
   if (amazonBuildOnAmazonDevice({ userAgent: navigator.userAgent })) {

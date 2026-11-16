@@ -174,6 +174,8 @@ export const Route = createRootRoute({
       ...(storeRead.msShortcuts ? { msShortcuts: true as const } : {}),
       ...(storeRead.msBadging ? { msBadging: true as const } : {}),
       ...(storeRead.msStoreUrl ? { msStoreUrl: storeRead.msStoreUrl } : {}),
+      ...(storeRead.samsungStore ? { samsungStore: true as const } : {}),
+      ...(storeRead.samsungPush ? { samsungPush: true as const } : {}),
     };
   },
   errorComponent: (props) => {
