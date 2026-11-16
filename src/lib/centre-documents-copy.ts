@@ -1,6 +1,8 @@
 export type CentreDocCopy = {
   title: string;
   lead: string;
+  /** The admin list of every claimed centre, not one centre's own page. */
+  adminLead: string;
   score: string;
   missing: string;
   expiring: string;
@@ -38,6 +40,7 @@ export type CentreDocCopy = {
 const en: CentreDocCopy = {
   title: "Documents",
   lead: "Upload the files this centre needs. Parents never see the files. A badge appears only after KidEase approves the licence and insurance.",
+  adminLead: "Each claimed centre, with how complete its files are. Open one to approve or reject a file. Parents never see the files.",
   score: "{n}% complete",
   missing: "Missing",
   expiring: "Expiring soon",
@@ -84,6 +87,7 @@ const en: CentreDocCopy = {
 const fr: CentreDocCopy = {
   title: "Documents",
   lead: "Téléversez les fichiers de ce centre. Les parents ne voient jamais les fichiers. Un badge apparaît seulement après l’approbation de la licence et de l’assurance.",
+  adminLead: "Chaque centre réclamé, avec le niveau de ses fichiers. Ouvrez-en un pour approuver ou refuser un fichier. Les parents ne voient jamais les fichiers.",
   score: "{n} % complet",
   missing: "Manquant",
   expiring: "Expire bientôt",

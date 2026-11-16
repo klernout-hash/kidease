@@ -4137,3 +4137,11 @@ html[data-look="clean"] .ke-home-web > #featured ~ * {
 html[data-look="clean"] [data-ke="search-split"]:has(> [data-ke="search-split-map"]) .ke-result-stack {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+
+/* Admin home on phones, clean look: the catalogue box keeps its counts and drops the long notes,
+   so the first centre waiting for review comes up sooner. */
+@media (max-width: 767px) {
+  html[data-look="clean"] [data-ke="catalogue-health"] > p {
+    display: none;
+  }
+}
