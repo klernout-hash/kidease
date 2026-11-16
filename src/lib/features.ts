@@ -133,6 +133,11 @@ export function showPayCtas(env?: EnvMap): boolean {
   return evaluateFeatureFlag("SHOW_PAY_CTAS", env);
 }
 
+/** Daycare Today leads with arrivals, today's tours, and waiting requests. Default on. */
+export function hostTodayEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_HOST_TODAY", env);
+}
+
 /** Email when a saved search matches a newly posted open spot. Default off. */
 export function openSpotAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_OPEN_SPOT_ALERTS", env);

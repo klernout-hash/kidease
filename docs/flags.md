@@ -271,6 +271,8 @@ These are env-only. Unset means the feature stays on. Set the value to `0` to pa
 
 A paused screen says what is off and offers a way to search.
 
+`FEATURE_HOST_TODAY` is on. The daycare Today screen leads with arrivals, tours booked today, and requests that are waiting. “Finish your listing” sits lower, and only for an owner. Staff still open on check-in and their hours.
+
 ## Later (not this PR)
 
 - Per-user or % rollouts (today the server uses one distinct id).

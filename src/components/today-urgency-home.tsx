@@ -100,12 +100,14 @@ export function TodayUrgencyHome({
   leads,
   onChanged,
   onOpenDesk,
+  quietSetup = false,
 }: {
   listings: Daycare[];
   tours: TourRequest[];
   leads: LeadRequest[];
   onChanged: () => void;
   onOpenDesk: (desk: "listings" | "tours" | "licence" | "screening" | "requests") => void;
+  quietSetup?: boolean;
 }) {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
@@ -253,7 +255,18 @@ export function TodayUrgencyHome({
         <h2 className="font-display text-2xl" data-tour="provider-today">{t("todayHome")}</h2>
         <p className="mt-1 text-sm text-muted">{t("todayHomeLead")}</p>
       </div>
-      <SetupProgress listings={coachListings} />
+      {quietSetup ? (
+        <details className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border" data-ke="finish-listing-progress">
+          <summary className="flex min-h-11 cursor-pointer items-center font-medium">
+            {locale === "fr" ? "Terminer votre fiche" : "Finish your listing"}
+          </summary>
+          <div className="mt-3">
+            <SetupProgress listings={coachListings} />
+          </div>
+        </details>
+      ) : (
+        <SetupProgress listings={coachListings} />
+      )}
       {coachListings.filter((listing) => publicApprovalEligible(listing)).map((listing) => (
         <div key={listing.id}>
           <p className="font-medium">{listing.name}</p>
