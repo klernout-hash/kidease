@@ -139,7 +139,7 @@ export function StoreBadges({ huaweiHref = null }: { huaweiHref?: string | null 
           return (
             <li key={store} className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border" aria-disabled={tileHref ? undefined : "true"}>
               {tileHref ? (
-                <a href={tileHref} rel="noopener noreferrer" className="inline-flex min-h-11 items-center" data-ke={`store-link-${store}`}>
+                <a href={tileHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center" data-ke={`store-link-${store}`}>
                   {store === "huawei" ? null : <BadgeImage store={store} locale={lang} />}
                 </a>
               ) : store === "huawei" ? null : (
