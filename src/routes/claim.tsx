@@ -380,6 +380,32 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
       <main className="mx-auto max-w-3xl px-4 py-10" data-ke="claim-page" data-commerce={nativeShell ? "hidden" : "web"}>
         <h1 className="font-display text-4xl">{t("claimFindTitle")}</h1>
         <p className="mt-3 max-w-xl text-muted">{t("claimFindLead")}</p>
+        {!pending && !previewWizard ? (
+          // Clean look: say what a centre gets and the three steps before the search box.
+          <div className="ke-clean-only mt-5 space-y-4" data-ke="claim-why-steps">
+            <ul className="grid gap-2 sm:grid-cols-3">
+              {partnerPerks.slice(0, 3).map(([Icon, key]) => (
+                <li key={key} className="flex gap-2 rounded-xl bg-surface p-3 text-sm leading-5 ring-1 ring-border">
+                  <Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                  {t(key)}
+                </li>
+              ))}
+            </ul>
+            <ol className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted" aria-label={locale === "fr" ? "Étapes" : "Steps"}>
+              {(locale === "fr"
+                ? ["Trouvez votre centre", "Confirmez que vous le gérez", "Publiez votre fiche"]
+                : ["Find your centre", "Confirm you run it", "Publish your listing"]
+              ).map((step, i) => (
+                <li key={step} className="flex items-center gap-2">
+                  <span className="grid size-6 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-fg" aria-hidden="true">
+                    {i + 1}
+                  </span>
+                  {step}
+                </li>
+              ))}
+            </ol>
+          </div>
+        ) : null}
         {pending || previewWizard ? (
           <ClaimVerifyWizard
             centreName={pending?.name || (locale === "fr" ? "Centre exemple" : "Example centre")}
