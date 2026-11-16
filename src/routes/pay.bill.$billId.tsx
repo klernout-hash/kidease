@@ -45,6 +45,7 @@ function PayBillPage() {
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const [missing, setMissing] = useState(false);
+  const [confirming, setConfirming] = useState(Boolean(search.paid));
   const [consents, setConsents] = useState<CaslPrefs>({
     smsService: false,
     emailService: false,
@@ -61,9 +62,13 @@ function PayBillPage() {
         setStripeLive(res.stripeLive);
         setServiceFee(res.serviceFee ?? null);
         setMissing(false);
+        setConfirming(false);
       })
       .catch(() => {
-        if (!cancelled) setMissing(true);
+        if (!cancelled) {
+          setMissing(true);
+          setConfirming(false);
+        }
       });
     void getMyCaslConsents()
       .then((row) => {
@@ -88,6 +93,7 @@ function PayBillPage() {
           setBill(res.bill);
           setStripeLive(res.stripeLive);
           setServiceFee(res.serviceFee ?? null);
+          setConfirming(false);
         })
         .catch(() => undefined);
     }, 1200);
@@ -111,7 +117,7 @@ function PayBillPage() {
   }
 
   const alreadyPaid = bill?.status === "paid";
-  const canPay = Boolean(stripeLive && bill?.status === "sent");
+  const canPay = Boolean(stripeLive && bill?.status === "sent" && !confirming && !alreadyPaid);
 
   async function pay() {
     if (!canPay || !bill) return;
