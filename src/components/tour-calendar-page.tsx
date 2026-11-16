@@ -145,7 +145,7 @@ export function TourCalendarPage({ audience }: { audience: "parent" | "provider"
     <section data-ke="tour-calendar" data-tour="provider-tours" className="space-y-4">
       <div>
         <p className="text-sm font-semibold text-primary">KidEase</p>
-        <h1 className="mt-2 font-display text-3xl">{title}</h1>
+        <h1 className="mt-2 font-display text-3xl" data-tour="provider-tours-title">{title}</h1>
         <p className="mt-3 text-base">
           {fr
             ? "Voici les visites encore ouvertes. Le rappel reste dans vos avis."

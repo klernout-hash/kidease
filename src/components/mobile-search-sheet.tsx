@@ -177,6 +177,7 @@ export function MobileSearchHome({
         <button
           type="button"
           data-ke="msv2-pill"
+          data-tour="search-where"
           className="flex h-14 w-full items-center gap-3 rounded-full bg-bg px-4 text-left shadow-card ring-1 ring-border"
           onClick={() => setOpen(true)}
         >
@@ -269,6 +270,7 @@ export function MobileSearchResults({
         <button
           type="button"
           data-ke="msv2-summary"
+          data-tour="search-where"
           className="min-w-0 flex-1 rounded-full bg-surface px-4 py-2 text-left ring-1 ring-border"
           onClick={() => setOpen(true)}
         >

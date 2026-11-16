@@ -29,6 +29,15 @@ import {
   boxesOverlap,
   placeCoachBubble,
   presentCoachSteps,
+  isHelpCoda,
+  openingAnchor,
+  replayDecision,
+  replayOpens,
+  replayPath,
+  sameReplayPlace,
+  SEARCH_WHERE_ANCHOR,
+  TOURS,
+  stepAnchors,
 } from "../src/lib/first-run.ts";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -173,9 +182,17 @@ test("each main screen has one tour, and quiet desks stay quiet", () => {
 
 test("a missing target is skipped and the bubble stays off the target", () => {
   const slides = welcomeSlides(WELCOME_PARENT);
-  const visible = presentCoachSteps(slides, (selector) => selector.includes("help-button"));
-  assert.equal(visible.length, 1);
-  assert.equal(visible[0]?.title.en, "Help stays here");
+  assert.equal(slides.at(-1)?.title.en, "Help stays here");
+  assert.equal(isHelpCoda(slides.at(-1)), true);
+  assert.equal(slides[0]?.title.en, "Search here");
+  assert.equal(slides[0]?.anchors[0], SEARCH_WHERE_ANCHOR);
+  assert.equal(slides[0]?.anchors.includes('[data-tour="parent-search"]'), false);
+  const helpOnly = presentCoachSteps(slides, (selector) => selector.includes("help-button"));
+  assert.equal(helpOnly.length, 0);
+  const home = presentCoachSteps(slides, () => true);
+  assert.equal(home[0]?.title.en, "Search here");
+  assert.equal(home.at(-1)?.title.en, "Help stays here");
+  assert.equal(welcomeSlides(WELCOME_PROVIDER).at(-1)?.title.en, "Help stays here");
   const target = { top: 20, left: 16, width: 280, height: 56 };
   const placed = placeCoachBubble(target, { width: 260, height: 150 }, { width: 390, height: 844 });
   assert.equal(boxesOverlap(target, { ...placed, height: 150 }, 8), false);
@@ -183,6 +200,41 @@ test("a missing target is skipped and the bubble stays off the target", () => {
   const above = placeCoachBubble(low, { width: 260, height: 150 }, { width: 390, height: 844 });
   assert.equal(above.arrow, "down");
   assert.equal(boxesOverlap(low, { ...above, height: 150 }, 8), false);
+});
+
+test("search and replay anchors are data attributes, and a seen tour still replays", () => {
+  const slides = [...welcomeSlides(WELCOME_PARENT), ...welcomeSlides(WELCOME_PROVIDER)];
+  for (const slide of slides) {
+    for (const selector of stepAnchors(slide)) {
+      assert.match(selector, /\[data-/);
+      assert.doesNotMatch(selector, /nth-child|nth-of-type|:eq\(/);
+    }
+  }
+  for (const steps of Object.values(TOURS)) {
+    for (const step of steps) {
+      assert.match(step.anchor, /\[data-/);
+      assert.doesNotMatch(step.anchor, /nth-child|nth-of-type/);
+    }
+  }
+  assert.equal(TOURS["tour:parent:search"][0]?.anchor, SEARCH_WHERE_ANCHOR);
+  assert.equal(openingAnchor(welcomeSlides(WELCOME_PARENT), (selector) => selector === SEARCH_WHERE_ANCHOR), SEARCH_WHERE_ANCHOR);
+  assert.equal(openingAnchor(welcomeSlides(WELCOME_PARENT), (selector) => selector.includes("help-button")), null);
+  const seen = markSeen(EMPTY_ONBOARDING, WELCOME_PARENT);
+  assert.equal(replayOpens(WELCOME_PARENT, false, seen), false);
+  assert.equal(replayOpens(WELCOME_PARENT, true, seen), true);
+  assert.equal(replayOpens(WELCOME_PROVIDER, true, markSeen(seen, WELCOME_PROVIDER)), true);
+  assert.deepEqual(replayDecision(WELCOME_PARENT, "/help", "", false), { action: "go", path: "/" });
+  assert.deepEqual(replayDecision(WELCOME_PARENT, "/", "", true), { action: "play" });
+  assert.deepEqual(replayDecision(WELCOME_PARENT, "/fr", "", true), { action: "play" });
+  assert.deepEqual(replayDecision(WELCOME_PROVIDER, "/help", "", false), { action: "go", path: "/provider?desk=today" });
+  assert.deepEqual(replayDecision(WELCOME_PROVIDER, "/provider", "", true), { action: "play" });
+  assert.equal(sameReplayPlace("/fr/help", "", "/help"), true);
+  assert.equal(sameReplayPlace("/provider", "", "/provider?desk=today"), true);
+  assert.equal(sameReplayPlace("/provider", "?desk=requests", "/provider?desk=today"), false);
+  assert.equal(replayPath("tour:parent:search"), "/search");
+  assert.equal(replayPath("tour:provider:requests"), "/provider?desk=requests");
+  assert.deepEqual(replayDecision("tour:parent:search", "/help", "", false), { action: "go", path: "/search" });
+  assert.deepEqual(replayDecision(CHECKLIST_PARENT, "/parent", "", true), { action: "go", path: "/parent" });
 });
 
 test("help search finds French and English articles", () => {

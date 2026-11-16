@@ -81,7 +81,7 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
 
   const list = (
     <div data-tour="desk-messages">
-      <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]">{t("messages")}</h2>
+      <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]" data-tour="inbox-heading">{t("messages")}</h2>
       <label className="mt-3 block">
         <span className="sr-only">{t("inboxSearchThreads")}</span>
         <span className="flex h-11 items-center gap-2 rounded-full border border-border bg-surface px-3">

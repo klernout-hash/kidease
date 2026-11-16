@@ -288,6 +288,7 @@ export function ExploreSearchBar({
           <button
             type="button"
             data-ke="search-pill"
+            data-tour="search-where"
             className="flex min-h-[44px] min-w-[44px] flex-1 items-center gap-3 text-left"
             aria-expanded={false}
             aria-label={t("searchBarAria")}
@@ -355,6 +356,7 @@ export function ExploreSearchBar({
         )}
       >
         <div
+          data-tour="search-where"
           className={cn(
             segmentClass("where", 0),
             prominent ? "lg:min-w-0" : "lg:min-w-[12rem] lg:flex-[1.2]",

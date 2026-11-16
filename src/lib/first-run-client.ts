@@ -18,6 +18,33 @@ import { getOnboardingProgress, readFirstRunEnabled, saveOnboardingProgress } fr
 
 export const REPLAY_EVENT = "kidease-first-run-replay";
 const FORCE_KEY = "kidease-force-checklist";
+const REPLAY_FORCE_KEY = "kidease-force-replay";
+
+/** Survives the navigation a replay uses to reach its own page. */
+export function stashReplay(key: string) {
+  try {
+    window.sessionStorage.setItem(REPLAY_FORCE_KEY, key);
+  } catch {
+    /* private mode */
+  }
+}
+
+export function peekStashedReplay(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.sessionStorage.getItem(REPLAY_FORCE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function clearStashedReplay() {
+  try {
+    window.sessionStorage.removeItem(REPLAY_FORCE_KEY);
+  } catch {
+    /* private mode */
+  }
+}
 
 export function forceChecklist(key: string) {
   rememberReopen(key);
