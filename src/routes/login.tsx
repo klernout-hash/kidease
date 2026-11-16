@@ -1,3 +1,4 @@
+import { checkEmailStatus } from "@/lib/auth/email-status-client";
 import { createFileRoute, Link, useRouteContext, useRouter, useRouterState } from "@tanstack/react-router";
 import { authBackFallback, currentAuthBackFallback } from "@/lib/auth/auth-back";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
@@ -136,16 +137,19 @@ function LoginEmailControl({
   onOperator,
   onBlurEmail,
   onReviewer,
+  onEdit,
 }: {
   mode: "in" | "up";
   emailRef: MutableRefObject<string>;
   onOperator: (operator: boolean) => void;
   onBlurEmail: (email: string) => void;
   onReviewer: (reviewer: boolean) => void;
+  onEdit?: () => void;
 }) {
   const operator = useRef(false);
   const reviewer = useRef(false);
   function remember(email: string) {
+    if (email !== emailRef.current) onEdit?.();
     emailRef.current = email;
     const next = email.trim().toLowerCase() === OPERATOR_EMAIL;
     if (next !== operator.current) {
@@ -332,6 +336,13 @@ export function LoginScreen({
   });
   const { user, isPending: sessionPending } = useCurrentUserState();
   const [mode, setMode] = useState<"in" | "up">(search.intent === "up" ? "up" : "in");
+  // Clean look: one "Continue with email" step, then a password (account found) or a name and password (new).
+  const [emailFirst, setEmailFirst] = useState(false);
+  const [emailStep, setEmailStep] = useState<"email" | "rest">("email");
+  const [emailFound, setEmailFound] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (search.intent !== "admin" && document.documentElement.dataset.look === "clean") setEmailFirst(true);
+  }, [search.intent]);
   const nameRef = useRef("");
   const emailRef = useRef("");
   const passwordRef = useRef("");
@@ -339,6 +350,8 @@ export function LoginScreen({
   const [reviewerSignIn, setReviewerSignIn] = useState(false);
   const [emailLink, setEmailLink] = useState("");
   const parentSignup = mode === "up" && !operator && role !== "provider";
+  const askEmailOnly = emailFirst && emailStep === "email" && !operator;
+  const restHidden = askEmailOnly;
   const [phone, setPhone] = useState("");
   const [smsConsent, setSmsConsent] = useState(false);
   const [error, setError] = useState<string | null>(() => oauthErrorText(search.error));
@@ -614,6 +627,28 @@ export function LoginScreen({
 
   async function onEmail(e: FormEvent) {
     e.preventDefault();
+    if (askEmailOnly) {
+      const form = new FormData(e.currentTarget as HTMLFormElement);
+      const email = loginSubmittedText(form, "email", emailRef.current, true);
+      if (!email) {
+        setError(locale === "fr" ? "Entrez votre courriel." : "Enter your email.");
+        return;
+      }
+      setBusy(true);
+      setError(null);
+      try {
+        const status = await checkEmailStatus(email);
+        if (!status.valid) throw new Error(locale === "fr" ? "Vérifiez votre courriel." : "Check your email address.");
+        setEmailFound(status.exists);
+        setMode(status.exists ? "in" : "up");
+        setEmailStep("rest");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     void cancelPasskeyCeremony();
     if (submitLock.current) return;
     submitLock.current = true;
@@ -920,7 +955,7 @@ export function LoginScreen({
           </div>
           ) : null}
           <form method="post" action={loginPath} onSubmit={onEmail} className={`mt-6 space-y-3 ph-no-capture ${pickingRole ? "hidden" : ""}`} data-ke={operator ? "admin-email-first" : "email-sign-in"}>
-            {mode === "up" && !operator ? (
+            {mode === "up" && !operator && !restHidden ? (
               <label className="block text-sm">
                 {t("name")}
                 <LoginNameControl nameRef={nameRef} />
@@ -934,16 +969,31 @@ export function LoginScreen({
                 onOperator={setOperator}
                 onReviewer={setReviewerSignIn}
                 onBlurEmail={setEmailLink}
+                onEdit={() => {
+                  if (emailFirst && emailStep === "rest") {
+                    setEmailStep("email");
+                    setEmailFound(null);
+                  }
+                }}
               />
             </label>
+            {emailFirst && emailStep === "rest" && emailFound !== null && !operator ? (
+              <p className="text-sm text-muted" data-ke="email-first-status">
+                {emailFound
+                  ? locale === "fr" ? "Bon retour. Entrez votre mot de passe." : "Welcome back. Enter your password."
+                  : locale === "fr" ? "Nouveau sur KidEase. Ajoutez votre nom et un mot de passe pour créer votre compte." : "New to KidEase. Add your name and a password to create your account."}
+              </p>
+            ) : null}
+            {restHidden ? null : (
             <LoginPasswordControl
               mode={mode}
               showRules={mode === "up" && !operator}
               label={t("password")}
               passwordRef={passwordRef}
             />
-            {mode === "up" && !operator ? <ContinueAgeNotice /> : null}
-            {parentSignup ? (
+            )}
+            {mode === "up" && !operator && !restHidden ? <ContinueAgeNotice /> : null}
+            {parentSignup && !restHidden ? (
               <ParentSmsFields phone={phone} onPhone={setPhone} consent={smsConsent} onConsent={setSmsConsent} />
             ) : null}
             {/* Store reviewers skip the widget; the server bypass (reviewerSignInSkipsTurnstile) still applies only to sign-in. */}
@@ -990,9 +1040,11 @@ export function LoginScreen({
               size="lg"
               className="w-full min-h-12"
               data-ke="email-primary"
-              disabled={busy || (turnstileRequired && !token.trim())}
+              disabled={busy || (!askEmailOnly && turnstileRequired && !token.trim())}
             >
-              {busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
+              {askEmailOnly
+                ? locale === "fr" ? "Continuer" : "Continue"
+                : busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
             {mode === "in" && !nativeIosSkipsPasskey() ? (
               <Button
@@ -1022,7 +1074,7 @@ export function LoginScreen({
               </p>
             </div>
           ) : null}
-          {!operator && !pickingRole ? (
+          {!operator && !pickingRole && !emailFirst ? (
           <button
             type="button"
             className="mt-4 inline-flex min-h-[44px] min-w-[44px] items-center text-sm text-muted underline-offset-4 hover:underline"

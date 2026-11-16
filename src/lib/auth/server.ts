@@ -85,6 +85,7 @@ import {
   SHARED_SESSION_TOKEN_COOKIE,
   unsignedSessionToken,
 } from "./cookies";
+import { EMAIL_STATUS_MAX, EMAIL_STATUS_WINDOW_S, emailStatusPlugin } from "./email-status-plugin";
 import { AUTH_FORGOT_MAX, AUTH_LOGIN_MAX, AUTH_SIGNUP_MAX } from "@/lib/auth-rate-limit";
 import { passkeyPlugin } from "./passkey-plugin";
 import { PASSKEY_RATE_MAX } from "@/lib/passkey-policy";
@@ -445,6 +446,7 @@ export const auth = betterAuth({
     customRules: {
       "/sign-in/email": { window: 60, max: AUTH_LOGIN_MAX },
       "/sign-up/email": { window: 60, max: AUTH_SIGNUP_MAX },
+      "/email-status": { window: EMAIL_STATUS_WINDOW_S, max: EMAIL_STATUS_MAX },
       "/forget-password": { window: 60, max: AUTH_FORGOT_MAX },
       "/request-password-reset": { window: 60, max: AUTH_FORGOT_MAX },
       "/passkey/login/options": { window: 600, max: PASSKEY_RATE_MAX },
@@ -521,6 +523,9 @@ export const auth = betterAuth({
     // WebAuthn passkeys. Before bearer() so a new session still sets
     // set-auth-token for the Capacitor shell. tanstackStartCookies stays last.
     passkeyPlugin(),
+
+    // Email-first sign-in: does this email already have an account?
+    emailStatusPlugin(),
 
     // Accept `Authorization: Bearer <session-token>` as an alternative to the
     // cookie. Needed for the LIVE PREVIEW: the app runs in an embedded iframe
