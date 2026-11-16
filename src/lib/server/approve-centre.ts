@@ -218,8 +218,10 @@ export async function runApproval(
     visibility: flags.visibility,
     isTest: flags.isTest,
   });
-  const visibility = keepHidden ? "admin_only" : flags.visibility;
-  const isTest = keepHidden ? 1 : flags.isTest;
+  if (keepHidden) {
+    flags.visibility = "admin_only";
+    flags.isTest = 1;
+  }
   const markFounding = !subscriptionsEnabled() && row.id !== PROTECTED_LISTING_ID;
   try {
     await sql`
@@ -234,8 +236,8 @@ export async function runApproval(
           registry_match_state = 'matched',
           license_verification_source = ${next.licenseVerificationSource || "admin"},
           license_verified_at = coalesce(license_verified_at, now()),
-          visibility = ${visibility},
-          is_test = ${isTest}
+          visibility = ${flags.visibility},
+          is_test = ${flags.isTest}
       where id = ${row.id}
     `;
     await syncVerifiedLocation(sql, row.id, Number(next.lat), Number(next.lng));
@@ -250,8 +252,8 @@ export async function runApproval(
           screening: false,
           trust: false,
           photos: "not_required",
-          visibility,
-          isTest,
+          visibility: flags.visibility,
+          isTest: flags.isTest,
         }),
       });
     }

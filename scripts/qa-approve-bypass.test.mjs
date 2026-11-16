@@ -97,8 +97,9 @@ test("a QA fixture can be approved without screening and stays off public surfac
   const approve = src("src/lib/server/approve-centre.ts");
   assert.match(approve, /qa_approve_bypass/);
   assert.match(approve, /writeTrustEvent/);
-  assert.match(approve, /visibility = \$\{visibility\}/);
-  assert.match(approve, /is_test = \$\{isTest\}/);
+  assert.match(approve, /flags\.visibility = "admin_only"/);
+  assert.match(approve, /flags\.isTest = 1/);
+  assert.match(approve, /is_test = \$\{flags\.isTest\}/);
   assert.match(src("src/lib/server/family.ts"), /isAdminOnlyListing/);
   assert.match(src("src/lib/server/map-pins.ts"), /PUBLIC_LISTING_SQL/);
   assert.match(src("src/lib/sitemap.ts"), /isPublicListing/);
