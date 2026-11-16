@@ -27,7 +27,7 @@ export function CertExpiryPanel() {
   }, []);
 
   return (
-    <section className="rounded-xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="cert-expiry">
+    <section className="min-h-44 rounded-xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="cert-expiry">
       <h2 className="font-display text-xl">{fr ? "Certificats du personnel" : "Staff certificates"}</h2>
       <p className="mt-2 text-sm">
         {fr

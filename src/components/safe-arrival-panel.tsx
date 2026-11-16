@@ -6,7 +6,7 @@ export function SafeArrivalPanel() {
   const { locale } = useCopy();
   const fr = locale === "fr";
   return (
-    <section className="rounded-xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="safe-arrival">
+    <section className="min-h-44 rounded-xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="safe-arrival">
       <h2 className="font-display text-xl">{fr ? "Arrivée sûre" : "Safe arrival"}</h2>
       <p className="mt-2 text-sm">
         {fr

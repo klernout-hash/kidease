@@ -10,7 +10,7 @@ import { useCopy } from "@/lib/use-copy";
 export function FamilyInviteGap() {
   const { locale } = useCopy();
   const fr = locale === "fr";
-  const [on, setOn] = useState(false);
+  const [on, setOn] = useState<boolean | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -26,6 +26,9 @@ export function FamilyInviteGap() {
     };
   }, []);
 
+  if (on == null) {
+    return <div className="min-h-44" data-ke="family-invite-gap" aria-busy="true" />;
+  }
   if (!on) return null;
 
   return (

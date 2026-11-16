@@ -18,6 +18,7 @@ import {
   parentQuickStart,
   parseOnboardingState,
   providerSetup,
+  showProviderSetupCard,
   readinessLabel,
   readinessPercent,
   reopenChecklist,
@@ -95,6 +96,23 @@ test("server and this-device memory stay seen once either side has seen it", () 
   assert.equal(shouldAutoShow(merged, WELCOME_PARENT), false);
   assert.equal(shouldAutoShow(merged, WELCOME_PROVIDER), false);
   assert.equal(shouldAutoShow(merged, "tour:parent:search"), false);
+});
+
+test("staff and a daycare with no centre do not get the owner setup card", () => {
+  assert.equal(showProviderSetupCard("staff", true), false);
+  assert.equal(showProviderSetupCard("read_only", true), false);
+  assert.equal(showProviderSetupCard("owner", false), false);
+  assert.equal(showProviderSetupCard(null, true), false);
+  assert.equal(showProviderSetupCard("owner", true), true);
+  assert.equal(showProviderSetupCard("manager", true), true);
+  const provider = readFileSync(new URL("../src/routes/provider.tsx", import.meta.url), "utf8");
+  assert.match(provider, /data-ke="provider-setup-reserve"/);
+  assert.match(provider, /data-ke="provider-claim-only"/);
+  assert.match(provider, /data-ke="staff-today"/);
+  assert.match(provider, /data-ke="staff-hours-link"/);
+  const host = readFileSync(new URL("../src/components/first-run.tsx", import.meta.url), "utf8");
+  assert.match(host, /provider-setup-reserve/);
+  assert.match(host, /showProviderSetupCard/);
 });
 
 test("the provider checklist ticks a step only from real facts", () => {
