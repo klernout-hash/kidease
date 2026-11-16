@@ -39,6 +39,7 @@ export type StripeInvoiceView = {
   invoicePdf: string | null;
   daycareName: string | null;
   viewer: "parent" | "daycare";
+  payPath?: string | null;
 };
 
 type InvoiceRow = {
@@ -250,8 +251,64 @@ export const listMyStripeInvoices = createServerFn({ method: "GET" })
         params,
       )
       .catch(() => [] as InvoiceRow[]);
-    return { invoices: rows.map((row) => toView(row, context.userId)) };
+    const centreBills = await listCentreBillsForDesk(sql, homeId, daycareIds);
+    return { invoices: [...centreBills, ...rows.map((row) => toView(row, context.userId))] };
   });
+
+async function listCentreBillsForDesk(sql: Sql, homeId: string, daycareIds: string[]): Promise<StripeInvoiceView[]> {
+  const params: unknown[] = [homeId];
+  let daycareClause = "false";
+  if (daycareIds.length) {
+    const marks = daycareIds.map((id, index) => {
+      params.push(id);
+      return `$${index + 2}`;
+    });
+    daycareClause = `i.daycare_id in (${marks.join(", ")})`;
+  }
+  const rows = await sql
+    .query<{
+      id: string;
+      number: string;
+      amount_cents: number | null;
+      currency: string | null;
+      status: string;
+      paid_at: string | Date | null;
+      parent_user_id: string | null;
+      daycare_id: string | null;
+      daycare_name: string | null;
+    }>(
+      `select i.id, i.number, i.amount_cents, i.currency, i.status, i.paid_at, i.parent_user_id, i.daycare_id, d.name as daycare_name
+       from invoices i
+       join daycares d on d.id = i.daycare_id
+       where i.status in ('sent', 'paid', 'void', 'refunded')
+         and (i.parent_user_id = $1 or ${daycareClause})
+       order by i.created_at desc
+       limit 100`,
+      params,
+    )
+    .catch(() => []);
+  const views: StripeInvoiceView[] = [];
+  for (const row of rows) {
+    const status: ParentInvoiceStatus = row.status === "paid" ? "paid" : row.status === "sent" ? "open" : "failed";
+    const paidAt = row.paid_at instanceof Date ? row.paid_at.toISOString() : row.paid_at;
+    const base = {
+      number: row.number,
+      amountCents: row.amount_cents,
+      currency: row.currency || "cad",
+      status,
+      paidAt: paidAt || null,
+      hostedInvoiceUrl: null,
+      invoicePdf: null,
+      daycareName: row.daycare_name || null,
+      payPath: `/pay/bill/${row.id}`,
+    };
+    if (row.parent_user_id === homeId) views.push({ ...base, id: row.id, viewer: "parent" });
+    if (row.daycare_id && daycareIds.includes(row.daycare_id)) {
+      views.push({ ...base, id: `${row.id}:centre`, viewer: "daycare" });
+    }
+  }
+  return views;
+}
 
 export const getMyStripeInvoice = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
