@@ -17,9 +17,16 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
         return descriptor
     }
 
+    /// In-app path from a home-screen shortcut. Other URLs are ignored.
+    func openAppPath(_ path: String) {
+        guard path.hasPrefix("/"), !path.hasPrefix("//"), !path.contains("'"), !path.contains("\\") else { return }
+        webView?.evaluateJavaScript("window.location.assign('\(path)')")
+    }
+
     override open func capacitorDidLoad() {
         super.capacitorDidLoad()
         bridge?.registerPluginInstance(AppleSignInPlugin())
+        bridge?.registerPluginInstance(ApplePlatformPlugin())
         bridge?.registerPluginInstance(AuthSessionPlugin())
         bridge?.registerPluginInstance(CallKitVoipPlugin())
         bridge?.registerPluginInstance(AdminWebOnlyPlugin())

@@ -202,6 +202,9 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_AI_DAILY_UPDATE",
   "FEATURE_AI_REVIEW_REQUEST",
   "FEATURE_AI_SMART_STAFFING",
+  "FEATURE_APPLE_LIVE_ACTIVITIES",
+  "FEATURE_APPLE_APP_SHORTCUTS",
+  "FEATURE_APPLE_HOME_WIDGET",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -576,6 +579,12 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_AI_REVIEW_REQUEST: false,
   /** Count children and educators the centre typed. Off. Not a licensing decision. */
   FEATURE_AI_SMART_STAFFING: false,
+  /** iOS Live Activity for a pickup or drop-off. Off. No push. Needs the Info.plist key. */
+  FEATURE_APPLE_LIVE_ACTIVITIES: false,
+  /** iOS home-screen quick actions. Off. Nothing is added until this is on. */
+  FEATURE_APPLE_APP_SHORTCUTS: false,
+  /** iOS home-screen widget snapshot. Off. The widget target is not in the app yet. */
+  FEATURE_APPLE_HOME_WIDGET: false,
 };
 
 /**
@@ -1383,6 +1392,24 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_AI_DAILY_UPDATE", defaultOn: false, docs: "docs/flags.md", summary: "Draft a daily note from what the centre typed. Off. Nothing is sent." },
   { key: "FEATURE_AI_REVIEW_REQUEST", defaultOn: false, docs: "docs/flags.md", summary: "Draft a note asking a parent to write their own visit note. Off. Nothing is sent." },
   { key: "FEATURE_AI_SMART_STAFFING", defaultOn: false, docs: "docs/flags.md", summary: "Count children and educators the centre typed. Off. Not a licensing decision." },
+  {
+    key: "FEATURE_APPLE_LIVE_ACTIVITIES",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "iOS pickup or drop-off Live Activity. Off. No push is sent. The Info.plist key stays unset.",
+  },
+  {
+    key: "FEATURE_APPLE_APP_SHORTCUTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "iOS home-screen shortcuts for search, saved centres, and help. Off. No items are added.",
+  },
+  {
+    key: "FEATURE_APPLE_HOME_WIDGET",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "iOS home-screen widget line. Off. No child name, fee, or rating is written.",
+  },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;

@@ -222,6 +222,9 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_CENTRE_LEAD_TRACKER` | Family steps on the daycare desk at `/provider/leads`. Default off. Uses messages, tours, waitlists, and enrolments the family already shared. In-app notices only. Mail, text, and push stay held. |
 | `FEATURE_CENTRE_API` | Centre API at `/api/v1/centre/leads` and docs at `/daycare-api`. Default off. Also needs `FEATURE_CENTRE_LEAD_TRACKER`. Keys are hashed. Child health is refused. Webhooks stay off until the centre turns them on. Signing secrets are encrypted with `CENTRE_WEBHOOK_KEY` and opened only while signing. |
 | `FEATURE_CENTRE_DOCUMENTS` | Daycare document checklist and completion score. Default off. Files stay private in storage. Expiry reminders are in the app only. No email or SMS. |
+| `FEATURE_APPLE_LIVE_ACTIVITIES` | iOS lock-screen pickup or drop-off card. Default off. No push. Also needs `NSSupportsLiveActivities` in Info.plist, which stays unset. |
+| `FEATURE_APPLE_APP_SHORTCUTS` | iOS home-screen shortcuts for search, saved centres, and help. Default off. No items are added. |
+| `FEATURE_APPLE_HOME_WIDGET` | iOS widget snapshot with public search copy. Default off. The widget extension is not in the Xcode target. |
 | `BRANDED_EMAILS` | Env only, not a PostHog flag. Default off. When `1`, notification email uses the KidEase layout (logo, button, plain-text part, one-click unsubscribe). Unset keeps today's bodies. Do not turn on until `send.kidease.ca` mail DNS is confirmed. |
 
 ## What is wired

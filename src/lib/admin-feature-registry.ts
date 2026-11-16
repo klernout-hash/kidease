@@ -191,6 +191,9 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_AI_DAILY_UPDATE: "daycare",
   FEATURE_AI_REVIEW_REQUEST: "daycare",
   FEATURE_AI_SMART_STAFFING: "daycare",
+  FEATURE_APPLE_LIVE_ACTIVITIES: "parent",
+  FEATURE_APPLE_APP_SHORTCUTS: "shared",
+  FEATURE_APPLE_HOME_WIDGET: "shared",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
