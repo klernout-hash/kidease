@@ -3545,5 +3545,11 @@
   "adminNavPayroll": "Paghe",
   "adminNavSubsidy": "Sussidio",
   "employeeInviteRole": "Questo invito è per il ruolo {role}.",
-  "parentStoriesHint": "Note dal nido"
+  "parentStoriesHint": "Note dal nido",
+  "deskNavDocuments": "Documenti",
+  "deskNavDocumentsHint": "Assicurazione, regole e guida",
+  "employeeResend": "Reinvia invito",
+  "employeeResent": "Invito inviato di nuovo.",
+  "employeeResendHeld": "Quell'invito non è stato inviato per email.",
+  "employeeResendFailed": "Impossibile reinviare quell'invito."
 }

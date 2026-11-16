@@ -98,6 +98,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "centre-care", label: "Care", hint: "Check-in, logs, and family files", labelKey: "dailyCare", hintKey: "dailyCareHint", href: "/provider", search: { desk: "care" } },
     { id: "money", label: "Earnings", hint: "Payouts, invoices, and payment history", labelKey: "deskNavMoney", hintKey: "deskNavMoneyHint", href: "/provider", search: { desk: "money" } },
     { id: "licence", label: "Licence", hint: "Trust checklist + photo", labelKey: "listingCoachOpenLicence", hintKey: "deskNavLicenceHint", href: "/provider", search: { desk: "licence" } },
+    { id: "centre-documents", label: "Documents", hint: "Insurance, policies, and handbook", labelKey: "deskNavDocuments", hintKey: "deskNavDocumentsHint", href: "/provider", search: { desk: "documents" } },
     { id: "contract", label: "Contract", hint: "Agreement + enrolment packs", labelKey: "deskNavContract", hintKey: "deskNavContractHint", href: "/provider", search: { desk: "contract" } },
     { id: "promote", label: "Promote", hint: "Promote and add-ons", labelKey: "deskNavPromote", hintKey: "deskNavPromoteHint", href: "/provider", search: { desk: "promote" } },
     { id: "post-job", label: "Post a daycare job", labelKey: "postDaycareJob", href: "/jobs/post" },
@@ -149,6 +150,7 @@ export type DaycareDesk =
   | "tours"
   | "calendar"
   | "licence"
+  | "documents"
   | "contract"
   | "promote"
   | "employees"
@@ -173,6 +175,7 @@ export function providerNavSearch(id: string): { desk: DaycareDesk } {
     id === "tours" ||
     id === "calendar" ||
     id === "licence" ||
+    id === "documents" ||
     id === "contract" ||
     id === "promote" ||
     id === "employees" ||
@@ -375,7 +378,7 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
     { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "listings", "calendar", "insights", "top-rated", "requests", "leads", "tours", "messages"] },
     { id: "business", label: "Business", labelKey: "navBusiness", open: true, itemIds: ["money", "promote"] },
     { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "hours", "screening", "learning", "tools", "centre-care"] },
-    { id: "compliance", label: "Compliance", labelKey: "navCompliance", itemIds: ["licence", "contract"] },
+    { id: "compliance", label: "Compliance", labelKey: "navCompliance", itemIds: ["licence", "centre-documents", "contract"] },
     { id: "grow", label: "Grow", labelKey: "navGrow", itemIds: ["post-job", "add", "claim"] },
     { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "subscription", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },

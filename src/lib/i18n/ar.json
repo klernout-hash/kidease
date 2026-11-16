@@ -3545,5 +3545,11 @@
   "adminNavPayroll": "الرواتب",
   "adminNavSubsidy": "الدعم",
   "employeeInviteRole": "هذه الدعوة لدور {role}.",
-  "parentStoriesHint": "ملاحظات من دار الحضانة"
+  "parentStoriesHint": "ملاحظات من دار الحضانة",
+  "deskNavDocuments": "المستندات",
+  "deskNavDocumentsHint": "التأمين والسياسات والدليل",
+  "employeeResend": "إعادة إرسال الدعوة",
+  "employeeResent": "أُعيد إرسال الدعوة.",
+  "employeeResendHeld": "لم تُرسل تلك الدعوة بالبريد.",
+  "employeeResendFailed": "تعذر إعادة إرسال تلك الدعوة."
 }

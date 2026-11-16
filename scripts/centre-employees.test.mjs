@@ -7,8 +7,10 @@ import {
   CENTRE_INVITE_BAD_EMAIL,
   CENTRE_INVITE_DUPLICATE,
   CENTRE_INVITE_HOURLY_MAX,
+  CENTRE_INVITE_NOT_FOUND,
   CENTRE_INVITE_NOT_OWNER,
   CENTRE_INVITE_RATE_LIMITED,
+  CENTRE_INVITE_RESEND_WAIT,
   CENTRE_INVITE_SELF,
   CENTRE_REVOKE_OWNER,
   CENTRE_STAFF_FORBIDDEN,
@@ -20,6 +22,7 @@ import {
   centreDeskCaps,
   decideAcceptInvite,
   decideInviteEmployee,
+  decideResendInvite,
   decideRevokeEmployee,
   maxCentreRole,
   parseCentreInviteRole,
@@ -146,6 +149,27 @@ test("accept invite requires matching mailbox and a live pending token", () => {
   );
 });
 
+test("a pending invite can be resent after ten minutes, and the same caps still apply", () => {
+  const now = Date.parse("2026-11-15T12:00:00Z");
+  const base = {
+    actorRole: "owner",
+    inviteStatus: "pending",
+    createdAtMs: now - 11 * 60 * 1000,
+    lastResentAtMs: null,
+    nowMs: now,
+    hourlyCount: 0,
+    dailyCount: 0,
+  };
+  assert.equal(decideResendInvite(base).ok, true);
+  assert.equal(decideResendInvite({ ...base, createdAtMs: now - 60 * 1000 }).error, CENTRE_INVITE_RESEND_WAIT);
+  assert.equal(decideResendInvite({ ...base, actorRole: "staff" }).error, CENTRE_INVITE_NOT_OWNER);
+  assert.equal(decideResendInvite({ ...base, inviteStatus: "accepted" }).error, CENTRE_INVITE_NOT_FOUND);
+  assert.equal(
+    decideResendInvite({ ...base, hourlyCount: CENTRE_INVITE_HOURLY_MAX }).error,
+    CENTRE_INVITE_RATE_LIMITED,
+  );
+});
+
 test("EN and FR-CA employee labels exist and match", () => {
   const dict = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   for (const key of [
@@ -153,6 +177,7 @@ test("EN and FR-CA employee labels exist and match", () => {
     "employeeAddTitle",
     "employeeAddSubmit",
     "employeeRoleStaff",
+    "employeeResend",
     "employeeRevoke",
     "employeeInviteTitle",
   ]) {
@@ -167,7 +192,9 @@ test("wire: Neon membership, Better Auth invite, owner revoke, king-admin untouc
   assert.match(migration, /create table if not exists centre_members/);
   assert.match(migration, /create table if not exists centre_invites/);
   assert.match(migration, /provider_daycares/);
-  assert.match(src("src/lib/server/centre-members.ts"), /inviteCentreEmployee/);
+  assert.match(src("src/lib/server/centre-members.ts"), /resendCentreInvite/);
+  assert.match(src("src/lib/server/centre-members.ts"), /trySendEmployeeInviteEmail/);
+  assert.match(src("src/components/centre-employees.tsx"), /data-ke="employee-resend"/);
   assert.match(src("src/lib/server/centre-members.ts"), /revokeCentreEmployee/);
   assert.match(src("src/lib/server/centre-members.ts"), /acceptCentreInvite/);
   assert.match(src("src/lib/server/centre-members.ts"), /employee_invite/);

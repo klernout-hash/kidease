@@ -30,6 +30,7 @@ function hostGroups(pathname: string): Group[] {
         { en: "Listings", fr: "Fiches", icon: "daycare", to: desk, search: { desk: "listings" }, marker: "listings" },
         { en: "Hours and open spots", fr: "Heures et places", icon: "howItWorks", to: desk, search: { desk: "hours" }, marker: "hours" },
         { en: "Licence", fr: "Permis", icon: "verify", to: desk, search: { desk: "licence" }, marker: "licence" },
+        { en: "Documents", fr: "Documents", icon: "privacy", to: desk, search: { desk: "documents" }, marker: "centre-documents" },
         { en: "Top Rated", fr: "Mieux noté", icon: "rate", to: desk, search: { desk: "top-rated" }, marker: "top-rated" },
       ],
     },

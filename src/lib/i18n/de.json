@@ -3545,5 +3545,11 @@
   "adminNavPayroll": "Lohn",
   "adminNavSubsidy": "Zuschuss",
   "employeeInviteRole": "Diese Einladung ist für die Rolle {role}.",
-  "parentStoriesHint": "Notizen von Ihrer Kita"
+  "parentStoriesHint": "Notizen von Ihrer Kita",
+  "deskNavDocuments": "Dokumente",
+  "deskNavDocumentsHint": "Versicherung, Regeln und Handbuch",
+  "employeeResend": "Einladung erneut senden",
+  "employeeResent": "Einladung erneut gesendet.",
+  "employeeResendHeld": "Diese Einladung wurde nicht per E-Mail gesendet.",
+  "employeeResendFailed": "Diese Einladung konnte nicht erneut gesendet werden."
 }

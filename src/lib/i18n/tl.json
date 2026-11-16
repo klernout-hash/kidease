@@ -3545,5 +3545,11 @@
   "adminNavPayroll": "Payroll",
   "adminNavSubsidy": "Subsidy",
   "employeeInviteRole": "Ang imbitasyong ito ay para sa papel na {role}.",
-  "parentStoriesHint": "Mga tala mula sa iyong daycare"
+  "parentStoriesHint": "Mga tala mula sa iyong daycare",
+  "deskNavDocuments": "Mga dokumento",
+  "deskNavDocumentsHint": "Insurance, mga patakaran, at handbook",
+  "employeeResend": "Ipadala muli ang imbitasyon",
+  "employeeResent": "Naipadala muli ang imbitasyon.",
+  "employeeResendHeld": "Hindi na-email ang imbitasyong iyon.",
+  "employeeResendFailed": "Hindi maipadala muli ang imbitasyong iyon."
 }
