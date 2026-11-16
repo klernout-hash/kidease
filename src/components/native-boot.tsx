@@ -49,6 +49,15 @@ export function NativeBoot() {
   const appleWidget = useRouterState({
     select: (s) => s.matches.some((match) => (match.context as { appleHomeWidget?: boolean }).appleHomeWidget === true),
   });
+  const playUpdates = useRouterState({
+    select: (s) => s.matches.some((match) => (match.context as { playUpdates?: boolean }).playUpdates === true),
+  });
+  const playShortcuts = useRouterState({
+    select: (s) => s.matches.some((match) => (match.context as { playShortcuts?: boolean }).playShortcuts === true),
+  });
+  const playIntegrity = useRouterState({
+    select: (s) => s.matches.some((match) => (match.context as { playIntegrity?: boolean }).playIntegrity === true),
+  });
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);
   const setAnchorMode = useAppStore((s) => s.setAnchorMode);
@@ -182,6 +191,16 @@ export function NativeBoot() {
       if (appleWidget === true) void mod.writeAppleHomeWidget(true, locale);
     });
   }, [appleShortcuts, appleWidget]);
+
+  useEffect(() => {
+    if (playUpdates !== true && playShortcuts !== true && playIntegrity !== true) return;
+    const locale = document.documentElement.lang.toLowerCase().startsWith("fr") ? "fr" : "en";
+    void import("@/lib/google/platform-client").then((mod) => {
+      if (playUpdates === true) void mod.checkPlayUpdate(true);
+      if (playShortcuts === true) void mod.applyPlayShortcuts(true, locale);
+      if (playIntegrity === true) void mod.requestPlayIntegrity(true);
+    });
+  }, [playUpdates, playShortcuts, playIntegrity]);
 
   useLayoutEffect(() => {
     const stop = startChannelListener();

@@ -4,5 +4,7 @@ package ca.kidease.app;
 final class StorePlugins {
     private StorePlugins() {}
 
-    static void register(MainActivity activity) {}
+    static void register(MainActivity activity) {
+        activity.registerStorePlugin(PlayPlatformPlugin.class);
+    }
 }

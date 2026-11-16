@@ -205,6 +205,9 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_APPLE_LIVE_ACTIVITIES",
   "FEATURE_APPLE_APP_SHORTCUTS",
   "FEATURE_APPLE_HOME_WIDGET",
+  "FEATURE_PLAY_IN_APP_UPDATES",
+  "FEATURE_PLAY_APP_SHORTCUTS",
+  "FEATURE_PLAY_INTEGRITY",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -585,6 +588,12 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_APPLE_APP_SHORTCUTS: false,
   /** iOS home-screen widget snapshot. Off. The widget target is not in the app yet. */
   FEATURE_APPLE_HOME_WIDGET: false,
+  /** Play in-app update check. Off. No Play UI until an update exists and this is on. */
+  FEATURE_PLAY_IN_APP_UPDATES: false,
+  /** Play home-screen shortcuts. Off. No items are added. */
+  FEATURE_PLAY_APP_SHORTCUTS: false,
+  /** Play Integrity request. Off. No token is stored or logged. */
+  FEATURE_PLAY_INTEGRITY: false,
 };
 
 /**
@@ -1409,6 +1418,24 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "iOS home-screen widget line. Off. No child name, fee, or rating is written.",
+  },
+  {
+    key: "FEATURE_PLAY_IN_APP_UPDATES",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Play flexible in-app update. Off. No update check until this is on.",
+  },
+  {
+    key: "FEATURE_PLAY_APP_SHORTCUTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Play home-screen shortcuts for search, saved centres, and help. Off.",
+  },
+  {
+    key: "FEATURE_PLAY_INTEGRITY",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Play Integrity check. Off. The token is not returned to the page and is not logged.",
   },
 ];
 

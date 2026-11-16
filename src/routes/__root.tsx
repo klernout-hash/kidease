@@ -160,6 +160,9 @@ export const Route = createRootRoute({
       ...(storeRead.appleLiveActivities ? { appleLiveActivities: true as const } : {}),
       ...(storeRead.appleShortcuts ? { appleShortcuts: true as const } : {}),
       ...(storeRead.appleHomeWidget ? { appleHomeWidget: true as const } : {}),
+      ...(storeRead.playUpdates ? { playUpdates: true as const } : {}),
+      ...(storeRead.playShortcuts ? { playShortcuts: true as const } : {}),
+      ...(storeRead.playIntegrity ? { playIntegrity: true as const } : {}),
     };
   },
   errorComponent: (props) => {
