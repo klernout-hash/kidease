@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState, useSearch } from "@tanstack/react-router";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { centreCanAccessPrivileged, centreCanMutateListingDetails, centreCanWriteLeads } from "@/lib/centre-roles";
@@ -58,6 +58,8 @@ import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { useCentreAgreementChips } from "@/components/use-centre-agreement-chips";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { CapacityForm, Field } from "@/components/provider-listing-forms";
+import { RequiredMark } from "@/components/required-field";
+import { PROVINCES, provinceFromPostalCode } from "@/lib/geo";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
 import {
   downgradeListingPhotoFile,
@@ -317,6 +319,7 @@ export function ProviderPage() {
     name: "",
     address: "",
     city: "",
+    province: "",
     postalCode: "",
     licenseNumber: "",
     infantMonthly: 0,
@@ -332,6 +335,7 @@ export function ProviderPage() {
   const [publishing, setPublishing] = useState(false);
   const [publishMessage, setPublishMessage] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const [missingFields, setMissingFields] = useState<string[]>([]);
+  const provinceLocked = useRef(false);
 
   async function load() {
     try {
@@ -925,7 +929,47 @@ export function ProviderPage() {
               <Field name="licenseNumber" required french={locale === "fr"} invalid={missingFields.includes("licenseNumber")} label={t("licenceNo")} value={form.licenseNumber} onChange={(v) => setForm({ ...form, licenseNumber: v })} />
               <Field name="address" required french={locale === "fr"} invalid={missingFields.includes("address")} label={t("addressLabel")} value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
               <Field name="city" required french={locale === "fr"} invalid={missingFields.includes("city")} label={t("cityLabel")} value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
-              <Field name="postalCode" required french={locale === "fr"} invalid={missingFields.includes("postalCode")} label={t("postalLabel")} value={form.postalCode} onChange={(v) => setForm({ ...form, postalCode: v })} />
+              <Field
+                name="postalCode"
+                required
+                french={locale === "fr"}
+                invalid={missingFields.includes("postalCode")}
+                label={t("postalLabel")}
+                value={form.postalCode}
+                onChange={(v) => {
+                  const guessed = provinceFromPostalCode(v);
+                  setForm((current) => ({
+                    ...current,
+                    postalCode: v,
+                    province: provinceLocked.current ? current.province : guessed || current.province,
+                  }));
+                }}
+              />
+              <label className="text-sm font-medium text-fg">
+                <span>
+                  {t("provinceLabel")}
+                  <RequiredMark french={locale === "fr"} />
+                </span>
+                <select
+                  name="province"
+                  required
+                  aria-invalid={missingFields.includes("province") || undefined}
+                  aria-required="true"
+                  className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3 text-fg"
+                  value={form.province}
+                  onChange={(e) => {
+                    provinceLocked.current = true;
+                    setForm((current) => ({ ...current, province: e.target.value }));
+                  }}
+                >
+                  <option value="">{locale === "fr" ? "Choisir une province" : "Choose a province"}</option>
+                  {PROVINCES.map((row) => (
+                    <option key={row.code} value={row.code}>
+                      {locale === "fr" ? row.nameFr : row.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <Field name="infantMonthly" label={`${t("infantFee")} CAD`} value={form.infantMonthly ? String(form.infantMonthly) : ""} onChange={(v) => setForm({ ...form, infantMonthly: Number(v) || 0 })} />
               <Field name="toddlerMonthly" label={`${t("toddlerFee")} CAD`} value={form.toddlerMonthly ? String(form.toddlerMonthly) : ""} onChange={(v) => setForm({ ...form, toddlerMonthly: Number(v) || 0 })} />
               <Field name="preschoolMonthly" label={`${t("preschoolFee")} CAD`} value={form.preschoolMonthly ? String(form.preschoolMonthly) : ""} onChange={(v) => setForm({ ...form, preschoolMonthly: Number(v) || 0 })} />

@@ -46,6 +46,53 @@ export const PROVINCES: Array<{
   { code: "NU", name: "Nunavut", nameFr: "Nunavut", lat: 63.7467, lng: -68.517, label: "Iqaluit, NU" },
 ];
 
+/** First letter of a Canadian postal code, except X which splits Nunavut and the Northwest Territories. */
+const POSTAL_PROVINCE: Record<string, string> = {
+  A: "NL",
+  B: "NS",
+  C: "PE",
+  E: "NB",
+  G: "QC",
+  H: "QC",
+  J: "QC",
+  K: "ON",
+  L: "ON",
+  M: "ON",
+  N: "ON",
+  P: "ON",
+  R: "MB",
+  S: "SK",
+  T: "AB",
+  V: "BC",
+  Y: "YT",
+};
+
+export function isCanadianProvinceCode(code: string | null | undefined): boolean {
+  const value = String(code || "").trim().toUpperCase();
+  return PROVINCES.some((row) => row.code === value);
+}
+
+/** Best province or territory for a Canadian postal code. Empty when the code is not Canadian. */
+export function provinceFromPostalCode(postal: string | null | undefined): string | null {
+  const compact = String(postal || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+  if (!compact) return null;
+  const first = compact[0] || "";
+  if (first === "X") {
+    const fsa = compact.slice(0, 3);
+    if (fsa === "X0A" || fsa === "X0B" || fsa === "X0C") return "NU";
+    return "NT";
+  }
+  return POSTAL_PROVINCE[first] || null;
+}
+
+export function provincePin(code: string | null | undefined): { lat: number; lng: number } {
+  const value = String(code || "").trim().toUpperCase();
+  const hit = PROVINCES.find((row) => row.code === value);
+  return { lat: hit?.lat ?? 49.8951, lng: hit?.lng ?? -97.1384 };
+}
+
 export const CITIES: CityHit[] = [
   { lat: 49.8951, lng: -97.1384, label: "Winnipeg, MB", province: "MB", aliases: ["winnipeg", "wpg", "r3", "r2"] },
   { lat: 49.887, lng: -97.113, label: "St. Boniface, Winnipeg", province: "MB", aliases: ["st boniface", "saint-boniface", "st. boniface"] },

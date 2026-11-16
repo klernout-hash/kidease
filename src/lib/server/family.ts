@@ -12,6 +12,7 @@ import { catalogByIdGet } from "@/lib/catalog";
 import { ClientInputError } from "@/lib/observe";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
+import { isCanadianProvinceCode, provinceFromPostalCode, provincePin } from "@/lib/geo";
 import { isAdminOnlyListing, listingVisibilityForOwners, providerDeskListingVisible } from "@/lib/listing-visibility";
 import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
@@ -1621,6 +1622,14 @@ export const getProvider = createServerFn({ method: "GET" })
     };
   });
 
+function resolveListingProvince(chosen: string | null | undefined, postal: string | null | undefined): string {
+  const explicit = String(chosen || "").trim().toUpperCase();
+  if (isCanadianProvinceCode(explicit)) return explicit;
+  const fromPostal = provinceFromPostalCode(postal);
+  if (fromPostal) return fromPostal;
+  throw new Error("Choose a Canadian province.");
+}
+
 export const createListing = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
@@ -1628,6 +1637,7 @@ export const createListing = createServerFn({ method: "POST" })
       name: string;
       address: string;
       city: string;
+      province?: string;
       postalCode: string;
       licenseNumber: string;
       infantMonthly: number;
@@ -1656,7 +1666,7 @@ export const createListing = createServerFn({ method: "POST" })
         name: data.name,
         address: data.address,
         city: data.city,
-        province: "MB",
+        province: resolveListingProvince(data.province, data.postalCode),
         postalCode: data.postalCode,
         licenseNumber: data.licenseNumber,
       });
@@ -1667,6 +1677,8 @@ export const createListing = createServerFn({ method: "POST" })
       }
       throw err;
     }
+    const province = resolveListingProvince(data.province, data.postalCode);
+    const pin = provincePin(province);
     const id = nid("d");
     const slug = data.name
       .toLowerCase()
@@ -1697,21 +1709,21 @@ export const createListing = createServerFn({ method: "POST" })
         address, city, province, postal_code, lat, lng, phone, hours, hours_fr,
         age_min_months, age_max_months, infant_monthly, toddler_monthly, preschool_monthly,
         part_time_monthly, spots_infant, spots_toddler, spots_preschool, waitlist,
-        rating_x10, review_count, license_number, languages, amenities, photos, verified,
+        rating_x10, review_count, license_number, languages, amenities, photos, verified, claim_status,
         last_photo_updated_at, visibility, is_test
       ) values (
         ${id}, ${slug}, ${data.name}, ${data.name},
         ${"Newly listed licensed centre."}, ${"Nouveau centre permis."},
         ${"This centre was listed by a provider on KidEase. Update the description from the provider dashboard."},
         ${"Ce centre a été inscrit par un fournisseur. Mettez à jour la description."},
-        ${data.address}, ${data.city}, ${"MB"}, ${data.postalCode},
-        ${49.8951}, ${-97.1384}, ${null},
+        ${data.address}, ${data.city}, ${province}, ${data.postalCode},
+        ${pin.lat}, ${pin.lng}, ${null},
         ${"7:30 a.m. – 5:30 p.m., Monday to Friday"},
         ${"7 h 30 – 17 h 30, du lundi au vendredi"},
         ${6}, ${72}, ${data.infantMonthly}, ${data.toddlerMonthly}, ${data.preschoolMonthly},
         ${Math.round(data.toddlerMonthly * 0.6)}, 2, 2, 2, 0, 40, 0,
-        ${data.licenseNumber}, ${"en"}, ${"meals,inclusive"},
-        ${photos}, 0, ${photoAt}, ${visibilityWrite.visibility}, ${visibilityWrite.isTest}
+          ${data.licenseNumber}, ${"en"}, ${"meals,inclusive"},
+          ${photos}, 0, ${"waiting"}, ${photoAt}, ${visibilityWrite.visibility}, ${visibilityWrite.isTest}
       )
     `.catch(async () => {
       await sql`
@@ -1720,21 +1732,21 @@ export const createListing = createServerFn({ method: "POST" })
           address, city, province, postal_code, lat, lng, phone, hours, hours_fr,
           age_min_months, age_max_months, infant_monthly, toddler_monthly, preschool_monthly,
           part_time_monthly, spots_infant, spots_toddler, spots_preschool, waitlist,
-          rating_x10, review_count, license_number, languages, amenities, photos, verified,
+          rating_x10, review_count, license_number, languages, amenities, photos, verified, claim_status,
           visibility, is_test
         ) values (
           ${id}, ${slug}, ${data.name}, ${data.name},
           ${"Newly listed licensed centre."}, ${"Nouveau centre permis."},
           ${"This centre was listed by a provider on KidEase. Update the description from the provider dashboard."},
           ${"Ce centre a été inscrit par un fournisseur. Mettez à jour la description."},
-          ${data.address}, ${data.city}, ${"MB"}, ${data.postalCode},
-          ${49.8951}, ${-97.1384}, ${null},
+          ${data.address}, ${data.city}, ${province}, ${data.postalCode},
+          ${pin.lat}, ${pin.lng}, ${null},
           ${"7:30 a.m. – 5:30 p.m., Monday to Friday"},
           ${"7 h 30 – 17 h 30, du lundi au vendredi"},
           ${6}, ${72}, ${data.infantMonthly}, ${data.toddlerMonthly}, ${data.preschoolMonthly},
           ${Math.round(data.toddlerMonthly * 0.6)}, 2, 2, 2, 0, 40, 0,
           ${data.licenseNumber}, ${"en"}, ${"meals,inclusive"},
-          ${photos}, 0, ${visibilityWrite.visibility}, ${visibilityWrite.isTest}
+          ${photos}, 0, ${"waiting"}, ${visibilityWrite.visibility}, ${visibilityWrite.isTest}
         )
       `;
     });
@@ -1798,7 +1810,7 @@ export const createListing = createServerFn({ method: "POST" })
         daycareName: data.name,
         address: data.address,
         city: data.city,
-        province: "MB",
+        province,
         slug,
         providerName: actor.name,
         providerEmail: actor.email,

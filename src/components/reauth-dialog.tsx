@@ -10,6 +10,7 @@ import {
   ADMIN_REAUTH_GRACE_MINUTES,
   isReauthRequiredMessage,
   REAUTH_REQUIRED_MESSAGE,
+  reauthMessageOf,
   REAUTH_WINDOW_MINUTES,
 } from "@/lib/reauth";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
@@ -18,7 +19,8 @@ import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field"
 import { useCopy } from "@/lib/use-copy";
 
 export function isReauthRequired(err: unknown): boolean {
-  return err instanceof Error && isReauthRequiredMessage(err.message);
+  if (err instanceof Error && err.name === "ReauthRequiredError") return true;
+  return isReauthRequiredMessage(reauthMessageOf(err));
 }
 
 export async function withReauth<T>(action: () => Promise<T>, prompt: () => Promise<boolean>): Promise<T> {

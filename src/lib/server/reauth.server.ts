@@ -7,17 +7,17 @@ import {
   ADMIN_IDLE_COOKIE,
   isKideasePublicHost,
   KIDEASE_COOKIE_DOMAIN,
+  parseCookieHeader,
   pickCookieValue,
   SHARED_ADMIN_IDLE_COOKIE,
 } from "@/lib/auth/cookies";
 import {
   ADMIN_IDLE_TTL_MS,
   adminReauthGraceMs,
-  parseReauthProof,
+  anyReauthProofAllows,
   REAUTH_COOKIE,
-  REAUTH_REQUIRED_MESSAGE,
+  ReauthRequiredError,
   REAUTH_WINDOW_MS,
-  reauthProofAllows,
   SHARED_REAUTH_COOKIE,
   signReauthStamp,
   type StepUpClass,
@@ -53,8 +53,10 @@ function graceMs() {
   return adminReauthGraceMs(process.env.ADMIN_REAUTH_GRACE_MS);
 }
 
-function currentProof() {
-  return parseReauthProof(getCookie(REAUTH_COOKIE) || getCookie(SHARED_REAUTH_COOKIE), secret());
+function reauthCookieValues(): Array<string | null | undefined> {
+  const header = getRequest()?.headers.get("cookie");
+  const parsed = parseCookieHeader(header);
+  return [getCookie(REAUTH_COOKIE), getCookie(SHARED_REAUTH_COOKIE), parsed.get(REAUTH_COOKIE), parsed.get(SHARED_REAUTH_COOKIE)];
 }
 
 /**
@@ -74,7 +76,7 @@ export function writeReauthCookie(userId: string) {
 }
 
 export function isStepUpFresh(userId: string, klass: StepUpClass): boolean {
-  return reauthProofAllows(currentProof(), userId, klass, Date.now(), graceMs());
+  return anyReauthProofAllows(reauthCookieValues(), userId, klass, secret(), Date.now(), graceMs());
 }
 
 /** High-stakes step-up (Approve/Live and the other trust actions). */
@@ -84,14 +86,14 @@ export function isCurrentUserRecentlyReauthed(userId: string): boolean {
 
 export function assertRecentReauth(userId: string) {
   if (!isCurrentUserRecentlyReauthed(userId)) {
-    throw new Error(REAUTH_REQUIRED_MESSAGE);
+    throw new ReauthRequiredError();
   }
 }
 
 /** Low-risk desk edits: skip the dialog inside the grace window. */
 export function assertGraceReauth(userId: string) {
   if (!isStepUpFresh(userId, "grace")) {
-    throw new Error(REAUTH_REQUIRED_MESSAGE);
+    throw new ReauthRequiredError();
   }
 }
 

@@ -95,6 +95,12 @@ export type TransactionalMailInput = {
   branded?: import("./email-layout.ts").BrandedEmailInput;
   /** Set true when the email is about a test/QA listing. It is sent only when every recipient is on QA_SEND_ALLOWLIST. */
   aboutTestListing?: boolean;
+  /**
+   * A person the owner just typed, such as a staff invite.
+   * Send it even when the centre name looks like a QA fixture.
+   * Broadcasts about that centre stay suppressed.
+   */
+  directInvite?: boolean;
 };
 
 /** Same address list as qa-send-mail.ts. A star allows every recipient. An empty list allows none. */
@@ -394,9 +400,10 @@ export async function sendTransactionalMail(
   recordOtpMailHealth({ ...providers, lastEvent: lastHealth.lastEvent ?? "logged" });
   const blob = `${input.subject}\n${input.text || ""}`;
   const aboutTestListing =
-    input.aboutTestListing === true ||
-    /[([]\s*(qa|test)\s*[)\]]/i.test(blob) ||
-    /\bkidease\s+test\b/i.test(blob);
+    !input.directInvite &&
+    (input.aboutTestListing === true ||
+      /[([]\s*(qa|test)\s*[)\]]/i.test(blob) ||
+      /\bkidease\s+test\b/i.test(blob));
   const qaAllowlistSend = aboutTestListing && testListingRecipientsAllowed(to, env.QA_SEND_ALLOWLIST);
   if (aboutTestListing && !qaAllowlistSend) {
     emit(deps, input.purpose, "logged", { via: "logged", reason: "test_listing_suppressed" });

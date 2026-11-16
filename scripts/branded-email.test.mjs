@@ -125,7 +125,7 @@ test("senders pass branded content and QA listings are guarded", () => {
     "src/lib/server/stripe-parent-invoices.ts",
     "src/lib/server/search-alerts.ts",
   ]) {
-    assert.match(read(file), /aboutTestListing|isAdminOnlyListing/, file);
+    assert.match(read(file), /aboutTestListing|isAdminOnlyListing|directInvite/, file);
   }
   const flags = read("src/lib/flags.ts");
   assert.match(flags, /BRANDED_EMAILS/);

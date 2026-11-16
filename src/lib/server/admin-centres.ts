@@ -84,6 +84,40 @@ async function requireOperator(userId: string) {
   return requireAdmin(userId);
 }
 
+/**
+ * Approve, keep waiting, and needs-a-document.
+ * The signed-in operator is the actor, even if a view-as frame overlaid the
+ * request user. A missing Cloudflare Access header is not a denial: Access
+ * guards the /admin document, and these calls are /_serverFn.
+ * Step-up still applies. A missing confirm asks again. It is not "Not authorized".
+ */
+async function requireAdminDecision(contextUserId: string) {
+  const { getViewAsFrame, runWithoutViewAs } = await import("@/lib/server/view-as-frame.server");
+  const { getVerifiedAuthSession } = await import("@/lib/auth/verify.server");
+  const real = await runWithoutViewAs(() => getVerifiedAuthSession());
+  const actorId = real?.id || contextUserId;
+  const { adminMayDecideCentre } = await import("@/lib/admin-decision-auth");
+  const sql = await getSql();
+  const roleRows = await sql<{ role: string | null }>`
+    select role from profiles where user_id = ${actorId} limit 1
+  `;
+  if (
+    real?.email &&
+    roleRows[0] &&
+    !adminMayDecideCentre({ email: real.email, storedRole: roleRows[0].role })
+  ) {
+    throw new Error("Not authorized");
+  }
+  const frame = getViewAsFrame();
+  if (frame && frame.actorUserId === actorId) {
+    throw new Error("View as user is read-only.");
+  }
+  const actor = await requireAdmin(actorId);
+  const { assertRecentReauth } = await import("@/lib/server/reauth.server");
+  assertRecentReauth(actorId);
+  return { ...actor, userId: actorId };
+}
+
 async function deliverToProvider(to: string, subject: string, text: string, aboutTestListing = false) {
   if (aboutTestListing) {
     console.info("[kidease-mail] provider-decision skipped test listing", subject);
@@ -418,9 +452,7 @@ export const decideCentre = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { daycareId: string; decision: Decision; note?: string }) => input)
   .handler(async ({ context, data }) => {
-    const actor = await requireOperator(context.userId);
-    const { assertRecentReauth } = await import("@/lib/server/reauth.server");
-    assertRecentReauth(context.userId);
+    const actor = await requireAdminDecision(context.userId);
     const decision = data.decision;
     if (!["approve", "decline", "waiting", "needs_docs"].includes(decision)) throw new Error("Invalid decision");
 
@@ -481,7 +513,7 @@ export const decideCentre = createServerFn({ method: "POST" })
         update listing_claims
         set status = ${claimStatus},
             reviewed_at = now(),
-            reviewed_by = ${context.userId},
+            reviewed_by = ${actor.userId},
             review_note = ${data.note?.trim() || null}
         where id = ${latest[0].id}
       `.catch(async () => {
@@ -585,7 +617,7 @@ export const decideCentre = createServerFn({ method: "POST" })
 
     await writeTrustEvent(sql, {
       daycareId: data.daycareId,
-      actorUserId: context.userId,
+      actorUserId: actor.userId,
       kind: `claim_${claimStatus}`,
       note: data.note?.trim() || null,
       payload: JSON.stringify({

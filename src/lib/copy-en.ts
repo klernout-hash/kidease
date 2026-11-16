@@ -1462,7 +1462,7 @@ export const en = {
     centreName: "Centre name",
     licenceNo: "Licence number",
     createListing: "Publish listing",
-    publishListingMissing: "Add the centre name, licence number, address, city, and postal code, then publish again.",
+    publishListingMissing: "Add the centre name, licence number, address, city, province, and postal code, then publish again.",
     publishListingWorking: "Publishing…",
     publishListingDone: "Listing published. It is waiting for review.",
     daycareAlreadyListed: "Daycare already Listed",
