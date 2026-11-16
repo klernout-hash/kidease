@@ -49,13 +49,16 @@ export function extractStripeBillRef(obj: StripeBillObject | null | undefined, t
     kind === "charge" || type.startsWith("charge") ? data.id || null : charge && "id" in charge ? charge.id || null : null;
   const receiptUrl =
     (charge && "receipt_url" in charge ? charge.receipt_url : null) || data.receipt_url || null;
+  const sessionUnpaid =
+    (kind === "checkout.session" || type.startsWith("checkout.session")) && data.payment_status === "unpaid";
   const paid =
-    type === "payment_intent.succeeded" ||
-    type === "checkout.session.completed" ||
-    type === "invoice.paid" ||
-    data.payment_status === "paid" ||
-    data.status === "paid" ||
-    type === "charge.succeeded";
+    !sessionUnpaid &&
+    (type === "payment_intent.succeeded" ||
+      type === "checkout.session.completed" ||
+      type === "invoice.paid" ||
+      data.payment_status === "paid" ||
+      data.status === "paid" ||
+      type === "charge.succeeded");
   return {
     billId: pickMeta(data),
     sessionId,

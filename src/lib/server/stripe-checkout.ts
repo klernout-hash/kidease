@@ -372,6 +372,21 @@ export async function stripeRequest<T>(
   return json;
 }
 
+export async function retrieveStripeCheckoutSession(
+  sessionId: string,
+  opts?: { secret?: string; qa?: boolean },
+): Promise<{
+  id?: string;
+  payment_status?: string | null;
+  status?: string | null;
+  amount_total?: number | null;
+  payment_intent?: string | { id?: string } | null;
+}> {
+  const id = sessionId.trim();
+  if (!id.startsWith("cs_")) throw new Error("Checkout session not found");
+  return stripeRequest(`/checkout/sessions/${encodeURIComponent(id)}`, {}, "GET", opts);
+}
+
 export async function createStripeCheckoutSession(input: StripeCheckoutInput): Promise<StripeCheckoutSession> {
   const customerId = await ensureCanadaStripeCustomer({
     customerId: input.customerId,

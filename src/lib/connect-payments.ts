@@ -199,6 +199,21 @@ export function parentChargeQuote(input: {
   };
 }
 
+/**
+ * The pay page must show the amount Checkout will charge.
+ * The fee line is added only when a Connect destination will receive the bill.
+ */
+export function quoteShownOnPayPage(quote: ParentChargeQuote, hasDestination: boolean): ParentChargeQuote {
+  if (hasDestination && quote.feeCents > 0) return quote;
+  return {
+    ...quote,
+    feeCents: 0,
+    parentPaysCents: quote.invoiceCents,
+    applicationFeeCents: 0,
+    passedToParent: false,
+  };
+}
+
 export function destinationChargeFields(input: {
   invoiceCents: number;
   destination: string;

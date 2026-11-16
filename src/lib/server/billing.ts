@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
-import { connectLiveEnabled, parentChargeQuote } from "@/lib/connect-payments";
+import { connectLiveEnabled, parentChargeQuote, quoteShownOnPayPage } from "@/lib/connect-payments";
 import { centreUsesTestStripe, payerUsesTestStripe, stripeCredentialsForMode } from "@/lib/stripe-route";
 import { currentPeriod, platformFeeBps } from "@/lib/stripe-methods";
 import { stripeChargesLive } from "@/lib/stripe-live";
@@ -16,7 +16,7 @@ import {
 } from "@/lib/bill";
 import { canCreateBillForCentre, canReadBill, decideBillCheckout, resolveConnectDestination } from "@/lib/access-control";
 import { extractStripeBillRef, type StripeBillObject } from "@/lib/stripe-bill-event";
-import { createStripeCheckoutSession } from "@/lib/server/stripe-checkout";
+import { createStripeCheckoutSession, retrieveStripeCheckoutSession } from "@/lib/server/stripe-checkout";
 import { rememberStripeCustomer } from "@/lib/server/stripe-lifecycle";
 import { notifyParentBill, notifyPlatform } from "@/lib/server/notify";
 import { formatPlanCad } from "@/lib/upgrade-plans";
@@ -243,12 +243,7 @@ export async function applyStripeBillEvent(input: {
     return { ok: true, billId: bill.id, status: "refunded", handled: type };
   }
 
-  if (
-    !ref.paid &&
-    type !== "checkout.session.completed" &&
-    type !== "payment_intent.succeeded" &&
-    type !== "invoice.paid"
-  ) {
+  if (!ref.paid) {
     return { ok: true, billId: ref.billId, handled: type };
   }
 
@@ -591,14 +586,78 @@ export const getBill = createServerFn({ method: "GET" })
       status: bill.status,
     });
     if (!access.ok) throw new Error("Bill not found");
-    const serviceFee = parentChargeQuote({
-      invoiceCents: bill.amountCents,
-      bps: platformFeeBps(),
-      province: row.province,
-      daycareId: bill.daycareId,
+    const centreRows = await sql<{
+      slug: string | null;
+      visibility: string | null;
+      is_test: number | boolean | null;
+      is_demo: number | boolean | null;
+    }>`
+      select slug, visibility, is_test, is_demo from daycares where id = ${bill.daycareId} limit 1
+    `.catch(() => []);
+    const centre = centreRows[0];
+    const settled = await reconcilePaidCheckout(sql, bill, {
+      qa:
+        payerUsesTestStripe({ email: bill.parentEmail }) ||
+        centreUsesTestStripe({
+          id: bill.daycareId,
+          slug: centre?.slug,
+          visibility: centre?.visibility,
+          isTest: centre?.is_test,
+          isDemo: centre?.is_demo,
+        }),
     });
-    return { bill, stripeLive: parentBillCardLive(), role: access.role, platformFeeBps: platformFeeBps(), serviceFee };
+    const current = settled ?? bill;
+    const connect = await sql<{ stripe_account_id: string | null; charges_enabled: number }>`
+      select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${current.daycareId} limit 1
+    `.catch(() => []);
+    const destination = resolveConnectDestination({
+      stripeAccountId: connect[0]?.stripe_account_id,
+      chargesEnabled: connect[0]?.charges_enabled,
+    });
+    const serviceFee = quoteShownOnPayPage(
+      parentChargeQuote({
+        invoiceCents: current.amountCents,
+        bps: platformFeeBps(),
+        province: row.province,
+        daycareId: current.daycareId,
+      }),
+      Boolean(destination),
+    );
+    return { bill: current, stripeLive: parentBillCardLive(), role: access.role, platformFeeBps: platformFeeBps(), serviceFee };
   });
+
+async function reconcilePaidCheckout(
+  sql: Sql,
+  bill: Bill,
+  opts: { qa: boolean },
+): Promise<Bill | null> {
+  if (bill.status !== "sent") return bill;
+  const sessionId = (bill.stripeCheckoutSessionId || "").trim();
+  if (!sessionId.startsWith("cs_")) return bill;
+  const creds = stripeCredentialsForMode(opts.qa ? "test" : "live", process.env);
+  const secret = opts.qa ? (creds.ok && !creds.secret.startsWith("sk_live_") ? creds.secret : "") : creds.ok ? creds.secret : "";
+  if (!secret) return bill;
+  try {
+    const session = await retrieveStripeCheckoutSession(sessionId, { secret, qa: opts.qa });
+    if (session.payment_status !== "paid") return bill;
+    await applyStripeBillEvent({
+      type: "checkout.session.completed",
+      object: {
+        id: session.id || sessionId,
+        object: "checkout.session",
+        payment_status: "paid",
+        client_reference_id: bill.id,
+        metadata: { bill_id: bill.id, kidease: "bill" },
+        payment_intent: session.payment_intent,
+      },
+    });
+    const row = await loadInvoice(sql, bill.id);
+    return row ? mapBill(row) : bill;
+  } catch (err) {
+    console.error("[kidease-bill] checkout reconcile skipped", err instanceof Error ? err.message : "failed");
+    return bill;
+  }
+}
 
 export const createBillCheckout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
@@ -646,6 +705,8 @@ export const createBillCheckout = createServerFn({ method: "POST" })
     if (!gate.ok) throw new Error(gate.error);
     if (gate.alreadyPaid) return { url: null as string | null, alreadyPaid: true as const };
     if (!bill) throw new Error("Bill not found");
+    const settled = await reconcilePaidCheckout(sql, bill, { qa });
+    if (settled?.status === "paid") return { url: null as string | null, alreadyPaid: true as const };
     if (!creds.ok) throw new Error(creds.reason);
     const connect = await sql<{ stripe_account_id: string | null; charges_enabled: number }>`
       select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${bill.daycareId} limit 1
@@ -654,11 +715,14 @@ export const createBillCheckout = createServerFn({ method: "POST" })
       stripeAccountId: connect[0]?.stripe_account_id,
       chargesEnabled: connect[0]?.charges_enabled,
     });
-    const quote = parentChargeQuote({
-      invoiceCents: bill.amountCents,
-      province: row?.province,
-      daycareId: bill.daycareId,
-    });
+    const quote = quoteShownOnPayPage(
+      parentChargeQuote({
+        invoiceCents: bill.amountCents,
+        province: row?.province,
+        daycareId: bill.daycareId,
+      }),
+      Boolean(destination),
+    );
     const origin = appOrigin();
     const profile = await sql<{ stripe_customer_id: string | null; locale: string | null }>`
       select stripe_customer_id, locale from profiles where user_id = ${context.userId} limit 1

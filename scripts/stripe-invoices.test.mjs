@@ -4,7 +4,8 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { peekStripeLivemode, selectStripeWebhookSecrets } from "../src/lib/connect-payments.ts";
+import { parentChargeQuote, peekStripeLivemode, quoteShownOnPayPage, selectStripeWebhookSecrets } from "../src/lib/connect-payments.ts";
+import { extractStripeBillRef } from "../src/lib/stripe-bill-event.ts";
 import { brandedInvoicePdf } from "../src/lib/invoice-pdf.ts";
 import { invoiceListHtml } from "../src/lib/invoice-list-html.ts";
 import { gateStripeWebhook, resetStripeEventClaimsForTests } from "../src/lib/server/stripe-signature.ts";
@@ -330,4 +331,32 @@ test("paid PDF is stamped PAID and the list offers download and print", () => {
   assert.doesNotMatch(src("src/lib/server/stripe-parent-invoices.ts"), /SUBSCRIPTIONS_ENABLED/);
   assert.doesNotMatch(src("src/routes/invoices.tsx"), /SUBSCRIPTIONS_ENABLED/);
   assert.doesNotMatch(src("docs/stripe-preview-webhooks.md"), /Apple IAP|Google Play Billing|StoreKit/);
+});
+
+test("the pay page total matches Checkout, and a paid return can mark the bill", () => {
+  const quote = parentChargeQuote({ invoiceCents: 100, bps: 300, env: {} });
+  assert.equal(quote.parentPaysCents, 103);
+  const shown = quoteShownOnPayPage(quote, false);
+  assert.equal(shown.parentPaysCents, 100);
+  assert.equal(shown.feeCents, 0);
+  assert.equal(quoteShownOnPayPage(quote, true).parentPaysCents, 103);
+  const unpaid = extractStripeBillRef(
+    { id: "cs_test_1", object: "checkout.session", payment_status: "unpaid", metadata: { bill_id: "bill_1" } },
+    "checkout.session.completed",
+  );
+  assert.equal(unpaid.paid, false);
+  const paid = extractStripeBillRef(
+    { id: "cs_test_1", object: "checkout.session", payment_status: "paid", metadata: { bill_id: "bill_1" } },
+    "checkout.session.completed",
+  );
+  assert.equal(paid.paid, true);
+  assert.equal(paid.billId, "bill_1");
+  const billing = src("src/lib/server/billing.ts");
+  assert.match(billing, /reconcilePaidCheckout/);
+  assert.match(billing, /quoteShownOnPayPage/);
+  const pay = src("src/routes/pay.bill.$billId.tsx");
+  assert.match(pay, /confirming/);
+  assert.match(pay, /!confirming/);
+  assert.match(src("src/lib/server/stripe-parent-invoices.ts"), /from invoices i/);
+  assert.match(src("src/components/stripe-invoice-list.tsx"), /payPath/);
 });

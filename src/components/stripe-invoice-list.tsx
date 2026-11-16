@@ -127,16 +127,23 @@ export function StripeInvoiceList({
         <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
           {invoices.map((invoice) => {
             const money = formatInvoiceMoney(invoice.amountCents, invoice.currency, locale === "fr" ? "fr" : "en");
-            const canPay = invoice.viewer !== "daycare" && invoice.status === "open" && Boolean(invoice.hostedInvoiceUrl);
+            const payHref = invoice.payPath || invoice.hostedInvoiceUrl;
+            const canPay = invoice.viewer !== "daycare" && invoice.status === "open" && Boolean(payHref);
             const primary = emphasizePay && canPay && !primaryUsed;
             if (primary) primaryUsed = true;
             return (
               <li key={invoice.id} className="flex flex-wrap items-center justify-between gap-3 p-4" data-ke="invoice-row" data-status={invoice.status}>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Link to={detailTo} params={{ id: invoice.id }} search={{}} className="font-medium underline-offset-4 hover:underline">
-                      {invoice.number}
-                    </Link>
+                    {invoice.payPath ? (
+                      <a href={invoice.payPath} className="font-medium underline-offset-4 hover:underline">
+                        {invoice.number}
+                      </a>
+                    ) : (
+                      <Link to={detailTo} params={{ id: invoice.id }} search={{}} className="font-medium underline-offset-4 hover:underline">
+                        {invoice.number}
+                      </Link>
+                    )}
                     <InvoiceBadge status={invoice.status} />
                   </div>
                   <p className="text-sm text-muted">
@@ -145,11 +152,15 @@ export function StripeInvoiceList({
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {canPay && invoice.hostedInvoiceUrl ? (
+                  {canPay && payHref ? (
                     <Button size="md" variant={primary ? "primary" : "secondary"} asChild>
-                      <a href={invoice.hostedInvoiceUrl} target="_blank" rel="noreferrer">
-                        {t("invoicePay")}
-                      </a>
+                      {invoice.payPath ? (
+                        <a href={invoice.payPath}>{t("invoicePay")}</a>
+                      ) : (
+                        <a href={payHref} target="_blank" rel="noreferrer">
+                          {t("invoicePay")}
+                        </a>
+                      )}
                     </Button>
                   ) : null}
                   <Button
