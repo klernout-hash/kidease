@@ -228,6 +228,12 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_PLAY_IN_APP_UPDATES` | Play flexible in-app update. Default off. No update check until this is on. |
 | `FEATURE_PLAY_APP_SHORTCUTS` | Play home-screen shortcuts for search, saved centres, and help. Default off. |
 | `FEATURE_PLAY_INTEGRITY` | Play Integrity. Default off. Needs the Play Console cloud project number. The token is not shown and not logged. |
+| `FEATURE_MS_SHARE_TARGET` | Microsoft share sheet opens search. Default off. The static manifest is unchanged. |
+| `FEATURE_MS_PROTOCOL_HANDLERS` | `web+kidease` opens search. Default off. |
+| `FEATURE_MS_WIDGETS` | Microsoft search widget. Default off. No centre names or fees. |
+| `FEATURE_MS_SHORTCUTS` | Microsoft taskbar shortcuts. Default off. |
+| `FEATURE_MS_BADGING` | Taskbar badge. Default off. A missing count does not call the badge API. |
+| `FEATURE_MS_STORE_LINK` | Microsoft Store link. Default off. Needs `MICROSOFT_STORE_PRODUCT_ID`. No id is invented. |
 | `BRANDED_EMAILS` | Env only, not a PostHog flag. Default off. When `1`, notification email uses the KidEase layout (logo, button, plain-text part, one-click unsubscribe). Unset keeps today's bodies. Do not turn on until `send.kidease.ca` mail DNS is confirmed. |
 
 ## What is wired

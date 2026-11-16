@@ -208,6 +208,12 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_PLAY_IN_APP_UPDATES",
   "FEATURE_PLAY_APP_SHORTCUTS",
   "FEATURE_PLAY_INTEGRITY",
+  "FEATURE_MS_SHARE_TARGET",
+  "FEATURE_MS_PROTOCOL_HANDLERS",
+  "FEATURE_MS_WIDGETS",
+  "FEATURE_MS_SHORTCUTS",
+  "FEATURE_MS_BADGING",
+  "FEATURE_MS_STORE_LINK",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -594,6 +600,18 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_PLAY_APP_SHORTCUTS: false,
   /** Play Integrity request. Off. No token is stored or logged. */
   FEATURE_PLAY_INTEGRITY: false,
+  /** Microsoft share target. Off. The static manifest stays as it is. */
+  FEATURE_MS_SHARE_TARGET: false,
+  /** Microsoft protocol handler. Off. */
+  FEATURE_MS_PROTOCOL_HANDLERS: false,
+  /** Microsoft PWA widget feed. Off. No centre names or fees. */
+  FEATURE_MS_WIDGETS: false,
+  /** Microsoft manifest shortcuts. Off. */
+  FEATURE_MS_SHORTCUTS: false,
+  /** Microsoft badge count. Off. Nothing is badged without a real count. */
+  FEATURE_MS_BADGING: false,
+  /** Microsoft Store product link. Off. No product id is invented. */
+  FEATURE_MS_STORE_LINK: false,
 };
 
 /**
@@ -1437,6 +1455,12 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary: "Play Integrity check. Off. The token is not returned to the page and is not logged.",
   },
+  { key: "FEATURE_MS_SHARE_TARGET", defaultOn: false, docs: "docs/flags.md", summary: "Microsoft share target to search. Off. The static manifest is unchanged." },
+  { key: "FEATURE_MS_PROTOCOL_HANDLERS", defaultOn: false, docs: "docs/flags.md", summary: "web+kidease protocol handler. Off." },
+  { key: "FEATURE_MS_WIDGETS", defaultOn: false, docs: "docs/flags.md", summary: "Microsoft search widget. Off. No centre names or fees." },
+  { key: "FEATURE_MS_SHORTCUTS", defaultOn: false, docs: "docs/flags.md", summary: "Microsoft taskbar shortcuts. Off." },
+  { key: "FEATURE_MS_BADGING", defaultOn: false, docs: "docs/flags.md", summary: "Microsoft app badge. Off. No count is invented." },
+  { key: "FEATURE_MS_STORE_LINK", defaultOn: false, docs: "docs/flags.md", summary: "Microsoft Store link. Off until a real product id is set." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;

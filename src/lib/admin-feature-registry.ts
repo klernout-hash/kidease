@@ -197,6 +197,12 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_PLAY_IN_APP_UPDATES: "shared",
   FEATURE_PLAY_APP_SHORTCUTS: "shared",
   FEATURE_PLAY_INTEGRITY: "shared",
+  FEATURE_MS_SHARE_TARGET: "shared",
+  FEATURE_MS_PROTOCOL_HANDLERS: "shared",
+  FEATURE_MS_WIDGETS: "shared",
+  FEATURE_MS_SHORTCUTS: "shared",
+  FEATURE_MS_BADGING: "shared",
+  FEATURE_MS_STORE_LINK: "shared",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
