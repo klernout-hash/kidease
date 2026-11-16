@@ -8,6 +8,7 @@ import {
   CENTRE_INVITE_TTL_MS,
   decideAcceptInvite,
   decideInviteEmployee,
+  invitesToClaim,
   decideResendInvite,
   decideRevokeEmployee,
   normalizeInviteEmail,
@@ -482,6 +483,144 @@ export const peekCentreInvite = createServerFn({ method: "GET" })
       role: row.role,
       daycareName: row.daycare_name,
     };
+  });
+
+/**
+ * Attach a live staff invite for this mailbox when the person presses Accept.
+ * Leaves the login and any account-closure date alone, and does not grant owner.
+ */
+export async function claimPendingCentreInvitesForUser(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  userId: string,
+  email: string,
+  inviteId?: string,
+): Promise<{ claimed: number }> {
+  const normalized = normalizeInviteEmail(email);
+  if (!normalized.includes("@")) return { claimed: 0 };
+  const rows = await sql<{
+    id: string;
+    daycare_id: string;
+    email: string;
+    role: string;
+    status: string;
+    expires_at: string | Date;
+    invited_by: string | null;
+  }>`
+    select id, daycare_id, email, role, status, expires_at, invited_by
+    from centre_invites
+    where lower(email) = ${normalized}
+      and status = 'pending'
+      and expires_at > now()
+  `.catch(() => []);
+  const now = Date.now();
+  const wanted = (inviteId || "").trim();
+  const chosen = invitesToClaim({
+    email: normalized,
+    nowMs: now,
+    invites: rows.map((row) => ({
+      id: row.id,
+      daycareId: row.daycare_id,
+      email: row.email,
+      role: row.role,
+      status: row.status,
+      expiresAtMs: new Date(row.expires_at).getTime(),
+    })),
+  }).filter((row) => !wanted || row.id === wanted);
+  let claimed = 0;
+  for (const invite of chosen) {
+    const source = rows.find((row) => row.id === invite.id);
+    const existing = await sql<{ id: string; status: string; role: string }>`
+      select id, status, role from centre_members
+      where daycare_id = ${invite.daycareId} and user_id = ${userId}
+      limit 1
+    `.catch(() => []);
+    if (!existing[0]) {
+      await sql`
+        insert into centre_members (id, daycare_id, user_id, role, status, invited_by)
+        values (
+          ${nid("cm")},
+          ${invite.daycareId},
+          ${userId},
+          ${invite.role},
+          'active',
+          ${source?.invited_by || userId}
+        )
+      `;
+    } else if (existing[0].status !== "active") {
+      await sql`
+        update centre_members
+        set role = ${invite.role}, status = 'active', revoked_at = null, revoked_by = null
+        where id = ${existing[0].id}
+      `;
+    }
+    await sql`
+      update centre_invites
+      set status = 'accepted', accepted_at = now(), accepted_user_id = ${userId}
+      where id = ${invite.id} and status = 'pending'
+    `;
+    await logSecurityEvent({
+      kind: "employee_accept",
+      actorUserId: userId,
+      daycareId: invite.daycareId,
+      detail: `accepted ${invite.role} from email match`,
+    });
+    claimed += 1;
+  }
+  return { claimed };
+}
+
+export const listMyStaffInvites = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { readViewAsPublic } = await import("@/lib/view-as-public");
+    if (readViewAsPublic()) return { invites: [] as Array<{ id: string; centre: string; role: string }> };
+    const actor = await lookupUser(context.userId);
+    const email = normalizeInviteEmail(actor.email || "");
+    if (!email.includes("@")) return { invites: [] as Array<{ id: string; centre: string; role: string }> };
+    const sql = await getSql();
+    const rows = await sql<{ id: string; role: string; centre: string }>`
+      select i.id, i.role, d.name as centre
+      from centre_invites i
+      join daycares d on d.id = i.daycare_id
+      where lower(i.email) = ${email}
+        and i.status = 'pending'
+        and i.expires_at > now()
+      order by i.created_at asc
+    `.catch(() => []);
+    const now = Date.now();
+    const allowed = new Set(
+      invitesToClaim({
+        email,
+        nowMs: now,
+        invites: rows.map((row) => ({
+          id: row.id,
+          daycareId: "",
+          email,
+          role: row.role,
+          status: "pending",
+          expiresAtMs: now + 60_000,
+        })),
+      }).map((row) => row.id),
+    );
+    return {
+      invites: rows
+        .filter((row) => allowed.has(row.id))
+        .map((row) => ({ id: row.id, centre: row.centre, role: row.role })),
+    };
+  });
+
+export const acceptMyStaffInvite = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id?: string }) => ({ id: String(input?.id || "").trim() }))
+  .handler(async ({ context, data }) => {
+    const { readViewAsPublic } = await import("@/lib/view-as-public");
+    if (readViewAsPublic()) throw new Error(CENTRE_INVITE_NOT_FOUND);
+    if (!data.id) throw new Error(CENTRE_INVITE_NOT_FOUND);
+    const actor = await lookupUser(context.userId);
+    const sql = await getSql();
+    const result = await claimPendingCentreInvitesForUser(sql, context.userId, actor.email || "", data.id);
+    if (result.claimed !== 1) throw new Error(CENTRE_INVITE_NOT_FOUND);
+    return { ok: true as const };
   });
 
 export const acceptCentreInvite = createServerFn({ method: "POST" })

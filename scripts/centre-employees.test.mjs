@@ -22,6 +22,7 @@ import {
   centreDeskCaps,
   decideAcceptInvite,
   decideInviteEmployee,
+  invitesToClaim,
   decideResendInvite,
   decideRevokeEmployee,
   maxCentreRole,
@@ -116,6 +117,57 @@ test("invite decision: owner only, rate limit, no self, no duplicate", () => {
   assert.equal(maxCentreRole(["staff", "owner", "manager"]), "owner");
 });
 
+test("accept attaches only this mailbox's live staff invite and opens the daycare desk", () => {
+  const now = Date.parse("2026-11-16T18:00:00.000Z");
+  const live = {
+    id: "inv_staff",
+    daycareId: "d_3plahsnplst5",
+    email: "info@openroadoutlet.ca",
+    role: "staff",
+    status: "pending",
+    expiresAtMs: now + 60_000,
+  };
+  const claimed = invitesToClaim({
+    email: "INFO@openroadoutlet.ca",
+    nowMs: now,
+    invites: [
+      live,
+      { ...live, id: "inv_other", email: "other@openroadoutlet.ca" },
+      { ...live, id: "inv_old", status: "accepted" },
+      { ...live, id: "inv_gone", expiresAtMs: now - 1 },
+      { ...live, id: "inv_owner", role: "owner" },
+      { ...live, id: "inv_revoked", status: "revoked" },
+      { ...live, id: "inv_manager", role: "manager" },
+    ],
+  });
+  assert.deepEqual(
+    claimed.map((row) => row.id),
+    ["inv_staff", "inv_manager"],
+  );
+  assert.equal(invitesToClaim({ email: "not-an-email", invites: [live] }).length, 0);
+  const members = src("src/lib/server/centre-members.ts");
+  const claim = members.slice(members.indexOf("claimPendingCentreInvitesForUser"));
+  const claimBody = claim.slice(0, claim.indexOf("export const listMyStaffInvites"));
+  assert.match(claimBody, /status = 'accepted'/);
+  assert.match(claimBody, /existing\[0\]\.status !== "active"/);
+  assert.doesNotMatch(claimBody, /password/);
+  assert.doesNotMatch(claimBody, /deleted_at/);
+  assert.doesNotMatch(claimBody, /provider_daycares/);
+  assert.match(members, /export const acceptMyStaffInvite/);
+  assert.match(members, /claimPendingCentreInvitesForUser\(sql, context\.userId, actor\.email \|\| "", data\.id\)/);
+  const roles = src("src/lib/server/roles.ts");
+  assert.doesNotMatch(roles, /claimPendingCentreInvitesForUser/);
+  const chrome = src("src/lib/server/role-route.ts");
+  assert.doesNotMatch(chrome, /claimPendingCentreInvitesForUser/);
+  const banner = src("src/components/staff-invite-banner.tsx");
+  assert.match(banner, /data-ke="staff-invite-banner"/);
+  assert.match(banner, /window\.location\.assign\("\/provider"\)/);
+  assert.match(src("src/components/shell.tsx"), /StaffInviteBanner/);
+  assert.match(src("src/lib/copy-en.ts"), /\{centre\} invited you to join their team\./);
+  assert.match(src("src/lib/copy-en.ts"), /staffInviteAccept: "Accept"/);
+  assert.match(src("src/lib/copy-fr.ts"), /staffInviteAccept: "Accepter"/);
+});
+
 test("accept invite requires matching mailbox and a live pending token", () => {
   const ok = decideAcceptInvite({
     inviteStatus: "pending",
@@ -201,6 +253,9 @@ test("wire: Neon membership, Better Auth invite, owner revoke, king-admin untouc
   assert.match(src("src/lib/server/invite-mail.ts"), /purpose: "invite"/);
   assert.match(src("src/lib/transactional-mail.ts"), /"invite"/);
   assert.match(src("src/routes/invite.$token.tsx"), /createFileRoute\("\/invite\/\$token"\)/);
+  assert.match(src("src/routes/invite.$token.tsx"), /acceptCentreInvite\(\{ data: token \}\)/);
+  assert.match(src("src/routes/invite.$token.tsx"), /sessionEmail === inviteEmail/);
+  assert.equal(src("src/lib/role-access.ts").includes('startsWith("/invite/")'), false);
   assert.match(src("src/routeTree.gen.ts"), /id:\s*'\/invite\/\$token'/);
   assert.match(src("src/lib/server/family.ts"), /delete from centre_members/);
   assert.match(src("src/routes/provider.tsx"), /employees/);
