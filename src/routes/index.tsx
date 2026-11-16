@@ -1,5 +1,5 @@
 import { FEATURE_SPONSORED_LISTINGS } from "@/lib/sponsored-flag";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
@@ -476,23 +476,22 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
       </div>
       <JsonLd json={organizationGraphJsonLdScript(locale === "fr" ? "fr" : "en")} />
       <div className="ke-home w-full min-w-0" data-ke="home-discovery-surface">
-      <h1 className="ke-gutter mx-auto w-full pt-4 text-center text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
+      <h1 className="ke-gutter mx-auto hidden w-full pt-4 text-center text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em] md:block">
         {t("tagline")}
       </h1>
       <div className="ke-home-web ke-web-only w-full [[data-channel=app]_&]:hidden">
         <section className="from-soft border-b border-border bg-bg">
           <div className="ke-gutter mx-auto w-full pb-10 pt-1 md:pb-14">
             {featuredSearch}
+            <Link to="/search" className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary md:hidden">
+              {t("smartMatchTitle")}
+            </Link>
           </div>
         </section>
 
         {/* Clean look: centres this family opened sit right under the search. */}
         <div className="ke-clean-only ke-gutter mx-auto w-full pt-4">
           <RecentlyViewedRow items={recentPublic} cards />
-        </div>
-
-        <div className="ke-gutter mx-auto w-full pt-6 md:pt-8">
-          <TrustBar />
         </div>
 
         {!featuredReady || featuredAgreement.showSection ? (
@@ -520,6 +519,10 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           </div>
         </section>
         ) : null}
+
+        <div className="ke-gutter mx-auto w-full pt-2 md:pt-8">
+          <TrustBar />
+        </div>
 
         <section id="how" aria-labelledby="how-kidease-heading" className="ke-gutter mx-auto w-full py-10 md:py-16">
           <h2 id="how-kidease-heading" className="text-center text-xl tracking-[-0.03em] text-fg md:text-2xl">

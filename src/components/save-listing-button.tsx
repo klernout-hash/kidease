@@ -54,6 +54,7 @@ export function SaveListingButton({
   const fallbackSearch = useRouterState({ select: (s) => s.location.searchStr });
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [sheet, setSheet] = useState(false);
 
   useEffect(() => {
     function sync() {
@@ -90,7 +91,7 @@ export function SaveListingButton({
     stashPendingSave(daycareId);
     addGuestShortlist({ id: daycareId });
     capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload(signupPromptStep("save"), { source: "listing" }));
-    toast.message(t("signupWhySave"));
+    setSheet(false);
     void navigate({
       to: saveLoginTo(locale === "fr" ? "fr" : "en"),
       search: parentSignupSearch(saveReturnPath(fallbackPath, fallbackSearch, nextPath), "save"),
@@ -140,13 +141,14 @@ export function SaveListingButton({
 
   if (!user) {
     return (
+      <>
       <a
         href={guestHref}
         aria-label={label}
         data-ke="save-listing"
         onClick={(e) => {
           e.preventDefault();
-          goLogin();
+          setSheet(true);
         }}
         className={cn(
           appearance === "photo"
@@ -160,6 +162,19 @@ export function SaveListingButton({
       >
         <Heart className={appearance === "photo" ? "size-7 text-current" : "size-4"} />
       </a>
+      {sheet ? (
+        <div className="fixed inset-0 z-50 grid place-items-end bg-fg/40 p-4" role="presentation" data-ke="save-signin-sheet">
+          <div role="dialog" aria-modal="true" aria-labelledby="save-signin-title" className="w-full max-w-md rounded-xl border border-border bg-surface p-4">
+            <h2 id="save-signin-title" className="font-display text-xl">{t("signIn")}</h2>
+            <p className="mt-2 text-sm text-muted">{t("signupWhySave")}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button type="button" className="min-h-11" onClick={goLogin}>{t("signIn")}</Button>
+              <Button type="button" variant="secondary" className="min-h-11" onClick={() => setSheet(false)}>{t("close")}</Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      </>
     );
   }
 

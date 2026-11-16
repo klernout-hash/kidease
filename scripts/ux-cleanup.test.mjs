@@ -48,7 +48,7 @@ test("Cards quiet overlapping labels and keep a reserved photo aspect", () => {
   assert.equal((card.match(/data-ke="card-view-details"/g) || []).length, 2);
   assert.match(card, /parentActions \? <SaveListingButton/);
   assert.doesNotMatch(card, /card-book-tour|card-request-info|card-join-waitlist|CompareChip|ShareListingButton/);
-  assert.match(card, /rounded-md bg-primary/);
+  assert.doesNotMatch(card, /w-full items-center justify-center whitespace-normal rounded-md bg-primary/);
   assert.doesNotMatch(card, /rounded-\[14px\]/);
   assert.match(badges, /!compact \? <GuestFavoriteBadge/);
   assert.match(carousel, /ListingPhotoFallback/);

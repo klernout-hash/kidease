@@ -3582,5 +3582,6 @@
   "tourAssistantConfirm": "Enviar esta solicitud de visita",
   "tourAssistantSent": "La solicitud está enviada. El centro la verá en Solicitudes.",
   "tourAssistantSignIn": "Inicia sesión con una cuenta de padre para enviar esta visita.",
-  "tourAssistantSlotGone": "Esa hora ya no está libre. Elige otra hora publicada."
+  "tourAssistantSlotGone": "Esa hora ya no está libre. Elige otra hora publicada.",
+  "ontarioCapFee": "Hasta 22 $ al día (tope de Ontario)"
 }
