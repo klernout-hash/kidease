@@ -298,6 +298,7 @@ test("My requests is one list with a plain status", () => {
   assert.equal(src("src/lib/copy-fr.ts").includes('parentRequestWaiting: "En attente du centre"'), true);
   assert.match(src("src/components/parent-desk.tsx"), /parentRequestRows\(\{ leads, tours, bookings \}\)/);
   assert.doesNotMatch(src("src/components/parent-desk.tsx"), /pendingTours/);
+  assert.match(src("src/components/parent-requests.tsx"), /id=\{row\.kind === "tour" \? `tour-\$\{row\.id\}` : undefined\}/);
   assert.match(src("src/components/parent-requests.tsx"), /parentRequestStatusKey/);
   assert.match(src("src/components/parent-requests.tsx"), /openChat/);
 });

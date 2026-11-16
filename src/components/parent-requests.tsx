@@ -24,7 +24,11 @@ export function ParentRequestsList({ items }: { items: ParentRequestRow[] }) {
   return (
     <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border" data-ke="parent-requests">
       {items.map((row) => (
-        <li key={`${row.kind}-${row.id}`} className="flex flex-wrap items-start justify-between gap-3 p-4">
+        <li
+          key={`${row.kind}-${row.id}`}
+          id={row.kind === "tour" ? `tour-${row.id}` : undefined}
+          className="flex flex-wrap items-start justify-between gap-3 p-4"
+        >
           <div className="min-w-0">
             <Link to={listingTo} params={{ slug: row.daycareSlug }} className="font-medium hover:underline">
               {row.daycareName}
