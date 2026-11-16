@@ -1046,7 +1046,7 @@ export function LoginScreen({
                 ? locale === "fr" ? "Continuer" : "Continue"
                 : busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
-            {mode === "in" && !nativeIosSkipsPasskey() ? (
+            {mode === "in" && !askEmailOnly && !nativeIosSkipsPasskey() ? (
               <Button
                 type="button"
                 variant="secondary"
@@ -1060,7 +1060,7 @@ export function LoginScreen({
               </Button>
             ) : null}
           </form>
-          {mode === "in" && !pickingRole ? (
+          {mode === "in" && !pickingRole && !askEmailOnly ? (
             <div className="mt-3">
               <Link
                 to={forgotTo}
