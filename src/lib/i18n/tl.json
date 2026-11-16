@@ -3587,5 +3587,9 @@
   "parentRequestTourAsked": "Hiniling ang tour",
   "moreTools": "Iba pang mga tool",
   "setupReady": "{n}% handa",
-  "setupNextFees": "Susunod: ilagay ang bayad"
+  "setupNextFees": "Susunod: ilagay ang bayad",
+  "licenceRecordUnverified": "Walang beripikadong lisensya ang KidEase para sa sentrong ito. Tingnan ang opisyal na rehistro ng lalawigan o teritoryo.",
+  "listingBadgeWaiting": "Naghihintay",
+  "listingBadgeLive": "Live",
+  "listingBadgeDeclined": "Tinanggihan"
 }

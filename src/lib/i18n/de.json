@@ -3587,5 +3587,9 @@
   "parentRequestTourAsked": "Besichtigung angefragt",
   "moreTools": "Weitere Werkzeuge",
   "setupReady": "{n}% fertig",
-  "setupNextFees": "Als Nächstes: Gebühren eintragen"
+  "setupNextFees": "Als Nächstes: Gebühren eintragen",
+  "licenceRecordUnverified": "KidEase hat keine geprüfte Lizenz für dieses Zentrum. Prüfen Sie das amtliche Verzeichnis der Provinz oder des Territoriums.",
+  "listingBadgeWaiting": "Wartet",
+  "listingBadgeLive": "Live",
+  "listingBadgeDeclined": "Abgelehnt"
 }

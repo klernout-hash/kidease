@@ -3587,5 +3587,9 @@
   "parentRequestTourAsked": "ਦੌਰੇ ਦੀ ਬੇਨਤੀ",
   "moreTools": "ਹੋਰ ਸੰਦ",
   "setupReady": "{n}% ਤਿਆਰ",
-  "setupNextFees": "ਅਗਲਾ: ਫੀਸ ਲਿਖੋ"
+  "setupNextFees": "ਅਗਲਾ: ਫੀਸ ਲਿਖੋ",
+  "licenceRecordUnverified": "KidEase ਕੋਲ ਇਸ ਕੇਂਦਰ ਦਾ ਤਸਦੀਕਸ਼ੁਦਾ ਲਾਇਸੰਸ ਨਹੀਂ ਹੈ। ਸੂਬੇ ਜਾਂ ਖੇਤਰ ਦਾ ਅਧਿਕਾਰਤ ਰਜਿਸਟਰ ਵੇਖੋ।",
+  "listingBadgeWaiting": "ਉਡੀਕ",
+  "listingBadgeLive": "ਲਾਈਵ",
+  "listingBadgeDeclined": "ਰੱਦ"
 }
