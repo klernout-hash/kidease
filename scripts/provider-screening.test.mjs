@@ -66,7 +66,7 @@ test("desk roles map onto screening roles without inventing a parallel employee 
   assert.equal(deskRoleToScreeningRole("owner"), "owner");
   assert.equal(deskRoleToScreeningRole("manager"), "director");
   assert.equal(deskRoleToScreeningRole("staff"), "staff");
-  assert.equal(deskRoleToScreeningRole("read_only"), "volunteer");
+  assert.equal(deskRoleToScreeningRole("read_only"), "staff");
 });
 
 test("Screening on file is earned only when every required current doc is cleared", () => {

@@ -217,7 +217,7 @@ function MealsTool({ copy, records, save, locale, canSave }: ToolProps & { local
       <h3 className="text-xl font-semibold">{copy.meals}</h3>
       <label className={label}>
         {copy.weekOf}
-        <input type="date" className={field} value={weekOf} onChange={(e) => setWeekOf(e.target.value)} />
+        <input type="date" className={field} value={weekOf} readOnly={!canSave} disabled={!canSave} onChange={(e) => setWeekOf(e.target.value)} />
       </label>
       <div className="mt-3 space-y-3 md:hidden" data-ke="meal-plan-list">
         {DAYS.map((day) => (
@@ -232,6 +232,8 @@ function MealsTool({ copy, records, save, locale, canSave }: ToolProps & { local
                     aria-label={`${copy.food} ${day} ${slot}`}
                     className={field}
                     value={c?.food || ""}
+                    readOnly={!canSave}
+                    disabled={!canSave}
                     onChange={(e) => setCell(day, slot, { food: e.target.value })}
                   />
                 </label>
@@ -256,15 +258,15 @@ function MealsTool({ copy, records, save, locale, canSave }: ToolProps & { local
                   const c = cell(day, slot);
                   return (
                     <td key={day} className="p-1 align-top">
-                      <input aria-label={`${copy.food} ${day} ${slot}`} className={field} value={c?.food || ""} onChange={(e) => setCell(day, slot, { food: e.target.value })} />
+                      <input aria-label={`${copy.food} ${day} ${slot}`} className={field} value={c?.food || ""} readOnly={!canSave} disabled={!canSave} onChange={(e) => setCell(day, slot, { food: e.target.value })} />
                       <div className="mt-1 flex flex-wrap gap-1">
                         {FOOD_GROUPS.map((g) => (
                           <label key={g} className="text-xs">
-                            <input type="checkbox" checked={c?.groups.includes(g) || false} onChange={(e) => setCell(day, slot, { groups: e.target.checked ? [...(c?.groups || []), g] : (c?.groups || []).filter((x) => x !== g) })} /> {menuLabel(g, locale)}
+                            <input type="checkbox" disabled={!canSave} checked={c?.groups.includes(g) || false} onChange={(e) => setCell(day, slot, { groups: e.target.checked ? [...(c?.groups || []), g] : (c?.groups || []).filter((x) => x !== g) })} /> {menuLabel(g, locale)}
                           </label>
                         ))}
                       </div>
-                      <select aria-label={copy.allergens} className="mt-1 w-full text-xs" multiple value={c?.allergens || []} onChange={(e) => setCell(day, slot, { allergens: [...e.target.selectedOptions].map((o) => o.value) })}>
+                      <select aria-label={copy.allergens} className="mt-1 w-full text-xs" multiple disabled={!canSave} value={c?.allergens || []} onChange={(e) => setCell(day, slot, { allergens: [...e.target.selectedOptions].map((o) => o.value) })}>
                         {ALLERGENS.map((a) => <option key={a} value={a}>{menuLabel(a, locale)}</option>)}
                       </select>
                     </td>
@@ -283,7 +285,7 @@ function MealsTool({ copy, records, save, locale, canSave }: ToolProps & { local
       <p className="mt-2 text-sm">{copy.allergens}: {menuAllergens(menu).map((id) => menuLabel(id, locale)).join(", ") || "—"}</p>
       <label className={`${label} mt-3`}>
         {copy.allergyNote}
-        <textarea className={`${field} min-h-20 py-2`} value={note} onChange={(e) => setNote(e.target.value)} />
+        <textarea className={`${field} min-h-20 py-2`} value={note} readOnly={!canSave} disabled={!canSave} onChange={(e) => setNote(e.target.value)} />
       </label>
       {canSave ? <Button className="mt-3 min-h-11" onClick={() => void save("menu", { ...menu, allergens: menuAllergens(menu) })}>{copy.save}</Button> : null}
       <History copy={copy} rows={records.filter((r) => r.kind === "menu")} render={(r) => `${copy.weekOf} ${String(r.payload.weekOf)} · ${(r.payload.items as unknown[] | undefined)?.length || 0}`} />

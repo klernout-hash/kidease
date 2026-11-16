@@ -19,6 +19,7 @@ import {
 } from "@/lib/host-listing";
 import { hostCopy } from "@/lib/host-listing-copy";
 import { loadFamilyGuide, saveFamilyGuide } from "@/lib/server/host-calendar";
+import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import type { Daycare } from "@/lib/types";
@@ -43,6 +44,7 @@ export function HostListingsDesk({
 }) {
   const { t, locale } = useCopy();
   const copy = hostCopy(locale);
+  const canAdd = useCentreWrite("listing");
   const [openId, setOpenId] = useState<string | null>(null);
   const [view, setView] = useState<"cards" | "rows">("cards");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -188,6 +190,7 @@ export function HostListingsDesk({
           >
             {view === "cards" ? <List className="size-5" aria-hidden /> : <LayoutGrid className="size-5" aria-hidden />}
           </button>
+          {canAdd ? (
           <button
             ref={addRef}
             type="button"
@@ -199,6 +202,7 @@ export function HostListingsDesk({
           >
             <Plus className="size-5" aria-hidden />
           </button>
+          ) : null}
         </div>
       </div>
       {searchOpen ? (

@@ -368,7 +368,9 @@ export function ProviderScreeningPanel() {
                 <li key={person.id}>
                   <p className="text-sm font-semibold">
                     {person.name}
-                    <span className="ml-2 text-xs font-normal text-muted">{t(ROLE_COPY[person.role] || "screeningRoleStaff")}</span>
+                    <span className="ml-2 text-xs font-normal text-muted">
+                      {person.centreRole === "read_only" ? (loc === "fr" ? "Lecture seule" : "Read-only") : t(ROLE_COPY[person.role] || "screeningRoleStaff")}
+                    </span>
                   </p>
                   <ul className="mt-2 space-y-2">
                     {person.docs.map((doc) => (

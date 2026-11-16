@@ -159,7 +159,9 @@ export type DaycareDesk =
   | "learning"
   | "hours"
   | "tools"
-  | "care";
+  | "care"
+  | "documents"
+  | "contracts";
 
 export function providerNavSearch(id: string): { desk: DaycareDesk } {
   if (

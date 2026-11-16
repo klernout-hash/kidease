@@ -46,6 +46,7 @@ function matchesChild(row: AttendanceRow, childName: string, bookingId: string |
 
 export function CareChildOps({
   role,
+  locked = false,
   row,
   ops,
   busy,
@@ -53,6 +54,7 @@ export function CareChildOps({
   onReload,
 }: {
   role: CareDeskRole;
+  locked?: boolean;
   row: AttendanceRow;
   ops: CareOpsPayload;
   busy: string | null;
@@ -178,7 +180,7 @@ export function CareChildOps({
                               key={status}
                               size="sm"
                               variant="secondary"
-                              disabled={busy !== null}
+                              disabled={locked || busy !== null}
                               onClick={() => void logDose(med.id, time, status)}
                             >
                               {t(DOSE_COPY[status])}
@@ -198,6 +200,7 @@ export function CareChildOps({
               {t("careMedName")}
               <input
                 className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                readOnly={locked}
                 placeholder={t("careMedNamePh")}
                 value={medDraft.name}
                 onChange={(e) => setMedDraft((prev) => ({ ...prev, name: e.target.value }))}
@@ -207,6 +210,7 @@ export function CareChildOps({
               {t("careMedDosage")}
               <input
                 className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                readOnly={locked}
                 placeholder={t("careMedDosagePh")}
                 value={medDraft.dosage}
                 onChange={(e) => setMedDraft((prev) => ({ ...prev, dosage: e.target.value }))}
@@ -216,6 +220,7 @@ export function CareChildOps({
               {t("careMedTimes")}
               <input
                 className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                readOnly={locked}
                 placeholder={t("careMedTimesPh")}
                 value={medDraft.times}
                 onChange={(e) => setMedDraft((prev) => ({ ...prev, times: e.target.value }))}
@@ -226,12 +231,13 @@ export function CareChildOps({
               <textarea
                 rows={2}
                 className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                readOnly={locked}
                 value={medDraft.instructions}
                 onChange={(e) => setMedDraft((prev) => ({ ...prev, instructions: e.target.value }))}
               />
             </label>
             <div>
-              <Button size="sm" disabled={busy !== null} onClick={() => void saveMed()}>
+              <Button size="sm" disabled={locked || busy !== null} onClick={() => void saveMed()}>
                 {busy === `${row.childName}:med` ? t("loading") : t("careMedAdd")}
               </Button>
             </div>
@@ -263,6 +269,7 @@ export function CareChildOps({
               {t("careIncidentKind")}
               <select
                 className="mt-1 block rounded-md border border-border bg-bg px-2 py-1.5 text-sm"
+                disabled={locked}
                 value={incidentDraft.kind}
                 onChange={(e) => setIncidentDraft((prev) => ({ ...prev, kind: e.target.value as IncidentKind }))}
               >
@@ -277,6 +284,7 @@ export function CareChildOps({
               {t("careIncidentWhere")}
               <input
                 className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                readOnly={locked}
                 value={incidentDraft.location}
                 onChange={(e) => setIncidentDraft((prev) => ({ ...prev, location: e.target.value }))}
               />
@@ -286,6 +294,7 @@ export function CareChildOps({
               <textarea
                 rows={3}
                 className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                readOnly={locked}
                 value={incidentDraft.description}
                 onChange={(e) => setIncidentDraft((prev) => ({ ...prev, description: e.target.value }))}
               />
@@ -295,6 +304,7 @@ export function CareChildOps({
               <textarea
                 rows={2}
                 className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                readOnly={locked}
                 value={incidentDraft.actionTaken}
                 onChange={(e) => setIncidentDraft((prev) => ({ ...prev, actionTaken: e.target.value }))}
               />
@@ -302,12 +312,13 @@ export function CareChildOps({
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
+                disabled={locked}
                 checked={incidentDraft.firstAid}
                 onChange={(e) => setIncidentDraft((prev) => ({ ...prev, firstAid: e.target.checked }))}
               />
               {t("careIncidentFirstAid")}
             </label>
-            <Button size="sm" disabled={busy !== null} onClick={() => void fileIncident()}>
+            <Button size="sm" disabled={locked || busy !== null} onClick={() => void fileIncident()}>
               {busy === `${row.childName}:incident` ? t("loading") : t("careIncidentSubmit")}
             </Button>
           </div>

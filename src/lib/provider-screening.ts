@@ -165,7 +165,7 @@ export function deskRoleToScreeningRole(role: string | null | undefined): Screen
   const v = (role || "").trim();
   if (v === "owner") return "owner";
   if (v === "manager") return "director";
-  if (v === "read_only") return "volunteer";
+  if (v === "read_only") return "staff";
   return "staff";
 }
 
