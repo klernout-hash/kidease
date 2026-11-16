@@ -108,6 +108,8 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_RANKING_V2",
   "FEATURE_SUPPORT_CHAT",
   "FEATURE_SUPPORT_SMS_REPLY",
+  "FEATURE_LIVE_SUPPORT_CHAT",
+  "FEATURE_SUPPORT_SMS_ALERT",
   "FEATURE_TOP_RATED_BADGE",
   "FEATURE_MOBILE_SEARCH_V2",
   "FEATURE_UI_AIRBNB_V1",
@@ -431,6 +433,10 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_SUPPORT_CHAT: false,
   /** Owner text replies into that thread. Off. Also needs FEATURE_SUPPORT_CHAT. */
   FEATURE_SUPPORT_SMS_REPLY: false,
+  /** Live support chat in Messages. Off. The old support card stays until this is on. */
+  FEATURE_LIVE_SUPPORT_CHAT: false,
+  /** Text when a live support message arrives. Off. Also needs FEATURE_LIVE_SUPPORT_CHAT. */
+  FEATURE_SUPPORT_SMS_ALERT: false,
   /** KidEase Top Rated. Off. Not a government rating. */
   FEATURE_TOP_RATED_BADGE: false,
   /** Mobile Where / When / Who search. Off. The current search stays until this is on. */
@@ -1240,6 +1246,18 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Owner text replies land in the support thread. Off. Needs FEATURE_SUPPORT_CHAT. A bad signature is rejected.",
+  },
+  {
+    key: "FEATURE_LIVE_SUPPORT_CHAT",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Live support chat in Messages, with one thread per person and an admin inbox. Off. The old support card stays.",
+  },
+  {
+    key: "FEATURE_SUPPORT_SMS_ALERT",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Text Kyle when a live support message arrives. Off. Needs FEATURE_LIVE_SUPPORT_CHAT. The text has a name, a role, and a link. No message body.",
   },
   {
     key: "FEATURE_TOP_RATED_BADGE",

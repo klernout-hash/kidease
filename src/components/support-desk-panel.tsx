@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useCopy } from "@/lib/use-copy";
 import { localePath } from "@/lib/locale-path";
+import { LiveSupportChat } from "@/components/live-support-chat";
+import { liveSupportPack } from "@/lib/live-support";
 import { messageReferenceInBody, supportCopy, withMessageReference, type SupportLocale } from "@/lib/support-desk";
-import { loadSupportDesk, postSupportDesk, supportDeskStatus } from "@/lib/server/support-desk";
-import { listAdminSupportDesk, replyAdminSupportDesk } from "@/lib/server/support-desk";
+import { liveSupportStatus } from "@/lib/server/live-support";
+import { listAdminSupportDesk, loadSupportDesk, postSupportDesk, replyAdminSupportDesk, supportDeskStatus } from "@/lib/server/support-desk";
 
 function pack(locale: string) {
   return locale === "fr" ? supportCopy.fr : supportCopy.en;
@@ -20,21 +22,55 @@ export function SupportDeskBar({
   const { locale } = useCopy();
   const copy = pack(locale as SupportLocale);
   const [enabled, setEnabled] = useState(false);
+  const [live, setLive] = useState(false);
   const [chip, setChip] = useState<"all" | "daycares" | "support">("all");
 
   useEffect(() => {
     let stop = false;
-    void supportDeskStatus()
-      .then((row) => {
-        if (!stop) setEnabled(Boolean(row.enabled));
-      })
-      .catch(() => {
-        if (!stop) setEnabled(false);
-      });
+    void Promise.all([
+      supportDeskStatus().catch(() => ({ enabled: false })),
+      liveSupportStatus().catch(() => ({ enabled: false })),
+    ]).then(([legacy, next]) => {
+      if (stop) return;
+      setEnabled(Boolean(legacy.enabled));
+      setLive(Boolean(next.enabled));
+    });
     return () => {
       stop = true;
     };
   }, []);
+
+  if (live) {
+    return (
+      <div className="mt-4" data-ke="support-desk" data-open="live">
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label={copy.title}>
+          {(
+            [
+              ["all", copy.all],
+              ["daycares", copy.daycares],
+              ["support", copy.support],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={chip === id}
+              className={`min-h-11 rounded-full px-4 text-sm font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${
+                chip === id ? "bg-fg text-bg" : "bg-surface text-fg ring-1 ring-border"
+              }`}
+              onClick={() => {
+                setChip(id);
+                onOpen(id === "support");
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {open ? <LiveSupportChat mode="member" /> : null}
+      </div>
+    );
+  }
 
   if (!enabled) {
     return (
@@ -172,12 +208,17 @@ function SupportThread({ copy }: { copy: (typeof supportCopy)[SupportLocale] }) 
 export function AdminSupportDesk() {
   const { locale } = useCopy();
   const copy = pack(locale);
+  const liveCopy = liveSupportPack(locale);
   const [enabled, setEnabled] = useState(false);
+  const [live, setLive] = useState(false);
   const [threads, setThreads] = useState<Array<{ id: string; unread: boolean; preview: string }>>([]);
   const [active, setActive] = useState("");
   const [text, setText] = useState("");
 
   useEffect(() => {
+    void liveSupportStatus()
+      .then((row) => setLive(Boolean(row.enabled)))
+      .catch(() => setLive(false));
     void listAdminSupportDesk()
       .then((row) => {
         if (!row.enabled) return;
@@ -186,6 +227,22 @@ export function AdminSupportDesk() {
       })
       .catch(() => setEnabled(false));
   }, []);
+
+  if (live) {
+    return (
+      <section className="rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="admin-support-desk" data-open="live">
+        <h3 className="font-display text-xl">{liveCopy.inboxTitle}</h3>
+        <p className="mt-1 text-sm text-muted">{liveCopy.inboxLead}</p>
+        <Link
+          to="/admin-support"
+          search={{ thread: undefined }}
+          className="mt-3 inline-flex min-h-11 items-center font-semibold text-primary underline-offset-4 touch-manipulation hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        >
+          {liveCopy.inboxTitle}
+        </Link>
+      </section>
+    );
+  }
 
   if (!enabled) return null;
 

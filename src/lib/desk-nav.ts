@@ -67,6 +67,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "payroll", label: "Payroll", hint: "Centre tool, not a platform payroll", labelKey: "adminNavPayroll", href: "/provider", search: { desk: "tools" } },
     { id: "subsidy-tool", label: "Subsidy", hint: "Centre billing tool", labelKey: "adminNavSubsidy", href: "/provider", search: { desk: "tools" } },
     { id: "support", label: "Support", hint: "Cases and refunds", href: "/support" },
+    { id: "support-inbox", label: "Support inbox", hint: "Live chats from parents and daycares", href: "/admin-support" },
     { id: "profile", label: "Profile", labelKey: "profile", href: "/account", search: { tab: "profile", section: "profile", desk: "admin" } },
     { id: "appearance", label: "Appearance", labelKey: "appearance", href: "/account", search: { tab: "profile", section: "appearance", desk: "admin" } },
     { id: "delete", label: "Delete account", labelKey: "deleteAccount", href: "/account", search: { tab: "profile", section: "delete", desk: "admin" } },
@@ -77,6 +78,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   ],
   support: [
     { id: "inbox", label: "Inbox", hint: "Open cases", href: "/support" },
+    { id: "support-inbox", label: "Support inbox", hint: "Live chats", href: "/admin-support" },
     { id: "new", label: "New case", hint: "Open a case" },
     { id: "account", label: "Account", hint: "Profile and preferences", href: "/account", search: { tab: "profile", desk: "support" } },
   ],
@@ -340,6 +342,8 @@ type DeskNavOpts = {
   topRated?: boolean;
   /** Family steps. Hidden until FEATURE_CENTRE_LEAD_TRACKER is on. */
   leadTracker?: boolean;
+  /** Live support inbox. Hidden until FEATURE_LIVE_SUPPORT_CHAT is on. */
+  liveSupport?: boolean;
 };
 
 /** Today, Listings, Calendar, and Insights sit together. Calendar arrives with FEATURE_HOST_LISTING. */
@@ -382,6 +386,7 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.id === "tours" && opts?.hostListing === true) return false;
     if (item.id === "insights") return opts?.providerInsights === true;
     if (item.id === "leads") return opts?.leadTracker === true;
+    if (item.id === "support-inbox") return opts?.liveSupport === true;
     if (item.id === "top-rated") return opts?.topRated === true;
     if (item.id === "promote" || item.id === "subscription") return false;
     if (item.id === "upgrade") return opts?.subscriptionsEnabled === true;
@@ -444,14 +449,14 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
     { id: "ops", label: "Operations", labelKey: "navOperations", open: true, itemIds: ["queue", "people", "connect", "mail"] },
     { id: "review", label: "Review", labelKey: "navReview", open: true, itemIds: ["verify", "truth", "reviews", "screening", "documents", "spam", "trust", "trust-queue"] },
     { id: "listings-data", label: "Listings data", labelKey: "navListingsData", itemIds: ["daycares", "incomplete", "winnipeg", "vacancies", "ranking", "qc-home"] },
-    { id: "support", label: "Support", labelKey: "support", itemIds: ["support", "triage"] },
+    { id: "support", label: "Support", labelKey: "support", itemIds: ["support", "support-inbox", "triage"] },
     { id: "people", label: "People and money", labelKey: "navPeopleMoney", itemIds: ["money", "quickbooks", "payroll", "subsidy-tool", "contracts", "government"] },
     { id: "system", label: "System", labelKey: "navSystem", itemIds: ["activity", "ai", "features", "email-health", "chat"] },
     { id: "account", label: "Account", labelKey: "account", itemIds: ["profile", "appearance", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", itemIds: ["notify-prefs", "security", "email-sms"] },
   ],
   support: [
-    { id: "cases", label: "Support", labelKey: "support", open: true, itemIds: ["inbox", "new"] },
+    { id: "cases", label: "Support", labelKey: "support", open: true, itemIds: ["inbox", "support-inbox", "new"] },
     { id: "account", label: "Account", labelKey: "account", itemIds: ["account"] },
   ],
 };

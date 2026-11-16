@@ -206,6 +206,8 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_RANKING_V2` | Search ranking v2. Default off. Best match stays as it is today. No paid rank and no new Google calls. See docs/ranking-v2-gap-report.md. |
 | `FEATURE_SUPPORT_CHAT` | KidEase Support thread in Messages, and a staff inbox on the web desk. Default off. The phone number is an env var only. |
 | `FEATURE_SUPPORT_SMS_REPLY` | Owner SMS replies into that thread. Default off. Also needs `FEATURE_SUPPORT_CHAT`. Bad signatures are rejected. |
+| `FEATURE_LIVE_SUPPORT_CHAT` | Live support chat in Messages. One thread per person, bubble timeline, and an admin inbox at `/admin-support`. Default off. The old support card stays. |
+| `FEATURE_SUPPORT_SMS_ALERT` | Text `SUPPORT_ALERT_PHONE` when a live support message arrives. Default off. Also needs `FEATURE_LIVE_SUPPORT_CHAT`. The text has a name, a role, and a link. No message body. |
 | `FEATURE_TOP_RATED_BADGE` | KidEase Top Rated on listing cards and the daycare status page. Default off. Not a government rating. |
 | `FEATURE_MOBILE_SEARCH_V2` | Mobile Home search with Where, When, and Who. Default off. Desktop and the current search stay as they are. No paid place lookup. |
 | `FEATURE_UI_AIRBNB_V1` | Phone shell: search pill, one-card home, account hub, language list. Default off. Desktop, admin, and gov stay as they are. No paid placement. |
