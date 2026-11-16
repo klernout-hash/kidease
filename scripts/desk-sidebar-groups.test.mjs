@@ -117,14 +117,12 @@ test("parent and daycare groups stay on the live headings", () => {
   );
   assert.deepEqual(
     DESK_GROUPS.daycare.map((group) => group.id),
-    ["desk", "more-tools"],
+    ["desk", "business", "team", "compliance", "grow", "account", "settings"],
   );
-  assert.deepEqual(DESK_GROUPS.daycare.find((group) => group.id === "desk")?.itemIds, ["today", "calendar", "listings", "messages"]);
-  assert.equal(DESK_GROUPS.daycare.find((group) => group.id === "more-tools")?.open, undefined);
   assert.equal(DESK_GROUPS.parent.find((group) => group.id === "family")?.labelKey, "familyDeskTitle");
   assert.equal(DESK_GROUPS.parent.find((group) => group.id === "search-tools")?.labelKey, "navSearchTools");
   assert.equal(DESK_GROUPS.daycare.find((group) => group.id === "desk")?.labelKey, "daycareDeskTitle");
-  assert.equal(DESK_GROUPS.daycare.find((group) => group.id === "more-tools")?.labelKey, "moreTools");
+  assert.equal(DESK_GROUPS.daycare.find((group) => group.id === "business")?.labelKey, "navBusiness");
   const drawer = src("src/components/nav-drawer.tsx");
   assert.doesNotMatch(drawer, /phoneDeskGroupOpen/);
   assert.doesNotMatch(src("src/routes/provider.tsx"), /data-ke="listings-actions"/);
