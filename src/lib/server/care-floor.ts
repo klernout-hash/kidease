@@ -10,7 +10,7 @@ import {
   rollCanClose,
   type RollMark,
 } from "@/lib/care-floor";
-import { centreCanWriteCare } from "@/lib/centre-roles";
+import { centreActionDenied, centreCanWriteCare } from "@/lib/centre-roles";
 import { getSql } from "@/lib/db";
 import { nid } from "@/lib/utils";
 import { listAccessibleDaycareIds, loadCentreRole } from "@/lib/server/centre-access";
@@ -176,7 +176,7 @@ export const saveCareFloor = createServerFn({ method: "POST" })
     payload: writeOf(input?.payload),
   }))
   .handler(async ({ context, data }) => {
-    if (!(await canWrite(context.userId, data.daycareId))) return { ok: false as const, error: "You cannot change this centre." };
+    if (!(await canWrite(context.userId, data.daycareId))) throw centreActionDenied("write");
     const sql = await getSql();
     if (data.action === "roll_start") {
       const open = await sql<{ id: string }>`

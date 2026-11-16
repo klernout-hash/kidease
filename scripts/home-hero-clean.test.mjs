@@ -121,8 +121,8 @@ test("header leaves tour requests on listings and keeps the daycare journey in t
   assert.equal(groups.length, 1);
   assert.equal(groups[0].links.filter((link) => link.to === "/claim").length, 1);
   const detail = src("src/routes/daycare.$slug.tsx");
-  assert.match(detail, /const primaryAction = live \? onTour : onInfo/);
-  assert.match(detail, /const primaryLabel = live \? t\("requestTour"\) : t\("requestInfo"\)/);
+  assert.match(detail, /const primaryAction = tourReady \? onTour : onInfo/);
+  assert.match(detail, /const primaryLabel = tourReady \? t\("requestTour"\) : t\("requestInfo"\)/);
   assert.match(detail, /<RequestTourSheet/);
   assert.match(detail, /<RequestInfoSheet/);
 });

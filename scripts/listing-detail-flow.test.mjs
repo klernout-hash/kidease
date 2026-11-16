@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { listingOfferGroups } from "../src/lib/listing-offers.ts";
 import { amenityLabel } from "../src/lib/amenities.ts";
+import { listingHasOwnerClaim } from "../src/lib/approve-live.ts";
 
 const page = readFileSync(new URL("../src/routes/daycare.$slug.tsx", import.meta.url), "utf8");
 const css = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
@@ -14,6 +15,11 @@ test("offers split meals from programs and drop harvested fee words", () => {
   assert.equal(offer.groups.find((group) => group.id === "place")?.items.includes("Daily outdoor block"), true);
   assert.equal(offer.groups.find((group) => group.id === "care")?.items.includes("Music program"), true);
   assert.equal(listingOfferGroups("", "fr").groups.length, 0);
+});
+
+test("staff screening is a plain label, not the stored token", () => {
+  assert.equal(amenityLabel("staff-screening", "en"), "Staff screening attested");
+  assert.equal(amenityLabel("staff-screening", "fr"), "Vérification du personnel attestée");
 });
 
 test("public amenity labels explain the participation flag without claiming a fee", () => {
@@ -28,6 +34,14 @@ test("public amenity labels explain the participation flag without claiming a fe
       assert.ok(publicItems.includes(amenityLabel("music", locale)));
     }
   }
+});
+
+test("a claimed centre can book a tour even when the public live flag is off", () => {
+  assert.equal(listingHasOwnerClaim({ claimed: true, live: false }), true);
+  assert.equal(listingHasOwnerClaim({ claimStatus: "approved", claimed: false }), true);
+  assert.equal(listingHasOwnerClaim({ claimStatus: "unclaimed", claimed: false, claimedAt: null }), false);
+  assert.match(page, /listingHasOwnerClaim/);
+  assert.match(page, /unclaimed=\{!tourReady\}/);
 });
 
 test("opened listing keeps enquire and drops rental wording", () => {
@@ -56,7 +70,7 @@ test("detail keeps one facts group and the same next step on phone and desktop",
   assert.equal((page.match(/<ListingHeaderPills /g) ?? []).length, 1);
   assert.doesNotMatch(page, /<ul[^>]+data-ke="listing-highlights"/);
   assert.equal((page.match(/onClick=\{primaryAction\}/g) ?? []).length, 2);
-  assert.match(page, /const primaryAction = live \? onTour : onInfo/);
+  assert.match(page, /const primaryAction = tourReady \? onTour : onInfo/);
   assert.match(page, /href="#listing-availability-details"/);
   assert.match(page, /<JoinWaitlist/);
   assert.match(page, /<WaitlistOptIn/);

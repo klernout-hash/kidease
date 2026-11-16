@@ -30,7 +30,7 @@ test("listing detail keeps website CTAs, login next, and a back link", () => {
   assert.match(listing, /\$\{listingPath\}\?ask=/);
   assert.match(listing, /backToExplore/);
   assert.match(listing, /data-ke="listing-next-step-lead"/);
-  assert.match(listing, /const primaryLabel = live \? t\("requestTour"\) : t\("requestInfo"\)/);
+  assert.match(listing, /const primaryLabel = tourReady \? t\("requestTour"\) : t\("requestInfo"\)/);
   assert.equal((listing.match(/onClick=\{primaryAction\}/g) ?? []).length, 2);
   assert.match(listing, /md:hidden/);
   assert.match(listing, /\[\[data-channel=app\]_&\]:bottom-\[calc\(5rem\+var\(--ke-keyboard,0px\)\)\]/);
@@ -65,9 +65,14 @@ test("Explore empty states distinguish load failure from a true empty radius", (
 test("error surfaces and get-app offer a next step instead of a dead end", () => {
   const err = src("src/lib/error-component.tsx");
   assert.match(err, /copy\.retry/);
+  assert.match(err, /copy\.home/);
+  assert.match(err, /copy\.support/);
   assert.doesNotMatch(err, /Reload Explore/);
-  assert.match(err, /Back to home/);
-  assert.match(err, /Email support/);
+  assert.match(src("src/lib/safe-error.ts"), /Back to home/);
+  assert.match(src("src/lib/safe-error.ts"), /Email support/);
+  assert.match(src("src/lib/safe-error.ts"), /Retour à l'accueil/);
+  assert.match(src("src/lib/safe-error.ts"), /Écrire au soutien/);
+  assert.doesNotMatch(src("src/components/qbo-panel.tsx"), /from: "\/provider"/);
   assert.match(err, /SUPPORT_INBOX_EMAIL/);
   const rootCrash = src("src/routes/__root.tsx");
   assert.match(rootCrash, /href="\/search"/);

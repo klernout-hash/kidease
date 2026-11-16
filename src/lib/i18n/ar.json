@@ -3213,6 +3213,7 @@
   "alertSummary": "{on} من {total} تنبيهات مفعّلة",
   "navMenu": "القائمة",
   "navCalendar": "التقويم",
+  "deskNavCalendarHint": "أماكن شاغرة حسب اليوم",
   "menuEarningsMonth": "أرباح هذا الشهر",
   "menuReviews": "التقييمات",
   "menuCreateListing": "إنشاء ملف جديد",
@@ -3543,5 +3544,12 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "الرواتب",
   "adminNavSubsidy": "الدعم",
-  "employeeInviteRole": "هذه الدعوة لدور {role}."
+  "employeeInviteRole": "هذه الدعوة لدور {role}.",
+  "parentStoriesHint": "ملاحظات من دار الحضانة",
+  "deskNavDocuments": "المستندات",
+  "deskNavDocumentsHint": "التأمين والسياسات والدليل",
+  "employeeResend": "إعادة إرسال الدعوة",
+  "employeeResent": "أُعيد إرسال الدعوة.",
+  "employeeResendHeld": "لم تُرسل تلك الدعوة بالبريد.",
+  "employeeResendFailed": "تعذر إعادة إرسال تلك الدعوة."
 }

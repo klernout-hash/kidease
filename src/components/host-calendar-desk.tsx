@@ -102,6 +102,7 @@ export function HostCalendarDesk({
           <p className="mt-1 text-sm text-muted">{copy.calendarLead}</p>
           <p className="mt-1 text-sm text-muted">{copy.parentsSee}</p>
         </div>
+        {canEdit ? (
         <button
           type="button"
           className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full ring-1 ring-border touch-manipulation"
@@ -111,6 +112,7 @@ export function HostCalendarDesk({
         >
           <Settings className="size-5" aria-hidden />
         </button>
+        ) : null}
       </div>
       {listings.length > 1 ? (
         <label className="block text-sm">

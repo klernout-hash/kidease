@@ -564,7 +564,7 @@ export function ParentDesk({
           <h2 className="font-display text-2xl">{t("myRequests")}</h2>
           <p className="mt-1 text-sm text-muted">{t("myRequestsLead")}</p>
           <div className="mt-4">
-            {leads.length === 0 && bookings.length === 0 ? (
+            {leads.length === 0 && bookings.length === 0 && tours.length === 0 ? (
               <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" art={<KidNotebook />} />
             ) : leads.length ? (
             <Suspense fallback={<div className="ke-skel h-24 rounded-xl" aria-hidden="true" />}>
@@ -600,7 +600,7 @@ export function ParentDesk({
                   </div>
                   <p className="text-sm text-muted">
                     {b.childName ? `${b.childName} · ` : ""}
-                    {b.startDate ?? formatMonth(b.startMonth, locale)} · {t(b.ageGroup)}
+                    {b.startDate ?? formatMonth(b.startMonth, locale)} · {String(b.ageGroup) === "any" ? (locale === "fr" ? "Tout âge" : "Any age") : t(b.ageGroup)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

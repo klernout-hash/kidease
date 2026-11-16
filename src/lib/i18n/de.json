@@ -3213,6 +3213,7 @@
   "alertSummary": "{on} von {total} Hinweisen an",
   "navMenu": "Menü",
   "navCalendar": "Kalender",
+  "deskNavCalendarHint": "Freie Plätze nach Tag",
   "menuEarningsMonth": "Einnahmen diesen Monat",
   "menuReviews": "Bewertungen",
   "menuCreateListing": "Neue Einrichtung anlegen",
@@ -3543,5 +3544,12 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "Lohn",
   "adminNavSubsidy": "Zuschuss",
-  "employeeInviteRole": "Diese Einladung ist für die Rolle {role}."
+  "employeeInviteRole": "Diese Einladung ist für die Rolle {role}.",
+  "parentStoriesHint": "Notizen von Ihrer Kita",
+  "deskNavDocuments": "Dokumente",
+  "deskNavDocumentsHint": "Versicherung, Regeln und Handbuch",
+  "employeeResend": "Einladung erneut senden",
+  "employeeResent": "Einladung erneut gesendet.",
+  "employeeResendHeld": "Diese Einladung wurde nicht per E-Mail gesendet.",
+  "employeeResendFailed": "Diese Einladung konnte nicht erneut gesendet werden."
 }

@@ -14,6 +14,11 @@ import {
 import type { RoomBand } from "@/lib/provincial-ratios";
 import { nid } from "@/lib/utils";
 
+function shiftInstant(value: string | Date): string {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+}
+
 async function ensureStaffTables() {
   const sql = await getSql();
   await sql`
@@ -81,11 +86,11 @@ export const listStaffDesk = createServerFn({ method: "GET" })
     const daycareId = centres.some((row) => row.id === data.daycareId) ? data.daycareId : centres[0]?.id || "";
     const province = centres.find((row) => row.id === daycareId)?.province || "";
     const shifts = daycareId
-      ? await sql<{ id: string; staff_name: string; role: string; room_band: string; starts_at: string; ends_at: string }>`
+      ? await sql<{ id: string; staff_name: string; role: string; room_band: string; starts_at: string | Date; ends_at: string | Date }>`
           select id, staff_name, role, room_band, starts_at, ends_at
           from staff_shifts where daycare_id = ${daycareId}
           order by starts_at desc limit 40
-        `.catch(() => [])
+        `
       : [];
     const certs = daycareId
       ? await sql<{
@@ -111,8 +116,8 @@ export const listStaffDesk = createServerFn({ method: "GET" })
         staffName: row.staff_name,
         role: row.role,
         roomBand: row.room_band,
-        startsAt: new Date(row.starts_at).toISOString(),
-        endsAt: new Date(row.ends_at).toISOString(),
+        startsAt: shiftInstant(row.starts_at),
+        endsAt: shiftInstant(row.ends_at),
       })),
       certs: certs.map((row) => ({
         id: row.id,
@@ -136,18 +141,22 @@ export const saveStaffShift = createServerFn({ method: "POST" })
     if (!parsed.ok) throw new Error("Check the name and the times.");
     const { screeningGate } = await import("@/lib/server/compliance-screening");
     const gate = await screeningGate(daycareId, parsed.shift.staffName);
-    if (gate.block) throw new Error("This staff record is expired. Update it before adding the shift.");
+    if (gate.block && gate.status === "expired") {
+      return { ok: false as const, error: "This staff record is expired. Update it before adding the shift." };
+    }
     await ensureStaffTables();
     const sql = await getSql();
     const id = nid("shf");
-    await sql`
+    const inserted = await sql<{ id: string }>`
       insert into staff_shifts (id, daycare_id, staff_name, role, room_band, starts_at, ends_at, created_by)
       values (
         ${id}, ${daycareId}, ${parsed.shift.staffName}, ${parsed.shift.role}, ${parsed.shift.roomBand},
         ${parsed.shift.startsAt}, ${parsed.shift.endsAt}, ${context.userId}
       )
+      returning id
     `;
-    return { ok: true as const, id, hours: parsed.shift.hours };
+    if (!inserted[0]?.id) return { ok: false as const, error: "That shift was not saved." };
+    return { ok: true as const, id: inserted[0].id, hours: parsed.shift.hours };
   });
 
 export const saveEceCertificate = createServerFn({ method: "POST" })

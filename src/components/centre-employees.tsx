@@ -6,6 +6,7 @@ import {
   acceptCentreInvite,
   inviteCentreEmployee,
   listCentreTeam,
+  resendCentreInvite,
   revokeCentreEmployee,
   type CentreTeamPayload,
 } from "@/lib/server/centre-members";
@@ -90,6 +91,19 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("employeeInviteFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onResend(id: string) {
+    setBusy(true);
+    try {
+      const res = await resendCentreInvite({ data: { id } });
+      if (res.mailed) toast.success(t("employeeResent"));
+      else toast.message(t("employeeResendHeld"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("employeeResendFailed"));
     } finally {
       setBusy(false);
     }
@@ -218,16 +232,32 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
                   {t(STATUS_COPY[row.status] ?? "employeeStatusPending")}
                 </p>
               </div>
-              {row.canRevoke ? (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="min-h-11 shrink-0"
-                  disabled={busy}
-                  onClick={() => void onRevoke(row.id, row.kind)}
-                >
-                  {t("employeeRevoke")}
-                </Button>
+              {row.status === "pending" || row.canRevoke ? (
+                <div className="flex flex-wrap gap-2">
+                  {row.status === "pending" && row.canRevoke ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="min-h-11 shrink-0"
+                      data-ke="employee-resend"
+                      disabled={busy}
+                      onClick={() => void onResend(row.id)}
+                    >
+                      {t("employeeResend")}
+                    </Button>
+                  ) : null}
+                  {row.canRevoke ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="min-h-11 shrink-0"
+                      disabled={busy}
+                      onClick={() => void onRevoke(row.id, row.kind)}
+                    >
+                      {t("employeeRevoke")}
+                    </Button>
+                  ) : null}
+                </div>
               ) : null}
             </li>
           ))

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { CountUp } from "@/components/count-up";
+import { PayoutStatusCard } from "@/components/payout-status-card";
 import { EarningsHeader } from "@/components/earnings-header";
 import { PerformanceBars } from "@/components/earnings-bars";
 import { EmptyState } from "@/components/empty-state";
@@ -47,6 +48,12 @@ export function HostEarningsScreen({ initial }: { initial?: EarningsResult | nul
       {data && !data.ok ? (
         <div className="mt-6">
           <EmptyState title={t("actionFailed")} action={t("back")} actionTo="/menu" />
+        </div>
+      ) : null}
+
+      {desk ? (
+        <div className="mt-6">
+          <PayoutStatusCard status={desk.payouts} />
         </div>
       ) : null}
 

@@ -8,6 +8,7 @@ import {
   CENTRE_INVITE_TTL_MS,
   decideAcceptInvite,
   decideInviteEmployee,
+  decideResendInvite,
   decideRevokeEmployee,
   normalizeInviteEmail,
   parseCentreInviteRole,
@@ -297,6 +298,93 @@ export const inviteCentreEmployee = createServerFn({ method: "POST" })
       hourlyMax: CENTRE_INVITE_HOURLY_MAX,
       dailyMax: CENTRE_INVITE_DAILY_MAX,
     };
+  });
+
+export const resendCentreInvite = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string }) => ({ id: String(input?.id || "").trim() }))
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    if (!data.id) throw new Error(CENTRE_INVITE_NOT_FOUND);
+    const invite = await sql<{
+      id: string;
+      daycare_id: string;
+      email: string;
+      name: string | null;
+      role: string;
+      status: string;
+      created_at: string | Date;
+    }>`
+      select id, daycare_id, email, name, role, status, created_at
+      from centre_invites
+      where id = ${data.id} and status = 'pending' and expires_at > now()
+      limit 1
+    `.catch(() => []);
+    const row = invite[0];
+    if (!row) throw new Error(CENTRE_INVITE_NOT_FOUND);
+    const actorRole = await loadCentreRole(sql, context.userId, row.daycare_id);
+    const hourlyInvites = await sql<{ n: number }>`
+      select count(*)::int as n from centre_invites
+      where daycare_id = ${row.daycare_id} and created_at > now() - interval '1 hour'
+    `.catch(() => [{ n: 0 }]);
+    const hourlyResends = await sql<{ n: number }>`
+      select count(*)::int as n from security_events
+      where kind = 'employee_invite' and daycare_id = ${row.daycare_id}
+        and detail like 'resent %' and at > now() - interval '1 hour'
+    `.catch(() => [{ n: 0 }]);
+    const dailyInvites = await sql<{ n: number }>`
+      select count(*)::int as n from centre_invites
+      where invited_by = ${context.userId} and created_at > now() - interval '24 hours'
+    `.catch(() => [{ n: 0 }]);
+    const dailyResends = await sql<{ n: number }>`
+      select count(*)::int as n from security_events
+      where kind = 'employee_invite' and actor_user_id = ${context.userId}
+        and detail like 'resent %' and at > now() - interval '24 hours'
+    `.catch(() => [{ n: 0 }]);
+    const last = await sql<{ at: string | Date }>`
+      select at from security_events
+      where kind = 'employee_invite' and detail = ${`resent ${row.id}`}
+      order by at desc
+      limit 1
+    `.catch(() => []);
+    const createdAtMs = new Date(row.created_at).getTime();
+    const lastResentAtMs = last[0] ? new Date(last[0].at).getTime() : null;
+    const decision = decideResendInvite({
+      actorRole,
+      inviteStatus: row.status,
+      createdAtMs,
+      lastResentAtMs: Number.isFinite(lastResentAtMs) ? lastResentAtMs : null,
+      hourlyCount: (hourlyInvites[0]?.n ?? 0) + (hourlyResends[0]?.n ?? 0),
+      dailyCount: (dailyInvites[0]?.n ?? 0) + (dailyResends[0]?.n ?? 0),
+    });
+    if (!decision.ok) throw new Error(decision.error);
+    const centre = await sql<{ name: string }>`select name from daycares where id = ${row.daycare_id} limit 1`;
+    if (!centre[0]) throw new Error("Centre not found");
+    const token = makeInviteToken();
+    const payload = {
+      to: row.email,
+      centreName: centre[0].name,
+      roleLabel: roleLabel(row.role),
+      url: employeeInviteUrl(token),
+      invitedName: row.name,
+    };
+    const sent = await trySendEmployeeInviteEmail(payload);
+    if (!sent.mailed && !sent.suppressed) throw new Error("Could not resend that invite.");
+    if (sent.mailed) {
+      await sql`
+        update centre_invites
+        set token_hash = ${hashInviteToken(token)},
+            expires_at = ${new Date(Date.now() + CENTRE_INVITE_TTL_MS).toISOString()}
+        where id = ${row.id} and status = 'pending'
+      `;
+    }
+    await logSecurityEvent({
+      kind: "employee_invite",
+      actorUserId: context.userId,
+      daycareId: row.daycare_id,
+      detail: `resent ${row.id}`,
+    });
+    return { ok: true as const, mailed: sent.mailed };
   });
 
 export const revokeCentreEmployee = createServerFn({ method: "POST" })

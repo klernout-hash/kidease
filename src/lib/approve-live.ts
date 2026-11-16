@@ -90,6 +90,20 @@ export type ApprovalClaim = {
 
 const APPROVED_CLAIM = new Set(["approved", "live", "active", "published"]);
 
+/**
+ * An owner claim, not the public Live flag.
+ * Admin-only and test centres stay off the public catalogue, and they can still be claimed.
+ */
+export function listingHasOwnerClaim(centre: {
+  claimed?: boolean | null;
+  claimStatus?: string | null;
+  claimedAt?: string | null;
+}): boolean {
+  if (centre.claimed) return true;
+  if ((centre.claimedAt || "").trim()) return true;
+  return APPROVED_CLAIM.has((centre.claimStatus || "").trim().toLowerCase());
+}
+
 export type VerifiedSearchPoint = LatLng & {
   source: "listing" | "city";
   eligible: boolean;

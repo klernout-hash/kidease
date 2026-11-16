@@ -179,6 +179,7 @@ import { Route as FrMeetTheTeamRouteImport } from './routes/fr.meet-the-team'
 import { Route as FrMenuRouteImport } from './routes/fr.menu'
 import { Route as FrMilieuxFamiliauxRouteImport } from './routes/fr.milieux-familiaux'
 import { Route as FrNeedCareFastRouteImport } from './routes/fr.need-care-fast'
+import { Route as FrNotificationsRouteImport } from './routes/fr.notifications'
 import { Route as FrParentRouteImport } from './routes/fr.parent'
 import { Route as FrPlansRouteImport } from './routes/fr.plans'
 import { Route as FrPricingRouteImport } from './routes/fr.pricing'
@@ -1194,6 +1195,11 @@ const FrNeedCareFastRoute = FrNeedCareFastRouteImport.update({
   path: '/need-care-fast',
   getParentRoute: () => FrRoute,
 } as any)
+const FrNotificationsRoute = FrNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrParentRoute = FrParentRouteImport.update({
   id: '/parent',
   path: '/parent',
@@ -2177,6 +2183,7 @@ export interface FileRoutesByFullPath {
   '/fr/menu': typeof FrMenuRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
+  '/fr/notifications': typeof FrNotificationsRoute
   '/fr/parent': typeof FrParentRouteWithChildren
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
@@ -2509,6 +2516,7 @@ export interface FileRoutesByTo {
   '/fr/menu': typeof FrMenuRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
+  '/fr/notifications': typeof FrNotificationsRoute
   '/fr/parent': typeof FrParentRouteWithChildren
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
@@ -2844,6 +2852,7 @@ export interface FileRoutesById {
   '/fr/menu': typeof FrMenuRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
+  '/fr/notifications': typeof FrNotificationsRoute
   '/fr/parent': typeof FrParentRouteWithChildren
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
@@ -3180,6 +3189,7 @@ export interface FileRouteTypes {
     | '/fr/menu'
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
+    | '/fr/notifications'
     | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
@@ -3512,6 +3522,7 @@ export interface FileRouteTypes {
     | '/fr/menu'
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
+    | '/fr/notifications'
     | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
@@ -3846,6 +3857,7 @@ export interface FileRouteTypes {
     | '/fr/menu'
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
+    | '/fr/notifications'
     | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
@@ -5430,6 +5442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrNeedCareFastRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/notifications': {
+      id: '/fr/notifications'
+      path: '/notifications'
+      fullPath: '/fr/notifications'
+      preLoaderRoute: typeof FrNotificationsRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/parent': {
       id: '/fr/parent'
       path: '/parent'
@@ -6672,6 +6691,7 @@ interface FrRouteChildren {
   FrMenuRoute: typeof FrMenuRoute
   FrMilieuxFamiliauxRoute: typeof FrMilieuxFamiliauxRoute
   FrNeedCareFastRoute: typeof FrNeedCareFastRoute
+  FrNotificationsRoute: typeof FrNotificationsRoute
   FrParentRoute: typeof FrParentRouteWithChildren
   FrPlansRoute: typeof FrPlansRoute
   FrPricingRoute: typeof FrPricingRoute
@@ -6759,6 +6779,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrMenuRoute: FrMenuRoute,
   FrMilieuxFamiliauxRoute: FrMilieuxFamiliauxRoute,
   FrNeedCareFastRoute: FrNeedCareFastRoute,
+  FrNotificationsRoute: FrNotificationsRoute,
   FrParentRoute: FrParentRouteWithChildren,
   FrPlansRoute: FrPlansRoute,
   FrPricingRoute: FrPricingRoute,

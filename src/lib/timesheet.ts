@@ -127,8 +127,26 @@ export function torontoWeek(anchor: Date): {
     endMs: end.getTime(),
     startIso: start.toISOString(),
     endIso: end.toISOString(),
-    label: `${startYmd} to ${addDays(startYmd, 6)}`,
+    label: `${startYmd} – ${addDays(startYmd, 6)}`,
   };
+}
+
+/** Show the stored Monday–Sunday label in the visitor's language. */
+export function formatWeekSpan(label: string, locale: "en" | "fr"): string {
+  const parts = label.includes(" – ") ? label.split(" – ") : label.split(" - ");
+  if (parts.length !== 2) return label;
+  const day = (ymd: string) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd.trim());
+    if (!match) return ymd.trim();
+    const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+    return new Intl.DateTimeFormat(locale === "fr" ? "fr-CA" : "en-CA", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(date);
+  };
+  return `${day(parts[0])} – ${day(parts[1])}`;
 }
 
 /** Read a clock time typed as Toronto local time. */

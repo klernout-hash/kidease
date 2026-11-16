@@ -1100,6 +1100,11 @@ export const getThread = createServerFn({ method: "GET" })
     const { videoSurfaceEnabled } = await import("@/lib/channel-readiness");
     const { voiceCredentialsPresent } = await import("@/lib/voice");
     const { voiceCallsEnabled } = await import("@/lib/features");
+    const zoneRows = await sql<{ timezone: string | null; province: string | null }>`
+      select timezone, province from daycares where id = ${conv[0].daycare_id} limit 1
+    `.catch(() => []);
+    const { resolveListingTourTimezone } = await import("@/lib/tour-calendar");
+    const timeZone = resolveListingTourTimezone(zoneRows[0]?.timezone, zoneRows[0]?.province);
     return {
       id: conv[0].id,
       videoSurfaceEnabled: videoSurfaceEnabled(),
@@ -1133,6 +1138,7 @@ export const getThread = createServerFn({ method: "GET" })
       messages: mapped,
       tours: await listToursForConversation(sql, conversationId),
       canWrite: access.canWrite,
+      timeZone,
     };
   });
 
@@ -1640,7 +1646,7 @@ export const createListing = createServerFn({ method: "POST" })
     )[0]?.n ?? 0;
     const staffOnly = ownerCount === 0 && (await listAccessibleDaycareIds(sql, context.userId)).length > 0;
     if (!centreCanCreateListing({ ownerCount, memberOnly: staffOnly })) {
-      throw new Error("Only the centre owner can add a listing.");
+      throw Object.assign(new Error("Only the centre owner can add a listing."), { status: 403 });
     }
     try {
       await assertNewListingAllowed({

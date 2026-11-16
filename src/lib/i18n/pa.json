@@ -3213,6 +3213,7 @@
   "alertSummary": "{total} ਵਿੱਚੋਂ {on} ਚੇਤਾਵਨੀਆਂ ਚਾਲੂ ਹਨ",
   "navMenu": "ਮੀਨੂ",
   "navCalendar": "ਕੈਲੰਡਰ",
+  "deskNavCalendarHint": "ਦਿਨ ਅਨੁਸਾਰ ਖਾਲੀ ਥਾਵਾਂ",
   "menuEarningsMonth": "ਇਸ ਮਹੀਨੇ ਦੀ ਕਮਾਈ",
   "menuReviews": "ਸਮੀਖਿਆਵਾਂ",
   "menuCreateListing": "ਨਵੀਂ ਸੂਚੀ ਬਣਾਓ",
@@ -3543,5 +3544,12 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "ਤਨਖਾਹ",
   "adminNavSubsidy": "ਸਬਸਿਡੀ",
-  "employeeInviteRole": "ਇਹ ਸੱਦਾ {role} ਭੂਮਿਕਾ ਲਈ ਹੈ।"
+  "employeeInviteRole": "ਇਹ ਸੱਦਾ {role} ਭੂਮਿਕਾ ਲਈ ਹੈ।",
+  "parentStoriesHint": "ਤੁਹਾਡੇ ਡੇਅਕੇਅਰ ਤੋਂ ਨੋਟ",
+  "deskNavDocuments": "ਦਸਤਾਵੇਜ਼",
+  "deskNavDocumentsHint": "ਬੀਮਾ, ਨੀਤੀਆਂ ਅਤੇ ਹੈਂਡਬੁੱਕ",
+  "employeeResend": "ਸੱਦਾ ਦੁਬਾਰਾ ਭੇਜੋ",
+  "employeeResent": "ਸੱਦਾ ਦੁਬਾਰਾ ਭੇਜਿਆ ਗਿਆ।",
+  "employeeResendHeld": "ਉਹ ਸੱਦਾ ਈਮੇਲ ਨਹੀਂ ਕੀਤਾ ਗਿਆ।",
+  "employeeResendFailed": "ਉਹ ਸੱਦਾ ਦੁਬਾਰਾ ਨਹੀਂ ਭੇਜਿਆ ਜਾ ਸਕਿਆ।"
 }

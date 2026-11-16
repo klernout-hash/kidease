@@ -3213,6 +3213,7 @@
   "alertSummary": "{on} di {total} avvisi attivi",
   "navMenu": "Menu",
   "navCalendar": "Calendario",
+  "deskNavCalendarHint": "Posti liberi per giorno",
   "menuEarningsMonth": "Guadagni di questo mese",
   "menuReviews": "Recensioni",
   "menuCreateListing": "Crea una nuova scheda",
@@ -3543,5 +3544,12 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "Paghe",
   "adminNavSubsidy": "Sussidio",
-  "employeeInviteRole": "Questo invito è per il ruolo {role}."
+  "employeeInviteRole": "Questo invito è per il ruolo {role}.",
+  "parentStoriesHint": "Note dal nido",
+  "deskNavDocuments": "Documenti",
+  "deskNavDocumentsHint": "Assicurazione, regole e guida",
+  "employeeResend": "Reinvia invito",
+  "employeeResent": "Invito inviato di nuovo.",
+  "employeeResendHeld": "Quell'invito non è stato inviato per email.",
+  "employeeResendFailed": "Impossibile reinviare quell'invito."
 }

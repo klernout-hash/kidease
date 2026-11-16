@@ -3213,6 +3213,7 @@
   "alertSummary": "{total} 项提醒中已开启 {on} 项",
   "navMenu": "菜单",
   "navCalendar": "日历",
+  "deskNavCalendarHint": "按天查看空位",
   "menuEarningsMonth": "本月收入",
   "menuReviews": "评价",
   "menuCreateListing": "新建园所简介",
@@ -3543,5 +3544,12 @@
   "adminNavQuickBooks": "QuickBooks",
   "adminNavPayroll": "工资",
   "adminNavSubsidy": "补贴",
-  "employeeInviteRole": "此邀请的角色是{role}。"
+  "employeeInviteRole": "此邀请的角色是{role}。",
+  "parentStoriesHint": "来自托儿所的笔记",
+  "deskNavDocuments": "文件",
+  "deskNavDocumentsHint": "保险、制度和手册",
+  "employeeResend": "再次发送邀请",
+  "employeeResent": "邀请已再次发送。",
+  "employeeResendHeld": "该邀请没有通过电子邮件发送。",
+  "employeeResendFailed": "无法再次发送该邀请。"
 }

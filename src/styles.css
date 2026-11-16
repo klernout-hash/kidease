@@ -1710,6 +1710,25 @@
   [data-ke="claim-page"] {
     padding-bottom: calc(8rem + env(safe-area-inset-bottom));
   }
+  [data-ke="centre-documents"],
+  [data-ke="centre-documents"] h2,
+  [data-ke="centre-document-row"] {
+    scroll-margin-top: calc(var(--ke-header-h, 4.5rem) + 0.75rem);
+  }
+  .ke-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  html:has([data-ke="centre-documents"]) .ke-help-bot {
+    bottom: calc(5.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
+  }
   html:has([data-ke="claim-page"]) .ke-help-bot {
     bottom: calc(5.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
   }
@@ -1779,6 +1798,24 @@
     }
     html:has([data-ke="listing-sticky-bar"]) .ke-help-bot {
       bottom: calc(11rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
+    }
+    html[data-cookie-banner="open"]:has([data-ke="listing-sticky-bar"]) .ke-help-bot {
+      bottom: calc(16rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
+    }
+    html:has([data-ke="listing-sticky-bar"]) {
+      scroll-padding-bottom: calc(8rem + env(safe-area-inset-bottom, 0px));
+    }
+    html[data-cookie-banner="open"]:has([data-ke="listing-sticky-bar"]) {
+      scroll-padding-bottom: calc(16rem + env(safe-area-inset-bottom, 0px));
+    }
+    html:has([data-ke="listing-sticky-bar"]) .ke-listing-page {
+      padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+    }
+    html[data-cookie-banner="open"]:has([data-ke="listing-sticky-bar"]) .ke-listing-page {
+      padding-bottom: calc(14rem + env(safe-area-inset-bottom, 0px));
+    }
+    html:has([data-ke="listing-sticky-bar"]) #listing-reviews {
+      scroll-margin-bottom: calc(8rem + env(safe-area-inset-bottom, 0px));
     }
     html:has([data-ke="thread-composer"]) .ke-help-bot {
       bottom: calc(7.5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));

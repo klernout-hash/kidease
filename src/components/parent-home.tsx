@@ -9,11 +9,20 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { parentHomeCardEligible, showHomeUpgradeCard } from "@/lib/upgrade-prompt";
 import { showsParentBrowseActions } from "@/lib/role-access";
+import { isLeadStatus, leadStatusCopyKey } from "@/lib/lead-requests";
 import { spotOfferCopy } from "@/lib/spot-offer-copy";
 import { useCopy } from "@/lib/use-copy";
 import type { Booking, DaycareCard, TourRequest } from "@/lib/types";
 
 type LeadSnap = { id: string; daycareName?: string | null; status: string };
+
+function parentLeadLabel(status: string, t: (key: "statusWaitlist" | "leadStatusRequested" | "leadStatusConfirmed" | "leadStatusDeclined" | "leadStatusReceived" | "leadStatusAnswered" | "leadStatusClosed") => string, locale: string): string {
+  const raw = status.trim().toLowerCase();
+  if (raw === "waiting" || raw === "waitlist") return t("statusWaitlist");
+  if (raw === "any") return locale === "fr" ? "Tout âge" : "Any age";
+  if (isLeadStatus(raw)) return t(leadStatusCopyKey(raw));
+  return status;
+}
 
 function tourWhen(tour: TourRequest): string {
   const times = [...(tour.preferredTimes || [])].filter((slot) => slot.date);
@@ -54,7 +63,7 @@ export function ParentHome({
   const joinLabel = spotOfferCopy(locale).join;
   const parentPath = parentDeskPath(useRouterState({ select: (s) => s.location.pathname }));
   const nextTour = [...tours]
-    .filter((tour) => tour.status === "pending" || tour.status === "accepted")
+    .filter((tour) => tour.status === "pending" || tour.status === "accepted" || String(tour.status) === "confirmed")
     .sort((a, b) => tourWhen(a).localeCompare(tourWhen(b)))[0];
   const empty = saved.length === 0 && bookings.length === 0 && tours.length === 0 && leads.length === 0;
   const card = showHomeUpgradeCard({
@@ -133,7 +142,7 @@ export function ParentHome({
             {leads.slice(0, 3).map((lead) => (
               <li key={lead.id} className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border">
                 <span className="min-w-0 truncate text-sm">{lead.daycareName || t("parentHomeRequests")}</span>
-                <span className="text-xs text-muted">{lead.status}</span>
+                <span className="text-xs text-muted">{parentLeadLabel(lead.status, t, locale)}</span>
               </li>
             ))}
           </ul>

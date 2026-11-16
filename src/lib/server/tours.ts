@@ -32,6 +32,8 @@ import {
   type PreferredTime,
 } from "@/lib/threads";
 import { canProposeTourTime, declineReasonValid, effectiveTourStatus, holdExpiresAtIso } from "@/lib/tour-hold";
+import { linkedParentName } from "@/lib/parent-display-name";
+import { leadStatusForTour } from "@/lib/lead-requests";
 import { nextTourPipeline, tourStatusStampedByBooking } from "@/lib/tour-pipeline";
 import { isTourWindowBookable, remainingTourSeats, toPublicTourSlot } from "@/lib/tour-calendar";
 import type { BookingStatus, TourRequest, TourStatus } from "@/lib/types";
@@ -61,10 +63,8 @@ type TourRow = {
 };
 
 function guestParentName(row: TourRow): string | null {
-  const fromUser = (row.parent_name || "").trim();
-  if (fromUser) return fromUser;
   const assembled = `${row.parent_first_name || ""} ${row.parent_last_name || ""}`.trim();
-  return assembled || null;
+  return linkedParentName({ accountName: row.parent_name, givenName: assembled });
 }
 
 function mapTour(row: TourRow): TourRequest {
@@ -80,11 +80,11 @@ function mapTour(row: TourRow): TourRequest {
     parentUserId: row.user_id,
     preferredTimes: parsePreferredTimes(row.preferred_times),
     parentNote: row.parent_note,
-    status: effectiveTourStatus({
+    status: (String(row.status) === "confirmed" ? "accepted" : effectiveTourStatus({
       status: row.status,
       createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
       holdExpiresAt: row.hold_expires_at instanceof Date ? row.hold_expires_at.toISOString() : row.hold_expires_at ?? null,
-    }),
+    })),
     centreNote: row.centre_note,
     createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
     respondedAt: row.responded_at ? String(row.responded_at) : null,
@@ -415,6 +415,14 @@ export const respondTourRequest = createServerFn({ method: "POST" })
       returning id
     `;
     if (!updated[0]) throw new Error("This tour request was already answered or expired");
+    const leadStatus = leadStatusForTour(next);
+    if (leadStatus) {
+      await sql`
+        update lead_requests
+        set status = ${leadStatus}, updated_at = now()
+        where source_kind = 'tour_request' and source_id = ${tour.id}
+      `;
+    }
 
     void import("@/lib/server/engagement")
       .then(async (mod) => {
@@ -776,6 +784,14 @@ export const advanceTourRequest = createServerFn({ method: "POST" })
           responded_at = coalesce(responded_at, now())
       where id = ${tour.id}
     `;
+    const synced = leadStatusForTour(next);
+    if (synced) {
+      await sql`
+        update lead_requests
+        set status = ${synced}, updated_at = now()
+        where source_kind = 'tour_request' and source_id = ${tour.id}
+      `;
+    }
 
     const body = tourStatusBody({
       status: next,

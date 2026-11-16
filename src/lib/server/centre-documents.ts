@@ -50,11 +50,11 @@ function toStored(row: DocRow): StoredCentreDoc | null {
 
 async function rowsFor(sql: Sql, daycareId: string): Promise<StoredCentreDoc[]> {
   const rows = await sql<DocRow>`
-    select id, daycare_id, kind, policy_key, filename, mime, storage_ref, expires_on, review_status, review_reason
+    select id, daycare_id, kind, policy_key, filename, mime, storage_ref, expires_on::text as expires_on, review_status, review_reason
     from centre_documents
     where daycare_id = ${daycareId}
-    order by created_at desc
-  `.catch(() => [] as DocRow[]);
+    order by id desc
+  `;
   return rows.map(toStored).filter((row): row is StoredCentreDoc => Boolean(row));
 }
 
@@ -105,6 +105,87 @@ export const listCentreDocumentChecklist = createServerFn({ method: "GET" })
     return { enabled: true as const, checklist: scoreFor(centre, documents), centreName: centre.name };
   });
 
+export type CentreUploadResult =
+  | { ok: true; status: 201; id: string }
+  | { ok: false; status: 400 | 403 | 413 | 415 | 500; error: string };
+
+const CENTRE_UPLOAD_TYPES = "PDF, JPG, PNG or WebP only";
+
+export async function uploadCentreDocument(
+  userId: string,
+  data: {
+    daycareId: string;
+    kind: "insurance" | "policy" | "handbook";
+    policyKey?: string | null;
+    dataUrl: string;
+    mime: string;
+    filename?: string;
+    expiresOn?: string | null;
+  },
+): Promise<CentreUploadResult> {
+  if (!centreDocumentsEnabled()) return { ok: false, status: 400, error: "Documents are off." };
+  if (data.kind !== "insurance" && data.kind !== "policy" && data.kind !== "handbook") {
+    return { ok: false, status: 400, error: "That document type is not saved here." };
+  }
+  const policyKey: PolicyKey | null = data.kind === "policy" ? (isPolicyKey(data.policyKey) ? data.policyKey : null) : null;
+  if (data.kind === "policy" && !policyKey) return { ok: false, status: 400, error: "Choose which policy this file is." };
+  if (data.kind === "insurance" && !/^\d{4}-\d{2}-\d{2}$/.test(data.expiresOn || "")) {
+    return { ok: false, status: 400, error: "Add the insurance expiry date." };
+  }
+  const parsed = parsePrivateUpload({ dataUrl: data.dataUrl, mime: data.mime, filename: data.filename });
+  if (!parsed.ok) {
+    const tooBig = dataUrlBytes(data.dataUrl) > 4 * 1024 * 1024;
+    return {
+      ok: false,
+      status: tooBig ? 413 : 415,
+      error: tooBig ? "That file is over 4 MB." : CENTRE_UPLOAD_TYPES,
+    };
+  }
+  const sql = await getSql();
+  try {
+    await assertCentreManager(sql, userId, data.daycareId);
+  } catch (err) {
+    return { ok: false, status: 403, error: err instanceof Error ? err.message : "You can only update documents for your centre." };
+  }
+  const stored = await persistPrivateDoc({
+    prefix: R2_CENTRE_DOC_PREFIX,
+    keyTail: `${data.daycareId}/${nid("cdc")}`,
+    body: parsed.body,
+    mime: parsed.mime,
+  });
+  const id = nid("cdc");
+  if (data.kind === "policy") {
+    await sql`delete from centre_documents where daycare_id = ${data.daycareId} and kind = 'policy' and policy_key = ${policyKey}`;
+  } else {
+    await sql`delete from centre_documents where daycare_id = ${data.daycareId} and kind = ${data.kind}`;
+  }
+  const inserted = await sql<{ id: string }>`
+    insert into centre_documents (
+      id, daycare_id, kind, policy_key, filename, mime, storage_ref, expires_on, review_status, updated_at
+    ) values (
+      ${id},
+      ${data.daycareId},
+      ${data.kind},
+      ${policyKey},
+      ${parsed.filename},
+      ${stored.mime},
+      ${stored.storageRef},
+      ${data.expiresOn || null},
+      'pending',
+      now()
+    )
+    returning id
+  `;
+  if (!inserted[0]?.id) return { ok: false, status: 500, error: "That file was not saved." };
+  return { ok: true, status: 201, id: inserted[0].id };
+}
+
+function dataUrlBytes(dataUrl: string): number {
+  const comma = dataUrl.indexOf(",");
+  const payload = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  return Math.floor((payload.length * 3) / 4);
+}
+
 export const saveCentreDocument = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
@@ -119,48 +200,17 @@ export const saveCentreDocument = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ context, data }) => {
-    if (!centreDocumentsEnabled()) throw new Error("Documents are off.");
-    if (data.kind !== "insurance" && data.kind !== "policy" && data.kind !== "handbook") {
-      throw new Error("That document type is not saved here.");
+    const stored = await uploadCentreDocument(context.userId, data);
+    if (!stored.ok) {
+      const err = new Error(stored.error) as Error & { status: number };
+      err.status = stored.status;
+      throw err;
     }
-    const policyKey: PolicyKey | null = data.kind === "policy" ? (isPolicyKey(data.policyKey) ? data.policyKey : null) : null;
-    if (data.kind === "policy" && !policyKey) throw new Error("Choose which policy this file is.");
-    if (data.kind === "insurance" && !/^\d{4}-\d{2}-\d{2}$/.test(data.expiresOn || "")) {
-      throw new Error("Add the insurance expiry date.");
-    }
-    const parsed = parsePrivateUpload({ dataUrl: data.dataUrl, mime: data.mime, filename: data.filename });
-    if (!parsed.ok) throw new Error(parsed.error);
     const sql = await getSql();
-    await assertCentreManager(sql, context.userId, data.daycareId);
-    const stored = await persistPrivateDoc({
-      prefix: R2_CENTRE_DOC_PREFIX,
-      keyTail: `${data.daycareId}/${nid("cdc")}`,
-      body: parsed.body,
-      mime: parsed.mime,
-    });
-    const id = nid("cdc");
-    if (data.kind === "policy") {
-      await sql`delete from centre_documents where daycare_id = ${data.daycareId} and kind = 'policy' and policy_key = ${policyKey}`;
-    } else {
-      await sql`delete from centre_documents where daycare_id = ${data.daycareId} and kind = ${data.kind}`;
-    }
-    await sql`
-      insert into centre_documents (
-        id, daycare_id, kind, policy_key, filename, mime, storage_ref, expires_on, review_status, updated_at
-      ) values (
-        ${id},
-        ${data.daycareId},
-        ${data.kind},
-        ${policyKey},
-        ${parsed.filename},
-        ${stored.mime},
-        ${stored.storageRef},
-        ${data.expiresOn || null},
-        'pending',
-        now()
-      )
-    `;
-    return { ok: true as const, id };
+    const centre = await centreFacts(sql, data.daycareId);
+    if (!centre) throw new Error("Centre not found");
+    const documents = await rowsFor(sql, data.daycareId);
+    return { ok: true as const, id: stored.id, checklist: scoreFor(centre, documents) };
   });
 
 export const deleteCentreDocument = createServerFn({ method: "POST" })
@@ -176,7 +226,10 @@ export const deleteCentreDocument = createServerFn({ method: "POST" })
       returning id
     `;
     if (!removed[0]) throw new Error("File not found");
-    return { ok: true as const };
+    const centre = await centreFacts(sql, data.daycareId);
+    if (!centre) throw new Error("Centre not found");
+    const documents = await rowsFor(sql, data.daycareId);
+    return { ok: true as const, checklist: scoreFor(centre, documents) };
   });
 
 export type AdminDocumentCentre = {

@@ -179,7 +179,7 @@ export function englishPath(pathname: string): string {
 }
 
 /** Signed-in desks that have a real `/fr` URL. Nested paths exist for parent and inbox only. */
-export const FRENCH_DESK_PREFIXES = ["/parent", "/inbox", "/account", "/menu", "/provider", "/support"] as const;
+export const FRENCH_DESK_PREFIXES = ["/parent", "/inbox", "/account", "/menu", "/provider", "/support", "/notifications"] as const;
 
 const FRENCH_DESK_NESTED = new Set<string>(["/parent", "/inbox"]);
 
