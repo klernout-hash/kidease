@@ -237,7 +237,9 @@ export function onboardingPlace(input: {
     else if (desk === "tours" || desk === "calendar") tour = "tour:provider:tours";
     else if (desk === "money") tour = "tour:provider:money";
     else if (desk === "today" || desk === "") tour = "tour:provider:attendance";
-    return { welcome: WELCOME_PROVIDER, tour, checklist: CHECKLIST_PROVIDER };
+    // The setup list lives on Today only. Other tabs open straight to their work.
+    const home = desk === "today" || desk === "";
+    return { welcome: WELCOME_PROVIDER, tour, checklist: home ? CHECKLIST_PROVIDER : null };
   }
   if (path === "/inbox" || path.startsWith("/inbox/")) {
     const centre = view === "centre";
