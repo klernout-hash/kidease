@@ -151,7 +151,7 @@ test("parent sidebar items are URLs and plan copy stays off when plans are hidde
 
 test("offline page is not served for 401 or Unauthorized", () => {
   const sw = src("public/sw.js");
-  assert.match(sw, /kidease-shell-v8/);
+  assert.match(sw, /kidease-shell-v9/);
   assert.match(sw, /navigator\.onLine === false/);
   assert.match(sw, /status === 401/);
   assert.match(sw, /Unauthorized/);
