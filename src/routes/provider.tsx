@@ -79,7 +79,7 @@ import { DirectorNudgeQueue } from "@/components/director-nudges";
 import { FreePageExplainer } from "@/components/free-listing-share";
 import { CompletenessChecklist } from "@/components/listing-completeness";
 import { ClaimProgressMeter } from "@/components/claim-progress-meter";
-import { ActionRequiredBanner, ListingReadinessCoach } from "@/components/listing-readiness-coach";
+import { ListingReadinessCoach } from "@/components/listing-readiness-coach";
 import { COACH_FOCUS_ANCHOR, type ListingCoachFocus } from "@/lib/listing-verified";
 import { DemandCues } from "@/components/rank-cues";
 import type { DemandSnapshot } from "@/lib/demand-heat";
@@ -749,7 +749,6 @@ export function ProviderPage() {
             {t("showTestListings")}{testListingCount ? ` · ${testListingCount}` : ""}
           </label>
           ) : null}
-          <ActionRequiredBanner listings={deskListings} />
           <DirectorNudgeQueue listings={deskListings} stats={stats} onConfirmed={() => void load()} skipConfirmSpots />
           <VacancyConfirmLoop listings={deskListings} onConfirmed={() => void load()} />
           <SpotOfferDesk includeTest={operatorTools && showTestListings} />

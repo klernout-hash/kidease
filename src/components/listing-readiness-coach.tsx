@@ -122,6 +122,48 @@ export function ListingReadinessCoach({
   );
 }
 
+export function SetupProgress({ listings }: { listings: ListingVerifiedInput[] }) {
+  const { t } = useCopy();
+  const coaches = listings.map((listing) => listingVerifiedCoach(listing));
+  const steps = coaches.flatMap((coach) => [...coach.blockers, ...coach.nice]);
+  if (!steps.length) return null;
+  const done = steps.filter((step) => step.done).length;
+  const percent = Math.round((done / steps.length) * 100);
+  if (percent >= 100) return null;
+  const next = coaches.map((coach) => coach.next).find((step) => step && !step.done) ?? null;
+  const nextLabel = next?.id === "fees"
+    ? t("setupNextFees")
+    : next
+      ? t(next.kind === "blocker" ? BLOCKER_KEY[next.id as VerifiedBlocker] : NICE_KEY[next.id as VerifiedNice])
+      : "";
+  return (
+    <details className="rounded-xl border border-border bg-surface p-4" data-ke="setup-progress">
+      <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-2">
+        <span className="font-medium">{t("setupReady").replace("{n}", String(percent))}</span>
+        {nextLabel ? <span className="text-sm text-muted">{nextLabel}</span> : null}
+      </summary>
+      <div
+        className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2"
+        role="progressbar"
+        aria-valuenow={percent}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div className="h-full bg-primary" style={{ width: `${percent}%` }} />
+      </div>
+      <ul className="mt-3 space-y-2 text-sm">
+        {coaches.flatMap((coach) => coach.blockers.filter((step) => !step.done)).map((step) => (
+          <li key={step.id}>
+            <CoachLink href={step.href} className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline">
+              {t(BLOCKER_KEY[step.id as VerifiedBlocker])}
+            </CoachLink>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 export function ActionRequiredBanner({ listings }: { listings: ListingVerifiedInput[] }) {
   const { t } = useCopy();
   const pending = listings.filter((listing) => !listingVerifiedCoach(listing).verified);

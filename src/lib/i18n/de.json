@@ -3584,5 +3584,8 @@
   "tourAssistantSignIn": "Melde dich mit einem Elternkonto an, um diese Besichtigung zu senden.",
   "tourAssistantSlotGone": "Diese Zeit ist nicht mehr frei. Wähle eine andere angegebene Zeit.",
   "ontarioCapFee": "Bis zu 22 $ pro Tag (Obergrenze Ontario)",
-  "parentRequestTourAsked": "Besichtigung angefragt"
+  "parentRequestTourAsked": "Besichtigung angefragt",
+  "moreTools": "Weitere Werkzeuge",
+  "setupReady": "{n}% fertig",
+  "setupNextFees": "Als Nächstes: Gebühren eintragen"
 }

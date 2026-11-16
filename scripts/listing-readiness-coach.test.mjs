@@ -103,7 +103,8 @@ test("Today and listing editor use Action required + coach, not a Superhost publ
   const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const model = src("src/lib/listing-verified.ts");
 
-  assert.match(home, /ActionRequiredBanner/);
+  assert.match(home, /SetupProgress/);
+  assert.doesNotMatch(home, /ActionRequiredBanner/);
   assert.match(home, /opsRows/);
   assert.doesNotMatch(home, /QualityIssuesPanel|qualityScoreTitle|Superhost/);
   assert.match(forms, /ListingReadinessCoach/);
@@ -120,7 +121,7 @@ test("Today and listing editor use Action required + coach, not a Superhost publ
   assert.match(model, /desk: "screening"/);
   assert.match(model, /desk: "licence"/);
   assert.match(model, /desk: "listings"/);
-  assert.match(provider, /ActionRequiredBanner/);
+  assert.doesNotMatch(provider, /ActionRequiredBanner/);
   assert.match(provider, /ListingReadinessCoach/);
   assert.match(provider, /CompletenessChecklist/);
   assert.match(provider, /ProviderTrustChecklist/);

@@ -7,7 +7,7 @@ import { respondTourRequest } from "@/lib/server/tours";
 import { listInbox } from "@/lib/server/inbox";
 import { listProviderScreening } from "@/lib/server/provider-screening";
 import type { LeadRequest } from "@/lib/lead-requests";
-import { ActionRequiredBanner } from "@/components/listing-readiness-coach";
+import { SetupProgress } from "@/components/listing-readiness-coach";
 import {
   buildTodayRows,
   collectActionRequired,
@@ -175,6 +175,7 @@ export function TodayUrgencyHome({
   );
   const emptyHref = empty?.href;
   const emptyDesk = emptyHref?.to === "/provider" ? emptyHref.search.desk : null;
+  const firstTourId = opsRows.find((row) => row.kind === "tour_request" && row.tourId)?.tourId;
 
   async function decide(tourId: string, status: "accepted" | "declined") {
     if (status === "declined" && declineReason.trim().length < 2) {
@@ -252,7 +253,7 @@ export function TodayUrgencyHome({
         <h2 className="font-display text-2xl">{t("todayHome")}</h2>
         <p className="mt-1 text-sm text-muted">{t("todayHomeLead")}</p>
       </div>
-      <ActionRequiredBanner listings={coachListings} />
+      <SetupProgress listings={coachListings} />
       {coachListings.filter((listing) => publicApprovalEligible(listing)).map((listing) => (
         <div key={listing.id}>
           <p className="font-medium">{listing.name}</p>
@@ -312,6 +313,7 @@ export function TodayUrgencyHome({
                     <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
+                        variant={row.tourId === firstTourId ? "primary" : "secondary"}
                         disabled={busy !== null}
                         onClick={() => void decide(row.tourId!, "accepted")}
                       >
@@ -352,7 +354,12 @@ export function TodayUrgencyHome({
           ))}
         </ul>
       ) : null}
-      <DailyCareDesk role="provider" />
+      <details className="rounded-xl border border-border bg-surface p-4">
+        <summary className="flex min-h-11 cursor-pointer items-center font-medium">{t("dailyCare")}</summary>
+        <div className="mt-4">
+          <DailyCareDesk role="provider" />
+        </div>
+      </details>
     </section>
   );
 }

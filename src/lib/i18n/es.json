@@ -3584,5 +3584,8 @@
   "tourAssistantSignIn": "Inicia sesión con una cuenta de padre para enviar esta visita.",
   "tourAssistantSlotGone": "Esa hora ya no está libre. Elige otra hora publicada.",
   "ontarioCapFee": "Hasta 22 $ al día (tope de Ontario)",
-  "parentRequestTourAsked": "Visita solicitada"
+  "parentRequestTourAsked": "Visita solicitada",
+  "moreTools": "Más herramientas",
+  "setupReady": "{n}% listo",
+  "setupNextFees": "Siguiente: indica las tarifas"
 }
