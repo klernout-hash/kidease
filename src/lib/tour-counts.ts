@@ -1,0 +1,78 @@
+/**
+ * One definition for tour numbers.
+ * Open requests are still waiting. Booked seats are accepted visits.
+ * Posted tour times are windows the centre published.
+ * `booked` on a slot can include waiting requests, so seats use `accepted` only.
+ */
+
+export type TourCountSummary = {
+  openRequests: number;
+  bookedSeats: number;
+  postedTimes: number;
+};
+
+export type TourCountSlot = {
+  pending?: number | null;
+  accepted?: number | null;
+};
+
+export type TourCountRequest = {
+  status?: string | null;
+  kind?: string | null;
+};
+
+const OPEN_STATUS = new Set(["pending", "requested", "waiting"]);
+const BOOKED_STATUS = new Set(["accepted", "confirmed"]);
+
+function whole(value: unknown): number {
+  const n = Math.floor(Number(value) || 0);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+export function summarizeTourCounts(input: {
+  slots?: readonly TourCountSlot[] | null;
+  requests?: readonly TourCountRequest[] | null;
+}): TourCountSummary {
+  if (input.slots) {
+    let openRequests = 0;
+    let bookedSeats = 0;
+    for (const slot of input.slots) {
+      openRequests += whole(slot.pending);
+      bookedSeats += whole(slot.accepted);
+    }
+    return { openRequests, bookedSeats, postedTimes: input.slots.length };
+  }
+  let openRequests = 0;
+  let bookedSeats = 0;
+  for (const row of input.requests ?? []) {
+    if (row.kind && row.kind !== "tour") continue;
+    const status = String(row.status || "").trim().toLowerCase();
+    if (OPEN_STATUS.has(status)) openRequests += 1;
+    else if (BOOKED_STATUS.has(status)) bookedSeats += 1;
+  }
+  return { openRequests, bookedSeats, postedTimes: 0 };
+}
+
+export const TOUR_COUNT_LABELS = {
+  en: {
+    openRequests: "Open requests",
+    bookedSeats: "Booked seats",
+    postedTimes: "Posted tour times",
+    meaning: "Open requests are still waiting. Booked seats are confirmed. Posted tour times are the visit times a centre published.",
+  },
+  fr: {
+    openRequests: "Demandes ouvertes",
+    bookedSeats: "Places réservées",
+    postedTimes: "Heures de visite publiées",
+    meaning: "Les demandes ouvertes attendent encore. Les places réservées sont confirmées. Les heures de visite publiées sont celles qu’un centre a mises en ligne.",
+  },
+} as const;
+
+export function tourCountLabels(locale: string) {
+  return locale === "fr" ? TOUR_COUNT_LABELS.fr : TOUR_COUNT_LABELS.en;
+}
+
+export function tourCountLine(counts: TourCountSummary, locale: string): string {
+  const labels = tourCountLabels(locale);
+  return `${labels.openRequests} ${counts.openRequests}. ${labels.bookedSeats} ${counts.bookedSeats}. ${labels.postedTimes} ${counts.postedTimes}.`;
+}

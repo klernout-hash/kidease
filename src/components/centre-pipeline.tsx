@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
+import { TourCountSummary } from "@/components/tour-count-summary";
 import { pipelineByStage, PIPELINE_STAGES, type PipelineCard, type PipelineStage } from "@/lib/crm-pipeline";
+import { summarizeTourCounts } from "@/lib/tour-counts";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 
@@ -12,8 +14,13 @@ const STAGE_KEY: Record<PipelineStage, CopyKey> = {
 };
 
 export function CentrePipeline({ cards }: { cards: PipelineCard[] }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const grouped = pipelineByStage(cards);
+  const counts = summarizeTourCounts({
+    requests: cards
+      .filter((card) => card.kind === "tour")
+      .map((card) => ({ status: card.tourStatus, kind: "tour" as const })),
+  });
 
   return (
     <section className="space-y-3">
@@ -21,6 +28,7 @@ export function CentrePipeline({ cards }: { cards: PipelineCard[] }) {
         <h2 className="font-display text-2xl">{t("pipelineTitle")}</h2>
         <p className="mt-1 text-sm text-muted">{t("pipelineLead")}</p>
       </div>
+      <TourCountSummary counts={counts} locale={locale} />
       <div className="grid gap-3 md:grid-cols-5">
         {PIPELINE_STAGES.map((stage) => (
           <div key={stage} className="rounded-xl bg-surface p-3 ring-1 ring-border">

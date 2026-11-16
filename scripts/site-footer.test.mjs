@@ -242,6 +242,7 @@ test("EN footer labels stay in use order", () => {
     "Meet the team",
     "Donate to kids",
     "Get the app",
+    "Blog",
   ]);
 });
 
@@ -273,6 +274,7 @@ test("FR footer labels stay in the same use order", () => {
     "L’équipe",
     "Faire un don aux enfants",
     "Télécharger l’appli",
+    "Blogue",
   ]);
 });
 
@@ -298,6 +300,7 @@ test("footer does not drop destinations when columns are renamed and reordered",
     "/team|{}|bare",
     "/start-a-daycare|{}|paired",
     "/donate|{}|paired",
+    "/blog|{}|paired",
   ]) {
     assert.ok(all.includes(dest), `missing ${dest}`);
   }

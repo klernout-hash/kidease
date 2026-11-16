@@ -68,6 +68,7 @@ export type CalendarEvent = {
   day: string;
   startAt: string;
   location: string;
+  status: "pending" | "accepted";
 };
 
 function ymd(date: Date): string {
@@ -137,6 +138,7 @@ export function eventsFromTours(
         day: slot.date,
         startAt: `${slot.date}T${time}:00`,
         location: "",
+        status: tour.status === "accepted" ? "accepted" : "pending",
       });
     }
   }

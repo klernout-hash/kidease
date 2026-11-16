@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
+import { TourCountSummary } from "@/components/tour-count-summary";
 import { Button } from "@/components/ui/button";
 import {
   deleteTourWindow,
@@ -8,6 +9,7 @@ import {
   saveTourWindows,
   setDaycareTimezone,
 } from "@/lib/server/tour-calendar";
+import { summarizeTourCounts, tourCountLabels } from "@/lib/tour-counts";
 import { useCopy } from "@/lib/use-copy";
 import { TOUR_INVENTORY_COPY_KEY } from "@/lib/tour-hold";
 import {
@@ -40,6 +42,7 @@ export function TourAvailabilityForm({ daycare, onSaved }: { daycare: Daycare; o
   const loc = locale === "fr" ? "fr" : "en";
   const [timezone, setTimezone] = useState(daycare.timezone || DEFAULT_TOUR_TIMEZONE);
   const [slots, setSlots] = useState<PublicTourSlot[]>([]);
+  const [ready, setReady] = useState(false);
   const [date, setDate] = useState(todayIso());
   const [startTime, setStartTime] = useState("10:00");
   const [endTime, setEndTime] = useState("10:30");
@@ -51,6 +54,7 @@ export function TourAvailabilityForm({ daycare, onSaved }: { daycare: Daycare; o
     const res = await listCentreTourWindows({ data: { daycareId: daycare.id } });
     setTimezone(res.timezone);
     setSlots(res.slots);
+    setReady(true);
   }
 
   useEffect(() => {
@@ -60,8 +64,11 @@ export function TourAvailabilityForm({ daycare, onSaved }: { daycare: Daycare; o
         if (!live) return;
         setTimezone(res.timezone);
         setSlots(res.slots);
+        setReady(true);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (live) setReady(true);
+      });
     return () => {
       live = false;
     };
@@ -182,6 +189,11 @@ export function TourAvailabilityForm({ daycare, onSaved }: { daycare: Daycare; o
         </Button>
       </form>
 
+      {ready ? (
+        <div className="mt-5">
+          <TourCountSummary counts={summarizeTourCounts({ slots })} locale={loc} />
+        </div>
+      ) : null}
       <ul className="mt-5 space-y-2">
         {slots.length === 0 ? (
           <li className="rounded-lg bg-bg px-4 py-6 text-center text-sm text-muted ring-1 ring-border">
@@ -190,6 +202,7 @@ export function TourAvailabilityForm({ daycare, onSaved }: { daycare: Daycare; o
         ) : (
           slots.map((slot) => {
             const left = remainingTourSeats(slot.capacity, slot.booked);
+            const counts = tourCountLabels(loc);
             return (
               <li key={slot.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-bg px-3 py-3 ring-1 ring-border">
                 <div>
@@ -197,7 +210,9 @@ export function TourAvailabilityForm({ daycare, onSaved }: { daycare: Daycare; o
                   <p className="text-xs text-muted">
                     {t("tourTimesInventory")}: {t(TOUR_INVENTORY_COPY_KEY[slot.inventory])}
                     {" · "}
-                    {slot.booked}/{slot.capacity} {t("tourTimesBooked")}
+                    {counts.openRequests} {slot.pending}
+                    {" · "}
+                    {counts.bookedSeats} {slot.accepted}
                     {left === 0 ? ` · ${t("tourTimesFull")}` : ""}
                   </p>
                 </div>

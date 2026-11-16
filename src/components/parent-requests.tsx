@@ -1,9 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { EmptyState } from "@/components/empty-state";
 import { KidNotebook } from "@/components/kid-art";
+import { TourCountSummary } from "@/components/tour-count-summary";
 import { Button } from "@/components/ui/button";
 import { inboxThreadTo } from "@/lib/desk-nav";
 import { parentRequestKindKey, parentRequestStatusKey, type ParentRequestRow } from "@/lib/parent-request-rows";
+import { summarizeTourCounts } from "@/lib/tour-counts";
 import { useCopy } from "@/lib/use-copy";
 
 function requestDate(value: string, locale: string): string {
@@ -21,7 +23,12 @@ export function ParentRequestsList({ items }: { items: ParentRequestRow[] }) {
       <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" art={<KidNotebook />} />
     );
   }
+  const counts = summarizeTourCounts({
+    requests: items.map((row) => ({ status: row.status, kind: row.kind })),
+  });
   return (
+    <div className="space-y-3">
+    <TourCountSummary counts={counts} locale={locale} />
     <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border" data-ke="parent-requests">
       {items.map((row) => (
         <li
@@ -58,5 +65,6 @@ export function ParentRequestsList({ items }: { items: ParentRequestRow[] }) {
         </li>
       ))}
     </ul>
+    </div>
   );
 }

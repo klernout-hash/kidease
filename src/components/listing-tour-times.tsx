@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { TourAssistant } from "@/components/tour-assistant";
+import { TourCountSummary } from "@/components/tour-count-summary";
 import { tourAssistantFactsFromListing } from "@/lib/ai/tour-assistant";
 import { Button } from "@/components/ui/button";
 import { listPublicTourSlots } from "@/lib/server/tour-calendar";
+import { summarizeTourCounts } from "@/lib/tour-counts";
 import { useCopy } from "@/lib/use-copy";
 import {
   formatTourSlotRange,
@@ -24,6 +26,7 @@ export function ListingTourTimes({
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const [slots, setSlots] = useState<PublicTourSlot[]>([]);
+  const [ready, setReady] = useState(false);
   const [empty, setEmpty] = useState<TourEmptyReason | null>(null);
   const [timezone, setTimezone] = useState(daycare.timezone || "America/Winnipeg");
 
@@ -33,14 +36,16 @@ export function ListingTourTimes({
     void listPublicTourSlots({ data: { daycareId: daycare.id } })
       .then((res) => {
         if (!live) return;
-        setSlots(res.slots.slice(0, 6));
+        setSlots(res.slots);
         setEmpty(res.empty);
         setTimezone(res.timezone);
+        setReady(true);
       })
       .catch(() => {
         if (!live) return;
         setSlots([]);
         setEmpty("none_posted");
+        setReady(true);
       });
     return () => {
       live = false;
@@ -64,6 +69,11 @@ export function ListingTourTimes({
     <section id="listing-tours" className="scroll-mt-24" data-listing-tour-times>
       <h2 className="font-display text-2xl">{t("tourTimesPublicHint")}</h2>
       <p className="mt-1 text-sm text-muted">{timezoneLabel(timezone, loc)}</p>
+      {ready ? (
+        <div className="mt-3">
+          <TourCountSummary counts={summarizeTourCounts({ slots })} locale={loc} />
+        </div>
+      ) : null}
       {empty ? (
         <p className="mt-3 max-w-prose text-sm text-muted" data-tour-empty={empty}>
           {canBook
@@ -76,7 +86,7 @@ export function ListingTourTimes({
         </p>
       ) : (
         <ul className="mt-3 divide-y divide-border">
-          {slots.map((slot) => (
+          {slots.slice(0, 6).map((slot) => (
             <li key={slot.id} className="flex items-center justify-between gap-3 py-3 text-sm">
               <span>{formatTourSlotRange(slot, loc)}</span>
               <span className="shrink-0 text-xs text-muted">
