@@ -4078,3 +4078,16 @@ html[data-look="clean"]:has([data-ke="notification-bell"]) [data-ke="menu-trigge
     white-space: nowrap;
   }
 }
+
+/* Airbnb comparison, batch 6. Clean look only. */
+/* Web home: the trust line moves under the listings, so cards come straight after the search. */
+html[data-look="clean"] .ke-home-web {
+  display: flex;
+  flex-direction: column;
+}
+html[data-look="clean"] .ke-home-web > div:has(> [data-ke="home-trust-line"]) {
+  order: 1;
+}
+html[data-look="clean"] .ke-home-web > #featured ~ * {
+  order: 2;
+}

@@ -3583,5 +3583,6 @@
   "tourAssistantSent": "申請已送出。中心會喺申請見到。",
   "tourAssistantSignIn": "請用家長帳戶登入先送出呢次參觀。",
   "tourAssistantSlotGone": "呢個時間已經冇位。請另選一個已公布嘅時間。",
-  "ontarioCapFee": "每日最多 22 加元（安大略上限）"
+  "ontarioCapFee": "每日最多 22 加元（安大略上限）",
+  "parentRequestTourAsked": "已申請參觀"
 }

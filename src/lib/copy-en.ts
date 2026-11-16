@@ -2126,6 +2126,7 @@ export const en = {
     leadStatusAnswered: "Answered",
     leadStatusClosed: "Closed",
     parentRequestWaiting: "Waiting on centre",
+    parentRequestTourAsked: "Tour requested",
     parentRequestConfirmed: "Confirmed",
     parentRequestDeclined: "Declined",
     parentRequestEnrolled: "Enrolled",
