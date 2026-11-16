@@ -194,6 +194,14 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_CENTRE_MINISITE",
   "FEATURE_ROOM_FORECAST",
   "FEATURE_FIRST_RUN_ONBOARDING",
+  "FEATURE_AI_TOUR_FOLLOWUP",
+  "FEATURE_AI_PHONE_RECEPTION",
+  "FEATURE_AI_LEAD_SCORE",
+  "FEATURE_AI_WAITLIST_FILL",
+  "FEATURE_AI_POST_WRITER",
+  "FEATURE_AI_DAILY_UPDATE",
+  "FEATURE_AI_REVIEW_REQUEST",
+  "FEATURE_AI_SMART_STAFFING",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -552,6 +560,22 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_ROOM_FORECAST: false,
   /** First-run walkthrough, checklists, and help tours. Off. Nothing is sent. */
   FEATURE_FIRST_RUN_ONBOARDING: false,
+  /** Draft a tour follow-up. Off. Nothing is sent. */
+  FEATURE_AI_TOUR_FOLLOWUP: false,
+  /** A phone script the centre can read. Off. No call is placed and no paid phone line is used. */
+  FEATURE_AI_PHONE_RECEPTION: false,
+  /** Name the family step from messages and tours already on file. Off. */
+  FEATURE_AI_LEAD_SCORE: false,
+  /** Draft a note for the next family on a list the centre typed. Off. Nothing is sent. */
+  FEATURE_AI_WAITLIST_FILL: false,
+  /** Draft a post from one fact the centre typed. Off. KidEase does not post it. */
+  FEATURE_AI_POST_WRITER: false,
+  /** Draft a daily note from what the centre typed. Off. Nothing is sent. */
+  FEATURE_AI_DAILY_UPDATE: false,
+  /** Draft a note asking a parent to write their own visit note. Off. Nothing is sent. */
+  FEATURE_AI_REVIEW_REQUEST: false,
+  /** Count children and educators the centre typed. Off. Not a licensing decision. */
+  FEATURE_AI_SMART_STAFFING: false,
 };
 
 /**
@@ -1351,6 +1375,14 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     summary:
       "First visit walkthrough, setup checklists, screen tips, and the help guide. Off. Nothing is emailed, texted, or pushed.",
   },
+  { key: "FEATURE_AI_TOUR_FOLLOWUP", defaultOn: false, docs: "docs/flags.md", summary: "Draft a thank-you after a recorded visit. Off. Nothing is sent." },
+  { key: "FEATURE_AI_PHONE_RECEPTION", defaultOn: false, docs: "docs/flags.md", summary: "A phone script from posted hours. Off. No call is placed and no paid phone line is used." },
+  { key: "FEATURE_AI_LEAD_SCORE", defaultOn: false, docs: "docs/flags.md", summary: "Name the family step from messages and tours already saved. Off." },
+  { key: "FEATURE_AI_WAITLIST_FILL", defaultOn: false, docs: "docs/flags.md", summary: "Draft a note for the next family on a list the centre typed. Off. Nothing is sent." },
+  { key: "FEATURE_AI_POST_WRITER", defaultOn: false, docs: "docs/flags.md", summary: "Draft a post from one fact the centre typed. Off. KidEase does not post it." },
+  { key: "FEATURE_AI_DAILY_UPDATE", defaultOn: false, docs: "docs/flags.md", summary: "Draft a daily note from what the centre typed. Off. Nothing is sent." },
+  { key: "FEATURE_AI_REVIEW_REQUEST", defaultOn: false, docs: "docs/flags.md", summary: "Draft a note asking a parent to write their own visit note. Off. Nothing is sent." },
+  { key: "FEATURE_AI_SMART_STAFFING", defaultOn: false, docs: "docs/flags.md", summary: "Count children and educators the centre typed. Off. Not a licensing decision." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;

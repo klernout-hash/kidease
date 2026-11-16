@@ -36,6 +36,7 @@ import { listCentreTools, saveCentreToolRecord } from "@/lib/server/centre-tools
 import { listDoorRoster, recordChildCheck } from "@/lib/server/child-checkin";
 import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
+import { AiSuitePanel } from "@/components/ai-suite-panel";
 
 type Data = Awaited<ReturnType<typeof listCentreTools>>;
 type Rec = Data["records"][number];
@@ -132,6 +133,7 @@ export function CentreToolsDesk() {
         <h2 className="font-display text-3xl">{copy.title}</h2>
         <p className="mt-1 text-base text-muted-foreground">{copy.lead}</p>
       </div>
+      <AiSuitePanel />
       {data.centres.length > 1 ? (
         <label className={label}>
           {copy.centre}

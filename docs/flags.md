@@ -210,6 +210,14 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_MOBILE_SEARCH_V2` | Mobile Home search with Where, When, and Who. Default off. Desktop and the current search stay as they are. No paid place lookup. |
 | `FEATURE_UI_AIRBNB_V1` | Phone shell: search pill, one-card home, account hub, language list. Default off. Desktop, admin, and gov stay as they are. No paid placement. |
 | `FEATURE_FIRST_RUN_ONBOARDING` | First visit walkthrough, provider and parent checklists, screen tips, and the help guide. Default off. Seen state is saved per account. Nothing is emailed, texted, or pushed. |
+| `FEATURE_AI_TOUR_FOLLOWUP` | Draft a thank-you after a recorded visit. Default off. Nothing is sent. |
+| `FEATURE_AI_PHONE_RECEPTION` | A phone script from posted hours. Default off. No call is placed and no paid phone line is used. |
+| `FEATURE_AI_LEAD_SCORE` | Name the family step from messages and tours already saved. Default off. |
+| `FEATURE_AI_WAITLIST_FILL` | Draft a note for the next family on a list the centre typed. Default off. Nothing is sent. |
+| `FEATURE_AI_POST_WRITER` | Draft a post from one fact the centre typed. Default off. KidEase does not post it. |
+| `FEATURE_AI_DAILY_UPDATE` | Draft a daily note from what the centre typed. Default off. Nothing is sent. |
+| `FEATURE_AI_REVIEW_REQUEST` | Draft a note asking a parent to write their own visit note. Default off. Nothing is sent. |
+| `FEATURE_AI_SMART_STAFFING` | Count children and educators the centre typed. Default off. Not a licensing decision. |
 | `FEATURE_FR_AUTH_QC` | French password-reset, sign-in code, and verify-email for Quebec (country CA, region QC) and French locale. Default off. Also lets Accept-Language and Quebec geo open `/fr/forgot-password`, `/fr/reset-password`, and `/fr/verify-2fa`. English mail subjects stay byte-for-byte until this is on. |
 | `FEATURE_CENTRE_LEAD_TRACKER` | Family steps on the daycare desk at `/provider/leads`. Default off. Uses messages, tours, waitlists, and enrolments the family already shared. In-app notices only. Mail, text, and push stay held. |
 | `FEATURE_CENTRE_API` | Centre API at `/api/v1/centre/leads` and docs at `/daycare-api`. Default off. Also needs `FEATURE_CENTRE_LEAD_TRACKER`. Keys are hashed. Child health is refused. Webhooks stay off until the centre turns them on. Signing secrets are encrypted with `CENTRE_WEBHOOK_KEY` and opened only while signing. |

@@ -183,6 +183,14 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_CENTRE_MINISITE: "daycare",
   FEATURE_ROOM_FORECAST: "daycare",
   FEATURE_FIRST_RUN_ONBOARDING: "shared",
+  FEATURE_AI_TOUR_FOLLOWUP: "daycare",
+  FEATURE_AI_PHONE_RECEPTION: "daycare",
+  FEATURE_AI_LEAD_SCORE: "daycare",
+  FEATURE_AI_WAITLIST_FILL: "daycare",
+  FEATURE_AI_POST_WRITER: "daycare",
+  FEATURE_AI_DAILY_UPDATE: "daycare",
+  FEATURE_AI_REVIEW_REQUEST: "daycare",
+  FEATURE_AI_SMART_STAFFING: "daycare",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
