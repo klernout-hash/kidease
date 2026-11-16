@@ -170,7 +170,17 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
               </div>
             ) : null}
             <div className="relative z-20 ml-auto flex items-center gap-2 bg-bg pl-1 max-md:min-w-0 max-md:max-w-full max-md:gap-1.5 md:shrink-0 [[data-channel=website]_&]:flex">
-              {!headerUser || (!viewingGuest && chrome.role === "provider") ? (
+              {headerUser && !viewingGuest && chrome.role === "provider" ? (
+                // A signed-in daycare already has a centre: send them to their desk, not the marketing page.
+                <Link
+                  to={localePath("/provider", locale)}
+                  search={{ desk: "today" }}
+                  data-ke="header-daycare-desk"
+                  className="ke-web-only hidden min-h-[44px] min-w-[44px] items-center px-1.5 text-[13px] font-medium text-muted underline-offset-4 hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:inline-flex"
+                >
+                  {t("daycareDeskTitle")}
+                </Link>
+              ) : !headerUser ? (
                 <Link
                   to={localePath("/claim", locale)}
                   data-ke="list-your-daycare"
