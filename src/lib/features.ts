@@ -133,6 +133,11 @@ export function showPayCtas(env?: EnvMap): boolean {
   return evaluateFeatureFlag("SHOW_PAY_CTAS", env);
 }
 
+/** Centre request replies in English and French. Owners can edit them. Default on. Nothing is sent until they press Send. */
+export function ownerReplyTemplatesEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_OWNER_REPLY_TEMPLATES", env);
+}
+
 /** Email when a saved search matches a newly posted open spot. Default off. */
 export function openSpotAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_OPEN_SPOT_ALERTS", env);

@@ -271,6 +271,8 @@ These are env-only. Unset means the feature stays on. Set the value to `0` to pa
 
 A paused screen says what is off and offers a way to search.
 
+`FEATURE_OWNER_REPLY_TEMPLATES` is on. A centre can insert “Tour confirmed”, “Waitlist added”, “Spot offered”, or “Not a fit right now” in English or French, then edit the words before sending. An owner can save their own wording. Nothing is sent until they press Send.
+
 ## Later (not this PR)
 
 - Per-user or % rollouts (today the server uses one distinct id).
