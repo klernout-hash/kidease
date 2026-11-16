@@ -323,9 +323,6 @@ export const DaycareCard = memo(function DaycareCard({
   const priceUnit = subsidy?.subsidy_type === "ten_max" ? " / day max" : daily ? " / day" : feeOk ? t("month") : "";
   const priceOnPhoto = daily && !isOntarioCapMonthly(item.fromPrice);
   const ontarioCap = showFees && String(item.province || "").toUpperCase() === "ON" && isOntarioCapMonthly(item.fromPrice);
-  const ageYears = item.ageMaxMonths > 0 && item.ageMinMonths % 12 === 0 && item.ageMaxMonths % 12 === 0
-    ? `${item.ageMinMonths / 12}-${item.ageMaxMonths / 12} ${locale === "fr" ? "ans" : "yrs"}`
-    : ages;
   const statusLine = openSpotsLine || (ontarioCap ? t("ontarioCapFee") : priceAmount ? `${priceAmount}${priceUnit}` : freshnessText);
   const showParentAverage = parentRatingShown(item.parentReviewCount, item.parentRatingX10, ratingFloor);
   const verifiedCheck = showVerifiedCheck(item);
@@ -355,7 +352,7 @@ export const DaycareCard = memo(function DaycareCard({
           />
           {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
         </div>
-        <ListingAnchor slug={item.slug} data-ke="card-view-details" label={`${t("viewDetails")} · ${name}`} className="mt-2 flex min-h-0 flex-1 flex-col text-inherit no-underline">
+        <ListingAnchor slug={item.slug} data-ke="card-view-details" label={`${t("viewDetails")} · ${name}`} className="mt-2 flex min-h-11 flex-1 flex-col text-inherit no-underline">
           <div className="flex min-h-10 items-start gap-1" data-ke="card-name">
             <div className="flex min-w-0 flex-1 items-start gap-0.5">
               <h3 className="line-clamp-2 min-w-0 whitespace-normal text-[15px] min-h-10 font-semibold leading-5 tracking-[-0.02em] text-fg">
@@ -375,14 +372,14 @@ export const DaycareCard = memo(function DaycareCard({
           <p className="mt-0.5 min-h-5 truncate text-[13px] leading-5 text-muted" data-far={farAway ? "1" : undefined}>
             {placeLine || "\u00a0"}
           </p>
-          {ageYears ? (
+          {ages ? (
             <p className="mt-0.5 truncate text-[13px] font-medium leading-5 text-fg" data-ke="card-age-range">
-              {ageYears}
+              {ages}
             </p>
           ) : null}
         </ListingAnchor>
         {statusLine ? (
-          <p className="mt-0.5 truncate text-[13px] leading-5 text-fg" data-ke="card-status">
+          <p className="mt-0.5 truncate text-[13px] leading-5 text-fg" data-ke={openSpotsLine ? "card-open-spots" : "card-status"}>
             {ontarioCap ? (
               <a href="https://www.ontario.ca/page/child-care-ontario" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline" target="_blank" rel="noreferrer">
                 {t("ontarioCapFee")}
@@ -419,7 +416,7 @@ export const DaycareCard = memo(function DaycareCard({
         {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
       </div>
 
-      <ListingAnchor slug={item.slug} data-ke="card-view-details" label={`${t("viewDetails")} · ${name}`} className="flex min-h-0 flex-1 flex-col text-inherit no-underline">
+      <ListingAnchor slug={item.slug} data-ke="card-view-details" label={`${t("viewDetails")} · ${name}`} className="flex min-h-11 flex-1 flex-col text-inherit no-underline">
         <div className="mt-1 flex flex-1 flex-col space-y-px text-fg">
           <div className="flex items-start gap-1" data-ke="card-name">
             <div className="flex min-w-0 flex-1 items-start gap-0.5">
