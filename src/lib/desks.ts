@@ -790,6 +790,8 @@ export type SessionDesks = {
   topRated?: boolean;
   /** Family steps. Off unless FEATURE_CENTRE_LEAD_TRACKER is on. */
   leadTracker?: boolean;
+  /** Live support inbox. Off unless FEATURE_LIVE_SUPPORT_CHAT is on. */
+  liveSupport?: boolean;
   /** Shared menu badges. One payload so every desk shows the same numbers. */
   attention?: import("@/lib/attention").AttentionCounts;
   /** ISO time the 30-day restore window ends. Null when the account is active. */

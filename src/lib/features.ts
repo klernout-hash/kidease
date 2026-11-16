@@ -69,6 +69,16 @@ export function supportSmsReplyEnabled(env?: EnvMap): boolean {
   return supportDeskEnabled(env) && evaluateFeatureFlag("FEATURE_SUPPORT_SMS_REPLY", env);
 }
 
+/** Bubble support chat in Messages. Off. The old support card stays until this is on. */
+export function liveSupportEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_LIVE_SUPPORT_CHAT", env);
+}
+
+/** Text Kyle when a live support message arrives. Off. Also needs FEATURE_LIVE_SUPPORT_CHAT. */
+export function supportSmsAlertEnabled(env?: EnvMap): boolean {
+  return liveSupportEnabled(env) && evaluateFeatureFlag("FEATURE_SUPPORT_SMS_ALERT", env);
+}
+
 /** Owner email when a support message arrives. Off. The chat flag does not turn this on. */
 export function supportEmailAlertEnabled(env?: EnvMap): boolean {
   const source = env ?? (typeof process !== "undefined" ? (process.env as EnvMap) : {});

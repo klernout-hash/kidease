@@ -33,6 +33,7 @@ import { Route as AdminGovScreeningRouteImport } from './routes/admin-gov-screen
 import { Route as AdminQcHomeRouteImport } from './routes/admin-qc-home'
 import { Route as AdminRankingRouteImport } from './routes/admin-ranking'
 import { Route as AdminSpamRouteImport } from './routes/admin-spam'
+import { Route as AdminSupportRouteImport } from './routes/admin-support'
 import { Route as AdminTriageRouteImport } from './routes/admin-triage'
 import { Route as AdminTrustRouteImport } from './routes/admin-trust'
 import { Route as AdminTruthRouteImport } from './routes/admin-truth'
@@ -465,6 +466,11 @@ const AdminRankingRoute = AdminRankingRouteImport.update({
 const AdminSpamRoute = AdminSpamRouteImport.update({
   id: '/admin-spam',
   path: '/admin-spam',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/admin-support',
+  path: '/admin-support',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminTriageRoute = AdminTriageRouteImport.update({
@@ -2062,6 +2068,7 @@ export interface FileRoutesByFullPath {
   '/admin-qc-home': typeof AdminQcHomeRoute
   '/admin-ranking': typeof AdminRankingRoute
   '/admin-spam': typeof AdminSpamRoute
+  '/admin-support': typeof AdminSupportRoute
   '/admin-triage': typeof AdminTriageRoute
   '/admin-trust': typeof AdminTrustRoute
   '/admin-truth': typeof AdminTruthRoute
@@ -2401,6 +2408,7 @@ export interface FileRoutesByTo {
   '/admin-qc-home': typeof AdminQcHomeRoute
   '/admin-ranking': typeof AdminRankingRoute
   '/admin-spam': typeof AdminSpamRoute
+  '/admin-support': typeof AdminSupportRoute
   '/admin-triage': typeof AdminTriageRoute
   '/admin-trust': typeof AdminTrustRoute
   '/admin-truth': typeof AdminTruthRoute
@@ -2739,6 +2747,7 @@ export interface FileRoutesById {
   '/admin-qc-home': typeof AdminQcHomeRoute
   '/admin-ranking': typeof AdminRankingRoute
   '/admin-spam': typeof AdminSpamRoute
+  '/admin-support': typeof AdminSupportRoute
   '/admin-triage': typeof AdminTriageRoute
   '/admin-trust': typeof AdminTrustRoute
   '/admin-truth': typeof AdminTruthRoute
@@ -3080,6 +3089,7 @@ export interface FileRouteTypes {
     | '/admin-qc-home'
     | '/admin-ranking'
     | '/admin-spam'
+    | '/admin-support'
     | '/admin-triage'
     | '/admin-trust'
     | '/admin-truth'
@@ -3419,6 +3429,7 @@ export interface FileRouteTypes {
     | '/admin-qc-home'
     | '/admin-ranking'
     | '/admin-spam'
+    | '/admin-support'
     | '/admin-triage'
     | '/admin-trust'
     | '/admin-truth'
@@ -3756,6 +3767,7 @@ export interface FileRouteTypes {
     | '/admin-qc-home'
     | '/admin-ranking'
     | '/admin-spam'
+    | '/admin-support'
     | '/admin-triage'
     | '/admin-trust'
     | '/admin-truth'
@@ -4096,6 +4108,7 @@ export interface RootRouteChildren {
   AdminQcHomeRoute: typeof AdminQcHomeRoute
   AdminRankingRoute: typeof AdminRankingRoute
   AdminSpamRoute: typeof AdminSpamRoute
+  AdminSupportRoute: typeof AdminSupportRoute
   AdminTriageRoute: typeof AdminTriageRoute
   AdminTrustRoute: typeof AdminTrustRoute
   AdminTruthRoute: typeof AdminTruthRoute
@@ -4468,6 +4481,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-spam'
       fullPath: '/admin-spam'
       preLoaderRoute: typeof AdminSpamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-support': {
+      id: '/admin-support'
+      path: '/admin-support'
+      fullPath: '/admin-support'
+      preLoaderRoute: typeof AdminSupportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-triage': {
@@ -7075,6 +7095,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminQcHomeRoute: AdminQcHomeRoute,
   AdminRankingRoute: AdminRankingRoute,
   AdminSpamRoute: AdminSpamRoute,
+  AdminSupportRoute: AdminSupportRoute,
   AdminTriageRoute: AdminTriageRoute,
   AdminTrustRoute: AdminTrustRoute,
   AdminTruthRoute: AdminTruthRoute,

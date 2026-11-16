@@ -194,6 +194,7 @@ export function DeskShell({
     providerInsights: session?.providerInsights,
     leadTracker: session?.leadTracker,
     topRated: session?.topRated,
+    liveSupport: session?.liveSupport,
   };
   const labelPlan = (item: DeskItem) => {
     const planned = planNavItem(item, chrome.paid);

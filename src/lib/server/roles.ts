@@ -31,6 +31,7 @@ import {
   centreLeadTrackerEnabled,
   topRatedEnabled,
   tourCalendarEnabled,
+  liveSupportEnabled,
 } from "@/lib/features";
 import {
   bootstrapAdminEmail,
@@ -363,6 +364,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     providerInsights: providerInsightsEnabled(),
     leadTracker: centreLeadTrackerEnabled(),
     topRated: topRatedEnabled(),
+    liveSupport: liveSupportEnabled(),
     attention,
     restoreUntil,
     viewAs: viewing,
