@@ -284,11 +284,19 @@ export async function runPhoneIssuePass(browser, base) {
     });
     for (const note of privacy) problems.push(`privacy ${note}`);
 
-    await page.mouse.click(20, 20).catch(() => undefined);
+    /* A coordinate tap can hit a real link and reload the page. A window event
+       starts the same lazy help chunk without leaving this screen. */
+    await page.evaluate(() => {
+      window.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    }).catch(() => undefined);
     const launcher = page.locator("[data-ke='help-launcher']");
-    /* Help is a lazy chunk after the first tap (or a 4s idle cap). The tap above
-       starts it; the wait covers the chunk on a busy preview. */
-    const seen = await launcher.waitFor({ state: "visible", timeout: 12000 }).then(() => true).catch(() => false);
+    const deadline = Date.now() + 12000;
+    let seen = false;
+    while (Date.now() < deadline) {
+      seen = await launcher.isVisible().catch(() => false);
+      if (seen) break;
+      await page.waitForTimeout(250).catch(() => undefined);
+    }
     if (!seen) {
       problems.push("help launcher did not show");
     } else {

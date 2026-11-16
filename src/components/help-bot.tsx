@@ -16,11 +16,11 @@ type ChatMsg = { id?: string; role: "user" | "assistant"; text: string; path?: s
 const CHAT_KEY = "kidease-help-chat";
 type AskError = "off" | "turnstile" | "rate_limited" | "ticket";
 
-export function HelpBot() {
+export function HelpBot({ panelOnly = false, onClose }: { panelOnly?: boolean; onClose?: () => void } = {}) {
   const { t, locale } = useCopy();
   const a11yPass = useRouteContext({ from: "__root__", select: (s) => Boolean(s.a11yPass) });
   const { user } = useCurrentUserState();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(panelOnly);
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState("");
   const [msgs, setMsgs] = useState<ChatMsg[]>([{ role: "assistant", text: t("helpBotHello") }]);
@@ -187,9 +187,7 @@ export function HelpBot() {
     }
   }
 
-  return (
-    <div className="ke-help-bot" data-ke="help-launcher">
-      {open ? (
+  const panel = open ? (
         <div
           className="mb-3 flex h-[min(28rem,70dvh)] w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl bg-surface shadow-lift ring-1 ring-border"
           role={a11yPass ? "dialog" : undefined}
@@ -213,7 +211,10 @@ export function HelpBot() {
             <button
               type="button"
               className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-white/10"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                onClose?.();
+              }}
               aria-label={t("close")}
             >
               <X className="size-4" aria-hidden="true" />
@@ -300,7 +301,13 @@ export function HelpBot() {
             </div>
           )}
         </div>
-      ) : null}
+      ) : null;
+
+  if (panelOnly) return panel;
+
+  return (
+    <div className="ke-help-bot" data-ke="help-launcher">
+      {panel}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -324,6 +331,10 @@ export function HelpBot() {
       </button>
     </div>
   );
+}
+
+export function HelpBotPanel({ onClose }: { onClose?: () => void }) {
+  return <HelpBot panelOnly onClose={onClose} />;
 }
 
 /** One launcher for the whole app. Video and phone screens opt out. */
