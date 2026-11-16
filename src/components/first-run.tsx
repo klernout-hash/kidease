@@ -301,6 +301,10 @@ function ChecklistCard({
   const title = provider ? readinessLabel(locale, result.percent) : pickCopy(locale, UI_COPY.parentList);
   const lead = provider ? pickCopy(locale, UI_COPY.providerListLead) : pickCopy(locale, UI_COPY.parentListLead);
   const count = provider ? `${result.percent}%` : parentProgressLabel(locale, result.done, result.total);
+  const nextStep = steps.find((step) => !step.done) ?? null;
+  const doneCount = steps.filter((step) => step.done).length;
+  // Clean look: the list folds to one "Next" row. Today's look keeps it open.
+  const collapse = typeof document !== "undefined" && document.documentElement.dataset.look === "clean";
   return (
     <section
       className="mx-4 mb-4 max-w-3xl rounded-xl bg-surface p-4 text-fg shadow-card ring-1 ring-border"
@@ -326,7 +330,24 @@ function ChecklistCard({
       >
         <div className="h-full rounded-full bg-primary" style={{ width: `${result.percent}%` }} />
       </div>
-      <ul className="mt-3 grid gap-2">
+      {nextStep ? (
+        <a
+          href={localePath(nextStep.href, locale)}
+          data-ke="setup-next-step"
+          className="mt-3 flex min-h-11 items-center justify-between gap-2 rounded-lg bg-surface-2 px-3 text-sm font-medium text-fg no-underline hover:bg-surface-2/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        >
+          <span>
+            {locale === "fr" ? "Prochaine étape : " : "Next: "}
+            {pickCopy(locale, nextStep.label)}
+          </span>
+          <span aria-hidden>→</span>
+        </a>
+      ) : null}
+      <details className="mt-2" data-ke="setup-steps" open={!collapse}>
+        <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary">
+          {locale === "fr" ? `Toutes les étapes (${doneCount}/${steps.length})` : `All steps (${doneCount} of ${steps.length} done)`}
+        </summary>
+      <ul className="mt-1 grid gap-2">
         {steps.map((step) => (
           <li key={step.id}>
             <a
@@ -344,6 +365,7 @@ function ChecklistCard({
           </li>
         ))}
       </ul>
+      </details>
       {provider ? (
         <a
           href={localePath("/provider?desk=documents", locale)}
