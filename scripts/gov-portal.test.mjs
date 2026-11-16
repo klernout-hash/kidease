@@ -202,7 +202,7 @@ test("footer link stays off and /gov is not in the sitemap", () => {
   assert.equal(govPortalFooterEnabled({ FEATURE_GOV_PORTAL: "1" }), true);
   assert.equal(showGovFooterLink({ enabled: false, native: false }), false);
   assert.equal(showGovFooterLink({ enabled: true, native: true }), false);
-  assert.equal(showGovFooterLink({ enabled: true, native: false }), true);
+  assert.equal(showGovFooterLink({ enabled: true, native: false }), false);
   const paths = sitemapPublicPaths();
   for (const path of GOV_SITEMAP_PATHS) assert.equal(paths.includes(path), false);
   assert.equal(isGovPortalPath("/fr/gov/login"), true);
@@ -212,7 +212,9 @@ test("footer link stays off and /gov is not in the sitemap", () => {
   const guard = read("src/lib/gov/desk-guard.ts");
   assert.match(guard, /govPortalFooterEnabled/);
   assert.match(guard, /govClosedHome/);
-  assert.match(read("src/components/site-footer.tsx"), /showGovFooterLink/);
+  assert.doesNotMatch(read("src/components/site-footer.tsx"), /showGovFooterLink|Government sign-in|\/gov\/login/);
+  assert.doesNotMatch(read("src/lib/app-menu.ts"), /\/gov\/login|Government sign-in/);
+  assert.match(read("src/routes/gov_.login.tsx"), /createFileRoute\("\/gov_\/login"\)/);
   assert.match(read("src/lib/desk-nav.ts"), /id: "payments"/);
   assert.match(read("src/routes/provider.subscription.tsx"), /subscriptionsEnabled !== true/);
   assert.match(read("src/routes/provider.subscription.tsx"), /desk: "today"/);

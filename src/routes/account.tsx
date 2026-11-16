@@ -71,10 +71,23 @@ export function accountLoader() {
   return connectPaymentsPublic();
 }
 
-export function accountHead({ match }: { match: { search: { desk?: string } } }) {
+export function accountHead({
+  match,
+}: {
+  match: { pathname?: string; search: { desk?: string } };
+}) {
+  const french = String(match.pathname || "").startsWith("/fr");
+  const admin = match.search.desk === "admin";
+  const title = french
+    ? admin
+      ? "Compte admin · KidEase"
+      : "Compte · KidEase"
+    : admin
+      ? "Admin account · KidEase"
+      : "Account · KidEase";
   return {
     meta: [
-      { title: match.search.desk === "admin" ? "Admin account · KidEase" : "Account · KidEase" },
+      { title },
       { name: "robots", content: "noindex, nofollow" },
     ],
   };

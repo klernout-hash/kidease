@@ -120,11 +120,15 @@ export async function menuLoader({
     return { earnings, insights, desk: null, payments: null, connect: null, centres: [] };
 }
 
-export function menuHead() {
+export function menuHead({ matches }: { matches?: Array<{ pathname: string }> } = {}) {
+  const french = (matches ?? []).some((item) => item.pathname.startsWith("/fr"));
   return {
     meta: [
       { title: "Menu · KidEase" },
-      { name: "description", content: "Account, help, and the rest of KidEase." },
+      {
+        name: "description",
+        content: french ? "Compte, aide et le reste de KidEase." : "Account, help, and the rest of KidEase.",
+      },
     ],
   };
 }

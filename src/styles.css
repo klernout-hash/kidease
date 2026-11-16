@@ -1779,6 +1779,15 @@
     html:has(.ke-help-bot) [data-ke="recently-viewed"] .ke-chip-carousel {
       margin-right: 5.5rem;
     }
+    /* The help button sits on the right. Keep filter chips out from under it. */
+    html:has(.ke-help-bot) [data-ke="daycare-type-menu"],
+    html:has(.ke-help-bot) .ke-explore-filter-scroll,
+    html:has(.ke-help-bot) [data-ke="home-care-types"],
+    html:has(.ke-help-bot) [data-ke="msv2-categories"],
+    html:has(.ke-help-bot) [data-ke="msv2-result-chips"] {
+      padding-right: 4.75rem;
+      scroll-padding-right: 4.75rem;
+    }
   }
   @media (max-width: 767px) {
     .ke-help-bot > button > span {
@@ -3032,6 +3041,13 @@ html[data-resolved-theme="dark"] .ke-site-footer {
   }
   html:not([data-channel="app"]):not([data-runtime="native"]):has([data-ke="listing-sticky-bar"]) .ke-help-bot {
     bottom: calc(7.25rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
+  }
+  /* Search chips sit low on a phone. Keep the help button above them and the tab bar. */
+  html:has([data-ke="explore-filter-bar"]) .ke-help-bot,
+  html:has([data-ke="daycare-type-menu"]) .ke-help-bot,
+  html:has([data-ke="msv2-results"]) .ke-help-bot,
+  html:has([data-ke="msv2-categories"]) .ke-help-bot {
+    bottom: calc(8.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
   }
   /* An open More menu stays above the help button and the sticky actions. */
   html:has([data-ke="listing-more"] [role="menu"]) .ke-help-bot {

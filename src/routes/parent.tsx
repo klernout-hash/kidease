@@ -68,7 +68,7 @@ export function parentHead({ matches }: { matches: Array<{ pathname: string }> }
   if (matches.some((item) => isParentSignupPath(item.pathname))) return { meta: [] };
   return {
     meta: [
-      { title: "Parent home · KidEase" },
+      { title: matches.some((item) => item.pathname.startsWith("/fr")) ? "Espace parent · KidEase" : "Parent home · KidEase" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   };

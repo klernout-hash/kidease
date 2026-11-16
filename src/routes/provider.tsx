@@ -191,10 +191,11 @@ export function providerBeforeLoad({
   return beforeLoadPrivate(privateReturnPath(location), context.roleChrome);
 }
 
-export function providerHead() {
+export function providerHead({ matches }: { matches?: Array<{ pathname: string }> } = {}) {
+  const french = (matches ?? []).some((item) => item.pathname.startsWith("/fr"));
   return {
     meta: [
-      { title: "Daycare desk · KidEase" },
+      { title: french ? "Espace garderie · KidEase" : "Daycare desk · KidEase" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   };
