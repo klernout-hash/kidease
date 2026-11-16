@@ -2,7 +2,12 @@
  * Sign in with Huawei ID (HMS Account Kit, OAuth 2.0).
  *
  * Shown only when FEATURE_SIGNIN_HUAWEI or FEATURE_LOGIN_HUAWEI is on and
- * the app id and secret are set. Default off. Callback `/api/auth/callback/huawei`.
+ * the app id and secret are set. Default off.
+ *
+ * Huawei registered one callback only:
+ * `https://www.kidease.ca/api/auth/callback/huawei`.
+ * The apex host and every Vercel host are not registered, so the
+ * redirect_uri is that www URL even when the request arrives on another host.
  *
  * The website, iPhone app, Microsoft app, and Huawei app use this OAuth
  * redirect. The Huawei shell does not include HMS Account Kit (only HMS
@@ -22,6 +27,16 @@ export const HUAWEI_TOKEN_URL = "https://oauth-login.cloud.huawei.com/oauth2/v3/
 export const HUAWEI_USERINFO_URL = "https://account.cloud.huawei.com/rest.php?nsp_svc=GOpen.User.getInfo";
 export const HUAWEI_SCOPES = ["openid", "profile", "email"] as const;
 export const HUAWEI_CALLBACK_PATH = "/api/auth/callback/huawei";
+/** The only redirect Huawei has registered. Do not swap in the request host. */
+export const HUAWEI_REDIRECT_URI = `https://www.kidease.ca${HUAWEI_CALLBACK_PATH}`;
+
+/**
+ * Always the registered www callback. `requestHost` is unused on purpose:
+ * kidease.ca, a Vercel alias, and www must all send the same redirect_uri.
+ */
+export function huaweiRedirectUri(_requestHost?: string | null): string {
+  return HUAWEI_REDIRECT_URI;
+}
 
 export type HuaweiProfileInput = {
   openID?: string | null;
@@ -98,6 +113,7 @@ type HuaweiOAuthConfig = {
   authorizationUrl: string;
   tokenUrl: string;
   scopes: string[];
+  redirectURI: string;
   pkce: false;
   getUserInfo: (tokens: { accessToken?: string | null }) => Promise<LinkedProfile | null>;
 };
@@ -114,6 +130,7 @@ export function huaweiOAuthConfig(env: NodeJS.ProcessEnv = process.env): HuaweiO
     authorizationUrl: HUAWEI_AUTHORIZATION_URL,
     tokenUrl: HUAWEI_TOKEN_URL,
     scopes: [...HUAWEI_SCOPES],
+    redirectURI: huaweiRedirectUri(),
     pkce: false,
     getUserInfo: async (tokens) => {
       const access = tokens.accessToken?.trim();

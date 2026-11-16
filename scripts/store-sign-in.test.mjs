@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { amazonOAuthConfig, mapAmazonProfile } from "../src/lib/auth/amazon-idp.ts";
-import { huaweiOAuthConfig, mapHuaweiProfile } from "../src/lib/auth/huawei-idp.ts";
+import { huaweiOAuthConfig, huaweiRedirectUri, mapHuaweiProfile } from "../src/lib/auth/huawei-idp.ts";
 import { helpLauncherVisible } from "../src/lib/help-launcher.ts";
 import {
   googlePlayServicesAvailable,
@@ -78,6 +78,10 @@ test("Huawei ID and Login with Amazon stay off until the flag and keys are set",
   const huaweiOAuth = huaweiOAuthConfig({ ...huaweiKeys, FEATURE_LOGIN_HUAWEI: "1" });
   assert.equal(huaweiOAuth?.authorizationUrl, "https://oauth-login.cloud.huawei.com/oauth2/v3/authorize");
   assert.deepEqual(huaweiOAuth?.scopes, ["openid", "profile", "email"]);
+  assert.equal(huaweiOAuth?.redirectURI, "https://www.kidease.ca/api/auth/callback/huawei");
+  for (const host of ["www.kidease.ca", "kidease.ca", "kidease.vercel.app", "kidease-git.vercel.app", null]) {
+    assert.equal(huaweiRedirectUri(host), "https://www.kidease.ca/api/auth/callback/huawei");
+  }
   assert.equal(huaweiOAuthConfig({ FEATURE_LOGIN_HUAWEI: "1" }), null);
   const amazonOAuth = amazonOAuthConfig({ ...amazonKeys, FEATURE_LOGIN_AMAZON: "1" });
   assert.equal(amazonOAuth?.authorizationUrl, "https://www.amazon.com/ap/oa");
