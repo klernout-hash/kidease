@@ -406,7 +406,7 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_OFFLINE_CHECKIN: false,
   /** Amazon Device Messaging push for Fire devices (no Google Play services). Off. Needs ADM_CLIENT_ID / ADM_CLIENT_SECRET. */
   FEATURE_AMAZON_ADM: false,
-  /** Login with Amazon button, shown only on Fire / Amazon Appstore devices. Off. */
+  /** Login with Amazon. Off. Website, iPhone, and Microsoft also need the client id and secret. The Amazon build also needs an Amazon device. */
   FEATURE_LOGIN_AMAZON: false,
   /** Landscape daycare check-in kiosk for Fire tablets with a PIN exit. Off. */
   FEATURE_FIRE_KIOSK: false,
@@ -1166,7 +1166,7 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     key: "FEATURE_LOGIN_AMAZON",
     defaultOn: false,
     docs: "docs/amazon.md",
-    summary: "Login with Amazon button on Fire / Amazon Appstore devices only. Apple, Google, Facebook order is unchanged.",
+    summary: "Continue with Amazon when AMAZON_CLIENT_ID and AMAZON_CLIENT_SECRET are set. Website, iPhone, and Microsoft. The Amazon build also needs an Amazon device. Play and Galaxy stay without it.",
   },
   {
     key: "FEATURE_FIRE_KIOSK",

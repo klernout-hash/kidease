@@ -4,17 +4,17 @@ Each KidEase build shows only the sign-in buttons that work on that device.
 
 | Where | Buttons, in this order |
 | --- | --- |
-| iPhone and iPad app | Apple, Google, Facebook, email |
+| iPhone and iPad app | Apple, Google, Facebook, Huawei, Amazon, email |
 | Google Play and Samsung Galaxy Store | Google, Facebook, email |
 | Huawei AppGallery | Huawei ID, Facebook, email |
 | Amazon Appstore and Fire | Login with Amazon, Facebook, email |
-| Microsoft Store and the website | Apple, Google, Facebook, email |
+| Microsoft Store and the website | Apple, Google, Facebook, Huawei, Amazon, email |
 
 Email is the form under the buttons. The Help button stays on these screens.
 
 Continue with Google stays hidden until `GOOGLE_SIGNIN_ENABLED=1` and `GOOGLE_CLIENT_ID` plus `GOOGLE_CLIENT_SECRET` are set. While the flag is off, the order on each row above drops Google and keeps the rest: Apple, then Facebook, then email, with no empty slot. When the flag is on, Google returns between Apple and Facebook.
 
-Huawei ID and Login with Amazon stay hidden until the flags below are `1` and the keys are set. Apple and Facebook keep their current flags and keys.
+Continue with Huawei and Continue with Amazon stay hidden until a flag below is `1` and the keys are set. On an iPhone, they also stay hidden until Sign in with Apple is on. The Amazon Appstore build still needs an Amazon device. Play and Galaxy Store builds never show these two buttons. Apple and Facebook keep their current flags and keys.
 
 A Play or Galaxy Store build hides Google when the phone has no Google Play services. The app adds `KidEaseNoGms` to the user agent in that case.
 
@@ -22,10 +22,10 @@ A Play or Galaxy Store build hides Google when the phone has no Google Play serv
 
 Leave the flags at `0` until the consoles below are filled in. Do not commit real values.
 
-- `FEATURE_SIGNIN_HUAWEI`
+- `FEATURE_LOGIN_HUAWEI` or `FEATURE_SIGNIN_HUAWEI` (either one)
 - `HUAWEI_APP_ID` (same value as `HUAWEI_CLIENT_ID`)
 - `HUAWEI_APP_SECRET` (same value as `HUAWEI_CLIENT_SECRET`)
-- `FEATURE_SIGNIN_AMAZON`
+- `FEATURE_LOGIN_AMAZON` or `FEATURE_SIGNIN_AMAZON` (either one)
 - `AMAZON_CLIENT_ID`
 - `AMAZON_CLIENT_SECRET`
 - `AMAZON_API_KEY`
@@ -40,7 +40,9 @@ Redirect URLs, exact, no trailing slash:
 - `https://kidease-git.vercel.app/api/auth/callback/huawei`
 - the same three hosts with `/api/auth/callback/amazon`
 
-A verified email from Huawei ID or Login with Amazon joins an existing KidEase account the same way Apple, Google, and Facebook do. An email the provider marks unverified does not join an account.
+A verified email from Huawei ID or Login with Amazon joins an existing KidEase account the same way Apple, Google, and Facebook do. An email the provider marks unverified does not join an account. Signing in does not change a parent into a daycare, or a daycare into a parent, outside the existing short sign-up window. Staff roles stay put.
+
+The Huawei phone app opens the same website OAuth page in the system browser. HMS Account Kit is not compiled into that build (HMS Push is the Huawei library). Login with Amazon is the website OAuth flow at `https://www.amazon.com/ap/oa` with the `profile` scope. No Amazon or Huawei sign-in SDK is in the apps.
 
 ## What to copy from each console
 

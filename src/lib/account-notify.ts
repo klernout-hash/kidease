@@ -34,6 +34,8 @@ const AUTH_METHOD_LABEL: Record<string, string> = {
   "grok-google": "Google",
   facebook: "Facebook",
   apple: "Apple",
+  huawei: "Huawei",
+  amazon: "Amazon",
 };
 
 export function accountRoleLabel(role: AccountNotifyRole | string | null | undefined): string {
@@ -64,6 +66,8 @@ export function authMethodLabel(providerId?: string | null): string {
   if (id.includes("google")) return "Google";
   if (id.includes("apple")) return "Apple";
   if (id.includes("facebook")) return "Facebook";
+  if (id.includes("huawei")) return "Huawei";
+  if (id.includes("amazon")) return "Amazon";
   if (id.includes("credential") || id.includes("password") || id === "email") return "email/password";
   return "";
 }

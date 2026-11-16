@@ -8,23 +8,29 @@ import { fileURLToPath } from "node:url";
 import { FORBIDDEN, SOURCE_STORES, scanBuffers, scanRepoSources } from "./check-store-isolation.mjs";
 
 const BASE = "Mozilla/5.0 (Linux; Android 11; KFTRWI) AppleWebKit/537.36 Chrome/120 Safari/537.36";
+const OPEN = ["apple", "google", "facebook", "huawei", "amazon"];
 const STORES = {
-  web: { ua: "Mozilla/5.0 (X11; Linux x86_64) Chrome/120", own: ["apple", "google", "facebook"] },
-  ios: { ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) KidEaseNative", own: ["apple", "google", "facebook"] },
+  web: { ua: "Mozilla/5.0 (X11; Linux x86_64) Chrome/120", own: OPEN },
+  ios: { ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) KidEaseNative", own: OPEN },
   play: { ua: `${BASE} KidEaseNative`, own: ["google", "facebook"] },
   samsung: { ua: `${BASE} KidEaseNative KidEaseStoreSamsung`, own: ["google", "facebook"] },
   huawei: { ua: `${BASE} KidEaseNative KidEaseStoreHuawei KidEaseNoGms`, own: ["huawei", "facebook"] },
-  microsoft: { ua: "Mozilla/5.0 (Windows NT 10.0) KidEaseNative KidEaseStoreMicrosoft", own: ["apple", "google", "facebook"] },
+  microsoft: { ua: "Mozilla/5.0 (Windows NT 10.0) KidEaseNative KidEaseStoreMicrosoft", own: OPEN },
   amazon: { ua: `${BASE} KidEaseNative KidEaseStoreAmazon KidEaseNoGms KidEaseAmazonDevice`, own: ["amazon", "facebook"] },
 };
-const STORE_ONLY_BUTTONS = { amazon: "amazon", huawei: "huawei" };
+const CLOSED_TO = {
+  play: ["huawei", "amazon"],
+  samsung: ["huawei", "amazon"],
+  huawei: ["amazon", "google"],
+  amazon: ["huawei", "google"],
+};
 
 for (const [store, { ua, own }] of Object.entries(STORES)) {
   test(`${store}: no other store's sign-in buttons or Amazon UI`, () => {
     const channel = storeChannelFromSignals({ userAgent: ua });
     const choices = signInChoicesForChannel(channel).filter((c) => c !== "email");
-    for (const [owner, button] of Object.entries(STORE_ONLY_BUTTONS)) {
-      if (owner !== store) assert.ok(!choices.includes(button), `${store} shows ${button}`);
+    for (const button of CLOSED_TO[store] || []) {
+      assert.ok(!choices.includes(button), `${store} shows ${button}`);
     }
     for (const c of choices) assert.ok(own.includes(c), `${store} shows ${c}`);
     assert.equal(amazonBuildOnAmazonDevice({ userAgent: ua }), store === "amazon");

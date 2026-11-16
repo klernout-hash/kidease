@@ -1,14 +1,19 @@
 /**
  * Sign in with Huawei ID (HMS Account Kit, OAuth 2.0).
  *
- * Shown only when FEATURE_SIGNIN_HUAWEI is on and the app id and secret are
- * set. Default off. Callback `/api/auth/callback/huawei`.
+ * Shown only when FEATURE_SIGNIN_HUAWEI or FEATURE_LOGIN_HUAWEI is on and
+ * the app id and secret are set. Default off. Callback `/api/auth/callback/huawei`.
+ *
+ * The website, iPhone app, Microsoft app, and Huawei app use this OAuth
+ * redirect. The Huawei shell does not include HMS Account Kit (only HMS
+ * Push). The button opens this page in the system browser sheet.
  *
  * Server env only. Never `VITE_*`. Never commit the secret.
  *
  *   HUAWEI_APP_ID          AppGallery Connect app id (also accepted as HUAWEI_CLIENT_ID)
  *   HUAWEI_APP_SECRET      App secret (also accepted as HUAWEI_CLIENT_SECRET)
  *   FEATURE_SIGNIN_HUAWEI  1 to turn the button on
+ *   FEATURE_LOGIN_HUAWEI   same switch, either flag is enough
  */
 import { huaweiAppId, huaweiAppSecret, huaweiSignInVisible } from "./store-signin-flags.ts";
 
