@@ -3575,5 +3575,12 @@
   "attentionOfferWaiting": "Oferta de plaza esperando al padre",
   "attentionOverdueInvoice": "Factura vencida",
   "attentionStaffCert": "Certificado del personal por vencer",
-  "attentionListingGap": "Paso de la ficha por terminar"
+  "attentionListingGap": "Paso de la ficha por terminar",
+  "tourAssistantTitle": "Pregunta sobre este centro",
+  "tourAssistantPrompt": "Pregunta por las tarifas, los horarios, las edades o un horario de visita abierto.",
+  "tourAssistantSend": "Preguntar",
+  "tourAssistantConfirm": "Enviar esta solicitud de visita",
+  "tourAssistantSent": "La solicitud está enviada. El centro la verá en Solicitudes.",
+  "tourAssistantSignIn": "Inicia sesión con una cuenta de padre para enviar esta visita.",
+  "tourAssistantSlotGone": "Esa hora ya no está libre. Elige otra hora publicada."
 }

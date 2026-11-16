@@ -3575,5 +3575,12 @@
   "attentionOfferWaiting": "عرض المكان بانتظار ولي الأمر",
   "attentionOverdueInvoice": "فاتورة متأخرة",
   "attentionStaffCert": "شهادة موظف على وشك الانتهاء",
-  "attentionListingGap": "خطوة في الملف لإكمالها"
+  "attentionListingGap": "خطوة في الملف لإكمالها",
+  "tourAssistantTitle": "اسأل عن هذا المركز",
+  "tourAssistantPrompt": "اسأل عن الرسوم أو الساعات أو الأعمار المنشورة، أو عن وقت زيارة مفتوح.",
+  "tourAssistantSend": "اسأل",
+  "tourAssistantConfirm": "أرسل طلب الزيارة هذا",
+  "tourAssistantSent": "أُرسل الطلب. سيراه المركز في الطلبات.",
+  "tourAssistantSignIn": "سجّل الدخول بحساب ولي أمر لإرسال هذه الزيارة.",
+  "tourAssistantSlotGone": "هذا الوقت لم يعد متاحًا. اختر وقتًا منشورًا آخر."
 }

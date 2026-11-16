@@ -3575,5 +3575,12 @@
   "attentionOfferWaiting": "ਜਗ੍ਹਾ ਦੀ ਪੇਸ਼ਕਸ਼ ਮਾਪੇ ਦੀ ਉਡੀਕ ਵਿੱਚ",
   "attentionOverdueInvoice": "ਬਿਲ ਦੀ ਮਿਆਦ ਲੰਘ ਗਈ",
   "attentionStaffCert": "ਸਟਾਫ਼ ਦਾ ਸਰਟੀਫਿਕੇਟ ਖਤਮ ਹੋ ਰਿਹਾ ਹੈ",
-  "attentionListingGap": "ਸੂਚੀ ਦਾ ਇੱਕ ਕਦਮ ਬਾਕੀ ਹੈ"
+  "attentionListingGap": "ਸੂਚੀ ਦਾ ਇੱਕ ਕਦਮ ਬਾਕੀ ਹੈ",
+  "tourAssistantTitle": "ਇਸ ਕੇਂਦਰ ਬਾਰੇ ਪੁੱਛੋ",
+  "tourAssistantPrompt": "ਪ੍ਰਕਾਸ਼ਿਤ ਫੀਸ, ਘੰਟੇ, ਉਮਰ, ਜਾਂ ਖੁੱਲ੍ਹੇ ਦੌਰੇ ਦਾ ਸਮਾਂ ਪੁੱਛੋ।",
+  "tourAssistantSend": "ਪੁੱਛੋ",
+  "tourAssistantConfirm": "ਇਹ ਦੌਰਾ ਬੇਨਤੀ ਭੇਜੋ",
+  "tourAssistantSent": "ਬੇਨਤੀ ਭੇਜੀ ਗਈ। ਕੇਂਦਰ ਇਸਨੂੰ ਬੇਨਤੀਆਂ ਵਿੱਚ ਵੇਖੇਗਾ।",
+  "tourAssistantSignIn": "ਇਹ ਦੌਰਾ ਭੇਜਣ ਲਈ ਮਾਪੇ ਖਾਤੇ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ।",
+  "tourAssistantSlotGone": "ਇਹ ਸਮਾਂ ਹੁਣ ਖੁੱਲ੍ਹਾ ਨਹੀਂ। ਕੋਈ ਹੋਰ ਪ੍ਰਕਾਸ਼ਿਤ ਸਮਾਂ ਚੁਣੋ।"
 }
