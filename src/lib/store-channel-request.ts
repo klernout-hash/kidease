@@ -12,6 +12,10 @@ export type ServerStoreRead = {
   setCookie: string | null;
   /** Capacitor shell: hide Admin so the first HTML has no Access links. */
   hideAdmin: boolean;
+  /** Present only when that Apple flag is on. Omitted while the flag is off. */
+  appleLiveActivities?: true;
+  appleShortcuts?: true;
+  appleHomeWidget?: true;
 };
 
 function requestIsHttps(url: string | undefined, forwardedProto: string | null): boolean {
@@ -52,12 +56,14 @@ export const readServerStoreChannel = createServerFn({ method: "GET" })
         search: fromUrl || data.search,
         cookie: req?.headers.get("cookie"),
       };
+      const { applePlatformContext } = await import("@/lib/apple/platform");
       return {
         channel: storeChannelFromSignals(signals),
         setCookie: microsoftStoreCookieHeader(signals, {
           secure: requestIsHttps(req?.url, req?.headers.get("x-forwarded-proto") ?? null),
         }),
         hideAdmin: nativeShellHidesAdmin(signals),
+        ...applePlatformContext(process.env),
       };
     } catch {
       return {

@@ -43,6 +43,12 @@ export function NativeBoot() {
   usePushRegistration();
   useHuaweiCallPushRegistration();
   const searchStr = useRouterState({ select: (s) => s.location.searchStr });
+  const appleShortcuts = useRouterState({
+    select: (s) => s.matches.some((match) => (match.context as { appleShortcuts?: boolean }).appleShortcuts === true),
+  });
+  const appleWidget = useRouterState({
+    select: (s) => s.matches.some((match) => (match.context as { appleHomeWidget?: boolean }).appleHomeWidget === true),
+  });
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);
   const setAnchorMode = useAppStore((s) => s.setAnchorMode);
@@ -167,6 +173,15 @@ export function NativeBoot() {
     const idle = window.setTimeout(() => startWebVitals(), 2500);
     return () => window.clearTimeout(idle);
   }, []);
+
+  useEffect(() => {
+    if (appleShortcuts !== true && appleWidget !== true) return;
+    const locale = document.documentElement.lang.toLowerCase().startsWith("fr") ? "fr" : "en";
+    void import("@/lib/apple/platform-client").then((mod) => {
+      if (appleShortcuts === true) void mod.applyAppleShortcuts(true, locale);
+      if (appleWidget === true) void mod.writeAppleHomeWidget(true, locale);
+    });
+  }, [appleShortcuts, appleWidget]);
 
   useLayoutEffect(() => {
     const stop = startChannelListener();

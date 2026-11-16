@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { careReminderCopy } from "@/lib/care-reminder-copy";
@@ -27,6 +28,12 @@ export function CareReminderForm({ childId, childName }: { childId: string; chil
   const [zone, setZone] = useState("");
   const [days, setDays] = useState<Day[]>([blank(-1)]);
   const [busy, setBusy] = useState(false);
+  const appleLive = useRouterState({
+    select: (s) => s.matches.some((match) => (match.context as { appleLiveActivities?: boolean }).appleLiveActivities === true),
+  });
+  const appleWidget = useRouterState({
+    select: (s) => s.matches.some((match) => (match.context as { appleHomeWidget?: boolean }).appleHomeWidget === true),
+  });
 
   useEffect(() => {
     void loadCareReminder({ data: { childId } })
@@ -70,7 +77,19 @@ export function CareReminderForm({ childId, childName }: { childId: string; chil
             ),
           },
         })
-          .then(() => toast.success(copy.saved))
+          .then(() => {
+            toast.success(copy.saved);
+            if (appleLive !== true && appleWidget !== true) return;
+            const activityLocale = locale === "fr" ? "fr" : "en";
+            const day = days.find((row) => row.pickupOn && row.pickup) || days.find((row) => row.dropoffOn && row.dropoff);
+            void import("@/lib/apple/platform-client").then((mod) => {
+              if (appleWidget === true) void mod.writeAppleHomeWidget(true, activityLocale);
+              if (appleLive !== true || !masterOn || !day) return;
+              const kind = day.pickupOn && day.pickup ? "pickup" : "dropoff";
+              const timeLabel = kind === "pickup" ? day.pickup : day.dropoff;
+              void mod.startAppleLiveActivity(true, { childName, kind, timeLabel, locale: activityLocale });
+            });
+          })
           .catch(() => toast.error(copy.off))
           .finally(() => setBusy(false));
       }}

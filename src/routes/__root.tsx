@@ -157,6 +157,9 @@ export const Route = createRootRoute({
       frAuthQc: frAuthQc === true,
       airbnbUi,
       switches,
+      ...(storeRead.appleLiveActivities ? { appleLiveActivities: true as const } : {}),
+      ...(storeRead.appleShortcuts ? { appleShortcuts: true as const } : {}),
+      ...(storeRead.appleHomeWidget ? { appleHomeWidget: true as const } : {}),
     };
   },
   errorComponent: (props) => {
