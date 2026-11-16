@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { AI_FLAGS, aiFlagDefaultOn } from "../src/lib/ai/flags.ts";
 import { aiFeatureVisible } from "../src/lib/ai/flag-gate.ts";
-import { answerTourAssistant } from "../src/lib/ai/tour-assistant.ts";
+import { answerTourAssistant, tourAssistantFactsFromListing } from "../src/lib/ai/tour-assistant.ts";
 
 const facts = {
   centre: "Elm",
@@ -44,9 +44,25 @@ test("answers use posted facts and hand off otherwise", () => {
   assert.equal(pii.text.includes("ada@example.com"), false);
 });
 
-test("the listing shows the assistant behind the flag", () => {
+test("French fees stay in French and only open calendar slots can be sent", () => {
+  const factsFr = tourAssistantFactsFromListing({
+    centre: "Orme",
+    locale: "fr",
+    toddlerMonthly: 900,
+    ageMinMonths: 6,
+    ageMaxMonths: 60,
+    slots: [],
+  });
+  assert.equal(factsFr.fees, "tout-petit 900");
+  assert.equal(factsFr.ages, "6-60 mois");
+  assert.equal(factsFr.openings, null);
   const page = readFileSync(new URL("../src/components/listing-tour-times.tsx", import.meta.url), "utf8");
+  const widget = readFileSync(new URL("../src/components/tour-assistant.tsx", import.meta.url), "utf8");
   assert.match(page, /TourAssistant/);
-  assert.match(readFileSync(new URL("../src/components/tour-assistant.tsx", import.meta.url), "utf8"), /useAiFeatureFlag\(AI_FLAGS\.tourAssistant\)/);
-  assert.match(readFileSync(new URL("../src/components/tour-assistant.tsx", import.meta.url), "utf8"), /createTourRequest/);
+  assert.match(page, /remaining > 0/);
+  assert.match(widget, /useAiFeatureFlag\(AI_FLAGS\.tourAssistant\)/);
+  assert.match(widget, /listPublicTourSlots/);
+  assert.match(widget, /createTourRequest/);
+  assert.match(widget, /border-border/);
+  assert.doesNotMatch(widget, /sms|mailto|notifyThreadParty/i);
 });

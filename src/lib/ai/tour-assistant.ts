@@ -26,6 +26,37 @@ export type TourAssistantReply =
   | { kind: "book"; slotId: string; text: string }
   | { kind: "handoff"; text: string };
 
+export function tourAssistantFactsFromListing(input: {
+  centre: string;
+  locale?: "en" | "fr";
+  hours?: string | null;
+  ageMinMonths?: number | null;
+  ageMaxMonths?: number | null;
+  infantMonthly?: number | null;
+  toddlerMonthly?: number | null;
+  preschoolMonthly?: number | null;
+  slots: readonly TourAssistantSlot[];
+}): TourAssistantFacts {
+  const fr = input.locale === "fr";
+  const fees = [
+    input.infantMonthly != null ? `${fr ? "poupon" : "infant"} ${input.infantMonthly}` : "",
+    input.toddlerMonthly != null ? `${fr ? "tout-petit" : "toddler"} ${input.toddlerMonthly}` : "",
+    input.preschoolMonthly != null ? `${fr ? "préscolaire" : "preschool"} ${input.preschoolMonthly}` : "",
+  ].filter(Boolean);
+  const ages =
+    input.ageMinMonths != null && input.ageMaxMonths != null && (input.ageMinMonths > 0 || input.ageMaxMonths > 0)
+      ? `${input.ageMinMonths}-${input.ageMaxMonths} ${fr ? "mois" : "months"}`
+      : null;
+  return {
+    centre: input.centre,
+    hours: (input.hours || "").trim() || null,
+    ages,
+    fees: fees.length ? fees.join(", ") : null,
+    openings: null,
+    slots: input.slots,
+  };
+}
+
 const HOURS = /\b(hours?|heures?|ouvert|open)\b/i;
 const AGES = /\b(ages?|âge|ages|infant|toddler|preschool|bébé|poupon|enfant)\b/i;
 const FEES = /\b(fees?|frais|prix|price|cost|coût|monthly|mensuel)\b/i;

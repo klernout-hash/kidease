@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { TourAssistant, tourAssistantFactsFromListing } from "@/components/tour-assistant";
+import { TourAssistant } from "@/components/tour-assistant";
+import { tourAssistantFactsFromListing } from "@/lib/ai/tour-assistant";
 import { Button } from "@/components/ui/button";
 import { listPublicTourSlots } from "@/lib/server/tour-calendar";
 import { useCopy } from "@/lib/use-copy";
@@ -94,6 +95,7 @@ export function ListingTourTimes({
         daycareId={daycare.id}
         facts={tourAssistantFactsFromListing({
           centre: daycare.name,
+          locale: loc,
           hours: loc === "fr" ? daycare.hoursFr || daycare.hours : daycare.hours,
           ageMinMonths: daycare.ageMinMonths,
           ageMaxMonths: daycare.ageMaxMonths,

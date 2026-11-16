@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AI_FLAGS } from "@/lib/ai/flags";
 import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
-import { answerTourAssistant, type TourAssistantFacts, type TourAssistantSlot } from "@/lib/ai/tour-assistant";
+import { answerTourAssistant, type TourAssistantFacts } from "@/lib/ai/tour-assistant";
 import { createTourRequest } from "@/lib/server/tours";
+import { listPublicTourSlots } from "@/lib/server/tour-calendar";
 import { useCopy } from "@/lib/use-copy";
 
 export function TourAssistant({
@@ -29,10 +30,19 @@ export function TourAssistant({
   }
 
   async function confirm() {
-    const slot = facts.slots.find((row) => row.id === slotId);
+    const slot = facts.slots.find((row) => row.id === slotId && row.remaining > 0);
     if (!slot) return;
     setBusy(true);
     try {
+      const fresh = await listPublicTourSlots({ data: { daycareId } });
+      const stillOpen = fresh.slots.some(
+        (row) => row.id === slot.id && row.remaining > 0 && row.date === slot.date && row.startTime === slot.time,
+      );
+      if (!stillOpen) {
+        setReply(t("tourAssistantSlotGone"));
+        setSlotId(null);
+        return;
+      }
       await createTourRequest({
         data: {
           daycareId,
@@ -40,25 +50,27 @@ export function TourAssistant({
           locale: loc,
         },
       });
-      setReply(loc === "fr" ? "La demande est envoyée. Le centre la verra dans Demandes." : "The request is sent. The centre will see it under Requests.");
+      setReply(t("tourAssistantSent"));
       setSlotId(null);
     } catch {
-      setReply(loc === "fr" ? "Connectez-vous avec un compte parent pour envoyer cette visite." : "Sign in with a parent account to send this tour.");
+      setReply(t("tourAssistantSignIn"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <section className="mt-4 space-y-2 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="tour-assistant">
+    <section className="mt-4 space-y-2 rounded-xl border border-border bg-surface p-4" data-ke="tour-assistant">
       <h3 className="font-display text-lg">{t("tourAssistantTitle")}</h3>
-      <label className="block text-sm">
+      <label className="block text-sm" htmlFor="tour-assistant-question">
         {t("tourAssistantPrompt")}
         <textarea
+          id="tour-assistant-question"
           className="ke-textarea mt-1 w-full"
           rows={2}
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
+          onFocus={(event) => event.currentTarget.scrollIntoView({ block: "nearest" })}
         />
       </label>
       <Button type="button" variant="secondary" className="min-h-11 touch-manipulation" onClick={ask}>
@@ -74,31 +86,3 @@ export function TourAssistant({
   );
 }
 
-export function tourAssistantFactsFromListing(input: {
-  centre: string;
-  hours?: string | null;
-  ageMinMonths?: number | null;
-  ageMaxMonths?: number | null;
-  infantMonthly?: number | null;
-  toddlerMonthly?: number | null;
-  preschoolMonthly?: number | null;
-  slots: readonly TourAssistantSlot[];
-}): TourAssistantFacts {
-  const fees = [
-    input.infantMonthly != null ? `infant ${input.infantMonthly}` : "",
-    input.toddlerMonthly != null ? `toddler ${input.toddlerMonthly}` : "",
-    input.preschoolMonthly != null ? `preschool ${input.preschoolMonthly}` : "",
-  ].filter(Boolean);
-  const ages =
-    input.ageMinMonths != null && input.ageMaxMonths != null && (input.ageMinMonths > 0 || input.ageMaxMonths > 0)
-      ? `${input.ageMinMonths}-${input.ageMaxMonths} months`
-      : null;
-  return {
-    centre: input.centre,
-    hours: (input.hours || "").trim() || null,
-    ages,
-    fees: fees.length ? fees.join(", ") : null,
-    openings: null,
-    slots: input.slots,
-  };
-}
