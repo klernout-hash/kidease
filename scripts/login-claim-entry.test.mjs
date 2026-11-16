@@ -1,3 +1,4 @@
+import { providerDeskAlias } from "../src/lib/desk-nav.ts";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
@@ -30,7 +31,9 @@ test("claim search matches the real centre name, licence tail, and id", () => {
 
 test("provider overview is the today desk, and a signed-out claim link does not start a claim", () => {
   const provider = readFileSync(new URL("../src/routes/provider.tsx", import.meta.url), "utf8");
-  assert.match(provider, /deskRaw === "overview" \? "today"/);
+  assert.match(provider, /providerDeskAlias\(deskRaw\)/);
+  assert.equal(providerDeskAlias("overview"), "today");
+  assert.equal(providerDeskAlias("earnings"), "money");
   const claim = readFileSync(new URL("../src/routes/claim.tsx", import.meta.url), "utf8");
   const login = readFileSync(new URL("../src/routes/login.tsx", import.meta.url), "utf8");
   assert.match(claim, /previewClaimTarget/);

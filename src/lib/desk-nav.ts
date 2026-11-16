@@ -202,9 +202,22 @@ function deskParam(searchStr: string | null | undefined): string {
   return new URLSearchParams(query).get("desk") || "";
 }
 
+/** Words a director might type or bookmark for a tab, mapped to the tab's real id. */
+export const PROVIDER_DESK_ALIASES: Record<string, string> = {
+  overview: "today",
+  earnings: "money",
+  payouts: "money",
+  billing: "money",
+  bills: "money",
+};
+
+export function providerDeskAlias(value: string | null | undefined): string {
+  const raw = String(value || "").trim().toLowerCase();
+  return PROVIDER_DESK_ALIASES[raw] ?? raw;
+}
+
 function normalizeProviderDesk(value: string | null | undefined): DaycareDesk | null {
-  const raw = String(value || "").trim();
-  const desk = raw === "overview" ? "today" : raw;
+  const desk = providerDeskAlias(value);
   return (PROVIDER_DESK_IDS as readonly string[]).includes(desk) ? (desk as DaycareDesk) : null;
 }
 
@@ -418,13 +431,14 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
     { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },
   ],
   daycare: [
-    { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "listings", "calendar", "insights", "top-rated", "requests", "leads", "tours", "messages"] },
-    { id: "business", label: "Business", labelKey: "navBusiness", open: true, itemIds: ["money", "promote"] },
+    // The five places a director uses every day, like a host's Today, Calendar, Listings, Messages.
+    { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "calendar", "listings", "messages", "requests"] },
+    { id: "business", label: "Business", labelKey: "navBusiness", open: true, itemIds: ["money", "insights", "leads", "tours", "top-rated", "promote"] },
     { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "hours", "screening", "learning", "tools", "centre-care"] },
-    { id: "compliance", label: "Compliance", labelKey: "navCompliance", open: true, itemIds: ["licence", "centre-documents", "contract"] },
+    { id: "compliance", label: "Compliance", labelKey: "navCompliance", itemIds: ["licence", "centre-documents", "contract"] },
     { id: "grow", label: "Grow", labelKey: "navGrow", itemIds: ["post-job", "add", "claim"] },
-    { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "subscription", "delete"] },
-    { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },
+    { id: "account", label: "Account", labelKey: "account", itemIds: ["profile", "appearance", "subscription", "delete"] },
+    { id: "settings", label: "Settings", labelKey: "settings", itemIds: ["notify-prefs", "security", "email-sms"] },
   ],
   admin: [
     { id: "ops", label: "Operations", labelKey: "navOperations", open: true, itemIds: ["queue", "mail"] },
