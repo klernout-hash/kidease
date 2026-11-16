@@ -133,6 +133,11 @@ export function showPayCtas(env?: EnvMap): boolean {
   return evaluateFeatureFlag("SHOW_PAY_CTAS", env);
 }
 
+/** Named admin list filters, such as a province or documents waiting. Default on. */
+export function adminSavedFiltersEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_ADMIN_SAVED_FILTERS", env);
+}
+
 /** Email when a saved search matches a newly posted open spot. Default off. */
 export function openSpotAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_OPEN_SPOT_ALERTS", env);

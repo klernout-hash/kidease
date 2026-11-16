@@ -271,6 +271,8 @@ These are env-only. Unset means the feature stays on. Set the value to `0` to pa
 
 A paused screen says what is off and offers a way to search.
 
+`FEATURE_ADMIN_SAVED_FILTERS` is on. An admin can save, name, and delete a list filter, such as unclaimed centres in one province or documents waiting.
+
 ## Later (not this PR)
 
 - Per-user or % rollouts (today the server uses one distinct id).
