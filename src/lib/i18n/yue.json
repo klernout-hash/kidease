@@ -3587,5 +3587,9 @@
   "parentRequestTourAsked": "已申請參觀",
   "moreTools": "更多工具",
   "setupReady": "完成咗 {n}%",
-  "setupNextFees": "下一步：填費用"
+  "setupNextFees": "下一步：填費用",
+  "licenceRecordUnverified": "KidEase 未有呢間中心嘅已核實牌照。請睇省或地區嘅官方登記。",
+  "listingBadgeWaiting": "等緊",
+  "listingBadgeLive": "已上線",
+  "listingBadgeDeclined": "已拒絕"
 }

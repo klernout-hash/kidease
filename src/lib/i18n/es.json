@@ -3587,5 +3587,9 @@
   "parentRequestTourAsked": "Visita solicitada",
   "moreTools": "Más herramientas",
   "setupReady": "{n}% listo",
-  "setupNextFees": "Siguiente: indica las tarifas"
+  "setupNextFees": "Siguiente: indica las tarifas",
+  "licenceRecordUnverified": "KidEase no tiene una licencia verificada para este centro. Consulte el registro oficial de la provincia o el territorio.",
+  "listingBadgeWaiting": "En espera",
+  "listingBadgeLive": "En línea",
+  "listingBadgeDeclined": "Rechazado"
 }

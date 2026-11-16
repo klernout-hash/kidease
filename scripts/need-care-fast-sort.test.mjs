@@ -30,8 +30,12 @@ test("need care fast availability sort defaults off and does not use Google", ()
   );
   assert.equal(normalizeNeedCareFastPage({}).sort, "distance");
   assert.equal(normalizeNeedCareFastPage({ sort: "spots" }).sort, "spots");
+  assert.match(needCareFastCopy("en").leadSpots, /does not load Google Maps/);
+  assert.match(needCareFastCopy("en").leadSpots, /search map uses Google Maps/);
   assert.match(needCareFastCopy("en").leadSpots, /OpenStreetMap/);
-  assert.match(needCareFastCopy("en").leadSpots, /does not use Google Maps/);
+  assert.match(needCareFastCopy("fr").leadSpots, /ne charge pas Google Maps/);
+  assert.match(needCareFastCopy("fr").leadSpots, /OpenStreetMap/);
+  assert.doesNotMatch(needCareFastCopy("fr").leadSpots, /n'utilise pas Google Maps|n’utilise pas Google Maps/);
   assert.match(needCareFastCopy("fr").help, /Aide/);
   const page = read("src/lib/server/need-care-fast-page.ts");
   assert.match(page, /needCareFastEnabled/);

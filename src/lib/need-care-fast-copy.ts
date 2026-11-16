@@ -25,7 +25,7 @@ const en: NeedCareFastCopy = {
   why: "This page shows only centres that confirmed an open spot in the last 7 days.",
   lead: "Enter your city. We sort the closest centres first.",
   leadSpots:
-    "Enter your city. Centres with more open spots come first, then the closer ones. Distance uses the centre pin on OpenStreetMap. KidEase does not use Google Maps.",
+    "Enter your city. Centres with more open spots come first, then the closer ones. This page measures distance from each centre's saved pin and does not load Google Maps. The search map uses Google Maps, or OpenStreetMap if Google Maps does not load.",
   help: "Help",
   placeLabel: "City",
   submit: "Show open spots",
@@ -47,7 +47,7 @@ const fr: NeedCareFastCopy = {
   why: "Cette page montre seulement les centres qui ont confirmé une place libre dans les 7 derniers jours.",
   lead: "Entrez votre ville. Nous trions les centres les plus proches d'abord.",
   leadSpots:
-    "Entrez votre ville. Les centres avec plus de places libres viennent d'abord, puis les plus proches. La distance utilise l'épingle du centre sur OpenStreetMap. KidEase n'utilise pas Google Maps.",
+    "Entrez votre ville. Les centres avec plus de places libres viennent d'abord, puis les plus proches. Cette page mesure la distance à partir de l'épingle enregistrée de chaque centre et ne charge pas Google Maps. La carte de recherche utilise Google Maps, ou OpenStreetMap si Google Maps ne charge pas.",
   help: "Aide",
   placeLabel: "Ville",
   submit: "Voir les places libres",

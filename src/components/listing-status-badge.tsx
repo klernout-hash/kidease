@@ -1,6 +1,6 @@
 import { useRoleChrome } from "@/components/role-chrome";
 import { parentPayLeadKey } from "@/lib/copy-keys";
-import { listingStatusFromClaim, listingStatusLabel } from "@/lib/listing-status";
+import { listingStatusFromClaim } from "@/lib/listing-status";
 import { useCopy } from "@/lib/use-copy";
 import { useStoreShell } from "@/lib/use-native-shell";
 import { cn } from "@/lib/utils";
@@ -18,8 +18,11 @@ export function ListingStatusBadge({
   invert?: boolean;
   className?: string;
 }) {
+  const { t } = useCopy();
   const status = listingStatusFromClaim(claimStatus, { live, claimedAt });
-  const label = listingStatusLabel(claimStatus, { live, claimedAt });
+  const label = t(
+    status === "live" ? "listingBadgeLive" : status === "declined" ? "listingBadgeDeclined" : "listingBadgeWaiting",
+  );
   return (
     <span
       className={cn(

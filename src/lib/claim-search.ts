@@ -57,6 +57,42 @@ export function foldClaimText(value: string): string {
     .replace(/[^a-z0-9]+/g, "");
 }
 
+/** Words that appear in almost every centre name. They are not a search by themselves. */
+const GENERIC_CLAIM_WORDS = new Set([
+  "daycare",
+  "daycares",
+  "garderie",
+  "garderies",
+  "centre",
+  "center",
+  "centers",
+  "centres",
+  "child",
+  "children",
+  "care",
+  "childcare",
+  "the",
+  "and",
+]);
+
+/** "day" and "daycare" match thousands of centres. A real name token does not. */
+export function isGenericClaimFragment(folded: string): boolean {
+  if (!folded) return true;
+  if (GENERIC_CLAIM_WORDS.has(folded)) return true;
+  for (const word of GENERIC_CLAIM_WORDS) {
+    if (folded.length >= 2 && folded.length < word.length && word.startsWith(folded)) return true;
+  }
+  return false;
+}
+
+/** Name tokens that must all appear before a centre counts as a match. */
+export function claimDistinctiveTokens(query: string): string[] {
+  return query
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length >= 3 && !isGenericClaimFragment(token));
+}
+
 export function claimListingScore(
   query: string,
   listing: { id: string; name: string; address?: string | null; postalCode?: string | null; licenseNumber?: string | null; city?: string | null },
@@ -68,8 +104,12 @@ export function claimListingScore(
   const foldedQ = foldClaimText(q);
   const foldedName = foldClaimText(name);
   if (id && id === q) return 110;
-  if (name.startsWith(q) || (foldedQ && foldedName.startsWith(foldedQ))) return 100;
-  if (name.includes(q) || (foldedQ.length >= 2 && foldedName.includes(foldedQ))) return 80;
+  const generic = isGenericClaimFragment(foldedQ);
+  if (!generic && (name.startsWith(q) || (foldedQ && foldedName.startsWith(foldedQ)))) return 100;
+  if (!generic && (name.includes(q) || (foldedQ.length >= 2 && foldedName.includes(foldedQ)))) return 80;
+  const tokens = claimDistinctiveTokens(q);
+  if (tokens.length > 0 && tokens.every((token) => foldedName.includes(token))) return tokens.length > 1 ? 70 : 75;
+  if (tokens.length > 1) return 0;
   const city = claimCityScore(q, listing.city || "");
   if (city) return city;
   const addr = (listing.address || "").toLowerCase();
@@ -97,6 +137,9 @@ export function claimCityScore(query: string, city: string): number {
   if (saved.includes(q)) return 58;
   const keys = claimCityKeys(query);
   if (keys.includes(saved)) return 55;
-  if (keys.some((key) => saved.includes(key) || (key.length > 3 && key.includes(saved)))) return 55;
+  const queryWords = new Set(q.split(" ").filter((word) => word.length > 2 && !isGenericClaimFragment(word)));
+  const savedWords = saved.split(" ").filter((word) => word.length > 2);
+  if (savedWords.length > 0 && savedWords.every((word) => queryWords.has(word))) return 55;
+  if (keys.some((key) => key.length > 3 && saved.includes(key) && !isGenericClaimFragment(key))) return 55;
   return 0;
 }

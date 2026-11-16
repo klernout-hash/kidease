@@ -332,7 +332,6 @@ export function GovDashboardView({
           </ul>
         </section>
         <OversightNote locale={data.locale} ratio={typeof data.childPerSpace === "number" ? data.childPerSpace : null} />
-        <GovMap data={data} />
         <section className="mt-6 grid gap-3 lg:grid-cols-2" data-ke="gov-needs-attention" aria-labelledby="gov-needs-title">
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border">
             <h2 id="gov-needs-title" className="font-display text-xl">{copy.needsTitle}</h2>
@@ -622,18 +621,26 @@ function GovCentreDirectory({ locale, province, city }: { locale: "en" | "fr"; p
   });
   const [rows, setRows] = useState<GovCentreLine[]>([]);
   const [detail, setDetail] = useState<GovCentreDetail | null>(null);
+  const [listPhase, setListPhase] = useState<"idle" | "loading" | "ready" | "error">("idle");
   useEffect(() => {
     if (!city || city === "ALL") {
       setRows([]);
+      setListPhase("idle");
       return;
     }
     let live = true;
+    setListPhase("loading");
+    setRows([]);
     void listGovCentres({ data: { province, city } })
       .then((next) => {
-        if (live) setRows(next);
+        if (!live) return;
+        setRows(next);
+        setListPhase("ready");
       })
       .catch(() => {
-        if (live) setRows([]);
+        if (!live) return;
+        setRows([]);
+        setListPhase("error");
       });
     return () => {
       live = false;
@@ -664,7 +671,15 @@ function GovCentreDirectory({ locale, province, city }: { locale: "en" | "fr"; p
         <p className="mt-2 text-sm text-muted">
           {fr ? "Choisissez une ville dans le tableau pour voir ses centres." : "Choose a city in the table to see its centres."}
         </p>
-      ) : rows.length ? (
+      ) : listPhase === "loading" ? (
+        <p className="mt-2 text-sm text-muted" role="status" data-ke="gov-centres-loading">
+          {fr ? "Chargement des centres." : "Loading centres."}
+        </p>
+      ) : listPhase === "error" ? (
+        <p className="mt-2 text-sm text-muted" role="alert" data-ke="gov-centres-error">
+          {fr ? "Les centres n’ont pas chargé. Choisissez la ville de nouveau." : "The centres did not load. Choose the city again."}
+        </p>
+      ) : listPhase === "ready" && rows.length ? (
         <ul className="mt-3 divide-y divide-border text-sm">
           {rows.map((row) => (
             <li key={row.slug} className="py-2">
@@ -678,9 +693,11 @@ function GovCentreDirectory({ locale, province, city }: { locale: "en" | "fr"; p
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="mt-2 text-sm text-muted">{fr ? "Aucun centre public dans cette ville." : "No public centre in this city."}</p>
-      )}
+      ) : listPhase === "ready" ? (
+        <p className="mt-2 text-sm text-muted" role="status" data-ke="gov-centres-empty">
+          {fr ? "Aucun centre public dans cette ville." : "No public centre in this city."}
+        </p>
+      ) : null}
       {detail ? (
         <article id="gov-centre" className="mt-4 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="gov-centre-detail">
           <h3 className="font-display text-xl">{detail.name}</h3>

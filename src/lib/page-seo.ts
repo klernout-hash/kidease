@@ -9,6 +9,7 @@ import { SUPPORT_INBOX_EMAIL } from "./support.ts";
 import { FACEBOOK_PROFILE_URL, INSTAGRAM_PROFILE_URL } from "./social.ts";
 import { SITEMAP_ORIGIN } from "./public-url.ts";
 import { hreflangLinks, pathLocale } from "./locale-path.ts";
+import { appAvailabilitySentence, liveAppStores } from "./app-stores.ts";
 
 export const HOME_SEO_TITLE = "KidEase · Licensed daycare near you";
 export const HOME_SEO_DESCRIPTION =
@@ -188,9 +189,10 @@ export function organizationJsonLd(locale: "en" | "fr" = "en") {
 
 /**
  * SoftwareApplication for the web / PWA.
- * Amazon Appstore is the only approved store. No download counts, ratings, or store IDs.
+ * Store pages come from the same list as the tiles. No counts or ratings.
  */
-export function softwareApplicationJsonLd() {
+export function softwareApplicationJsonLd(locale: "en" | "fr" = "en") {
+  const storeUrls = liveAppStores().map((store) => store.url).filter((url): url is string => Boolean(url));
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -198,13 +200,13 @@ export function softwareApplicationJsonLd() {
     url: `${SITEMAP_ORIGIN}/get-app`,
     applicationCategory: "LifestyleApplication",
     operatingSystem: "Web, iOS, Android",
+    sameAs: storeUrls,
     offers: {
       "@type": "Offer",
       price: "0",
       priceCurrency: "CAD",
     },
-    description:
-      "Free search for licensed Canadian child care listings. Monthly fees, open spots, and enrolment. Amazon Appstore is approved. App Store and Google Play are not approved yet.",
+    description: appAvailabilitySentence(locale),
     publisher: {
       "@type": "Organization",
       name: "KidEase",
@@ -216,7 +218,7 @@ export function softwareApplicationJsonLd() {
 export function organizationGraphJsonLd(locale: "en" | "fr" = "en") {
   return {
     "@context": "https://schema.org",
-    "@graph": [organizationJsonLd(locale), softwareApplicationJsonLd()].map((node) => {
+    "@graph": [organizationJsonLd(locale), softwareApplicationJsonLd(locale)].map((node) => {
       const { "@context": _ctx, ...rest } = node as Record<string, unknown> & { "@context"?: string };
       void _ctx;
       return rest;
@@ -268,7 +270,7 @@ export const MARKETING_PAGE_SEO = {
   getApp: {
     title: "Get the KidEase app · iPhone, Android, Mac",
     description:
-      "KidEase on your phone. The Amazon Appstore app is approved. App Store, Google Play, Galaxy Store, Microsoft Store, and AppGallery are not approved yet.",
+      appAvailabilitySentence("en"),
     path: "/get-app",
   },
   contact: {
@@ -403,7 +405,7 @@ export const MARKETING_PAGE_SEO_FR = {
   getApp: {
     title: "Télécharger l’appli KidEase · iPhone, Android, Mac",
     description:
-      "KidEase sur votre téléphone. L’appli Amazon Appstore est approuvée. L’App Store, Google Play, le Galaxy Store, le Microsoft Store et AppGallery ne sont pas approuvés.",
+      appAvailabilitySentence("fr"),
     path: "/fr/get-app",
   },
   benefits: {

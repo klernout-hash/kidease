@@ -26,6 +26,7 @@ export function FooterAppBadges() {
                 href={store.url!}
                 className="ke-footer-store-badge"
                 aria-label={`${t("appStoresDownload")} · ${name}`}
+                target={store.id === "huawei" ? "_blank" : undefined}
                 rel="noopener noreferrer"
                 data-ke={`footer-store-${store.id}`}
               >

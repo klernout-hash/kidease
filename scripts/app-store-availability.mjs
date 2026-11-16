@@ -74,7 +74,7 @@ export async function captureAppStoreAvailability(browser, base, outDir) {
                 const huawei = tiles.find((li) => li.textContent.includes("Huawei AppGallery"));
                 const pending = tiles.filter((li) => /^(App Store|Galaxy Store|Samsung Galaxy Store|Microsoft Store)/.test(li.textContent.trim()));
                 return {
-                  huaweiText: huawei?.textContent.trim(), available: huawei?.textContent.includes(available), soon: huawei?.textContent.includes(soon), links: huawei?.querySelectorAll("a").length,
+                  huaweiText: huawei?.textContent.trim(), available: huawei?.textContent.includes(available), soon: huawei?.textContent.includes(soon), links: huawei?.querySelectorAll("a").length, huaweiHref: huawei?.querySelector("a")?.getAttribute("href"), huaweiTarget: huawei?.querySelector("a")?.getAttribute("target"),
                   pendingCount: pending.length, pendingUnlinked: pending.every((li) => li.textContent.includes(unavailable) && !li.querySelector("a")),
                   playLink: tiles.find((li) => li.textContent.includes("Google Play"))?.querySelector("a")?.getAttribute("href"),
                 };
@@ -92,7 +92,9 @@ export async function captureAppStoreAvailability(browser, base, outDir) {
           for (const panel of observed.panels) {
             assert.equal(panel.available, true, `${file}: Huawei availability`);
             assert.equal(panel.soon, false, `${file}: stale Huawei label`);
-            assert.equal(panel.links, 0, `${file}: unknown Huawei URL`);
+            assert.equal(panel.links, 1, `${file}: Huawei listing link`);
+            assert.equal(panel.huaweiHref, "https://appgallery.huawei.com/#/app/C119648761");
+            assert.equal(panel.huaweiTarget, "_blank");
             assert.equal(panel.pendingCount, 3);
             assert.equal(panel.pendingUnlinked, true, `${file}: unavailable downloads retain their status and have no link`);
             assert.equal(panel.playLink, "https://play.google.com/store/apps/details?id=ca.kidease.app");

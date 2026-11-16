@@ -43,14 +43,18 @@ export function AppStoreStatus({ compact = false }: { compact?: boolean }) {
             <li key={store.id} className="min-w-0 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke={`app-store-${store.id}`} data-live={store.live ? "1" : "0"}>
               <p className="text-base font-semibold text-fg">{name}</p>
               {downloadUrl ? (
-                <a
-                  href={downloadUrl}
-                  rel="noopener noreferrer"
-                  className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-fg touch-manipulation"
-                  data-ke={`app-store-link-${store.id}`}
-                >
-                  {t("appStoresDownload")}
-                </a>
+                <>
+                  <a
+                    href={downloadUrl}
+                    target={store.id === "huawei" ? "_blank" : undefined}
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-fg touch-manipulation"
+                    data-ke={`app-store-link-${store.id}`}
+                  >
+                    {t("appStoresDownload")}
+                  </a>
+                  <p className="mt-2 text-sm text-muted">{t("storeAvailableNow")}</p>
+                </>
               ) : store.live ? (
                 <p className="mt-3 inline-flex min-h-11 items-center text-sm text-muted" data-ke={`app-store-available-${store.id}`}>
                   {t("storeAvailableNow")}

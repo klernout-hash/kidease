@@ -3587,5 +3587,9 @@
   "parentRequestTourAsked": "تم طلب الزيارة",
   "moreTools": "أدوات إضافية",
   "setupReady": "جاهز {n}%",
-  "setupNextFees": "التالي: أدخل الرسوم"
+  "setupNextFees": "التالي: أدخل الرسوم",
+  "licenceRecordUnverified": "ليس لدى KidEase ترخيص مُتحقق لهذا المركز. راجع السجل الرسمي للمقاطعة أو الإقليم.",
+  "listingBadgeWaiting": "بانتظار",
+  "listingBadgeLive": "مباشر",
+  "listingBadgeDeclined": "مرفوض"
 }

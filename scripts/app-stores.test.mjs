@@ -6,6 +6,7 @@ import test from "node:test";
 import {
   AMAZON_STORE_URL,
   APP_STORES,
+  HUAWEI_STORE_URL,
   PLAY_STORE_URL,
   appShareUrl,
   liveAppStores,
@@ -25,18 +26,20 @@ test("confirmed store availability does not invent an unknown download link", ()
   assert.equal(amazon?.live, true);
   assert.equal(amazon?.url, AMAZON_STORE_URL);
   assert.equal(huawei?.live, true);
-  assert.equal(huawei?.url, null);
+  assert.equal(huawei?.url, HUAWEI_STORE_URL);
+  assert.equal(HUAWEI_STORE_URL, "https://appgallery.huawei.com/#/app/C119648761");
   assert.equal(apple?.live, false);
   assert.equal(apple?.url, null);
   assert.equal(liveAppStores().every((store) => store.url), true);
-  assert.equal(liveAppStores().some((store) => store.id === "huawei"), false);
+  assert.equal(liveAppStores().some((store) => store.id === "huawei"), true);
 });
 
 test("the share link sends a phone to its store and everyone else to the list", () => {
   assert.equal(storeForDevice("Mozilla/5.0 (Linux; Android 14; Pixel) AppleWebKit")?.id, "play");
   assert.equal(storeForDevice("Mozilla/5.0 (Linux; Android 11; KFTRWI) Silk/120")?.id, "amazon");
   assert.equal(storeForDevice("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)"), null);
-  assert.equal(storeForDevice("Mozilla/5.0 (Linux; Android 12; HUAWEI ANA-NX9)"), null);
+  assert.equal(storeForDevice("Mozilla/5.0 (Linux; Android 12; HUAWEI ANA-NX9)")?.id, "huawei");
+  assert.equal(storeForDevice("Mozilla/5.0 (Linux; Android 12; HUAWEI ANA-NX9)")?.url, HUAWEI_STORE_URL);
   assert.equal(appShareUrl("https://kidease.ca/"), "https://kidease.ca/app");
 });
 
