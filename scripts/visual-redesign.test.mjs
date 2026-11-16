@@ -84,7 +84,8 @@ test("guest visual cards use the compact photo layout and one details action", (
   assert.match(card, /data-ke="visual-card"/);
   assert.match(card, /className="ke-card-photo"/);
   assert.match(src("src/styles.css"), /--ke-card-photo-ratio:\s*20 \/ 19;/);
-  assert.match(card, /rounded-md bg-primary/);
+  assert.match(card, /data-ke="card-view-details"/);
+  assert.doesNotMatch(card, /w-full items-center justify-center whitespace-normal rounded-md bg-primary/);
   assert.doesNotMatch(card, /rounded-\[14px\]/);
   assert.match(card, /data-ke="card-live-pill"/);
   assert.match(card, /SubsidyPill/);

@@ -29,6 +29,9 @@ export type ListingFeeInput = {
   ageMaxMonths?: number | null;
 };
 
+/** Ontario's published parent-fee cap. Not a centre's own price. */
+export const ONTARIO_DAILY_CAP = 22;
+
 /** True when a monthly figure is just a daily cap times a billing-day guess. */
 export function isDerivedFromDailyCap(amount: number | null | undefined, daily: number | null | undefined): boolean {
   if (amount == null || daily == null || !Number.isFinite(amount) || !Number.isFinite(daily)) return false;
@@ -48,6 +51,13 @@ export function looksLikeProvinceCap(amount: number | null | undefined, province
   if (code !== "ON") return false;
   const daily = ONTARIO_DAILY_CAP_CENTS / 100;
   return amount >= daily * 20 - 0.51 && amount <= daily * 22 + 0.51;
+}
+
+/** $477 and $22 × 21.75 are the Ontario cap written as a month, not a centre fee. */
+export function isOntarioCapMonthly(amount: number | null | undefined): boolean {
+  if (amount == null || !Number.isFinite(amount) || amount <= 0) return false;
+  if (Math.round(amount) === 477) return true;
+  return isDerivedFromDailyCap(amount, ONTARIO_DAILY_CAP);
 }
 
 /** $10 or $9.65 when this listing's public fee line is a daily cap. */
@@ -72,7 +82,7 @@ export function publicMonthlyFee(amount: number | null | undefined, listing: Lis
   const centre = String(listing.feeConfidence || "").trim().toLowerCase() === "centre";
   const daily = dailyCapDollars(listing);
   if (!centre && daily != null && isDerivedFromDailyCap(real, daily)) return null;
-  if (!centre && looksLikeProvinceCap(real, listing.province)) return null;
+  if (!centre && (looksLikeProvinceCap(real, listing.province) || (String(listing.province || "").trim().toUpperCase() === "ON" && isOntarioCapMonthly(real)))) return null;
   return real;
 }
 

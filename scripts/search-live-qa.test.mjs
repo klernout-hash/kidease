@@ -111,7 +111,7 @@ test("a Where box that is not a place becomes a name search, and name matches st
   );
   assert.equal(FAR_NAME_KM, 80);
   assert.match(search, /labelFar=\{nameSearch\}/);
-  assert.match(src("src/components/daycare-card.tsx"), /farAway \? item\.province/);
+  assert.match(src("src/components/daycare-card.tsx"), /farAway \? ` · \$\{item\.province\}`/);
 });
 
 test("large city searches overlay the nearest cards first", () => {
