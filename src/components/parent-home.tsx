@@ -159,6 +159,7 @@ export function ParentHome({
           )}
         </div>
       </section>
+      {empty ? null : (
       <form action="/search" method="get" className="flex flex-wrap gap-[8px]" data-ke="parent-home-search">
         <label className="min-w-[44px] flex-1">
           <span className="sr-only">{t("parentHomeSearchLabel")}</span>
@@ -173,6 +174,7 @@ export function ParentHome({
           {t("search")}
         </Button>
       </form>
+      )}
       <AreaWaitlistForm returnTo="/parent" />
 
       {empty ? (

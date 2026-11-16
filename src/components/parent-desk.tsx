@@ -493,7 +493,12 @@ export function ParentDesk({
               .catch(() => setUpgradeDismissed(false));
           }}
         />
-        <EceJobDesk mode="parent" />
+        <details className="mt-8 rounded-xl border border-border bg-surface p-4">
+          <summary className="flex min-h-11 cursor-pointer items-center font-medium">{t("findDaycareJobs")}</summary>
+          <div className="mt-4">
+            <EceJobDesk mode="parent" />
+          </div>
+        </details>
         </>
       ) : null}
 
