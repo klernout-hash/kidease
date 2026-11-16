@@ -1239,7 +1239,7 @@ export function Listing() {
             compact
           />
             {!tourReady ? (
-              <p className="text-sm text-muted">
+              <p className="mt-3 text-sm text-muted">
                 {t("unclaimedNotice")}{" "}
                 <Link
                   to="/verify"

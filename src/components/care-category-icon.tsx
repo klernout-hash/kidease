@@ -95,15 +95,18 @@ export function CareCategoryIcon({ id, index = 0 }: { id: string; index?: number
       className="ke-category-art"
       aria-hidden="true"
     >
-      <img
-        className="ke-category-icon"
-        src={art.src}
-        alt=""
-        width={256}
-        height={256}
-        decoding="async"
-        draggable={false}
-      />
+      <picture>
+        <source srcSet={art.webp} type="image/webp" />
+        <img
+          className="ke-category-icon"
+          src={art.src}
+          alt=""
+          width={128}
+          height={128}
+          decoding="async"
+          draggable={false}
+        />
+      </picture>
     </span>
   );
 }

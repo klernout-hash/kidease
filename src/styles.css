@@ -4172,3 +4172,39 @@ html[data-look="clean"] [data-ke="search-split"]:has(> [data-ke="search-split-ma
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Speed and polish pass. */
+/* Tap targets: the root font is 14px, so Tailwind's 11 units come out at 38.5px. Controls that
+   ask for 44px get at least 44px in the clean look (WCAG 2.5.8 and Apple's 44pt). */
+html[data-look="clean"] :is(a, button, summary, select, input, label, [role="button"], [role="tab"]):is(.min-h-11, .h-11, .size-11) {
+  min-height: max(calc(var(--spacing) * 11), 44px);
+}
+html[data-look="clean"] :is(a, button, summary, [role="button"], [role="tab"]):is(.min-w-11, .w-11, .size-11) {
+  min-width: max(calc(var(--spacing) * 11), 44px);
+}
+html[data-look="clean"] :is(a, button, [role="button"]).h-11 {
+  height: max(calc(var(--spacing) * 11), 44px);
+}
+/* Header categories on tablets: the strip fades at its edge instead of cutting a label in half. */
+@media (min-width: 768px) {
+  html[data-look="clean"] [data-ke="airbnb-care-cats"] {
+    mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
+  }
+}
+/* Phones: the last links on a page clear the floating Help button. */
+@media (max-width: 767px) {
+  html[data-look="clean"] body:has([data-ke="help-launcher"]) footer {
+    padding-bottom: calc(5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  }
+}
+/* Numbers in tables and stats line up. */
+html[data-look="clean"] :is(table, dl, [data-ke$="-summary"]) {
+  font-variant-numeric: tabular-nums;
+}
+html[data-look="clean"] [data-ke="msv2-back"] {
+  min-width: 44px;
+  min-height: 44px;
+}
+html[data-look="clean"] [data-ke="msv2-summary"] {
+  min-height: 44px;
+}
