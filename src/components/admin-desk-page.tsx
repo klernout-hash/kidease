@@ -42,7 +42,8 @@ import {
   type AdminDeskTab,
 } from "@/lib/account-notify";
 import { listPlatformEvents } from "@/lib/server/notify";
-import { listAdminPeople, type AdminPersonRow } from "@/lib/server/admin-people";
+import { listAdminPeople, searchAdminUsers, type AdminPersonRow } from "@/lib/server/admin-people";
+import { AdminPayoutsPanel } from "@/components/admin-payouts";
 import { AdminViewAsPicker } from "@/components/admin-view-as-picker";
 import { ViewAsButton } from "@/components/view-as-button";
 import {
@@ -588,7 +589,7 @@ export function AdminPage() {
   return (
     <TwoFactorGate next={adminDeskHref(search)}>
     <LoginFunnelDeskLand desk="admin" />
-    <DeskShell desk="admin" active={tab} onSelect={(id) => setTab(id as AdminDeskTab)}>
+    <DeskShell desk="admin" active={tab === "payouts" ? "connect" : tab} onSelect={(id) => setTab(id as AdminDeskTab)}>
       {centresError ? (
         <AdminCentresLoadBanner
           message={centresError}
@@ -907,6 +908,8 @@ export function AdminPage() {
         <AdminScreeningQueue rows={screeningQueue} onChanged={() => void refresh()} />
       ) : tab === "mail" ? (
         <AdminMailPanel />
+      ) : tab === "payouts" ? (
+        <AdminPayoutsPanel />
       ) : tab === "contracts" ? (
         <AdminContractsPanel
           rows={contracts}
@@ -1121,13 +1124,46 @@ function PeoplePanel({
   role: "all" | AccountNotifyRole;
   onRole: (v: "all" | AccountNotifyRole) => void;
 }) {
+  const [looked, setLooked] = useState<AdminPersonRow[] | null>(null);
+  const [looking, setLooking] = useState(false);
+  useEffect(() => {
+    const needle = q.trim();
+    if (needle.length < 2) {
+      setLooked(null);
+      setLooking(false);
+      return;
+    }
+    let live = true;
+    setLooking(true);
+    const timer = window.setTimeout(() => {
+      void searchAdminUsers({ data: { q: needle } })
+        .then((next) => {
+          if (live) setLooked(next);
+        })
+        .catch(() => {
+          if (live) setLooked([]);
+        })
+        .finally(() => {
+          if (live) setLooking(false);
+        });
+    }, 250);
+    return () => {
+      live = false;
+      window.clearTimeout(timer);
+    };
+  }, [q]);
+  const shown = (looked ?? rows).filter((person) => {
+    if (!showQa && isQaPersonAccount(person)) return false;
+    if (looked && role !== "all" && person.role !== role) return false;
+    return true;
+  });
   return (
     <>
       <AdminViewAsPicker />
       <div className="mb-4">
-        <h2 className="font-display text-2xl">People</h2>
-        <p className="mt-1 text-sm text-muted">
-          Parents and daycare providers who created an account in the last {ADMIN_PEOPLE_DAYS} days. Search by name or email.
+        <h2 className="font-display text-2xl">Users</h2>
+        <p className="mt-1 max-w-prose text-sm leading-6 text-muted">
+          Recent parent and daycare accounts from the last {ADMIN_PEOPLE_DAYS} days. Search a name or email to look up any account. Each row shows the role, the date it was created, and a linked daycare when one is saved.
         </p>
       </div>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -1164,13 +1200,20 @@ function PeoplePanel({
           ))}
         </div>
       </div>
-      <ul className="mt-6 divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
-        {rows.length === 0 ? (
+      <ul className="mt-6 divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border" data-ke="admin-users">
+        {looking ? (
+          <li className="p-8 text-center text-sm text-muted">Looking up accounts…</li>
+        ) : shown.length === 0 ? (
           <li className="p-8 text-center">
-            {all.length === 0 ? (
+            {looked ? (
+              <>
+                <p className="font-medium">No account matches that search.</p>
+                <p className="mt-2 text-sm text-muted">Try another name or email.</p>
+              </>
+            ) : all.length === 0 ? (
               <>
                 <p className="font-medium">No new parents or daycare providers in the last {ADMIN_PEOPLE_DAYS} days.</p>
-                <p className="mt-2 text-sm text-muted">New signups appear here with name, email, and role. Activity still logs the same people.</p>
+                <p className="mt-2 text-sm text-muted">Search a name or email to look up an older account.</p>
               </>
             ) : (
               <>
@@ -1180,18 +1223,19 @@ function PeoplePanel({
             )}
           </li>
         ) : (
-          rows.map((p) => (
+          shown.map((p) => (
             <li key={p.userId} className="p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium">{p.name?.trim() || "—"}</p>
-                    <RoleBadge label={p.role === "provider" ? "Daycare" : "Parent"} />
+                    <RoleBadge label={p.role === "provider" ? "Daycare" : p.role === "parent" ? "Parent" : p.role} />
                   </div>
                   <p className="mt-1 text-sm">{p.email || "no email"}</p>
                   <p className="text-sm text-muted">
                     {[p.city, p.phone].filter(Boolean).join(" · ") || "—"}
                   </p>
+                  <p className="text-sm text-muted">Linked daycare: {p.daycareName || "—"}</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <p className="text-right text-xs text-muted">

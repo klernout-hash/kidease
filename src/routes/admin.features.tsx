@@ -66,7 +66,7 @@ function FeaturesPage() {
 
   return (
     <Shell>
-      <main className="mx-auto w-full max-w-5xl px-4 py-8">
+      <main className="ke-admin-wrap mx-auto w-full min-w-0 max-w-5xl px-4 py-8">
         <h1 className="font-display text-[clamp(1.75rem,4vw,2.25rem)]">{t("adminFeaturesTitle")}</h1>
         <p className="mt-2 max-w-prose text-sm leading-6 text-muted">{t("adminFeaturesLead")}</p>
         {page.reason === "key-not-set" ? (

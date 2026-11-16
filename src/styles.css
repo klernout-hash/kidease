@@ -2589,6 +2589,23 @@ dialog.msv2-dialog::backdrop {
 .ke-dense .space-y-4 > :not([hidden]) ~ :not([hidden]) {
   margin-top: 0.4rem;
 }
+.ke-admin-wrap {
+  min-width: 0;
+  max-width: 100%;
+}
+.ke-admin-wrap :is(h1, h2, h3, h4) {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-wrap: wrap;
+}
+.ke-admin-wrap :is(p, li, dd, dt) {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
 .ke-dense :is(h1, h2).text-3xl {
   font-size: 1.25rem;
   line-height: 1.2;
