@@ -22,8 +22,8 @@ import { listingVerifiedCoach } from "@/lib/listing-verified";
 import { DailyCareDesk } from "@/components/daily-care-desk";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible } from "@/lib/approve-live";
-import { AttentionList } from "@/components/attention-list";
-import { providerAttentionFacts } from "@/lib/attention-list";
+import { ProviderAttention } from "@/components/attention-list";
+import { certExpiryDue } from "@/lib/cert-expiry";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
@@ -110,7 +110,12 @@ export function TodayUrgencyHome({
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
   const [threads, setThreads] = useState<Conversation[]>([]);
-  const [screening, setScreening] = useState<Array<{ daycareId: string; daycareName: string; screeningOnFile: boolean; people: Array<{ docs: Array<{ status: string }> }> }>>([]);
+  const [screening, setScreening] = useState<Array<{
+    daycareId: string;
+    daycareName: string;
+    screeningOnFile: boolean;
+    people: Array<{ name: string; docs: Array<{ id: string | null; status: string; expiresOn: string | null }> }>;
+  }>>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [declineFor, setDeclineFor] = useState<string | null>(null);
   const [declineReason, setDeclineReason] = useState("");
@@ -126,7 +131,10 @@ export function TodayUrgencyHome({
             daycareId: centre.daycareId,
             daycareName: centre.daycareName,
             screeningOnFile: centre.screeningOnFile,
-            people: centre.people.map((person) => ({ docs: person.docs.map((doc) => ({ status: doc.status })) })),
+            people: centre.people.map((person) => ({
+              name: person.name,
+              docs: person.docs.map((doc) => ({ id: doc.id, status: doc.status, expiresOn: doc.expiresOn })),
+            })),
           })),
         ),
       )
@@ -193,50 +201,59 @@ export function TodayUrgencyHome({
   return (
     <section className="space-y-6" data-tour="provider-attendance">
       {user?.id ? (
-        <AttentionList
+        <ProviderAttention
           userId={user.id}
-          facts={providerAttentionFacts({
-            requests: [
-              ...leads
-                .filter((lead) => lead.status === "requested" || lead.status === "received")
-                .map((lead) => ({
-                  id: lead.id,
-                  daycareId: lead.daycareId,
-                  title: lead.parentName || lead.daycareName,
-                  status: lead.status,
-                })),
-              ...tours
-                .filter((tour) => tour.status === "pending")
-                .map((tour) => ({
-                  id: tour.id,
-                  daycareId: tour.daycareId,
-                  title: tour.parentName || tour.daycareName,
-                  status: "pending",
-                })),
-            ],
-            messages: threads
-              .filter((thread) => thread.unread && thread.daycareId)
-              .map((thread) => ({
-                id: thread.id,
-                daycareId: thread.daycareId,
-                title: thread.daycareName,
-                unread: true,
+          requests={[
+            ...leads
+              .filter((lead) => lead.status === "requested" || lead.status === "received")
+              .map((lead) => ({
+                id: lead.id,
+                daycareId: lead.daycareId,
+                title: lead.parentName || lead.daycareName,
+                status: lead.status,
               })),
-            documents: screening
-              .filter((centre) => centre.people.some((person) => person.docs.some((doc) => doc.status === "missing")))
-              .map((centre) => ({
-                id: centre.daycareId,
-                daycareId: centre.daycareId,
-                title: centre.daycareName,
-                status: "missing",
+            ...tours
+              .filter((tour) => tour.status === "pending")
+              .map((tour) => ({
+                id: tour.id,
+                daycareId: tour.daycareId,
+                title: tour.parentName || tour.daycareName,
+                status: "pending",
               })),
-            listingGaps: listings.filter(listingNeedsCompleteness).map((listing) => ({
-              id: listing.id,
-              daycareId: listing.id,
-              title: listing.name,
-              open: true,
-            })),
-          })}
+          ]}
+          messages={threads
+            .filter((thread) => thread.unread && thread.daycareId)
+            .map((thread) => ({
+              id: thread.id,
+              daycareId: thread.daycareId,
+              title: thread.daycareName,
+              unread: true,
+            }))}
+          documents={screening
+            .filter((centre) => centre.people.some((person) => person.docs.some((doc) => doc.status === "missing")))
+            .map((centre) => ({
+              id: centre.daycareId,
+              daycareId: centre.daycareId,
+              title: centre.daycareName,
+              status: "missing",
+            }))}
+          certs={screening.flatMap((centre) =>
+            centre.people.flatMap((person) =>
+              person.docs
+                .filter((doc) => doc.expiresOn && certExpiryDue(doc.expiresOn))
+                .map((doc) => ({
+                  id: doc.id || `${centre.daycareId}:${person.name}`,
+                  daycareId: centre.daycareId,
+                  title: person.name || centre.daycareName,
+                  expiresAt: doc.expiresOn as string,
+                })),
+            ),
+          )}
+          listings={listings.filter(listingNeedsCompleteness).map((listing) => ({
+            id: listing.id,
+            name: listing.name,
+            open: true,
+          }))}
         />
       ) : null}
       <div>

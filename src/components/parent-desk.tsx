@@ -475,7 +475,7 @@ export function ParentDesk({
 
       {contentTab === "explore" ? (
         <>
-        <ParentAttention userId={user.id} tours={tours} bills={bills} />
+        <ParentAttention userId={user.id} tours={tours} bills={bills} childIds={children.map((child) => child.id)} />
         <ParentHome
           saved={saved}
           bookings={bookings}

@@ -66,6 +66,9 @@ test("the list is on the parent home and the provider Today desk", () => {
   const parent = readFileSync(new URL("../src/components/parent-desk.tsx", import.meta.url), "utf8");
   const today = readFileSync(new URL("../src/components/today-urgency-home.tsx", import.meta.url), "utf8");
   assert.match(parent, /ParentAttention/);
-  assert.match(today, /providerAttentionFacts/);
+  assert.match(today, /ProviderAttention/);
+  assert.match(parent, /childIds=/);
+  assert.match(readFileSync(new URL("../src/components/attention-list.tsx", import.meta.url), "utf8"), /listCentreWaitlist/);
+  assert.match(readFileSync(new URL("../src/components/attention-list.tsx", import.meta.url), "utf8"), /listChildAgreements/);
   assert.match(readFileSync(new URL("../src/lib/copy-fr.ts", import.meta.url), "utf8"), /attentionTitle: "À faire"/);
 });

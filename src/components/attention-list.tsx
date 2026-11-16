@@ -9,8 +9,9 @@ import {
   type AttentionDetail,
   type AttentionFact,
 } from "@/lib/attention-list";
-import { listMySpotOffers } from "@/lib/server/spot-offers";
+import { listCentreWaitlist, listMySpotOffers } from "@/lib/server/spot-offers";
 import { listProviderBills } from "@/lib/server/billing";
+import { listChildAgreements } from "@/lib/server/parent-agreement";
 import { listInbox } from "@/lib/server/inbox";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
@@ -116,13 +117,16 @@ export function ParentAttention({
   userId,
   tours,
   bills,
+  childIds = [],
 }: {
   userId: string;
   tours: readonly { id: string; daycareId: string; daycareName: string; status: string; respondedAt?: string | null }[];
   bills: readonly { id: string; daycareId: string; daycareName: string; number: string; status: string; dueAt?: string | null; paidAt?: string | null }[];
+  childIds?: readonly string[];
 }) {
   const [offers, setOffers] = useState<NonNullable<Parameters<typeof parentAttentionFacts>[0]["offers"]>>([]);
   const [messages, setMessages] = useState<NonNullable<Parameters<typeof parentAttentionFacts>[0]["messages"]>>([]);
+  const [forms, setForms] = useState<NonNullable<Parameters<typeof parentAttentionFacts>[0]["forms"]>>([]);
   useEffect(() => {
     let live = true;
     void listMySpotOffers()
@@ -161,13 +165,29 @@ export function ParentAttention({
       .catch(() => {
         if (live) setMessages([]);
       });
+    const ids = childIds.filter(Boolean);
+    void Promise.all(ids.map((childId) => listChildAgreements({ data: { childId } }).catch(() => null))).then((packs) => {
+      if (!live) return;
+      const next = packs.flatMap((pack) =>
+        (pack?.rows ?? [])
+          .filter((row) => row.status === "sent")
+          .map((row) => ({
+            id: row.agreementId,
+            daycareId: row.daycareId,
+            daycareName: row.daycareName,
+            title: row.childName || row.daycareName,
+            status: "sent",
+          })),
+      );
+      setForms(next);
+    });
     return () => {
       live = false;
     };
-  }, [userId]);
+  }, [userId, childIds.join("|")]);
   const facts = useMemo(
-    () => parentAttentionFacts({ tours, bills, offers, messages }),
-    [tours, bills, offers, messages],
+    () => parentAttentionFacts({ tours, bills, offers, messages, forms }),
+    [tours, bills, offers, messages, forms],
   );
   return <AttentionList userId={userId} facts={facts} />;
 }
@@ -178,14 +198,17 @@ export function ProviderAttention({
   messages,
   documents,
   listings,
+  certs = [],
 }: {
   userId: string;
   requests: readonly { id: string; daycareId: string; title: string; status: string; respondedAt?: string | null }[];
   messages: readonly { id: string; daycareId: string; title: string; unread: boolean; readAt?: string | null }[];
   documents: readonly { id: string; daycareId: string; title: string; status: string }[];
   listings: readonly { id: string; name: string; open: boolean }[];
+  certs?: readonly { id: string; daycareId: string; title: string; expiresAt: string }[];
 }) {
   const [bills, setBills] = useState<Parameters<typeof providerAttentionFacts>[0]["bills"]>([]);
+  const [offers, setOffers] = useState<Parameters<typeof providerAttentionFacts>[0]["offers"]>([]);
   useEffect(() => {
     let live = true;
     void listProviderBills()
@@ -205,6 +228,26 @@ export function ProviderAttention({
       .catch(() => {
         if (live) setBills([]);
       });
+    void listCentreWaitlist()
+      .then((result) => {
+        if (!live) return;
+        const next = (result.centres ?? []).flatMap((centre) =>
+          centre.families
+            .filter((family) => family.status === "offered")
+            .map((family) => ({
+              id: family.id,
+              daycareId: centre.daycareId,
+              title: family.parentName || centre.daycareName,
+              status: "open",
+              expiresAt: null,
+              resolvedAt: null,
+            })),
+        );
+        setOffers(next);
+      })
+      .catch(() => {
+        if (live) setOffers([]);
+      });
     return () => {
       live = false;
     };
@@ -216,9 +259,11 @@ export function ProviderAttention({
         messages,
         documents,
         bills,
+        offers,
+        certs,
         listingGaps: listings.map((row) => ({ id: row.id, daycareId: row.id, title: row.name, open: row.open })),
       }),
-    [requests, messages, documents, bills, listings],
+    [requests, messages, documents, bills, offers, certs, listings],
   );
   return <AttentionList userId={userId} facts={facts} />;
 }
