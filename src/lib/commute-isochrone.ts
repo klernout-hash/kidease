@@ -78,6 +78,7 @@ export function calcSiblingSplitDetour(input: SiblingSplitInput): { minutes: num
 
 export function detourPill(minutes: number, locale: "en" | "fr"): string {
   const n = Math.max(0, Math.round(minutes));
+  if (n === 0) return locale === "fr" ? "Sur votre trajet" : "On your commute";
   if (locale === "fr") return `+${n} min sur votre trajet`;
   return `+${n} min on your commute`;
 }

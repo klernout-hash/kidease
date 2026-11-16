@@ -3970,6 +3970,58 @@ html[data-look="clean"] :is(input, select, textarea).border:not([class*="border-
   border-color: var(--ke-field-line);
 }
 
+/* Airbnb comparison, batch 1. Clean look only. */
+/* Cards: the whole card opens the listing, so the extra button per card goes. */
+html[data-look="clean"] .ke-visual-card [data-ke="card-view-details"] {
+  display: none;
+}
+/* Cards: keep name, place, ages, open spots and fee. The rest is on the listing page. */
+html[data-look="clean"] .ke-visual-card :is([data-ke="parent-fit"], [data-ke="vacancy-confirmed"], [data-ke="kidease-approved-marker"], [data-ke="provincial-openings"]) {
+  display: none;
+}
+html[data-look="clean"] .ke-visual-card [data-ke="card-age-range"],
+html[data-look="clean"] .ke-visual-card [data-ke="card-open-spots"] {
+  font-weight: 400;
+  color: var(--color-muted);
+}
+html[data-look="clean"] .ke-visual-card [data-ke="card-name"] {
+  min-height: 0;
+}
+html[data-look="clean"] .ke-visual-card [data-ke="card-name"] h3 {
+  min-height: 0;
+  -webkit-line-clamp: 1;
+}
+/* Phone home: the match helper is one slim row so listings start higher. */
+@media (max-width: 767px) {
+  html[data-look="clean"] [data-ke="smart-match-card"] {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
+    border-radius: 9999px;
+  }
+  html[data-look="clean"] [data-ke="smart-match-card"] h2 {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  html[data-look="clean"] [data-ke="smart-match-card"] p {
+    display: none;
+  }
+  html[data-look="clean"] [data-ke="smart-match-card"] [data-ke="smart-match-open"] {
+    width: auto;
+    flex-shrink: 0;
+    border-radius: 9999px;
+  }
+}
+/* Cards: the age list stays on one line. */
+html[data-look="clean"] .ke-visual-card [data-ke="card-age-range"] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
 /* Airbnb comparison, batch 4. Clean look only. */
 /* Listing: the section links stay under the header while you read. */
 html[data-look="clean"] .ke-listing-jump {
