@@ -820,13 +820,15 @@ async function runRoleFixture(page, base) {
     record(
       "sidebar-daycare",
       /\bToday\b/.test(daycareSide) &&
-        /\bRequests\b/.test(daycareSide) &&
+        /\bCalendar\b/.test(daycareSide) &&
         /\bListings\b/.test(daycareSide) &&
-        /\bEarnings\b/.test(daycareSide) &&
+        /\bMessages\b/.test(daycareSide) &&
+        /More tools/i.test(daycareSide) &&
         /Daycare desk/i.test(daycareSide) &&
         !/\bPromote\b/.test(daycareSide) &&
         !/\bUpgrade\b/.test(daycareSide) &&
-        !/\bMoney\b/.test(daycareSide) &&
+        !/\bRequests\b/.test(daycareSide) &&
+        !/\bEarnings\b/.test(daycareSide) &&
         !/my centre/i.test(daycareSide),
       { note: daycareSide.slice(0, 200) },
     );

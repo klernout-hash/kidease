@@ -155,7 +155,7 @@ export function SetupProgress({ listings }: { listings: ListingVerifiedInput[] }
         {coaches.flatMap((coach) => coach.blockers.filter((step) => !step.done)).map((step) => (
           <li key={step.id}>
             <CoachLink href={step.href} className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline">
-              {t(BLOCKER_KEY[step.id])}
+              {t(BLOCKER_KEY[step.id as VerifiedBlocker])}
             </CoachLink>
           </li>
         ))}

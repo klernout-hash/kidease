@@ -313,7 +313,7 @@ export function TodayUrgencyHome({
                     <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
-                        variant={row.tourId === firstTourId ? "default" : "secondary"}
+                        variant={row.tourId === firstTourId ? "primary" : "secondary"}
                         disabled={busy !== null}
                         onClick={() => void decide(row.tourId!, "accepted")}
                       >
