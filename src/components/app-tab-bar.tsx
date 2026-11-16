@@ -12,6 +12,7 @@ import { hapticLight, isNative } from "@/lib/native";
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { nativeStoreTabs, type NativeStoreTabId } from "@/lib/native-store-tabs";
 import { deskHrefForLocale, inboxListPath, menuDeskPath, parentDeskPath, providerDeskPath, supportDeskPath } from "@/lib/desk-nav";
+import { allows, type StaffGrants } from "@/lib/staff-permissions";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { useAirbnbUi } from "@/lib/use-airbnb-ui";
@@ -88,6 +89,8 @@ export function AppTabBar() {
     };
   }, []);
   const storeTabs = native ? nativeStoreTabs(kind) : null;
+  const daycareGrants = session?.centreOwner ? null : session?.centreGrants;
+  const daycareTabs = kind === "daycare" && !storeTabs ? daycareTabCount(daycareGrants, session?.hostListing === true) : 0;
   const requestBadge = attentionForItem(session?.attention, "bookings");
   const menuActive = bare === "/menu" || bare.startsWith("/menu/");
 
@@ -105,6 +108,8 @@ export function AppTabBar() {
             "mx-auto grid max-w-lg gap-x-[8px] px-1 pt-1 md:max-w-3xl",
             storeTabs
               ? "grid-cols-4"
+              : daycareTabs > 0 && daycareTabs !== 5
+                ? ""
               : airbnb && kind === "parent"
                 ? "grid-cols-5"
               : airbnb && kind === "guest"
@@ -113,6 +118,7 @@ export function AppTabBar() {
                   ? "grid-cols-3"
                   : "grid-cols-5",
           )}
+          style={daycareTabs > 0 && daycareTabs !== 5 ? { gridTemplateColumns: `repeat(${daycareTabs}, minmax(0, 1fr))` } : undefined}
         >
           {storeTabs
             ? storeTabs.map((item) => (
@@ -130,41 +136,15 @@ export function AppTabBar() {
               ))
             : null}
           {!storeTabs && kind === "daycare" ? (
-            <>
-              <Tab
-                to={providerDeskPath(pathname)}
-                search={{ desk: "today" }}
-                label={t("todayHome")}
-                icon={Building2}
-                marker="today"
-                active={(bare === "/provider" || bare === "/provider/") && (!desk || desk === "today")}
-              />
-              <Tab
-                to={providerDeskPath(pathname)}
-                search={{ desk: session?.hostListing ? "calendar" : "tours" }}
-                label={t("navCalendar")}
-                icon={Calendar}
-                marker="calendar"
-                active={bare.startsWith("/provider") && desk === (session?.hostListing ? "calendar" : "tours")}
-              />
-              <Tab
-                to={providerDeskPath(pathname)}
-                search={{ desk: "listings" }}
-                label={t("deskNavListings")}
-                icon={ClipboardList}
-                marker="listings"
-                active={bare.startsWith("/provider") && desk === "listings"}
-              />
-              <Tab
-                to={inboxListPath(pathname)}
-                search={{ view: "centre" }}
-                label={t("messages")}
-                icon={MessageCircle}
-                marker="messages"
-                active={bare.startsWith("/inbox") && view !== "family"}
-              />
-              <MenuTab active={menuActive} />
-            </>
+            <DaycareTabs
+              pathname={pathname}
+              bare={bare}
+              desk={desk}
+              view={view}
+              menuActive={menuActive}
+              hostListing={session?.hostListing === true}
+              grants={session?.centreOwner ? null : session?.centreGrants}
+            />
           ) : null}
           {kind === "parent" && !storeTabs && !airbnb ? (
             <>
@@ -306,6 +286,90 @@ export function AppTabBar() {
           ) : null}
         </div>
       </nav>
+    </>
+  );
+}
+
+function daycareTabCount(grants: StaffGrants | null | undefined, hostListing: boolean): number {
+  return daycareTabPlan(grants, hostListing).length;
+}
+
+function daycareTabPlan(
+  grants: StaffGrants | null | undefined,
+  hostListing: boolean,
+): Array<"today" | "calendar" | "listings" | "messages" | "menu"> {
+  const show = (area: "calendar" | "listing" | "messages" | "requests") => !grants || allows(grants, area, "view");
+  const plan: Array<"today" | "calendar" | "listings" | "messages" | "menu"> = ["today"];
+  if (hostListing ? show("calendar") : show("requests")) plan.push("calendar");
+  if (show("listing")) plan.push("listings");
+  if (show("messages")) plan.push("messages");
+  plan.push("menu");
+  return plan;
+}
+
+function DaycareTabs({
+  pathname,
+  bare,
+  desk,
+  view,
+  menuActive,
+  hostListing,
+  grants,
+}: {
+  pathname: string;
+  bare: string;
+  desk?: string;
+  view?: string;
+  menuActive: boolean;
+  hostListing: boolean;
+  grants: StaffGrants | null | undefined;
+}) {
+  const { t } = useCopy();
+  const calendarDesk = hostListing ? "calendar" : "tours";
+  const plan = daycareTabPlan(grants, hostListing);
+  return (
+    <>
+      {plan.includes("today") ? (
+        <Tab
+          to={providerDeskPath(pathname)}
+          search={{ desk: "today" }}
+          label={t("todayHome")}
+          icon={Building2}
+          marker="today"
+          active={(bare === "/provider" || bare === "/provider/") && (!desk || desk === "today")}
+        />
+      ) : null}
+      {plan.includes("calendar") ? (
+        <Tab
+          to={providerDeskPath(pathname)}
+          search={{ desk: calendarDesk }}
+          label={t("navCalendar")}
+          icon={Calendar}
+          marker="calendar"
+          active={bare.startsWith("/provider") && desk === calendarDesk}
+        />
+      ) : null}
+      {plan.includes("listings") ? (
+        <Tab
+          to={providerDeskPath(pathname)}
+          search={{ desk: "listings" }}
+          label={t("deskNavListings")}
+          icon={ClipboardList}
+          marker="listings"
+          active={bare.startsWith("/provider") && desk === "listings"}
+        />
+      ) : null}
+      {plan.includes("messages") ? (
+        <Tab
+          to={inboxListPath(pathname)}
+          search={{ view: "centre" }}
+          label={t("messages")}
+          icon={MessageCircle}
+          marker="messages"
+          active={bare.startsWith("/inbox") && view !== "family"}
+        />
+      ) : null}
+      <MenuTab active={menuActive} />
     </>
   );
 }

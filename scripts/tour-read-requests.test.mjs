@@ -29,7 +29,12 @@ function handlers(path, sql, effects) {
     "@/lib/server/safety": { omitHiddenParents: async (_sql, rows) => rows },
     "@/lib/server/coparent": { familyScopeFor: async (id) => ({ dataUserId: id }) },
     "@/lib/features": { tourCalendarEnabled: () => false },
-    "@/lib/server/centre-access": { canCentreWriteLeadsFor: async () => true },
+    "@/lib/server/centre-access": {
+      canCentreWriteLeadsFor: async () => true,
+      daycareIdsForArea: async () => ["a", "b"],
+      explainStaffArea: async () => ({ ok: true }),
+      assertStaffArea: async () => {},
+    },
     "@/lib/server/roles": { requireAdmin: async () => {} },
     "@/lib/utils": { nid: () => "synthetic-id" },
   };

@@ -2,6 +2,8 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { MenuGlyph, MenuRow } from "@/components/menu-row";
 import { RoleSwitchPill } from "@/components/role-switch-pill";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useSessionDesks } from "@/components/session-desks";
+import { navGrantAllows } from "@/lib/staff-permissions";
 import { signOut } from "@/lib/auth/client";
 import { menuDeskPath, providerDeskPath } from "@/lib/desk-nav";
 import { localePath } from "@/lib/locale-path";
@@ -140,9 +142,22 @@ export function PhoneCategoryMenu({ host }: { host: boolean }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useCurrentUserState();
+  const { session } = useSessionDesks();
   const fr = locale === "fr";
   const signedIn = Boolean(user);
+  const staffView = host && session?.centreOwner === false;
+  const grants = staffView ? session?.centreGrants : null;
   const groups = (host ? hostGroups(pathname) : parentGroups(pathname, locale, signedIn))
+    .map((group) => ({
+      ...group,
+      rows: staffView
+        ? group.rows.filter((row) => {
+            if (row.marker === "licence" || row.marker === "contract" || row.marker === "claim") return false;
+            if (row.marker === "employees") return session?.centreCanInvite === true;
+            return navGrantAllows(grants, row.marker);
+          })
+        : group.rows,
+    }))
     .map((group) => ({
       ...group,
       rows: signedIn ? group.rows : group.rows.filter((row) => !GUEST_HIDDEN.has(row.marker)),

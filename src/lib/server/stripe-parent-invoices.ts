@@ -10,8 +10,8 @@ import { evaluateFeatureFlag } from "@/lib/flags";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 import { isAddressBlocked, readConsent } from "@/lib/server/casl-consent";
 import { sendSms } from "@/lib/server/sms";
-import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { listCentreOwnerEmails } from "@/lib/server/thread-access";
+import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { nextAlertSendAt } from "@/lib/alert-push";
 import { quietHourInZone } from "@/lib/family-time";
 import {
@@ -228,7 +228,8 @@ export const listMyStripeInvoices = createServerFn({ method: "GET" })
     const sql = await getSql();
     const { familyScopeFor } = await import("@/lib/server/coparent");
     const homeId = (await familyScopeFor(context.userId)).dataUserId;
-    const daycareIds = await listAccessibleDaycareIds(sql, context.userId);
+    const { daycareIdsForArea } = await import("@/lib/server/centre-access");
+    const daycareIds = await daycareIdsForArea(sql, context.userId, "bills", "view");
     const params: unknown[] = [homeId];
     let daycareClause = "false";
     if (daycareIds.length) {
@@ -662,7 +663,14 @@ async function canRead(sql: Sql, userId: string, row: InvoiceRow): Promise<boole
   if (row.parent_user_id && row.parent_user_id === home.dataUserId) return true;
   if (!row.daycare_id) return false;
   const ids = await listAccessibleDaycareIds(sql, userId);
-  return ids.includes(row.daycare_id);
+  if (!ids.includes(row.daycare_id)) return false;
+  try {
+    const { explainStaffArea } = await import("@/lib/server/centre-access");
+    const decision = await explainStaffArea(sql, userId, row.daycare_id, "bills", "view");
+    return decision.ok;
+  } catch {
+    return true;
+  }
 }
 
 function toView(row: InvoiceRow, userId: string): StripeInvoiceView {

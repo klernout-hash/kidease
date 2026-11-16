@@ -21,6 +21,7 @@ import * as privateDocs from "../src/lib/private-docs.ts";
 import * as providerScreening from "../src/lib/provider-screening.ts";
 import * as utils from "../src/lib/utils.ts";
 import * as runtimeSwitches from "../src/lib/runtime-switches.ts";
+import * as staffPermissions from "../src/lib/staff-permissions.ts";
 
 const READER = "reader-1";
 const CENTRE = "centre-1";
@@ -162,6 +163,7 @@ function modulesFor(sql, privateDocsServer, centreAccess) {
     "@/lib/db": { getSql: async () => sql, getSqlWithin: async () => sql },
     "@/lib/auth/middleware": { authMiddleware: {} },
     "@/lib/centre-roles": centreRoles,
+    "@/lib/staff-permissions": staffPermissions,
     "@/lib/server/centre-access": centreAccess,
     "@/lib/features": features,
     "@/lib/flags": flags,

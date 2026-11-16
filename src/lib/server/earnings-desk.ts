@@ -103,6 +103,14 @@ export const sendEarningsStatement = createServerFn({ method: "POST" })
 
 async function centreDesk(userId: string): Promise<EarningsResult> {
   const sql = await getSql();
+  const { explainBillsList, listOwnedDaycareIds, staffAreaError } = await import("@/lib/server/centre-access");
+  const decision = await explainBillsList(sql, userId);
+  if (!decision.ok) {
+    if (decision.reason === "permission") throw staffAreaError(decision);
+    return { ok: false };
+  }
+  const daycareIds = decision.daycareIds;
+  const owned = await listOwnedDaycareIds(sql, userId);
   const start = new Date();
   start.setMonth(start.getMonth() - 23, 1);
   const startDay = start.toISOString().slice(0, 10);
@@ -123,27 +131,26 @@ async function centreDesk(userId: string): Promise<EarningsResult> {
         coalesce(sum(coalesce(i.amount_cents, coalesce(i.total, 0) * 100)), 0)::int as gross_cents,
         coalesce(sum(coalesce(i.platform_fee_cents, coalesce(i.platform_fee, 0) * 100)), 0)::int as fee_cents
       from invoices i
-      join provider_daycares p on p.daycare_id = i.daycare_id
-      where p.user_id = ${userId}
+      where i.daycare_id = any(${daycareIds}::text[])
         and i.status in ('paid', 'sent')
         and coalesce(i.paid_at, i.due_at, i.created_at) >= ${startDay}
       group by 1, 2
     `,
-    billQuery(sql, userId, "centre"),
+    billQuery(sql, daycareIds, owned),
     userEmail(sql, userId),
-    sql<{ n: number; enabled: number }>`
+    owned.length
+      ? sql<{ n: number; enabled: number }>`
       select count(*)::int as n, coalesce(sum(case when s.payouts_enabled = 1 then 1 else 0 end), 0)::int as enabled
       from stripe_accounts s
-      join provider_daycares p on p.daycare_id = s.daycare_id
-      where p.user_id = ${userId}
-    `.catch(() => []),
+      where s.daycare_id = any(${owned}::text[])
+    `.catch(() => [])
+      : Promise.resolve([] as { n: number; enabled: number }[]),
     sql<{ period: string; days: number; children: number }>`
       select substring(a.day::text from 1 for 7) as period,
         count(*)::int as days,
         count(distinct a.child_name)::int as children
       from attendance a
-      join provider_daycares p on p.daycare_id = a.daycare_id
-      where p.user_id = ${userId}
+      where a.daycare_id = any(${daycareIds}::text[])
         and a.status in ('arrived', 'departed')
         and a.day >= ${startDay}
       group by 1
@@ -151,8 +158,7 @@ async function centreDesk(userId: string): Promise<EarningsResult> {
     sql<{ period: string; tours: number }>`
       select to_char(t.responded_at, 'YYYY-MM') as period, count(*)::int as tours
       from tour_requests t
-      join provider_daycares p on p.daycare_id = t.daycare_id
-      where p.user_id = ${userId}
+      where t.daycare_id = any(${daycareIds}::text[])
         and t.status = 'accepted'
         and t.responded_at is not null
         and t.responded_at >= ${startDay}
@@ -164,7 +170,7 @@ async function centreDesk(userId: string): Promise<EarningsResult> {
     billRows.map((row) => row.id),
   );
   const facts = factsMap(attendance, tours);
-  const payouts = !payoutRow[0] || Number(payoutRow[0].n) < 1 ? "unknown" : Number(payoutRow[0].enabled) > 0 ? "on" : "off";
+  const payouts = owned.length === 0 || !payoutRow[0] || Number(payoutRow[0].n) < 1 ? "unknown" : Number(payoutRow[0].enabled) > 0 ? "on" : "off";
   return shapeEarningsDesk({
     aggregates: aggregates.map((row) => ({
       period: String(row.period || ""),
@@ -222,22 +228,23 @@ type BillRow = MoneyRow & {
   scheduled_for: string | null;
 };
 
-async function billQuery(sql: Awaited<ReturnType<typeof getSql>>, userId: string, who: "centre" | "parent"): Promise<BillRow[]> {
-  if (who === "parent") return parentRows(sql, userId);
+async function billQuery(sql: Awaited<ReturnType<typeof getSql>>, daycareIds: string[], ownedIds: string[]): Promise<BillRow[]> {
+  if (!daycareIds.length) return [];
   return sql<BillRow>`
     select i.id, i.number, i.status, i.period, i.paid_at, i.due_at, i.receipt_url, i.daycare_id,
       i.net_cents, i.amount_cents, i.platform_fee_cents, i.total, i.platform_fee,
       u.name as parent_name, u.image as parent_image, ch.name as child_name,
       d.name as centre_name, d.photos as centre_photos, b.start_date as program_start,
-      po.stripe_payout_id, po.stripe_transfer_id, po.scheduled_for
+      case when i.daycare_id = any(${ownedIds}::text[]) then po.stripe_payout_id else null end as stripe_payout_id,
+      case when i.daycare_id = any(${ownedIds}::text[]) then po.stripe_transfer_id else null end as stripe_transfer_id,
+      case when i.daycare_id = any(${ownedIds}::text[]) then po.scheduled_for else null end as scheduled_for
     from invoices i
-    join provider_daycares p on p.daycare_id = i.daycare_id
     left join daycares d on d.id = i.daycare_id
     left join "user" u on u.id = i.parent_user_id
     left join children ch on ch.id = i.child_id
     left join bookings b on b.id = i.booking_id
     left join payouts po on po.daycare_id = i.daycare_id and po.period = substring(coalesce(i.period, '') from 1 for 7)
-    where p.user_id = ${userId}
+    where i.daycare_id = any(${daycareIds}::text[])
       and i.status in ('paid', 'sent')
     order by coalesce(i.paid_at, i.due_at, i.created_at) desc
     limit ${BILL_LIMIT}

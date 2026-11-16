@@ -7,15 +7,21 @@ import {
   CENTRE_INVITE_NOT_FOUND,
   CENTRE_INVITE_TTL_MS,
   decideAcceptInvite,
-  decideInviteEmployee,
   invitesToClaim,
   decideResendInvite,
   decideRevokeEmployee,
   normalizeInviteEmail,
-  parseCentreInviteRole,
   type CentreInviteRole,
   type CentreMemberRole,
 } from "@/lib/centre-roles";
+import {
+  decideCentreInvite,
+  decidePermissionUpdate,
+  grantsForMember,
+  permissionChangeDetail,
+  type StaffGrants,
+  type StaffPreset,
+} from "@/lib/staff-permissions";
 import { getSql } from "@/lib/db";
 import { lookupUser } from "@/lib/server/notify";
 import { logSecurityEvent } from "@/lib/server/security-events";
@@ -36,13 +42,51 @@ export type CentreTeamRow = {
   status: "active" | "pending" | "revoked";
   createdAt: string;
   canRevoke: boolean;
+  preset: StaffPreset | "read_only" | null;
+  grants: StaffGrants;
 };
 
 export type CentreTeamPayload = {
   centres: Array<{ id: string; name: string; role: CentreMemberRole }>;
   people: CentreTeamRow[];
   canInvite: boolean;
+  canEditPermissions: boolean;
 };
+
+async function rememberPreset(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  daycareId: string,
+  userId: string,
+  preset: string | null,
+) {
+  if (!preset) return;
+  await sql`
+    update centre_members
+    set permission_preset = ${preset}
+    where daycare_id = ${daycareId} and user_id = ${userId} and role <> 'owner'
+  `.catch(() => undefined);
+}
+
+async function invitePreset(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  inviteId: string,
+  role: string,
+): Promise<string | null> {
+  const rows = await sql<{ permission_preset: string | null }>`
+    select permission_preset from centre_invites where id = ${inviteId} limit 1
+  `.catch(() => []);
+  const stored = rows[0]?.permission_preset;
+  if (stored === "staff" || stored === "lead" || stored === "manager") return stored;
+  if (role === "manager") return "manager";
+  if (role === "staff") return "staff";
+  return null;
+}
+
+function memberAccess(role: string, preset: string | null, permissions: unknown): Pick<CentreTeamRow, "preset" | "grants"> {
+  const grants = grantsForMember({ role, preset, permissions });
+  const stored = preset === "staff" || preset === "lead" || preset === "manager" || preset === "custom" ? preset : null;
+  return { preset: role === "read_only" && !stored ? "read_only" : stored, grants };
+}
 
 function hashInviteToken(token: string) {
   return createHash("sha256").update(token, "utf8").digest("hex");
@@ -52,7 +96,8 @@ function makeInviteToken() {
   return randomBytes(32).toString("hex");
 }
 
-function roleLabel(role: string) {
+function roleLabel(role: string, preset?: string | null) {
+  if (preset === "lead") return "Lead";
   if (role === "owner") return "Owner";
   if (role === "manager") return "Manager";
   if (role === "read_only") return "Read-only";
@@ -124,12 +169,14 @@ export const listCentreTeam = createServerFn({ method: "GET" })
           status: "active" as const,
           createdAt: String(m.created_at),
           canRevoke: false,
+          ...memberAccess(m.role, null, null),
         })),
-        canInvite: false,
+        canInvite: staffCentres.some((row) => row.role === "manager"),
+        canEditPermissions: false,
       };
     }
 
-    const members = await sql.query<{
+    type MemberListRow = {
       id: string;
       daycare_id: string;
       daycare_name: string;
@@ -138,17 +185,28 @@ export const listCentreTeam = createServerFn({ method: "GET" })
       created_at: string;
       email: string | null;
       name: string | null;
-    }>(
-      `select m.id, m.daycare_id, d.name as daycare_name, m.role, m.status, m.created_at,
+      permission_preset?: string | null;
+      permissions?: unknown;
+    };
+    const memberSql = `select m.id, m.daycare_id, d.name as daycare_name, m.role, m.status, m.created_at,
               u.email, coalesce(nullif(btrim(u.name), ''), m.invited_by) as name
        from centre_members m
        join daycares d on d.id = m.daycare_id
        left join "user" u on u.id = m.user_id
        where m.daycare_id = any($1::text[])
          and m.status = 'active'
-       order by d.name, m.role, u.email`,
-      [scoped],
-    ).catch(() => []);
+       order by d.name, m.role, u.email`;
+    const members =
+      (await sql
+        .query<MemberListRow>(
+          memberSql.replace(
+            "m.created_at,",
+            "m.created_at, m.permission_preset, m.permissions,",
+          ),
+          [scoped],
+        )
+        .catch(() => null)) ??
+      (await sql.query<MemberListRow>(memberSql, [scoped]).catch(() => []));
 
     const invites = await sql.query<{
       id: string;
@@ -159,8 +217,10 @@ export const listCentreTeam = createServerFn({ method: "GET" })
       role: string;
       status: string;
       created_at: string;
+      permission_preset?: string | null;
     }>(
-      `select i.id, i.daycare_id, d.name as daycare_name, i.email, i.name, i.role, i.status, i.created_at
+      `select i.id, i.daycare_id, d.name as daycare_name, i.email, i.name, i.role, i.status, i.created_at,
+              i.permission_preset
        from centre_invites i
        join daycares d on d.id = i.daycare_id
        where i.daycare_id = any($1::text[])
@@ -182,6 +242,7 @@ export const listCentreTeam = createServerFn({ method: "GET" })
         status: "active" as const,
         createdAt: String(m.created_at),
         canRevoke: canInvite && m.role !== "owner",
+        ...memberAccess(m.role, m.permission_preset ?? null, m.permissions ?? null),
       })),
       ...invites.map((i) => ({
         id: i.id,
@@ -194,6 +255,7 @@ export const listCentreTeam = createServerFn({ method: "GET" })
         status: "pending" as const,
         createdAt: String(i.created_at),
         canRevoke: canInvite,
+        ...memberAccess(i.role, i.permission_preset ?? null, null),
       })),
     ];
 
@@ -201,13 +263,14 @@ export const listCentreTeam = createServerFn({ method: "GET" })
       centres: centres.map((c) => ({ id: c.id, name: centrePickerLabel(c.name, null, c.id), role: "owner" as const })),
       people: dedupeCentreTeam(people),
       canInvite,
+      canEditPermissions: true,
     };
   });
 
 export const inviteCentreEmployee = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (input: { daycareId: string; email: string; name?: string; role?: string }) => input,
+    (input: { daycareId: string; email: string; name?: string; role?: string; preset?: string }) => input,
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
@@ -241,11 +304,12 @@ export const inviteCentreEmployee = createServerFn({ method: "POST" })
         and status = 'pending'
         and expires_at > now()
     `.catch(() => [{ n: 0 }]);
-    const decision = decideInviteEmployee({
+    const decision = decideCentreInvite({
       actorRole,
       actorEmail: actor.email || "",
       inviteEmail: email,
-      inviteRole: parseCentreInviteRole(data.role),
+      preset: data.preset,
+      role: data.role,
       alreadyMember: (existingMember[0]?.n ?? 0) > 0,
       pendingInvite: (pending[0]?.n ?? 0) > 0,
       hourlyCount: hourly[0]?.n ?? 0,
@@ -260,21 +324,41 @@ export const inviteCentreEmployee = createServerFn({ method: "POST" })
 
     const token = makeInviteToken();
     const id = nid("inv");
-    await sql`
+    const expiresAt = new Date(Date.now() + CENTRE_INVITE_TTL_MS).toISOString();
+    const tokenHash = hashInviteToken(token);
+    const inserted = await sql`
       insert into centre_invites (
-        id, daycare_id, email, name, role, token_hash, status, invited_by, expires_at
+        id, daycare_id, email, name, role, token_hash, status, invited_by, expires_at, permission_preset
       ) values (
         ${id},
         ${daycareId},
         ${email},
         ${name},
         ${decision.role},
-        ${hashInviteToken(token)},
+        ${tokenHash},
         'pending',
         ${context.userId},
-        ${new Date(Date.now() + CENTRE_INVITE_TTL_MS).toISOString()}
+        ${expiresAt},
+        ${decision.preset}
       )
-    `;
+    `.then(() => true).catch(() => false);
+    if (!inserted) {
+      await sql`
+        insert into centre_invites (
+          id, daycare_id, email, name, role, token_hash, status, invited_by, expires_at
+        ) values (
+          ${id},
+          ${daycareId},
+          ${email},
+          ${name},
+          ${decision.role},
+          ${tokenHash},
+          'pending',
+          ${context.userId},
+          ${expiresAt}
+        )
+      `;
+    }
     await logSecurityEvent({
       kind: "employee_invite",
       actorUserId: context.userId,
@@ -284,7 +368,7 @@ export const inviteCentreEmployee = createServerFn({ method: "POST" })
     const payload = {
       to: email,
       centreName: centre[0].name,
-      roleLabel: roleLabel(decision.role),
+      roleLabel: roleLabel(decision.role, decision.preset),
       url: employeeInviteUrl(token),
       invitedName: name,
     };
@@ -552,6 +636,10 @@ export async function claimPendingCentreInvitesForUser(
         set role = ${invite.role}, status = 'active', revoked_at = null, revoked_by = null
         where id = ${existing[0].id}
       `;
+      await rememberPreset(sql, invite.daycareId, userId, await invitePreset(sql, invite.id, invite.role));
+    }
+    if (!existing[0]) {
+      await rememberPreset(sql, invite.daycareId, userId, await invitePreset(sql, invite.id, invite.role));
     }
     await sql`
       update centre_invites
@@ -672,6 +760,7 @@ export const acceptCentreInvite = createServerFn({ method: "POST" })
         values (${nid("cm")}, ${invite.daycare_id}, ${context.userId}, ${invite.role}, 'active', ${context.userId})
       `;
     }
+    await rememberPreset(sql, invite.daycare_id, context.userId, await invitePreset(sql, invite.id, invite.role));
     await sql`
       update centre_invites
       set status = 'accepted', accepted_at = now(), accepted_user_id = ${context.userId}
@@ -690,4 +779,62 @@ export const acceptCentreInvite = createServerFn({ method: "POST" })
       `.catch(() => undefined);
     }
     return { ok: true as const, daycareId: invite.daycare_id };
+  });
+
+export const updateCentreStaffPermissions = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { memberId?: string; preset?: string; grants?: StaffGrants }) => ({
+    memberId: String(input?.memberId || "").trim(),
+    preset: String(input?.preset || "").trim(),
+    grants: input?.grants,
+  }))
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    if (!data.memberId) throw new Error("Employee not found");
+    const rows = await sql<{
+      id: string;
+      daycare_id: string;
+      user_id: string;
+      role: string;
+      permission_preset: string | null;
+      permissions: unknown;
+    }>`
+      select id, daycare_id, user_id, role, permission_preset, permissions
+      from centre_members
+      where id = ${data.memberId} and status = 'active'
+      limit 1
+    `.catch(() => []);
+    const row = rows[0];
+    if (!row) throw new Error("Employee not found");
+    const actorRole = await loadCentreRole(sql, context.userId, row.daycare_id);
+    const decision = decidePermissionUpdate({
+      actorIsOwner: actorRole === "owner",
+      targetRole: row.role,
+      preset: data.preset,
+      grants: data.grants,
+    });
+    if (!decision.ok) throw new Error(decision.error);
+    const before = grantsForMember({ role: row.role, preset: row.permission_preset, permissions: row.permissions });
+    const detail = permissionChangeDetail({
+      presetFrom: row.permission_preset || row.role || "staff",
+      presetTo: decision.preset,
+      before,
+      after: decision.grants,
+    });
+    if (!detail) return { ok: true as const, unchanged: true as const };
+    await sql`
+      update centre_members
+      set role = ${decision.role},
+          permission_preset = ${decision.preset},
+          permissions = ${decision.preset === "custom" ? JSON.stringify(decision.grants) : null}::jsonb
+      where id = ${row.id} and role <> 'owner' and status = 'active'
+    `;
+    await logSecurityEvent({
+      kind: "employee_permissions",
+      actorUserId: context.userId,
+      targetUserId: row.user_id,
+      daycareId: row.daycare_id,
+      detail,
+    });
+    return { ok: true as const };
   });

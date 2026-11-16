@@ -17,7 +17,7 @@ import { PayoutStatusCard } from "@/components/payout-status-card";
 import { loadEarningsDesk } from "@/lib/server/earnings-desk";
 import { Field } from "@/components/provider-listing-forms";
 
-export function ProviderMoneyPanel() {
+export function ProviderMoneyPanel({ showPayouts = true, canEdit = true }: { showPayouts?: boolean; canEdit?: boolean }) {
   const { t, locale } = useCopy();
   const [bills, setBills] = useState<Bill[]>([]);
   const [parties, setParties] = useState<BillParty[]>([]);
@@ -108,14 +108,14 @@ export function ProviderMoneyPanel() {
             </div>
           </dl>
         ) : null}
-        {payouts ? (
+        {showPayouts && payouts ? (
           <div className="mt-4">
             <PayoutStatusCard status={payouts} />
           </div>
         ) : null}
       </div>
 
-      <form
+      {canEdit ? <form
         id="new-bill"
         className="scroll-mt-24 rounded-xl bg-surface p-5 ring-1 ring-border"
         onSubmit={(e) => {
@@ -240,7 +240,7 @@ export function ProviderMoneyPanel() {
           {ready && party && amountCad < 1 ? <p className="mt-2 text-sm text-muted">{t("newBillNeedAmount")}</p> : null}
         </div>
         {/* Deposit CTA from an offered spot can deep-link here later (/provider?desk=money). */}
-      </form>
+      </form> : null}
 
       <BillList
         title={t("openBills")}
@@ -249,7 +249,7 @@ export function ProviderMoneyPanel() {
         stripeLive={stripeLive}
         locale={locale}
         busy={busy}
-        onSend={(id) => {
+        onSend={canEdit ? (id) => {
           setBusy(id);
           void sendBill({ data: id })
             .then(() => {
@@ -258,8 +258,8 @@ export function ProviderMoneyPanel() {
             })
             .catch((err) => toast.error(err instanceof Error ? err.message : t("sendFailed")))
             .finally(() => setBusy(null));
-        }}
-        onVoid={(id) => {
+        } : undefined}
+        onVoid={canEdit ? (id) => {
           setBusy(id);
           void voidBill({ data: id })
             .then(() => {
@@ -268,7 +268,7 @@ export function ProviderMoneyPanel() {
             })
             .catch((err) => toast.error(err instanceof Error ? err.message : t("billVoidFailed")))
             .finally(() => setBusy(null));
-        }}
+        } : undefined}
       />
 
       <BillList

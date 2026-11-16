@@ -314,6 +314,11 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
       `.catch(() => [] as Array<{ role: string }>);
   const { maxCentreRole, parseCentreMemberRole } = await import("@/lib/centre-roles");
   const centreRole = owned ? ("owner" as const) : maxCentreRole(memberRoles.map((row) => parseCentreMemberRole(row.role)));
+  const { grantsForMember, mergeGrants } = await import("@/lib/staff-permissions");
+  const { listMemberGrants } = await import("@/lib/server/centre-access");
+  const grantRows = owned ? [] : await listMemberGrants(sql, userId);
+  const centreGrants = owned || !grantRows.length ? null : mergeGrants(grantRows.map((row) => grantsForMember(row)));
+  const centreCanInvite = owned || grantRows.some((row) => row.role === "manager" || row.preset === "manager");
   const desks = desksFor({ role: stored, ownsCentre: owned || member });
   const { purgeAccountIfExpired, readDeletedAt } = await import("@/lib/server/family");
   const deletedAt = await readDeletedAt(userId);
@@ -352,6 +357,8 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     centreRole: stored === "admin" ? "owner" : centreRole,
     ownsCentre: owned,
     centreLinked: owned || member,
+    centreGrants,
+    centreCanInvite,
     curriculumPack: curriculumPackEnabled(),
     coparentLink: coparentLinkEnabled(),
     coparentEmail: coparentEmailEnabled(),

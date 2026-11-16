@@ -441,6 +441,8 @@ export const listLeadRequests = createServerFn({ method: "GET" })
         case when l.status in ('requested', 'received') then 0 else 1 end,
         l.created_at desc
     `.catch(() => []);
+    const { daycareIdsForArea } = await import("@/lib/server/centre-access");
+    const requestCentres = new Set(await daycareIdsForArea(sql, context.userId, "requests", "view"));
     const { omitHiddenParents } = await import("@/lib/server/safety");
     const centreRows = rows
       .filter((row) => row.user_id && row.user_id !== context.userId)
@@ -448,6 +450,7 @@ export const listLeadRequests = createServerFn({ method: "GET" })
     const visibleCentre = await omitHiddenParents(sql, centreRows);
     const visibleIds = new Set(visibleCentre.map((row) => row.id));
     return rows
+      .filter((row) => row.user_id === context.userId || requestCentres.has(row.daycare_id))
       .filter((row) => !row.user_id || row.user_id === context.userId || visibleIds.has(row.id))
       .map((row) => {
         const lead = mapLead(row);
@@ -641,7 +644,11 @@ export const updateLeadRequest = createServerFn({ method: "POST" })
 
     const { assertCentreAction } = await import("@/lib/server/centre-access");
     const admin = await callerIsAdmin();
-    if (!admin) await assertCentreAction(sql, context.userId, lead.daycare_id, "write");
+    if (!admin) {
+      await assertCentreAction(sql, context.userId, lead.daycare_id, "write");
+      const { assertStaffArea } = await import("@/lib/server/centre-access");
+      await assertStaffArea(sql, context.userId, lead.daycare_id, "requests", "edit");
+    }
 
     const next = nextLeadStatus(lead.status, data.action);
     if (!next) throw new Error("This request was already answered");

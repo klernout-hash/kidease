@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { openHealth, sealHealth } from "@/lib/child-health-crypto";
-import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { ENROLLED_BOOKING_STATUSES } from "@/lib/review-gate";
 import {
   childProfileEnabled,
@@ -140,8 +139,12 @@ export const centreChildProfiles = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     if (!childProfileEnabled()) return { enabled: false as const, rows: [] };
     const sql = await getSql();
-    const ids = await listAccessibleDaycareIds(sql, context.userId);
-    if (!ids.includes(data.daycareId)) return { enabled: true as const, rows: [] };
+    const { explainStaffArea, staffAreaError } = await import("@/lib/server/centre-access");
+    const decision = await explainStaffArea(sql, context.userId, data.daycareId, "children", "view");
+    if (!decision.ok) {
+      if (decision.reason === "absent") return { enabled: true as const, rows: [] };
+      throw staffAreaError(decision);
+    }
     const rows = await sql<{
       child_id: string;
       allergies: string | null;
@@ -181,8 +184,9 @@ export const checkPickup = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (!childProfileEnabled()) return { ok: false as const, error: "off" };
     const sql = await getSql();
-    const ids = await listAccessibleDaycareIds(sql, context.userId);
-    if (!ids.includes(data.daycareId)) return { ok: false as const, error: "centre" };
+    const { explainStaffArea } = await import("@/lib/server/centre-access");
+    const access = await explainStaffArea(sql, context.userId, data.daycareId, "children", "edit");
+    if (!access.ok) return { ok: false as const, error: access.reason === "absent" ? "centre" : "forbidden" };
     const share = await sql<{ shared: number; user_id: string }>`
       select s.shared, c.user_id
       from child_profile_shares s

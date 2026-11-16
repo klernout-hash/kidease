@@ -8,8 +8,16 @@ import {
   listCentreTeam,
   resendCentreInvite,
   revokeCentreEmployee,
+  updateCentreStaffPermissions,
   type CentreTeamPayload,
 } from "@/lib/server/centre-members";
+import {
+  STAFF_AREAS,
+  presetGrants,
+  type StaffGrants,
+  type StaffLevel,
+  type StaffPreset,
+} from "@/lib/staff-permissions";
 import { useCopy } from "@/lib/use-copy";
 import { centrePickerLabel } from "@/lib/centre-label";
 import { StaffDeskLink } from "@/components/staff-scheduling-desk";
@@ -25,17 +33,18 @@ const ROLE_COPY: Record<string, CopyKey> = {
 
 type TeamPerson = CentreTeamPayload["people"][number];
 
-function groupTeamPeople(rows: TeamPerson[]): Array<TeamPerson & { key: string; centres: string[] }> {
-  const grouped = new Map<string, TeamPerson & { key: string; centres: string[] }>();
+function groupTeamPeople(rows: TeamPerson[]): Array<TeamPerson & { key: string; centres: string[]; seats: TeamPerson[] }> {
+  const grouped = new Map<string, TeamPerson & { key: string; centres: string[]; seats: TeamPerson[] }>();
   for (const row of rows) {
     const email = row.email.trim().toLowerCase();
     const key = email || `${row.kind}-${row.id}`;
     const centre = centrePickerLabel(row.daycareName, null, row.daycareId);
     const prev = grouped.get(key);
     if (!prev) {
-      grouped.set(key, { ...row, key, centres: [centre] });
+      grouped.set(key, { ...row, key, centres: [centre], seats: [row] });
       continue;
     }
+    prev.seats.push(row);
     if (!prev.centres.includes(centre)) prev.centres.push(centre);
     if (row.role === "owner") prev.role = row.role;
     if (row.canRevoke) prev.canRevoke = true;
@@ -48,7 +57,13 @@ const STATUS_COPY: Record<string, CopyKey> = {
   pending: "employeeStatusPending",
 };
 
-export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
+export function CentreEmployeesPanel({
+  canInvite,
+  canEditPermissions = false,
+}: {
+  canInvite: boolean;
+  canEditPermissions?: boolean;
+}) {
   const { t } = useCopy();
   const [team, setTeam] = useState<CentreTeamPayload | null>(null);
   const [busy, setBusy] = useState(false);
@@ -82,7 +97,8 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
           daycareId: form.daycareId,
           email: form.email,
           name: form.name || undefined,
-          role: form.role,
+          role: form.role === "lead" ? "staff" : form.role,
+          preset: form.role,
         },
       });
       if (res?.mailed) confirmSuccess({ variant: "toast", title: t("employeeInviteSent") });
@@ -186,10 +202,13 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
                 {(
                   [
                     ["staff", "employeeRoleStaff", "employeeRoleStaffAccess"],
+                    ["lead", "employeePresetLead", "employeePresetLeadAccess"],
                     ["manager", "employeeRoleManager", "employeeRoleManagerAccess"],
                     ["read_only", "employeeRoleReadOnly", "employeeRoleReadOnlyAccess"],
                   ] as const
-                ).map(([value, label, summary]) => (
+                )
+                  .filter(([value]) => canEditPermissions || value === "staff" || value === "lead")
+                  .map(([value, label, summary]) => (
                   <label key={value} className="flex min-h-11 items-start gap-3 rounded-lg px-1 py-1">
                     <input
                       className="mt-1 size-4 shrink-0"
@@ -228,7 +247,7 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
                 <p className="font-medium break-words">{row.name || row.email || t("employeeNoName")}</p>
                 <p className="text-sm text-muted break-all">{row.email}</p>
                 <p className="mt-1 text-xs text-subtle">
-                  {row.centres.join(" · ")} · {t(ROLE_COPY[row.role] ?? "employeeRoleStaff")} ·{" "}
+                  {row.centres.join(" · ")} · {row.preset === "lead" ? t("employeePresetLead") : t(ROLE_COPY[row.role] ?? "employeeRoleStaff")} ·{" "}
                   {t(STATUS_COPY[row.status] ?? "employeeStatusPending")}
                 </p>
               </div>
@@ -259,11 +278,138 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
                   ) : null}
                 </div>
               ) : null}
+              {canEditPermissions
+                ? row.seats
+                    .filter((seat) => seat.kind === "member" && seat.role !== "owner")
+                    .map((seat) => (
+                      <StaffAccessEditor
+                        key={seat.id}
+                        memberId={seat.id}
+                        centreName={row.centres.length > 1 ? seat.daycareName : undefined}
+                        preset={
+                          seat.preset === "lead" || seat.preset === "manager" || seat.preset === "staff" || seat.preset === "custom"
+                            ? seat.preset
+                            : "custom"
+                        }
+                        grants={seat.grants}
+                        busy={busy}
+                        onSaved={() => load()}
+                      />
+                    ))
+                : null}
             </li>
           ))
         )}
       </ul>
     </section>
+  );
+}
+
+const AREA_COPY = {
+  bills: "employeeAreaBills",
+  messages: "employeeAreaMessages",
+  children: "employeeAreaChildren",
+  listing: "employeeAreaListing",
+  calendar: "employeeAreaCalendar",
+  schedule: "employeeAreaSchedule",
+  requests: "employeeAreaRequests",
+  documents: "employeeAreaDocuments",
+} as const;
+
+function StaffAccessEditor({
+  memberId,
+  centreName,
+  preset,
+  grants,
+  busy,
+  onSaved,
+}: {
+  memberId: string;
+  centreName?: string;
+  preset: StaffPreset;
+  grants: StaffGrants;
+  busy: boolean;
+  onSaved: () => Promise<void> | void;
+}) {
+  const { t } = useCopy();
+  const [choice, setChoice] = useState<StaffPreset>(preset);
+  const [levels, setLevels] = useState<StaffGrants>(grants);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setChoice(preset);
+    setLevels(grants);
+  }, [preset, grants]);
+
+  function pickPreset(next: "staff" | "lead" | "manager") {
+    setChoice(next);
+    setLevels(presetGrants(next));
+  }
+
+  function pickLevel(area: (typeof STAFF_AREAS)[number], level: StaffLevel) {
+    setChoice("custom");
+    setLevels((current) => ({ ...current, [area]: level }));
+  }
+
+  async function save() {
+    setSaving(true);
+    try {
+      await updateCentreStaffPermissions({ data: { memberId, preset: choice, grants: levels } });
+      toast.success(t("employeePermissionSaved"));
+      await onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("employeePermissionFailed"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <fieldset className="w-full rounded-lg p-3 ring-1 ring-border sm:basis-full" data-ke="staff-permissions">
+      <legend className="px-1 text-sm font-medium">{t("employeePermissionsTitle")}</legend>
+      {centreName ? <p className="text-sm text-muted">{centreName}</p> : null}
+      <p className="mt-1 text-sm text-muted">{t("employeePermissionsLead")}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {(
+          [
+            ["staff", "employeePresetStaff"],
+            ["lead", "employeePresetLead"],
+            ["manager", "employeePresetManager"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            className={`min-h-11 rounded-full px-4 text-sm font-medium touch-manipulation ${choice === value ? "bg-primary text-primary-fg" : "bg-surface ring-1 ring-border"}`}
+            aria-pressed={choice === value}
+            onClick={() => pickPreset(value)}
+          >
+            {t(label)}
+          </button>
+        ))}
+      </div>
+      <div className="mt-3 grid gap-2">
+        {STAFF_AREAS.map((area) => (
+          <label key={area} className="grid gap-1 text-sm sm:grid-cols-[minmax(0,1fr)_10rem] sm:items-center">
+            <span>{t(AREA_COPY[area])}</span>
+            <select
+              className="ke-input min-h-11 w-full"
+              value={levels[area]}
+              aria-label={t(AREA_COPY[area])}
+              onChange={(event) => pickLevel(area, event.target.value as StaffLevel)}
+            >
+              <option value="none">{t("employeePermissionNone")}</option>
+              <option value="view">{t("employeePermissionView")}</option>
+              <option value="edit">{t("employeePermissionEdit")}</option>
+            </select>
+          </label>
+        ))}
+      </div>
+      <p className="mt-3 text-sm text-muted">{t("employeeOwnerOnlyNote")}</p>
+      <Button type="button" variant="secondary" className="mt-3 min-h-11" disabled={busy || saving} onClick={() => void save()}>
+        {t("employeePermissionSave")}
+      </Button>
+    </fieldset>
   );
 }
 

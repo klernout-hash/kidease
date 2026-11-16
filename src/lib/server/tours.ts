@@ -308,12 +308,17 @@ export const listTourRequests = createServerFn({ method: "GET" })
     const asParent = data.desk !== "centre";
     const asCentre = data.desk !== "parent";
     let lockedCentreId = "";
+    const { daycareIdsForArea, explainStaffArea, staffAreaError } = await import("@/lib/server/centre-access");
+    const requestCentres = new Set(await daycareIdsForArea(sql, context.userId, "requests", "view"));
+    if (data.centreId && data.desk === "centre") {
+      const decision = await explainStaffArea(sql, context.userId, data.centreId, "requests", "view");
+      if (!decision.ok && decision.reason !== "absent") throw staffAreaError(decision);
+    }
     if (data.desk === "centre") {
       const { tourCalendarEnabled } = await import("@/lib/features");
       if (tourCalendarEnabled()) {
-        const { listAccessibleDaycareIds } = await import("@/lib/server/centre-access");
         const { resolveTourCentre } = await import("@/lib/tour-phase0");
-        const memberships = await listAccessibleDaycareIds(sql, context.userId);
+        const memberships = [...requestCentres];
         const decision = resolveTourCentre({ selectedId: data.centreId, memberships });
         if (!decision.ok) throw new Error("Not authorized");
         lockedCentreId = decision.centreId;
@@ -355,6 +360,7 @@ export const listTourRequests = createServerFn({ method: "GET" })
     const visibleCentre = await omitHiddenParents(sql, centreRows);
     const visibleIds = new Set(visibleCentre.map((row) => row.id));
     return rows
+      .filter((row) => row.user_id === homeId || requestCentres.has(row.daycare_id))
       .filter((row) => !lockedCentreId || row.daycare_id === lockedCentreId)
       .filter((row) => !row.user_id || row.user_id === homeId || visibleIds.has(row.id))
       .map(mapTour);

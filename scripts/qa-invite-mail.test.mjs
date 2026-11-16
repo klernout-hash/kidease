@@ -93,6 +93,6 @@ test("each invite role shows what that person can open", () => {
   assert.match(page, /employeeRoleManagerAccess/);
   assert.match(page, /employeeRoleReadOnlyAccess/);
   const copy = src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts");
-  assert.match(copy, /employeeRoleStaffAccess: "Can update leads, messages, and open spots/);
+  assert.match(copy, /employeeRoleStaffAccess: "Today, check-in and check-out, their own hours/);
   assert.match(copy, /employeeRoleReadOnlyAccess: "Peut voir ce centre/);
 });

@@ -254,7 +254,10 @@ test("host calendar excludes overdue pending requests and keeps accepted tours w
       return [];
     },
     {
-      "@/lib/server/centre-access": { hasCentreDeskAccess: async () => true },
+      "@/lib/server/centre-access": {
+        hasCentreDeskAccess: async () => true,
+        explainStaffArea: async () => ({ ok: true }),
+      },
     },
   );
   const { loadHostCalendar } = run.load("src/lib/server/host-calendar.ts");
