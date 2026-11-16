@@ -3558,5 +3558,22 @@
   "parentRequestCancelled": "已取消",
   "parentRequestEnrolment": "报名",
   "parentRequestSentOn": "发送于",
-  "parentRequestVisitOn": "参观日期"
+  "parentRequestVisitOn": "参观日期",
+  "attentionTitle": "需要你处理",
+  "attentionDone": "已完成",
+  "attentionEmpty": "现在没有需要你处理的事。",
+  "attentionDismiss": "稍后",
+  "attentionTourUpdate": "有参观更新要看",
+  "attentionSpotOffer": "有名额邀请要回复",
+  "attentionFormDue": "有表格或文件要完成",
+  "attentionInvoiceDue": "有账单要付",
+  "attentionPaymentFailed": "付款失败",
+  "attentionUnreadMessage": "中心有未读消息",
+  "attentionUnreadParent": "家长有未读消息",
+  "attentionNewRequest": "有新申请要回复",
+  "attentionMissingDoc": "缺少文件",
+  "attentionOfferWaiting": "名额邀请还在等家长",
+  "attentionOverdueInvoice": "账单已逾期",
+  "attentionStaffCert": "员工证书即将到期",
+  "attentionListingGap": "园所资料还有一步要完成"
 }

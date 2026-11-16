@@ -55,6 +55,7 @@ import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { PARENT_UPGRADE_PLANS } from "@/lib/upgrade-plans";
 import { ParentHome } from "@/components/parent-home";
+import { ParentAttention } from "@/components/attention-list";
 import { useRoleChrome } from "@/components/role-chrome";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
 import { DeleteChildControl } from "@/components/delete-child-control";
@@ -474,6 +475,7 @@ export function ParentDesk({
 
       {contentTab === "explore" ? (
         <>
+        <ParentAttention userId={user.id} tours={tours} bills={bills} childIds={children.map((child) => child.id)} />
         <ParentHome
           saved={saved}
           bookings={bookings}
