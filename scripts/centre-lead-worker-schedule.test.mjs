@@ -97,11 +97,10 @@ test("the served registry does not admit tracker even when its environment opt-i
         return dependencies[name];
       },
     });
-    assert.equal(TOUR_SCHEDULER_ACTIVATED, false);
-    assert.deepEqual(
-      exports.functions.map((fn) => fn.options.id),
-      ["search-alerts-hourly"],
-    );
+    assert.equal(TOUR_SCHEDULER_ACTIVATED, true);
+    const served = exports.functions.map((fn) => fn.options.id);
+    assert.deepEqual(served, ["search-alerts-hourly", "tour-holds-hourly"]);
+    assert.equal(served.some((id) => /centre-lead|tracker/.test(id)), false);
     assert.deepEqual(
       selectRegisteredFunctions(exports.searchAlertsHourly, exports.expireTourHoldsHourly, {
         tourActivated: true,
