@@ -946,6 +946,8 @@ async function runRoleFixture(page, base) {
       const tour = page.getByRole("button", { name: /book a tour/i });
       if (await save.count()) await save.first().click();
       else if (await tour.count()) await tour.first().click();
+      const guestSheet = page.locator('[data-ke="save-signin-sheet"]');
+      if (await guestSheet.count()) await guestSheet.getByRole("button", { name: /^sign in$/i }).click();
       await page.waitForURL(/\/login/i, { timeout: timeoutMs }).catch(() => {});
       record("listing-guest-signin", guestActions > 0 && /\/login/i.test(page.url()), {
         note: `actions=${guestActions} save=${await save.count()} tour=${await tour.count()} url=${page.url()}`,
@@ -1138,6 +1140,8 @@ async function clientHandlerSmoke(page, base) {
     const saveHref = (await save.getAttribute("href")) || "";
     record("save-opens-login", /\/login/.test(saveHref) && /why=save/.test(saveHref), { note: "href" });
     await save.click();
+    const saveSheet = page.locator('[data-ke="save-signin-sheet"]');
+    if (await saveSheet.count()) await saveSheet.getByRole("button", { name: /^sign in$/i }).click();
     await page.waitForURL(/\/login/i, { timeout: timeoutMs }).catch(() => {});
     record("save-click-login", /\/login/i.test(page.url()) && /why=save/.test(page.url()), { note: "login" });
 
