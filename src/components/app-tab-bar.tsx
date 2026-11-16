@@ -105,7 +105,9 @@ export function AppTabBar() {
             "mx-auto grid max-w-lg gap-x-[8px] px-1 pt-1 md:max-w-3xl",
             storeTabs
               ? "grid-cols-4"
-              : airbnb && (kind === "parent" || kind === "guest")
+              : airbnb && kind === "parent"
+                ? "grid-cols-5"
+              : airbnb && kind === "guest"
                 ? "grid-cols-4"
                 : kind === "guest"
                   ? "grid-cols-3"
@@ -188,7 +190,7 @@ export function AppTabBar() {
                 icon={ClipboardCheck}
                 marker="bookings"
                 badge={requestBadge}
-                active={bare.startsWith("/parent") && (tab === "requests" || tab === "enrolled")}
+                active={bare.startsWith("/parent") && (tab === "requests" || tab === "enrolled" || tab === "waitlists" || tab === "tours")}
               />
               <Tab
                 to={inboxListPath(pathname)}
@@ -217,6 +219,15 @@ export function AppTabBar() {
                 icon={Heart}
                 marker="saved"
                 active={bare.startsWith("/parent") && tab === "saved"}
+              />
+              <Tab
+                to={parentDeskPath(pathname)}
+                search={{ tab: "requests" }}
+                label={t("navRequestsShort")}
+                icon={ClipboardCheck}
+                marker="bookings"
+                badge={requestBadge}
+                active={bare.startsWith("/parent") && (tab === "requests" || tab === "enrolled" || tab === "waitlists" || tab === "tours")}
               />
               <Tab
                 to={inboxListPath(pathname)}

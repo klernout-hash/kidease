@@ -2132,6 +2132,7 @@ export const fr = {
     leadStatusAnswered: "Répondue",
     leadStatusClosed: "Fermée",
     parentRequestWaiting: "En attente du centre",
+    parentRequestTourAsked: "Visite demandée",
     parentRequestConfirmed: "Confirmée",
     parentRequestDeclined: "Refusée",
     parentRequestEnrolled: "Inscrit",

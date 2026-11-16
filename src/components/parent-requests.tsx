@@ -36,7 +36,7 @@ export function ParentRequestsList({ items }: { items: ParentRequestRow[] }) {
             <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
               <span className="text-muted">{t(parentRequestKindKey(row.kind))}</span>
               <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-0.5 text-[11px] font-medium text-fg ring-1 ring-inset ring-border" data-ke="request-status">
-                {t(parentRequestStatusKey(row.status))}
+                {row.kind === "tour" && row.status === "waiting" ? t("parentRequestTourAsked") : t(parentRequestStatusKey(row.status))}
               </span>
             </p>
             <p className="mt-1 text-xs text-subtle">
