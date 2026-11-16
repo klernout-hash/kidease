@@ -95,8 +95,8 @@ test("uploading a health policy, reloading, and removing it updates the score", 
   assert.equal(removed.percent, 0);
   const server = read("src/lib/server/centre-documents.ts");
   const ui = read("src/components/centre-document-checklist.tsx");
-  assert.match(server, /select id from centre_documents where id/);
-  assert.match(server, /The file was not saved/);
+  assert.match(server, /returning id/);
+  assert.match(server, /That file was not saved/);
   assert.doesNotMatch(server, /from centre_documents\s+where daycare_id[\s\S]{0,180}\.catch\(\(\) => \[\]/);
   assert.match(ui, /copy\.remove/);
   assert.match(ui, /saved\.checklist/);
