@@ -16,6 +16,10 @@ export type ServerStoreRead = {
   appleLiveActivities?: true;
   appleShortcuts?: true;
   appleHomeWidget?: true;
+  /** Present only when that Play flag is on. Omitted while the flag is off. */
+  playUpdates?: true;
+  playShortcuts?: true;
+  playIntegrity?: true;
 };
 
 function requestIsHttps(url: string | undefined, forwardedProto: string | null): boolean {
@@ -57,6 +61,7 @@ export const readServerStoreChannel = createServerFn({ method: "GET" })
         cookie: req?.headers.get("cookie"),
       };
       const { applePlatformContext } = await import("@/lib/apple/platform");
+      const { playPlatformContext } = await import("@/lib/google/platform");
       return {
         channel: storeChannelFromSignals(signals),
         setCookie: microsoftStoreCookieHeader(signals, {
@@ -64,6 +69,7 @@ export const readServerStoreChannel = createServerFn({ method: "GET" })
         }),
         hideAdmin: nativeShellHidesAdmin(signals),
         ...applePlatformContext(process.env),
+        ...playPlatformContext(process.env),
       };
     } catch {
       return {

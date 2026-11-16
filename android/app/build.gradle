@@ -132,6 +132,9 @@ dependencies {
     samsungImplementation project(":capacitor-geolocation")
     samsungImplementation project(":capacitor-community-in-app-review")
     playImplementation project(":capacitor-push-notifications")
+    // Play in-app updates and Play Integrity. play flavour only. Flags default off.
+    playImplementation "com.google.android.play:app-update:2.1.0"
+    playImplementation "com.google.android.play:integrity:1.4.0"
     samsungImplementation project(":capacitor-push-notifications")
     // CallMessagingService (play/samsung source sets) extends FirebaseMessagingService directly;
     // the push plugin keeps firebase-messaging as an implementation dep, so expose it here.

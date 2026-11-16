@@ -225,6 +225,9 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_APPLE_LIVE_ACTIVITIES` | iOS lock-screen pickup or drop-off card. Default off. No push. Also needs `NSSupportsLiveActivities` in Info.plist, which stays unset. |
 | `FEATURE_APPLE_APP_SHORTCUTS` | iOS home-screen shortcuts for search, saved centres, and help. Default off. No items are added. |
 | `FEATURE_APPLE_HOME_WIDGET` | iOS widget snapshot with public search copy. Default off. The widget extension is not in the Xcode target. |
+| `FEATURE_PLAY_IN_APP_UPDATES` | Play flexible in-app update. Default off. No update check until this is on. |
+| `FEATURE_PLAY_APP_SHORTCUTS` | Play home-screen shortcuts for search, saved centres, and help. Default off. |
+| `FEATURE_PLAY_INTEGRITY` | Play Integrity. Default off. Needs the Play Console cloud project number. The token is not shown and not logged. |
 | `BRANDED_EMAILS` | Env only, not a PostHog flag. Default off. When `1`, notification email uses the KidEase layout (logo, button, plain-text part, one-click unsubscribe). Unset keeps today's bodies. Do not turn on until `send.kidease.ca` mail DNS is confirmed. |
 
 ## What is wired

@@ -194,6 +194,9 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_APPLE_LIVE_ACTIVITIES: "parent",
   FEATURE_APPLE_APP_SHORTCUTS: "shared",
   FEATURE_APPLE_HOME_WIDGET: "shared",
+  FEATURE_PLAY_IN_APP_UPDATES: "shared",
+  FEATURE_PLAY_APP_SHORTCUTS: "shared",
+  FEATURE_PLAY_INTEGRITY: "shared",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
