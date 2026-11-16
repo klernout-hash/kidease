@@ -3969,3 +3969,43 @@ html[data-look="clean"] .border:not([class*="border-"]) {
 html[data-look="clean"] :is(input, select, textarea).border:not([class*="border-"]) {
   border-color: var(--ke-field-line);
 }
+
+/* Airbnb comparison, batch 4. Clean look only. */
+/* Listing: the section links stay under the header while you read. */
+html[data-look="clean"] .ke-listing-jump {
+  position: sticky;
+  top: var(--ke-header-h, 4rem);
+  z-index: 15;
+  background: var(--color-bg);
+}
+/* Listing, wide screens: More and Save share one row under the main button. */
+@media (min-width: 768px) {
+  html[data-look="clean"] [data-ke="listing-action-summary"] > .grid {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+  html[data-look="clean"] [data-ke="listing-action-summary"] > .grid > :first-child {
+    grid-column: 1 / -1;
+  }
+  html[data-look="clean"] [data-ke="listing-action-summary"] [data-ke="listing-more"] > summary {
+    width: 100%;
+  }
+}
+/* Listing, phone: the page owns the bottom edge. The app tabs step aside for the action bar,
+   and the heart stays on the photo so there is only one. */
+@media (max-width: 767px) {
+  html[data-look="clean"]:has([data-ke="listing-sticky-bar"]) [data-ke="app-tab-bar"] {
+    display: none !important;
+  }
+  html[data-look="clean"] [data-ke="listing-sticky-bar"] {
+    bottom: var(--ke-keyboard, 0px) !important;
+  }
+  html[data-look="clean"] [data-ke="listing-sticky-bar"] [data-ke="save-listing"],
+  html[data-look="clean"] [data-ke="listing-sticky-bar"] button[aria-label][aria-pressed] {
+    display: none;
+  }
+}
+/* Sections land below the sticky section links, not under them. */
+html[data-look="clean"] .ke-listing-page section[id] {
+  scroll-margin-top: calc(var(--ke-header-h, 4.5rem) + 3.5rem);
+}
