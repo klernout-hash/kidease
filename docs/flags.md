@@ -271,6 +271,8 @@ These are env-only. Unset means the feature stays on. Set the value to `0` to pa
 
 A paused screen says what is off and offers a way to search.
 
+`FEATURE_SAVED_CENTRE_AGE_ALERTS` is on. A parent who saved a centre gets an in-app note when that centre posts an opening for their child's age. Three notes a day. Email still needs `FEATURE_OPEN_SPOT_ALERTS`. Push still needs `FEATURE_PUSH`. A child whose age does not fit is not told it is for them.
+
 `FEATURE_SEARCH_MEMORY` is on. Search remembers the last place, child age, and monthly budget. Guests keep it on this device. A signed-in parent also keeps it on their profile. Reset clears all three. A link that already has a place or an age is left as it is.
 
 `FEATURE_COMPARE_PARENT_FEE` is on. Compare shows the fee parents pay and the distance from a saved commute address. A centre with no confirmed fee says “Ask the centre”. Nothing is sent.
