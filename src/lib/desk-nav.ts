@@ -376,9 +376,23 @@ const OWNER_ONLY_NAV = new Set([
 
 const PARENT_TOOL_IDS = new Set<string>(CENTRE_TOOLS.filter((tool) => tool.parent && tool.id !== "offline").map((tool) => tool.id));
 
+/** A new daycare has no centre yet. Keep the claim step and account links. */
+const BEFORE_CENTRE_NAV = new Set([
+  "today",
+  "claim",
+  "profile",
+  "appearance",
+  "delete",
+  "notify-prefs",
+  "security",
+  "email-sms",
+  "account",
+]);
+
 export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
+    if (desk === "daycare" && opts?.centreLinked === false && !BEFORE_CENTRE_NAV.has(item.id)) return false;
     if (item.id === "learning") return opts?.curriculumPack === true;
     if (item.id === "family") return opts?.coparentLink === true || opts?.coparentEmail === true;
     if (item.id === "hours") return opts?.staffTimesheets === true;
