@@ -37,6 +37,7 @@ import {
   isAccountEventKind,
   isSignupActivityKind,
   parseAccountEventDetail,
+  isAdminDeskTab,
   parseAdminActivityKind,
   resolveAdminTab,
   type AccountNotifyRole,
@@ -81,6 +82,8 @@ import { approvalHealthSummary, approvalClickFeedback } from "@/lib/approve-live
 import { confirmAction, approvalSuccessReady } from "@/lib/success-confirm";
 import { isQueueableClaimStatus } from "@/lib/listing-status";
 import { needsLicenseReview, needsPhotoReview, needsVerification } from "@/lib/admin-verify";
+import { AdminSavedFilters } from "@/components/admin-saved-filters";
+import { centreMatchesSavedView } from "@/lib/admin-saved-filters";
 import {
   ADMIN_CENTRE_STAT_COPY,
   ADMIN_LEAD_STAT_META,
@@ -312,15 +315,23 @@ export function AdminPage() {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    if (!needle) return staffCentres;
-    return staffCentres.filter((c) =>
-      [c.name, c.slug, c.city, c.province, c.address, c.providerName, c.providerEmail, c.contactEmail]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(needle),
+    const searched = !needle
+      ? staffCentres
+      : staffCentres.filter((c) =>
+          [c.name, c.slug, c.city, c.province, c.address, c.providerName, c.providerEmail, c.contactEmail]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase()
+            .includes(needle),
+        );
+    return searched.filter((c) =>
+      centreMatchesSavedView(
+        { province: provCode(c.province) === "—" ? "" : provCode(c.province) },
+        { province: search.prov, docs: search.docs === 1 },
+        needsLicenseReview(c) || needsPhotoReview(c),
+      ),
     );
-  }, [staffCentres, q]);
+  }, [staffCentres, q, search.prov, search.docs]);
 
   const waitingOnYou = useMemo(
     () => filtered.filter((c) => isQueued(c.claimStatus)).sort((a, b) => compareTimeDesc(a.submittedAt, b.submittedAt)),
@@ -592,6 +603,37 @@ export function AdminPage() {
     <TwoFactorGate next={adminDeskHref(search)}>
     <LoginFunnelDeskLand desk="admin" />
     <DeskShell desk="admin" active={tab === "payouts" ? "connect" : tab} onSelect={(id) => setTab(id as AdminDeskTab)}>
+      <AdminSavedFilters
+        tab={tab}
+        stat={stat}
+        province={search.prov}
+        docs={search.docs === 1}
+        onApply={(filter) => {
+          if (filter.id === "draft") {
+            void navigate({
+              to: "/admin",
+              search: {
+                tab,
+                stat: adminStatSearchValue(tab, stat),
+                prov: filter.province,
+                docs: filter.docs ? 1 : undefined,
+              },
+              replace: true,
+            });
+            return;
+          }
+          const nextTab = isAdminDeskTab(filter.tab) ? filter.tab : tab;
+          void navigate({
+            to: "/admin",
+            search: {
+              tab: nextTab,
+              stat: filter.stat ? adminStatSearchValue(nextTab, filter.stat) : undefined,
+              prov: filter.province,
+              docs: filter.docs ? 1 : undefined,
+            },
+          });
+        }}
+      />
       {centresError ? (
         <AdminCentresLoadBanner
           message={centresError}

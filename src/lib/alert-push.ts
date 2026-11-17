@@ -174,6 +174,17 @@ type Pair = { title: string; body: string };
 function copyFor(category: AlertCategory, locale: AlertLocale, vars: { name: string; status: string }): Pair {
   const fr = locale === "fr";
   const name = vars.name;
+  if (category === "spot_opened" && vars.status === "child_age") {
+    return fr
+      ? {
+          title: "Place pour l'âge de votre enfant",
+          body: fill("{name} a publié une place pour l'âge de votre enfant. Vérifiez avec le centre.", { name, status: vars.status }),
+        }
+      : {
+          title: "Opening for your child's age",
+          body: fill("{name} posted an opening for your child's age. Check with the centre.", { name, status: vars.status }),
+        };
+  }
   if (category === "spot_opened") {
     return fr
       ? {

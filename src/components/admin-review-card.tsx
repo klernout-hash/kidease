@@ -38,6 +38,8 @@ import { ViewAsButton } from "@/components/view-as-button";
 import { cn } from "@/lib/utils";
 import { queueStorefrontSrc } from "@/lib/queue-photo";
 import { LISTING_PLACEHOLDER } from "@/lib/listing-photo";
+import { HealthChecklist, HealthRing } from "@/components/profile-health-card";
+import { compareHealth, profileHealth, type ProfileHealth } from "@/lib/profile-health";
 
 const FACT_TONE: Record<ReviewFactTone, string> = {
   ready: "font-medium text-fg",
@@ -335,6 +337,64 @@ export function AdminReviewLoading() {
   );
 }
 
+/** Photo strip: up to 4 photos, Airbnb style, with the count on the last tile. */
+function ReviewPhotoStrip({ centre }: { centre: AdminCentreRow }) {
+  const thumbs = centre.photoThumbs?.length ? centre.photoThumbs : centre.storefrontPhoto ? [centre.storefrontPhoto] : [];
+  const count = centre.photoCount ?? thumbs.length;
+  if (!thumbs.length) {
+    return (
+      <div className="flex h-28 items-center justify-center rounded-xl bg-danger/5 text-sm font-medium text-danger ring-1 ring-danger/30" data-ke="review-photo-strip" data-ke-photo-count="0">
+        No photos yet
+      </div>
+    );
+  }
+  const rest = Math.max(0, count - thumbs.length);
+  return (
+    <div
+      className={cn("grid h-36 gap-1 overflow-hidden rounded-xl sm:h-44", thumbs.length === 1 ? "grid-cols-1" : "grid-cols-[2fr_1fr]")}
+      data-ke="review-photo-strip"
+      data-ke-photo-count={count}
+    >
+      <img src={queueStorefrontSrc(thumbs[0])} alt={`${centre.name}, photo 1`} className="h-full w-full object-cover" loading="lazy" />
+      {thumbs.length > 1 ? (
+        <div className="grid grid-rows-2 gap-1">
+          <img src={queueStorefrontSrc(thumbs[1])} alt={`${centre.name}, photo 2`} className="h-full w-full object-cover" loading="lazy" />
+          <div className="relative">
+            {thumbs[2] ? (
+              <img src={queueStorefrontSrc(thumbs[2])} alt={`${centre.name}, photo 3`} className="h-full w-full object-cover" loading="lazy" />
+            ) : (
+              <div className="h-full w-full bg-surface-2" />
+            )}
+            <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm font-medium text-white">
+              {rest > 0 ? `+${rest} · ${count} photos` : `${count} photos`}
+            </span>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** The score card face: ring, band, green/red checklist, and what still blocks Approve. */
+function ReviewHealthSnapshot({ centre, health }: { centre: AdminCentreRow; health: ProfileHealth }) {
+  return (
+    <div className="mt-3 space-y-3" data-ke="admin-review-health">
+      <ReviewPhotoStrip centre={centre} />
+      <div className="flex items-start gap-4">
+        <div className="min-w-0 flex-1">
+          <HealthChecklist health={health} locale="en" />
+        </div>
+        <HealthRing health={health} locale="en" />
+      </div>
+      {health.blockers.length ? (
+        <p className="rounded-lg bg-danger/5 px-3 py-2 text-sm text-danger ring-1 ring-danger/30" data-ke="approve-blockers" role="status">
+          Approve opens when: {health.blockers.map((b) => b.en.toLowerCase()).join(" · ")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function AdminReviewCard({
   centre,
   packs,
@@ -369,6 +429,7 @@ export function AdminReviewCard({
     claimedAt: centre.claimedAt,
   });
   const locked = busy !== null;
+  const health = centre.health ?? profileHealth({});
   const place = [centre.city, centre.province].filter(Boolean).join(", ");
   const contactName = centre.providerName?.trim() || "No contact name";
   const email = centre.providerEmail || centre.contactEmail || "";
@@ -393,8 +454,9 @@ export function AdminReviewCard({
 
   return (
     <article
-      className="ke-panel px-3 py-2.5 shadow-card sm:px-3.5"
+      className="ke-panel rounded-2xl px-3 py-3 shadow-card sm:px-4"
       data-ke="admin-review-card"
+      data-ke-health-band={health.band}
       data-ke-review-mode={mode}
       data-ke-claim-kind={kind.id}
     >
@@ -454,6 +516,8 @@ export function AdminReviewCard({
         </div>
       ) : null}
       {submitted ? <p className="mt-1 text-xs text-subtle">Submitted {submitted}</p> : null}
+
+      {centre.mergedInto || centre.importFault ? null : <ReviewHealthSnapshot centre={centre} health={health} />}
 
       <dl className="mt-3 grid grid-cols-1 divide-y divide-border border-y border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0" data-ke="admin-review-facts">
         {facts.map((fact) => (
@@ -526,8 +590,19 @@ export function AdminReviewCard({
         ) : (
         <div className="mt-1.5 flex flex-col gap-1.5 sm:flex-row sm:items-center" role="group" aria-label={`Decision for ${centre.name}`}>
           {canOfferApprove(status) ? (
-            <Button type="button" className="w-full sm:w-auto sm:min-w-36" disabled={locked} onClick={() => onDecide(centre.daycareId, "approve")}>
-              Approve
+            <Button
+              type="button"
+              className="w-full sm:w-auto sm:min-w-36"
+              disabled={locked || !health.minimumMet}
+              title={health.minimumMet ? undefined : health.blockers.map((b) => b.en).join(". ")}
+              data-ke="approve-button"
+              data-ke-approve-mode={health.ready ? "ready" : health.minimumMet ? "override" : "blocked"}
+              onClick={() => {
+                if (!health.ready && !window.confirm(`${centre.name} is at ${health.score}%. Approve anyway?`)) return;
+                onDecide(centre.daycareId, "approve");
+              }}
+            >
+              {health.ready ? "Approve" : "Approve anyway"}
             </Button>
           ) : (
             <p className="text-sm font-medium text-primary" data-ke="approve-closed">
@@ -664,6 +739,16 @@ export function AdminCentreStatList({
   onMergeHiddenReview?: (daycareId: string) => void;
 }) {
   const copy = ADMIN_CENTRE_STAT_COPY[stat];
+  const [band, setBand] = useState<"all" | ProfileHealth["band"]>("all");
+  const scored = rows.map((row) => ({ row, health: row.health ?? profileHealth({}) }));
+  const bandCount = (b: ProfileHealth["band"]) => scored.filter((item) => item.health.band === b).length;
+  const shown =
+    stat === "waiting"
+      ? scored
+          .filter((item) => band === "all" || item.health.band === band)
+          .sort((a, b) => compareHealth(a.health, b.health))
+          .map((item) => item.row)
+      : rows;
   const countLabel = loading || unavailable
     ? "—"
     : rows.length === 0
@@ -686,6 +771,31 @@ export function AdminCentreStatList({
         </div>
         <p className="text-sm tabular-nums text-muted">{countLabel}</p>
       </div>
+      {stat === "waiting" && !loading && !unavailable && rows.length ? (
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filter by profile health" data-ke="health-filter">
+          {(
+            [
+              ["all", `All ${rows.length}`],
+              ["ready", `Ready ${bandCount("ready")}`],
+              ["almost", `Almost ${bandCount("almost")}`],
+              ["needs_work", `Needs work ${bandCount("needs_work")}`],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={band === id}
+              onClick={() => setBand(id)}
+              className={cn(
+                "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-full px-4 text-sm font-medium ring-1 touch-manipulation",
+                band === id ? "bg-fg text-bg ring-fg" : "bg-surface text-fg ring-border hover:ring-fg/40",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className="mt-3">
         {loading ? (
           <AdminReviewLoading />
@@ -693,9 +803,11 @@ export function AdminCentreStatList({
           <AdminReviewNotice title="Queue unavailable" body={error || "This list could not be loaded."} tone="danger" marker="error" />
         ) : rows.length === 0 ? (
           <AdminReviewNotice title={copy.caughtUp || "None"} body={copy.empty} marker="empty" />
+        ) : shown.length === 0 ? (
+          <AdminReviewNotice title="Nothing in this group" body="Pick another filter to see the rest of the queue." marker="empty" />
         ) : (
-          <ul className="space-y-2">
-            {rows.map((centre) => (
+          <ul className="space-y-3">
+            {shown.map((centre) => (
               <li key={centre.daycareId}>
                 <AdminReviewCard
                   centre={centre}

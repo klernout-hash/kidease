@@ -21,7 +21,8 @@ export function notificationCentreMode(env?: Record<string, string | undefined>,
 export type ChannelPrefs = Record<NoticePrefChannel, boolean>;
 
 export function defaultChannelPrefs(): ChannelPrefs {
-  return { in_app: true, email: true, sms: false, push: false };
+  // Everything a person can turn off later starts on. SMS needs CASL opt-in, so it stays off.
+  return { in_app: true, email: true, sms: false, push: true };
 }
 
 export function parseChannelPrefs(raw: unknown): ChannelPrefs {

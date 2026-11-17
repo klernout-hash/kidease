@@ -271,6 +271,16 @@ These are env-only. Unset means the feature stays on. Set the value to `0` to pa
 
 A paused screen says what is off and offers a way to search.
 
+`FEATURE_HOST_TODAY` is on. The daycare Today screen leads with arrivals, tours booked today, and requests that are waiting. “Finish your listing” sits lower, and only for an owner. Staff still open on check-in and their hours.
+
+`FEATURE_ADMIN_SAVED_FILTERS` is on. An admin can save, name, and delete a list filter, such as unclaimed centres in one province or documents waiting.
+
+`FEATURE_GOV_FILTERED_EXPORT` is on. A government table can download CSV or PDF of the rows on screen, after the province, city, and search filters already applied. The older summary download stays.
+
+`FEATURE_OWNER_REPLY_TEMPLATES` is on. A centre can insert “Tour confirmed”, “Waitlist added”, “Spot offered”, or “Not a fit right now” in English or French, then edit the words before sending. An owner can save their own wording. Nothing is sent until they press Send.
+
+`FEATURE_SAVED_CENTRE_AGE_ALERTS` is on. A parent who saved a centre gets an in-app note when that centre posts an opening for their child's age. Three notes a day. Email still needs `FEATURE_OPEN_SPOT_ALERTS`. Push still needs `FEATURE_PUSH`. A child whose age does not fit is not told it is for them.
+
 `FEATURE_SEARCH_MEMORY` is on. Search remembers the last place, child age, and monthly budget. Guests keep it on this device. A signed-in parent also keeps it on their profile. Reset clears all three. A link that already has a place or an age is left as it is.
 
 `FEATURE_COMPARE_PARENT_FEE` is on. Compare shows the fee parents pay and the distance from a saved commute address. A centre with no confirmed fee says “Ask the centre”. Nothing is sent.

@@ -61,7 +61,15 @@ test("a saved account choice survives a second read and the sender uses it", asy
   assert.equal(absent.push, null);
   const kept = decisionFor(absent);
   assert.equal(kept.channels.includes("email"), true);
-  assert.equal(kept.channels.includes("push"), false);
+  assert.equal(kept.channels.includes("push"), true, "push is on by default (#934)");
+
+  await pg.query(
+    `insert into unified_alert_prefs (user_id, type_id, enabled, email_on, push_on)
+     values ($1, $2, $3, $4, $5)`,
+    ["parent-c", "parent_request_accepted", 1, 1, 0],
+  );
+  const pushOff = await readChoice(pg, "parent-c", "parent_request_accepted");
+  assert.equal(decisionFor(pushOff).channels.includes("push"), false, "a saved push-off choice wins");
 
   await pg.query(
     `insert into unified_alert_prefs (user_id, type_id, enabled, email_on, push_on)

@@ -475,7 +475,7 @@ export const DaycareCard = memo(function DaycareCard({
           <ProvincialOpeningLine item={item} />
           <div className="flex min-h-12 flex-wrap content-start gap-1 pt-1">
             {ageChips.map((band) => (
-              <span key={band} className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium">
+              <span key={band} title={parentAgeLabel(band, loc)} className="max-w-full truncate rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium">
                 {parentAgeLabel(band, loc)}
               </span>
             ))}

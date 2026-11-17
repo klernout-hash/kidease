@@ -19,6 +19,8 @@ import { isOrphanInboxId, mergeUnifiedInbox } from "@/lib/desk-features";
 import { featureCopy } from "@/lib/flagged-feature-copy";
 import type { CentreInboxThread } from "@/lib/inbox-stages";
 import { fillQuickReply, opsQuickReplies } from "@/lib/inbox-quick-replies";
+import type { OwnerReplyTemplate } from "@/lib/owner-reply-templates";
+import { listOwnerReplyTemplates, saveOwnerReplyTemplate } from "@/lib/server/owner-reply-templates";
 import {
   MESSAGE_FILTERS,
   filterInboxList,
@@ -87,7 +89,29 @@ export function CentreInboxDesk({
   );
   const selected = visible.find((row) => row.id === selectedId) ?? items?.find((row) => row.id === selectedId) ?? null;
   const tour = tours[0] ?? null;
-  const templates = opsQuickReplies();
+  const [ownerTemplates, setOwnerTemplates] = useState<OwnerReplyTemplate[] | null>(null);
+  const [editId, setEditId] = useState("");
+  const [editTitle, setEditTitle] = useState("");
+  const [editBody, setEditBody] = useState("");
+  const daycareId = selected?.daycareId || "";
+  useEffect(() => {
+    if (!daycareId) return;
+    let live = true;
+    void listOwnerReplyTemplates({ data: { daycareId, locale } })
+      .then((res) => {
+        if (!live) return;
+        setOwnerTemplates(res.enabled && res.templates.length ? res.templates : null);
+      })
+      .catch(() => {
+        if (live) setOwnerTemplates(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [daycareId, locale]);
+  const templates = ownerTemplates
+    ? ownerTemplates.map((row) => ({ ...row, meta: row.body }))
+    : opsQuickReplies();
 
   async function loadList() {
     const gen = ++listGen.current;
@@ -514,6 +538,72 @@ export function CentreInboxDesk({
                       </li>
                     ))}
                   </ul>
+                  {ownerTemplates && daycareId ? (
+                    <form
+                      className="mt-2 space-y-2 border-t border-border px-1 pt-2"
+                      data-ke="owner-reply-edit"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const current = ownerTemplates.find((row) => row.id === (editId || ownerTemplates[0]?.id));
+                        if (!current) return;
+                        void saveOwnerReplyTemplate({
+                          data: { daycareId, locale, id: current.id, title: editTitle || current.title, body: editBody || current.body },
+                        })
+                          .then((res) => {
+                            if (!res.ok) {
+                              toast.error(locale === "fr" ? "Seul le propriétaire peut modifier ces réponses." : "Only the owner can change these replies.");
+                              return;
+                            }
+                            setOwnerTemplates((rows) =>
+                              (rows ?? []).map((row) => (row.id === res.template.id ? res.template : row)),
+                            );
+                            toast.success(locale === "fr" ? "Réponse enregistrée." : "Reply saved.");
+                          })
+                          .catch(() => toast.error(t("actionFailed")));
+                      }}
+                    >
+                      <p className="text-sm font-medium">{locale === "fr" ? "Modifier une réponse" : "Edit a reply"}</p>
+                      <label className="block text-sm">
+                        {locale === "fr" ? "Réponse" : "Reply"}
+                        <select
+                          className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                          value={editId || ownerTemplates[0]?.id || ""}
+                          onChange={(event) => {
+                            const next = ownerTemplates.find((row) => row.id === event.target.value);
+                            setEditId(event.target.value);
+                            setEditTitle(next?.title || "");
+                            setEditBody(next?.body || "");
+                          }}
+                        >
+                          {ownerTemplates.map((row) => (
+                            <option key={row.id} value={row.id}>{row.title}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="block text-sm">
+                        {locale === "fr" ? "Titre" : "Title"}
+                        <input
+                          className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                          value={editTitle}
+                          onChange={(event) => setEditTitle(event.target.value)}
+                          placeholder={ownerTemplates[0]?.title}
+                        />
+                      </label>
+                      <label className="block text-sm">
+                        {locale === "fr" ? "Message" : "Message"}
+                        <textarea
+                          className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2"
+                          rows={3}
+                          value={editBody}
+                          onChange={(event) => setEditBody(event.target.value)}
+                          placeholder={ownerTemplates[0]?.body}
+                        />
+                      </label>
+                      <button type="submit" className="inline-flex min-h-11 items-center text-sm font-medium text-primary">
+                        {locale === "fr" ? "Enregistrer" : "Save"}
+                      </button>
+                    </form>
+                  ) : null}
                 </div>
               }
             />

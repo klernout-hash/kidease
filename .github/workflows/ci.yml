@@ -246,6 +246,16 @@ jobs:
           else
             npm run e2e:preview -- --desktop-visual-only
           fi
+      - name: Layout audit (overflow, overlaps, tap targets)
+        # Report only for now: lists every horizontal scroll, overlapping control,
+        # spilled text and small tap target at 320 to 1920px. Flip
+        # LAYOUT_AUDIT_BLOCKING to 1 once the report is clean.
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          LAYOUT_AUDIT_BLOCKING: "0"
+        run: npm run e2e:layout
       - name: Desktop visual summary
         if: always() && steps.visual.outputs.visual_outcome == 'failure'
         run: |

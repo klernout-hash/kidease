@@ -58,6 +58,7 @@ import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { useCentreAgreementChips } from "@/components/use-centre-agreement-chips";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { CapacityForm, Field } from "@/components/provider-listing-forms";
+import { MyListingHealth } from "@/components/my-listing-health";
 import { RequiredMark } from "@/components/required-field";
 import { PROVINCES, provinceFromPostalCode } from "@/lib/geo";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
@@ -109,6 +110,8 @@ import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
 import { HostTodayHome } from "@/components/host-today-home";
+import { HostStyleToday } from "@/components/host-style-today";
+import { hostTodayFlag } from "@/lib/server/host-today";
 import { hostSectionFromFocus } from "@/lib/host-action";
 import { isHostSection } from "@/lib/host-listing";
 import { syncHostActionNotices } from "@/lib/server/host-action";
@@ -270,6 +273,12 @@ export function ProviderPage() {
   const canEditBills = centreOwner || session?.centreGrants?.bills === "edit";
   const canInviteStaff = centreOwner || session?.centreCanInvite === true;
   const staffDesk = centreRole === "staff" || centreRole === "read_only";
+  const [hostToday, setHostToday] = useState(true);
+  useEffect(() => {
+    void hostTodayFlag()
+      .then((on) => setHostToday(Boolean(on)))
+      .catch(() => setHostToday(true));
+  }, []);
   const canWrite = centreRole ? centreCanWriteLeads(centreRole) : centreOwner;
   const canContracts = centreRole ? centreCanAccessPrivileged(centreRole) : centreOwner;
   const canDocuments = centreRole ? centreCanMutateListingDetails(centreRole) : centreOwner;
@@ -574,6 +583,16 @@ export function ProviderPage() {
           </Link>
         </p>
       ) : null}
+      {desk === "today" && hostToday && deskListings.length > 0 && !staffDesk ? (
+        <HostStyleToday
+          locale={locale === "fr" ? "fr" : "en"}
+          leads={leads}
+          tours={tours}
+          listings={deskListings}
+          owner={centreOwner}
+        />
+      ) : null}
+      {desk === "today" && hostToday && deskListings.length > 0 && !staffDesk ? <ChildCheckinDesk /> : null}
       {desk === "today" && deskListings.length > 0 && !staffDesk ? (
         <div data-ke="provider-setup-reserve" className="mb-4 min-h-[28rem]" />
       ) : null}
@@ -619,6 +638,7 @@ export function ProviderPage() {
               .then(() => setUpgradeDismissed(true))
               .catch(() => setUpgradeDismissed(false));
           }}
+          hideListingGaps={hostToday}
         />
         <TodayUrgencyHome
           listings={listings}
@@ -626,12 +646,13 @@ export function ProviderPage() {
           leads={leads}
           onChanged={() => void load()}
           onOpenDesk={(next) => setDesk(next)}
+          quietSetup={hostToday}
         />
         <FamilyEmailPreview centreName={listings[0]?.name || ""} />
         </>
       ) : null}
       {/* What needs doing first, then check-in, then records and settings folded under one heading. */}
-      {desk === "today" && !staffDesk && deskListings.length > 0 ? <ChildCheckinDesk /> : null}
+      {desk === "today" && !hostToday && !staffDesk && deskListings.length > 0 ? <ChildCheckinDesk /> : null}
       {desk === "today" && !staffDesk && deskListings.length > 0 ? (
         <TodayMore locale={locale === "fr" ? "fr" : "en"}>
           <AuditDeskLink locale={locale === "fr" ? "fr" : "en"} />
@@ -750,6 +771,9 @@ export function ProviderPage() {
           <h1 className="font-display text-2xl">{t("navCalendar")}</h1>
           <p className="mt-2 text-sm text-muted">{t("comingSoon")}</p>
         </section>
+      ) : null}
+      {desk === "listings" && !staffDesk && deskListings.length && !listingEditorOpen ? (
+        <MyListingHealth listings={deskListings.map((row) => ({ id: row.id, name: row.name }))} locale={locale === "fr" ? "fr" : "en"} />
       ) : null}
       {desk === "listings" && hostListing ? (
         <HostListingsDesk

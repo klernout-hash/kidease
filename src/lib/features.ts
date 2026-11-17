@@ -138,9 +138,37 @@ export function searchMemoryEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_SEARCH_MEMORY", env);
 }
 
+/** Centre request replies in English and French. Owners can edit them. Default on. Nothing is sent until they press Send. */
+export function ownerReplyTemplatesEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_OWNER_REPLY_TEMPLATES", env);
+}
+
+/** Download the government table that is on screen, with the current filters. Default on. */
+export function govFilteredExportEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_GOV_FILTERED_EXPORT", env);
+}
+
+/** Named admin list filters, such as a province or documents waiting. Default on. */
+export function adminSavedFiltersEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_ADMIN_SAVED_FILTERS", env);
+}
+
+/** Daycare Today leads with arrivals, today's tours, and waiting requests. Default on. */
+export function hostTodayEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_HOST_TODAY", env);
+}
+
 /** Email when a saved search matches a newly posted open spot. Default off. */
 export function openSpotAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_OPEN_SPOT_ALERTS", env);
+}
+
+/**
+ * In-app note when a saved centre posts an opening for the child's age.
+ * Default on. Email still needs FEATURE_OPEN_SPOT_ALERTS. Push still needs FEATURE_PUSH.
+ */
+export function savedCentreAgeAlertsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_SAVED_CENTRE_AGE_ALERTS", env);
 }
 
 /** Email a parent when a daycare offers a spot. Default OFF. The offer still shows in the account. */
