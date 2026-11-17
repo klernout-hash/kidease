@@ -23,6 +23,7 @@ import {
   type IncompleteMissingField,
 } from "@/lib/listing-incomplete";
 import { HIDDEN_REVIEW_POSSIBLE_SECOND_SITE, isAdminOnlyListing } from "@/lib/listing-visibility";
+import { gateOutboundEmail } from "@/lib/server/outbound-gate";
 
 export type AdminCentreRow = {
   daycareId: string;
@@ -152,6 +153,10 @@ async function deliverToProvider(to: string, subject: string, text: string, abou
       cta: { label: "Open your dashboard", href: "https://kidease.ca/provider" },
     }),
   });
+  const gated = await gateOutboundEmail({ to, subject, label: "centre-decision" });
+  if (!gated.allow) return "logged";
+  to = gated.to;
+  subject = gated.subject;
   const sendText = prepared.text;
   const sendHtml = prepared.html;
   const headers = Object.keys(prepared.headers).length ? prepared.headers : undefined;

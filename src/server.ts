@@ -1,5 +1,7 @@
 // Sentry first — Vercel Node functions cannot use --import, so init here.
 import "./instrument.server";
+// Outbound safety gate: registers the send gate and the group kill switches.
+import "@/lib/server/outbound-gate";
 
 import handler, { createServerEntry } from "@tanstack/react-start/server-entry";
 import { reportError } from "@/lib/observe";

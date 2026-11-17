@@ -15,6 +15,7 @@
 
 import { evaluateFeatureFlag } from "../flags.ts";
 import { brandKidEaseSms } from "../sms-copy.ts";
+import { blockedMessage, outboundGates } from "../outbound-gate-core.ts";
 
 const SMS_SCAFFOLD_MESSAGE =
   "SMS is scaffolded only. FEATURE_SMS is off until Kyle adds Twilio credentials and a Canadian sender.";
@@ -73,6 +74,10 @@ export type SendSmsInput = {
    */
   audience?: "internal" | "user";
   consentGranted?: boolean;
+  /** Emergency or verification text. Counted toward the daily cap, never blocked. */
+  essential?: boolean;
+  /** Short tag for the outbound log, such as "spot-checkin". */
+  label?: string;
 };
 
 export type SendSmsResult =
@@ -88,6 +93,8 @@ export type SendSmsOptions = {
    * Still needs Twilio credentials. The caller must pass audience "internal".
    */
   operatorAlert?: boolean;
+  /** Skip the outbound safety gate (tests only). */
+  skipOutboundGate?: boolean;
 };
 
 const TWILIO_MESSAGES = (accountSid: string) =>
@@ -148,7 +155,7 @@ function resolveSender(env: EnvMap): { messagingServiceSid?: string; from?: stri
 export async function sendSms(input: SendSmsInput, options: SendSmsOptions = {}): Promise<SendSmsResult> {
   const env = options.env ?? process.env;
   const fetchImpl = options.fetchImpl ?? fetch;
-  const to = normalizeE164(input.to);
+  let to = normalizeE164(input.to);
   if (!isE164(to)) {
     return { ok: false, skipped: false, error: "Recipient must be an E.164 number (e.g. +12045550100)." };
   }
@@ -168,8 +175,21 @@ export async function sendSms(input: SendSmsInput, options: SendSmsOptions = {})
   const sender = resolveSender(env);
   if ("error" in sender) return { ok: false, skipped: true, error: sender.error };
 
-  const body = brandKidEaseSms(input.body);
+  let body = brandKidEaseSms(input.body);
   if (!body) return { ok: false, skipped: false, error: "SMS body is empty." };
+
+  const gateSms = options.skipOutboundGate ? undefined : outboundGates().sms;
+  if (gateSms) {
+    const gated = await gateSms({
+      to,
+      body,
+      essential: input.essential === true || Boolean(options.operatorAlert),
+      label: input.label || (audience === "internal" ? "internal" : "user"),
+    });
+    if (!gated.allow) return { ok: false, skipped: true, error: blockedMessage(gated.reason) };
+    to = gated.to;
+    body = gated.body;
+  }
 
   const params = new URLSearchParams({ To: to, Body: body });
   if (sender.messagingServiceSid) params.set("MessagingServiceSid", sender.messagingServiceSid);

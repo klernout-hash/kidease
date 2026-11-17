@@ -11,6 +11,7 @@ import { createPrivateKey, sign } from "node:crypto";
 import { connect as http2Connect } from "node:http2";
 import { envFlagOn, evaluateFeatureFlag } from "../flags.ts";
 import { ordinaryApnsAps, ordinaryFcmMessage } from "../push-lifecycle.ts";
+import { blockedMessage, outboundGates } from "../outbound-gate-core.ts";
 
 type EnvMap = Record<string, string | undefined>;
 type PushProvider = "fcm" | "apns" | "adm";
@@ -425,6 +426,11 @@ export async function sendPushToDevices(
   const url = pushLink(input.url);
   if (!title || !body) {
     return { ok: false, skipped: true, error: "Push title and body are required." };
+  }
+  const gate = outboundGates().gate;
+  if (gate && input.tokens.length > 0) {
+    const gated = await gate({ channel: "push", units: input.tokens.length, label: "push" });
+    if (!gated.allow) return { ok: false, skipped: true, error: blockedMessage(gated.reason) };
   }
 
   const fetchImpl = options.fetchImpl ?? fetch;
