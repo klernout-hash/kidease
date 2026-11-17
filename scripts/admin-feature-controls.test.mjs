@@ -26,8 +26,8 @@ test("the registry is the 209 product flags and the 14 switches, not routes", ()
   assert.equal(FEATURE_FLAG_KEYS.length, 209);
   assert.equal(switches.length, 14);
   assert.equal(FEATURE_SWITCHES.length, 14);
-  assert.equal(featureControlRegistry().length, 222);
-  assert.equal(new Set(flags.map((row) => row.key)).size, 208);
+  assert.equal(featureControlRegistry().length, 223);
+  assert.equal(new Set(flags.map((row) => row.key)).size, 209);
   assert.equal(flags.every((row) => row.writable === false && row.control === "deployment-configuration-required"), true);
   assert.equal(switches.every((row) => row.writable === true && row.control === "posthog-rollout"), true);
   assert.equal(flags.filter((row) => row.category === "government").map((row) => row.key).sort().join(","), "FEATURE_GOV_PORTAL,FEATURE_GOV_SCOPES,FEATURE_PROVINCE_REPORTS");
