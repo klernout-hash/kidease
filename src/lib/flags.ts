@@ -224,6 +224,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_HUAWEI_APPGALLERY_LINK",
   "FEATURE_AMAZON_STORE_DEEP_LINK",
   "FEATURE_PERSISTENT_SESSIONS",
+  "FEATURE_OWNER_REPLY_TEMPLATES",
   "FEATURE_SAVED_CENTRE_AGE_ALERTS",
   "FEATURE_SEARCH_MEMORY",
   "FEATURE_COMPARE_PARENT_FEE",
@@ -645,6 +646,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_AMAZON_STORE_DEEP_LINK: false,
   /** Stay signed in on the phone, and a 30-day choice on the website. Off. */
   FEATURE_PERSISTENT_SESSIONS: false,
+  /** Centre request replies in English and French. On. Picking one does not send it. */
+  FEATURE_OWNER_REPLY_TEMPLATES: true,
   /** In-app when a saved centre opens a spot for the child's age. On. Mail stays on FEATURE_OPEN_SPOT_ALERTS. */
   FEATURE_SAVED_CENTRE_AGE_ALERTS: true,
   /** Remember the last search place, age, and budget. On. Reset clears them. */
@@ -1529,6 +1532,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Stay signed in on the phone until Sign out, and a 30-day choice on the website. Off. Admin sign-in is unchanged.",
+  },
+  {
+    key: "FEATURE_OWNER_REPLY_TEMPLATES",
+    defaultOn: true,
+    docs: "docs/flags.md",
+    summary:
+      "Request replies such as Tour confirmed and Waitlist added, in English and French. On. An owner can edit them. Nothing is sent until they press Send.",
   },
   {
     key: "FEATURE_SAVED_CENTRE_AGE_ALERTS",
