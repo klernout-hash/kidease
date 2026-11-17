@@ -228,7 +228,7 @@ export const FEATURE_FLAG_KEYS = [
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
 
-export type FlagSource = "remote" | "env" | "default";
+export type FlagSource = "remote" | "env" | "default" | "kill";
 
 export type FlagDecision = {
   key: FeatureFlagKey;
@@ -1619,10 +1619,12 @@ export function describeFeatureFlag(
     remoteValue: typeof remoteValue === "boolean" ? remoteValue : null,
     defaultWhenUnset: FLAG_DEFAULTS[key],
   });
+  if (useCache) scheduleKillRefresh();
+  const killed = useCache && resolved.enabled && Boolean(killSnapshot?.keys.has(key));
   return {
     key,
-    enabled: resolved.enabled,
-    source: resolved.source,
+    enabled: killed ? false : resolved.enabled,
+    source: killed ? "kill" : resolved.source,
     envEnabled: envFlagSet(envRaw) ? envFlagOn(envRaw) : FLAG_DEFAULTS[key],
     envSet: envFlagSet(envRaw),
     remoteValue: typeof remoteValue === "boolean" ? remoteValue : null,
@@ -1737,6 +1739,51 @@ function scheduleRemoteRefresh(): void {
   inflight = refreshRemoteFlags(process.env).finally(() => {
     inflight = null;
   });
+}
+
+/**
+ * Admin group kill switches (src/lib/server/outbound-gate.ts). A switch only
+ * forces flags off; it never turns one on. Server-only: the browser never
+ * registers a loader, so this is a no-op there.
+ */
+const KILL_TTL_MS = 15_000;
+let killLoader: (() => Promise<ReadonlySet<string>>) | null = null;
+let killSnapshot: { keys: ReadonlySet<string>; at: number } | null = null;
+let killInflight: Promise<void> | null = null;
+
+export function registerFlagKillLoader(loader: (() => Promise<ReadonlySet<string>>) | null): void {
+  killLoader = loader;
+  killSnapshot = null;
+  if (loader) scheduleKillRefresh();
+}
+
+function scheduleKillRefresh(): void {
+  if (!killLoader || killInflight) return;
+  if (killSnapshot && Date.now() - killSnapshot.at < KILL_TTL_MS) return;
+  killInflight = killLoader()
+    .then((keys) => {
+      killSnapshot = { keys, at: Date.now() };
+    })
+    .catch(() => {
+      // Keep the last snapshot; try again on the next read.
+    })
+    .finally(() => {
+      killInflight = null;
+    });
+}
+
+/** Await the current kill set (admin panel and tests). */
+export async function refreshFlagKills(): Promise<ReadonlySet<string>> {
+  if (!killLoader) return new Set();
+  const keys = await killLoader();
+  killSnapshot = { keys, at: Date.now() };
+  return keys;
+}
+
+/** Test-only: set the forced-off keys directly. */
+export function setFlagKillsForTests(keys: readonly string[] | null): void {
+  killLoader = null;
+  killSnapshot = keys ? { keys: new Set(keys), at: Date.now() } : null;
 }
 
 /** Test-only: drop the in-process overlay so cases stay isolated. */

@@ -50,6 +50,7 @@ async function deliver(input: { body: string; audience: Audience; actorId: strin
     `;
     if (emailPlan === "send" && centre.contact_email) {
       const result = await sendComplianceEmail({
+            essential: true,
         to: centre.contact_email,
         subject: "KidEase: a notice for your area",
         text: input.body,
@@ -83,6 +84,7 @@ async function deliver(input: { body: string; audience: Audience; actorId: strin
         if (delivery === "skip") skipped += 1;
         if (delivery === "send" && channel === "email" && emailRow[0]?.email) {
           const result = await sendComplianceEmail({
+            essential: true,
             to: emailRow[0].email,
             subject: "KidEase: a notice for your area",
             text: input.body,
@@ -96,7 +98,7 @@ async function deliver(input: { body: string; audience: Audience; actorId: strin
           if (result === "sent") sent += 1;
         }
         if (delivery === "send" && channel === "sms" && emailRow[0]?.phone) {
-          const result = await sendComplianceSms({ to: emailRow[0].phone, body: `${input.body} Reply STOP to opt out.`, consentGranted: true });
+          const result = await sendComplianceSms({ to: emailRow[0].phone, body: `${input.body} Reply STOP to opt out.`, consentGranted: true, essential: true });
           if (result === "sent") sent += 1;
         }
       }

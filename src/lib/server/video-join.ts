@@ -260,6 +260,9 @@ export const joinVideoRoom = createServerFn({ method: "POST" })
       };
     }
 
+    const { gateMediaSession } = await import("./outbound-gate");
+    const media = await gateMediaSession("video");
+    if (!media.ok) return { ok: false, reason: "feature_off", error: media.error, paywall: false };
     const { createVideoRoom, createVideoAccessToken } = await import("./video");
     const room = await createVideoRoom({ roomName: status.roomName });
     if (!room.ok) {

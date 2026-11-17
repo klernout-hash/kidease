@@ -116,6 +116,7 @@ import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as WaitlistRouteImport } from './routes/waitlist'
 import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
+import { Route as AdminOutboundRouteImport } from './routes/admin.outbound'
 import { Route as AdminGovernmentRouteImport } from './routes/admin.government'
 import { Route as AdminDataRequestsRouteImport } from './routes/admin_.data-requests'
 import { Route as AdminEscalationsRouteImport } from './routes/admin_.escalations'
@@ -882,6 +883,11 @@ const WaitlistRoute = WaitlistRouteImport.update({
 const AdminFeaturesRoute = AdminFeaturesRouteImport.update({
   id: '/features',
   path: '/features',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOutboundRoute = AdminOutboundRouteImport.update({
+  id: '/outbound',
+  path: '/outbound',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminGovernmentRoute = AdminGovernmentRouteImport.update({
@@ -2151,6 +2157,7 @@ export interface FileRoutesByFullPath {
   '/verify-2fa': typeof Verify2faRoute
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
+  '/admin/outbound': typeof AdminOutboundRoute
   '/admin/government': typeof AdminGovernmentRoute
   '/admin/data-requests': typeof AdminDataRequestsRoute
   '/admin/escalations': typeof AdminEscalationsRoute
@@ -2489,6 +2496,7 @@ export interface FileRoutesByTo {
   '/verify-2fa': typeof Verify2faRoute
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
+  '/admin/outbound': typeof AdminOutboundRoute
   '/admin/government': typeof AdminGovernmentRoute
   '/admin/data-requests': typeof AdminDataRequestsRoute
   '/admin/escalations': typeof AdminEscalationsRoute
@@ -2830,6 +2838,7 @@ export interface FileRoutesById {
   '/verify-2fa': typeof Verify2faRoute
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
+  '/admin/outbound': typeof AdminOutboundRoute
   '/admin/government': typeof AdminGovernmentRoute
   '/admin_/data-requests': typeof AdminDataRequestsRoute
   '/admin_/escalations': typeof AdminEscalationsRoute
@@ -3172,6 +3181,7 @@ export interface FileRouteTypes {
     | '/verify-2fa'
     | '/waitlist'
     | '/admin/features'
+    | '/admin/outbound'
     | '/admin/government'
     | '/admin/data-requests'
     | '/admin/escalations'
@@ -3510,6 +3520,7 @@ export interface FileRouteTypes {
     | '/verify-2fa'
     | '/waitlist'
     | '/admin/features'
+    | '/admin/outbound'
     | '/admin/government'
     | '/admin/data-requests'
     | '/admin/escalations'
@@ -3850,6 +3861,7 @@ export interface FileRouteTypes {
     | '/verify-2fa'
     | '/waitlist'
     | '/admin/features'
+    | '/admin/outbound'
     | '/admin/government'
     | '/admin_/data-requests'
     | '/admin_/escalations'
@@ -5062,6 +5074,13 @@ declare module '@tanstack/react-router' {
       path: '/features'
       fullPath: '/admin/features'
       preLoaderRoute: typeof AdminFeaturesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/outbound': {
+      id: '/admin/outbound'
+      path: '/outbound'
+      fullPath: '/admin/outbound'
+      preLoaderRoute: typeof AdminOutboundRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/government': {
@@ -6686,11 +6705,13 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminFeaturesRoute: typeof AdminFeaturesRoute
+  AdminOutboundRoute: typeof AdminOutboundRoute
   AdminGovernmentRoute: typeof AdminGovernmentRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminFeaturesRoute: AdminFeaturesRoute,
+  AdminOutboundRoute: AdminOutboundRoute,
   AdminGovernmentRoute: AdminGovernmentRoute,
 }
 

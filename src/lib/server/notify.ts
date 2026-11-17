@@ -34,6 +34,7 @@ import { brandedNotice } from "@/lib/email-layout";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { mailPreheaderHtml } from "@/lib/mail-copy";
 import { dayKeyInTimeZone, formatInTimeZone } from "@/lib/family-time";
+import { gateOutboundEmail } from "@/lib/server/outbound-gate";
 
 /** Owner / admin notify. Support cases route through support@kidease.ca on the desk — not this address. */
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim();
@@ -458,6 +459,10 @@ async function deliverEmail(
   });
   text = prepared.text;
   html = prepared.html;
+  const gated = await gateOutboundEmail({ to, subject, label: "notify" });
+  if (!gated.allow) return "logged";
+  to = gated.to;
+  subject = gated.subject;
   const headers = Object.keys(prepared.headers).length ? prepared.headers : undefined;
   const reply = resolveMailReplyTo(replyTo, ADMIN_EMAIL);
   const resend = process.env.RESEND_API_KEY?.trim();
