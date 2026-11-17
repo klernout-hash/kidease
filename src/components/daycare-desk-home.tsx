@@ -28,6 +28,7 @@ export function DaycareDeskHome({
   dismissed = false,
   settled = false,
   onDismiss,
+  hideListingGaps = false,
 }: {
   listings: Daycare[];
   leads: LeadRequest[];
@@ -40,6 +41,7 @@ export function DaycareDeskHome({
   dismissed?: boolean;
   settled?: boolean;
   onDismiss?: () => void;
+  hideListingGaps?: boolean;
 }) {
   const { t } = useCopy();
   void planName;
@@ -81,7 +83,7 @@ export function DaycareDeskHome({
         </Link>
       </section>
 
-      <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border">
+      {hideListingGaps ? null : <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border">
         <h2 className="font-display text-xl">{t("deskHomeListing")}</h2>
         <FoundingMemberBadge show={primary?.foundingMember} className="mt-2" />
         {primary && vacancyUpdatedThisWeek(primary) ? (
@@ -106,7 +108,7 @@ export function DaycareDeskHome({
         <Link to="/provider" search={{ desk: "listings" }} className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary">
           {primary ? t("deskHomeEdit") : t("deskHomeMyListing")}
         </Link>
-      </section>
+      </section>}
     </div>
   );
 }
