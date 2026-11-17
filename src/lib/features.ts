@@ -133,6 +133,11 @@ export function showPayCtas(env?: EnvMap): boolean {
   return evaluateFeatureFlag("SHOW_PAY_CTAS", env);
 }
 
+/** Remember the last search place, age, and budget. Default on. Guests use this device. Signed-in parents also use their profile. */
+export function searchMemoryEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_SEARCH_MEMORY", env);
+}
+
 /** Email when a saved search matches a newly posted open spot. Default off. */
 export function openSpotAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_OPEN_SPOT_ALERTS", env);
@@ -400,6 +405,11 @@ export function staffTimesheetsEnabled(env?: EnvMap): boolean {
 /** Centre reply under a public parent review. Default off. No email. */
 export function reviewRepliesEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_REVIEW_REPLIES", env);
+}
+
+/** Compare fee parents pay, and distance from a saved commute. Default on. */
+export function compareParentFeeEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_COMPARE_PARENT_FEE", env);
 }
 
 /** Enrolment e-sign, sign page, and signed PDF. Default off. */

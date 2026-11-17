@@ -55,6 +55,8 @@ import { fsaOf, MAX_SEARCH_RADIUS_KM } from "@/lib/proximity";
 import { areaPresence } from "@/lib/presence";
 import { readSearchCache, searchCacheKey, writeSearchCache, type SearchPageResponse } from "@/lib/search-cache";
 import { readRecentSearches, rememberSearch, writeRecentSearches, type RecentSearch } from "@/lib/recent-searches";
+import { SEARCH_MEMORY_KEY, parseSearchMemory, readSearchMemory, searchUrlOwnsMemory } from "@/lib/search-memory";
+import { loadSearchMemory, saveSearchMemory } from "@/lib/server/search-memory";
 import { parentFitCacheKey } from "@/lib/parent-fit";
 import { parentFitFromSearch, useParentFitFacts } from "@/lib/use-parent-fit";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
@@ -413,7 +415,7 @@ export function SearchScreen({
     return { ...incomingRaw, q, city };
   }, [incomingRaw]);
   const { t, locale } = useCopy();
-  const { user } = useCurrentUserState();
+  const { user, isPending: userPending } = useCurrentUserState();
   const fitFacts = useParentFitFacts();
   const [budgetMonthly, setBudgetMonthly] = useState("");
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
@@ -629,6 +631,47 @@ export function SearchScreen({
       setNeedBy(startWindowToDate(incoming.start));
     }
   }, [incoming.sort, incoming.age, incoming.cat, incoming.care, incoming.favorites, incoming.start, incoming.openings, setSort, setAgeGroup]);
+
+  const memoryLoaded = useRef(false);
+  useEffect(() => {
+    if (memoryLoaded.current || userPending) return;
+    let live = true;
+    void (async () => {
+      if (searchUrlOwnsMemory(incoming)) {
+        memoryLoaded.current = true;
+        return;
+      }
+      let memory = readSearchMemory(window.localStorage.getItem(SEARCH_MEMORY_KEY));
+      if (user?.id) {
+        const remote = await loadSearchMemory().catch(() => null);
+        if (remote && remote.enabled && remote.memory) memory = remote.memory;
+      }
+      if (!live) return;
+      memoryLoaded.current = true;
+      if (!memory) return;
+      setBudgetMonthly(memory.budgetMonthly ? String(memory.budgetMonthly) : "");
+      setAgeGroup(memory.age);
+      setOrigin({ lat: memory.lat, lng: memory.lng, label: memory.label, explicit: true }, "manual");
+      setQuery(memory.label);
+    })();
+    return () => {
+      live = false;
+    };
+  }, [userPending, user?.id, incoming, setAgeGroup, setOrigin, setQuery]);
+
+  useEffect(() => {
+    if (!memoryLoaded.current) return;
+    const memory = parseSearchMemory({
+      label: origin.label,
+      lat: origin.lat,
+      lng: origin.lng,
+      age: ageGroup,
+      budgetMonthly: Number(budgetMonthly) || null,
+    });
+    if (!memory) return;
+    window.localStorage.setItem(SEARCH_MEMORY_KEY, JSON.stringify(memory));
+    if (user?.id) void saveSearchMemory({ data: memory }).catch(() => undefined);
+  }, [origin.label, origin.lat, origin.lng, ageGroup, budgetMonthly, user?.id]);
 
   useEffect(() => {
     if (readLiveSearchFlag(incoming.live)) setClaimVerifiedOnly(true);
@@ -1830,18 +1873,31 @@ export function SearchScreen({
       {chip(readyOnly, t("filterDetailsReady"), () => setReadyOnly((v) => !v))}
       {chip(liveOn, t("filterClaimVerified"), () => writeLiveClaimed(!liveOn))}
       {chip(ten, t("filterTen"), () => setTen((v) => !v))}
-      {fitFacts.signedIn ? (
-        <label className="inline-flex min-h-11 items-center gap-2 text-sm">
-          <span>{locale === "fr" ? "Budget mensuel" : "Monthly budget"}</span>
-          <input
-            inputMode="numeric"
-            className="ke-input w-[7rem]"
-            value={budgetMonthly}
-            aria-label={locale === "fr" ? "Budget mensuel" : "Monthly budget"}
-            onChange={(event) => setBudgetMonthly(event.target.value.replace(/[^\d]/g, "").slice(0, 5))}
-          />
-        </label>
-      ) : null}
+      <label className="inline-flex min-h-11 items-center gap-2 text-sm">
+        <span>{locale === "fr" ? "Budget mensuel" : "Monthly budget"}</span>
+        <input
+          inputMode="numeric"
+          className="ke-input w-[7rem]"
+          value={budgetMonthly}
+          aria-label={locale === "fr" ? "Budget mensuel" : "Monthly budget"}
+          onChange={(event) => setBudgetMonthly(event.target.value.replace(/[^\d]/g, "").slice(0, 5))}
+        />
+      </label>
+      <button
+        type="button"
+        data-ke="search-memory-reset"
+        className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium text-primary touch-manipulation"
+        onClick={() => {
+          window.localStorage.removeItem(SEARCH_MEMORY_KEY);
+          setBudgetMonthly("");
+          setAgeGroup("any");
+          if (user?.id) void saveSearchMemory({ data: null }).catch(() => undefined);
+          writeNowLoopSearch({ age: "" });
+          writeExploreSearch({ q: "" });
+        }}
+      >
+        {locale === "fr" ? "Réinitialiser" : "Reset"}
+      </button>
       {chip(meals, t("filterMeals"), () => setMeals((v) => !v))}
       {chip(outdoor, t("filterOutdoor"), () => setOutdoor((v) => !v))}
       {chip(inclusive, t("filterInclusive"), () => setInclusive((v) => !v))}
