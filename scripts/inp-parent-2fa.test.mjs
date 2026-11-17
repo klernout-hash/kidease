@@ -28,7 +28,7 @@ test("parent desk defers heavy tab content so nav highlight paints first", () =>
   assert.match(shortlist, /SAVED_EAGER_CARDS/);
   assert.match(desk, /savedReady/);
   assert.match(desk, /requestIdleCallback/);
-  assert.match(desk, /withTimeoutFallback/);
+  assert.match(desk, /withTimeout/);
   assert.match(desk, /LOADER_SETTLE_MS/);
   assert.match(desk, /exploreReady/);
   assert.match(desk, /loadDeskExtras/);

@@ -31,13 +31,6 @@ test("phone menu can open pay, documents, tours, family, daycare notes, and aler
   assert.doesNotMatch(phone, /NotificationBell/);
 });
 
-test("home puts saved daycares and waiting items before search", () => {
-  const home = src("src/components/parent-home.tsx");
-  const saved = home.indexOf('data-ke="parent-home-saved"');
-  const waiting = home.indexOf('data-ke="parent-home-waiting"');
-  const search = home.indexOf('data-ke="parent-home-search"');
-  assert.ok(saved > 0 && waiting > saved && search > waiting);
-});
 
 test("listing phone bar keeps one primary, Save, and a secondary disclosure", () => {
   const page = src("src/routes/daycare.$slug.tsx");

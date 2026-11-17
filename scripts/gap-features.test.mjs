@@ -73,7 +73,8 @@ test("job board powers differ on each desk and stay on one flag", () => {
   assert.match(desk, /data-ke="ece-jobs-gov"/);
   assert.match(provider, /ChildCheckinDesk/);
   assert.match(src("src/components/org-occupancy-desk.tsx"), /EceJobDesk mode="org"/);
-  assert.match(src("src/components/parent-desk.tsx"), /EceJobDesk mode="parent"/);
+  assert.doesNotMatch(src("src/components/parent-desk.tsx"), /EceJobDesk/);
+  assert.match(src("src/routes/jobs.tsx"), /EceJobBoard/);
   assert.match(src("src/components/gov/gov-dashboard.tsx"), /GovJobShortage/);
   const gov = src("src/lib/server/ece-jobs.ts");
   assert.match(gov, /listJobShortage/);

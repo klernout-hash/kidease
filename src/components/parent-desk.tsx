@@ -9,7 +9,6 @@ import { ParentShortlist } from "@/components/parent-shortlist";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { ChildHealthLog } from "@/components/child-health-log";
-import { EceJobDesk } from "@/components/ece-job-desk";
 import { ChildCareCard } from "@/components/child-care-card";
 import { CareReminderForm } from "@/components/care-reminder-form";
 import { CoparentDesk } from "@/components/coparent-desk";
@@ -46,7 +45,7 @@ import { doorDistanceKm } from "@/lib/card-distance";
 import { useAppStore } from "@/lib/store";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
-import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
+import { LOADER_SETTLE_MS, withTimeout } from "@/lib/timeout";
 import { parentDeskPath, parentNavSearch } from "@/lib/desk-nav";
 import { MAX_CHILDREN_PER_PARENT } from "@/lib/children-limit";
 import { parentDeskTabOrDefault } from "@/lib/parent-tab";
@@ -55,6 +54,7 @@ import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { PARENT_UPGRADE_PLANS } from "@/lib/upgrade-plans";
 import { ParentHome } from "@/components/parent-home";
+import { ParentHomeCare } from "@/components/parent-home-care";
 import { ParentAttention } from "@/components/attention-list";
 import { useRoleChrome } from "@/components/role-chrome";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
@@ -163,6 +163,7 @@ export function ParentDesk({
   const [contentTab, setContentTab] = useState<ParentTab>(initialTab ?? "explore");
   const [explore, setExplore] = useState<Card[]>([]);
   const [exploreReady, setExploreReady] = useState(false);
+  const [exploreError, setExploreError] = useState(false);
   const [saved, setSaved] = useState<Card[]>(() => asList(initialSaved));
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -173,6 +174,8 @@ export function ParentDesk({
   const [centreMessages, setCentreMessages] = useState(0);
   const [upgradeDismissed, setUpgradeDismissed] = useState(false);
   const [homeSettled, setHomeSettled] = useState(false);
+  const [homeError, setHomeError] = useState(false);
+  const [extrasState, setExtrasState] = useState<"pending" | "ready" | "error">("pending");
   const [editing, setEditing] = useState<Child | null | "new">(null);
   const [childFocus, setChildFocus] = useState<string | null>(null);
   const [childOpen, setChildOpen] = useState(false);
@@ -184,6 +187,10 @@ export function ParentDesk({
   const [savedReady, setSavedReady] = useState(false);
   const [shortlistShared, setShortlistShared] = useState(initialShared);
   const acceptedShare = useRef<string | null>(null);
+  const activeUserId = useRef(user?.id);
+  activeUserId.current = user?.id;
+  const exploreSeq = useRef(0);
+  const extrasSeq = useRef(0);
 
   const selectTab = useCallback((id: string) => {
     const next = parentDeskTabOrDefault(id);
@@ -200,6 +207,10 @@ export function ParentDesk({
 
   const loadExplore = useCallback(
     async (startBookings: Booking[], fresh = false) => {
+      const seq = ++exploreSeq.current;
+      const uid = activeUserId.current;
+      const current = () => seq === exploreSeq.current && uid === activeUserId.current;
+      setExploreError(false);
       try {
         if (!(origin.label || "").trim()) {
           startTransition(() => setExplore([]));
@@ -216,17 +227,17 @@ export function ParentDesk({
           q: loc.label,
           startDate: soonestStartDate(startBookings),
         };
-        const rows = await withTimeoutFallback(
+        const rows = await withTimeout(
           dedupedQuery(`parent-search:${JSON.stringify(data)}`, QUERY_STALE_MS, () => searchDaycares({ data }), {
             cacheIf: (value) => Array.isArray(value) && value.length > 0,
             fresh,
           }),
           LOADER_SETTLE_MS,
-          [] as Card[],
+          "parent-search-timeout",
         );
         const next = rows.length
           ? rows
-          : await withTimeoutFallback(
+          : await withTimeout(
               dedupedQuery(
                 `parent-featured:${loc.lat},${loc.lng},${loc.label ?? ""}`,
                 QUERY_STALE_MS,
@@ -234,11 +245,13 @@ export function ParentDesk({
                 { cacheIf: (value) => Array.isArray(value) && value.length > 0, fresh },
               ),
               LOADER_SETTLE_MS,
-              [] as Card[],
+              "parent-featured-timeout",
             );
-        startTransition(() => setExplore(asList(next)));
+        if (current()) startTransition(() => setExplore(asList(next)));
+      } catch {
+        if (current()) startTransition(() => setExploreError(true));
       } finally {
-        startTransition(() => setExploreReady(true));
+        if (current()) startTransition(() => setExploreReady(true));
       }
     },
     [origin, radiusKm],
@@ -248,7 +261,7 @@ export function ParentDesk({
   const loadFamily = useCallback(async (fresh = false) => {
     const seq = ++familySeq.current;
     if (shareToken && acceptedShare.current !== shareToken) {
-      const result = await acceptShortlistShare({ data: { token: shareToken } }).catch(() => null);
+      const result = await withTimeout(acceptShortlistShare({ data: { token: shareToken } }), LOADER_SETTLE_MS, "parent-share-timeout").catch(() => null);
       acceptedShare.current = shareToken;
       if (result?.ok) toast.success(t("shareShortlistAccepted"));
       else if (result && !result.ok) {
@@ -263,12 +276,12 @@ export function ParentDesk({
         toast.error(t(key));
       }
     }
-    const f = await dedupedQuery(`parent-family:${user?.id ?? ""}`, QUERY_STALE_MS, () => getFamily(), {
+    const f = await withTimeout(dedupedQuery(`parent-family:${user?.id ?? ""}`, QUERY_STALE_MS, () => getFamily(), {
       fresh: fresh || Boolean(shareToken),
-    });
-    if (seq !== familySeq.current) return f;
+    }), LOADER_SETTLE_MS, "parent-family-timeout");
+    if (seq !== familySeq.current || user?.id !== activeUserId.current) return f;
     await yieldToMain();
-    if (seq !== familySeq.current) return f;
+    if (seq !== familySeq.current || user?.id !== activeUserId.current) return f;
     startTransition(() => {
       setSaved(asList(f?.saved));
       setBookings(asList(f?.bookings));
@@ -279,38 +292,35 @@ export function ParentDesk({
       setCentreMessages(f.centreMessages ?? 0);
       setUpgradeDismissed(Boolean(f.upgradeCardDismissed));
       setShortlistShared(Boolean(f.shortlistShared));
+      setHomeSettled(true);
+      setHomeError(false);
     });
     return f;
   }, [shareToken, t, user?.id]);
 
   const loadDeskExtras = useCallback(async (fresh = false) => {
     const uid = user?.id ?? "";
-    const [billed, tourRows, leadRows] = await Promise.all([
-      dedupedQuery(
-        `parent-bills:${uid}`,
-        QUERY_STALE_MS,
-        () => listParentBills().catch(() => ({ bills: [] as Bill[] })),
-        { fresh },
-      ),
-      dedupedQuery(
-        `parent-tours:${uid}`,
-        QUERY_STALE_MS,
-        () => listTourRequests({ data: { desk: "parent" } }).catch(() => [] as TourRequest[]),
-        { fresh },
-      ),
-      dedupedQuery(
-        `parent-leads:${uid}`,
-        QUERY_STALE_MS,
-        () => listLeadRequests({ data: { desk: "parent" } }).catch(() => [] as LeadRequest[]),
-        { fresh },
-      ),
+    const seq = ++extrasSeq.current;
+    setExtrasState("pending");
+    const [billed, tourRows, leadRows] = await Promise.allSettled([
+      withTimeout(dedupedQuery(`parent-bills:${uid}`, QUERY_STALE_MS, () => listParentBills(), { fresh }), LOADER_SETTLE_MS, "parent-bills-timeout"),
+      withTimeout(dedupedQuery(`parent-tours:${uid}`, QUERY_STALE_MS, () => listTourRequests({ data: { desk: "parent" } }), { fresh }), LOADER_SETTLE_MS, "parent-tours-timeout"),
+      withTimeout(dedupedQuery(`parent-leads:${uid}`, QUERY_STALE_MS, () => listLeadRequests({ data: { desk: "parent" } }), { fresh }), LOADER_SETTLE_MS, "parent-leads-timeout"),
     ]);
+    if (seq !== extrasSeq.current || uid !== activeUserId.current) return;
     startTransition(() => {
-      setBills(asList(billed?.bills));
-      setTours(asList(tourRows));
-      setLeads(asList(leadRows));
+      if (billed.status === "fulfilled") setBills(asList(billed.value.bills));
+      if (tourRows.status === "fulfilled") setTours(asList(tourRows.value));
+      if (leadRows.status === "fulfilled") setLeads(asList(leadRows.value));
+      setExtrasState([billed, tourRows, leadRows].every((result) => result.status === "fulfilled") ? "ready" : "error");
     });
   }, [user?.id]);
+
+  function retryHome() {
+    setHomeError(false);
+    setHomeSettled(false);
+    void load().catch(() => setHomeError(true));
+  }
 
   async function load() {
     const f = await loadFamily(true);
@@ -318,6 +328,9 @@ export function ParentDesk({
   }
 
   useEffect(() => {
+    familySeq.current += 1;
+    extrasSeq.current += 1;
+    exploreSeq.current += 1;
     setBookings([]);
     setPayments([]);
     setBills([]);
@@ -328,6 +341,9 @@ export function ParentDesk({
     setCentreMessages(0);
     setUpgradeDismissed(false);
     setHomeSettled(false);
+    setHomeError(false);
+    setExtrasState("pending");
+    setExploreError(false);
     setExplore([]);
     setExploreReady(false);
     setPicked({});
@@ -345,7 +361,6 @@ export function ParentDesk({
       })
       .then((f) => {
         if (cancelled || !f) return;
-        startTransition(() => setHomeSettled(true));
         cancelIdle = scheduleIdle(() => {
           if (cancelled) return;
           void loadExplore(f.bookings).catch(() => undefined);
@@ -353,9 +368,11 @@ export function ParentDesk({
         });
       })
       .catch(() => {
+        if (cancelled) return;
         startTransition(() => {
           setExploreReady(true);
           setChildrenReady(true);
+          setHomeError(true);
         });
       });
     return () => {
@@ -442,9 +459,6 @@ export function ParentDesk({
     }
   }, [bookings, children, contentTab, deferredSaved, located, origin, radiusKm]);
 
-  void explore;
-  void exploreReady;
-  void ParentDeskRails;
   if (!user) return <DeskSkeleton />;
   const upgradeBuyer = {
     role: desks?.role,
@@ -475,7 +489,6 @@ export function ParentDesk({
 
       {contentTab === "explore" ? (
         <>
-        <ParentAttention userId={user.id} tours={tours} bills={bills} childIds={children.map((child) => child.id)} />
         <ParentHome
           saved={saved}
           bookings={bookings}
@@ -487,18 +500,32 @@ export function ParentDesk({
           messages={centreMessages}
           dismissed={upgradeDismissed}
           settled={homeSettled}
+          loadError={homeError}
+          extrasState={extrasState}
+          bills={bills}
+          onRetry={retryHome}
+          care={<ParentHomeCare bookings={bookings} userId={user.id} />}
+          attention={extrasState === "ready" ? <ParentAttention userId={user.id} tours={tours} bills={bills} childIds={children.map((child) => child.id)} /> : null}
+          matches={
+            <section data-ke="parent-home-matches" className="min-h-56">
+              {!exploreReady ? <p role="status" className="text-sm text-muted">{locale === "fr" ? "Recherche de garderies près de chez vous…" : "Finding care near you…"}</p> : exploreError ? (
+                <div role="alert">
+                  <p className="text-sm text-muted">{locale === "fr" ? "Les garderies n’ont pas pu être chargées." : "Daycares could not load."}</p>
+                  <Button variant="secondary" className="mt-3" onClick={() => { setExploreReady(false); void loadExplore(bookings, true); }}>{locale === "fr" ? "Réessayer" : "Try again"}</Button>
+                </div>
+              ) : explore.length ? (
+                <Suspense fallback={<p role="status">{locale === "fr" ? "Préparation des résultats…" : "Preparing your results…"}</p>}>
+                  <ParentDeskRails items={explore} children={children} bookings={bookings} matchOnly />
+                </Suspense>
+              ) : <EmptyState title={t("parentHomeFindTitle")} body={t("parentHomeFindBody")} />}
+            </section>
+          }
           onDismiss={() => {
             void dismissUpgradeCard()
               .then(() => setUpgradeDismissed(true))
               .catch(() => setUpgradeDismissed(false));
           }}
         />
-        <details className="mt-8 rounded-xl border border-border bg-surface p-4">
-          <summary className="flex min-h-11 cursor-pointer items-center font-medium">{t("findDaycareJobs")}</summary>
-          <div className="mt-4">
-            <EceJobDesk mode="parent" />
-          </div>
-        </details>
         </>
       ) : null}
 

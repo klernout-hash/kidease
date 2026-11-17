@@ -320,6 +320,7 @@ export const getFamily = createServerFn({ method: "GET" })
       children.map((row) => mapChild(revealChildHealth(row))),
     );
     return {
+      viewerId: context.userId,
       role: (profile[0]?.role === "admin" ? "admin" : profile[0]?.role === "provider" ? "provider" : "parent") as
         | "parent"
         | "provider"

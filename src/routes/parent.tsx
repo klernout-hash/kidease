@@ -26,6 +26,7 @@ import { stripLocalePrefix } from "@/lib/locale-path";
 import { getFamily } from "@/lib/server/family";
 import { useCopy } from "@/lib/use-copy";
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
+import { LOADER_SETTLE_MS, withTimeout } from "@/lib/timeout";
 
 const ParentDesk = lazy(() =>
   import("@/components/parent-desk").then((m) => ({ default: m.ParentDesk })),
@@ -76,13 +77,14 @@ export function parentHead({ matches }: { matches: Array<{ pathname: string }> }
 
 export async function parentLoader() {
   try {
-    const family = await getFamily();
+    const family = await withTimeout(getFamily(), LOADER_SETTLE_MS, "parent-loader-timeout");
     return {
+      viewerId: family.viewerId,
       saved: Array.isArray(family?.saved) ? family.saved : [],
       shortlistShared: Boolean(family?.shortlistShared),
     };
   } catch {
-    return { saved: [], shortlistShared: false };
+    return { viewerId: null, saved: [], shortlistShared: false };
   }
 }
 
@@ -274,6 +276,7 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
       {search.preview === "support" && canUseOperatorTools(session?.email) ? <SupportPreviewBanner /> : null}
       <Suspense fallback={<DeskSkeleton />}>
         <ParentDesk
+          key={user.id}
           initialTab={initialTab}
           plusReturn={search.plus ?? null}
           upgradeSearch={{
@@ -284,8 +287,8 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
           }}
           billingReturn={search.billing === "return"}
           shareToken={search.share ?? null}
-          initialSaved={loaded.saved}
-          initialShared={loaded.shortlistShared}
+          initialSaved={loaded.viewerId === user.id ? loaded.saved : []}
+          initialShared={loaded.viewerId === user.id && loaded.shortlistShared}
           initialChild={search.child ?? null}
           initialFocus={search.focus ?? null}
           familyInvite={search.invite ?? null}

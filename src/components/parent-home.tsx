@@ -1,9 +1,9 @@
+import { Fragment, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { parentDeskPath } from "@/lib/desk-nav";
 import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { AreaWaitlistForm } from "@/components/area-waitlist-form";
 import { useRoleChrome } from "@/components/role-chrome";
-import { EmptyState } from "@/components/empty-state";
 import { RoleUpgradeCard } from "@/components/role-upgrade-card";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,32 @@ import { showsParentBrowseActions } from "@/lib/role-access";
 import { isLeadStatus, leadStatusCopyKey } from "@/lib/lead-requests";
 import { spotOfferCopy } from "@/lib/spot-offer-copy";
 import { useCopy } from "@/lib/use-copy";
+import { localePath } from "@/lib/locale-path";
+import {
+  parentHomeSectionOrder,
+  parentHomeStage,
+  type ParentHomeSection,
+} from "@/lib/parent-home-stage";
+import { billDollars, billIsOpen, type Bill } from "@/lib/bill";
+import { money } from "@/lib/utils";
 import type { Booking, DaycareCard, TourRequest } from "@/lib/types";
 
 type LeadSnap = { id: string; daycareName?: string | null; status: string };
 
-function parentLeadLabel(status: string, t: (key: "statusWaitlist" | "leadStatusRequested" | "leadStatusConfirmed" | "leadStatusDeclined" | "leadStatusReceived" | "leadStatusAnswered" | "leadStatusClosed") => string, locale: string): string {
+function parentLeadLabel(
+  status: string,
+  t: (
+    key:
+      | "statusWaitlist"
+      | "leadStatusRequested"
+      | "leadStatusConfirmed"
+      | "leadStatusDeclined"
+      | "leadStatusReceived"
+      | "leadStatusAnswered"
+      | "leadStatusClosed",
+  ) => string,
+  locale: string,
+): string {
   const raw = status.trim().toLowerCase();
   if (raw === "waiting" || raw === "waitlist") return t("statusWaitlist");
   if (raw === "any") return locale === "fr" ? "Tout âge" : "Any age";
@@ -32,7 +53,7 @@ function tourWhen(tour: TourRequest): string {
   return tour.createdAt;
 }
 
-/** Parent landing: search, saved centres, request status, and the next tour. */
+/** Prioritize the family’s current stage while keeping search available for siblings. */
 export function ParentHome({
   saved,
   bookings,
@@ -44,6 +65,13 @@ export function ParentHome({
   messages = 0,
   dismissed = false,
   settled = false,
+  loadError = false,
+  extrasState = "pending",
+  bills = [],
+  care,
+  attention,
+  matches,
+  onRetry,
   onDismiss,
 }: {
   saved: DaycareCard[];
@@ -56,6 +84,13 @@ export function ParentHome({
   messages?: number;
   dismissed?: boolean;
   settled?: boolean;
+  loadError?: boolean;
+  extrasState?: "pending" | "ready" | "error";
+  bills?: Bill[];
+  care?: ReactNode;
+  attention?: ReactNode;
+  matches?: ReactNode;
+  onRetry?: () => void;
   onDismiss?: () => void;
 }) {
   const { t, locale } = useCopy();
@@ -63,9 +98,15 @@ export function ParentHome({
   const joinLabel = spotOfferCopy(locale).join;
   const parentPath = parentDeskPath(useRouterState({ select: (s) => s.location.pathname }));
   const nextTour = [...tours]
-    .filter((tour) => tour.status === "pending" || tour.status === "accepted" || String(tour.status) === "confirmed")
+    .filter(
+      (tour) =>
+        tour.status === "pending" ||
+        tour.status === "accepted" ||
+        String(tour.status) === "confirmed",
+    )
     .sort((a, b) => tourWhen(a).localeCompare(tourWhen(b)))[0];
-  const empty = saved.length === 0 && bookings.length === 0 && tours.length === 0 && leads.length === 0;
+  const empty =
+    saved.length === 0 && bookings.length === 0 && tours.length === 0 && leads.length === 0;
   const card = showHomeUpgradeCard({
     paid,
     eligible: parentHomeCardEligible({
@@ -75,21 +116,78 @@ export function ParentHome({
     dismissed,
   });
 
-  return (
-    <div className="mt-4 space-y-6" data-ke="parent-home" data-settled={settled ? "1" : "0"}>
-      {card ? (
-        <RoleUpgradeCard
-          role="parent"
-          paid={card === "plan"}
-          planLabel={planLabel}
-          renewsOn={renewsOn}
-          onDismiss={card === "upgrade" ? onDismiss : undefined}
-        />
+  const stage = parentHomeStage(bookings, settled);
+  const fr = locale === "fr";
+  const extraNotice = (
+    <p className="mt-2 text-sm text-muted" role="status">
+      {extrasState === "error"
+        ? fr
+          ? "Les demandes et factures n’ont pas toutes été chargées."
+          : "Some requests or bills could not load."
+        : fr
+          ? "Recherche de vos demandes et factures…"
+          : "Checking your requests and bills…"}
+      {extrasState === "error" && onRetry ? (
+        <Button variant="secondary" className="ml-2" onClick={onRetry}>
+          {fr ? "Réessayer" : "Try again"}
+        </Button>
       ) : null}
+    </p>
+  );
+  const sections: Record<ParentHomeSection, ReactNode> = {
+    care,
+    attention,
+    bills: (
+      <section data-ke="parent-home-bills">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-display text-xl">{t("openBills")}</h2>
+          <Link
+            to={parentPath}
+            search={{ tab: "payments" }}
+            className="inline-flex min-h-11 min-w-11 items-center rounded-md px-2 text-sm font-medium text-primary"
+          >
+            {t("parentHomeSeeAll")}
+          </Link>
+        </div>
+        {extrasState !== "ready" ? (
+          extraNotice
+        ) : bills.some((bill) => billIsOpen(bill.status)) ? (
+          <ul className="mt-2 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
+            {bills
+              .filter((bill) => billIsOpen(bill.status))
+              .slice(0, 3)
+              .map((bill) => (
+                <li
+                  key={bill.id}
+                  className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+                >
+                  <span className="min-w-0 text-sm">
+                    {bill.daycareName}
+                    {bill.childName ? ` · ${bill.childName}` : ""}
+                  </span>
+                  <span className="text-sm font-medium tabular-nums">
+                    {money(billDollars(bill), locale)}
+                  </span>
+                </li>
+              ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-muted">
+            {fr ? "Aucune facture ouverte." : "No open bills."}
+          </p>
+        )}
+      </section>
+    ),
+    matches,
+    saved: (
       <section data-ke="parent-home-saved">
         <div className="flex flex-wrap items-center justify-between gap-[8px]">
           <h2 className="font-display text-xl">{t("parentHomeSaved")}</h2>
-          <Link to={parentPath} search={{ tab: "saved" }} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md px-2 text-sm font-medium text-primary">
+          <Link
+            to={parentPath}
+            search={{ tab: "saved" }}
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md px-2 text-sm font-medium text-primary"
+          >
             {t("saved")}
           </Link>
         </div>
@@ -98,13 +196,22 @@ export function ParentHome({
         ) : (
           <ul className="mt-2 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
             {saved.slice(0, 4).map((item) => (
-              <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+              <li
+                key={item.id}
+                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+              >
                 {isSafeSitemapSlug(item.slug) ? (
-                  <Link to="/daycare/$slug" params={{ slug: item.slug }} className="flex min-h-12 min-w-0 flex-1 items-center text-sm font-medium">
+                  <Link
+                    to="/daycare/$slug"
+                    params={{ slug: item.slug }}
+                    className="flex min-h-[44px] min-w-0 flex-1 items-center text-sm font-medium"
+                  >
                     {item.name}
                   </Link>
                 ) : (
-                  <span className="flex min-h-12 min-w-0 flex-1 items-center text-sm font-medium">{item.name}</span>
+                  <span className="flex min-h-[44px] min-w-0 flex-1 items-center text-sm font-medium">
+                    {item.name}
+                  </span>
                 )}
                 {parentActions && isSafeSitemapSlug(item.slug) ? (
                   <Link
@@ -122,45 +229,73 @@ export function ParentHome({
           </ul>
         )}
       </section>
+    ),
+    requests: (
       <section data-ke="parent-home-waiting">
         <div className="flex flex-wrap items-center justify-between gap-[8px]">
           <h2 className="font-display text-xl">{t("parentHomeRequests")}</h2>
-          <Link to={parentPath} search={{ tab: "requests" }} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md px-2 text-sm font-medium text-primary">
+          <Link
+            to={parentPath}
+            search={{ tab: "requests" }}
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md px-2 text-sm font-medium text-primary"
+          >
             {t("parentHomeSeeAll")}
           </Link>
         </div>
-        {bookings.length === 0 && leads.length === 0 ? (
+        {extrasState !== "ready" ? (
+          extraNotice
+        ) : bookings.length === 0 && leads.length === 0 ? (
           <p className="mt-2 text-sm text-muted">{t("parentHomeNoRequests")}</p>
         ) : (
           <ul className="mt-2 space-y-2">
             {bookings.slice(0, 3).map((booking) => (
-              <li key={booking.id} className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border">
+              <li
+                key={booking.id}
+                className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border"
+              >
                 <span className="min-w-0 truncate text-sm">{booking.daycareName}</span>
                 <StatusBadge status={booking.status} />
               </li>
             ))}
             {leads.slice(0, 3).map((lead) => (
-              <li key={lead.id} className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border">
-                <span className="min-w-0 truncate text-sm">{lead.daycareName || t("parentHomeRequests")}</span>
-                <span className="text-xs text-muted">{parentLeadLabel(lead.status, t, locale)}</span>
+              <li
+                key={lead.id}
+                className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border"
+              >
+                <span className="min-w-0 truncate text-sm">
+                  {lead.daycareName || t("parentHomeRequests")}
+                </span>
+                <span className="text-xs text-muted">
+                  {parentLeadLabel(lead.status, t, locale)}
+                </span>
               </li>
             ))}
           </ul>
         )}
         <div className="mt-4">
           <h3 className="text-sm font-medium text-fg">{t("parentNextTour")}</h3>
-          {nextTour ? (
+          {extrasState !== "ready" ? (
+            extraNotice
+          ) : nextTour ? (
             <p className="mt-1 text-sm text-muted">
               {nextTour.daycareName}
-              {nextTour.status === "pending" ? ` · ${t("parentTourWaiting")}` : ` · ${t("parentTourConfirmed")}`}
+              {nextTour.status === "pending"
+                ? ` · ${t("parentTourWaiting")}`
+                : ` · ${t("parentTourConfirmed")}`}
             </p>
           ) : (
             <p className="mt-1 text-sm text-muted">{t("parentNoTour")}</p>
           )}
         </div>
       </section>
-      {empty ? null : (
-      <form action="/search" method="get" className="flex flex-wrap gap-[8px]" data-ke="parent-home-search">
+    ),
+    search: empty ? null : (
+      <form
+        action={localePath("/search", locale)}
+        method="get"
+        className="flex flex-wrap gap-[8px]"
+        data-ke="parent-home-search"
+      >
         <label className="min-w-[44px] flex-1">
           <span className="sr-only">{t("parentHomeSearchLabel")}</span>
           <input
@@ -170,21 +305,83 @@ export function ParentHome({
             autoComplete="off"
           />
         </label>
-        <Button type="submit" className="shrink-0 rounded-full px-4">
+        <Button type="submit" variant="secondary" className="shrink-0 rounded-full px-4">
           {t("search")}
         </Button>
       </form>
-      )}
-      <AreaWaitlistForm returnTo="/parent" />
+    ),
+    area: <AreaWaitlistForm returnTo={parentPath} />,
+    plan: card ? (
+      <RoleUpgradeCard
+        role="parent"
+        paid={card === "plan"}
+        planLabel={planLabel}
+        renewsOn={renewsOn}
+        onDismiss={card === "upgrade" ? onDismiss : undefined}
+      />
+    ) : null,
+  };
 
-      {empty ? (
-        <EmptyState
-          title={t("parentHomeFindTitle")}
-          body={t("parentHomeFindBody")}
-          action={t("parentHomeFindAction")}
-          actionTo="/search"
-        />
-      ) : null}
+  return (
+    <div
+      className="mt-4 space-y-6"
+      data-ke="parent-home"
+      data-stage={stage}
+      data-settled={settled ? "1" : "0"}
+    >
+      <div>
+        <h1 className="font-display text-2xl">
+          {fr ? "Votre espace parent KidEase" : "Your KidEase parent home"}
+        </h1>
+        <p className="mt-2 text-sm text-muted">
+          {stage === "enrolled"
+            ? fr
+              ? "Retrouvez les nouvelles de votre enfant, les actions à faire et vos factures. Consultez les soins du jour."
+              : "Keep up with your child’s day, next steps and bills. Check today’s care."
+            : fr
+              ? "Trouvez une garderie permise et suivez vos demandes. Cherchez une garde près de chez vous."
+              : "Find licensed care and follow your requests. Search for care nearby."}
+        </p>
+        {stage !== "pending" && !loadError ? (
+          <Button asChild className="mt-3">
+            {stage === "enrolled" ? (
+              <Link to={parentPath} search={{ tab: "care" }}>
+                {fr ? "Voir les soins du jour" : "View daily care"}
+              </Link>
+            ) : (
+              <Link to={localePath("/search", locale)}>{t("parentHomeFindAction")}</Link>
+            )}
+          </Button>
+        ) : null}
+      </div>
+      {loadError ? (
+        <div role="alert" className="rounded-xl border border-border bg-surface p-4">
+          <p>
+            {fr
+              ? "Votre espace parent n’a pas pu être chargé."
+              : "Your parent home could not load."}
+          </p>
+          {onRetry ? (
+            <Button className="mt-3" onClick={onRetry}>
+              {fr ? "Réessayer" : "Try again"}
+            </Button>
+          ) : null}
+          <Link
+            to={localePath("/search", locale)}
+            className="ml-3 inline-flex min-h-11 items-center text-sm font-medium text-primary"
+          >
+            {t("emptyFindCare")}
+          </Link>
+        </div>
+      ) : stage === "pending" ? (
+        <p role="status" className="text-sm text-muted">
+          {fr ? "Préparation de votre espace parent…" : "Getting your parent home ready…"}
+        </p>
+      ) : (
+        parentHomeSectionOrder(stage).map((section) => (
+          <Fragment key={section}>{sections[section]}</Fragment>
+        ))
+      )}
     </div>
   );
 }
