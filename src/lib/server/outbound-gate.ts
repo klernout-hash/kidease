@@ -16,23 +16,19 @@ import {
   normalizeControlEdit,
   type OutboundControls,
 } from "@/lib/outbound-controls";
-import { createOutboundGate, registerOutboundGates, type OutboundStore } from "@/lib/outbound-gate-core";
+import { blockedMessage, createOutboundGate, registerOutboundGates, type OutboundStore } from "@/lib/outbound-gate-core";
 
 const CONTROLS_TTL_MS = 15_000;
 let cached: { at: number; controls: OutboundControls } | null = null;
 
 async function readControls(): Promise<OutboundControls> {
   if (cached && Date.now() - cached.at < CONTROLS_TTL_MS) return cached.controls;
-  try {
-    const sql = await getSql();
-    const rows = await sql<{ key: string; value: string }>`select key, value from outbound_controls`;
-    cached = { at: Date.now(), controls: controlsFromRows(rows) };
-    return cached.controls;
-  } catch (err) {
-    // Keep the last known settings (test mode stays on if it was on).
-    if (cached) return cached.controls;
-    throw err;
-  }
+  // An expired snapshot may predate test mode or a kill switch enabled by
+  // another instance. Let read errors reach the gate so it fails closed.
+  const sql = await getSql();
+  const rows = await sql<{ key: string; value: string }>`select key, value from outbound_controls`;
+  cached = { at: Date.now(), controls: controlsFromRows(rows) };
+  return cached.controls;
 }
 
 export function clearOutboundControlsCache(): void {
@@ -104,10 +100,14 @@ export const gateOutboundSms = outboundGate.gateSms;
  * so each counts as the admin "minutes per call" setting toward the media cap.
  */
 export async function gateMediaSession(kind: "video" | "voice"): Promise<{ ok: true } | { ok: false; error: string }> {
-  const c = await outboundGate.controls();
+  let c: OutboundControls;
+  try {
+    c = await outboundGate.controls();
+  } catch {
+    return { ok: false, error: blockedMessage("controls_unavailable") };
+  }
   const r = await gateOutbound({ channel: "media", units: c.mediaMinutesPerSession, label: kind });
   if (r.allow) return { ok: true };
-  const { blockedMessage } = await import("@/lib/outbound-gate-core");
   return { ok: false, error: blockedMessage(r.reason) };
 }
 

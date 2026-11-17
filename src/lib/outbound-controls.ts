@@ -189,7 +189,7 @@ export function forcedOffFlags(controls: OutboundControls): Set<string> {
   return out;
 }
 
-export type OutboundBlockReason = "switch_off" | "daily_cap" | "no_test_recipient";
+export type OutboundBlockReason = "switch_off" | "daily_cap" | "no_test_recipient" | "controls_unavailable";
 
 /**
  * Before counting: is this send blocked by a switch or by test mode having

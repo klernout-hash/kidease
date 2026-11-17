@@ -58,14 +58,26 @@ export function createOutboundGate(deps: GateDeps) {
       return await deps.store.loadControls();
     } catch (err) {
       deps.onError?.(err);
-      return defaultControls();
+      throw err;
     }
   }
 
   async function gate(input: GateInput): Promise<GateResult> {
     const essential = Boolean(input.essential);
     const units = Math.max(1, Math.floor(input.units ?? 1));
-    const c = await controls();
+    let c: OutboundControls;
+    try {
+      c = await controls();
+    } catch {
+      if (!essential) {
+        // Unknown settings must never disable test routing or a kill switch.
+        log("[kidease-outbound] blocked", { channel: input.channel, reason: "controls_unavailable", label: input.label ?? "" });
+        return { allow: false, reason: "controls_unavailable" };
+      }
+      // Sign-in, password and emergency messages intentionally reach the real
+      // recipient even during a controls outage. Counting stays best effort.
+      c = defaultControls();
+    }
     const testRecipient = resolveTestRecipient(c, input.channel, env);
     const pre = precheckOutbound({ controls: c, channel: input.channel, essential, testRecipient });
     const day = outboundDay(now());
@@ -133,6 +145,7 @@ export type EmailGate = OutboundGate["gateEmail"];
 
 /** Plain words for a blocked send, safe to show an admin. */
 export function blockedMessage(reason: OutboundBlockReason): string {
+  if (reason === "controls_unavailable") return "Not sent: safety settings could not load. Please try again.";
   if (reason === "switch_off") return "Not sent: this channel is switched off in admin.";
   if (reason === "daily_cap") return "Not sent: today's limit for this channel is reached.";
   return "Not sent: test mode is on but no test address is set.";
