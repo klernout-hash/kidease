@@ -357,6 +357,18 @@
   min-width: 44px;
 }
 
+/* The root font is 14px, so 2.75rem is about 38.5px. Today's look uses the
+   same 44px floor as the clean look for controls that already ask for it. */
+html:not([data-look="clean"]) :is(a, button, summary, select, input, label, [role="button"], [role="tab"]):is(.min-h-11, .h-11, .size-11) {
+  min-height: max(44px, 2.75rem);
+}
+html:not([data-look="clean"]) :is(a, button, summary, [role="button"], [role="tab"]):is(.min-w-11, .w-11, .size-11) {
+  min-width: max(44px, 2.75rem);
+}
+html:not([data-look="clean"]) :is(a, button, [role="button"]).h-11 {
+  height: max(44px, 2.75rem);
+}
+
 /* Header buttons use rem, so a large text size makes them wider than a 320px
    phone once the back control is also in the row. Kept outside @layer so it
    wins over the size utilities. 44px stays a full touch target. */
@@ -367,8 +379,8 @@
     height: 44px;
   }
   header .size-9 {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
   }
 }
 
