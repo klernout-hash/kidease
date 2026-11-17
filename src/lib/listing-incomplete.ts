@@ -187,3 +187,8 @@ export function incompleteCrmPayload(input: {
     updatedAt: input.updatedAt || input.submittedAt || null,
   };
 }
+
+/** Same rules as the Incomplete checklist, for the profile health score and the Approve minimum. */
+export const checklistHasFees = hasFeeOrProgram;
+export const checklistHasAges = hasConfirmedAges;
+export const checklistHasHours = hasListedHours;

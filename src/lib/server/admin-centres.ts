@@ -7,6 +7,9 @@ import { requireAdmin } from "@/lib/server/roles";
 import { writeTrustEvent } from "@/lib/server/trust";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { splitPhotoList } from "@/lib/listing-photo";
+import type { ProfileHealth } from "@/lib/profile-health";
+import { healthFromDaycareRow } from "@/lib/profile-health-row";
+import { loadDaycareHealth } from "@/lib/server/profile-health";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { compareTimeDesc } from "@/lib/sort-time";
 import { transactionalMailFrom } from "@/lib/mail-from";
@@ -61,6 +64,12 @@ export type AdminCentreRow = {
   hasProviderLink: boolean;
   hasListingClaim: boolean;
   missing: IncompleteMissingField[];
+  /** Real listing photos on file (not placeholders). Drives the profile health score. */
+  photoCount?: number;
+  /** Up to 4 listing photos for the card's photo strip. */
+  photoThumbs?: string[];
+  /** Same score the daycare sees on its own desk. */
+  health?: ProfileHealth;
   updatedAt: string | null;
   addonLine?: string | null;
   mergedInto: string | null;
@@ -397,10 +406,36 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           province: r.province,
         });
       const photos = firstReviewPhoto(r.photos, r.license_photo);
+      const realPhotos = splitPhotoList(r.photos).filter((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
+      const health = healthFromDaycareRow({
+        photos: r.photos,
+        license_number: r.license_number,
+        license_status: r.license_status,
+        license_expiry: r.license_expiry,
+        registry_match_state: r.registry_match_state,
+        license_photo: r.license_photo,
+        screening_on_file: r.screening_on_file,
+        staff_screening_attested: r.staff_screening_attested,
+        province: r.province,
+        infant_monthly: r.infant_monthly ?? null,
+        toddler_monthly: r.toddler_monthly ?? null,
+        preschool_monthly: r.preschool_monthly ?? null,
+        part_time_monthly: r.part_time_monthly ?? null,
+        ages_confirmed: r.ages_confirmed ?? null,
+        age_min_months: r.age_min_months ?? null,
+        age_max_months: r.age_max_months ?? null,
+        hours: r.hours ?? null,
+        phone: r.phone ?? null,
+        contact_email: r.contact_email ?? null,
+        address: r.address ?? null,
+      });
       return {
         ...row,
         live,
         ...photos,
+        photoCount: realPhotos.length,
+        photoThumbs: realPhotos.slice(0, 4),
+        health,
         missing: incompleteMissing({
           claimStatus: row.claimStatus,
           claimedAt: row.claimedAt,
@@ -478,6 +513,12 @@ export const decideCentre = createServerFn({ method: "POST" })
     let approvalHealth: Awaited<ReturnType<typeof runApproval>>["health"] | null = null;
 
     if (decision === "approve") {
+      // Approve needs the public-card minimum: 1 photo, a valid licence, fees and ages.
+      // The score can be under Ready (Kyle can override); the minimum cannot.
+      const minimum = await loadDaycareHealth(sql, data.daycareId);
+      if (!minimum.minimumMet) {
+        throw new Error(`Not approved yet: ${minimum.blockers.map((b) => b.en).join(". ")}.`);
+      }
       const approved = await runApproval(sql, {
         daycareId: data.daycareId,
         actorUserId: context.userId,
