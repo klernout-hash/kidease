@@ -91,10 +91,18 @@ import { CurriculumDeskLink, CurriculumPackDesk } from "@/components/curriculum-
 import { OrgDeskLink, OrgOccupancyDesk } from "@/components/org-occupancy-desk";
 import { EceJobDesk } from "@/components/ece-job-desk";
 import { ChildCheckinDesk } from "@/components/child-checkin-desk";
-import { SafeArrivalPanel } from "@/components/safe-arrival-panel";
-import { ChildHealthLog } from "@/components/child-health-log";
-import { CertExpiryPanel } from "@/components/cert-expiry-panel";
-import { FamilyInviteGap } from "@/components/family-invite-gap";
+const SafeArrivalPanel = lazy(() =>
+  import("@/components/safe-arrival-panel").then((m) => ({ default: m.SafeArrivalPanel })),
+);
+const ChildHealthLog = lazy(() =>
+  import("@/components/child-health-log").then((m) => ({ default: m.ChildHealthLog })),
+);
+const CertExpiryPanel = lazy(() =>
+  import("@/components/cert-expiry-panel").then((m) => ({ default: m.CertExpiryPanel })),
+);
+const FamilyInviteGap = lazy(() =>
+  import("@/components/family-invite-gap").then((m) => ({ default: m.FamilyInviteGap })),
+);
 import { orgDeskStatus } from "@/lib/server/org-occupancy";
 import { gapCopy, moneyCentreChoice, pickCentre } from "@/lib/gap-features";
 import { useSessionDesks } from "@/components/desk-switcher";
@@ -643,7 +651,6 @@ export function ProviderPage() {
         </>
       ) : null}
       {/* What needs doing first, then check-in, then records and settings folded under one heading. */}
-      {desk === "today" && centreOwner && !staffDesk && deskListings.length > 0 ? <FamilyInviteGap /> : null}
       {desk === "today" && !hostToday && !staffDesk && deskListings.length > 0 ? <ChildCheckinDesk /> : null}
       {desk === "today" && !staffDesk && deskListings.length > 0 ? (
         <TodayMore locale={locale === "fr" ? "fr" : "en"}>
@@ -651,9 +658,12 @@ export function ProviderPage() {
           <StoriesDeskLink />
           <CurriculumDeskLink />
           <OrgDeskLink />
-          {centreOwner ? <SafeArrivalPanel /> : null}
-          {centreOwner ? <CertExpiryPanel /> : null}
-          {centreOwner ? <ChildHealthLog /> : null}
+          <Suspense fallback={<div className="min-h-44" aria-hidden="true" />}>
+            {centreOwner ? <SafeArrivalPanel /> : null}
+            {centreOwner ? <CertExpiryPanel /> : null}
+            {centreOwner ? <ChildHealthLog /> : null}
+            {centreOwner ? <FamilyInviteGap /> : null}
+          </Suspense>
           <EceJobDesk mode={centreOwner ? "daycare" : "staff"} />
         </TodayMore>
       ) : null}
