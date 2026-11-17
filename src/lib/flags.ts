@@ -224,6 +224,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_HUAWEI_APPGALLERY_LINK",
   "FEATURE_AMAZON_STORE_DEEP_LINK",
   "FEATURE_PERSISTENT_SESSIONS",
+  "FEATURE_ADMIN_SAVED_FILTERS",
   "FEATURE_GOV_FILTERED_EXPORT",
   "FEATURE_OWNER_REPLY_TEMPLATES",
   "FEATURE_SAVED_CENTRE_AGE_ALERTS",
@@ -647,6 +648,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_AMAZON_STORE_DEEP_LINK: false,
   /** Stay signed in on the phone, and a 30-day choice on the website. Off. */
   FEATURE_PERSISTENT_SESSIONS: false,
+  /** Admins can save, name, and delete list filters. On. */
+  FEATURE_ADMIN_SAVED_FILTERS: true,
   /** Download the government table on screen, with the filters already applied. On. */
   FEATURE_GOV_FILTERED_EXPORT: true,
   /** Centre request replies in English and French. On. Picking one does not send it. */
@@ -1535,6 +1538,12 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Stay signed in on the phone until Sign out, and a 30-day choice on the website. Off. Admin sign-in is unchanged.",
+  },
+  {
+    key: "FEATURE_ADMIN_SAVED_FILTERS",
+    defaultOn: true,
+    docs: "docs/flags.md",
+    summary: "Admins can save, name, and delete list filters, such as unclaimed centres in one province or documents waiting. On.",
   },
   {
     key: "FEATURE_GOV_FILTERED_EXPORT",

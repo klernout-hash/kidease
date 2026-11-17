@@ -271,6 +271,8 @@ These are env-only. Unset means the feature stays on. Set the value to `0` to pa
 
 A paused screen says what is off and offers a way to search.
 
+`FEATURE_ADMIN_SAVED_FILTERS` is on. An admin can save, name, and delete a list filter, such as unclaimed centres in one province or documents waiting.
+
 `FEATURE_GOV_FILTERED_EXPORT` is on. A government table can download CSV or PDF of the rows on screen, after the province, city, and search filters already applied. The older summary download stays.
 
 `FEATURE_OWNER_REPLY_TEMPLATES` is on. A centre can insert “Tour confirmed”, “Waitlist added”, “Spot offered”, or “Not a fit right now” in English or French, then edit the words before sending. An owner can save their own wording. Nothing is sent until they press Send.

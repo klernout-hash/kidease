@@ -26,7 +26,9 @@ export const Route = createFileRoute("/admin")({
     const role = s.role === "parent" || s.role === "provider" ? (s.role as AccountNotifyRole) : undefined;
     const q = typeof s.q === "string" && s.q.trim() ? s.q : undefined;
     const stat = parseAdminStatFilter(typeof s.stat === "string" ? s.stat : undefined);
-    const out: { tab?: AdminDeskTab; kind?: string; role?: AccountNotifyRole; q?: string; stat?: AdminStatFilter } = {};
+    const prov = typeof s.prov === "string" && /^[A-Z]{2}$/.test(s.prov) ? s.prov : undefined;
+    const docs = s.docs === "1" || s.docs === 1 ? (1 as const) : undefined;
+    const out: { tab?: AdminDeskTab; kind?: string; role?: AccountNotifyRole; q?: string; stat?: AdminStatFilter; prov?: string; docs?: 1 } = {};
     if (tab) out.tab = tab;
     else if (role) out.tab = "people";
     else if (kind && kind !== "all") out.tab = "activity";
@@ -34,6 +36,8 @@ export const Route = createFileRoute("/admin")({
     if (role) out.role = role;
     if (q) out.q = q;
     if (stat) out.stat = stat;
+    if (prov) out.prov = prov;
+    if (docs) out.docs = docs;
     return out;
   },
   head: () => ({
