@@ -2,10 +2,13 @@
  * Branded KidEase email layout. Table-based, inline CSS, 600px, dark-mode safe.
  * Pure: no DB, no env reads except via args. Used by sendTransactionalMail when BRANDED_EMAILS=1.
  */
+import { CASL_SENDER } from "./casl.ts";
+
 export type EmailLocale = "en" | "fr" | "fr-qc";
 export type EmailBlock =
   | { kind: "p"; text: string }
   | { kind: "list"; items: string[] }
+  | { kind: "button"; label: string; href: string }
   | { kind: "code"; text: string };
 
 export type BrandedEmailInput = {
@@ -43,6 +46,7 @@ function blocksHtml(blocks: EmailBlock[]): string {
   const p = "margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#1f2937;";
   return blocks
     .map((b) => {
+      if (b.kind === "button") return button(b.label, b.href);
       if (b.kind === "p") return `<p class="ke-text" style="${p}">${escapeHtml(b.text)}</p>`;
       if (b.kind === "code")
         return `<p style="margin:0 0 16px;font-family:'Courier New',monospace;font-size:28px;letter-spacing:6px;font-weight:bold;color:${BRAND_BLUE};" class="ke-code">${escapeHtml(b.text)}</p>`;
@@ -98,6 +102,7 @@ export function renderBrandedEmail(input: BrandedEmailInput): string {
 <title>${escapeHtml(input.heading)}</title>
 <style>
 :root{color-scheme:light dark;supported-color-schemes:light dark;}
+.ke-text{overflow-wrap:anywhere;word-break:break-word;}
 @media (prefers-color-scheme: dark){
  .ke-bg{background:#0b1020 !important;} .ke-card{background:#111827 !important;}
  .ke-text{color:#e5e7eb !important;} .ke-muted{color:#9ca3af !important;}
@@ -127,7 +132,7 @@ ${second}
  <p class="ke-muted" style="margin:0 0 8px;color:#6b7280;">${escapeHtml(f.tag)}</p>
  ${input.reason ? `<p class="ke-muted" style="margin:0 0 8px;color:#6b7280;">${escapeHtml(input.reason)}</p>` : ""}
  <p class="ke-muted" style="margin:0;color:#6b7280;">${unsub}<a href="${origin}/help" style="color:#6b7280;text-decoration:underline;">${f.help}</a> &nbsp;·&nbsp; <a href="${origin}/privacy" style="color:#6b7280;text-decoration:underline;">${f.privacy}</a></p>
- <p class="ke-muted" style="margin:8px 0 0;color:#9ca3af;">KidEase · Canada · <a href="${origin}" style="color:#9ca3af;">kidease.ca</a></p>
+ <p class="ke-muted" style="margin:8px 0 0;color:#6b7280;">${escapeHtml(CASL_SENDER.name)} · ${escapeHtml(CASL_SENDER.city)}<br><a href="mailto:${escapeHtml(CASL_SENDER.email)}" style="color:#6b7280;">${escapeHtml(CASL_SENDER.email)}</a> · <a href="${origin}" style="color:#6b7280;">kidease.ca</a></p>
 </td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -135,11 +140,12 @@ ${second}
 /** Plain-text fallback built from the same blocks. */
 export function renderBrandedText(input: BrandedEmailInput): string {
   const t = (h: string, bs: EmailBlock[], cta?: string) =>
-    [h, "", ...bs.flatMap((b) => (b.kind === "list" ? b.items.map((i) => `- ${i}`) : [b.text])), ...(cta && input.cta ? ["", `${cta}: ${input.cta.href}`] : [])].join("\n");
+    [h, "", ...bs.flatMap((b) => (b.kind === "list" ? b.items.map((i) => `- ${i}`) : b.kind === "button" ? [`${b.label}: ${b.href}`] : [b.text])), ...(cta && input.cta ? ["", `${cta}: ${input.cta.href}`] : [])].join("\n");
   const parts = [t(input.heading, input.blocks, input.cta?.label)];
   if (input.en) parts.push("---- English ----", t(input.en.heading, input.en.blocks, input.en.cta?.label));
+  if (input.reason) parts.push(input.reason);
   if (input.unsubscribeUrl) parts.push(`${input.locale === "en" ? "Unsubscribe" : "Se désabonner / Unsubscribe"}: ${input.unsubscribeUrl}`);
-  parts.push("KidEase · kidease.ca");
+  parts.push(`${CASL_SENDER.name} · ${CASL_SENDER.city}\n${CASL_SENDER.email}\nkidease.ca`);
   return parts.join("\n\n");
 }
 
@@ -158,6 +164,7 @@ export function brandedNotice(input: {
   cta?: { label: string; href: string };
   code?: string;
   reason?: string;
+  unsubscribeUrl?: string;
   origin?: string;
   en?: BrandedEmailInput["en"];
 }): BrandedEmailInput {
@@ -181,6 +188,7 @@ export function brandedNotice(input: {
     blocks,
     cta: input.cta,
     reason: input.reason,
+    unsubscribeUrl: input.unsubscribeUrl,
     origin: input.origin,
     en: input.en,
   };

@@ -53,6 +53,9 @@ export const saveComplaint = createServerFn({ method: "POST" })
           to: parent[0].email,
           subject: "KidEase: your complaint number",
           text: `Your tracking number is ${code}. Keep it to ask about the complaint.`,
+          heading: "Your complaint tracking number",
+          cta: { label: "Open your complaints", href: "https://www.kidease.ca/family-complaints" },
+          reason: "You get this because you filed a complaint on KidEase.",
           aboutTestListing: centre
             ? isAdminOnlyListing({
                 name: centre.name,

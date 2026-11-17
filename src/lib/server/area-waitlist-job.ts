@@ -450,7 +450,7 @@ async function sendAreaEmail(
     url: `${origin}/daycare/${hit.slug}`,
     manageUrl: `${origin}/parent?tab=waitlists`,
   });
-  const { brandedNotice, emailLocaleFor } = await import("@/lib/email-layout");
+  const { emailLocaleFor } = await import("@/lib/email-layout");
   const provinceRows = await sql<{ province: string | null }>`
     select province from daycares where id = ${hit.daycareId} limit 1
   `.catch(() => [] as Array<{ province: string | null }>);
@@ -486,26 +486,18 @@ async function sendAreaEmail(
     text: letter.text,
     html: letter.html,
     purpose: "area_waitlist",
+    unsubscribeUrl: brandedLetter.branded.unsubscribeUrl,
     aboutTestListing: isAdminOnlyListing({ name: hit.name, slug: hit.slug }),
-    branded: brandedNotice({
-      heading: brandedLetter.subject,
-      text: brandedLetter.text,
+    branded: {
+      ...brandedLetter.branded,
       locale: mailLocale,
-      cta: {
-        label: primary === "fr" ? "Ouvrir la fiche" : "Open the listing",
-        href: `${origin}/daycare/${hit.slug}`,
-      },
-      reason: primary === "fr"
-        ? "Vous recevez ce courriel parce que vous avez une alerte de secteur sur KidEase."
-        : "You get this because you have an area alert on KidEase.",
       en: enLetter
         ? {
             heading: enLetter.subject,
-            blocks: brandedNotice({ heading: enLetter.subject, text: enLetter.text }).blocks,
-            cta: { label: "Open the listing" },
+            blocks: enLetter.branded.blocks,
           }
         : undefined,
-    }),
+    },
   }).catch(() => null);
   if (sent && (sent.status === "sent" || sent.status === "logged")) {
     await sql`update area_waitlist_sends set emailed = 1 where id = ${hit.sendId}`.catch(() => undefined);

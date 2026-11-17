@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { buildTourIcs, tourCalendarLinks, tourInviteCopy, tourReminderAt, tourSlotInstants, tourUpdateCalendarText } from "../src/lib/tour-ics.ts";
+import { buildTourIcs, tourCalendarLinks, tourInviteCopy, tourReminderAt, tourReminderLetter, tourSlotInstants, tourUpdateCalendarText } from "../src/lib/tour-ics.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -45,8 +45,12 @@ test("invite copy is bilingual and the job is wired", () => {
   assert.match(fr.subject, /Visite/);
   assert.match(fr.reminder, /Rappel/);
   assert.match(fr.sms, /KidEase/);
+  assert.match(fr.sms, /Répondez STOP pour vous désabonner\./);
   const en = tourInviteCopy("en", "Corner Care");
   assert.match(en.text, /does not give out the spot/);
+  assert.match(en.sms, /Reply STOP to opt out\./);
+  assert.match(tourReminderLetter("en", "Corner Care", "accepted").sms, /is confirmed\. Reply STOP to opt out\./);
+  assert.match(tourReminderLetter("fr", "Garderie du coin", "accepted").sms, /est confirmée\. Répondez STOP pour vous désabonner\./);
   const job = readFileSync(join(root, "src/lib/server/tour-holds.ts"), "utf8");
   const book = readFileSync(join(root, "src/lib/server/tour-calendar.ts"), "utf8");
   assert.match(job, /sendDueTourReminders/);

@@ -5,6 +5,7 @@
 import { getSql } from "@/lib/db";
 import { parseQaAllowlist, qaSendDecision, type QaSendDecision, type QaSendFeature } from "@/lib/qa-send";
 import { mailboxAddress } from "@/lib/server/titan-mail";
+import { gateOutboundEmail } from "@/lib/server/outbound-gate";
 
 export function qaAllowlistFromEnv(env: NodeJS.ProcessEnv = process.env): string[] {
   return parseQaAllowlist(env.QA_SEND_ALLOWLIST);
@@ -62,10 +63,19 @@ export async function deliverQaEmail(input: {
     console.info("[kidease-qa-send]", JSON.stringify(line));
     return { ...decision, via: "none" };
   }
-  const { sendTitanMail } = await import("@/lib/server/titan-mail.server");
-  await sendTitanMail({
+  const gated = await gateOutboundEmail({
     to: input.recipient.trim(),
     subject: input.subject,
+    label: input.feature,
+  });
+  if (!gated.allow) {
+    console.info("[kidease-qa-send]", JSON.stringify({ ...line, reason: "dropped", outboundReason: gated.reason, via: "none" }));
+    return { ...decision, deliver: false, reason: "dropped", via: "none" };
+  }
+  const { sendTitanMail } = await import("@/lib/server/titan-mail.server");
+  await sendTitanMail({
+    to: gated.to,
+    subject: gated.subject,
     text: input.text,
     html: input.html,
   });

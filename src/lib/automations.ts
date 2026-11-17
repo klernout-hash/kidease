@@ -9,6 +9,12 @@
  */
 
 import { CASL_SENDER, decideCaslSend, normalizeCaslEmail } from "./casl.ts";
+import {
+  brandedNotice,
+  renderBrandedEmail,
+  renderBrandedText,
+  type BrandedEmailInput,
+} from "./email-layout.ts";
 import { envFlagOn, type EnvMap } from "./flags.ts";
 import { dayKeyInTimeZone, isValidTimeZone, quietHourInZone } from "./family-time.ts";
 
@@ -661,135 +667,189 @@ const FIELD_COPY: Record<MissingField, { en: string; fr: string }> = {
   },
 };
 
+export type AutomationLetter = {
+  subject: string;
+  text: string;
+  html: string;
+  branded: BrandedEmailInput;
+};
+
+/** Both fallback and branded sends use the same action links and footer. */
+function automationLetter(subject: string, content: BrandedEmailInput): AutomationLetter {
+  const branded: BrandedEmailInput = {
+    ...content,
+    origin: AUTOMATION_ORIGIN,
+    unsubscribeUrl: `${AUTOMATION_ORIGIN}${CASL_SENDER.unsubscribePath}`,
+  };
+  return {
+    subject,
+    text: renderBrandedText(branded),
+    html: renderBrandedEmail(branded),
+    branded,
+  };
+}
+
 export function missingInfoLetter(input: {
   locale: AutomationLocale;
   centreName: string;
   missing: MissingField[];
-}): { subject: string; text: string; html: string } {
+}): AutomationLetter {
   const fr = input.locale === "fr";
-  const lines = input.missing.map((field) => {
-    const label = FIELD_COPY[field][fr ? "fr" : "en"];
-    const href = providerFixHref(input.locale, field);
-    return { label, href };
-  });
-  const subject = fr ? `Il manque des infos sur ${input.centreName}` : `A few details are missing for ${input.centreName}`;
+  const subject = fr
+    ? `Il manque des infos sur ${input.centreName}`
+    : `A few details are missing for ${input.centreName}`;
   const lead = fr
     ? `Des parents cherchent ${input.centreName} sur KidEase. Ajoutez seulement ce qui manque :`
     : `Parents look up ${input.centreName} on KidEase. Add only what is missing:`;
-  const textBody = [lead, ...lines.map((line) => `- ${line.label}: ${line.href}`)].join("\n");
-  const htmlBody = `<p>${esc(lead)}</p><ul>${lines
-    .map((line) => `<li><a href="${esc(line.href)}">${esc(line.label)}</a></li>`)
-    .join("")}</ul>`;
-  const basis = fr
-    ? "Vous recevez ce courriel parce que votre centre est revendiqué sur KidEase."
-    : "You are getting this because your centre is claimed on KidEase.";
-  const footer = caslMailFooter(input.locale, basis);
-  return { subject, text: textBody + footer.text, html: htmlBody + footer.html };
+  return automationLetter(subject, {
+    locale: input.locale,
+    heading: subject,
+    preheader: lead,
+    blocks: [
+      { kind: "p", text: lead },
+      ...input.missing.map((field) => ({
+        kind: "button" as const,
+        label: FIELD_COPY[field][fr ? "fr" : "en"],
+        href: providerFixHref(input.locale, field),
+      })),
+    ],
+    reason: fr
+      ? "Vous recevez ce courriel parce que votre centre est revendiqué sur KidEase."
+      : "You get this because your centre is claimed on KidEase.",
+  });
 }
 
-export function parentProfileLetter(locale: AutomationLocale): { subject: string; text: string; html: string } {
-  const href = parentChildHref(locale);
-  if (locale === "fr") {
-    const subject = "Ajoutez le profil de votre enfant";
-    const text = `KidEase peut garder le prénom et la date de naissance de votre enfant pour les demandes de place. Ce n’est pas exigé pour chercher. Ajoutez-le ici : ${href}`;
-    const html = `<p>KidEase peut garder le prénom et la date de naissance de votre enfant pour les demandes de place. Ce n’est pas exigé pour chercher.</p><p><a href="${esc(href)}">Ajouter le profil</a></p>`;
-    const footer = caslMailFooter(locale, "Vous recevez ce courriel parce que vous avez un compte parent KidEase.");
-    return { subject, text: text + footer.text, html: html + footer.html };
-  }
-  const subject = "Add your child’s profile";
-  const text = `KidEase can keep your child’s first name and birthdate for spot requests. You do not need it to search. Add it here: ${href}`;
-  const html = `<p>KidEase can keep your child’s first name and birthdate for spot requests. You do not need it to search.</p><p><a href="${esc(href)}">Add the profile</a></p>`;
-  const footer = caslMailFooter(locale, "You are getting this because you have a KidEase parent account.");
-  return { subject, text: text + footer.text, html: html + footer.html };
+export function parentProfileLetter(locale: AutomationLocale): AutomationLetter {
+  const fr = locale === "fr";
+  const subject = fr ? "Ajoutez le profil de votre enfant" : "Add your child’s profile";
+  return automationLetter(
+    subject,
+    brandedNotice({
+      locale,
+      heading: subject,
+      text: fr
+        ? "KidEase peut garder le prénom et la date de naissance de votre enfant pour les demandes de place. Ce n’est pas exigé pour chercher."
+        : "KidEase can keep your child’s first name and birthdate for spot requests. You do not need it to search.",
+      cta: { label: fr ? "Ajouter le profil" : "Add the profile", href: parentChildHref(locale) },
+      reason: fr
+        ? "Vous recevez ce courriel parce que vous avez un compte parent KidEase."
+        : "You get this because you have a KidEase parent account.",
+    }),
+  );
 }
 
 export function onboardingLetter(input: {
   locale: AutomationLocale;
   centreName: string;
   step: OnboardStep;
-}): { subject: string; text: string; html: string } {
-  const listings = providerFixHref(input.locale, "hours");
-  const spots = providerFixHref(input.locale, "vacancy");
+}): AutomationLetter {
   const fr = input.locale === "fr";
   const copy = {
     d0: fr
       ? {
           subject: `${input.centreName} est sur KidEase`,
-          text: `Votre revendication est enregistrée. Ouvrez le bureau du centre et vérifiez le nom, le téléphone et les heures. ${listings}`,
+          text: "Votre revendication est enregistrée. Ouvrez le bureau du centre et vérifiez le nom, le téléphone et les heures.",
         }
       : {
           subject: `${input.centreName} is on KidEase`,
-          text: `Your claim is saved. Open the centre desk and check the name, phone, and hours. ${listings}`,
+          text: "Your claim is saved. Open the centre desk and check the name, phone, and hours.",
         },
     d2: fr
       ? {
           subject: "Les parents comparent les heures et les frais",
-          text: `Ajoutez les heures, les frais et une photo si ce n’est pas déjà fait. ${listings}`,
+          text: "Ajoutez les heures, les frais et une photo si ce n’est pas déjà fait.",
         }
       : {
           subject: "Parents compare hours and fees",
-          text: `Add hours, fees, and a photo if they are not there yet. ${listings}`,
+          text: "Add hours, fees, and a photo if they are not there yet.",
         },
     d7: fr
       ? {
           subject: "Dites si vous avez une place",
-          text: `Si vous avez une place ouverte, mettez le nombre à jour. Sinon, laissez-le vide. ${spots}`,
+          text: "Si vous avez une place ouverte, mettez le nombre à jour. Sinon, laissez-le vide.",
         }
       : {
           subject: "Say if you have a spot",
-          text: `If you have an open spot, update the number. If not, leave it empty. ${spots}`,
+          text: "If you have an open spot, update the number. If not, leave it empty.",
         },
   }[input.step];
-  const footer = caslMailFooter(
-    input.locale,
-    fr
-      ? "Vous recevez ce courriel parce que vous venez de revendiquer un centre sur KidEase."
-      : "You are getting this because you just claimed a centre on KidEase.",
+  const spots = input.step === "d7";
+  return automationLetter(
+    copy.subject,
+    brandedNotice({
+      locale: input.locale,
+      heading: copy.subject,
+      text: copy.text,
+      cta: {
+        label: spots
+          ? fr
+            ? "Mettre à jour les places"
+            : "Update open spots"
+          : fr
+            ? "Ouvrir le bureau du centre"
+            : "Open the centre desk",
+        href: providerFixHref(input.locale, spots ? "vacancy" : "hours"),
+      },
+      reason: fr
+        ? "Vous recevez ce courriel parce que vous venez de revendiquer un centre sur KidEase."
+        : "You get this because you just claimed a centre on KidEase.",
+    }),
   );
-  return {
-    subject: copy.subject,
-    text: copy.text + footer.text,
-    html: `<p>${esc(copy.text)}</p>${footer.html}`,
-  };
 }
 
 export function claimListingLetter(input: {
   locale: AutomationLocale;
   centreName: string;
   daycareId: string;
-}): { subject: string; text: string; html: string } {
-  const href = claimHref(input.locale, input.daycareId);
-  if (input.locale === "fr") {
-    const subject = `Revendiquez ${input.centreName} sur KidEase`;
-    const text = `KidEase est un répertoire de garderies au Canada. Votre centre y figure déjà. Revendiquez la fiche gratuite pour répondre aux parents. ${href}`;
-    const basis =
-      "Vous recevez ce courriel parce que cette adresse est publiée comme contact d’affaires du centre. Consentement implicite entre entreprises (LCRN).";
-    const footer = caslMailFooter("fr", basis);
-    return { subject, text: text + footer.text, html: `<p>${esc(text)}</p>${footer.html}` };
-  }
-  const subject = `Claim ${input.centreName} on KidEase`;
-  const text = `KidEase is a daycare directory in Canada. Your centre is already listed. Claim the free listing to answer parents. ${href}`;
-  const basis =
-    "You are getting this because this address is published as the centre’s business contact. Implied consent for a business message (CASL).";
-  const footer = caslMailFooter("en", basis);
-  return { subject, text: text + footer.text, html: `<p>${esc(text)}</p>${footer.html}` };
+}): AutomationLetter {
+  const fr = input.locale === "fr";
+  const subject = fr
+    ? `Revendiquez ${input.centreName} sur KidEase`
+    : `Claim ${input.centreName} on KidEase`;
+  return automationLetter(
+    subject,
+    brandedNotice({
+      locale: input.locale,
+      heading: subject,
+      text: fr
+        ? "KidEase est un répertoire de garderies au Canada. Votre centre y figure déjà. Revendiquez la fiche gratuite pour répondre aux parents."
+        : "KidEase is a daycare directory in Canada. Your centre is already listed. Claim the free listing to answer parents.",
+      cta: {
+        label: fr ? "Revendiquer la fiche" : "Claim the listing",
+        href: claimHref(input.locale, input.daycareId),
+      },
+      reason: fr
+        ? "Vous recevez ce courriel parce que cette adresse est publiée comme contact d’affaires du centre. Consentement implicite entre entreprises (LCRN)."
+        : "You get this because this address is published as the centre’s business contact. Implied consent for a business message (CASL).",
+    }),
+  );
 }
 
 export function staleSpotLetter(input: {
   locale: AutomationLocale;
   centreName: string;
-}): { subject: string; text: string; html: string } {
-  const href = providerFixHref(input.locale, "vacancy");
-  if (input.locale === "fr") {
-    const subject = `Mettez à jour les places de ${input.centreName}`;
-    const text = `Les places ouvertes n’ont pas été mises à jour depuis 21 jours. Les parents ne voient plus ce nombre comme actuel. Mettez-le à jour dans les 9 jours, sinon KidEase le masque. ${href}`;
-    const footer = caslMailFooter("fr", "Vous recevez ce courriel parce que votre centre est revendiqué sur KidEase.");
-    return { subject, text: text + footer.text, html: `<p>${esc(text)}</p>${footer.html}` };
-  }
-  const subject = `Update open spots at ${input.centreName}`;
-  const text = `Open spots have not been updated for 21 days. Parents no longer treat that number as current. Update it in the next 9 days, or KidEase will hide it. ${href}`;
-  const footer = caslMailFooter("en", "You are getting this because your centre is claimed on KidEase.");
-  return { subject, text: text + footer.text, html: `<p>${esc(text)}</p>${footer.html}` };
+}): AutomationLetter {
+  const fr = input.locale === "fr";
+  const subject = fr
+    ? `Mettez à jour les places de ${input.centreName}`
+    : `Update open spots at ${input.centreName}`;
+  return automationLetter(
+    subject,
+    brandedNotice({
+      locale: input.locale,
+      heading: subject,
+      text: fr
+        ? "Les places ouvertes n’ont pas été mises à jour depuis 21 jours. Les parents ne voient plus ce nombre comme actuel. Mettez-le à jour dans les 9 jours, sinon KidEase le masque."
+        : "Open spots have not been updated for 21 days. Parents no longer treat that number as current. Update it in the next 9 days, or KidEase will hide it.",
+      cta: {
+        label: fr ? "Mettre à jour les places" : "Update open spots",
+        href: providerFixHref(input.locale, "vacancy"),
+      },
+      reason: fr
+        ? "Vous recevez ce courriel parce que votre centre est revendiqué sur KidEase."
+        : "You get this because your centre is claimed on KidEase.",
+    }),
+  );
 }
 
 export function invoiceLetter(input: {
@@ -798,8 +858,7 @@ export function invoiceLetter(input: {
   number: string;
   stage: InvoiceReminderStage | DunningStage;
   kind: "remind" | "dunning";
-}): { subject: string; text: string; html: string } {
-  const href = payHref(input.locale);
+}): AutomationLetter {
   const fr = input.locale === "fr";
   const subject = fr
     ? input.kind === "dunning"
@@ -820,50 +879,74 @@ export function invoiceLetter(input: {
           : input.stage === "overdue_3"
             ? `Bill ${input.number} is 3 days late`
             : `Bill ${input.number} is 7 days late`;
-  const text = fr
-    ? `Votre facture ${input.number} pour ${input.centreName} est sur KidEase. Payez-la dans votre compte. Nous arrêtons ces rappels quand elle est payée. ${href}`
-    : `Your bill ${input.number} for ${input.centreName} is on KidEase. Pay it in your account. These reminders stop when it is paid. ${href}`;
-  const basis = fr
-    ? "Ce message concerne une facture déjà ouverte. KidEase · Winnipeg, Manitoba."
-    : "This message is about a bill that is already open. KidEase · Winnipeg, Manitoba.";
-  const footer = caslMailFooter(input.locale, basis);
-  return { subject, text: text + footer.text, html: `<p>${esc(text)}</p>${footer.html}` };
+  return automationLetter(
+    subject,
+    brandedNotice({
+      locale: input.locale,
+      heading: subject,
+      text: fr
+        ? `Votre facture ${input.number} pour ${input.centreName} est sur KidEase. Payez-la dans votre compte. Nous arrêtons ces rappels quand elle est payée.`
+        : `Your bill ${input.number} for ${input.centreName} is on KidEase. Pay it in your account. These reminders stop when it is paid.`,
+      cta: { label: fr ? "Voir la facture" : "View the bill", href: payHref(input.locale) },
+      reason: fr
+        ? "Vous recevez ce courriel parce que vous avez une facture ouverte sur KidEase."
+        : "You get this because you have an open bill on KidEase.",
+    }),
+  );
 }
 
 export function tourFollowupLetter(input: {
   locale: AutomationLocale;
   centreName: string;
   slug: string;
-}): { subject: string; text: string; html: string } {
-  const href = reviewHref(input.locale, input.slug);
-  if (input.locale === "fr") {
-    const subject = `Comment s’est passée la visite à ${input.centreName}?`;
-    const text = `Votre visite était hier. Si vous voulez une place, répondez au centre dans KidEase. ${href}`;
-    const footer = caslMailFooter("fr", "Vous recevez ce courriel parce que vous avez réservé une visite sur KidEase.");
-    return { subject, text: text + footer.text, html: `<p>${esc(text)}</p>${footer.html}` };
-  }
-  const subject = `How was the tour at ${input.centreName}?`;
-  const text = `Your tour was yesterday. If you want a spot, reply to the centre in KidEase. ${href}`;
-  const footer = caslMailFooter("en", "You are getting this because you booked a tour on KidEase.");
-  return { subject, text: text + footer.text, html: `<p>${esc(text)}</p>${footer.html}` };
+}): AutomationLetter {
+  const fr = input.locale === "fr";
+  const subject = fr
+    ? `Comment s’est passée la visite à ${input.centreName}?`
+    : `How was the tour at ${input.centreName}?`;
+  return automationLetter(
+    subject,
+    brandedNotice({
+      locale: input.locale,
+      heading: subject,
+      text: fr
+        ? "Votre visite était hier. Si vous voulez une place, répondez au centre dans KidEase."
+        : "Your tour was yesterday. If you want a spot, reply to the centre in KidEase.",
+      cta: {
+        label: fr ? "Voir le centre" : "View the centre",
+        href: reviewHref(input.locale, input.slug),
+      },
+      reason: fr
+        ? "Vous recevez ce courriel parce que vous avez réservé une visite sur KidEase."
+        : "You get this because you booked a tour on KidEase.",
+    }),
+  );
 }
 
 export function reviewRequestLetter(input: {
   locale: AutomationLocale;
   centreName: string;
   slug: string;
-}): { subject: string; text: string; html: string } {
-  const href = reviewHref(input.locale, input.slug);
-  if (input.locale === "fr") {
-    const subject = `Un avis sur ${input.centreName}?`;
-    const text = `Vous êtes inscrit à ${input.centreName} depuis environ un mois. Un avis aide d’autres parents. Il n’est pas exigé. KidEase le lit avant de l’afficher. Tous les parents inscrits reçoivent la même invitation. ${href}`;
-    const footer = caslMailFooter("fr", "Vous recevez ce courriel parce que vous êtes inscrit à ce centre sur KidEase.");
-    return { subject, text: text + footer.text, html: `<p>${esc(text)}</p>${footer.html}` };
-  }
-  const subject = `A review of ${input.centreName}?`;
-  const text = `You have been enrolled at ${input.centreName} for about a month. A review helps other parents. It is optional. KidEase reads it before it shows. Every enrolled parent gets the same invite. ${href}`;
-  const footer = caslMailFooter("en", "You are getting this because you are enrolled at this centre on KidEase.");
-  return { subject, text: text + footer.text, html: `<p>${esc(text)}</p>${footer.html}` };
+}): AutomationLetter {
+  const fr = input.locale === "fr";
+  const subject = fr ? `Un avis sur ${input.centreName}?` : `A review of ${input.centreName}?`;
+  return automationLetter(
+    subject,
+    brandedNotice({
+      locale: input.locale,
+      heading: subject,
+      text: fr
+        ? `Vous êtes inscrit à ${input.centreName} depuis environ un mois. Un avis aide d’autres parents. Il n’est pas exigé. KidEase le lit avant de l’afficher. Tous les parents inscrits reçoivent la même invitation.`
+        : `You have been enrolled at ${input.centreName} for about a month. A review helps other parents. It is optional. KidEase reads it before it shows. Every enrolled parent gets the same invite.`,
+      cta: {
+        label: fr ? "Laisser un avis" : "Leave a review",
+        href: reviewHref(input.locale, input.slug),
+      },
+      reason: fr
+        ? "Vous recevez ce courriel parce que vous êtes inscrit à ce centre sur KidEase."
+        : "You get this because you are enrolled at this centre on KidEase.",
+    }),
+  );
 }
 
 export function opsDigestLetter(input: {

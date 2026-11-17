@@ -86,6 +86,9 @@ export async function sendComplianceEmail(input: {
   to: string;
   subject: string;
   text: string;
+  heading: string;
+  cta: { label: string; href: string };
+  reason: string;
   aboutTestListing?: boolean;
   /** Emergency notices: counted, never blocked by a switch or cap. */
   essential?: boolean;
@@ -97,14 +100,20 @@ export async function sendComplianceEmail(input: {
   if (input.aboutTestListing) return "sent";
   try {
     const { prepareMailBody } = await import("@/lib/transactional-mail");
-    const { brandedNotice } = await import("@/lib/email-layout");
+    const { brandedNotice, renderBrandedEmail, renderBrandedText } = await import("@/lib/email-layout");
+    const branded = brandedNotice({
+      heading: input.heading,
+      text: input.text,
+      cta: input.cta,
+      reason: input.reason,
+    });
     const prepared = await prepareMailBody({
       purpose: "customer_alert",
       to,
       subject: input.subject,
-      text: input.text,
-      html: "",
-      branded: brandedNotice({ heading: input.subject, text: input.text }),
+      text: renderBrandedText(branded),
+      html: renderBrandedEmail(branded),
+      branded,
     });
     const gated = await gateOutboundEmail({ to, subject: input.subject, essential: input.essential, label: "compliance" });
     if (!gated.allow) return "failed";
