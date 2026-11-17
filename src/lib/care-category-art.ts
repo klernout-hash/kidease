@@ -13,10 +13,13 @@ export const CARE_CATEGORY_SOURCES = {
 
 export type CareCategoryId = keyof typeof CARE_CATEGORY_SOURCES;
 
-export function careCategoryArt(id: string): { src: string } | null {
+export function careCategoryArt(id: string): { src: string; webp: string } | null {
   if (!Object.hasOwn(CARE_CATEGORY_SOURCES, id)) return null;
   const key = id as CareCategoryId;
+  const file = CARE_CATEGORY_SOURCES[key];
   return {
-    src: `/photos/care-icons/${CARE_CATEGORY_SOURCES[key]}`,
+    src: `/photos/care-icons/${file}`,
+    // 128px WebP of the same art (about 10 KB instead of about 95 KB); shown up to 56px.
+    webp: `/photos/care-icons/${file.replace(/\.png$/, ".webp")}`,
   };
 }

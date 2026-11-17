@@ -196,6 +196,8 @@ export function BadgeImage({
       width={box.width}
       height={box.height}
       className={`ke-store-badge ${compact ? "h-8" : "h-10"} w-auto max-w-none${muted ? " opacity-60 grayscale" : ""}`}
+      // Badges sit in the footer and menus: never compete with the first screen.
+      loading="lazy"
       decoding="async"
     />
   );

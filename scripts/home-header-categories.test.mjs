@@ -86,7 +86,8 @@ for (const locale of ["en", "fr"]) {
     assert.doesNotMatch(html, /data-fit="1"|<button/);
     assert.equal((html.match(/class="ke-category-icon"/g) ?? []).length, 6);
     assert.equal((html.match(/aria-hidden="true"/g) ?? []).length, 6);
-    assert.match(html, /alt="" width="256" height="256"/);
+    assert.match(html, /<source srcSet="\/photos\/care-icons\/[^"]+\.webp" type="image\/webp"/);
+    assert.match(html, /alt="" width="128" height="128"/);
     for (const [index, link] of links.entries()) {
       const type = BROWSE_DAYCARE_TYPES[index];
       assert.equal(link.to, locale === "fr" ? "/fr/search" : "/search");
