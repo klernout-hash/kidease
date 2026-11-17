@@ -99,7 +99,9 @@ export function createOutboundGate(deps: GateDeps) {
       }
       return { allow: false, reason: "daily_cap" };
     }
-    return { allow: true, testMode: c.testMode && (input.channel === "email" || input.channel === "sms"), testRecipient };
+    // Sign-in codes, password resets and emergency notices always reach the real person.
+    const reroute = c.testMode && !essential && (input.channel === "email" || input.channel === "sms");
+    return { allow: true, testMode: reroute, testRecipient };
   }
 
   /** Email: gate, then reroute in test mode. */

@@ -204,7 +204,7 @@ export function precheckOutbound(input: {
 }): { ok: true } | { ok: false; reason: OutboundBlockReason } {
   const { controls, channel } = input;
   if (!input.essential && !controls.switches[CHANNEL_GROUP[channel]]) return { ok: false, reason: "switch_off" };
-  if (controls.testMode && (channel === "email" || channel === "sms") && !input.testRecipient) {
+  if (!input.essential && controls.testMode && (channel === "email" || channel === "sms") && !input.testRecipient) {
     return { ok: false, reason: "no_test_recipient" };
   }
   return { ok: true };

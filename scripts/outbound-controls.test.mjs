@@ -133,6 +133,17 @@ test("test mode reroutes email and SMS and names the real recipient", async () =
   assert.equal((await g.gateEmail({ to: "a@b.ca", subject: "x" })).to, "admin-set@example.ca");
 });
 
+test("test mode never reroutes sign-in codes, resets or emergency notices", async () => {
+  const store = memoryStore();
+  store.controls.testMode = true;
+  const g = createOutboundGate({ store, env: { OUTBOUND_TEST_EMAIL: "t@example.ca" }, log: quiet });
+  const r = await g.gateEmail({ to: "parent@example.ca", subject: "Your code", essential: true });
+  assert.equal(r.to, "parent@example.ca");
+  assert.equal(r.testMode, false);
+  const empty = createOutboundGate({ store, env: {}, log: quiet });
+  assert.equal((await empty.gateSms({ to: "+12045550100", body: "Emergency", essential: true })).allow, true);
+});
+
 test("test mode falls back to Kyle's operator contacts", async () => {
   const store = memoryStore();
   store.controls.testMode = true;
