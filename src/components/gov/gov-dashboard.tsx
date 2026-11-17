@@ -9,6 +9,7 @@ import { OVERSIGHT_ITEMS, facilityRisk, govOversightEnabled } from "@/lib/gov/ov
 import { GovJobShortage } from "@/components/ece-job-desk";
 import { CurriculumGovStrip } from "@/components/curriculum-pack";
 import { GovMap } from "@/components/gov/gov-map";
+import { FilteredTableExport } from "@/components/gov/filtered-table-export";
 import { getGovCentre, listGovCentres, type GovCentreDetail, type GovCentreLine } from "@/lib/server/gov-portal";
 
 function show(value: number | null, locale: "en" | "fr", hidden: string): string {
@@ -398,6 +399,12 @@ export function GovDashboardView({
               </tbody>
             </table>
           </div>
+          <FilteredTableExport
+            locale={data.locale}
+            title={copy.cities}
+            headers={[copy.city, copy.licensed, copy.capacity, copy.spots]}
+            rows={data.cities.filter((row) => !row.suppressed).map((row) => [row.label, row.centres, row.capacity, row.openSpots])}
+          />
         </section>
         <GovCentreDirectory locale={data.locale} province={data.province} city={cityValue} />
         </>
@@ -474,6 +481,12 @@ export function GovDashboardView({
               </tbody>
             </table>
           </div>
+          <FilteredTableExport
+            locale={data.locale}
+            title={copy.trends}
+            headers={[copy.month, copy.listingsAdded, copy.vacancyUpdates, copy.jobs]}
+            rows={data.trends.map((row) => [row.month, row.listings, row.vacancyUpdates, row.jobs])}
+          />
         </section>
         <SurveyContext locale={data.locale} />
         <p className="mt-8 max-w-3xl text-sm leading-6 text-muted" data-ke="gov-jobs-scope">
@@ -544,6 +557,12 @@ export function GovDashboardView({
               {data.locale === "fr" ? "Alerte courriel (en attente, rien n’est envoyé)" : "Email alert (held, nothing is sent)"}
             </label>
             {flagged.length > 0 ? <LicenceFlags data={{ ...data, licenceFlags: flagged }} /> : null}
+            <FilteredTableExport
+              locale={data.locale}
+              title={data.locale === "fr" ? "Permis signalés" : "Flagged licences"}
+              headers={["Name", "City", "Status"]}
+              rows={flagged.map((flag) => [flag.name, flag.city, flag.status])}
+            />
           </section>
         ) : null}
 
@@ -679,6 +698,13 @@ function GovCentreDirectory({ locale, province, city }: { locale: "en" | "fr"; p
           {fr ? "Les centres n’ont pas chargé. Choisissez la ville de nouveau." : "The centres did not load. Choose the city again."}
         </p>
       ) : listPhase === "ready" && rows.length ? (
+        <>
+        <FilteredTableExport
+          locale={locale}
+          title={fr ? "Centres" : "Centres"}
+          headers={[fr ? "Nom" : "Name", fr ? "Ville" : "City", fr ? "Permis" : "Licensed"]}
+          rows={rows.map((row) => [row.name, row.city, row.licensed ? (fr ? "oui" : "yes") : ""])}
+        />
         <ul className="mt-3 divide-y divide-border text-sm">
           {rows.map((row) => (
             <li key={row.slug} className="py-2">
@@ -692,6 +718,7 @@ function GovCentreDirectory({ locale, province, city }: { locale: "en" | "fr"; p
             </li>
           ))}
         </ul>
+        </>
       ) : listPhase === "ready" ? (
         <p className="mt-2 text-sm text-muted" role="status" data-ke="gov-centres-empty">
           {fr ? "Aucun centre public dans cette ville." : "No public centre in this city."}

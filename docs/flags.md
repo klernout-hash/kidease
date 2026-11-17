@@ -271,6 +271,8 @@ These are env-only. Unset means the feature stays on. Set the value to `0` to pa
 
 A paused screen says what is off and offers a way to search.
 
+`FEATURE_GOV_FILTERED_EXPORT` is on. A government table can download CSV or PDF of the rows on screen, after the province, city, and search filters already applied. The older summary download stays.
+
 `FEATURE_OWNER_REPLY_TEMPLATES` is on. A centre can insert “Tour confirmed”, “Waitlist added”, “Spot offered”, or “Not a fit right now” in English or French, then edit the words before sending. An owner can save their own wording. Nothing is sent until they press Send.
 
 `FEATURE_SAVED_CENTRE_AGE_ALERTS` is on. A parent who saved a centre gets an in-app note when that centre posts an opening for their child's age. Three notes a day. Email still needs `FEATURE_OPEN_SPOT_ALERTS`. Push still needs `FEATURE_PUSH`. A child whose age does not fit is not told it is for them.
