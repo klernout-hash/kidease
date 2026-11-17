@@ -14,3 +14,20 @@ test("additional provider panels load only when rendered", () => {
  }
  assert.match(page, /<Suspense fallback=/);
 });
+
+test("discovery links do not eagerly import their desk panels", () => {
+  const provider = src("src/routes/provider.tsx");
+  for (const [name, file] of [["LearningStoriesDesk", "learning-stories-desk"], ["CurriculumPackDesk", "curriculum-pack"], ["OrgOccupancyDesk", "org-occupancy-desk"]]) {
+    assert.ok(provider.includes(`const ${name} = lazy(`));
+    const link = src(`src/components/${file}-link.tsx`);
+    assert.ok(!link.includes(`@/components/${file}"`));
+    assert.match(link, /min-h-11/);
+  }
+});
+
+test("Registries overview uses plain EN and FR and does not promise a live check", () => {
+  const trust = src("src/components/admin-trust.tsx");
+  assert.match(trust, /This is not a live registry check/);
+  assert.match(trust, /Ce n’est pas une vérification en direct/);
+  assert.doesNotMatch(trust, /adapter stubs|fail closed|pretend a scrape/);
+});

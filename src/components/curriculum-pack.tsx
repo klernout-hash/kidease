@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,6 @@ import { pickStoryBooks } from "@/lib/story-corner/open-books";
 import {
   attachCurriculumPhoto,
   curriculumCoverage,
-  curriculumStatus,
   grantCurriculumPhotoConsent,
   listCurriculumTimeline,
   listStoryCorner,
@@ -180,24 +178,6 @@ function HelpLink({ label, topic }: { label: string; topic: string }) {
     >
       {label}
     </a>
-  );
-}
-
-export function CurriculumDeskLink() {
-  const { copy } = usePackCopy();
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    void curriculumStatus()
-      .then((row) => setOn(row.pack))
-      .catch(() => setOn(false));
-  }, []);
-  if (!on) return null;
-  return (
-    <p className="mb-4">
-      <Link to="/provider" search={{ desk: "learning" }} className="inline-flex min-h-11 items-center font-semibold text-primary underline-offset-4 hover:underline">
-        {copy.title}
-      </Link>
-    </p>
   );
 }
 

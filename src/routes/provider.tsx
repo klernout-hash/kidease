@@ -91,9 +91,18 @@ import { COACH_FOCUS_ANCHOR, type ListingCoachFocus } from "@/lib/listing-verifi
 import { DemandCues } from "@/components/rank-cues";
 import type { DemandSnapshot } from "@/lib/demand-heat";
 import type { ProviderEntitlements } from "@/lib/provider-entitlements";
-import { LearningStoriesDesk, StoriesDeskLink } from "@/components/learning-stories-desk";
-import { CurriculumDeskLink, CurriculumPackDesk } from "@/components/curriculum-pack";
-import { OrgDeskLink, OrgOccupancyDesk } from "@/components/org-occupancy-desk";
+import { StoriesDeskLink } from "@/components/learning-stories-desk-link";
+const LearningStoriesDesk = lazy(() =>
+  import("@/components/learning-stories-desk").then((m) => ({ default: m.LearningStoriesDesk })),
+);
+import { CurriculumDeskLink } from "@/components/curriculum-pack-link";
+const CurriculumPackDesk = lazy(() =>
+  import("@/components/curriculum-pack").then((m) => ({ default: m.CurriculumPackDesk })),
+);
+import { OrgDeskLink } from "@/components/org-occupancy-desk-link";
+const OrgOccupancyDesk = lazy(() =>
+  import("@/components/org-occupancy-desk").then((m) => ({ default: m.OrgOccupancyDesk })),
+);
 const EceJobDesk = lazy(() =>
   import("@/components/ece-job-desk").then((m) => ({ default: m.EceJobDesk })),
 );
