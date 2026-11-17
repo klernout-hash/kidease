@@ -214,6 +214,7 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_AMAZON_STORE_DEEP_LINK: "shared",
   FEATURE_PERSISTENT_SESSIONS: "shared",
   FEATURE_SEARCH_MEMORY: "parent",
+  FEATURE_COMPARE_PARENT_FEE: "parent",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {

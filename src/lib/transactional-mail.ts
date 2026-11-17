@@ -20,6 +20,7 @@ import {
 import { SUPPORT_INBOX_EMAIL } from "./support.ts";
 import { mailboxAddress, titanAppPassword } from "./server/titan-mail.ts";
 import { parseQaAllowlist } from "./qa-send.ts";
+import { outboundGates } from "./outbound-gate-core.ts";
 
 export const MAIL_FROM_RESEND_ENV = "MAIL_FROM_RESEND";
 /** Apex From Resend will accept today (kidease.ca is verified). */
@@ -52,6 +53,7 @@ export type TransactionalMailReason =
   | "not_configured"
   | "rejected"
   | "test_listing_suppressed"
+  | "outbound_blocked"
   | "qa_allowlist_sent";
 
 export type TransactionalMailEvent =
@@ -101,7 +103,23 @@ export type TransactionalMailInput = {
    * Broadcasts about that centre stay suppressed.
    */
   directInvite?: boolean;
+  /** Internal safety alerts. Counted toward the daily email cap but never blocked. */
+  outboundEssential?: boolean;
 };
+
+/** Sign-in and account safety mail. Counted toward caps, never blocked by a switch or cap. */
+export const ESSENTIAL_MAIL_PURPOSES: ReadonlySet<TransactionalMailPurpose> = new Set([
+  "2fa",
+  "password_reset",
+  "verify_email",
+]);
+
+type OutboundEmailGateFn = (input: {
+  to: string;
+  subject: string;
+  essential?: boolean;
+  label?: string;
+}) => Promise<{ allow: true; to: string; subject: string; testMode: boolean } | { allow: false; reason: string }>;
 
 /** Same address list as qa-send-mail.ts. A star allows every recipient. An empty list allows none. */
 export function testListingRecipientsAllowed(to: string, allowlistRaw: string | null | undefined): boolean {
@@ -155,6 +173,8 @@ export type SendTitanMail = (input: {
 }) => Promise<{ ok: true; via: "titan" }>;
 
 export type TransactionalMailDeps = {
+  /** Outbound safety gate. Defaults to the one src/lib/server/outbound-gate.ts registers. */
+  gate?: OutboundEmailGateFn | null;
   fetch?: typeof fetch;
   sendTitan?: SendTitanMail;
   env?: EnvMap;
@@ -394,7 +414,7 @@ export async function sendTransactionalMail(
   (globalThis as { __kideaseViewAsSideEffect__?: (action: "email") => void }).__kideaseViewAsSideEffect__?.("email");
   const env = deps.env ?? process.env;
   const fetchFn = deps.fetch ?? fetch;
-  const to = normalizeEmail(input.to);
+  let to = normalizeEmail(input.to);
   const replyTo = (input.replyTo || env.ADMIN_EMAIL || KIDEASE_OPERATOR_EMAIL).trim() || KIDEASE_OPERATOR_EMAIL;
   const providers = otpProvidersFromEnv(env);
   recordOtpMailHealth({ ...providers, lastEvent: lastHealth.lastEvent ?? "logged" });
@@ -411,6 +431,21 @@ export async function sendTransactionalMail(
   }
   const sentReason = (reason?: TransactionalMailReason): TransactionalMailReason | undefined =>
     qaAllowlistSend ? "qa_allowlist_sent" : reason;
+  const gate = deps.gate === undefined ? (outboundGates().email as OutboundEmailGateFn | undefined) : deps.gate;
+  if (gate) {
+    const g = await gate({
+      to,
+      subject: input.subject,
+      essential: input.outboundEssential === true || ESSENTIAL_MAIL_PURPOSES.has(input.purpose),
+      label: `txn-${input.purpose}`,
+    });
+    if (!g.allow) {
+      emit(deps, input.purpose, "logged", { via: "logged", reason: "outbound_blocked" });
+      return { status: "logged", via: "logged", reason: "outbound_blocked" };
+    }
+    to = normalizeEmail(g.to);
+    input = { ...input, subject: g.subject };
+  }
   const body = await prepareMailBody(input, env);
   input = { ...input, text: body.text, html: body.html };
 

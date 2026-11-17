@@ -273,7 +273,21 @@ A paused screen says what is off and offers a way to search.
 
 `FEATURE_SEARCH_MEMORY` is on. Search remembers the last place, child age, and monthly budget. Guests keep it on this device. A signed-in parent also keeps it on their profile. Reset clears all three. A link that already has a place or an age is left as it is.
 
+`FEATURE_COMPARE_PARENT_FEE` is on. Compare shows the fee parents pay and the distance from a saved commute address. A centre with no confirmed fee says “Ask the centre”. Nothing is sent.
+
 ## Later (not this PR)
 
 - Per-user or % rollouts (today the server uses one distinct id).
 - A dedicated `/admin-flags` page. Chat lab is enough to read state.
+
+## Outbound safety (Admin > Outbound safety, `/admin/outbound`)
+
+Stored in the database (migration `0210_outbound_controls.sql`), not in Vercel. Every change writes a row to `outbound_control_audit`.
+
+- **Master switches**, one per group: all text messages, all automated email, all push, all government features, all paid services (video, voice, public API). Off forces that group's feature flags off and stops every non-essential send on that channel. On only stops forcing: each flag follows its own value again. The list of flags per group is in `src/lib/outbound-controls.ts`.
+- **Daily limits**: texts 200, emails 2000, push 5000, video and voice 120 minutes. Days reset at midnight Winnipeg time. When a limit is hit, that channel stops for the day and Kyle gets one email per channel per day (`OUTBOUND_ALERT_EMAIL`, else kyle@kidease.ca).
+- **Essential messages** (password reset, sign-in codes, email verification, government emergency notices, and the cap alert itself) are counted but never blocked by a switch or a limit.
+- **Video and voice minutes**: Twilio does not report call length to KidEase yet, so each video join or call start counts as a set number of minutes (15 by default, editable).
+- **Test mode** (off by default): every outgoing email and text goes to the test address instead, with the real recipient at the start of the subject or text. Addresses come from the admin page, else `OUTBOUND_TEST_EMAIL` and `OUTBOUND_TEST_PHONE` in Vercel, else Kyle's operator contacts `ADMIN_EMAIL` and `ADMIN_SMS`. Nothing is hardcoded. If test mode is on and no address is set, nothing is sent. Essential messages (sign-in codes, password resets, email verification, emergency notices) are never rerouted, so real people can still sign in.
+- Kyle's own hand-typed replies from Admin mail are not gated or rerouted.
+- If the database can't be read, the last known settings are used; a broken counter never stops mail.

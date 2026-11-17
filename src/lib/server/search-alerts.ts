@@ -64,6 +64,7 @@ import {
 import { sendSms } from "@/lib/server/sms";
 import { isValidTimeZone } from "@/lib/family-time";
 import { readFamilyTimeZone } from "@/lib/server/alert-dispatch";
+import { gateOutboundEmail } from "@/lib/server/outbound-gate";
 
 type SavedSearchJobRow = {
   id: string;
@@ -1029,7 +1030,7 @@ export async function sendSearchAlertEmail(payload: {
   events: Array<{ name: string; city: string; kind: SearchAlertKind; distanceKm: number; slug: string; title?: string }>;
 }) {
   const actor = await lookupUser(payload.userId);
-  const to = actor.email?.trim();
+  let to = actor.email?.trim();
   const { caslOneClickUrl, caslUnsubscribeUrl } = await import("@/lib/server/casl-consent");
   const unsubUrl = caslUnsubscribeUrl({
     userId: payload.userId,
@@ -1079,6 +1080,10 @@ export async function sendSearchAlertEmail(payload: {
       cta: { label: "Open family desk", href: `${deskOrigin}/parent?tab=alerts` },
     }),
   });
+  const gated = await gateOutboundEmail({ to, subject, label: "search-alert" });
+  if (!gated.allow) throw new Error(`Search alert not sent (${gated.reason}).`);
+  to = gated.to;
+  const sendSubject = gated.subject;
   const sendText = prepared.text;
   const sendHtml = prepared.html;
   const listUnsub = oneClick ? `<${oneClick}>` : unsubUrl ? `<${unsubUrl}>` : undefined;
@@ -1095,7 +1100,7 @@ export async function sendSearchAlertEmail(payload: {
       body: JSON.stringify({
         from: transactionalMailFrom(),
         to: [to],
-        subject,
+        subject: sendSubject,
         text: sendText,
         html: sendHtml,
         tags: [{ name: "campaign", value: SEARCH_ALERTS_CAMPAIGN_TAG }],
@@ -1115,7 +1120,7 @@ export async function sendSearchAlertEmail(payload: {
       body: JSON.stringify({
         personalizations: [{ to: [{ email: to }] }],
         from: { email: fromMatch?.[2]?.trim() || "noreply@send.kidease.ca", name: fromMatch?.[1]?.replace(/"/g, "").trim() || "KidEase" },
-        subject,
+        subject: sendSubject,
         content: [
           { type: "text/plain", value: sendText },
           { type: "text/html", value: sendHtml },

@@ -63,7 +63,7 @@ function AdminGatePending() {
 
 function AdminRoute() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (pathname === "/admin/features" || pathname === "/admin/government") return <Outlet />;
+  if (pathname === "/admin/features" || pathname === "/admin/outbound" || pathname === "/admin/government") return <Outlet />;
   return (
     <Suspense
       fallback={

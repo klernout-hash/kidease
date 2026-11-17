@@ -8,6 +8,7 @@ import { homeProvince, redactLog, type ProvinceCode } from "@/lib/compliance/mod
 import { transactionalMailFrom } from "@/lib/mail-from";
 import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { govActorProvince } from "@/lib/gov/province-choice";
+import { gateOutboundEmail } from "@/lib/server/outbound-gate";
 
 export type Scope = {
   role: string;
@@ -86,6 +87,8 @@ export async function sendComplianceEmail(input: {
   subject: string;
   text: string;
   aboutTestListing?: boolean;
+  /** Emergency notices: counted, never blocked by a switch or cap. */
+  essential?: boolean;
 }): Promise<"sent" | "logged_no_mailer" | "failed"> {
   const key = process.env.RESEND_API_KEY?.trim();
   if (!key) return "logged_no_mailer";
@@ -103,10 +106,12 @@ export async function sendComplianceEmail(input: {
       html: "",
       branded: brandedNotice({ heading: input.subject, text: input.text }),
     });
+    const gated = await gateOutboundEmail({ to, subject: input.subject, essential: input.essential, label: "compliance" });
+    if (!gated.allow) return "failed";
     const payload: Record<string, unknown> = {
       from: transactionalMailFrom(),
-      to: [to],
-      subject: input.subject.slice(0, 140),
+      to: [gated.to],
+      subject: gated.subject.slice(0, 140),
       text: prepared.text.slice(0, 2000),
     };
     if (prepared.html) payload.html = prepared.html;
@@ -126,6 +131,8 @@ export async function sendComplianceSms(input: {
   to: string;
   body: string;
   consentGranted: boolean;
+  /** Emergency notices: counted, never blocked by a switch or cap. */
+  essential?: boolean;
 }): Promise<"sent" | "skipped" | "failed"> {
   if (!input.consentGranted) return "skipped";
   const { sendSms } = await import("@/lib/server/sms");
@@ -134,6 +141,8 @@ export async function sendComplianceSms(input: {
     body: input.body,
     consentGranted: true,
     audience: "user",
+    essential: input.essential,
+    label: "compliance",
   });
   if (result.ok) return "sent";
   if (result.skipped) return "skipped";

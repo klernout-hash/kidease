@@ -136,6 +136,9 @@ export const mintThreadVoiceToken = createServerFn({ method: "POST" })
     const status = await loadThread(context.userId, data.conversationId);
     if (!status.allowed || !status.desk) return { ok: false, error: "This call was not found." };
     if (!status.credentialsPresent) return { ok: false, error: status.error || VOICE_CREDENTIALS_MESSAGE };
+    const { gateMediaSession } = await import("./outbound-gate");
+    const media = await gateMediaSession("voice");
+    if (!media.ok) return { ok: false, error: media.error };
     const { createVoiceAccessToken } = await import("./voice");
     const identity = voiceIdentityForUser(context.userId, status.desk === "admin" ? "admin" : "user");
     const token = createVoiceAccessToken({ identity });

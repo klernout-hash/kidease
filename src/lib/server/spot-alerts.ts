@@ -28,6 +28,7 @@ import { transactionalMailFrom } from "@/lib/mail-from";
 import { resendCampaignTags } from "@/lib/email-suppressions";
 import { nid } from "@/lib/utils";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { gateOutboundEmail } from "@/lib/server/outbound-gate";
 
 type DaycareSpotRow = {
   id: string;
@@ -185,6 +186,9 @@ async function sendSpotMail(input: {
       reason: "You get this because you asked KidEase to email you about open spots.",
     }),
   });
+  const gated = await gateOutboundEmail({ to: input.to, subject: input.subject, label: "spot-alert" });
+  if (!gated.allow) return "failed" as const;
+  input = { ...input, to: gated.to, subject: gated.subject };
   const merged = { ...prepared.headers, ...(existing || {}) };
   const headers = Object.keys(merged).length ? merged : undefined;
   const sendText = prepared.text;
