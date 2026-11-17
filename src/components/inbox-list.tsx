@@ -104,7 +104,7 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
       <SupportDeskBar open={supportOpen} onOpen={setSupportOpen} />
       {supportOpen ? null : (
       <>
-      <div className="mt-4 flex flex-wrap gap-1.5" data-ke="inbox-stage-filters" role="group" aria-label={t("messages")}>
+      <div className="mt-4 flex flex-nowrap gap-1.5 overflow-x-auto px-1 py-1" data-ke="inbox-stage-filters" role="group" aria-label={t("messages")}>
         {MESSAGE_FILTERS.map((id) => (
           <button
             key={id}
@@ -112,7 +112,7 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
             aria-pressed={filter === id}
             onClick={() => setFilter(parseMessageFilter(id))}
             className={cn(
-              "min-h-11 whitespace-nowrap rounded-full px-4 text-sm font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+              "min-h-11 shrink-0 whitespace-nowrap rounded-full px-4 text-sm font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
               filter === id ? "bg-fg text-bg" : "bg-surface text-fg ring-1 ring-border",
             )}
           >

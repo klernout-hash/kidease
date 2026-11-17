@@ -88,8 +88,6 @@ function whyMatchLine(
 
 const LIVE_PILL =
   "inline-flex items-center rounded-full bg-ok font-bold leading-none text-surface shadow-card";
-const FEE_PILL =
-  "inline-flex items-center rounded-full bg-primary font-bold leading-none text-primary-fg shadow-card";
 
 function CardPhotoBadges({
   item,
@@ -126,7 +124,7 @@ function CardPhotoBadges({
               {t("live")}
             </span>
           ) : null}
-          {showSubsidy ? <SubsidyPill item={item} className={cn(FEE_PILL, pill)} /> : null}
+          {showSubsidy ? <SubsidyPill item={item} /> : null}
         </div>
       ) : null}
       {hollowPhoto && live ? (

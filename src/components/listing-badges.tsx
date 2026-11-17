@@ -43,7 +43,7 @@ export function ListingBadges({
 
   if (feeOnly) {
     if (!subsidy) return null;
-    return <SubsidyPill item={item} className={cn(pill, "mt-2 inline-flex bg-primary text-primary-fg")} />;
+    return <SubsidyPill item={item} className="mt-2" />;
   }
 
   return (
@@ -55,7 +55,7 @@ export function ListingBadges({
       {item.priority ? <PriorityPill /> : null}
       {!compact ? <GuestFavoriteBadge item={item} compact={compact} /> : null}
       <TrustSignals item={item} surface="parent" compact={compact} />
-      {subsidy ? <SubsidyPill item={item} className={cn(pill, "bg-primary text-primary-fg")} /> : null}
+      {subsidy ? <SubsidyPill item={item} /> : null}
       {live && !subsidy ? (
         <span className={cn(pill, "bg-ok text-primary-fg")}>{t("live")}</span>
       ) : null}

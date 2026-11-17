@@ -1302,7 +1302,7 @@ function MapPinPopup({
                 {t("live")}
               </span>
             ) : null}
-            <SubsidyPill item={item} className="inline-flex items-center rounded-full bg-[#1D4ED8] px-2 py-0.5 text-[10px] font-bold leading-none text-white" />
+            <SubsidyPill item={item} />
             {offerClaim ? <ClaimListingCta daycareId={item.id} name={name} source="card" /> : null}
           </div>
         ) : null}
