@@ -58,6 +58,7 @@ import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { useCentreAgreementChips } from "@/components/use-centre-agreement-chips";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { CapacityForm, Field } from "@/components/provider-listing-forms";
+import { MyListingHealth } from "@/components/my-listing-health";
 import { RequiredMark } from "@/components/required-field";
 import { PROVINCES, provinceFromPostalCode } from "@/lib/geo";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
@@ -750,6 +751,9 @@ export function ProviderPage() {
           <h1 className="font-display text-2xl">{t("navCalendar")}</h1>
           <p className="mt-2 text-sm text-muted">{t("comingSoon")}</p>
         </section>
+      ) : null}
+      {desk === "listings" && !staffDesk && deskListings.length && !listingEditorOpen ? (
+        <MyListingHealth listings={deskListings.map((row) => ({ id: row.id, name: row.name }))} locale={locale === "fr" ? "fr" : "en"} />
       ) : null}
       {desk === "listings" && hostListing ? (
         <HostListingsDesk
