@@ -19,11 +19,11 @@ import { FEATURE_FLAG_KEYS, FLAG_DEFAULTS } from "../src/lib/flags.ts";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("the registry is the 208 product flags and the 14 switches, not routes", () => {
+test("the registry is the 209 product flags and the 14 switches, not routes", () => {
   const flags = productFlagRows();
   const switches = switchRows();
-  assert.equal(flags.length, 208);
-  assert.equal(FEATURE_FLAG_KEYS.length, 208);
+  assert.equal(flags.length, 209);
+  assert.equal(FEATURE_FLAG_KEYS.length, 209);
   assert.equal(switches.length, 14);
   assert.equal(FEATURE_SWITCHES.length, 14);
   assert.equal(featureControlRegistry().length, 222);
