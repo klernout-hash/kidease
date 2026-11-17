@@ -232,3 +232,11 @@ test("scan uses real facts and leaves hooks and stubs alone", () => {
   assert.equal(hook.typeId, "staff_custody_notice");
   assert.equal(planPluginHook({ hook: "portfolio_item", userId: "p1", entityId: "story-1" }).typeId, "parent_portfolio_item");
 });
+
+test("every alert channel a person can turn off starts on, except SMS", () => {
+  const d = defaultUnifiedSettings("parent");
+  assert.equal(d.master, true);
+  assert.equal(d.inApp, true);
+  assert.equal(d.email, true);
+  assert.equal(d.push, true);
+});

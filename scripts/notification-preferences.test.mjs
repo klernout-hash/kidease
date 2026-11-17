@@ -26,7 +26,9 @@ test("a missing channel choice keeps the account default", () => {
   assert.equal(wantedChannel(false, true), false);
   const kept = decision();
   assert.equal(kept.channels.includes("email"), true);
-  assert.equal(kept.channels.includes("push"), false);
+  assert.equal(kept.channels.includes("push"), true, "push is on by default");
+  const pushOff = decision({ typePush: false });
+  assert.equal(pushOff.channels.includes("push"), false, "a saved choice wins");
   const emailOff = decision({ typeEmail: false });
   assert.equal(emailOff.channels.includes("email"), false);
   assert.equal(emailOff.channels.includes("in_app"), true);
