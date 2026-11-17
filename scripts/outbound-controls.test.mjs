@@ -133,6 +133,14 @@ test("test mode reroutes email and SMS and names the real recipient", async () =
   assert.equal((await g.gateEmail({ to: "a@b.ca", subject: "x" })).to, "admin-set@example.ca");
 });
 
+test("test mode falls back to Kyle's operator contacts", async () => {
+  const store = memoryStore();
+  store.controls.testMode = true;
+  const g = createOutboundGate({ store, env: { ADMIN_EMAIL: "ops@example.ca", ADMIN_SMS: "+12045550111" }, log: quiet });
+  assert.equal((await g.gateEmail({ to: "p@example.ca", subject: "x" })).to, "ops@example.ca");
+  assert.equal((await g.gateSms({ to: "+12045550100", body: "x" })).to, "+12045550111");
+});
+
 test("test mode with no test address sends nothing rather than the real person", async () => {
   const store = memoryStore();
   store.controls.testMode = true;

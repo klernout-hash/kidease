@@ -76,8 +76,8 @@ export const loadOutboundPage = createServerFn({ method: "GET" })
           from: r.old_value,
           to: r.new_value,
         })),
-        envTestEmail: maskEmail((process.env.OUTBOUND_TEST_EMAIL || "").trim()),
-        envTestPhone: maskPhone((process.env.OUTBOUND_TEST_PHONE || "").trim()),
+        envTestEmail: maskEmail((process.env.OUTBOUND_TEST_EMAIL || process.env.ADMIN_EMAIL || "").trim()),
+        envTestPhone: maskPhone((process.env.OUTBOUND_TEST_PHONE || process.env.ADMIN_SMS || "").trim()),
       };
     } catch {
       return { ok: false, error: "Outbound settings could not load. The database may need the 0210 migration." };

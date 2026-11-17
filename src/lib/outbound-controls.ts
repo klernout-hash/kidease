@@ -220,14 +220,18 @@ export function testModeSmsBody(body: string, originalTo: string): string {
   return `[TEST → ${originalTo}] ${body}`;
 }
 
-/** Which test address to use: admin value first, then env. */
+/**
+ * Which test address to use: the admin page first, then OUTBOUND_TEST_*,
+ * then Kyle's existing operator contacts (ADMIN_EMAIL, ADMIN_SMS).
+ */
 export function resolveTestRecipient(
   controls: OutboundControls,
   channel: OutboundChannel,
   env: Record<string, string | undefined>,
 ): string {
-  if (channel === "email") return controls.testEmail || (env.OUTBOUND_TEST_EMAIL || "").trim();
-  if (channel === "sms") return controls.testPhone || (env.OUTBOUND_TEST_PHONE || "").trim();
+  const pick = (...values: Array<string | undefined>) => values.map((v) => (v || "").trim()).find(Boolean) || "";
+  if (channel === "email") return pick(controls.testEmail, env.OUTBOUND_TEST_EMAIL, env.ADMIN_EMAIL);
+  if (channel === "sms") return pick(controls.testPhone, env.OUTBOUND_TEST_PHONE, env.ADMIN_SMS);
   return "";
 }
 
