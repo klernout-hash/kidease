@@ -8,6 +8,14 @@ While the live switch is off, a publish is only written to `curriculum_reminder_
 
 Child photos need a parent opt-in on the enrolment. The file is a private key. The page asks for a signed link. Sample activities have no photos of children.
 
+New photo keys bind the centre, child, booking and story:
+`family-docs/curriculum/{centre}/{child}/{booking}/{story}/{photo}.jpg`.
+Uploads require a private story and its metadata at the same centre, an enrolled booking for that exact child belonging to the child's parent, and current photo consent. The metadata write rechecks those relationships, the same consent timestamp, and the uploader's current centre access. A failed or unmatched write reports failure and attempts to delete the uploaded object. A failed cleanup can leave an unbound private orphan that the reader will not sign. If the database committed but its acknowledgement was lost, the metadata may already contain the key; this is not a transaction across storage and the database, and the normal reader authorization still applies.
+
+The reader requires that exact key in the story's photo list, matching story and metadata centres, a published private story, the bound booking's current enrolment and consent, and either that child's parent or staff at that centre. Draft stories cannot issue photo links. Legacy keys without booking and story provenance are blocked; this local change does not infer their provenance or migrate existing objects. A signed link already issued can remain usable for its 120-second lifetime after consent or access is revoked.
+
+The photo picker lists only the selected child's saved stories and attaches to the explicitly chosen story, including the story just saved. These checks do not change feature flags or activate the pack.
+
 Story Corner reads books from `data/story-corner/`. The importer downloads Global Digital Library CC BY files, checks the SHA-256, and does not keep a hotlink. CC BY-NC and ND items are skipped. CC BY-SA items are stored unchanged. Each book shows its credit line and a Creative Commons licence link.
 
 StoryWeaver stays off until `STORYWEAVER_API_TOKEN` is set. This build still does not call StoryWeaver. When a book is stored, the credit names the title, author, illustrator, translator, publisher, and StoryWeaver, plus the CC BY 4.0 link. Read Along videos are NC-ND and are always skipped.
