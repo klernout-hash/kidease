@@ -23,7 +23,8 @@ test("notification centre keeps texts behind consent and records a read receipt"
   });
   assert.equal(plan.channels.includes("sms"), false);
   assert.equal(plan.channels.includes("push"), false);
-  assert.deepEqual(defaultChannelPrefs().push, false);
+  assert.deepEqual(defaultChannelPrefs().push, true, "push starts on; people can turn it off");
+  assert.deepEqual(defaultChannelPrefs().sms, false, "SMS needs CASL opt-in");
   const receipt = markRead({ readerId: "u1", ownerId: "u1", already: null, now: "2026-10-31T00:00:00.000Z" });
   assert.equal("readBy" in receipt && receipt.readBy, "u1");
   assert.equal("error" in markRead({ readerId: "u2", ownerId: "u1", already: null, now: "2026-10-31T00:00:00.000Z" }), true);

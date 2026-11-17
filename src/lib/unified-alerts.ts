@@ -599,7 +599,9 @@ export function defaultUnifiedSettings(audience: UnifiedAudience, timeZone?: str
     master: true,
     inApp: true,
     email: true,
-    push: false,
+    // On by default (Kyle, 17 Nov). The phone still asks once before any push,
+    // and a saved choice always wins. SMS is never on by default (CASL consent).
+    push: true,
     quietStart: quiet.start,
     quietEnd: quiet.end,
     quietCustom: false,
