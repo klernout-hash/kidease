@@ -307,16 +307,26 @@ export const attachCurriculumPhoto = createServerFn({ method: "POST" })
     const storyId = String(data.storyId || "").trim();
     const bookingId = String(data.bookingId || "").trim();
     const sql = await assertCentre(context.userId, daycareId);
-    const booking = await sql<{ status: string; photo_consent_at: string | Date | null; child_id: string | null }>`
-      select status, photo_consent_at, child_id from bookings
-      where id = ${bookingId} and daycare_id = ${daycareId}
-      limit 1
-    `;
-    const row = booking[0];
-    const consentAt = row?.photo_consent_at instanceof Date ? row.photo_consent_at.toISOString() : row?.photo_consent_at || null;
-    const enrolled = Boolean(row && ENROLLED.includes(row.status as (typeof ENROLLED)[number]));
-    const key = `family-docs/curriculum/${daycareId}/${row?.child_id || "child"}/${nid("photo")}.jpg`;
-    const decision = acceptStoryPhoto({ consentAt, enrolled, key });
+    const rows = await sql.query<{ photo_consent_at: string | null; child_id: string; parent_user_id: string }>(
+      `select b.photo_consent_at::text as photo_consent_at, s.child_id, b.user_id as parent_user_id
+       from curriculum_story_meta m
+       join learning_stories s on s.id = m.story_id and s.daycare_id = m.daycare_id
+       join bookings b on b.child_id = s.child_id and b.daycare_id = s.daycare_id
+       join children c on c.id = s.child_id and c.user_id = b.user_id
+       where m.story_id = $1 and m.daycare_id = $2 and b.id = $3
+         and s.is_private = 1 and b.status = any($4::text[]) and jsonb_typeof(m.photo_keys) = 'array'
+       limit 1`,
+      [storyId, daycareId, bookingId, ENROLLED],
+    );
+    const row = rows[0];
+    if (!row || ![daycareId, row.child_id, bookingId, storyId].every((part) => /^[a-zA-Z0-9_-]+$/.test(part))) {
+      throw new Error("Choose a story for this child's enrolment.");
+    }
+    const consentAt = row.photo_consent_at;
+    // The booking and story are part of the private key so a different enrolment
+    // can never lend its consent to this photo, including after a re-enrolment.
+    const key = `family-docs/curriculum/${daycareId}/${row.child_id}/${bookingId}/${storyId}/${nid("photo")}.jpg`;
+    const decision = acceptStoryPhoto({ consentAt, enrolled: true, key });
     if (!decision.ok) throw new Error(decision.reason === "consent" ? "A parent must opt in before a photo is saved." : "Photos stay with enrolled children.");
     const bodyBase64 = String(data.bodyBase64 || "").replace(/^data:image\/[a-z0-9.+-]+;base64,/i, "");
     try {
@@ -325,11 +335,36 @@ export const attachCurriculumPhoto = createServerFn({ method: "POST" })
     } catch {
       throw new Error("Photo storage is not ready.");
     }
-    await sql`
-      update curriculum_story_meta
-      set photo_keys = photo_keys || ${JSON.stringify([key])}::jsonb, updated_at = now()
-      where story_id = ${storyId} and daycare_id = ${daycareId}
-    `;
+    try {
+      // Storage is outside the database: recheck the grant at the metadata write,
+      // including consent changes and staff removal while the upload was pending.
+      const wrote = await sql.query<{ story_id: string }>(
+        `update curriculum_story_meta m
+         set photo_keys = m.photo_keys || $1::jsonb, updated_at = now()
+         from learning_stories s
+         join bookings b on b.child_id = s.child_id and b.daycare_id = s.daycare_id
+         join children c on c.id = s.child_id and c.user_id = b.user_id
+         where m.story_id = s.id and m.daycare_id = s.daycare_id
+           and s.id = $2 and s.daycare_id = $3 and s.child_id = $4 and s.is_private = 1
+           and b.id = $5 and b.status = any($6::text[]) and b.photo_consent_at = $7::timestamptz
+           and b.user_id = $9 and jsonb_typeof(m.photo_keys) = 'array'
+           and (exists (select 1 from provider_daycares p where p.daycare_id = s.daycare_id and p.user_id = $8)
+             or exists (select 1 from centre_members cm where cm.daycare_id = s.daycare_id and cm.user_id = $8 and cm.status = 'active'))
+         returning m.story_id`,
+        [JSON.stringify([key]), storyId, daycareId, row.child_id, bookingId, ENROLLED, consentAt, context.userId, row.parent_user_id],
+      );
+      if (wrote.length !== 1 || wrote[0].story_id !== storyId) throw new Error("Photo metadata was not saved.");
+    } catch {
+      // An unbound object must never be reported as attached or signed by the reader.
+      try {
+        const { deleteFamilyDocObject } = await import("@/lib/server/r2.server");
+        await deleteFamilyDocObject(key);
+      } catch {
+        // Cleanup is best effort. An unbound orphan cannot pass the reader; a
+        // committed write with a lost acknowledgement still has normal read gates.
+      }
+      throw new Error("Photo could not be attached. Try again.");
+    }
     return { ok: true as const, key };
   });
 
@@ -338,22 +373,36 @@ export const viewCurriculumPhoto = createServerFn({ method: "POST" })
   .validator((input: { storyId?: string; key?: string }) => input)
   .handler(async ({ context, data }) => {
     if (!curriculumPackEnabled() || !curriculumPackLive()) return { blocked: true as const, reason: "off" };
-    const sql = await getSql();
     const key = String(data.key || "");
-    const rows = await sql.query<{ photo_consent_at: string | null; parent_user_id: string | null; status: string }>(
-      `select b.photo_consent_at::text as photo_consent_at, b.user_id as parent_user_id, b.status
+    const storyId = String(data.storyId || "").trim();
+    const parts = key.split("/");
+    // Legacy keys have no booking provenance. Do not guess which enrolment's
+    // consent applies, or allow path normalization to change the signed object.
+    if (parts.length !== 7 || parts[0] !== "family-docs" || parts[1] !== "curriculum"
+      || !parts.slice(2, 6).every((part) => /^[a-zA-Z0-9_-]+$/.test(part))
+      || !/^[a-zA-Z0-9_-]+\.jpg$/.test(parts[6]) || parts[5] !== storyId) {
+      return { blocked: true as const, reason: "photo" };
+    }
+    const [, , daycareId, childId, bookingId] = parts;
+    const sql = await getSql();
+    const rows = await sql.query<{ photo_consent_at: string | null }>(
+      `select b.photo_consent_at::text as photo_consent_at
        from curriculum_story_meta m
-       join learning_stories s on s.id = m.story_id
+       join learning_stories s on s.id = m.story_id and s.daycare_id = m.daycare_id
        join bookings b on b.child_id = s.child_id and b.daycare_id = s.daycare_id
-       where m.story_id = $1 and b.status = any($2::text[])
+       join children c on c.id = s.child_id and c.user_id = b.user_id
+       where m.story_id = $1 and m.status = 'published' and s.is_private = 1
+         and s.daycare_id = $2 and s.child_id = $3 and b.id = $4
+         and b.status = any($5::text[]) and jsonb_typeof(m.photo_keys) = 'array' and m.photo_keys ? $6
+         and (c.user_id = $7
+           or exists (select 1 from provider_daycares p where p.daycare_id = s.daycare_id and p.user_id = $7)
+           or exists (select 1 from centre_members cm where cm.daycare_id = s.daycare_id and cm.user_id = $7 and cm.status = 'active'))
        limit 1`,
-      [String(data.storyId || ""), ENROLLED],
+      [storyId, daycareId, childId, bookingId, ENROLLED, key, context.userId],
     ).catch(() => []);
     const row = rows[0];
-    const ids = await listAccessibleDaycareIds(sql, context.userId);
-    const staff = ids.length > 0;
-    const parent = row?.parent_user_id === context.userId;
-    if (!staff && !parent) return { blocked: true as const, reason: "enrol" };
+    const decision = acceptStoryPhoto({ key, consentAt: row?.photo_consent_at || null, enrolled: Boolean(row) });
+    if (!decision.ok) return { blocked: true as const, reason: decision.reason };
     let signed: string | null = null;
     try {
       const { presignR2Get } = await import("@/lib/server/r2.server");
