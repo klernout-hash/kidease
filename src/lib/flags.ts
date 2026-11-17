@@ -225,6 +225,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_AMAZON_STORE_DEEP_LINK",
   "FEATURE_PERSISTENT_SESSIONS",
   "FEATURE_SEARCH_MEMORY",
+  "FEATURE_COMPARE_PARENT_FEE",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -645,6 +646,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_PERSISTENT_SESSIONS: false,
   /** Remember the last search place, age, and budget. On. Reset clears them. */
   FEATURE_SEARCH_MEMORY: true,
+  /** Compare shows the parent fee and distance from a saved commute. On. No messages. */
+  FEATURE_COMPARE_PARENT_FEE: true,
 };
 
 /**
@@ -1530,6 +1533,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Search remembers the last place, child age, and monthly budget. On for guests on this device and for signed-in parents on their profile. Reset clears them.",
+  },
+  {
+    key: "FEATURE_COMPARE_PARENT_FEE",
+    defaultOn: true,
+    docs: "docs/flags.md",
+    summary:
+      "Compare shows the fee parents pay and distance from a saved commute address. On. A missing fee stays “Ask the centre”. No messages.",
   },
 ];
 
