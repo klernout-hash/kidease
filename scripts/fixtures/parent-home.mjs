@@ -20,6 +20,7 @@ import { attendanceCopy } from "../../src/lib/attendance-handoff.ts";
 import { centreClockLabel } from "../../src/lib/parent-arrival.ts";
 import { parentHomeCareRows } from "../../src/lib/parent-home-care.ts";
 import { isEnrolledBookingStatus } from "../../src/lib/daily-care.ts";
+import { useParentRequestScope } from "../../src/lib/use-parent-request-scope.ts";
 const require = createRequire(import.meta.url);
 
 function component(path, dependencies) {
@@ -71,6 +72,7 @@ export function renderParentHomeFixture({
     "@/components/ui/button": { Button },
     "@/lib/use-copy": { useCopy: () => ({ locale, t }) },
     "@/lib/desk-nav": { parentDeskPath },
+    "@/lib/use-parent-request-scope": { useParentRequestScope },
   };
   const { ParentHome } = component("src/components/parent-home.tsx", {
     ...common,

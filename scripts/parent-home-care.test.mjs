@@ -49,6 +49,26 @@ const snapshot = (overrides = {}) => ({
   ...overrides,
 });
 
+function productionModule(relative, dependencies) {
+  const module = { exports: {} };
+  const javascript = ts.transpileModule(
+    readFileSync(new URL(`../${relative}`, import.meta.url), "utf8"),
+    {
+      compilerOptions: {
+        module: ts.ModuleKind.CommonJS,
+        jsx: ts.JsxEmit.ReactJSX,
+        target: ts.ScriptTarget.ES2022,
+      },
+    },
+  ).outputText;
+  new vm.Script(javascript).runInNewContext({
+    module,
+    exports: module.exports,
+    require: (name) => dependencies[name] ?? require(name),
+  });
+  return module.exports;
+}
+
 function component(locale = "en", overrides = {}) {
   const dependencies = {
     "@/components/ui/button": {
@@ -75,23 +95,13 @@ function component(locale = "en", overrides = {}) {
     },
     ...overrides,
   };
-  const module = { exports: {} };
-  const javascript = ts.transpileModule(
-    readFileSync(new URL("../src/components/parent-home-care.tsx", import.meta.url), "utf8"),
-    {
-      compilerOptions: {
-        module: ts.ModuleKind.CommonJS,
-        jsx: ts.JsxEmit.ReactJSX,
-        target: ts.ScriptTarget.ES2022,
-      },
-    },
-  ).outputText;
-  new vm.Script(javascript).runInNewContext({
-    module,
-    exports: module.exports,
-    require: (name) => dependencies[name] ?? require(name),
-  });
-  return module.exports;
+  // The component and its hook must share the same React boundary, including
+  // the synthetic hooks used by the effects harness below.
+  dependencies["@/lib/use-parent-request-scope"] = productionModule(
+    "src/lib/use-parent-request-scope.ts",
+    dependencies,
+  );
+  return productionModule("src/components/parent-home-care.tsx", dependencies);
 }
 
 test("care snapshot joins only enrolled booking IDs, centres and centre-local days", () => {
@@ -192,12 +202,81 @@ function effectsHarness(overrides = {}) {
       useMemo: (fn) => fn(),
       useEffect: (fn) => effects.push(fn),
       useState: (initial) => [initial, (value) => updates.push(value)],
+      useRef: (initial) => ({ current: initial }),
+      useCallback: (fn) => fn,
     },
     ...overrides,
   });
   ParentHomeCare({ bookings: [booking], userId: "synthetic-parent" });
-  return { run: () => effects[0](), updates };
+  return {
+    run: () => {
+      const cleanups = effects
+        .map((effect) => effect())
+        .filter((cleanup) => typeof cleanup === "function");
+      return () => {
+        for (const cleanup of cleanups.reverse()) cleanup();
+      };
+    },
+    updates,
+  };
 }
+
+/** Persistent ref cells model viewer changes without replacing hook logic. */
+function scopeHarness() {
+  const refs = [];
+  const effects = [];
+  let cursor = 0;
+  const { useParentRequestScope } = productionModule("src/lib/use-parent-request-scope.ts", {
+    react: {
+      useRef: (initial) => {
+        const index = cursor++;
+        refs[index] ??= { current: initial };
+        return refs[index];
+      },
+      useCallback: (fn) => fn,
+      useEffect: (effect) => {
+        if (effects.length === 0) effects.push(effect);
+      },
+    },
+  });
+  function ScopeProbe(viewerId) {
+    cursor = 0;
+    return useParentRequestScope(viewerId);
+  }
+  return {
+    render: ScopeProbe,
+    mount: () => effects[0](),
+  };
+}
+
+test("actual request scope preserves replacement, account and unmount isolation in the VM", () => {
+  const harness = scopeHarness();
+  let scope = harness.render("synthetic-a");
+  const unmount = harness.mount();
+  const firstA = scope.issue("care");
+  const newerA = scope.issue("care");
+  const otherChannel = scope.issue("notes");
+  assert.equal(firstA.isCurrent(), false);
+  assert.equal(newerA.isCurrent(), true);
+  assert.equal(otherChannel.isCurrent(), true);
+  scope = harness.render("synthetic-b");
+  const accountB = scope.issue("care");
+  assert.equal(newerA.isCurrent(), false);
+  assert.equal(otherChannel.isCurrent(), false);
+  scope = harness.render("synthetic-a");
+  const returnedA = scope.issue("care");
+  assert.equal(scope.generation, 2);
+  assert.equal(accountB.isCurrent(), false);
+  assert.equal(newerA.isCurrent(), false);
+  assert.equal(returnedA.viewerId, "synthetic-a");
+  assert.equal(returnedA.isCurrent(), true);
+  returnedA.cancel();
+  assert.equal(returnedA.isCurrent(), false);
+  const pending = scope.issue("care");
+  unmount();
+  assert.equal(pending.isCurrent(), false);
+  assert.equal(scope.issue("care").isCurrent(), false);
+});
 
 test("home uses each accessible child's local day and restricts journal requests to enrolled bookings", async () => {
   const calls = [];
