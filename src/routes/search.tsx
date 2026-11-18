@@ -1,7 +1,7 @@
 import { useSplitMap } from "@/lib/use-split-map";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
@@ -24,6 +24,7 @@ import { resolveSearchCardOrigin } from "@/lib/search-card-origin";
 import { DaycareCard } from "@/components/daycare-card";
 import { AreaWaitlistForm } from "@/components/area-waitlist-form";
 import { SEARCH_PAGE_MAX, pageFromSearch } from "@/lib/search-page";
+import { compactSearchRadius, searchRadiusFromParams, withSearchRadius } from "@/lib/search-radius";
 import { searchDaycareMap, searchDaycarePage } from "@/lib/server/daycares";
 import { normalizeSearchResultFilters, schoolAgeOnlyFromSearch } from "@/lib/search-result-filters";
 import { searchMapState, type SearchMapResult } from "@/lib/search-map-state";
@@ -230,7 +231,7 @@ export async function searchLoader({ location, abortController }: { location: { 
       data: {
         lat: origin.lat,
         lng: origin.lng,
-        radiusKm: 25,
+        radiusKm: searchRadiusFromParams(location.search),
         sort,
         ageGroup: "any" as const,
         label: origin.label,
@@ -330,7 +331,8 @@ export function searchValidateSearch(s: Record<string, unknown>) {
       subsidy?: "1";
       lang?: string;
       licence?: LicenceBucket;
-    } = { ...fields };
+      km?: number;
+    } = { ...fields, ...compactSearchRadius(s) };
     const city = typeof s.city === "string" ? s.city.trim().slice(0, 80) : "";
     if (city) out.city = city;
     const sort = typeof s.sort === "string" ? s.sort : "";
@@ -444,8 +446,15 @@ export function SearchScreen({
   const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);
   const anchorMode = useAppStore((s) => s.anchorMode);
   const setAnchorMode = useAppStore((s) => s.setAnchorMode);
-  const radiusKm = useAppStore((s) => s.radiusKm);
-  const setRadiusKm = useAppStore((s) => s.setRadiusKm);
+  const radiusKm = searchRadiusFromParams(incoming);
+  const setStoredRadiusKm = useAppStore((s) => s.setRadiusKm);
+  const setRadiusKm = useCallback((next: number, replace = false) => {
+    void navigate({ search: (previous) => withSearchRadius(previous, next), replace });
+  }, [navigate]);
+  const radiusDragChanged = useRef<boolean | null>(null);
+  useEffect(() => {
+    setStoredRadiusKm(radiusKm);
+  }, [radiusKm, setStoredRadiusKm]);
   const sort = useAppStore((s) => s.sort);
   const setSort = useAppStore((s) => s.setSort);
   const rankOverride = parseRankingOverride(incoming.rank);
@@ -690,7 +699,9 @@ export function SearchScreen({
     const saved = takeSavedSearchToApply();
     if (!saved) return;
     setOrigin({ lat: saved.centerLat, lng: saved.centerLng, label: saved.centerLabel, explicit: true });
-    setRadiusKm(saved.radiusKm);
+    void navigate({
+      search: (previous) => withSearchRadius({ ...previous, q: saved.centerLabel }, saved.radiusKm),
+    });
     if (saved.ageBand === "school-age") {
       setSchoolAgeOnly(true);
       setAgeGroup("any");
@@ -712,11 +723,7 @@ export function SearchScreen({
     setReadyOnly(saved.filters.readyOnly);
     setClaimVerifiedOnly(saved.filters.claimVerifiedOnly);
     setFilters(true);
-  }, [setOrigin, setRadiusKm, setAgeGroup, setQuery, setLiveOnly]);
-
-  useEffect(() => {
-    if (radiusKm > MAX_SEARCH_RADIUS_KM) setRadiusKm(MAX_SEARCH_RADIUS_KM);
-  }, [radiusKm, setRadiusKm]);
+  }, [setOrigin, navigate, setAgeGroup, setQuery, setLiveOnly]);
 
   useEffect(() => {
     if (!user) {
@@ -1037,6 +1044,7 @@ export function SearchScreen({
 
   function withParentSearch(search: Record<string, unknown>) {
     return {
+      ...compactSearchRadius(incoming),
       ...parsePioneerSearch(incoming as Record<string, unknown>),
       ...search,
       ...compactParentListingSearch(parentFilters),
@@ -1115,6 +1123,7 @@ export function SearchScreen({
   function writeParentFilters(next: ParentListingSearch) {
     void navigate({
       search: {
+        ...compactSearchRadius(incoming),
         q: incoming.q ?? query,
         name: incoming.name,
         from: incoming.from,
@@ -1827,10 +1836,16 @@ export function SearchScreen({
         max={radiusMax}
         step={1}
         value={shownRadius}
+        onPointerDown={() => { radiusDragChanged.current = false; }}
+        onPointerUp={() => { radiusDragChanged.current = null; }}
+        onPointerCancel={() => { radiusDragChanged.current = null; }}
+        onBlur={() => { radiusDragChanged.current = null; }}
         onChange={(e) => {
-          setRadiusKm(Number(e.target.value));
+          const replace = radiusDragChanged.current === true;
+          if (radiusDragChanged.current !== null) radiusDragChanged.current = true;
+          setRadiusKm(Number(e.target.value), replace);
         }}
-        className="w-full accent-primary"
+        className="min-h-[44px] w-full touch-manipulation accent-primary"
         aria-valuemin={1}
         aria-valuemax={radiusMax}
         aria-valuenow={shownRadius}
@@ -2275,7 +2290,7 @@ export function SearchScreen({
             id="search-filters"
             role="region"
             aria-labelledby="search-filters-title"
-            className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border"
+            className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border [&_button]:min-h-[44px] [&_button]:min-w-[44px] [&_button]:touch-manipulation [&_label]:min-h-[44px] [&_label]:min-w-[44px] [&_[role=tablist]]:h-auto [&_[role=tablist]]:min-h-[48px]"
             data-ke="explore-filters-sheet"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">

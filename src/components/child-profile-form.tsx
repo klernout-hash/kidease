@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { emptyChild } from "@/lib/child-profile";
+import { childProfileHasChanges, type ChildDraft } from "@/lib/child-profile-unsaved";
 import { childBirthdateMessage, childBirthdateProblem } from "@/lib/child-birthdate";
 import { fieldErrorClass, RequiredMark } from "@/components/required-field";
 import { focusFirstInvalid } from "@/lib/profile-form";
@@ -14,22 +15,28 @@ import { DeleteChildControl } from "@/components/delete-child-control";
 import { useCopy } from "@/lib/use-copy";
 import type { Child } from "@/lib/types";
 
-type Draft = Omit<Child, "id"> & { id?: string };
+type Draft = ChildDraft;
 
 export function ChildProfileForm({
   initial,
   onSaved,
   onCancel,
+  onDirtyChange,
   focus,
 }: {
   initial?: Child | null;
   onSaved: () => void;
   onCancel?: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
   focus?: string | null;
 }) {
   const { t, locale } = useCopy();
   const reauth = useReauthPrompt();
-  const [draft, setDraft] = useState<Draft>(initial ?? emptyChild());
+  const initialSnapshot = useRef({
+    draft: initial ?? emptyChild(),
+    contacts: parsePickupContacts(initial?.pickupPeople || ""),
+  });
+  const [draft, setDraft] = useState<Draft>(initialSnapshot.current.draft);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [birthError, setBirthError] = useState("");
@@ -39,7 +46,14 @@ export function ChildProfileForm({
   const french = locale === "fr";
   const [pickupOn, setPickupOn] = useState(false);
   const [portfolioOn, setPortfolioOn] = useState(false);
-  const [contacts, setContacts] = useState<PickupContact[]>(() => parsePickupContacts(initial?.pickupPeople || ""));
+  const [contacts, setContacts] = useState<PickupContact[]>(initialSnapshot.current.contacts);
+  const dirty = !saved && childProfileHasChanges(initialSnapshot.current, { draft, contacts });
+
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
 
   useEffect(() => {
     void loadDeskFeatureFlags().then(
@@ -92,6 +106,7 @@ export function ChildProfileForm({
       }, reauth.prompt);
       confirmAction(t, added ? "childAdded" : "childSaved");
       setSaved(true);
+      onDirtyChange?.(false);
       onSaved();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("profileSaved"));
@@ -108,6 +123,13 @@ export function ChildProfileForm({
           ? "Un centre voit ces détails seulement après une inscription ou un partage que vous confirmez. Vous pouvez effacer ce profil."
           : "A centre sees these details only after you enrol or confirm a share. You can delete this profile."}
       </p>
+      {dirty ? (
+        <p role="status" data-ke="child-unsaved" className="text-sm font-medium text-fg">
+          {french
+            ? "Enregistrez ce profil avant de quitter. Les changements non enregistrés seront perdus."
+            : "Save this profile before leaving. Unsaved changes will be lost."}
+        </p>
+      ) : null}
       {nameInvalid || birthError ? (
         <p role="alert" data-ke="profile-required-note" className="text-sm text-danger">
           {t("profileRequiredNote")}
