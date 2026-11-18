@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { CCHF_DONATE_URL, SICKKIDS_DONATE_URL, cchfDonateUrl } from "../src/lib/donate.ts";
+import { CCHF_DONATE_URL, SICKKIDS_DONATE_URL, UNICEF_DONATE_URL, cchfDonateUrl } from "../src/lib/donate.ts";
 import { FOOTER_KIDEASE, FOOTER_SUPPORT, footerLinkLabel } from "../src/lib/site-footer-nav.ts";
 import { MARKETING_PAGE_SEO, MARKETING_PAGE_SEO_FR } from "../src/lib/page-seo.ts";
 import { localePath } from "../src/lib/locale-path.ts";
@@ -27,7 +27,7 @@ test("Kyle’s EN label stays Donate to kids and FR matches the footer pattern",
   assert.equal(copyValue("donateToKids", "fr"), "Faire un don aux enfants");
   assert.equal(
     copyValue("donateMatch", "en"),
-    "Gifts on this page go to the hospital foundation you choose. KidEase does not match donations.",
+    "Gifts go to the charity you choose. KidEase does not match donations.",
   );
   assert.doesNotMatch(copyValue("donateMatch", "en"), /will match/);
   assert.doesNotMatch(copyValue("donateMatch", "fr"), /égalera/);
@@ -63,4 +63,15 @@ test("hamburger, app menu, and footer all point at /donate", () => {
   assert.equal(MARKETING_PAGE_SEO_FR.donate.path, "/fr/donate");
   assert.match(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/donate/);
   assert.match(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/fr\/donate/);
+});
+
+test("UNICEF uses its official external form without partnership or proceeds claims", () => {
+  assert.equal(UNICEF_DONATE_URL, "https://secure.unicef.ca/page/172446/donate/1?locale=en-US");
+  assert.match(src("src/routes/donate.tsx"), /href={UNICEF_DONATE_URL}/);
+  assert.match(src("src/routes/donate.tsx"), /rel="noopener noreferrer"/);
+  for (const locale of ["en", "fr"]) {
+    assert.equal(copyValue("donateUnicefName", locale), "UNICEF Canada");
+    assert.match(copyValue("donateUnicefCta", locale), /UNICEF Canada/);
+    assert.doesNotMatch(copyValue("donateUnicefWhy", locale), /official partner|partenaire officiel|100%/i);
+  }
 });

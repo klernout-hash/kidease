@@ -2476,9 +2476,12 @@ export const en = {
     donateToKids: "Donate to kids",
     donateTitle: "Donate to kids",
     donateLead:
-      "Support children’s hospitals in Canada. KidEase links you to each foundation’s official donate page: we do not process gifts on this site.",
-    donateMatch: "Gifts on this page go to the hospital foundation you choose. KidEase does not match donations.",
+      "Support children in Canada and around the world. Give directly on each charity’s official website. KidEase does not collect these donations.",
+    donateMatch: "Gifts go to the charity you choose. KidEase does not match donations.",
     donateOptional: "Giving is optional. You do not need to donate to search, save listings, or use KidEase.",
+    donateUnicefName: "UNICEF Canada",
+    donateUnicefWhy: "Help UNICEF support children’s health, education and protection around the world. Donate directly through UNICEF Canada.",
+    donateUnicefCta: "Donate to UNICEF Canada",
     donateSickKidsName: "SickKids Foundation",
     donateSickKidsWhy:
       "SickKids Foundation is Canada’s largest charitable funder of childhood research and care: a name parents already know and trust. Gifts support life-saving research, advanced paediatric equipment, and family programs for children facing serious illness.",
@@ -2488,7 +2491,7 @@ export const en = {
       "CCHF is a collective network supporting 13 children’s hospital foundations across Canada: including BC Children’s, Alberta Children’s, CHEO, and IWK Health Centre. Giving through CCHF can support a hospital closer to home, so the impact feels local wherever KidEase families live.",
     donateCchfCta: "Donate to CCHF",
     donateExternalNote:
-      "Official foundation sites open in a new tab. Charitable tax receipts are issued by the foundation, not by KidEase.",
+      "Charity websites open in a new tab. Each charity handles its own donations and receipts. Links do not imply a partnership with or endorsement of KidEase.",
     team: "Meet the team",
     teamIntro:
       "Kyle and Kevin started KidEase, a Canadian company, so families can find licensed daycare anywhere in the country.",

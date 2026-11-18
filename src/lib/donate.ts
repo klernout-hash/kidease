@@ -1,5 +1,5 @@
 /**
- * Official foundation donate URLs. KidEase does not process these gifts —
+ * Official charity donate URLs. KidEase does not process these gifts —
  * buttons open the charity’s own form in a new tab.
  *
  * SickKids: donate.sickkidsfoundation.com is the Foundation’s donation form.
@@ -19,3 +19,6 @@ export function cchfDonateUrl(locale: string): string {
 export function sickKidsDonateUrl(_locale?: string): string {
   return SICKKIDS_DONATE_URL;
 }
+
+/** UNICEF Canada processes donations on its own secure site. */
+export const UNICEF_DONATE_URL = "https://secure.unicef.ca/page/172446/donate/1?locale=en-US";

@@ -3,7 +3,7 @@ import { ArrowUpRight, HeartHandshake } from "lucide-react";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
-import { cchfDonateUrl, sickKidsDonateUrl } from "@/lib/donate";
+import { cchfDonateUrl, sickKidsDonateUrl, UNICEF_DONATE_URL } from "@/lib/donate";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/donate")({
@@ -36,6 +36,12 @@ export function DonatePage() {
         </section>
 
         <ul className="mt-5 grid gap-4 md:mt-8 md:grid-cols-2">
+          <FoundationCard
+            name={t("donateUnicefName")}
+            why={t("donateUnicefWhy")}
+            cta={t("donateUnicefCta")}
+            href={UNICEF_DONATE_URL}
+          />
           <FoundationCard
             name={t("donateSickKidsName")}
             why={t("donateSickKidsWhy")}
@@ -72,7 +78,7 @@ function FoundationCard({
     <li className="flex h-full flex-col rounded-xl bg-surface p-5 shadow-card ring-1 ring-border md:p-6">
       <h2 className="text-2xl">{name}</h2>
       <Button asChild className="mt-4 w-full md:order-last md:mt-6">
-        <a href={href} target="_blank" rel="noreferrer">
+        <a href={href} target="_blank" rel="noopener noreferrer">
           {cta}
           <ArrowUpRight className="size-4" aria-hidden />
         </a>
