@@ -51,7 +51,7 @@ export function Contact() {
     e.preventDefault();
     const challenge = token.trim();
     if (turnstileRequired && !challenge) {
-      setFormError("Please complete the security check, then try again.");
+      setFormError(t("turnstileRequired"));
       setSent(false);
       return;
     }
@@ -82,6 +82,7 @@ export function Contact() {
       const message = publicFormErrorMessage(
         err,
         t("contactSendFailed").replace("{email}", SUPPORT_INBOX_EMAIL),
+        t("turnstileRequired"),
       );
       setFormError(message);
       toast.error(message);
