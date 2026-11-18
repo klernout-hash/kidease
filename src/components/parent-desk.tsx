@@ -1,5 +1,5 @@
 import { Component, lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, Navigate, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, Navigate, useBlocker, useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
 import type { UpgradeSearch } from "@/components/checkout-return";
@@ -60,6 +60,7 @@ import { useParentPlusAccess } from "@/lib/use-parent-plus";
 import { DeleteChildControl } from "@/components/delete-child-control";
 import { useParentNavigation } from "@/lib/use-parent-navigation";
 import { useParentRequestScope } from "@/lib/use-parent-request-scope";
+import { childProfileEntryIntent, completedChildProfileSearch, confirmChildProfileDiscard } from "@/lib/child-profile-unsaved";
 
 const ParentPlusPanel = lazy(() =>
   import("@/components/parent-plus").then((m) => ({ default: m.ParentPlusPanel })),
@@ -143,11 +144,12 @@ export function ParentDesk({
 }) {
   const { user } = useCurrentUserState();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const locationHref = useRouterState({ select: (s) => s.location.href });
   const navigate = useNavigate();
   const navigateTab = useCallback((id: string) => {
     void navigate({ to: parentDeskPath(pathname), search: parentNavSearch(id), replace: true });
   }, [navigate, pathname]);
-  const { tab, contentTab, selectTab } = useParentNavigation(initialTab, navigateTab);
+  const { tab, contentTab, selectTab: selectParentTab } = useParentNavigation(initialTab, navigateTab);
   const { issue: issueRequest } = useParentRequestScope(user?.id);
   const storeShell = useStoreShell();
   const chrome = useRoleChrome();
@@ -175,6 +177,29 @@ export function ParentDesk({
   const [homeError, setHomeError] = useState(false);
   const [extrasState, setExtrasState] = useState<"pending" | "ready" | "error">("pending");
   const [editing, setEditing] = useState<Child | null | "new">(null);
+  const [editorVersion, setEditorVersion] = useState(0);
+  const [childHealthVersion, setChildHealthVersion] = useState(0);
+  const childDirty = useRef(false);
+  const childEditorLocation = useRef(locationHref);
+  const appliedChildIntent = useRef<string | null>(null);
+  const onChildDirtyChange = useCallback((dirty: boolean) => {
+    childDirty.current = dirty;
+  }, []);
+  const confirmChildDiscard = useCallback(() =>
+    confirmChildProfileDiscard(childDirty.current, locale === "fr", (message) => window.confirm(message)),
+  [locale]);
+  const discardChildEdits = useCallback(() => {
+    if (!confirmChildDiscard()) return false;
+    childDirty.current = false;
+    return true;
+  }, [confirmChildDiscard]);
+  const childBeforeUnload = useCallback(() => childDirty.current, []);
+  // A failed/cancelled router transition must leave the current draft guarded.
+  const blockChildNavigation = useCallback(() => !confirmChildDiscard(), [confirmChildDiscard]);
+  useBlocker({
+    shouldBlockFn: blockChildNavigation,
+    enableBeforeUnload: childBeforeUnload,
+  });
   const [childFocus, setChildFocus] = useState<string | null>(null);
   const [childOpen, setChildOpen] = useState(false);
   const [childrenReady, setChildrenReady] = useState(false);
@@ -185,6 +210,58 @@ export function ParentDesk({
   const [savedReady, setSavedReady] = useState(false);
   const [shortlistShared, setShortlistShared] = useState(initialShared);
   const acceptedShare = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (childEditorLocation.current === locationHref) return;
+    childEditorLocation.current = locationHref;
+    if (childDirty.current) setEditorVersion((current) => current + 1);
+    childDirty.current = false;
+    setEditing(null);
+  }, [locationHref]);
+
+  function selectTab(id: string) {
+    if (id === tab) return;
+    if (!discardChildEdits()) return;
+    setEditing(null);
+    selectParentTab(id);
+  }
+
+  function editChild(next: Child | "new") {
+    if (!discardChildEdits()) return;
+    setEditorVersion((current) => current + 1);
+    setEditing(next);
+    setChildOpen(true);
+  }
+
+  function closeChildEditor(closeDetail = false) {
+    if (!discardChildEdits()) return;
+    setEditing(null);
+    if (closeDetail) setChildOpen(false);
+  }
+
+  async function finishChildEdit(childId?: string) {
+    childDirty.current = false;
+    setEditing(null);
+    setChildFocus(childId ?? null);
+    setChildOpen(Boolean(childId));
+    setChildHealthVersion((current) => current + 1);
+    if (initialChild || initialFocus) {
+      // Commit the completed entry intent before refreshing authoritative facts.
+      await navigate({
+        from: parentDeskPath(pathname),
+        to: parentDeskPath(pathname),
+        search: (current) => completedChildProfileSearch(current),
+        replace: true,
+      }).catch(() => undefined);
+    }
+    try {
+      await load();
+    } catch {
+      toast.error(locale === "fr"
+        ? "Le changement est enregistré. Rechargez la page pour l’afficher."
+        : "Your change is saved. Reload the page to see it.");
+    }
+  }
 
   const loadExplore = useCallback(
     async (startBookings: Booking[], fresh = false) => {
@@ -343,6 +420,8 @@ export function ParentDesk({
     setExplore([]);
     setExploreReady(false);
     setPicked({});
+    childDirty.current = false;
+    appliedChildIntent.current = null;
     setEditing(null);
   }, [user?.id]);
 
@@ -378,8 +457,14 @@ export function ParentDesk({
   }, [user?.id, loadFamily, loadExplore, loadDeskExtras]);
 
   useEffect(() => {
-    if (!initialChild || !childrenReady) return;
+    if (!initialChild) {
+      appliedChildIntent.current = null;
+      return;
+    }
+    const entryIntent = childProfileEntryIntent(locationHref, initialChild, initialFocus);
+    if (!entryIntent || !childrenReady || childDirty.current || appliedChildIntent.current === entryIntent) return;
     if (initialChild === "new") {
+      appliedChildIntent.current = entryIntent;
       if (children.length >= MAX_CHILDREN_PER_PARENT) {
         setEditing(null);
         return;
@@ -390,10 +475,11 @@ export function ParentDesk({
     }
     const found = children.find((child) => child.id === initialChild);
     if (!found) return;
+    appliedChildIntent.current = entryIntent;
     setChildFocus(found.id);
     setChildOpen(true);
     setEditing(initialFocus ? found : null);
-  }, [children, childrenReady, initialChild, initialFocus]);
+  }, [children, childrenReady, initialChild, initialFocus, locationHref]);
 
   useEffect(() => {
     if (contentTab !== "saved") {
@@ -754,7 +840,7 @@ export function ParentDesk({
 
       {contentTab === "children" ? (
         <div className="mt-6 space-y-4">
-          <ChildHealthLog />
+          <ChildHealthLog key={`${user.id}:${childHealthVersion}`} />
           <PortfolioGaps children={children} />
           <div>
             <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>
@@ -775,7 +861,7 @@ export function ParentDesk({
               title={t("noChildren")}
               body={familyCanWrite ? t("noChildrenLead") : locale === "fr" ? "Le parent principal n’a pas encore ajouté d’enfant." : "The main parent has not added a child yet."}
               action={familyCanWrite ? t("emptyAddChild") : undefined}
-              onAction={familyCanWrite ? () => { setEditing("new"); setChildOpen(true); } : undefined}
+              onAction={familyCanWrite ? () => editChild("new") : undefined}
             />
           ) : (
           <div className="ke-split" data-ke="children-split" data-selected={childOpen || editing ? "true" : "false"}>
@@ -788,6 +874,7 @@ export function ParentDesk({
                       aria-pressed={activeChild?.id === c.id}
                       className="flex min-h-11 w-full items-center px-4 text-left font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                       onClick={() => {
+                        if (!discardChildEdits()) return;
                         setChildFocus(c.id);
                         setChildOpen(true);
                         setEditing(null);
@@ -799,13 +886,13 @@ export function ParentDesk({
                 ))}
               </ul>
               {familyCanWrite && children.length < MAX_CHILDREN_PER_PARENT ? (
-                <Button className="mt-3" onClick={() => { setEditing("new"); setChildOpen(true); }}>
+                <Button className="mt-3" onClick={() => editChild("new")}>
                   {children.length ? t("newChild") : t("addChild")}
                 </Button>
               ) : null}
             </div>
             <div className="ke-split-detail min-w-0" data-ke="children-detail">
-              <Button variant="ghost" className="mb-3 md:hidden" onClick={() => { setChildOpen(false); setEditing(null); }}>
+              <Button variant="ghost" className="mb-3 md:hidden" onClick={() => closeChildEditor(true)}>
                 {t("back")}
               </Button>
               {editing ? (
@@ -813,13 +900,12 @@ export function ParentDesk({
               <h2 className="mb-4 text-base font-semibold">{editing === "new" ? t("newChild") : t("profileEdit")}</h2>
               <Suspense fallback={<div className="ke-skel h-48 rounded-xl" aria-hidden="true" />}>
                 <ChildProfileForm
+                  key={`${editing === "new" ? "new" : editing.id}:${editorVersion}`}
                   initial={editing === "new" ? null : editing}
                   focus={initialFocus}
-                  onSaved={() => {
-                    setEditing(null);
-                    void load();
-                  }}
-                  onCancel={() => setEditing(null)}
+                  onDirtyChange={onChildDirtyChange}
+                  onSaved={(childId) => { void finishChildEdit(childId); }}
+                  onCancel={() => closeChildEditor()}
                 />
               </Suspense>
             </div>
@@ -836,7 +922,7 @@ export function ParentDesk({
                           <button
                             type="button"
                             data-ke="child-profile-edit"
-                            onClick={() => setEditing(c)}
+                            onClick={() => editChild(c)}
                             className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-primary touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                           >
                             {t("profileEdit")}
@@ -850,10 +936,7 @@ export function ParentDesk({
                       <div className="px-3 pb-3">
                         <DeleteChildControl
                           child={{ id: c.id, name: c.name }}
-                          onDeleted={() => {
-                            setEditing(null);
-                            void load();
-                          }}
+                          onDeleted={() => { void finishChildEdit(); }}
                         />
                       </div>
                       <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">
@@ -872,7 +955,7 @@ export function ParentDesk({
                                 const on = selected.includes(d.id);
                                 return (
                                   <li key={d.id}>
-                                    <label className="flex min-h-10 cursor-pointer items-center gap-2 text-sm">
+                                    <label data-ke="child-share-centre" className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm touch-manipulation">
                                       <input
                                         type="checkbox"
                                         className="size-4 accent-primary"

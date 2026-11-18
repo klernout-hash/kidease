@@ -62,6 +62,7 @@ import {
 } from "@/lib/server/provider-entitlements";
 import { accessDeniedMessage, assertCanMutateListing, canUpdateBookingStatus } from "@/lib/access-control";
 import { providerMaySetBookingStatus } from "@/lib/marketplace-loop";
+import { claimRequestStatusTransition } from "@/lib/server/request-status-transition";
 import { resolveAdminAccess } from "@/lib/server/roles";
 import {
   canCentreWriteLeadsFor,
@@ -1239,10 +1240,16 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
         province: b.province || "",
       });
     }
-    const prev = b.status;
-    await sql`update bookings set status = ${data.status}, status_updated_at = now() where id = ${b.id}`.catch(async () => {
-      await sql`update bookings set status = ${data.status} where id = ${b.id}`;
-    });
+    let cid = b.conversation_id;
+    if (!cid) {
+      const existing = await sql<{ id: string }>`
+        select id from conversations where user_id = ${b.user_id} and daycare_id = ${b.daycare_id}
+      `;
+      cid = existing[0]?.id ?? null;
+    }
+    const transition = await claimRequestStatusTransition(sql, b.id, data.status);
+    if (!transition) return { ok: true as const, status: data.status, conversationId: cid };
+    const prev = transition.previousStatus;
     if (data.status === "accepted" || data.status === "waitlist") {
       const { rememberCentreLead } = await import("@/lib/server/lead-intake-write");
       await rememberCentreLead(sql, {
@@ -1270,13 +1277,6 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
       }
     }
 
-    let cid = b.conversation_id;
-    if (!cid) {
-      const existing = await sql<{ id: string }>`
-        select id from conversations where user_id = ${b.user_id} and daycare_id = ${b.daycare_id}
-      `;
-      cid = existing[0]?.id ?? null;
-    }
     if (cid) {
       const { syncToursFromBooking } = await import("@/lib/server/tours");
       await syncToursFromBooking(sql, cid, data.status).catch(() => undefined);

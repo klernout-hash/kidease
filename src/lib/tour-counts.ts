@@ -1,6 +1,6 @@
 /**
  * One definition for tour numbers.
- * Open requests are still waiting. Booked seats are accepted visits.
+ * Pending tour requests are still waiting. Confirmed tours are accepted visits.
  * Posted tour times are windows the centre published.
  * `booked` on a slot can include waiting requests, so seats use `accepted` only.
  */
@@ -55,16 +55,16 @@ export function summarizeTourCounts(input: {
 
 export const TOUR_COUNT_LABELS = {
   en: {
-    openRequests: "Open requests",
-    bookedSeats: "Booked seats",
+    openRequests: "Pending tour requests",
+    bookedSeats: "Confirmed tours",
     postedTimes: "Posted tour times",
-    meaning: "Open requests are still waiting. Booked seats are confirmed. Posted tour times are the visit times a centre published.",
+    meaning: "These numbers count tour requests and visits. Pending tour requests still need a reply. Posted tour times are the visit times a centre published.",
   },
   fr: {
-    openRequests: "Demandes ouvertes",
-    bookedSeats: "Places réservées",
+    openRequests: "Demandes de visite en attente",
+    bookedSeats: "Visites confirmées",
     postedTimes: "Heures de visite publiées",
-    meaning: "Les demandes ouvertes attendent encore. Les places réservées sont confirmées. Les heures de visite publiées sont celles qu’un centre a mises en ligne.",
+    meaning: "Ces nombres concernent les demandes de visite et les visites. Les demandes en attente ont besoin d’une réponse. Les heures de visite publiées sont celles qu’un centre a mises en ligne.",
   },
 } as const;
 

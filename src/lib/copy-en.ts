@@ -3010,7 +3010,7 @@ export const en = {
     ageNotConfirmedHide: "Hide age-not-confirmed listings",
     cardGapAges: "Ages not listed",
     cardGapFees: "Fee not confirmed",
-    cardGapPhoto: "Photo pending",
+    cardGapPhoto: "No centre photo",
     availabilityUnknown: "Availability unknown",
     confirmWithCentre: "Confirm with centre",
     unclaimedRequestNote:

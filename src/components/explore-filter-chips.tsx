@@ -1,4 +1,5 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 import { ChipButton } from "@/components/chip";
 import { Button } from "@/components/ui/button";
 import {
@@ -143,36 +144,31 @@ function FilterModal({
   onClose: () => void;
 }) {
   const { t } = useCopy();
-  const titleId = useId();
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
+  const returnFocus = useRef<HTMLElement | null>(null);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="presentation">
-      <button type="button" className="absolute inset-0 bg-fg/40" aria-label={t("cancel")} onClick={onClose} />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="relative z-10 w-full max-w-md rounded-t-xl bg-surface p-5 shadow-card ring-1 ring-border md:rounded-xl"
+    <Dialog.Root open onOpenChange={(next) => { if (!next) onClose(); }}>
+    <Dialog.Portal>
+      <Dialog.Overlay className="fixed inset-0 z-[80] bg-fg/40" />
+      <Dialog.Content
+        aria-describedby={undefined}
+        className="fixed inset-x-0 bottom-0 z-[81] mx-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col rounded-t-xl bg-surface p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-fg shadow-card ring-1 ring-border focus:outline-none md:inset-x-auto md:bottom-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-xl"
+        onOpenAutoFocus={() => {
+          const previous = document.activeElement;
+          returnFocus.current = previous instanceof HTMLElement ? previous : null;
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (returnFocus.current?.isConnected) returnFocus.current.focus();
+        }}
       >
-        <h2 id={titleId} className="font-display text-2xl">
+        <Dialog.Title className="shrink-0 font-display text-2xl">
           {title}
-        </h2>
-        <ul className="mt-4 space-y-2">
+        </Dialog.Title>
+        <ul className="mt-4 min-h-0 overflow-y-auto overscroll-contain space-y-2">
           {options.map((opt) => (
             <li key={opt.id}>
-              <label className="flex min-h-11 items-center gap-3 text-sm">
+              <label className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center gap-3 text-sm">
                 <input
                   type="checkbox"
                   className="size-4 accent-primary"
@@ -184,15 +180,19 @@ function FilterModal({
             </li>
           ))}
         </ul>
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-5 flex shrink-0 flex-wrap gap-2">
           <Button type="button" onClick={onApply}>
             {t("filterApply")}
           </Button>
           <Button type="button" variant="secondary" onClick={onClear}>
             {t("filterClear")}
           </Button>
+          <Dialog.Close asChild>
+            <Button type="button" variant="secondary">{t("cancel")}</Button>
+          </Dialog.Close>
         </div>
-      </div>
-    </div>
+      </Dialog.Content>
+    </Dialog.Portal>
+    </Dialog.Root>
   );
 }

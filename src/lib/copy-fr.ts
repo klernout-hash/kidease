@@ -3020,7 +3020,7 @@ export const fr = {
     ageNotConfirmedHide: "Masquer les fiches sans âge confirmé",
     cardGapAges: "Âges non indiqués",
     cardGapFees: "Tarif non confirmé",
-    cardGapPhoto: "Photo en attente",
+    cardGapPhoto: "Aucune photo du centre",
     availabilityUnknown: "Disponibilité inconnue",
     confirmWithCentre: "Confirmer auprès du centre",
     unclaimedRequestNote:
