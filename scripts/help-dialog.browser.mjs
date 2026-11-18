@@ -3,58 +3,54 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { chromium } from "playwright";
 import { checkedOutputPath, smokeAllowedOutputDirs } from "./browser-guard.mjs";
+import { startHelpDialogFixture } from "./fixtures/help-dialog.mjs";
+import { frenchTypography } from "../src/lib/french-type.ts";
 
-// Existing local preview only. All external requests and all non-read HTTP
-// requests are aborted, including the synthetic question used for error UI.
-const base = new URL(process.argv[2] ?? "http://127.0.0.1:8095/");
-assert.ok(["http:", "https:"].includes(base.protocol));
-assert.ok(["127.0.0.1", "localhost", "[::1]"].includes(base.hostname), "Use a local preview");
+// Actual Help/Radix/Router components in an isolated local fixture. No full-app
+// runtime, financial modules, application server, database or provider is loaded.
+assert.ok(!/^https?:/i.test(process.argv[2] ?? ""), "Use the isolated fixture, not an application preview URL");
 const output = checkedOutputPath(
-  resolve(process.argv[3] ?? "artifacts/help-dialog", "verdict.json"),
+  resolve(process.argv[2] ?? "artifacts/help-dialog", "verdict.json"),
   smokeAllowedOutputDirs(),
   "verdict",
 );
 const out = dirname(output);
 await mkdir(out, { recursive: true });
-const browser = await chromium.launch({
-  headless: true,
-  ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
-    ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
-    : {}),
-});
+const isolated = await startHelpDialogFixture(out);
+const base = new URL(isolated.origin);
+let browser;
+try {
+  browser = await chromium.launch({
+    headless: true,
+    ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
+      : {}),
+  });
+} catch (error) {
+  await isolated.close();
+  throw error;
+}
 const verdict = {
   ok: false,
   checks: [],
   nonReadRequestsBlocked: 0,
   externalRequestsBlocked: 0,
   blockedNonReadPaths: [],
+  apiRequestsBlocked: 0,
+  webSocketRequestsBlocked: 0,
+  scope: "isolated actual Help/Radix/Router components; synthetic denied service edges; compiled application CSS",
+  sourceProvenance: isolated.provenance,
+  boundary: isolated.metrics,
 };
-const text = {
-  en: {
-    help: "KidEase Help",
-    close: "Close",
-    input: "Ask a question…",
-    send: "Send",
-    loading: "Loading",
-    typing: "Typing…",
-    failure: "Couldn’t send that.",
-    agent: "Talk to a live agent",
-    path: "/help",
-    report: "/report",
-  },
-  fr: {
-    help: "Aide KidEase",
-    close: "Fermer",
-    input: "Posez une question…",
-    send: "Envoyer",
-    loading: "Chargement",
-    typing: "Rédaction…",
-    failure: "Envoi impossible.",
-    agent: "Parler à un agent",
-    path: "/fr/help",
-    report: "/fr/report",
-  },
-};
+const text = Object.fromEntries(["en", "fr"].map((locale) => {
+  const pack = isolated.packs[locale];
+  const value = (key) => locale === "fr" ? frenchTypography(pack[key]) : pack[key];
+  return [locale, {
+    help: value("helpBot"), close: value("close"), input: value("helpBotPh"), send: value("send"),
+    loading: value("loading"), typing: value("helpBotTyping"), failure: value("helpBotFail"), agent: value("helpBotAgent"),
+    path: locale === "fr" ? "/fr/help" : "/help", report: locale === "fr" ? "/fr/report" : "/report",
+  }];
+}));
 
 function deferred() {
   let resolve;
@@ -104,6 +100,11 @@ async function fixture(locale, width, { holdImport = false } = {}) {
       await route.abort();
       return;
     }
+    if (/^\/(?:api|_server[^/]*|__server[^/]*)(?:\/|$)/.test(url.pathname)) {
+      verdict.apiRequestsBlocked++;
+      await route.abort();
+      return;
+    }
     if (!["GET", "HEAD", "OPTIONS"].includes(request.method())) {
       verdict.nonReadRequestsBlocked++;
       const blocked = `${request.method()} ${url.pathname}`;
@@ -124,6 +125,10 @@ async function fixture(locale, width, { holdImport = false } = {}) {
       await importRelease.promise;
     }
     await route.continue();
+  });
+  await context.routeWebSocket("**/*", (socket) => {
+    verdict.webSocketRequestsBlocked++;
+    socket.close();
   });
   const page = await context.newPage();
   page.setDefaultTimeout(15000);
@@ -474,12 +479,25 @@ try {
       }
     }
   }
+  assert.equal(verdict.checks.length, 10, "All original Help cases must run");
+  assert.equal(verdict.externalRequestsBlocked, 0, "No external request may be attempted");
+  assert.equal(verdict.apiRequestsBlocked, 0, "No application API may be requested");
+  assert.equal(verdict.webSocketRequestsBlocked, 0, "No WebSocket may be requested");
+  assert.deepEqual(verdict.blockedNonReadPaths, ["POST /__help_fixture/denied"], "Only the explicit rejecting Help boundary may attempt a request");
+  assert.equal(verdict.nonReadRequestsBlocked, 4, "One synthetic denied send per normal locale/width case");
   verdict.ok = true;
 } catch (error) {
   verdict.error = String(error?.stack || error);
   process.exitCode = 1;
   console.error(verdict.error);
 } finally {
-  await writeFile(output, JSON.stringify(verdict, null, 2));
   await browser.close();
+  try {
+    await isolated.close();
+  } catch (error) {
+    verdict.ok = false;
+    verdict.cleanupError = String(error?.stack || error);
+    process.exitCode = 1;
+  }
+  await writeFile(output, JSON.stringify(verdict, null, 2));
 }

@@ -37,6 +37,10 @@ No libraries were added.
 
 ## Final verification
 
+This section retains the original worker's results at `16bae5fe`. It is historical
+evidence, not the local test allowlist for the integrated staging tree. Use the strict
+isolated commands below for current validation.
+
 - `node scripts/desk-nonpayment-checks.mjs typecheck` — passed on final source.
 - `node scripts/desk-nonpayment-checks.mjs lint` — passed, 0 errors / 141 warnings.
   Final scoped ESLint also passed, with only the existing Turnstile Fast Refresh warning.
@@ -44,24 +48,22 @@ No libraries were added.
   linked 71 server modules; locale chunks remained lazy; 856 client files passed the
   database-code check. Source-map upload and the remote migration ledger check skipped
   because their credentials / database URL were absent.
-- Explicit unit suite — **56/56 passed**:
-
-  ```sh
-  node --experimental-strip-types --test \
-    scripts/help-bubble.test.mjs scripts/help-launcher.test.mjs \
-    scripts/a11y-pass.test.mjs scripts/turnstile.test.mjs \
-    scripts/turnstile-widget.test.mjs scripts/public-form-error.test.mjs \
-    scripts/native-google-auth.test.mjs scripts/boot-loop.test.mjs \
-    scripts/site-guide.test.mjs
-  ```
+- The original worker reported **56/56 unit tests passed** across eight existing files.
+  Five of those files eagerly import pricing, subscription or refund-policy modules;
+  they are excluded from the current strict local allowlist even though their assertions
+  concern Help, accessibility or copy. The previously listed ninth file,
+  `scripts/turnstile-widget.test.mjs`, does not exist in committed `16bae5fe`; that command
+  typo is corrected here. These historical 56 results are not relabeled as a current
+  strictly nonfinancial run.
 
 - `node scripts/public-form-a11y.browser.mjs` — four synthetic EN/FR × 390/1280 cases
   passed: required errors, expired/error/timeout callbacks, alert clearing, rejected local
   submit stubs, repeated widget lifecycle, and 200% text load-failure alerts. Zero network
   mutations and no page errors or horizontal overflow. This uses actual Contact and
   Turnstile components with service edges stubbed; no real challenge or message service.
-- `node scripts/help-dialog.browser.mjs http://127.0.0.1:8096/ artifacts/a11y-en-fr/help-final`
-  — **10/10 passed** against the final production build, with no diagnostic overrides:
+- The worker's prior full-preview Help harness reported **10/10 passed** against its
+  production build, with no diagnostic overrides. The current script instead owns an
+  isolated fixture and does not accept an application-preview URL:
   EN/FR × 390/1280, EN/FR at 320px/200% text, and four fresh-context interrupted-import
   cases. Covered initial focus, Tab/Shift+Tab wrapping, outside focus containment,
   Escape/button/backdrop dismissal, three reopen cycles, translated busy/failure log,
@@ -101,6 +103,64 @@ No journey, child-profile, or privacy-lifecycle files were changed. No path over
 with journey commits `37238b95`, `751eff3e`, or `27330474`; no cherry-pick or integration
 into another worktree was performed. Keep the stable shell and lazy body changes
 together. Existing Radix Dialog dependency is required and already installed.
+
+## Integrated strictly nonfinancial validation
+
+The eligible unit files contain **34 tests**: Turnstile 15, native Google auth 9 and
+boot-loop 10. A credential-cleared run with module/fetch denial passed all 34, with
+zero failures or skips. Its log is `artifacts/a11y-adaptation/units.log`.
+
+```sh
+env -i PATH="$PATH" HOME="$HOME" CI=1 \
+  node --experimental-strip-types \
+  --import ./artifacts/a11y-adaptation/unit-guard.mjs --test \
+  scripts/turnstile.test.mjs \
+  scripts/native-google-auth.test.mjs \
+  scripts/boot-loop.test.mjs
+```
+
+Do not add `help-bubble`, `help-launcher`, `a11y-pass`, `public-form-error` or
+`site-guide` to that command: their runtime dependency closures reach financial policy.
+Also exclude `public-copy-language.test.mjs`, which includes wallet wording assertions.
+The unit preload is an ignored local module/fetch guard; it is not an OS socket sandbox.
+
+The adapted browser harnesses use actual Help, Radix, Router, Contact and Turnstile
+components. Only explicitly enumerated nonfinancial service/copy edges are isolated.
+Selected EN/FR strings and the support email are read from TypeScript AST literals;
+no copy runtime, pricing, refund module or financial mock is imported. The production
+UI code remains unchanged. Both fixtures use CSS from the finished application build,
+block external/API requests, reject unlisted direct or dynamic application imports,
+and verify source/CSS hashes before publishing a passing verdict.
+
+Preserve all **10 Help cases** and **4 public-form cases**. Their combined-tree browser
+runs are pending review of the private process guard's exact installed compiler/Chrome
+exceptions. The local private preload is an ignored audit artifact, not application
+or deployment code. Once that guard is ready, run from the staging checkout:
+
+```sh
+env -i PATH="$PATH" HOME="$HOME" CI=1 \
+  KIDEASE_OUTBOUND_GUARD_MODE=fixture \
+  A11Y_CSS_FILE="$PWD/.vercel/output/static/assets/styles-DSYW2fcR.css" \
+  PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
+  node --experimental-strip-types \
+  --import ./artifacts/journey-integration/runtime-outbound-guard.mjs \
+  scripts/help-dialog.browser.mjs artifacts/a11y-adaptation/help
+
+env -i PATH="$PATH" HOME="$HOME" CI=1 \
+  KIDEASE_OUTBOUND_GUARD_MODE=fixture \
+  A11Y_CSS_FILE="$PWD/.vercel/output/static/assets/styles-DSYW2fcR.css" \
+  CHROME_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
+  node --experimental-strip-types \
+  --import ./artifacts/journey-integration/runtime-outbound-guard.mjs \
+  scripts/public-form-a11y.browser.mjs
+```
+
+The CSS filename above belongs to the observed `fd5975ad` local build; use the exact
+finished CSS artifact of any later tested build. Browser fixtures prove component
+behavior and real Router/lazy-import interaction, not full application startup,
+server authorization, real message delivery, real Turnstile iframe traversal or an
+OS-level network sandbox. Their service boundaries reject synthetic actions; none
+returns a fabricated successful delivery.
 
 ## Remaining device checks
 
