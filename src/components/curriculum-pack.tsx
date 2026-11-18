@@ -186,6 +186,7 @@ export function CurriculumPackDesk() {
   const [section, setSection] = useState<Section>("goals");
   const [desk, setDesk] = useState<Awaited<ReturnType<typeof loadCurriculumDesk>> | null>(null);
   const [daycareId, setDaycareId] = useState("");
+  const [photoStoryId, setPhotoStoryId] = useState("");
   const [form, setForm] = useState({ childId: "", goalId: "", title: "", body: "", whatNext: "", observedOn: "", ageBand: "preschool" as AgeBand });
   const [answers, setAnswers] = useState<string[]>(["", "", "", ""]);
   const [busy, setBusy] = useState(false);
@@ -219,6 +220,8 @@ export function CurriculumPackDesk() {
   const province = desk.province;
   const shown = contentLocales(province, locale);
   const sections: Section[] = ["goals", "story", "plans", "activities", "coverage", "books"];
+  const childStories = desk.stories.filter((story) => story.childId === form.childId);
+  const photoStory = childStories.find((story) => story.id === photoStoryId);
 
   return (
     <section className="space-y-6">
@@ -240,6 +243,8 @@ export function CurriculumPackDesk() {
             value={daycareId || desk.daycareId}
             onChange={(event) => {
               setDaycareId(event.target.value);
+              setPhotoStoryId("");
+              setForm({ ...form, childId: "" });
               load(event.target.value);
             }}
           >
@@ -307,7 +312,8 @@ export function CurriculumPackDesk() {
                 void saveCurriculumStory({
                   data: { daycareId: daycareId || desk.daycareId, ...form, publish: true },
                 })
-                  .then(() => {
+                  .then((saved) => {
+                    setPhotoStoryId(saved.id);
                     toast.success(copy.saved);
                     load(daycareId || desk.daycareId);
                   })
@@ -318,7 +324,10 @@ export function CurriculumPackDesk() {
               {desk.children.length === 0 ? <p className="text-sm text-muted">{copy.noChild}</p> : null}
               <label className="block text-sm">
                 {copy.child}
-                <select className="ke-input mt-1 min-h-11 w-full" required value={form.childId} onChange={(event) => setForm({ ...form, childId: event.target.value })}>
+                <select className="ke-input mt-1 min-h-11 w-full" required value={form.childId} onChange={(event) => {
+                  setForm({ ...form, childId: event.target.value });
+                  setPhotoStoryId("");
+                }}>
                   <option value="">{copy.child}</option>
                   {desk.children.map((child) => (
                     <option key={child.id} value={child.id}>
@@ -360,39 +369,52 @@ export function CurriculumPackDesk() {
                 {copy.nextStep}
                 <textarea className="ke-textarea mt-1 min-h-20 w-full" value={form.whatNext} onChange={(event) => setForm({ ...form, whatNext: event.target.value })} />
               </label>
-              {desk.stories[0] ? <p className="text-sm text-muted">{copy.photoHint}</p> : null}
+              {childStories.length ? <p className="text-sm text-muted">{copy.photoHint}</p> : null}
               <Button type="submit" disabled={busy}>
                 {copy.saveStory}
               </Button>
-              {desk.stories[0] ? (
-              <label className="block text-sm">
-                {copy.photo}
-                <input
-                  className="mt-1 block min-h-11 w-full"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    const story = desk.stories[0];
-                    const child = desk.children.find((row) => row.id === form.childId);
-                    if (!file || !story || !child?.bookingId) return;
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      const bodyBase64 = String(reader.result || "");
-                      void attachCurriculumPhoto({
-                        data: {
-                          daycareId: daycareId || desk.daycareId,
-                          storyId: story.id,
-                          bookingId: child.bookingId,
-                          contentType: file.type,
-                          bodyBase64,
-                        },
-                      }).catch((error: unknown) => toast.error(error instanceof Error ? error.message : copy.photoHint));
-                    };
-                    reader.readAsDataURL(file);
-                  }}
-                />
-              </label>
+              {childStories.length ? (
+                <>
+                  <label className="block text-sm">
+                    {copy.story}
+                    <select className="ke-input mt-1 min-h-11 w-full" value={photoStory?.id || ""} onChange={(event) => setPhotoStoryId(event.target.value)}>
+                      <option value="">{copy.story}</option>
+                      {childStories.map((story) => (
+                        <option key={story.id} value={story.id}>{story.title}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block text-sm">
+                    {copy.photo}
+                    <input
+                      className="mt-1 block min-h-11 w-full"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      disabled={!photoStory || busy}
+                      key={photoStory?.id || "no-story"}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        const story = photoStory;
+                        const child = desk.children.find((row) => row.id === form.childId);
+                        if (!file || !story || story.childId !== child?.id || !child.bookingId) return;
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          const bodyBase64 = String(reader.result || "");
+                          void attachCurriculumPhoto({
+                            data: {
+                              daycareId: daycareId || desk.daycareId,
+                              storyId: story.id,
+                              bookingId: child.bookingId,
+                              contentType: file.type,
+                              bodyBase64,
+                            },
+                          }).catch((error: unknown) => toast.error(error instanceof Error ? error.message : copy.photoHint));
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+                </>
               ) : null}
             </form>
           ) : null}

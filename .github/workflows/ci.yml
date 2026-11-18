@@ -41,6 +41,8 @@ jobs:
         run: npx eslint .
       - name: Typecheck
         run: npx tsc --noEmit
+      - name: Install Chromium for component tests
+        run: npx playwright install --with-deps chromium
       - name: Unit tests
         run: npm test
 
