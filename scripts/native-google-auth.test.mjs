@@ -187,7 +187,7 @@ describe("native Google auth (Better Auth socialProviders.google)", () => {
     assert.match(loader, /googleSignInOffered/);
     assert.match(server, /googleSignInEnabled/);
     assert.match(read("src/lib/auth/native-oauth-return.server.ts"), /googleSignInEnabled/);
-    assert.match(read("src/components/help-bot.tsx"), /data-ke="help-launcher"/);
+    assert.match(read("src/components/help-launcher-shell.tsx"), /data-ke="help-launcher"/);
     assert.match(read("src/lib/auth/providers.ts"), /SOCIAL_SIGN_IN_ORDER = \["apple", "google", "facebook"\]/);
   });
 
