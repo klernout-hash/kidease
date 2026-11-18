@@ -11,6 +11,7 @@ import ts from "typescript";
 // runner, account credentials, app API transport or financial fixture is used.
 const root = fileURLToPath(new URL("../", import.meta.url));
 const output = join(root, "artifacts/parent-navigation");
+const logicOnly = process.argv.includes("--wrapper-regression-only");
 const forbidden =
   /stripe|\/billing|\/payments?(?:[./?]|$)|\/bill\.ts|\/upgrade-(?:role|plans)|parent-home\.(?:mjs)|parent-home-preview/i;
 const boundary = {
@@ -108,20 +109,49 @@ boundary["@/lib/desk-nav"] = ts.transpileModule(
 ).outputText;
 const results = [];
 const captures = [];
+const excludedCases = [];
 const parentSource = await readFile(join(root, "src/components/parent-desk.tsx"), "utf8");
 assert.match(
   parentSource,
   /return loadFamily\(true\);/,
   "Each parent mount must request fresh family data rather than adopt an abandoned pending read",
 );
-const requests = [];
-const styles = await readdir(join(root, ".vercel/output/static/assets"));
-const stylesheet = styles.find((name) => /^styles-.*\.css$/.test(name));
-assert.ok(
-  stylesheet,
-  "Synthetic UI screenshots require compiled app styles; run the clean build first",
+const parentTree = ts.createSourceFile(
+  "parent-desk.tsx",
+  parentSource,
+  ts.ScriptTarget.Latest,
+  true,
 );
-const css = await readFile(join(root, ".vercel/output/static/assets", stylesheet), "utf8");
+const parentDesk = parentTree.statements.find(
+  (node) => ts.isFunctionDeclaration(node) && node.name?.text === "ParentDesk",
+);
+const selectionWrapper = parentDesk?.body?.statements.find(
+  (node) => ts.isFunctionDeclaration(node) && node.name?.text === "selectTab",
+);
+assert.ok(
+  selectionWrapper,
+  "Select the actual ParentDesk navigation wrapper, without importing its module graph",
+);
+const selectionWrapperSource = selectionWrapper.getText(parentTree);
+boundary["virtual:parent-select-wrapper"] = ts.transpileModule(
+  `export function bindParentSelection({tab, discardChildEdits, setEditing, selectParentTab}) {
+    ${selectionWrapperSource}
+    return selectTab;
+  }`,
+  { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } },
+).outputText;
+const requests = [];
+let stylesheet = null;
+let css = "";
+if (!logicOnly) {
+  const styles = await readdir(join(root, ".vercel/output/static/assets"));
+  stylesheet = styles.find((name) => /^styles-.*\.css$/.test(name));
+  assert.ok(
+    stylesheet,
+    "Synthetic UI screenshots require compiled app styles; run the clean build first",
+  );
+  css = await readFile(join(root, ".vercel/output/static/assets", stylesheet), "utf8");
+}
 const server = await createServer({
   root,
   configFile: false,
@@ -209,6 +239,10 @@ try {
     return route.continue();
   });
   async function run(name, check, initialTab = "explore", locale = "en") {
+    if (logicOnly && !name.startsWith("actual wrapper")) {
+      excludedCases.push(name);
+      return;
+    }
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -270,6 +304,103 @@ try {
       },
     ],
   });
+
+  await run("actual wrapper cancels same-turn A→B→A before React commits B", async (page) => {
+    await page.evaluate(() => {
+      window.parentNavigationFixture.gate("care");
+      document.querySelector('[data-tab="care"]').click();
+      document.querySelector('[data-tab="explore"]').click();
+    });
+    // The return to A may cancel B before its gated loader even starts.
+    assert.deepEqual(
+      await page.evaluate(() => window.parentNavigationFixture.navigations),
+      ["care", "explore"],
+      "The actual wrapper must deliver the return to A even while its rendered tab is still A",
+    );
+    for (const route of await pending(page, "route")) await resolve(page, route.id, {});
+    await settleYields(page);
+    await waitFor(
+      page,
+      () =>
+        document.querySelector("main")?.dataset.activeTab === "explore" &&
+        document.querySelector("main")?.dataset.contentTab === "explore",
+    );
+    assert.equal(new URL(page.url()).searchParams.get("tab"), "explore");
+  });
+  const prepareDraft = async (page, allowDiscard) => {
+    await page.evaluate(
+      (allow) => window.parentNavigationFixture.api().prepareDraft(allow),
+      allowDiscard,
+    );
+    await waitFor(
+      page,
+      () => window.parentNavigationFixture.api().draftState().editing === "synthetic-draft",
+    );
+  };
+  await run(
+    "actual wrapper retains an unchanged-tab dirty draft without prompting or resetting",
+    async (page) => {
+      await prepareDraft(page, false);
+      await page.evaluate(() => document.querySelector('[data-tab="explore"]').click());
+      assert.deepEqual(
+        await page.evaluate(() => window.parentNavigationFixture.api().draftState()),
+        {
+          dirty: true,
+          editing: "synthetic-draft",
+          discardChecks: 0,
+          confirmations: 0,
+        },
+      );
+      assert.deepEqual(await page.evaluate(() => window.parentNavigationFixture.navigations), []);
+      assert.equal((await pending(page, "yield")).length, 0);
+    },
+  );
+  await run(
+    "actual wrapper keeps a rejected cross-tab departure and draft unchanged",
+    async (page) => {
+      await prepareDraft(page, false);
+      await page.evaluate(() => document.querySelector('[data-tab="saved"]').click());
+      assert.deepEqual(
+        await page.evaluate(() => window.parentNavigationFixture.api().draftState()),
+        {
+          dirty: true,
+          editing: "synthetic-draft",
+          discardChecks: 1,
+          confirmations: 1,
+        },
+      );
+      assert.deepEqual(await page.evaluate(() => window.parentNavigationFixture.navigations), []);
+      assert.equal((await pending(page, "yield")).length, 0);
+      assert.equal(new URL(page.url()).searchParams.get("tab"), "explore");
+    },
+  );
+  await run(
+    "actual wrapper clears an accepted dirty draft and delivers the new selection",
+    async (page) => {
+      await prepareDraft(page, true);
+      await page.evaluate(() => document.querySelector('[data-tab="saved"]').click());
+      await settleYields(page);
+      await waitFor(
+        page,
+        () =>
+          document.querySelector("main")?.dataset.activeTab === "saved" &&
+          document.querySelector("main")?.dataset.contentTab === "saved",
+      );
+      assert.deepEqual(
+        await page.evaluate(() => window.parentNavigationFixture.api().draftState()),
+        {
+          dirty: false,
+          editing: null,
+          discardChecks: 1,
+          confirmations: 1,
+        },
+      );
+      assert.deepEqual(await page.evaluate(() => window.parentNavigationFixture.navigations), [
+        "saved",
+      ]);
+      assert.equal(new URL(page.url()).searchParams.get("tab"), "saved");
+    },
+  );
 
   await run(
     "interrupted saved then care keeps the latest URL, highlight and panel",
@@ -583,10 +714,13 @@ try {
   await server.close();
 }
 await writeFile(
-  join(output, "results.json"),
+  join(output, logicOnly ? "wrapper-logic-results.json" : "results.json"),
   JSON.stringify(
     {
       synthetic: true,
+      logicOnly,
+      excludedCases,
+      selectionWrapperSource,
       results,
       captures,
       compiledStylesheet: stylesheet,
@@ -598,7 +732,7 @@ await writeFile(
       ],
       requestedModules: requests,
       limitations:
-        "Real React and TanStack Router run the extracted production navigation/request hooks and actual ParentHomeCare. ParentDesk as a whole is intentionally not mounted because it eagerly reads financial extras; financial routes/modules and all app APIs are forbidden. Generic read tests exercise the production request lifetime hook, not getFamily's server behavior. No real accounts, family records, database, authentication, financial flows, or messages are used.",
+        "Real React and TanStack Router run the extracted production navigation/request hooks, the verbatim ParentDesk selectTab wrapper and actual ParentHomeCare. Logic-only mode runs only the four wrapper regressions and emits no visual captures. ParentDesk as a whole is intentionally not mounted because it eagerly reads financial extras; financial routes/modules and all app APIs are forbidden. Generic read tests exercise the production request lifetime hook, not getFamily's server behavior. No real accounts, family records, database, authentication, financial flows, or messages are used.",
     },
     null,
     2,
@@ -607,6 +741,8 @@ await writeFile(
 console.log(
   JSON.stringify(
     {
+      logicOnly,
+      excludedCases: excludedCases.length,
       passed: results.filter((result) => result.passed).length,
       failed: results.filter((result) => !result.passed).length,
       output,

@@ -220,9 +220,11 @@ export function ParentDesk({
   }, [locationHref]);
 
   function selectTab(id: string) {
-    if (id === tab) return;
-    if (!discardChildEdits()) return;
-    setEditing(null);
+    if (id !== tab) {
+      if (!discardChildEdits()) return;
+      setEditing(null);
+    }
+    // The hook must also cancel a pending departure from the rendered tab.
     selectParentTab(id);
   }
 

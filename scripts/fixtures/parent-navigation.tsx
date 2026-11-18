@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import {
   createRootRoute,
@@ -7,6 +7,8 @@ import {
   Outlet,
   RouterProvider,
 } from "@tanstack/react-router";
+import { bindParentSelection } from "virtual:parent-select-wrapper";
+import { confirmChildProfileDiscard } from "../../src/lib/child-profile-unsaved";
 import { useParentNavigation } from "../../src/lib/use-parent-navigation";
 import { useParentRequestScope } from "../../src/lib/use-parent-request-scope";
 import { ParentHomeCare } from "../../src/components/parent-home-care";
@@ -90,6 +92,27 @@ export function Lifecycle({ initialTab }: { initialTab: SafeTab }) {
     void router.navigate({ to: "/parent", search: { tab: tab as SafeTab }, replace: true });
   }, []);
   const navigation = useParentNavigation(initialTab, navigate);
+  const childDirty = useRef(false);
+  const discardAllowed = useRef(true);
+  const discardChecks = useRef(0);
+  const confirmations = useRef<string[]>([]);
+  const [editing, setEditing] = useState<string | null>(null);
+  const discardChildEdits = useCallback(() => {
+    discardChecks.current += 1;
+    const allowed = confirmChildProfileDiscard(childDirty.current, locale === "fr", (message) => {
+      confirmations.current.push(message);
+      return discardAllowed.current;
+    });
+    if (!allowed) return false;
+    childDirty.current = false;
+    return true;
+  }, []);
+  const selectTab = bindParentSelection({
+    tab: navigation.tab,
+    discardChildEdits,
+    setEditing,
+    selectParentTab: navigation.selectTab,
+  });
   const { issue, generation } = useParentRequestScope(viewer);
   const [result, setResult] = useState("none");
   const [mountResult, setMountResult] = useState("none");
@@ -117,7 +140,18 @@ export function Lifecycle({ initialTab }: { initialTab: SafeTab }) {
   );
   useEffect(() => {
     expose = {
-      select: navigation.selectTab,
+      select: selectTab,
+      prepareDraft: (allowDiscard: boolean) => {
+        childDirty.current = true;
+        discardAllowed.current = allowDiscard;
+        setEditing("synthetic-draft");
+      },
+      draftState: () => ({
+        dirty: childDirty.current,
+        editing,
+        discardChecks: discardChecks.current,
+        confirmations: confirmations.current.length,
+      }),
       cachedResult: () =>
         dedupedQuery(`fixture-family:${viewer}`, 30_000, async () => "cache-miss"),
       homeRead: (kind: "boot" | "refresh") => {
@@ -155,7 +189,7 @@ export function Lifecycle({ initialTab }: { initialTab: SafeTab }) {
       },
       navigate: (tab: SafeTab) => router.navigate({ to: "/parent", search: { tab } }),
     };
-  }, [navigation.selectTab, issue, generation]);
+  }, [selectTab, editing, issue, generation]);
   return (
     <main
       data-locale={locale}
@@ -171,7 +205,7 @@ export function Lifecycle({ initialTab }: { initialTab: SafeTab }) {
             data-tab={tab}
             type="button"
             aria-pressed={navigation.tab === tab}
-            onClick={() => navigation.selectTab(tab)}
+            onClick={() => selectTab(tab)}
           >
             {tab}
           </button>
