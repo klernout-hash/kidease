@@ -19,8 +19,6 @@ const boundary = {
   "@/lib/server/daily-care":
     "export const listDailyJournals=(input)=>window.parentNavigationFixture.request('journal',input);",
   "@/lib/server/desk-features": "export const loadDeskFeatureFlags=async()=>({dailyLogs:true});",
-  "@/lib/use-copy":
-    "export const useCopy=()=>({locale:'en',t:(key)=>({careNoArrivalConfirmed:'No arrival confirmed',careAttendanceUpdated:'Updated by {name} at {time}',careCentreStaff:'Centre staff'}[key]||key)});",
   "@/lib/timeout":
     "export {withTimeout} from '/src/lib/timeout.ts'; export const LOADER_SETTLE_MS=750;",
 };
@@ -49,6 +47,43 @@ async function selectedDeclarations(path, names, imports = "") {
     compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
   }).outputText;
 }
+// Read only the actual care strings. Importing the full copy modules also loads
+// unrelated plan helpers, outside this fixture's nonfinancial module allowlist.
+async function careCopy(locale) {
+  const path = `src/lib/copy-${locale}.ts`;
+  const source = ts.createSourceFile(
+    path,
+    await readFile(join(root, path), "utf8"),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  const declaration = source.statements
+    .filter(ts.isVariableStatement)
+    .flatMap((node) => [...node.declarationList.declarations])
+    .find((node) => ts.isIdentifier(node.name) && node.name.text === locale);
+  let object = declaration?.initializer;
+  while (object && (ts.isAsExpression(object) || ts.isSatisfiesExpression(object)))
+    object = object.expression;
+  assert.ok(
+    object && ts.isObjectLiteralExpression(object),
+    `Actual ${locale} copy must remain an object`,
+  );
+  return Object.fromEntries(
+    ["careNoArrivalConfirmed", "careAttendanceUpdated", "careCentreStaff"].map((key) => {
+      const property = object.properties.find(
+        (node) => ts.isPropertyAssignment(node) && node.name.getText(source) === key,
+      );
+      assert.ok(
+        property && ts.isStringLiteral(property.initializer),
+        `Missing literal ${locale}.${key}`,
+      );
+      return [key, property.initializer.text];
+    }),
+  );
+}
+const careTranslations = { en: await careCopy("en"), fr: await careCopy("fr") };
+boundary["@/lib/use-copy"] = `const copy=${JSON.stringify(careTranslations)};
+export function useCopy(){const locale=document.documentElement.lang==='fr'?'fr':'en';return {locale,t:(key)=>{if(!(key in copy[locale]))throw new Error('Out-of-scope copy key: '+key);return copy[locale][key]}}}`;
 boundary["@/lib/attendance-handoff"] = await selectedDeclarations("src/lib/attendance-handoff.ts", [
   "ATTENDANCE_COPY",
   "attendanceCopy",
@@ -72,6 +107,7 @@ boundary["@/lib/desk-nav"] = ts.transpileModule(
   { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } },
 ).outputText;
 const results = [];
+const captures = [];
 const parentSource = await readFile(join(root, "src/components/parent-desk.tsx"), "utf8");
 assert.match(
   parentSource,
@@ -79,16 +115,13 @@ assert.match(
   "Each parent mount must request fresh family data rather than adopt an abandoned pending read",
 );
 const requests = [];
-let stylesheet;
-try {
-  const styles = await readdir(join(root, ".vercel/output/static/assets"));
-  stylesheet = styles.find((name) => /^styles-.*\.css$/.test(name));
-} catch {
-  /* A minimal test shell also works before a build. */
-}
-const css = stylesheet
-  ? await readFile(join(root, ".vercel/output/static/assets", stylesheet), "utf8")
-  : "body{font:16px sans-serif;margin:1rem}button,a{min-height:44px;min-width:44px}";
+const styles = await readdir(join(root, ".vercel/output/static/assets"));
+const stylesheet = styles.find((name) => /^styles-.*\.css$/.test(name));
+assert.ok(
+  stylesheet,
+  "Synthetic UI screenshots require compiled app styles; run the clean build first",
+);
+const css = await readFile(join(root, ".vercel/output/static/assets", stylesheet), "utf8");
 const server = await createServer({
   root,
   configFile: false,
@@ -140,7 +173,8 @@ const server = await createServer({
             next();
             return;
           }
-          const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Synthetic parent navigation test</title><link rel="stylesheet" href="/fixture.css"><style>body{padding:1rem}main{max-width:60rem;margin:auto}.fixture-controls{display:flex;flex-wrap:wrap;gap:1rem}main>p{margin-top:1rem}button{border:1px solid;padding:.5rem}</style></head><body><div id="root"></div><script type="module" src="/scripts/fixtures/parent-navigation.tsx"></script></body></html>`;
+          const locale = url.searchParams.get("locale") === "fr" ? "fr" : "en";
+          const html = `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Synthetic parent navigation test</title><link rel="stylesheet" href="/fixture.css"><style>body{padding:1rem}main{max-width:60rem;margin:auto}.fixture-controls{display:flex;flex-wrap:wrap;gap:1rem}main>p{margin-top:1rem}button{border:1px solid;padding:.5rem}</style></head><body><div id="root"></div><script type="module" src="/scripts/fixtures/parent-navigation.tsx"></script></body></html>`;
           response.setHeader("content-type", "text/html; charset=utf-8");
           response.end(await vite.transformIndexHtml(url.pathname, html));
         });
@@ -174,19 +208,20 @@ try {
       return route.abort();
     return route.continue();
   });
-  async function run(name, check, initialTab = "explore") {
+  async function run(name, check, initialTab = "explore", locale = "en") {
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     try {
-      await page.goto(`${origin}/parent?tab=${initialTab}`, { waitUntil: "load" });
+      await page.goto(`${origin}/parent?tab=${initialTab}&locale=${locale}`, { waitUntil: "load" });
+      assert.equal(await page.locator("html").getAttribute("lang"), locale);
       await page.locator('main[data-viewer="synthetic-a"]').waitFor({ timeout: 5000 });
       await check(page);
       assert.deepEqual(errors, [], "Unexpected browser errors");
-      results.push({ name, passed: true });
+      results.push({ name, locale, passed: true });
       console.log(`PASS ${name}`);
     } catch (error) {
-      results.push({ name, passed: false, error: error.message, browserErrors: errors });
+      results.push({ name, locale, passed: false, error: error.message, browserErrors: errors });
       console.log(`FAIL ${name}: ${error.message}`);
       process.exitCode = 1;
     } finally {
@@ -466,40 +501,76 @@ try {
     },
     "care",
   );
-  await run(
-    "account switch suppresses an older care note after the new account succeeds",
-    async (page) => {
-      await resolve(page, (await pending(page, "attendance"))[0].id, attendance("synthetic-a"));
-      await waitFor(page, () =>
-        window.parentNavigationFixture.pending().some((item) => item.kind === "journal"),
-      );
-      const old = (await pending(page, "journal"))[0];
-      await page.evaluate(() => window.parentNavigationFixture.account("synthetic-b"));
-      await page.locator('main[data-viewer="synthetic-b"]').waitFor();
-      await resolve(page, (await pending(page, "attendance"))[0].id, attendance("synthetic-b"));
-      await waitFor(
-        page,
-        () =>
-          window.parentNavigationFixture.pending().filter((item) => item.kind === "journal")
-            .length === 2,
-      );
-      const current = (await pending(page, "journal")).find(
-        (item) => item.viewer === "synthetic-b",
-      );
-      await resolve(page, current.id, journal("synthetic-b", "Synthetic current-B note"));
-      await page.getByText("Synthetic current-B note", { exact: true }).waitFor();
-      await resolve(page, old.id, journal("synthetic-a", "Synthetic stale-A note"));
-      assert.equal(await page.getByText("Synthetic stale-A note", { exact: true }).count(), 0);
-      for (const width of [390, 1280]) {
-        await page.setViewportSize({ width, height: 844 });
-        await page.screenshot({
-          path: join(output, `care-account-B-${width}.png`),
-          fullPage: true,
-        });
-      }
-    },
-    "care",
-  );
+  for (const locale of ["en", "fr"]) {
+    await run(
+      "account switch suppresses an older care note after the new account succeeds" +
+        (locale === "fr" ? " · FR" : ""),
+      async (page) => {
+        await resolve(page, (await pending(page, "attendance"))[0].id, attendance("synthetic-a"));
+        await waitFor(page, () =>
+          window.parentNavigationFixture.pending().some((item) => item.kind === "journal"),
+        );
+        const old = (await pending(page, "journal"))[0];
+        await page.evaluate(() => window.parentNavigationFixture.account("synthetic-b"));
+        await page.locator('main[data-viewer="synthetic-b"]').waitFor();
+        const currentAttendance = attendance("synthetic-b");
+        currentAttendance.children[0].lastUpdated = { name: null, at: "2026-11-18T14:00:00Z" };
+        await resolve(page, (await pending(page, "attendance"))[0].id, currentAttendance);
+        await waitFor(
+          page,
+          () =>
+            window.parentNavigationFixture.pending().filter((item) => item.kind === "journal")
+              .length === 2,
+        );
+        const current = (await pending(page, "journal")).find(
+          (item) => item.viewer === "synthetic-b",
+        );
+        await resolve(page, current.id, journal("synthetic-b", "Synthetic current-B note"));
+        await page.getByText("Synthetic current-B note", { exact: true }).waitFor();
+        await resolve(page, old.id, journal("synthetic-a", "Synthetic stale-A note"));
+        assert.equal(await page.getByText("Synthetic stale-A note", { exact: true }).count(), 0);
+        assert.equal(await page.locator("main").getAttribute("data-locale"), locale);
+        const care = page.locator('[data-ke="parent-home-care"]');
+        assert.equal(await care.getAttribute("aria-busy"), "false");
+        assert.equal(
+          await care.locator("h2").innerText(),
+          locale === "fr" ? "La journée de votre enfant" : "Your child's day",
+        );
+        assert.equal(
+          await care.locator('[data-ke="parent-home-care-status"]').innerText(),
+          locale === "fr" ? "Ici" : "Here",
+        );
+        assert.ok((await care.innerText()).includes(careTranslations[locale].careCentreStaff));
+        for (const width of [390, 1280]) {
+          await page.setViewportSize({ width, height: 844 });
+          await page.evaluate(() => document.fonts.ready);
+          const action = care.getByRole("link");
+          await action.focus();
+          const layout = await action.evaluate((el) => {
+            const style = getComputedStyle(el);
+            const rect = el.getBoundingClientRect();
+            return {
+              documentLocale: document.documentElement.lang,
+              overflow: document.documentElement.scrollWidth > innerWidth,
+              controlWidth: rect.width,
+              controlHeight: rect.height,
+              focusVisible: style.outlineStyle !== "none" || style.boxShadow !== "none",
+            };
+          });
+          assert.equal(layout.documentLocale, locale);
+          assert.equal(layout.overflow, false);
+          assert.ok(layout.controlWidth >= 44 && layout.controlHeight >= 44);
+          assert.equal(layout.focusVisible, true);
+          await action.evaluate((el) => el.blur());
+          const screenshot = `care-account-B-${locale === "fr" ? "fr-" : ""}${width}.png`;
+          await page.screenshot({ path: join(output, screenshot), fullPage: true });
+          captures.push({ locale, width, screenshot, component: "ParentHomeCare", ...layout });
+        }
+      },
+      "care",
+      locale,
+    );
+  }
   assert.equal(
     requests.filter((url) => new URL(url).pathname.startsWith("/api") || forbidden.test(url))
       .length,
@@ -517,6 +588,14 @@ await writeFile(
     {
       synthetic: true,
       results,
+      captures,
+      compiledStylesheet: stylesheet,
+      copySources: [
+        "src/lib/copy-en.ts",
+        "src/lib/copy-fr.ts",
+        "src/lib/attendance-handoff.ts",
+        "src/components/parent-home-care.tsx",
+      ],
       requestedModules: requests,
       limitations:
         "Real React and TanStack Router run the extracted production navigation/request hooks and actual ParentHomeCare. ParentDesk as a whole is intentionally not mounted because it eagerly reads financial extras; financial routes/modules and all app APIs are forbidden. Generic read tests exercise the production request lifetime hook, not getFamily's server behavior. No real accounts, family records, database, authentication, financial flows, or messages are used.",

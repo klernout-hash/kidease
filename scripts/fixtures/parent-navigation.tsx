@@ -15,6 +15,7 @@ import type { Booking } from "../../src/lib/types";
 
 // Explicit allowlist: this fixture has no account access, app transport or financial route.
 const safeTabs = ["explore", "saved", "care"] as const;
+const locale = document.documentElement.lang === "fr" ? "fr" : "en";
 type SafeTab = (typeof safeTabs)[number];
 const listeners = new Set<() => void>();
 let viewer: string | undefined = "synthetic-a";
@@ -51,6 +52,7 @@ function account(next: string | undefined) {
   listeners.forEach((listener) => listener());
 }
 const controls = {
+  locale,
   request,
   calls,
   navigations,
@@ -156,6 +158,7 @@ export function Lifecycle({ initialTab }: { initialTab: SafeTab }) {
   }, [navigation.selectTab, issue, generation]);
   return (
     <main
+      data-locale={locale}
       data-viewer={viewer}
       data-active-tab={navigation.tab}
       data-content-tab={navigation.contentTab}
