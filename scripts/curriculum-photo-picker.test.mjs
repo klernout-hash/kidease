@@ -105,7 +105,7 @@ test("synthetic curriculum picker binds upload to the selected child and exact s
     await server.listen();
     const address = server.httpServer.address();
     const origin = `http://127.0.0.1:${address.port}`;
-    const installedChrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+    const installedChrome = process.env.CHROME_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
     browser = await chromium.launch({ headless: true, ...(existsSync(installedChrome) ? {executablePath:installedChrome} : {}) });
     const context = await browser.newContext({ viewport: {width:390,height:844}, serviceWorkers:"block" });
     await context.route("**/*", async route => {

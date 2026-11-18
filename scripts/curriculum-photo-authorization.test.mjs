@@ -215,6 +215,56 @@ test("upload binds the generated private key to the exact centre, child, booking
   assert.deepEqual(state().removals, []);
 });
 
+// The first request pauses at storage while the second finishes registration.
+// This exercises handler interleaving, not independent PostgreSQL sessions.
+test("overlapping uploads append both exact keys without losing the faster write", { timeout: 10000 }, async () => {
+  const stored = Promise.withResolvers();
+  const resume = Promise.withResolvers();
+  state().afterPut = async () => {
+    state().afterPut = null;
+    stored.resolve();
+    await resume.promise;
+  };
+  const paused = attach();
+  await stored.promise;
+  const faster = await attach();
+  assert.deepEqual(await photoKeys(), [keyA, faster.key]);
+  resume.resolve();
+  const slower = await paused;
+  assert.notEqual(slower.key, faster.key);
+  assert.deepEqual(await photoKeys(), [keyA, faster.key, slower.key]);
+  assert.deepEqual(state().removals, []);
+  for (const key of [faster.key, slower.key]) {
+    await assertViewBlocked({ storyId: "story-a", key }, "staff-b");
+  }
+  for (const key of [faster.key, slower.key]) {
+    assert.equal(typeof (await view({ storyId: "story-a", key })).url, "string");
+  }
+});
+
+test("failed overlapping upload cleans up only its own object", { timeout: 10000 }, async () => {
+  const stored = Promise.withResolvers();
+  const resume = Promise.withResolvers();
+  state().afterPut = async () => {
+    state().afterPut = null;
+    stored.resolve();
+    await resume.promise;
+  };
+  const paused = attach();
+  const rejected = assert.rejects(paused, /Photo could not be attached/);
+  await stored.promise;
+  const failedKey = state().puts[0].key;
+  const successful = await attach();
+  state().zeroWrite = true;
+  resume.resolve();
+  await rejected;
+  assert.notEqual(failedKey, successful.key);
+  assert.deepEqual(state().removals, [failedKey]);
+  assert.deepEqual(await photoKeys(), [keyA, successful.key]);
+  await assertViewBlocked({ storyId: "story-a", key: failedKey });
+  assert.equal(typeof (await view({ storyId: "story-a", key: successful.key })).url, "string");
+});
+
 test("upload permits a matching draft without making the draft readable", async () => {
   const result = await attach(uploadData({ storyId: "story-second" }));
   assert.equal(result.ok, true);
