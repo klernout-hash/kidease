@@ -37,3 +37,11 @@ export function confirmChildProfileDiscard(
       : "Leave without saving? Unsaved changes will be lost.",
   );
 }
+
+/** A completed editor must not be reopened by its old child/focus deep link. */
+export function completedChildProfileSearch<T extends Record<string, unknown>>(
+  search: T,
+): Omit<T, "child" | "focus"> {
+  const { child: _child, focus: _focus, ...next } = search;
+  return next;
+}

@@ -25,7 +25,7 @@ export function ChildProfileForm({
   focus,
 }: {
   initial?: Child | null;
-  onSaved: () => void;
+  onSaved: (childId?: string) => void;
   onCancel?: () => void;
   onDirtyChange?: (dirty: boolean) => void;
   focus?: string | null;
@@ -100,14 +100,14 @@ export function ChildProfileForm({
     try {
       const added = !draft.id;
       const payload = pickupOn ? { ...draft, pickupPeople: formatPickupContacts(contacts) } : draft;
-      await withReauth(async () => {
-        if (draft.id) await updateChild({ data: { ...(payload as Child), id: draft.id } });
-        else await addChild({ data: payload });
+      const child = await withReauth(async () => {
+        if (draft.id) return updateChild({ data: { ...(payload as Child), id: draft.id } });
+        return addChild({ data: payload });
       }, reauth.prompt);
       confirmAction(t, added ? "childAdded" : "childSaved");
       setSaved(true);
       onDirtyChange?.(false);
-      onSaved();
+      onSaved(child.id);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("profileSaved"));
     } finally {

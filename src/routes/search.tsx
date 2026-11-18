@@ -1123,19 +1123,8 @@ export function SearchScreen({
   function writeParentFilters(next: ParentListingSearch) {
     void navigate({
       search: {
-        ...compactSearchRadius(incoming),
+        ...listingPageSearch(1),
         q: incoming.q ?? query,
-        name: incoming.name,
-        from: incoming.from,
-        to: incoming.to,
-        sort: incoming.sort,
-        age: incoming.age,
-        start: incoming.start,
-        cat: incoming.cat,
-        care: incoming.care,
-        favorites: incoming.favorites,
-        openings: incoming.openings,
-        live: liveSearchParam(liveOn),
         ages: undefined,
         open: undefined,
         sched: undefined,

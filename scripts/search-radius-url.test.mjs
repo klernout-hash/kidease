@@ -113,3 +113,37 @@ test("radius validation leaves the existing supported search fields intact", () 
   assert.deepEqual(after, before);
   assert.equal(km, 5);
 });
+
+function parentFilterWriter(incoming) {
+  let navigation;
+  const parentFilters = dependencies.parseParentListingSearch(incoming);
+  const withParentSearch = routeFunction("withParentSearch", { incoming, parentFilters });
+  const listingPageSearch = routeFunction("listingPageSearch", { incoming, parentFilters, withParentSearch, liveOn: true, dietParam: incoming.diet });
+  const write = routeFunction("writeParentFilters", {
+    incoming, query: "Winnipeg", liveOn: true, listingPageSearch,
+    navigate: (next) => { navigation = next; },
+  });
+  return (next) => { write(next); return navigation.search; };
+}
+
+test("applying a Schedule choice preserves the existing radius, language and advanced filters", () => {
+  const incoming = {
+    q: "Winnipeg", city: "Winnipeg", km: 5, page: 3, spoken: "fr", meals: "1",
+    cwelcc: "1", inclusive: "1", subsidy: "1", diet: "nut-free", licence: "centre",
+    age: "infant", from: "2027-01-15", to: "2027-02-15", sort: "distance", rank: "nearest",
+    favorites: "1", live: 1, openings: "1", start: "this-month", sched: "part", fac: "family_home",
+  };
+  const write = parentFilterWriter(incoming);
+  const changed = write({ ...dependencies.parseParentListingSearch(incoming), sched: ["full"] });
+  assert.equal(changed.sched, "full");
+  assert.equal(changed.page, undefined);
+  for (const key of ["q", "city", "km", "spoken", "meals", "cwelcc", "inclusive", "subsidy", "diet", "licence", "age", "from", "to", "sort", "rank", "favorites", "openings", "start"]) assert.equal(changed[key], incoming[key], key);
+  assert.equal(changed.fac, "family_home");
+});
+
+test("clearing parent filter choices removes old selections while retaining unrelated filters", () => {
+  const incoming = { q: "Winnipeg", km: 5, page: 3, spoken: "fr", meals: "1", diet: "nut-free", licence: "centre", ages: "infant", open: "waitlist", sched: "part", fac: "family_home" };
+  const changed = parentFilterWriter(incoming)({ ages: [], open: [], sched: [], fac: [] });
+  for (const key of ["ages", "open", "sched", "fac", "page"]) assert.equal(changed[key], undefined, key);
+  for (const key of ["q", "km", "spoken", "meals", "diet", "licence"]) assert.equal(changed[key], incoming[key], key);
+});

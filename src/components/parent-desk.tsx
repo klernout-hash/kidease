@@ -60,7 +60,7 @@ import { useParentPlusAccess } from "@/lib/use-parent-plus";
 import { DeleteChildControl } from "@/components/delete-child-control";
 import { useParentNavigation } from "@/lib/use-parent-navigation";
 import { useParentRequestScope } from "@/lib/use-parent-request-scope";
-import { confirmChildProfileDiscard } from "@/lib/child-profile-unsaved";
+import { completedChildProfileSearch, confirmChildProfileDiscard } from "@/lib/child-profile-unsaved";
 
 const ParentPlusPanel = lazy(() =>
   import("@/components/parent-plus").then((m) => ({ default: m.ParentPlusPanel })),
@@ -178,8 +178,10 @@ export function ParentDesk({
   const [extrasState, setExtrasState] = useState<"pending" | "ready" | "error">("pending");
   const [editing, setEditing] = useState<Child | null | "new">(null);
   const [editorVersion, setEditorVersion] = useState(0);
+  const [childHealthVersion, setChildHealthVersion] = useState(0);
   const childDirty = useRef(false);
   const childEditorLocation = useRef(locationHref);
+  const appliedChildIntent = useRef<string | null>(null);
   const onChildDirtyChange = useCallback((dirty: boolean) => {
     childDirty.current = dirty;
   }, []);
@@ -235,6 +237,30 @@ export function ParentDesk({
     if (!discardChildEdits()) return;
     setEditing(null);
     if (closeDetail) setChildOpen(false);
+  }
+
+  async function finishChildEdit(childId?: string) {
+    childDirty.current = false;
+    setEditing(null);
+    setChildFocus(childId ?? null);
+    setChildOpen(Boolean(childId));
+    setChildHealthVersion((current) => current + 1);
+    if (initialChild || initialFocus) {
+      // Commit the completed entry intent before refreshing authoritative facts.
+      await navigate({
+        from: parentDeskPath(pathname),
+        to: parentDeskPath(pathname),
+        search: (current) => completedChildProfileSearch(current),
+        replace: true,
+      }).catch(() => undefined);
+    }
+    try {
+      await load();
+    } catch {
+      toast.error(locale === "fr"
+        ? "Le changement est enregistré. Rechargez la page pour l’afficher."
+        : "Your change is saved. Reload the page to see it.");
+    }
   }
 
   const loadExplore = useCallback(
@@ -395,6 +421,7 @@ export function ParentDesk({
     setExploreReady(false);
     setPicked({});
     childDirty.current = false;
+    appliedChildIntent.current = null;
     setEditing(null);
   }, [user?.id]);
 
@@ -430,8 +457,9 @@ export function ParentDesk({
   }, [user?.id, loadFamily, loadExplore, loadDeskExtras]);
 
   useEffect(() => {
-    if (!initialChild || !childrenReady || childDirty.current) return;
+    if (!initialChild || !childrenReady || childDirty.current || appliedChildIntent.current === locationHref) return;
     if (initialChild === "new") {
+      appliedChildIntent.current = locationHref;
       if (children.length >= MAX_CHILDREN_PER_PARENT) {
         setEditing(null);
         return;
@@ -442,10 +470,11 @@ export function ParentDesk({
     }
     const found = children.find((child) => child.id === initialChild);
     if (!found) return;
+    appliedChildIntent.current = locationHref;
     setChildFocus(found.id);
     setChildOpen(true);
     setEditing(initialFocus ? found : null);
-  }, [children, childrenReady, initialChild, initialFocus]);
+  }, [children, childrenReady, initialChild, initialFocus, locationHref]);
 
   useEffect(() => {
     if (contentTab !== "saved") {
@@ -806,7 +835,7 @@ export function ParentDesk({
 
       {contentTab === "children" ? (
         <div className="mt-6 space-y-4">
-          <ChildHealthLog />
+          <ChildHealthLog key={`${user.id}:${childHealthVersion}`} />
           <PortfolioGaps children={children} />
           <div>
             <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>
@@ -870,11 +899,7 @@ export function ParentDesk({
                   initial={editing === "new" ? null : editing}
                   focus={initialFocus}
                   onDirtyChange={onChildDirtyChange}
-                  onSaved={() => {
-                    childDirty.current = false;
-                    setEditing(null);
-                    void load();
-                  }}
+                  onSaved={(childId) => { void finishChildEdit(childId); }}
                   onCancel={() => closeChildEditor()}
                 />
               </Suspense>
@@ -906,10 +931,7 @@ export function ParentDesk({
                       <div className="px-3 pb-3">
                         <DeleteChildControl
                           child={{ id: c.id, name: c.name }}
-                          onDeleted={() => {
-                            setEditing(null);
-                            void load();
-                          }}
+                          onDeleted={() => { void finishChildEdit(); }}
                         />
                       </div>
                       <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">

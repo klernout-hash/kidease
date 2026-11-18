@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { emptyChild } from "../src/lib/child-profile.ts";
-import { childProfileHasChanges, confirmChildProfileDiscard } from "../src/lib/child-profile-unsaved.ts";
+import { childProfileHasChanges, completedChildProfileSearch, confirmChildProfileDiscard } from "../src/lib/child-profile-unsaved.ts";
 
 const src = (file) => readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
 
@@ -60,4 +60,24 @@ test("clean exits need no prompt; dirty exits require the explicit discard choic
   assert.equal(confirmChildProfileDiscard(true, true, (message) => { messages.push(message); return true; }), true);
   assert.match(messages[0], /without saving.*lost/);
   assert.match(messages[1], /sans enregistrer.*perdus/);
+});
+
+
+test("completed child editor clears only its entry intent and preserves other search state", () => {
+  const previous = Object.freeze({ tab: "children", child: "new", focus: "name", preview: "support", custom: "preserve-me" });
+  const next = completedChildProfileSearch(previous);
+  assert.deepEqual(next, { tab: "children", preview: "support", custom: "preserve-me" });
+  assert.equal(previous.child, "new", "search updater must not mutate router state");
+  assert.deepEqual(completedChildProfileSearch({ tab: "children" }), { tab: "children" });
+});
+
+test("saved child selects its authoritative id and does not reapply completed editor intent on family refresh", () => {
+  const form = src("src/components/child-profile-form.tsx");
+  const desk = src("src/components/parent-desk.tsx");
+  assert.ok(/onSaved\(child\.id\)/.test(form), "actual saved child id reaches its parent");
+  assert.ok(/appliedChildIntent\.current === locationHref/.test(desk), "same-location family refresh cannot reopen a consumed form");
+  assert.ok(/setChildFocus\(childId \?\? null\)/.test(desk), "saved child is selected for the next step");
+  assert.ok(/search: \(current\) => completedChildProfileSearch\(current\),\s*replace: true/.test(desk), "completed child/focus intent is replaced without adding a back entry");
+  assert.ok(/ChildHealthLog key=\{`\$\{user.id\}:\$\{childHealthVersion\}`\}/.test(desk), "independent saved-health read refreshes after profile mutation");
+  assert.ok(/onDeleted=\{\(\) => \{ void finishChildEdit\(\); \}\}/.test(desk), "card deletion also refreshes saved family and health facts without selecting a deleted child");
 });

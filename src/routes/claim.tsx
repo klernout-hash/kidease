@@ -114,7 +114,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
 
   useEffect(() => {
     setOpen(q.trim().length >= 2);
-    return startClaimLookup(q, (term) => searchClaimable({ data: term }), setLookup);
+    return startClaimLookup(q, (term, signal) => searchClaimable({ data: term, signal }), setLookup);
   }, [q, lookupRetry]);
 
   useEffect(() => {
