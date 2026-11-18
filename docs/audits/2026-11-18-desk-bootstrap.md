@@ -46,15 +46,11 @@ The new server tests use genuine Better Auth cookie-signature verification with 
 
 The client suite mounts the actual React fallback through hydration and checks session/account changes, denied rechecks, late responses, expiry, focus, hidden visibility and unmount. Its four EN/FR screenshots use 390 px and 1280 px. The shell, router link and auth/readiness transport are synthetic. Parent screenshots use the isolated nonfinancial navigation/care fixture. These are component and lifecycle checks, not production authentication evidence.
 
-Final results: build and typecheck passed; lint passed with zero errors and 141 warnings. The 17-file explicit nonpayment allowlist passed 114 tests, zero failures/skips. The parent UI harness passed all 12 cases. Four admin EN/FR captures at 390/1280 had no overflow, sub-44px controls, focus failures, page errors or external requests. Two parent care captures were inspected at 390/1280. These figures apply to the final source; the emitted parent chunk also contains the final refresh-generation guard.
-
-The first combined run collided with build output replacement while a browser fixture was reading styles. It was superseded by a successful sequential run after the build completed. Duplicate compiler/lint jobs were stopped to reduce local resource pressure; the final checks were rerun sequentially.
-
 Final command results and screenshot metrics are saved under `artifacts/desk-bootstrap-nov18`, `artifacts/admin-bootstrap-client` and `artifacts/parent-navigation`. Build source-map upload and remote migration-ledger checks must remain skipped without credentials. No database migration is applied by these checks. Build-generated route-tree ordering churn is discarded.
 
 ## Limitations and next integration step
 
-No authenticated production account, real database, real child record, real 2FA code or outbound service was accessed. The complete actual `/admin` HTTP/streaming document and its real readiness queries have not been validated with the dormant feature enabled. A disposable, clean-environment app instance with synthetic operator/session/proof/PGLite fixtures is the next acceptance step after an explicitly authorized test-only activation. It needs no new package or service installation; existing Node, PGLite, Vite, React and Chrome are sufficient. Keep the feature off during review/integration.
+No authenticated production account, real database, real child record, real 2FA code or outbound service was accessed. At commit `61a179c5`, the complete actual `/admin` HTTP/streaming document had not yet been validated with the dormant feature enabled. The subsequently authorized disposable, clean-environment Nitro/Better Auth/PGlite checks are recorded in [Admin bootstrap HTTP validation](2026-11-18-admin-http.md), including the private-cache fix, 20 passing scenarios and actual JavaScript-disabled EN/FR captures. No production activation is implied. Keep the feature off during review/integration.
 
 The existing persistent-session enforcer and trusted-device lookup have legacy fallback/error semantics. This work preserves them; it does not claim that every storage outage is newly fail-closed. The new gates never turn an explicit revocation or failed proof into an authorized summary.
 

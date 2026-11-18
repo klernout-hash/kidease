@@ -20,6 +20,8 @@ export const DESK_NONPAYMENT_TESTS = [
   "scripts/admin-queue-route.test.mjs",
   "scripts/admin-centre-queue.test.mjs",
   "scripts/admin-queue-bootstrap-client.test.mjs",
+  "scripts/csp-private-cache.test.mjs",
+  "scripts/admin-http-guard.test.mjs",
 ];
 
 const command = process.argv[2];
@@ -33,22 +35,31 @@ const env = Object.fromEntries(
     .filter((key) => process.env[key])
     .map((key) => [key, process.env[key]]),
 );
-if (["tests", "parent-ui"].includes(command) && !existsSync(".vercel/output/static/assets")) {
+if (
+  ["tests", "parent-ui", "admin-http"].includes(command) &&
+  !existsSync(".vercel/output/static/assets")
+) {
   throw new Error("Run the clean build first; synthetic UI checks need its compiled styles.");
 }
 const args =
-  command === "parent-ui"
-    ? ["--experimental-strip-types", "scripts/parent-navigation.browser.mjs"]
-    : command === "tests"
-      ? ["--experimental-strip-types", "--test", "--test-concurrency=2", ...DESK_NONPAYMENT_TESTS]
-      : ["run", command];
-if (!["tests", "parent-ui", "typecheck", "lint", "build"].includes(command)) {
-  throw new Error("Choose tests, parent-ui, typecheck, lint or build.");
+  command === "admin-http"
+    ? ["scripts/admin-http.synthetic.mjs"]
+    : command === "parent-ui"
+      ? ["--experimental-strip-types", "scripts/parent-navigation.browser.mjs"]
+      : command === "tests"
+        ? ["--experimental-strip-types", "--test", "--test-concurrency=2", ...DESK_NONPAYMENT_TESTS]
+        : ["run", command];
+if (!["tests", "parent-ui", "admin-http", "typecheck", "lint", "build"].includes(command)) {
+  throw new Error("Choose tests, parent-ui, admin-http, typecheck, lint or build.");
 }
-const child = spawn(["tests", "parent-ui"].includes(command) ? process.execPath : "npm", args, {
-  env,
-  stdio: "inherit",
-});
+const child = spawn(
+  ["tests", "parent-ui", "admin-http"].includes(command) ? process.execPath : "npm",
+  args,
+  {
+    env,
+    stdio: "inherit",
+  },
+);
 child.on("exit", (code) => {
   process.exitCode = code ?? 1;
 });

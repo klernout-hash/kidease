@@ -12,5 +12,6 @@ export function applyStyleNonceBoot(html: string, nonce: string): string;
 export function stripModulePreloads(html: string): string;
 export function applyDocumentNonces(html: string, nonce: string): string;
 export function stripModulePreloadsForPath(html: string, pathname: string): string;
+export function hasPrivateCacheControl(headers: Headers): boolean;
 export function applyHtmlDocumentCacheHeaders(headers: Headers): void;
 export function isHtmlResponse(contentType: string | null | undefined): boolean;
