@@ -20,19 +20,49 @@ import { blockedMessage, createOutboundGate, registerOutboundGates, type Outboun
 
 const CONTROLS_TTL_MS = 15_000;
 let cached: { at: number; controls: OutboundControls } | null = null;
+let controlsGeneration = 0;
+let pendingControls: {
+  generation: number;
+  at: number;
+  promise: Promise<OutboundControls>;
+} | null = null;
 
 async function readControls(): Promise<OutboundControls> {
   if (cached && Date.now() - cached.at < CONTROLS_TTL_MS) return cached.controls;
-  // An expired snapshot may predate test mode or a kill switch enabled by
-  // another instance. Let read errors reach the gate so it fails closed.
-  const sql = await getSql();
-  const rows = await sql<{ key: string; value: string }>`select key, value from outbound_controls`;
-  cached = { at: Date.now(), controls: controlsFromRows(rows) };
-  return cached.controls;
+  // Share a refresh so concurrent reads cannot overwrite newer settings in
+  // completion order. Invalidation also retires any pre-edit refresh.
+  if (!pendingControls) {
+    pendingControls = {
+      generation: controlsGeneration,
+      at: Date.now(),
+      promise: (async () => {
+        const sql = await getSql();
+        const rows = await sql<{ key: string; value: string }>`select key, value from outbound_controls`;
+        return controlsFromRows(rows);
+      })(),
+    };
+  }
+  const pending = pendingControls;
+  try {
+    const controls = await pending.promise;
+    // A saved safety change must affect this waiter too, not just later calls.
+    if (pending.generation !== controlsGeneration) return readControls();
+    // Query latency consumes the freshness window; never re-age an old result.
+    if (Date.now() - pending.at >= CONTROLS_TTL_MS) {
+      throw new Error("Outbound safety settings refresh exceeded its freshness window");
+    }
+    cached = { at: pending.at, controls };
+    return controls;
+  } finally {
+    // A retired request must not clear a newer refresh after it settles.
+    if (pendingControls === pending) pendingControls = null;
+  }
 }
 
 export function clearOutboundControlsCache(): void {
+  controlsGeneration += 1;
   cached = null;
+  pendingControls = null;
 }
 
 export const sqlOutboundStore: OutboundStore = {
@@ -128,11 +158,12 @@ export async function saveOutboundControl(input: {
     values (${input.key}, ${norm.value}, now(), ${input.actorId})
     on conflict (key) do update set value = excluded.value, updated_at = now(), updated_by = excluded.updated_by
   `;
+  // The setting is already saved even if the separate audit write fails.
+  clearOutboundControlsCache();
   await sql`
     insert into outbound_control_audit (actor_id, actor_email, key, old_value, new_value)
     values (${input.actorId}, ${input.actorEmail}, ${input.key}, ${old}, ${norm.value})
   `;
-  clearOutboundControlsCache();
   return { ok: true, value: norm.value };
 }
 

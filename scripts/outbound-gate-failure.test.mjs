@@ -162,13 +162,15 @@ test("transactional nonessential mail never calls a provider when controls fail"
 
 // Run the real server store with SQL, time and registration injected. No DB or sender is imported.
 function serverGateFixture() {
-  const state = { now: 0, reads: 0, rows: [], failure: null, errors: [] };
+  const state = { now: 0, reads: 0, rows: [], failure: null, errors: [], readControls: null, auditFailure: null };
   const sql = async (strings) => {
     if (state.failure) throw state.failure;
-    if (strings.join("").includes("select key, value from outbound_controls")) {
+    const query = strings.join("");
+    if (query.includes("select key, value from outbound_controls")) {
       state.reads += 1;
-      return state.rows;
+      return state.readControls ? state.readControls() : state.rows;
     }
+    if (query.includes("insert into outbound_control_audit") && state.auditFailure) throw state.auditFailure;
     return [{ used: 1 }];
   };
   const imports = {
@@ -237,4 +239,110 @@ test("an expired live cache cannot authorize sends after a failed refresh and re
   state.now = 30_000;
   state.failure = new Error("another refresh unavailable");
   assert.deepEqual(await server.gateOutboundEmail(input), unavailable);
+});
+
+function deferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((yes, no) => {
+    resolve = yes;
+    reject = no;
+  });
+  return { promise, resolve, reject };
+}
+
+const savedTestRows = [
+  { key: "test_mode", value: "1" },
+  { key: "test_email", value: "saved@example.ca" },
+];
+const ordinaryMail = { to: "parent@example.ca", subject: "Spot open" };
+const nextTurn = () => new Promise((resolve) => setImmediate(resolve));
+
+test("concurrent cold gates share one controls refresh and keep test routing", async () => {
+  const { state, server } = serverGateFixture();
+  const read = deferred();
+  state.readControls = () => read.promise;
+  const first = server.gateOutboundEmail(ordinaryMail);
+  const second = server.gateOutboundEmail(ordinaryMail);
+  await nextTurn();
+  read.resolve(savedTestRows);
+  const results = await Promise.all([first, second]);
+  assert.equal(state.reads, 1, "concurrent gates must share one pending controls read");
+  for (const result of results) {
+    assert.equal(result.to, "saved@example.ca");
+    assert.equal(result.testMode, true);
+  }
+});
+
+test("an invalidated live read cannot return or replace a newer test-mode snapshot", async () => {
+  const { state, server } = serverGateFixture();
+  const oldRead = deferred();
+  state.readControls = () => state.reads === 1 ? oldRead.promise : savedTestRows;
+  const oldGate = server.gateOutboundEmail(ordinaryMail);
+  await nextTurn();
+  server.clearOutboundControlsCache();
+  const newer = await server.gateOutboundEmail(ordinaryMail);
+  oldRead.resolve([]);
+  const oldResult = await oldGate;
+  const after = await server.gateOutboundEmail(ordinaryMail);
+  for (const result of [newer, oldResult, after]) {
+    assert.equal(result.to, "saved@example.ca", "an older live result must never authorize the real recipient");
+    assert.equal(result.testMode, true);
+  }
+  assert.equal(state.reads, 2, "the superseded waiter can reuse the newer verified snapshot");
+});
+
+test("a late failed read cannot clear a newer pending controls refresh", async () => {
+  const { state, server } = serverGateFixture();
+  const oldRead = deferred();
+  const newerRead = deferred();
+  state.readControls = () => state.reads === 1 ? oldRead.promise : newerRead.promise;
+  const oldGate = server.gateOutboundEmail(ordinaryMail);
+  await nextTurn();
+  server.clearOutboundControlsCache();
+  const newerGate = server.gateOutboundEmail(ordinaryMail);
+  await nextTurn();
+  oldRead.reject(new Error("older controls read failed"));
+  const oldResult = await oldGate;
+  const joinedGate = server.gateOutboundEmail(ordinaryMail);
+  await nextTurn();
+  newerRead.resolve(savedTestRows);
+  const results = await Promise.all([newerGate, joinedGate]);
+  assert.deepEqual(oldResult, unavailable);
+  assert.equal(state.reads, 2, "late failure must preserve the newer in-flight read for joining gates");
+  for (const result of results) {
+    assert.equal(result.to, "saved@example.ca");
+    assert.equal(result.testMode, true);
+  }
+});
+
+test("saved controls invalidate the live cache even when the audit write fails", async () => {
+  const { state, server } = serverGateFixture();
+  assert.equal((await server.gateOutboundEmail(ordinaryMail)).to, ordinaryMail.to);
+  state.auditFailure = new Error("audit insert failed");
+  await assert.rejects(
+    server.saveOutboundControl({ key: "test_mode", value: "1", actorId: "synthetic-admin", actorEmail: "admin@example.ca" }),
+    (err) => err === state.auditFailure,
+  );
+  // The controls write succeeded before the separate audit insert failed.
+  state.rows = savedTestRows;
+  const result = await server.gateOutboundEmail(ordinaryMail);
+  assert.equal(result.to, "saved@example.ca");
+  assert.equal(result.testMode, true);
+  assert.equal(state.reads, 2);
+});
+
+test("a delayed controls snapshot cannot restart its expired freshness window", async () => {
+  const { state, server } = serverGateFixture();
+  const read = deferred();
+  state.readControls = () => state.reads === 1 ? read.promise : savedTestRows;
+  const gate = server.gateOutboundEmail(ordinaryMail);
+  await nextTurn();
+  state.now = 15_000;
+  read.resolve([]);
+  assert.deepEqual(await gate, unavailable, "a read that used its entire TTL must fail closed");
+  const fresh = await server.gateOutboundEmail(ordinaryMail);
+  assert.equal(fresh.to, "saved@example.ca");
+  assert.equal(fresh.testMode, true);
+  assert.equal(state.reads, 2);
 });
