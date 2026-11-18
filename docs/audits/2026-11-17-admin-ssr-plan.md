@@ -1,6 +1,6 @@
 # Admin queue counts: SSR investigation, 17 November 2026
 
-Admin counts are **not server-rendered by this change**. No admin runtime file or authorization rule was changed. This note records the remaining implementation boundary so a loader that never paints is not mistaken for the completed audit item.
+Historical investigation at commit `440723b6`: admin counts were not server-rendered in that revision. A dormant implementation was subsequently added on 18 November; see [implementation and acceptance boundaries](2026-11-18-desk-bootstrap.md). The new feature remains off. The source observations and plan below describe the earlier revision and explain the authorization requirements.
 
 ## Source evidence
 

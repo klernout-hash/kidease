@@ -260,7 +260,8 @@ export async function requireSupport(userId: string) {
   return lookupUser(userId);
 }
 
-export async function resolveSessionDesks(userId: string): Promise<SessionDesks> {
+/** Read-only consumers skip intake sends and cleanup; authorization checks still apply. */
+export async function resolveSessionDesks(userId: string, options: { readOnly?: boolean } = {}): Promise<SessionDesks> {
   const sql = await getSql();
   const viewing = readViewAsPublic();
   if (!viewing) {
@@ -305,7 +306,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
   // Parent intake stays on an explicit parent choice. Provider intake still
   // runs once the stored role or an owned centre says this is a daycare.
   // View-as never files intake or closes an account.
-  if (!viewing && (stored === "provider" || owned)) await claimProviderCrmIntake(userId);
+  if (!options.readOnly && !viewing && (stored === "provider" || owned)) await claimProviderCrmIntake(userId);
   const member = owned ? false : await isActiveCentreMember(sql, userId);
   const memberRoles = owned
     ? []
@@ -323,7 +324,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
   const { purgeAccountIfExpired, readDeletedAt } = await import("@/lib/server/family");
   const deletedAt = await readDeletedAt(userId);
   if (!viewing && deletedAt && !withinRestoreWindow(deletedAt)) {
-    await purgeAccountIfExpired(userId);
+    if (!options.readOnly) await purgeAccountIfExpired(userId);
     throw new Error("Account closed");
   }
   const restoreUntil = deletedAt && withinRestoreWindow(deletedAt) ? restoreDeadline(deletedAt).toISOString() : null;
@@ -428,7 +429,7 @@ export const assertAdminDesk = createServerFn({ method: "GET" })
     // alive. Do not throw — data loaders still surface a real idle timeout.
     const { bootstrapAdminIdleFromSession } = await import("./reauth.server");
     await bootstrapAdminIdleFromSession(context.userId).catch(() => false);
-    return { ok: true as const };
+    return { ok: true as const, queueSsrEnabled: process.env.FEATURE_ADMIN_QUEUE_SSR === "1" };
   });
 
 /**

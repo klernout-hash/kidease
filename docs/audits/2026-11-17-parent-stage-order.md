@@ -35,7 +35,7 @@ Screenshot and metric files are local ignored artifacts: `artifacts/desk-stage-o
 
 ## Remaining boundaries
 
-Admin queue SSR is not implemented. See [the complete authorization investigation and implementation plan](2026-11-17-admin-ssr-plan.md). No session, role, desk-ready, 2FA, trusted-device or idle gate was weakened.
+At this revision, admin queue SSR was not implemented. See [the original investigation](2026-11-17-admin-ssr-plan.md) and the subsequent [18 November dormant bootstrap/lifecycle work](2026-11-18-desk-bootstrap.md). No session, role, desk-ready, 2FA, trusted-device or idle gate was weakened.
 
 Authenticated parent and admin browser checks still need a suitable signed-in session. Parent access checks should include searching, enrolled, mixed and coparent accounts, fresh reloads and account changes. Current attendance/journal APIs scope their data to the current user; a coparent can have family enrollment without accessible daily details. This change reports that limit rather than broadening authorization. Journals without exact booking IDs are omitted.
 

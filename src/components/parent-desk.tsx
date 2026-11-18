@@ -48,7 +48,6 @@ import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { LOADER_SETTLE_MS, withTimeout } from "@/lib/timeout";
 import { parentDeskPath, parentNavSearch } from "@/lib/desk-nav";
 import { MAX_CHILDREN_PER_PARENT } from "@/lib/children-limit";
-import { parentDeskTabOrDefault } from "@/lib/parent-tab";
 import { useStoreShell } from "@/lib/use-native-shell";
 import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
@@ -59,6 +58,8 @@ import { ParentAttention } from "@/components/attention-list";
 import { useRoleChrome } from "@/components/role-chrome";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
 import { DeleteChildControl } from "@/components/delete-child-control";
+import { useParentNavigation } from "@/lib/use-parent-navigation";
+import { useParentRequestScope } from "@/lib/use-parent-request-scope";
 
 const ParentPlusPanel = lazy(() =>
   import("@/components/parent-plus").then((m) => ({ default: m.ParentPlusPanel })),
@@ -142,13 +143,12 @@ export function ParentDesk({
 }) {
   const { user } = useCurrentUserState();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const urlTab = useRouterState({
-    select: (s) => {
-      const tab = (s.location.search as { tab?: unknown }).tab;
-      return typeof tab === "string" ? tab : "";
-    },
-  });
   const navigate = useNavigate();
+  const navigateTab = useCallback((id: string) => {
+    void navigate({ to: parentDeskPath(pathname), search: parentNavSearch(id), replace: true });
+  }, [navigate, pathname]);
+  const { tab, contentTab, selectTab } = useParentNavigation(initialTab, navigateTab);
+  const { issue: issueRequest } = useParentRequestScope(user?.id);
   const storeShell = useStoreShell();
   const chrome = useRoleChrome();
   const plus = useParentPlusAccess();
@@ -159,8 +159,6 @@ export function ParentDesk({
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
-  const [tab, setTab] = useState<ParentTab>(initialTab ?? "explore");
-  const [contentTab, setContentTab] = useState<ParentTab>(initialTab ?? "explore");
   const [explore, setExplore] = useState<Card[]>([]);
   const [exploreReady, setExploreReady] = useState(false);
   const [exploreError, setExploreError] = useState(false);
@@ -187,29 +185,13 @@ export function ParentDesk({
   const [savedReady, setSavedReady] = useState(false);
   const [shortlistShared, setShortlistShared] = useState(initialShared);
   const acceptedShare = useRef<string | null>(null);
-  const activeUserId = useRef(user?.id);
-  activeUserId.current = user?.id;
-  const exploreSeq = useRef(0);
-  const extrasSeq = useRef(0);
-
-  const selectTab = useCallback((id: string) => {
-    const next = parentDeskTabOrDefault(id);
-    setTab(next);
-    const search = parentNavSearch(id);
-    const target = search.tab ?? "";
-    if (target && target !== urlTab) {
-      void navigate({ to: parentDeskPath(pathname), search, replace: true });
-    }
-    void yieldToMain().then(() => {
-      startTransition(() => setContentTab(next));
-    });
-  }, [navigate, pathname, urlTab]);
 
   const loadExplore = useCallback(
     async (startBookings: Booking[], fresh = false) => {
-      const seq = ++exploreSeq.current;
-      const uid = activeUserId.current;
-      const current = () => seq === exploreSeq.current && uid === activeUserId.current;
+      const request = issueRequest("explore");
+      const uid = request.viewerId;
+      const current = request.isCurrent;
+      if (!uid || !current()) return;
       setExploreError(false);
       try {
         if (!(origin.label || "").trim()) {
@@ -228,18 +210,19 @@ export function ParentDesk({
           startDate: soonestStartDate(startBookings),
         };
         const rows = await withTimeout(
-          dedupedQuery(`parent-search:${JSON.stringify(data)}`, QUERY_STALE_MS, () => searchDaycares({ data }), {
+          dedupedQuery(`parent-search:${uid}:${JSON.stringify(data)}`, QUERY_STALE_MS, () => searchDaycares({ data }), {
             cacheIf: (value) => Array.isArray(value) && value.length > 0,
             fresh,
           }),
           LOADER_SETTLE_MS,
           "parent-search-timeout",
         );
+        if (!current()) return;
         const next = rows.length
           ? rows
           : await withTimeout(
               dedupedQuery(
-                `parent-featured:${loc.lat},${loc.lng},${loc.label ?? ""}`,
+                `parent-featured:${uid}:${loc.lat},${loc.lng},${loc.label ?? ""}`,
                 QUERY_STALE_MS,
                 () => featuredDaycares({ data: loc }),
                 { cacheIf: (value) => Array.isArray(value) && value.length > 0, fresh },
@@ -254,83 +237,96 @@ export function ParentDesk({
         if (current()) startTransition(() => setExploreReady(true));
       }
     },
-    [origin, radiusKm],
+    [origin, radiusKm, issueRequest],
   );
 
-  const familySeq = useRef(0);
   const loadFamily = useCallback(async (fresh = false) => {
-    const seq = ++familySeq.current;
-    if (shareToken && acceptedShare.current !== shareToken) {
-      const result = await withTimeout(acceptShortlistShare({ data: { token: shareToken } }), LOADER_SETTLE_MS, "parent-share-timeout").catch(() => null);
-      acceptedShare.current = shareToken;
-      if (result?.ok) toast.success(t("shareShortlistAccepted"));
-      else if (result && !result.ok) {
-        const key =
-          result.reason === "email"
-            ? "shareShortlistMismatch"
-            : result.reason === "used"
-              ? "shareShortlistUsed"
-              : result.reason === "self"
-                ? "shareShortlistSelf"
-                : "shareShortlistBad";
-        toast.error(t(key));
+    const request = issueRequest("family");
+    const uid = request.viewerId;
+    if (!uid || uid !== user?.id || !request.isCurrent()) return null;
+    try {
+      if (shareToken && acceptedShare.current !== shareToken) {
+        const result = await withTimeout(acceptShortlistShare({ data: { token: shareToken } }), LOADER_SETTLE_MS, "parent-share-timeout").catch(() => null);
+        if (!request.isCurrent()) return null;
+        acceptedShare.current = shareToken;
+        if (result?.ok) toast.success(t("shareShortlistAccepted"));
+        else if (result && !result.ok) {
+          const key =
+            result.reason === "email"
+              ? "shareShortlistMismatch"
+              : result.reason === "used"
+                ? "shareShortlistUsed"
+                : result.reason === "self"
+                  ? "shareShortlistSelf"
+                  : "shareShortlistBad";
+          toast.error(t(key));
+        }
       }
+      if (!request.isCurrent()) return null;
+      const f = await withTimeout(dedupedQuery(`parent-family:${uid}`, QUERY_STALE_MS, () => getFamily(), {
+        fresh: fresh || Boolean(shareToken),
+        cacheIf: (family) => family.viewerId === uid,
+      }), LOADER_SETTLE_MS, "parent-family-timeout");
+      if (!request.isCurrent()) return null;
+      if (f.viewerId !== uid) throw new Error("Family viewer changed");
+      await yieldToMain();
+      if (!request.isCurrent()) return null;
+      startTransition(() => {
+        setSaved(asList(f?.saved));
+        setBookings(asList(f?.bookings));
+        setPayments(asList(f?.payments));
+        setChildren(asList(f?.children));
+        setChildrenReady(true);
+        setFamilyCanWrite(f?.familyCanWrite !== false);
+        setCentreMessages(f.centreMessages ?? 0);
+        setUpgradeDismissed(Boolean(f.upgradeCardDismissed));
+        setShortlistShared(Boolean(f.shortlistShared));
+        setHomeSettled(true);
+        setHomeError(false);
+      });
+      return f;
+    } catch (error) {
+      if (!request.isCurrent()) return null;
+      throw error;
     }
-    const f = await withTimeout(dedupedQuery(`parent-family:${user?.id ?? ""}`, QUERY_STALE_MS, () => getFamily(), {
-      fresh: fresh || Boolean(shareToken),
-    }), LOADER_SETTLE_MS, "parent-family-timeout");
-    if (seq !== familySeq.current || user?.id !== activeUserId.current) return f;
-    await yieldToMain();
-    if (seq !== familySeq.current || user?.id !== activeUserId.current) return f;
-    startTransition(() => {
-      setSaved(asList(f?.saved));
-      setBookings(asList(f?.bookings));
-      setPayments(asList(f?.payments));
-      setChildren(asList(f?.children));
-      setChildrenReady(true);
-      setFamilyCanWrite(f?.familyCanWrite !== false);
-      setCentreMessages(f.centreMessages ?? 0);
-      setUpgradeDismissed(Boolean(f.upgradeCardDismissed));
-      setShortlistShared(Boolean(f.shortlistShared));
-      setHomeSettled(true);
-      setHomeError(false);
-    });
-    return f;
-  }, [shareToken, t, user?.id]);
+  }, [shareToken, t, user?.id, issueRequest]);
 
   const loadDeskExtras = useCallback(async (fresh = false) => {
-    const uid = user?.id ?? "";
-    const seq = ++extrasSeq.current;
+    const request = issueRequest("extras");
+    const uid = request.viewerId;
+    if (!uid || uid !== user?.id || !request.isCurrent()) return;
     setExtrasState("pending");
     const [billed, tourRows, leadRows] = await Promise.allSettled([
       withTimeout(dedupedQuery(`parent-bills:${uid}`, QUERY_STALE_MS, () => listParentBills(), { fresh }), LOADER_SETTLE_MS, "parent-bills-timeout"),
       withTimeout(dedupedQuery(`parent-tours:${uid}`, QUERY_STALE_MS, () => listTourRequests({ data: { desk: "parent" } }), { fresh }), LOADER_SETTLE_MS, "parent-tours-timeout"),
       withTimeout(dedupedQuery(`parent-leads:${uid}`, QUERY_STALE_MS, () => listLeadRequests({ data: { desk: "parent" } }), { fresh }), LOADER_SETTLE_MS, "parent-leads-timeout"),
     ]);
-    if (seq !== extrasSeq.current || uid !== activeUserId.current) return;
+    if (!request.isCurrent()) return;
     startTransition(() => {
       if (billed.status === "fulfilled") setBills(asList(billed.value.bills));
       if (tourRows.status === "fulfilled") setTours(asList(tourRows.value));
       if (leadRows.status === "fulfilled") setLeads(asList(leadRows.value));
       setExtrasState([billed, tourRows, leadRows].every((result) => result.status === "fulfilled") ? "ready" : "error");
     });
-  }, [user?.id]);
+  }, [user?.id, issueRequest]);
 
   function retryHome() {
+    const request = issueRequest("retry");
+    if (!request.isCurrent()) return;
     setHomeError(false);
     setHomeSettled(false);
-    void load().catch(() => setHomeError(true));
+    void load().catch(() => { if (request.isCurrent()) setHomeError(true); });
   }
 
   async function load() {
+    const request = issueRequest("home");
+    if (!request.isCurrent()) return;
     const f = await loadFamily(true);
+    if (!f || !request.isCurrent()) return;
     await Promise.all([loadExplore(f.bookings, true), loadDeskExtras(true)]);
   }
 
   useEffect(() => {
-    familySeq.current += 1;
-    extrasSeq.current += 1;
-    exploreSeq.current += 1;
     setBookings([]);
     setPayments([]);
     setBills([]);
@@ -357,7 +353,7 @@ export function ParentDesk({
     void yieldToMain()
       .then(() => {
         if (cancelled) return null;
-        return loadFamily();
+        return loadFamily(true);
       })
       .then((f) => {
         if (cancelled || !f) return;
@@ -417,18 +413,15 @@ export function ParentDesk({
   }, [contentTab]);
 
   useEffect(() => {
-    if (!initialTab) return;
-    setTab(initialTab);
-    startTransition(() => setContentTab(initialTab));
-  }, [initialTab]);
-
-  useEffect(() => {
     function refresh() {
-      void loadFamily(true).catch(() => undefined);
+      const request = issueRequest("refresh");
+      void loadFamily(true).catch(() => {
+        if (request.isCurrent()) setHomeError(true);
+      });
     }
     window.addEventListener("kidease-shortlist", refresh);
     return () => window.removeEventListener("kidease-shortlist", refresh);
-  }, [loadFamily]);
+  }, [loadFamily, issueRequest]);
 
   const deferredSaved = useDeferredValue(saved);
   const rankedSaved = useMemo(() => {

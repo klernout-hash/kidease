@@ -12,17 +12,19 @@ import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import { LOADER_SETTLE_MS, withTimeout } from "@/lib/timeout";
 import type { Booking } from "@/lib/types";
 import { useCopy } from "@/lib/use-copy";
+import { useParentRequestScope } from "@/lib/use-parent-request-scope";
 
 type CareState =
   { kind: "loading" } | { kind: "error" } | { kind: "ready"; snapshot: ParentHomeCareSnapshot };
 
 /** Read-only home snapshot. Existing server functions keep their own access and feature gates. */
 export function ParentHomeCare({ bookings, userId }: { bookings: Booking[]; userId: string }) {
+  const { issue, generation } = useParentRequestScope(userId);
   const enrolled = useMemo(
     () => bookings.filter((booking) => isEnrolledBookingStatus(booking.status)),
     [bookings],
   );
-  const identity = `${userId}:${enrolled.map((booking) => `${booking.id}:${booking.daycareId}`).join("|")}`;
+  const identity = `${userId}:${generation}:${enrolled.map((booking) => `${booking.id}:${booking.daycareId}`).join("|")}`;
   const [result, setResult] = useState<{ identity: string; state: CareState }>({
     identity,
     state: { kind: "loading" },
@@ -31,12 +33,14 @@ export function ParentHomeCare({ bookings, userId }: { bookings: Booking[]; user
 
   useEffect(() => {
     let live = true;
+    const request = issue("care");
     setResult({ identity, state: { kind: "loading" } });
     const load = async (): Promise<ParentHomeCareSnapshot> => {
       const [attendance, flags] = await Promise.all([
         listMyChildAttendance(),
         loadDeskFeatureFlags(),
       ]);
+      if (!live || !request.isCurrent()) throw new Error("Care request ended");
       const ids = new Set(enrolled.map((booking) => booking.id));
       const children = attendance.children.filter((child) => ids.has(child.bookingId));
       const notes = flags.dailyLogs
@@ -58,15 +62,20 @@ export function ParentHomeCare({ bookings, userId }: { bookings: Booking[]; user
     };
     void withTimeout(load(), LOADER_SETTLE_MS, "Care snapshot timed out")
       .then((snapshot) => {
-        if (live) setResult({ identity, state: { kind: "ready", snapshot } });
+        if (live && request.isCurrent())
+          setResult({ identity, state: { kind: "ready", snapshot } });
       })
       .catch(() => {
-        if (live) setResult({ identity, state: { kind: "error" } });
+        if (live && request.isCurrent()) {
+          request.cancel();
+          setResult({ identity, state: { kind: "error" } });
+        }
       });
     return () => {
       live = false;
+      request.cancel();
     };
-  }, [identity, enrolled, attempt]);
+  }, [identity, enrolled, attempt, issue]);
 
   const state: CareState = result.identity === identity ? result.state : { kind: "loading" };
   return (
