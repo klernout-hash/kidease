@@ -258,7 +258,7 @@ try {
       const snapshot = () => page.evaluate(() => window.__staffShiftQa.snapshot());
       const edit = () => page.getByRole("button", { name: `${copy.editShiftTitle}: Avery Example`, exact: true });
       const editForm = () => page.getByRole("form", { name: copy.editShiftTitle, exact: true });
-      const fields = (form) => ({ name: form.getByLabel(copy.name, { exact: true }), role: form.getByLabel(copy.role, { exact: true }), room: form.getByLabel(copy.room, { exact: true }), start: form.getByLabel(copy.start, { exact: true }), end: form.getByLabel(copy.end, { exact: true }) });
+      const fields = (form) => ({ name: form.getByLabel(copy.name, { exact: true }), role: form.getByRole("combobox").nth(0), room: form.getByRole("combobox").nth(1), start: form.getByLabel(copy.start, { exact: true }), end: form.getByLabel(copy.end, { exact: true }) });
       await edit().waitFor();
       await page.evaluate(() => document.fonts.ready);
       assert.equal(await page.locator("[data-ke=staff-shift-row]").count(), 2);
@@ -266,6 +266,18 @@ try {
       let form = editForm();
       let controls = fields(form);
       await controls.name.waitFor();
+      assert.equal(await form.getByRole("combobox").count(), 2, "The edit form has the role and room controls");
+      for (const [control, label, options] of [
+        [controls.role, copy.role, ["ece", "assistant", "other"].map((value) => ({ value, text: copy.roles[value] }))],
+        [controls.room, copy.room, ["infant", "toddler", "preschool", "school-age"].map((value) => ({ value, text: copy.rooms[value] }))],
+      ]) {
+        const leadingLabel = await control.evaluate((element) => {
+          if (element.labels.length !== 1) throw new Error("Each shift select needs one associated label");
+          return [...element.labels[0].childNodes].filter((node) => node.nodeType === Node.TEXT_NODE).map((node) => node.textContent).join("").trim();
+        });
+        assert.equal(leadingLabel, label);
+        assert.deepEqual(await control.locator("option").evaluateAll((elements) => elements.map((element) => ({ value: element.value, text: element.textContent }))), options);
+      }
       assert.equal(await controls.name.inputValue(), "Avery Example");
       assert.equal(await controls.role.inputValue(), "ece");
       assert.equal(await controls.room.inputValue(), "preschool");
