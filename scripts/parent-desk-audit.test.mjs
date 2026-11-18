@@ -12,7 +12,7 @@ test("learning stories and child health stay inside the parent desk", () => {
   const nav = src("src/lib/desk-nav.ts");
   assert.doesNotMatch(page, /StoriesDeskLink/);
   assert.doesNotMatch(page, /ChildHealthLog/);
-  assert.match(desk, /<ChildHealthLog \/>/);
+  assert.match(desk, /<ChildHealthLog key=\{`\$\{user\.id\}:\$\{childHealthVersion\}`\} \/>/);
   assert.match(nav, /id: "stories"/);
   assert.match(nav, /parentStoriesNav/);
   assert.match(page, /ParentMenuFrame/);
