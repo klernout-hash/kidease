@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createServer as createHttpServer } from "node:http";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -170,7 +171,7 @@ const server = await createServer({
   },
   logLevel: "error",
   resolve: { alias: { "@": join(root, "src") } },
-  server: { host: "127.0.0.1", port: 0, hmr: false },
+  server: { middlewareMode: true, host: "127.0.0.1", port: 0, hmr: false, ws: false },
   plugins: [
     {
       name: "nonfinancial-parent-navigation-fixture",
@@ -213,10 +214,14 @@ const server = await createServer({
   ],
 });
 let browser;
+const httpServer = createHttpServer(server.middlewares);
 await mkdir(output, { recursive: true });
 try {
-  await server.listen();
-  const address = server.httpServer.address();
+  await new Promise((resolve, reject) => {
+    httpServer.once("error", reject);
+    httpServer.listen(0, "127.0.0.1", resolve);
+  });
+  const address = httpServer.address();
   const origin = `http://127.0.0.1:${address.port}`;
   browser = await chromium.launch({
     ...(process.platform === "darwin" &&
@@ -226,7 +231,7 @@ try {
     headless: true,
     args: ["--disable-background-networking"],
   });
-  const context = await browser.newContext();
+  const context = await browser.newContext({ serviceWorkers: "block" });
   await context.route("**/*", (route) => {
     const url = new URL(route.request().url());
     requests.push(url.origin + url.pathname);
@@ -711,6 +716,8 @@ try {
   await context.close();
 } finally {
   await browser?.close();
+  if (httpServer.listening)
+    await new Promise((resolve) => httpServer.close(resolve));
   await server.close();
 }
 await writeFile(

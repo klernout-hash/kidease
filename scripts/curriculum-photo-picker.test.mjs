@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { createServer as createHttpServer } from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
@@ -62,6 +63,49 @@ const virtual = {
     "import {createElement} from 'react'; export const Link=({to,children,...p})=>createElement('a',{href:to,...p},children);",
 };
 
+// Only these reviewed application modules may enter the synthetic client graph.
+const allowedAppModules = new Set(
+  [
+    "src/components/curriculum-pack.tsx",
+    "src/components/ui/button.tsx",
+    "src/components/empty-state.tsx",
+    "src/lib/curriculum/text.ts",
+    "src/lib/curriculum/pack.ts",
+    "src/lib/curriculum/i18n/docs.ts",
+    "src/lib/curriculum/i18n/goals.ts",
+    "src/lib/curriculum/i18n/play.ts",
+    "src/lib/curriculum/i18n/ui.ts",
+    "src/lib/gov/k-anonymity.ts",
+    "src/lib/story-corner/open-books.ts",
+    "src/lib/node-builtin.ts",
+    "src/lib/utils.ts",
+    "src/lib/html-text.ts",
+    "src/lib/languages.ts",
+  ].map((file) => join(root, file)),
+);
+const loadedAppModules = new Set();
+function inspectClientModule(id) {
+  if (id.startsWith("\0curriculum-picker:")) return;
+  const file = id.split("?")[0];
+  if (
+    /stripe|payment|billing|checkout|refund|parent-plus|upgrade-plans|copy-runtime|copy-en|copy-fr/i.test(
+      file,
+    ) ||
+    /(?:^@\/lib\/|\/src\/lib\/)(?:server|auth)\//.test(file) ||
+    /(?:^@\/lib\/|\/src\/lib\/)db(?:\.|$)/.test(file) ||
+    /^(?:resend|twilio|nodemailer|web-push|firebase-admin|posthog-node|posthog-js|undici|pg|postgres|kysely|bullmq|ioredis|redis)(?:\/|$)/.test(
+      file,
+    )
+  ) {
+    throw new Error("Out-of-scope module in curriculum picker");
+  }
+  if (file.startsWith(join(root, "src") + "/") && /\.[cm]?[jt]sx?$/.test(file)) {
+    if (!allowedAppModules.has(file))
+      throw new Error("Unreviewed application module in curriculum picker");
+    loadedAppModules.add(file);
+  }
+}
+
 function fixturePlugin() {
   return {
     name: "curriculum-picker-synthetic-edges",
@@ -76,17 +120,14 @@ function fixturePlugin() {
             )),
       );
       if (fixtureKey) return `\0curriculum-picker:${fixtureKey}`;
-      if (
-        /stripe|payment|billing/i.test(id) ||
-        id.startsWith("@/lib/server/") ||
-        id.includes("/src/lib/server/")
-      ) {
-        throw new Error(`Out-of-scope module in curriculum picker: ${id}`);
-      }
+      inspectClientModule(id);
     },
     load(id) {
       const prefix = "\0curriculum-picker:";
       if (id.startsWith(prefix)) return virtual[id.slice(prefix.length)];
+    },
+    transform(_code, id) {
+      inspectClientModule(id);
     },
   };
 }
@@ -112,11 +153,25 @@ test(
       join(fixture, "entry.tsx"),
       `import React from 'react'; import {createRoot} from 'react-dom/client'; import {CurriculumPackDesk} from ${JSON.stringify(join(root, "src/components/curriculum-pack.tsx"))}; import './fixture.css'; document.documentElement.lang=new URLSearchParams(location.search).get('locale')==='fr'?'fr':'en'; createRoot(document.getElementById('root')!).render(<CurriculumPackDesk/>);`,
     );
+    const runtimeGuard = globalThis[Symbol.for("kidease.private.outbound-guard")];
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = () => {
-      throw new Error("External fetch forbidden in synthetic picker QA");
-    };
+    const fetchDescriptor = Object.getOwnPropertyDescriptor(globalThis, "fetch");
+    const ownsFetch = !runtimeGuard;
+    let standaloneFetchAttempts = 0;
+    if (runtimeGuard) {
+      assert.equal(runtimeGuard.getStatus().mode, "fixture");
+      assert.equal(runtimeGuard.getStatus().violations, 0);
+      assert.equal(fetchDescriptor?.writable, false);
+      assert.equal(fetchDescriptor?.configurable, false);
+    } else {
+      assert.equal(fetchDescriptor?.writable, true, "Unknown readonly fetch guard is not accepted");
+      globalThis.fetch = () => {
+        standaloneFetchAttempts += 1;
+        throw new Error("External fetch forbidden in synthetic picker QA");
+      };
+    }
     let server;
+    let httpServer;
     let browser;
     try {
       server = await createServer({
@@ -132,6 +187,8 @@ test(
           port: 0,
           strictPort: false,
           hmr: false,
+          ws: false,
+          middlewareMode: true,
           fs: { allow: [root] },
         },
         optimizeDeps: {
@@ -149,8 +206,12 @@ test(
         },
         logLevel: "warn",
       });
-      await server.listen();
-      const address = server.httpServer.address();
+      httpServer = createHttpServer(server.middlewares);
+      await new Promise((resolve, reject) => {
+        httpServer.once("error", reject);
+        httpServer.listen(0, "127.0.0.1", resolve);
+      });
+      const address = httpServer.address();
       const origin = `http://127.0.0.1:${address.port}`;
       const installedChrome =
         process.env.CHROME_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -161,6 +222,7 @@ test(
       for (const locale of ["en", "fr"]) {
         const externalRequests = [];
         const pageErrors = [];
+        const blockedTransports = [];
         const captures = [];
         const context = await browser.newContext({
           viewport: { width: 390, height: 844 },
@@ -169,10 +231,21 @@ test(
         });
         try {
           await context.route("**/*", async (route) => {
-            const url = route.request().url();
-            if (url.startsWith(`${origin}/`) || url.startsWith("data:")) return route.continue();
-            externalRequests.push(url);
+            const request = route.request();
+            const url = new URL(request.url());
+            if (
+              url.origin === origin &&
+              request.method() === "GET" &&
+              !url.pathname.startsWith("/api")
+            )
+              return route.continue();
+            blockedTransports.push({ kind: "http", method: request.method() });
+            externalRequests.push(url.origin);
             return route.abort("blockedbyclient");
+          });
+          await context.routeWebSocket("**/*", (socket) => {
+            blockedTransports.push({ kind: "websocket" });
+            return socket.close({ code: 1008, reason: "Synthetic fixture blocks WebSockets" });
           });
           const page = await context.newPage();
           page.setDefaultTimeout(7000);
@@ -282,6 +355,7 @@ test(
             captures.push({ locale, width, height: 1000, screenshot, ...layout });
           }
           assert.deepEqual(externalRequests, []);
+          assert.deepEqual(blockedTransports, []);
           assert.deepEqual(pageErrors, []);
           await writeFile(
             join(artifacts, `${outputPrefix}-evidence.json`),
@@ -311,6 +385,9 @@ test(
                   syntheticBody: true,
                 })),
                 externalRequests,
+                blockedTransports,
+                loadedAppModules: [...loadedAppModules],
+                runtimeGuard: runtimeGuard?.getStatus() ?? null,
                 pageErrors,
               },
               null,
@@ -322,10 +399,13 @@ test(
         }
       }
     } finally {
-      globalThis.fetch = originalFetch;
       await browser?.close();
+      if (httpServer) await new Promise((resolve) => httpServer.close(resolve));
       await server?.close();
       await rm(fixture, { recursive: true, force: true });
+      if (ownsFetch) globalThis.fetch = originalFetch;
+      if (runtimeGuard) assert.equal(runtimeGuard.getStatus().violations, 0);
+      assert.equal(standaloneFetchAttempts, 0);
     }
   },
 );

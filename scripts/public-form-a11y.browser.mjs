@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, realpathSync } from "node:fs";
 import { mkdir, writeFile, rm } from "node:fs/promises";
+import { createServer as createHttpServer } from "node:http";
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
@@ -265,6 +266,7 @@ function syntheticEdges() {
 }
 
 let server;
+let httpServer;
 let browser;
 const results = [];
 let failure;
@@ -308,7 +310,7 @@ try {
     publicDir: false,
     resolve: { alias: { "@": join(root, "src") } },
     plugins: [syntheticEdges(), react()],
-    server: { host: "127.0.0.1", port: 0, hmr: false, fs: { allow: [root] } },
+    server: { middlewareMode: true, host: "127.0.0.1", port: 0, hmr: false, ws: false, fs: { allow: [root] } },
     optimizeDeps: {
       noDiscovery: true,
       include: [
@@ -324,8 +326,15 @@ try {
     },
     logLevel: "warn",
   });
-  await server.listen();
-  const origin = `http://127.0.0.1:${server.httpServer.address().port}`;
+  httpServer = createHttpServer(server.middlewares);
+  await new Promise((resolve, reject) => {
+    httpServer.once("error", reject);
+    httpServer.listen({ host: "127.0.0.1", port: 0 }, () => {
+      httpServer.removeListener("error", reject);
+      resolve();
+    });
+  });
+  const origin = `http://127.0.0.1:${httpServer.address().port}`;
   const chromePath =
     process.env.CHROME_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
   browser = await chromium.launch({
@@ -476,7 +485,11 @@ try {
     try {
       await browser?.close();
     } finally {
-      await server?.close();
+      try {
+        if (httpServer?.listening) await new Promise((resolve, reject) => httpServer.close((error) => error ? reject(error) : resolve()));
+      } finally {
+        await server?.close();
+      }
     }
     for (const source of [...provenance.copy, ...provenance.components, ...provenance.harness, ...provenance.fonts, provenance.compiledCss]) {
       assert.equal(sha256(join(root, source.path)), source.sha256, `Source changed during public-form QA: ${source.path}`);

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, realpathSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
+import { createServer as createHttpServer } from "node:http";
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
@@ -210,6 +211,14 @@ export async function startHelpDialogFixture(out) {
     const router=createRouter({routeTree:rootRoute.addChildren(routes)});createRoot(document.getElementById('root')).render(<RouterProvider router={router}/>);
   `);
   let server;
+  let httpServer;
+  async function closeServers() {
+    try {
+      if (httpServer?.listening) await new Promise((resolve, reject) => httpServer.close((error) => error ? reject(error) : resolve()));
+    } finally {
+      await server?.close();
+    }
+  }
   const processGuard = globalThis[Symbol.for("kidease.private.outbound-guard")];
   if (processGuard) {
     assert.equal(processGuard.getStatus().mode, "fixture", "Use the private guard's fixture mode");
@@ -224,16 +233,23 @@ export async function startHelpDialogFixture(out) {
     server = await createServer({
       configFile: false, envDir: false, root: fixture, publicDir: false, cacheDir: join(fixture, ".vite-cache"),
       resolve: { alias: { "@": join(root, "src") } }, plugins: [edges, react()],
-      server: { host: "127.0.0.1", port: 0, hmr: false, fs: { allow: [root] } },
+      server: { middlewareMode: true, host: "127.0.0.1", port: 0, hmr: false, ws: false, fs: { allow: [root] } },
       optimizeDeps: { noDiscovery: true, include: ["react", "react-dom/client", "react/jsx-runtime", "@tanstack/react-router", "@radix-ui/react-dialog", "@radix-ui/react-slot", "lucide-react", "clsx", "tailwind-merge", "class-variance-authority"] },
       logLevel: "warn",
     });
-    await server.listen();
+    httpServer = createHttpServer(server.middlewares);
+    await new Promise((resolve, reject) => {
+      httpServer.once("error", reject);
+      httpServer.listen({ host: "127.0.0.1", port: 0 }, () => {
+        httpServer.removeListener("error", reject);
+        resolve();
+      });
+    });
     return {
-      origin: `http://127.0.0.1:${server.httpServer.address().port}`, packs, provenance, metrics,
+      origin: `http://127.0.0.1:${httpServer.address().port}`, packs, provenance, metrics,
       async close() {
         try {
-          await server.close();
+          await closeServers();
           for (const entry of provenance) assert.equal(digest(join(root, entry.path)).sha256, entry.sha256, `Source changed during Help QA: ${entry.path}`);
           assert.deepEqual(metrics.forbiddenImports, []);
           assert.deepEqual(metrics.nodeFetchAttempts, []);
@@ -251,7 +267,7 @@ export async function startHelpDialogFixture(out) {
       },
     };
   } catch (error) {
-    try { await server?.close(); }
+    try { await closeServers(); }
     finally { if (!processGuard) globalThis.fetch = previousFetch; await rm(fixture, { recursive: true, force: true }); }
     throw error;
   }
