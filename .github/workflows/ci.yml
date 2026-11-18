@@ -283,6 +283,7 @@ jobs:
             artifacts/e2e/desktop-report.json
             artifacts/e2e/desktop-diff/
             artifacts/e2e/desktop-actual/
+            artifacts/layout-audit/report.json
           if-no-files-found: ignore
           retention-days: 7
 
