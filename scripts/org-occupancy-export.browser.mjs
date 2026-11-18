@@ -130,6 +130,7 @@ test(
       const built = await build({
         configFile: false,
         envDir: false,
+        define: { "process.env.NODE_ENV": JSON.stringify("production") },
         root: fixture,
         publicDir: false,
         logLevel: "error",
@@ -172,6 +173,7 @@ test(
         .join("\n");
       let css = cssBytes.toString("utf8");
       assert(script.length > 0 && css.length > 0);
+      assert.doesNotMatch(script, /process\.env\.NODE_ENV/, "The static browser fixture must resolve its production runtime");
       css = css.replace(
         /url\((['"]?)(\/fonts\/[^)'"\s]+)\1\)/g,
         (_, _quote, font) =>

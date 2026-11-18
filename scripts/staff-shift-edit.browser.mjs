@@ -93,7 +93,7 @@ const virtual = {
   `,
 };
 
-const metrics = { actualProjectModules: [], rewrittenEdges: [], forbiddenImports: [], browserTransports: [], nodeFetchAttempts: [] };
+const metrics = { actualProjectModules: [], rewrittenEdges: [], forbiddenImports: [], browserTransports: [], nodeFetchAttempts: [], pageErrors: [] };
 const guard = globalThis[Symbol.for("kidease.private.outbound-guard")];
 function guardStatus() {
   assert.equal(typeof guard?.getStatus, "function", "The private fixture guard must expose status");
@@ -207,6 +207,7 @@ try {
   };
   const built = await build({
     configFile: false, envDir: false, publicDir: false, root, logLevel: "error",
+    define: { "process.env.NODE_ENV": JSON.stringify("production") },
     resolve: { alias: { "@": join(root, "src") } }, plugins: [boundary, react()],
     build: { write: false, minify: false, sourcemap: false, lib: { entry: entryId, formats: ["iife"], name: "StaffShiftFixture" }, rollupOptions: { input: entryId, output: { inlineDynamicImports: true } } },
   });
@@ -215,6 +216,7 @@ try {
   assert.equal(output[0].type, "chunk");
   const script = output[0].code;
   assert.ok(script.length > 0);
+  assert.doesNotMatch(script, /\bprocess\.env\.NODE_ENV\b/, "The browser fixture must not depend on Node's process global");
   assert.deepEqual([...metrics.actualProjectModules].sort(), [...sourceFiles].sort());
   assert.deepEqual([...metrics.rewrittenEdges].sort(), Object.keys(replacements).sort());
   const explicitChrome = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || process.env.CHROME_PATH;
@@ -238,7 +240,10 @@ try {
     try {
       page = await context.newPage();
       page.setDefaultTimeout(10000);
-      page.on("pageerror", (error) => pageErrors.push(error.message));
+      page.on("pageerror", (error) => {
+        pageErrors.push(error.message);
+        metrics.pageErrors.push({ locale, width, message: error.message });
+      });
       await page.setContent(`<!doctype html><html lang="${locale}" data-look="clean" data-resolved-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>${css}</style></head><body><main class="w-full min-h-dvh overflow-x-hidden" style="max-width:52rem;margin:auto;padding:1rem"><div id="root"></div></main></body></html>`);
       await page.evaluate(() => {
         window.__staffShiftTransportAttempts = [];
@@ -354,6 +359,7 @@ finally {
     assert.deepEqual(metrics.forbiddenImports, []);
     assert.deepEqual(metrics.browserTransports, []);
     assert.deepEqual(metrics.nodeFetchAttempts, []);
+    assert.deepEqual(metrics.pageErrors, []);
     metrics.processGuard = guard ? guardStatus() : { mode: "local-deny-fetch", attempts: metrics.nodeFetchAttempts.length };
     if (!failure) assert.equal(results.length, 4);
   } catch (error) { failure ??= error; }
