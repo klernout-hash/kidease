@@ -177,6 +177,11 @@ export async function startHelpDialogFixture(out) {
           response.writeHead(405).end("Service requests are denied in this fixture");
           return;
         }
+        if (["/help", "/fr/help", "/report", "/fr/report"].includes(path)) {
+          // Serve only this fixed shell: Vite's dev HTML transform injects a WebSocket client.
+          response.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(readFileSync(join(fixture, "index.html")));
+          return;
+        }
         if (publicFiles.has(path)) {
           const mime = path.endsWith(".svg") ? "image/svg+xml" : "font/woff2";
           response.writeHead(200, { "content-type": mime }).end(readFileSync(publicFiles.get(path)));
@@ -231,7 +236,7 @@ export async function startHelpDialogFixture(out) {
     };
   try {
     server = await createServer({
-      configFile: false, envDir: false, root: fixture, publicDir: false, cacheDir: join(fixture, ".vite-cache"),
+      configFile: false, envDir: false, appType: "custom", root: fixture, publicDir: false, cacheDir: join(fixture, ".vite-cache"),
       resolve: { alias: { "@": join(root, "src") } }, plugins: [edges, react()],
       server: { middlewareMode: true, host: "127.0.0.1", port: 0, hmr: false, ws: false, fs: { allow: [root] } },
       optimizeDeps: { noDiscovery: true, include: ["react", "react-dom/client", "react/jsx-runtime", "@tanstack/react-router", "@radix-ui/react-dialog", "@radix-ui/react-slot", "lucide-react", "clsx", "tailwind-merge", "class-variance-authority"] },

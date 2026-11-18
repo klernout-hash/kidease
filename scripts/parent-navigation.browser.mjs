@@ -157,6 +157,7 @@ const server = await createServer({
   root,
   configFile: false,
   envDir: false,
+  appType: "custom",
   cacheDir: join(output, "vite-cache"),
   optimizeDeps: {
     noDiscovery: true,
@@ -207,7 +208,8 @@ const server = await createServer({
           const locale = url.searchParams.get("locale") === "fr" ? "fr" : "en";
           const html = `<!doctype html><html lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Synthetic parent navigation test</title><link rel="stylesheet" href="/fixture.css"><style>body{padding:1rem}main{max-width:60rem;margin:auto}.fixture-controls{display:flex;flex-wrap:wrap;gap:1rem}main>p{margin-top:1rem}button{border:1px solid;padding:.5rem}</style></head><body><div id="root"></div><script type="module" src="/scripts/fixtures/parent-navigation.tsx"></script></body></html>`;
           response.setHeader("content-type", "text/html; charset=utf-8");
-          response.end(await vite.transformIndexHtml(url.pathname, html));
+          // A static fixture page needs no development client or WebSocket transport.
+          response.end(html);
         });
       },
     },

@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { createServer as createHttpServer } from "node:http";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { createServer } from "vite";
@@ -143,15 +144,32 @@ test(
     await mkdir(fixture, { recursive: true });
     await writeFile(
       join(fixture, "index.html"),
-      `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><main class="mx-auto w-full max-w-3xl p-4"><p class="mb-4 text-sm">Synthetic component QA · no child photos</p><div id="root"></div></main><script type="module" src="/entry.tsx"></script></body></html>`,
+      `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/fixture.css?direct"></head><body><main class="mx-auto w-full max-w-3xl p-4"><p class="mb-4 text-sm">Synthetic component QA · no child photos</p><div id="root"></div></main><script type="module" src="/entry.tsx"></script></body></html>`,
     );
-    await writeFile(
-      join(fixture, "fixture.css"),
-      `@import ${JSON.stringify(join(root, "src/styles.css"))};\n@source ${JSON.stringify(join(root, "src/components/curriculum-pack.tsx"))};\n@source ${JSON.stringify(join(root, "src/components/ui/button.tsx"))};\n@source ${JSON.stringify(join(root, "src/components/empty-state.tsx"))};\n@source "./index.html";`,
-    );
+    const fixtureCss = `@import ${JSON.stringify(join(root, "src/styles.css"))};\n@source ${JSON.stringify(join(root, "src/components/curriculum-pack.tsx"))};\n@source ${JSON.stringify(join(root, "src/components/ui/button.tsx"))};\n@source ${JSON.stringify(join(root, "src/components/empty-state.tsx"))};\n@source "./index.html";`;
+    await writeFile(join(fixture, "fixture.css"), fixtureCss);
+    const fixtureStylesheet = {
+      mode: "fixture-source-css",
+      entrySha256: createHash("sha256").update(fixtureCss).digest("hex"),
+      inputs: await Promise.all(
+        [
+          "src/styles.css",
+          "src/components/curriculum-pack.tsx",
+          "src/components/ui/button.tsx",
+          "src/components/empty-state.tsx",
+        ].map(async (file) => {
+          const content = await readFile(join(root, file));
+          return {
+            file,
+            sha256: createHash("sha256").update(content).digest("hex"),
+            bytes: content.length,
+          };
+        }),
+      ),
+    };
     await writeFile(
       join(fixture, "entry.tsx"),
-      `import React from 'react'; import {createRoot} from 'react-dom/client'; import {CurriculumPackDesk} from ${JSON.stringify(join(root, "src/components/curriculum-pack.tsx"))}; import './fixture.css'; document.documentElement.lang=new URLSearchParams(location.search).get('locale')==='fr'?'fr':'en'; createRoot(document.getElementById('root')!).render(<CurriculumPackDesk/>);`,
+      `import React from 'react'; import {createRoot} from 'react-dom/client'; import {CurriculumPackDesk} from ${JSON.stringify(join(root, "src/components/curriculum-pack.tsx"))}; document.documentElement.lang=new URLSearchParams(location.search).get('locale')==='fr'?'fr':'en'; createRoot(document.getElementById('root')!).render(<CurriculumPackDesk/>);`,
     );
     const runtimeGuard = globalThis[Symbol.for("kidease.private.outbound-guard")];
     const originalFetch = globalThis.fetch;
@@ -177,6 +195,7 @@ test(
       server = await createServer({
         configFile: false,
         envDir: false,
+        appType: "custom",
         root: fixture,
         cacheDir: join(fixture, ".vite-cache"),
         publicDir: join(root, "public"),
@@ -206,7 +225,19 @@ test(
         },
         logLevel: "warn",
       });
-      httpServer = createHttpServer(server.middlewares);
+      httpServer = createHttpServer(async (request, response) => {
+        const url = new URL(request.url, "http://127.0.0.1");
+        if (request.method !== "GET" || url.pathname.startsWith("/api")) {
+          response.writeHead(403).end("Outside the synthetic fixture");
+          return;
+        }
+        if (url.pathname === "/") {
+          response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+          response.end(await readFile(join(fixture, "index.html")));
+          return;
+        }
+        server.middlewares(request, response, () => response.writeHead(404).end());
+      });
       await new Promise((resolve, reject) => {
         httpServer.once("error", reject);
         httpServer.listen(0, "127.0.0.1", resolve);
@@ -250,7 +281,29 @@ test(
           const page = await context.newPage();
           page.setDefaultTimeout(7000);
           page.on("pageerror", (error) => pageErrors.push(error.message));
+          const cssResponsePromise = page.waitForResponse((response) => {
+            const url = new URL(response.url());
+            return (
+              url.origin === origin &&
+              url.pathname === "/fixture.css" &&
+              url.searchParams.has("direct")
+            );
+          });
           await page.goto(`${origin}/?locale=${locale}`, { waitUntil: "networkidle" });
+          const cssResponse = await cssResponsePromise;
+          const contentType = cssResponse.headers()["content-type"];
+          assert.match(contentType, /text\/css/);
+          const cssBytes = await cssResponse.body();
+          assert.doesNotMatch(cssBytes.toString("utf8"), /__vite__updateStyle|@vite\/client/);
+          const stylesheetEvidence = {
+            ...fixtureStylesheet,
+            compiled: {
+              request: "/fixture.css?direct",
+              contentType,
+              sha256: createHash("sha256").update(cssBytes).digest("hex"),
+              bytes: cssBytes.length,
+            },
+          };
           assert.deepEqual(pageErrors, [], await page.locator("body").innerText());
           assert.equal(await page.locator("html").getAttribute("lang"), locale);
           await page
@@ -386,7 +439,8 @@ test(
                 })),
                 externalRequests,
                 blockedTransports,
-                loadedAppModules: [...loadedAppModules],
+                loadedAppModules: [...loadedAppModules].map((file) => relative(root, file)),
+                fixtureStylesheet: stylesheetEvidence,
                 runtimeGuard: runtimeGuard?.getStatus() ?? null,
                 pageErrors,
               },

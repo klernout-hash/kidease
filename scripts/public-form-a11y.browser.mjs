@@ -236,6 +236,12 @@ function syntheticEdges() {
           response.end("No service transport is allowed in this fixture");
           return;
         }
+        if (url.pathname === "/") {
+          // Keep the fixed fixture shell free of Vite's development WebSocket client.
+          response.setHeader("Content-Type", "text/html; charset=utf-8");
+          response.end(readFileSync(join(fixture, "index.html")));
+          return;
+        }
         if (url.pathname.startsWith("/fonts/")) {
           const font = fontFiles.get(url.pathname);
           if (!font) {
@@ -305,6 +311,7 @@ try {
   server = await createServer({
     configFile: false,
     envDir: false,
+    appType: "custom",
     root: fixture,
     cacheDir: join(fixture, ".vite-cache"),
     publicDir: false,
