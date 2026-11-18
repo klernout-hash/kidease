@@ -68,8 +68,11 @@ export function DaycareNameField({
           onFocus?.();
           if (value.trim().length >= 2) setOpen(true);
         }}
-        onBlur={() => {
-          window.setTimeout(() => setOpen(false), 120);
+        onBlur={(event) => {
+          const field = event.currentTarget;
+          window.setTimeout(() => {
+            if (document.activeElement !== field) setOpen(false);
+          }, 120);
         }}
         placeholder={placeholder}
         aria-labelledby={labelId}
