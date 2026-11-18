@@ -132,6 +132,10 @@ jobs:
           set -euo pipefail
           node --experimental-strip-types scripts/staff-shift-edit.browser.mjs
           node --experimental-strip-types scripts/org-occupancy-export.browser.mjs
+      - name: Search radius and map target UI checks
+        if: matrix.shard == '1/8'
+        timeout-minutes: 5
+        run: node scripts/visual-controls.browser.mjs
       - name: Playwright version
         id: playwright-version
         uses: ./.github/actions/playwright-version
@@ -158,6 +162,7 @@ jobs:
             artifacts/parent-navigation/
             artifacts/staff-shift-edit/
             artifacts/org-occupancy-export/
+            artifacts/visual-controls/after/
           if-no-files-found: ignore
 
   # Desktop baselines were captured on GitHub ubuntu-latest. Keep this job on

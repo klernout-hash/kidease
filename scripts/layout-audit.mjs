@@ -39,6 +39,10 @@ export function auditPage(minTap) {
   const W = innerWidth;
   const hiddenUp = (e) => {
     for (let p = e; p && p !== d.body; p = p.parentElement) {
+      if (p !== e && p.tagName === "DETAILS" && !p.open) {
+        const summary = [...p.children].find((child) => child.tagName === "SUMMARY");
+        if (!summary?.contains(e)) return true;
+      }
       const s = getComputedStyle(p);
       if (s.display === "none" || s.visibility === "hidden" || Number(s.opacity) === 0) return true;
     }

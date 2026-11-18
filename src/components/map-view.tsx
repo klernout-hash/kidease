@@ -1117,14 +1117,14 @@ function OsmMapView({
         <div className="overflow-hidden rounded-full bg-surface text-xs font-medium shadow-card ring-1 ring-border">
           <button
             type="button"
-            className={cn("px-3 py-1.5", base === "roadmap" ? "bg-primary text-primary-fg" : "text-muted")}
+            className={cn("inline-flex min-h-11 min-w-11 items-center justify-center px-3 py-1.5 touch-manipulation", base === "roadmap" ? "bg-primary text-primary-fg" : "text-muted")}
             onClick={() => setBase("roadmap")}
           >
             {t("mapRoad")}
           </button>
           <button
             type="button"
-            className={cn("px-3 py-1.5", base === "satellite" ? "bg-primary text-primary-fg" : "text-muted")}
+            className={cn("inline-flex min-h-11 min-w-11 items-center justify-center px-3 py-1.5 touch-manipulation", base === "satellite" ? "bg-primary text-primary-fg" : "text-muted")}
             onClick={() => setBase("satellite")}
           >
             {t("mapSat")}

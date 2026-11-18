@@ -3987,7 +3987,7 @@ html[data-look="clean"] [data-ke="where-controls"] > button {
 html[data-look="clean"] select[data-ke="search-radius"] {
   width: auto;
   min-width: 5.25rem !important;
-  height: 2.75rem;
+  height: max(44px, 2.75rem);
   padding-left: 0.5rem;
   border-color: transparent;
   background-color: transparent;

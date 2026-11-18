@@ -126,6 +126,96 @@ test("native modal escape stays interactive; explicit modal inertness still excl
   });
 });
 
+test("closed native details keep the first summary and hide body controls until opened", async () => {
+  await syntheticPage(async (page) => {
+    await page.locator("body").evaluate((body, markup) => {
+      body.innerHTML = `${markup}<details id="disclosure"><summary data-ke="first-summary" style="display:block;width:32px;height:32px">Go</summary><div>${markup.replaceAll("outside-", "closed-body-")}</div></details>`;
+    }, pair("outside"));
+    let result = await page.evaluate(auditPage, MIN_TAP);
+    assert(has(result.issues.overlap, "outside-a"));
+    assert(has(result.issues.small, "outside-small"));
+    assert(has(result.issues.small, "first-summary"));
+    assert(!has(result.issues.overlap, "closed-body-"));
+    assert(!has(result.issues.small, "closed-body-"));
+
+    await page.locator("#disclosure").evaluate((element) => { element.open = true; });
+    result = await page.evaluate(auditPage, MIN_TAP);
+    assert(has(result.issues.overlap, "closed-body-a"));
+    assert(has(result.issues.small, "closed-body-small"));
+    assert(has(result.issues.small, "first-summary"));
+
+    await page.locator("#disclosure").evaluate((element) => { element.open = false; });
+    result = await page.evaluate(auditPage, MIN_TAP);
+    assert(!has(result.issues.overlap, "closed-body-"));
+    assert(!has(result.issues.small, "closed-body-"));
+    assert(has(result.issues.overlap, "outside-a"));
+  });
+});
+
+test("only the first summary branch remains visible inside a closed disclosure", async () => {
+  await syntheticPage(async (page) => {
+    await page.locator("body").evaluate((body) => {
+      body.innerHTML = `<details id="summaries">
+        <summary style="display:block;width:160px;height:44px"><button class="small" data-ke="first-summary-child">A</button>Open</summary>
+        <summary style="display:block;width:160px;height:44px"><button class="small" data-ke="extra-summary-child">B</button>Extra</summary>
+      </details>`;
+    });
+    let result = await page.evaluate(auditPage, MIN_TAP);
+    assert(has(result.issues.small, "first-summary-child"));
+    assert(!has(result.issues.small, "extra-summary-child"));
+
+    // Like every native Boolean attribute, open="false" still opens details.
+    await page.locator("#summaries").evaluate((element) => { element.setAttribute("open", "false"); });
+    result = await page.evaluate(auditPage, MIN_TAP);
+    assert(has(result.issues.small, "first-summary-child"));
+    assert(has(result.issues.small, "extra-summary-child"));
+  });
+});
+
+test("a nested open disclosure remains hidden by its closed outer ancestor", async () => {
+  await syntheticPage(async (page) => {
+    await page.locator("body").evaluate((body, markup) => {
+      body.innerHTML = `<details id="outer"><summary data-ke="outer-summary" style="display:block;width:32px;height:32px">Go</summary>
+        <div><details id="inner" open><summary data-ke="inner-summary" style="display:block;width:32px;height:32px">Go</summary><div>${markup}</div></details></div>
+      </details>`;
+    }, pair("nested-body"));
+    let result = await page.evaluate(auditPage, MIN_TAP);
+    assert(has(result.issues.small, "outer-summary"));
+    assert(!has(result.issues.small, "inner-summary"));
+    assert(!has(result.issues.small, "nested-body-"));
+    assert(!has(result.issues.overlap, "nested-body-"));
+
+    await page.locator("#outer").evaluate((element) => { element.open = true; });
+    result = await page.evaluate(auditPage, MIN_TAP);
+    assert(has(result.issues.small, "inner-summary"));
+    assert(has(result.issues.small, "nested-body-small"));
+    assert(has(result.issues.overlap, "nested-body-a"));
+
+    await page.locator("#inner").evaluate((element) => { element.open = false; });
+    result = await page.evaluate(auditPage, MIN_TAP);
+    assert(has(result.issues.small, "inner-summary"));
+    assert(!has(result.issues.small, "nested-body-"));
+    assert(!has(result.issues.overlap, "nested-body-"));
+  });
+});
+
+test("closed disclosure text stays hidden while open overflow and spill remain findings", async () => {
+  await syntheticPage(async (page) => {
+    await page.locator("body").evaluate((body) => {
+      body.innerHTML = '<details id="wide-disclosure"><summary style="display:block;height:44px">Open</summary><div data-ke="details-wide" style="width:900px"><p data-ke="details-spill" style="width:60px;white-space:nowrap">Synthetic text visibly spills only when its disclosure is open.</p></div></details>';
+    });
+    let result = await page.evaluate(auditPage, MIN_TAP);
+    assert(!has(result.issues.overflow, "details-wide"));
+    assert(!has(result.issues.spill, "details-spill"));
+
+    await page.locator("#wide-disclosure").evaluate((element) => { element.open = true; });
+    result = await page.evaluate(auditPage, MIN_TAP);
+    assert(result.scrollWidth > 390);
+    assert(has(result.issues.overflow, "details-wide"));
+    assert(has(result.issues.spill, "details-spill"));
+  });
+});
+
 test("page diagnostics preserve real URL/font state and navigation status without error text", async () => {
   await syntheticPage(async (page) => {
     await page.goto("about:blank?q=Winnipeg&look=clean&code=synthetic-private#synthetic-fragment");
