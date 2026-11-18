@@ -2,10 +2,28 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { EceJobDesk } from "@/components/ece-job-desk";
 import { EmptyState } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
 import { gapCopy } from "@/lib/gap-features";
 import { orgCopy } from "@/lib/org-occupancy-copy";
+import { orgOccupancyCsv, type OrgOccupancyCsvReport } from "@/lib/org-occupancy-csv";
 import { listOrgOccupancy, setOrgCentre } from "@/lib/server/org-occupancy";
 import { useCopy } from "@/lib/use-copy";
+
+function downloadCsv(report: OrgOccupancyCsvReport, locale: string) {
+  const url = URL.createObjectURL(
+    new Blob([orgOccupancyCsv(report, locale)], { type: "text/csv;charset=utf-8" }),
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "kidease-centre-occupancy.csv";
+  document.body.appendChild(link);
+  try {
+    link.click();
+  } finally {
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+}
 
 export function OrgOccupancyDesk() {
   const { locale } = useCopy();
@@ -13,22 +31,47 @@ export function OrgOccupancyDesk() {
   const gap = gapCopy(locale === "fr" ? "fr" : "en");
   const [desk, setDesk] = useState<Awaited<ReturnType<typeof listOrgOccupancy>> | null>(null);
   useEffect(() => {
-    void listOrgOccupancy().then(setDesk).catch(() => setDesk({ enabled: false, sites: [], totals: { sites: 0, ready: 0, capacity: null, enrolled: null, occupancyPercent: null } }));
+    void listOrgOccupancy()
+      .then(setDesk)
+      .catch(() =>
+        setDesk({
+          enabled: false,
+          sites: [],
+          totals: { sites: 0, ready: 0, capacity: null, enrolled: null, occupancyPercent: null },
+        }),
+      );
   }, []);
   if (!desk) return <p className="text-sm text-muted">{copy.lead}</p>;
-  if (!desk.enabled) return <EmptyState title={copy.offTitle} body={copy.offBody} action={copy.home} actionTo="/provider" />;
+  if (!desk.enabled)
+    return (
+      <EmptyState
+        title={copy.offTitle}
+        body={copy.offBody}
+        action={copy.home}
+        actionTo="/provider"
+      />
+    );
   return (
     <section className="space-y-6">
       <div>
         <h2 className="font-display text-2xl">{copy.title}</h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">{copy.lead}</p>
       </div>
-      {desk.sites.length === 0 ? <p className="text-sm text-muted">{copy.empty}</p> : (
+      {desk.sites.length === 0 ? (
+        <p className="text-sm text-muted">{copy.empty}</p>
+      ) : (
         <>
-          <p className="text-sm">
-            {copy.total}: {desk.totals.ready} {copy.readyOf} {desk.totals.sites}
-            {desk.totals.occupancyPercent != null ? `. ${copy.occupancy} ${desk.totals.occupancyPercent}%` : ""}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm">
+              {copy.total}: {desk.totals.ready} {copy.readyOf} {desk.totals.sites}
+              {desk.totals.occupancyPercent != null
+                ? `. ${copy.occupancy} ${desk.totals.occupancyPercent}%`
+                : ""}
+            </p>
+            <Button type="button" variant="secondary" onClick={() => downloadCsv(desk, locale)}>
+              {copy.downloadCsv}
+            </Button>
+          </div>
           <div className="overflow-x-auto rounded-xl bg-surface ring-1 ring-border">
             <table className="w-full min-w-[32rem] text-sm">
               <thead className="bg-surface-2 text-left text-xs text-muted">
@@ -47,23 +90,41 @@ export function OrgOccupancyDesk() {
                   <tr key={site.id}>
                     <td className="px-3 py-3">
                       <p className="font-medium">{site.name}</p>
-                      <p className="text-muted">{[site.city, site.province].filter(Boolean).join(", ")}</p>
+                      <p className="text-muted">
+                        {[site.city, site.province].filter(Boolean).join(", ")}
+                      </p>
                       <Link
                         to="/provider"
                         search={{ desk: "today", centre: site.id }}
                         className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-primary"
-                        onClick={() => void setOrgCentre({ data: { daycareId: site.id } }).catch(() => undefined)}
+                        onClick={() =>
+                          void setOrgCentre({ data: { daycareId: site.id } }).catch(() => undefined)
+                        }
                       >
                         {gap.orgUse}
                       </Link>
                     </td>
-                    <td className="px-3 py-3 tabular-nums">{site.licensedCapacity ?? copy.notConfirmed}</td>
+                    <td className="px-3 py-3 tabular-nums">
+                      {site.licensedCapacity ?? copy.notConfirmed}
+                    </td>
                     <td className="px-3 py-3 tabular-nums">{site.enrolled ?? copy.notConfirmed}</td>
-                    <td className="px-3 py-3 tabular-nums">{site.openSpots ?? copy.notConfirmed}</td>
-                    <td className="px-3 py-3 tabular-nums">{"requests" in site ? (site.requests ?? copy.notConfirmed) : copy.notConfirmed}</td>
-                    <td className="px-3 py-3 tabular-nums">{"staff" in site ? (site.staff ?? copy.notConfirmed) : copy.notConfirmed}</td>
+                    <td className="px-3 py-3 tabular-nums">
+                      {site.openSpots ?? copy.notConfirmed}
+                    </td>
+                    <td className="px-3 py-3 tabular-nums">
+                      {"requests" in site
+                        ? (site.requests ?? copy.notConfirmed)
+                        : copy.notConfirmed}
+                    </td>
+                    <td className="px-3 py-3 tabular-nums">
+                      {"staff" in site ? (site.staff ?? copy.notConfirmed) : copy.notConfirmed}
+                    </td>
                     <td className="px-3 py-3">
-                      {site.occupancyPercent != null ? `${site.occupancyPercent}%` : site.note === "capacity-missing" ? copy.missingCapacity : copy.missingEnrolment}
+                      {site.occupancyPercent != null
+                        ? `${site.occupancyPercent}%`
+                        : site.note === "capacity-missing"
+                          ? copy.missingCapacity
+                          : copy.missingEnrolment}
                     </td>
                   </tr>
                 ))}

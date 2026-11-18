@@ -134,7 +134,7 @@ export const listStaffDesk = createServerFn({ method: "GET" })
 
 export const saveStaffShift = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { daycareId?: string } & Parameters<typeof parseShift>[0]) => input)
+  .validator((input: { daycareId?: string; id?: string } & Parameters<typeof parseShift>[0]) => input)
   .handler(async ({ context, data }) => {
     if (!staffSchedulingEnabled()) throw new Error("Staff shifts are off.");
     const daycareId = String(data.daycareId || "").trim();
@@ -148,6 +148,19 @@ export const saveStaffShift = createServerFn({ method: "POST" })
     }
     await ensureStaffTables();
     const sql = await getSql();
+    if (data.id !== undefined) {
+      const id = String(data.id || "").trim();
+      if (!id) return { ok: false as const, code: "shift-not-saved" as const, error: "That shift was not saved." };
+      const updated = await sql<{ id: string }>`
+        update staff_shifts
+        set staff_name = ${parsed.shift.staffName}, role = ${parsed.shift.role}, room_band = ${parsed.shift.roomBand},
+            starts_at = ${parsed.shift.startsAt}, ends_at = ${parsed.shift.endsAt}
+        where id = ${id} and daycare_id = ${daycareId}
+        returning id
+      `;
+      if (!updated[0]?.id) return { ok: false as const, code: "shift-not-saved" as const, error: "That shift was not saved." };
+      return { ok: true as const, id: updated[0].id, hours: parsed.shift.hours };
+    }
     const id = nid("shf");
     const inserted = await sql<{ id: string }>`
       insert into staff_shifts (id, daycare_id, staff_name, role, room_band, starts_at, ends_at, created_by)

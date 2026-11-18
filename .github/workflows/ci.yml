@@ -125,6 +125,13 @@ jobs:
           set -euo pipefail
           node scripts/desk-nonpayment-checks.mjs admin-ui
           node scripts/desk-nonpayment-checks.mjs parent-ui
+      - name: Staff shift editing and occupancy CSV UI checks
+        if: matrix.shard == '1/8'
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types scripts/staff-shift-edit.browser.mjs
+          node --experimental-strip-types scripts/org-occupancy-export.browser.mjs
       - name: Playwright version
         id: playwright-version
         uses: ./.github/actions/playwright-version
@@ -149,6 +156,8 @@ jobs:
             artifacts/e2e/
             artifacts/admin-bootstrap-client/
             artifacts/parent-navigation/
+            artifacts/staff-shift-edit/
+            artifacts/org-occupancy-export/
           if-no-files-found: ignore
 
   # Desktop baselines were captured on GitHub ubuntu-latest. Keep this job on
