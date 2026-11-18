@@ -168,6 +168,7 @@ function syntheticEdges() {
     name: "public-form-synthetic-edges",
     enforce: "pre",
     resolveId(id, importer) {
+      if (cleanId(id) === "/entry.tsx" && (!importer || cleanId(importer) === join(fixture, "index.html"))) return fixtureEntry;
       if (Object.prototype.hasOwnProperty.call(virtual, id)) return `\0public-form-qa:${id}`;
       const path = projectPath(id, importer);
       if (path && !allowedFile(path)) return denyImport(id, importer);
