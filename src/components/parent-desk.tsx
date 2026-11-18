@@ -60,7 +60,7 @@ import { useParentPlusAccess } from "@/lib/use-parent-plus";
 import { DeleteChildControl } from "@/components/delete-child-control";
 import { useParentNavigation } from "@/lib/use-parent-navigation";
 import { useParentRequestScope } from "@/lib/use-parent-request-scope";
-import { completedChildProfileSearch, confirmChildProfileDiscard } from "@/lib/child-profile-unsaved";
+import { childProfileEntryIntent, completedChildProfileSearch, confirmChildProfileDiscard } from "@/lib/child-profile-unsaved";
 
 const ParentPlusPanel = lazy(() =>
   import("@/components/parent-plus").then((m) => ({ default: m.ParentPlusPanel })),
@@ -457,9 +457,14 @@ export function ParentDesk({
   }, [user?.id, loadFamily, loadExplore, loadDeskExtras]);
 
   useEffect(() => {
-    if (!initialChild || !childrenReady || childDirty.current || appliedChildIntent.current === locationHref) return;
+    if (!initialChild) {
+      appliedChildIntent.current = null;
+      return;
+    }
+    const entryIntent = childProfileEntryIntent(locationHref, initialChild, initialFocus);
+    if (!entryIntent || !childrenReady || childDirty.current || appliedChildIntent.current === entryIntent) return;
     if (initialChild === "new") {
-      appliedChildIntent.current = locationHref;
+      appliedChildIntent.current = entryIntent;
       if (children.length >= MAX_CHILDREN_PER_PARENT) {
         setEditing(null);
         return;
@@ -470,7 +475,7 @@ export function ParentDesk({
     }
     const found = children.find((child) => child.id === initialChild);
     if (!found) return;
-    appliedChildIntent.current = locationHref;
+    appliedChildIntent.current = entryIntent;
     setChildFocus(found.id);
     setChildOpen(true);
     setEditing(initialFocus ? found : null);

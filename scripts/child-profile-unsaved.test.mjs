@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { emptyChild } from "../src/lib/child-profile.ts";
-import { childProfileHasChanges, completedChildProfileSearch, confirmChildProfileDiscard } from "../src/lib/child-profile-unsaved.ts";
+import { childProfileEntryIntent, childProfileHasChanges, completedChildProfileSearch, confirmChildProfileDiscard } from "../src/lib/child-profile-unsaved.ts";
 
 const src = (file) => readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
 
@@ -75,9 +75,26 @@ test("saved child selects its authoritative id and does not reapply completed ed
   const form = src("src/components/child-profile-form.tsx");
   const desk = src("src/components/parent-desk.tsx");
   assert.ok(/onSaved\(child\.id\)/.test(form), "actual saved child id reaches its parent");
-  assert.ok(/appliedChildIntent\.current === locationHref/.test(desk), "same-location family refresh cannot reopen a consumed form");
+  assert.ok(/appliedChildIntent\.current === entryIntent/.test(desk), "family refresh cannot reopen a consumed child/focus intent");
   assert.ok(/setChildFocus\(childId \?\? null\)/.test(desk), "saved child is selected for the next step");
   assert.ok(/search: \(current\) => completedChildProfileSearch\(current\),\s*replace: true/.test(desk), "completed child/focus intent is replaced without adding a back entry");
   assert.ok(/ChildHealthLog key=\{`\$\{user.id\}:\$\{childHealthVersion\}`\}/.test(desk), "independent saved-health read refreshes after profile mutation");
   assert.ok(/onDeleted=\{\(\) => \{ void finishChildEdit\(\); \}\}/.test(desk), "card deletion also refreshes saved family and health facts without selecting a deleted child");
+});
+
+test("completed URL rejects stale child/focus props before they can reopen a saved editor", () => {
+  assert.equal(childProfileEntryIntent("/parent?tab=children&child=new&focus=name", "new", "name"), '["new","name"]');
+  // The URL has committed; route search props can still describe the old editor.
+  assert.equal(childProfileEntryIntent("/parent?tab=children", "new", "name"), null);
+  assert.equal(childProfileEntryIntent("/fr/parent?tab=children", "synthetic-child-b", "name"), null);
+  assert.equal(childProfileEntryIntent("/parent?tab=children&child=synthetic-child-b&focus=health", "synthetic-child-a", "name"), null);
+  assert.equal(childProfileEntryIntent("/parent?tab=children&child=synthetic-child-b&focus=health", "synthetic-child-b", "health"), '["synthetic-child-b","health"]');
+});
+
+test("editor intent is scoped to validated child/focus, not unrelated URL state", () => {
+  const first = childProfileEntryIntent("/parent?tab=children&child=new", "new", null);
+  assert.equal(childProfileEntryIntent("/parent?tab=children&child=new&preview=support", "new", null), first);
+  assert.equal(childProfileEntryIntent("/fr/parent?child=synthetic-child&focus=unknown", "synthetic-child", null), '["synthetic-child",null]');
+  assert.equal(childProfileEntryIntent("/parent?child=synthetic-child&focus=name&focus=health", "synthetic-child", null), '["synthetic-child",null]');
+  assert.equal(childProfileEntryIntent("/parent?child=new", null, null), null);
 });

@@ -45,3 +45,22 @@ export function completedChildProfileSearch<T extends Record<string, unknown>>(
   const { child: _child, focus: _focus, ...next } = search;
   return next;
 }
+
+const CHILD_PROFILE_FOCUS_FIELDS = new Set([
+  "name", "birthdate", "health", "emergency", "pickup", "immunization", "doctor", "address",
+]);
+
+/** Router location can advance before the route's validated search props do. */
+export function childProfileEntryIntent(
+  href: string,
+  child: string | null,
+  focus: string | null,
+): string | null {
+  if (!child) return null;
+  const search = new URL(href, "http://localhost").searchParams;
+  const rawFocus = search.getAll("focus").length === 1 ? search.get("focus") : null;
+  const currentFocus = rawFocus && CHILD_PROFILE_FOCUS_FIELDS.has(rawFocus) ? rawFocus : null;
+  if (search.getAll("child").length !== 1 || search.get("child") !== child || currentFocus !== focus) return null;
+  // Unrelated query changes must not reapply an already consumed editor intent.
+  return JSON.stringify([child, focus]);
+}
