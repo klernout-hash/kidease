@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve as resolvePath } from "node:path";
@@ -154,7 +155,10 @@ try {
   const address = server.httpServer.address();
   const origin = `http://127.0.0.1:${address.port}`;
   browser = await chromium.launch({
-    executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    ...(process.platform === "darwin" &&
+    existsSync("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+      ? { executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" }
+      : {}),
     headless: true,
     args: ["--disable-background-networking"],
   });

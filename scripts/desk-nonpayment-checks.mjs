@@ -31,12 +31,12 @@ if (readdirSync(process.cwd()).some((name) => name.startsWith(".env") && name !=
   );
 }
 const env = Object.fromEntries(
-  ["PATH", "HOME", "TMPDIR", "LANG", "LC_ALL"]
+  ["PATH", "HOME", "TMPDIR", "LANG", "LC_ALL", "PLAYWRIGHT_BROWSERS_PATH"]
     .filter((key) => process.env[key])
     .map((key) => [key, process.env[key]]),
 );
 if (
-  ["tests", "parent-ui", "admin-http"].includes(command) &&
+  ["admin-ui", "parent-ui", "admin-http"].includes(command) &&
   !existsSync(".vercel/output/static/assets")
 ) {
   throw new Error("Run the clean build first; synthetic UI checks need its compiled styles.");
@@ -44,16 +44,25 @@ if (
 const args =
   command === "admin-http"
     ? ["scripts/admin-http.synthetic.mjs"]
-    : command === "parent-ui"
-      ? ["--experimental-strip-types", "scripts/parent-navigation.browser.mjs"]
-      : command === "tests"
-        ? ["--experimental-strip-types", "--test", "--test-concurrency=2", ...DESK_NONPAYMENT_TESTS]
-        : ["run", command];
-if (!["tests", "parent-ui", "admin-http", "typecheck", "lint", "build"].includes(command)) {
-  throw new Error("Choose tests, parent-ui, admin-http, typecheck, lint or build.");
+    : command === "admin-ui"
+      ? ["--experimental-strip-types", "--test", "scripts/admin-queue-bootstrap-client.browser.mjs"]
+      : command === "parent-ui"
+        ? ["--experimental-strip-types", "scripts/parent-navigation.browser.mjs"]
+        : command === "tests"
+          ? [
+              "--experimental-strip-types",
+              "--test",
+              "--test-concurrency=2",
+              ...DESK_NONPAYMENT_TESTS,
+            ]
+          : ["run", command];
+if (
+  !["tests", "admin-ui", "parent-ui", "admin-http", "typecheck", "lint", "build"].includes(command)
+) {
+  throw new Error("Choose tests, admin-ui, parent-ui, admin-http, typecheck, lint or build.");
 }
 const child = spawn(
-  ["tests", "parent-ui", "admin-http"].includes(command) ? process.execPath : "npm",
+  ["tests", "admin-ui", "parent-ui", "admin-http"].includes(command) ? process.execPath : "npm",
   args,
   {
     env,
