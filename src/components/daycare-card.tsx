@@ -167,8 +167,8 @@ function ListingAnchor({
       preload="intent"
       className={className}
       data-ke={dataKe}
-      aria-label={label}
     >
+      {label ? <span className="sr-only">{label}</span> : null}
       {children}
     </Link>
   );
@@ -337,7 +337,7 @@ export const DaycareCard = memo(function DaycareCard({
           />
           {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
         </div>
-        <ListingAnchor slug={item.slug} data-ke="card-view-details" className="mt-2 flex min-h-11 flex-1 flex-col text-inherit no-underline">
+        <ListingAnchor slug={item.slug} data-ke="card-view-details" label={`${t("viewDetails")} · ${name}`} className="mt-2 flex min-h-11 flex-1 flex-col text-inherit no-underline">
           <div className="flex min-h-10 items-start gap-1" data-ke="card-name">
             <div className="flex min-w-0 flex-1 items-start gap-0.5">
               <h3 className="line-clamp-2 min-w-0 whitespace-normal text-[15px] min-h-10 font-semibold leading-5 tracking-[-0.02em] text-fg">
@@ -400,7 +400,7 @@ export const DaycareCard = memo(function DaycareCard({
         {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
       </div>
 
-      <ListingAnchor slug={item.slug} data-ke="card-view-details" className="flex min-h-11 flex-1 flex-col text-inherit no-underline">
+      <ListingAnchor slug={item.slug} data-ke="card-view-details" label={`${t("viewDetails")} · ${name}`} className="flex min-h-11 flex-1 flex-col text-inherit no-underline">
         <div className="mt-1 flex flex-1 flex-col space-y-px text-fg">
           <div className="flex items-start gap-1" data-ke="card-name">
             <div className="flex min-w-0 flex-1 items-start gap-0.5">
