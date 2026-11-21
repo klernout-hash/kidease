@@ -12,6 +12,7 @@ import { showsParentBrowseActions } from "@/lib/role-access";
 import { isLeadStatus, leadStatusCopyKey } from "@/lib/lead-requests";
 import { spotOfferCopy } from "@/lib/spot-offer-copy";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { localePath } from "@/lib/locale-path";
 import {
   parentHomeSectionOrder,
@@ -94,6 +95,7 @@ export function ParentHome({
   onDismiss?: () => void;
 }) {
   const { t, locale } = useCopy();
+  const nativeShell = useInNativeShell();
   const parentActions = showsParentBrowseActions(useRoleChrome().role);
   const joinLabel = spotOfferCopy(locale).join;
   const parentPath = parentDeskPath(useRouterState({ select: (s) => s.location.pathname }));
@@ -311,7 +313,7 @@ export function ParentHome({
       </form>
     ),
     area: <AreaWaitlistForm returnTo={parentPath} />,
-    plan: card ? (
+    plan: card && !nativeShell ? (
       <RoleUpgradeCard
         role="parent"
         paid={card === "plan"}
