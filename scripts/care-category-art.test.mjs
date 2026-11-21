@@ -11,7 +11,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 import { airbnbCopy } from "../src/lib/airbnb-ui-copy.ts";
 import { CARE_CATEGORY_SOURCES, careCategoryArt } from "../src/lib/care-category-art.ts";
-import { feePillPulses } from "../src/lib/card-photo-pills.ts";
 import { listingSubsidy } from "../src/lib/fee-program.ts";
 import { localePath } from "../src/lib/locale-path.ts";
 import { cn } from "../src/lib/utils.ts";
@@ -150,39 +149,17 @@ test("shared category art keeps contain sizing and an explicit reduced-motion st
   assert.doesNotMatch(src("src/components/app-tab-bar.tsx"), /CareCategoryIcon|care-icons|care-cats/);
 });
 
-test("$10/day pulses only for a sourced ten-dollar program", () => {
-  assert.equal(feePillPulses("ten"), true);
-  assert.equal(feePillPulses("ten_max"), true);
-  assert.equal(feePillPulses("qc_965"), false);
-  assert.equal(feePillPulses("reduced"), false);
-  assert.equal(feePillPulses(null), false);
+test("compact blue fee tags keep eligibility, details and accessible tap targets", () => {
   assert.equal(listingSubsidy({ province: "ON", city: "Mississauga", name: "Brightpath Dixie" }), null);
-  assert.equal(feePillPulses(listingSubsidy({ province: "ON" })?.subsidy_type), false);
-  const sk = listingSubsidy({
-    province: "SK",
-    feeProgram: "sk-10-day",
-    facilityType: "child_care_centre",
-    agesKnown: true,
-    ageMinMonths: 0,
-    ageMaxMonths: 60,
-  });
-  assert.equal(sk?.subsidy_label, "$10 / Day");
-  assert.equal(feePillPulses(sk?.subsidy_type), true);
-  assert.match(src("src/components/subsidy-pill.tsx"), /feePillPulses\(subsidy\.subsidy_type\)/);
-  assert.match(src("src/components/subsidy-pill.tsx"), /ke-priority-pill/);
-  assert.match(src("src/components/airbnb-screens.tsx"), /feePillPulses\(subsidy\.subsidy_type\)/);
-});
-
-test("confirmed blue fee pills pulse in app search and stop for reduced motion", () => {
-  const css = src("src/styles.css");
-  const appSuppression = css.match(/html\[data-channel="app"\] \.ke-app-search \.ke-live-pulse,[\s\S]*?\{\s*animation: none;\s*\}/)?.[0];
-  assert.ok(appSuppression);
-  assert.doesNotMatch(appSuppression, /ke-priority-pill/);
-  assert.match(css, /prefers-reduced-motion: reduce[\s\S]*?\.ke-priority-pill \{ animation: none; \}/);
-  assert.doesNotMatch(css, /html\[data-look="clean"\] \[data-ke="card-photo-pills"\] :is\([^\n]*1D4ED8/);
   const pill = src("src/components/subsidy-pill.tsx");
-  assert.match(pill, /ke-priority-pill bg-primary text-primary-fg/);
-  assert.doesNotMatch(pill, /bg-\[#1D4ED8\]|text-white/);
-  assert.match(css, /--color-primary:\s*#1a3790;/);
+  assert.match(pill, /if \(!subsidy\) return null/);
+  assert.match(pill, /min-h-11 min-w-11/);
+  assert.match(pill, /h-\[1\.375rem\]/);
+  assert.match(pill, /bg-primary/);
+  assert.match(pill, /text-primary-fg/);
+  assert.match(pill, /\$10\/day/);
+  assert.match(pill, /10 \$\/jour/);
+  assert.doesNotMatch(pill, /ke-priority-pill|feePillPulses/);
+  assert.doesNotMatch(src("src/components/airbnb-screens.tsx"), /ke-priority-pill|feePillPulses/);
   assert.match(pill, /<Popover\.Portal>[\s\S]*data-ke="card-fee-source"/);
 });

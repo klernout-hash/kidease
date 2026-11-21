@@ -20,23 +20,35 @@ const read = (path) => readFileSync(join(root, path), "utf8");
 
 test("the parent-helper flag does not hide the launcher", () => {
   assert.equal(bubbleVisible({ reached: false, flags: {} }, 0), false);
-  assert.equal(bubbleVisible({ reached: true, flags: { [AI_FLAGS.parentHelper]: false } }, 0), false);
+  assert.equal(
+    bubbleVisible({ reached: true, flags: { [AI_FLAGS.parentHelper]: false } }, 0),
+    false,
+  );
   assert.equal(bubbleVisible({ reached: true, flags: {} }, 1), false);
   const bot = read("src/components/help-bot.tsx");
   const rootDoc = read("src/routes/__root.tsx");
   assert.doesNotMatch(bot, /useAiFeatureFlag/);
   assert.doesNotMatch(bot, /if \(!ready \|\| !helperOn\) return null/);
   assert.doesNotMatch(bot, /inAppChatEnabled/);
-  assert.match(bot, /helpLauncherVisible/);
+  assert.match(read("src/components/help-launcher-shell.tsx"), /helpLauncherVisible/);
   assert.match(rootDoc, /<LiveChatSlot \/>/);
   assert.equal((rootDoc.match(/<LiveChatSlot/g) ?? []).length, 1);
   assert.doesNotMatch(read("src/components/shell.tsx"), /LiveChatSlot/);
 });
 
-test("the launcher still mounts HelpBot", () => {
-  assert.equal(bubbleVisible({ reached: true, flags: { [AI_FLAGS.parentHelper]: true } }, 99), true);
+test("the launcher loads the help body inside one keyboard-accessible dialog", () => {
+  assert.equal(
+    bubbleVisible({ reached: true, flags: { [AI_FLAGS.parentHelper]: true } }, 99),
+    true,
+  );
   const bot = read("src/components/help-bot.tsx");
-  assert.match(bot, /return <HelpBot \/>/);
+  const shell = read("src/components/help-launcher-shell.tsx");
+  assert.match(shell, /import\("@\/components\/help-bot"\)/);
+  assert.match(shell, /<HelpBotPanel \/>/);
+  assert.match(shell, /<Dialog.Trigger asChild>/);
+  assert.match(shell, /<Dialog.Title/);
+  assert.match(shell, /<Dialog.Close asChild>/);
+  assert.doesNotMatch(bot, /role=\{a11yPass|export function LiveChatSlot/);
 });
 
 test("the bubble never calls askKidEase", () => {

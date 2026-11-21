@@ -12,10 +12,16 @@ function src(rel) {
 
 test("parent desk defers heavy tab content so nav highlight paints first", () => {
   const desk = src("src/components/parent-desk.tsx");
+  const navigation = src("src/lib/use-parent-navigation.ts");
   const shortlist = src("src/components/parent-shortlist.tsx");
   const route = src("src/routes/parent.tsx");
-  assert.match(desk, /startTransition/);
-  assert.match(desk, /setContentTab/);
+  assert.match(desk, /useParentNavigation\(initialTab, navigateTab\)/);
+  assert.match(desk, /onSelect=\{selectTab\}/);
+  // Highlight immediately; defer only the panel, and reject stale continuations.
+  assert.match(navigation, /setTab\(next\);[\s\S]*yieldToMain\(\)\.then/);
+  assert.match(navigation, /if \(mounted\.current && current === generation\.current\)/);
+  assert.match(navigation, /startTransition\(\(\) => setContentTab\(next\)\)/);
+  assert.match(navigation, /mounted\.current = false;[\s\S]*generation\.current \+= 1/);
   assert.match(desk, /active=\{tab === "subscription" \? "upgrade" : tab\}/);
   assert.match(desk, /contentTab === "explore"/);
   assert.match(desk, /contentTab === "saved"/);
@@ -28,7 +34,7 @@ test("parent desk defers heavy tab content so nav highlight paints first", () =>
   assert.match(shortlist, /SAVED_EAGER_CARDS/);
   assert.match(desk, /savedReady/);
   assert.match(desk, /requestIdleCallback/);
-  assert.match(desk, /withTimeoutFallback/);
+  assert.match(desk, /withTimeout/);
   assert.match(desk, /LOADER_SETTLE_MS/);
   assert.match(desk, /exploreReady/);
   assert.match(desk, /loadDeskExtras/);

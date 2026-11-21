@@ -94,6 +94,15 @@ export function isCurrentUserTwoFactorVerified(userId: string): boolean {
   return isTwoFactorVerifiedAny(userId, twoFactorCookieCandidates(), secret());
 }
 
+/** Expiry only, never proof material. Same candidates and signature checks as the gate. */
+export function getCurrentUserTwoFactorExpiryMs(userId: string): number | null {
+  const expiries = twoFactorCookieCandidates().flatMap((raw) => {
+    const proof = parseTwoFactorDevice(raw, secret());
+    return proof?.userId === userId ? [proof.exp] : [];
+  });
+  return expiries.length ? Math.max(...expiries) : null;
+}
+
 /** Fail closed: missing/invalid cookie or a thrown status check blocks staff. */
 export function assertTwoFactorVerified(userId: string) {
   try {

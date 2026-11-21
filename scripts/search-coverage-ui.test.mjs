@@ -34,6 +34,17 @@ test("map counts keep mapped pins separate from observed coverage", () => {
   assert.doesNotMatch(searchMapCount(0, 0, fallback, "en"), /matching|at least|all|no centres/i);
 });
 
+for (const [pins, mapped] of [
+  [0, "0 centres sur la carte"],
+  [1, "1 centre sur la carte"],
+  [2, "2 centres sur la carte"],
+]) {
+  test(`French map status with pin count ${pins} keeps coverage independent`, () => {
+    assert.equal(searchMapCount(pins, 5, fallback, "fr"), `${mapped} · 5 fiches consultables`);
+    assert.equal(searchMapCount(pins, 5, fallback, "en"), `${pins} mapped · 5 listings available to view`);
+  });
+}
+
 const priorWindow = globalThis.window;
 const priorStorage = globalThis.sessionStorage;
 let stored = null;

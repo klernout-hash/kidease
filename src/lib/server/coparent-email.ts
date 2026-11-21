@@ -20,7 +20,6 @@ import { invitePath, tokenOk, type CoparentLink } from "@/lib/coparent";
 import { R2_FAMILY_PREFIX } from "@/lib/private-docs";
 import { saveParentInAppNotice } from "@/lib/server/parent-notice";
 import { nid } from "@/lib/utils";
-import { escapeMailHtml, mailPreheaderHtml } from "@/lib/mail-copy";
 
 function fail(code: string): never {
   throw new Error(`coparent:${code}`);
@@ -78,27 +77,23 @@ async function sendFamilyMail(to: string, locale: string, kind: FamilyNoticeKind
   if (plan !== "send") return plan;
   const notice = familyNotice(locale, kind);
   const url = href.startsWith("http") ? href : `${appOrigin()}${href}`;
-  const text = `${notice.text}\n\n${url}\n`;
-  const html = `<!doctype html><html><body style="font-family:Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
-    ${mailPreheaderHtml(notice.text)}
-    <p>${escapeMailHtml(notice.text)}</p>
-    <p><a href="${escapeMailHtml(url)}">${escapeMailHtml(url)}</a></p>
-  </body></html>`;
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
-  const { brandedNotice } = await import("@/lib/email-layout");
+  const { brandedNotice, renderBrandedEmail, renderBrandedText } = await import("@/lib/email-layout");
   const localeCode = locale === "fr" ? "fr" : "en";
+  const branded = brandedNotice({
+    heading: notice.subject,
+    text: notice.text,
+    locale: localeCode,
+    cta: /^https:\/\//i.test(url) ? { label: notice.action, href: url } : undefined,
+    reason: notice.reason,
+  });
   await sendTransactionalMail({
     purpose: "coparent",
     to,
     subject: notice.subject,
-    text,
-    html,
-    branded: brandedNotice({
-      heading: notice.subject,
-      text,
-      locale: localeCode,
-      cta: /^https:\/\//i.test(url) ? { label: localeCode === "fr" ? "Ouvrir" : "Open", href: url } : undefined,
-    }),
+    text: renderBrandedText(branded),
+    html: renderBrandedEmail(branded),
+    branded: branded,
   });
   return plan;
 }

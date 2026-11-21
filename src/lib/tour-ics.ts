@@ -167,14 +167,14 @@ export function tourReminderLetter(
       ...base,
       subject: `Visite confirmée : ${centre}`,
       reminder: `Rappel : votre visite à ${centre} est confirmée. KidEase ne donne pas la place.`,
-      sms: `KidEase : rappel, votre visite à ${centre} est confirmée.`,
+      sms: `KidEase : rappel, votre visite à ${centre} est confirmée. Répondez STOP pour vous désabonner.`,
     };
   }
   return {
     ...base,
     subject: `Tour confirmed: ${centre}`,
     reminder: `Reminder: your visit at ${centre} is confirmed. KidEase does not give out the spot.`,
-    sms: `KidEase: reminder, your visit at ${centre} is confirmed.`,
+    sms: `KidEase: reminder, your visit at ${centre} is confirmed. Reply STOP to opt out.`,
   };
 }
 
@@ -199,13 +199,13 @@ export function tourInviteCopy(locale: "en" | "fr", centre: string): { subject: 
       subject: `Visite demandée : ${centre}`,
       text: `Vous avez demandé une visite à ${centre}. Le centre doit encore confirmer. KidEase ne donne pas la place. Ajoutez l'heure à votre calendrier depuis la confirmation.`,
       reminder: `Rappel : votre visite à ${centre} approche. Le centre confirme l'heure. KidEase ne donne pas la place.`,
-      sms: `KidEase : rappel, votre visite à ${centre} approche. Le centre confirme l'heure.`,
+      sms: `KidEase : rappel, votre visite à ${centre} approche. Le centre confirme l'heure. Répondez STOP pour vous désabonner.`,
     };
   }
   return {
     subject: `Tour requested: ${centre}`,
     text: `You asked to visit ${centre}. The centre still has to confirm. KidEase does not give out the spot. Add the time to your calendar from the confirmation.`,
     reminder: `Reminder: your visit at ${centre} is coming up. The centre confirms the time. KidEase does not give out the spot.`,
-    sms: `KidEase: reminder, your visit at ${centre} is coming up. The centre confirms the time.`,
+    sms: `KidEase: reminder, your visit at ${centre} is coming up. The centre confirms the time. Reply STOP to opt out.`,
   };
 }

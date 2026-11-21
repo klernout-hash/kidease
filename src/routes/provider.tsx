@@ -37,7 +37,9 @@ import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-que
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import { DaycareLeadInbox } from "@/components/daycare-lead-inbox";
-import { CentreFamilyDocs } from "@/components/family-vault";
+const CentreFamilyDocs = lazy(() =>
+  import("@/components/family-vault").then((m) => ({ default: m.CentreFamilyDocs })),
+);
 import { FamilyEmailPreview, FormSharePreview, TourFollowupPreview } from "@/components/phase0-mail-preview";
 import { EmptyState } from "@/components/empty-state";
 import { TodayUrgencyHome } from "@/components/today-urgency-home";
@@ -46,7 +48,9 @@ import { providerDeskAlias, providerDeskFromQuery, providerDeskPath, type Daycar
 import { capturePostHogEvent } from "@/lib/posthog";
 import type { LeadRequest } from "@/lib/lead-requests";
 import { listCentrePipeline } from "@/lib/server/crm-pipeline";
-import { CentrePipeline } from "@/components/centre-pipeline";
+const CentrePipeline = lazy(() =>
+  import("@/components/centre-pipeline").then((m) => ({ default: m.CentrePipeline })),
+);
 import type { PipelineCard } from "@/lib/crm-pipeline";
 import { TourCard } from "@/components/tour-card";
 import { useCopy } from "@/lib/use-copy";
@@ -87,10 +91,21 @@ import { COACH_FOCUS_ANCHOR, type ListingCoachFocus } from "@/lib/listing-verifi
 import { DemandCues } from "@/components/rank-cues";
 import type { DemandSnapshot } from "@/lib/demand-heat";
 import type { ProviderEntitlements } from "@/lib/provider-entitlements";
-import { LearningStoriesDesk, StoriesDeskLink } from "@/components/learning-stories-desk";
-import { CurriculumDeskLink, CurriculumPackDesk } from "@/components/curriculum-pack";
-import { OrgDeskLink, OrgOccupancyDesk } from "@/components/org-occupancy-desk";
-import { EceJobDesk } from "@/components/ece-job-desk";
+import { StoriesDeskLink } from "@/components/learning-stories-desk-link";
+const LearningStoriesDesk = lazy(() =>
+  import("@/components/learning-stories-desk").then((m) => ({ default: m.LearningStoriesDesk })),
+);
+import { CurriculumDeskLink } from "@/components/curriculum-pack-link";
+const CurriculumPackDesk = lazy(() =>
+  import("@/components/curriculum-pack").then((m) => ({ default: m.CurriculumPackDesk })),
+);
+import { OrgDeskLink } from "@/components/org-occupancy-desk-link";
+const OrgOccupancyDesk = lazy(() =>
+  import("@/components/org-occupancy-desk").then((m) => ({ default: m.OrgOccupancyDesk })),
+);
+const EceJobDesk = lazy(() =>
+  import("@/components/ece-job-desk").then((m) => ({ default: m.EceJobDesk })),
+);
 import { ChildCheckinDesk } from "@/components/child-checkin-desk";
 const SafeArrivalPanel = lazy(() =>
   import("@/components/safe-arrival-panel").then((m) => ({ default: m.SafeArrivalPanel })),
@@ -116,8 +131,12 @@ import { hostSectionFromFocus } from "@/lib/host-action";
 import { isHostSection } from "@/lib/host-listing";
 import { syncHostActionNotices } from "@/lib/server/host-action";
 import { HostListingsDesk } from "@/components/host-listing-desk";
-import { AgeOpenSpotsDesk } from "@/components/age-open-spots-desk";
-import { SpotOfferDesk } from "@/components/spot-offer-desk";
+const AgeOpenSpotsDesk = lazy(() =>
+  import("@/components/age-open-spots-desk").then((m) => ({ default: m.AgeOpenSpotsDesk })),
+);
+const SpotOfferDesk = lazy(() =>
+  import("@/components/spot-offer-desk").then((m) => ({ default: m.SpotOfferDesk })),
+);
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 
 // Desk editors and reports load when their selected desk renders. Today keeps

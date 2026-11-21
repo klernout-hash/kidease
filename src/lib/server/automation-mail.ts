@@ -76,6 +76,7 @@ export async function dispatchAutomationMail(input: {
   subject: string;
   text: string;
   html: string;
+  branded?: import("@/lib/email-layout").BrandedEmailInput;
   mode: AutomationMode;
   quiet: boolean;
   allowlist: string[] | null;
@@ -164,7 +165,8 @@ export async function dispatchAutomationMail(input: {
       subject: input.subject,
       text: input.text,
       html: input.html,
-      branded: brandedNotice({ heading: input.subject, text: input.text }),
+      unsubscribeUrl: input.branded?.unsubscribeUrl,
+      branded: input.branded ?? brandedNotice({ heading: input.subject, text: input.text }),
     });
     await sql`
       update automation_sends

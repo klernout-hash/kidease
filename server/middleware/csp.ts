@@ -10,6 +10,7 @@ import {
   applyDocumentNonces,
   stripModulePreloadsForPath,
   applyHtmlDocumentCacheHeaders,
+  hasPrivateCacheControl,
   buildContentSecurityPolicy,
   generateNonce,
   isHtmlResponse,
@@ -40,14 +41,17 @@ export default async function cspMiddleware(
   headers.set("Content-Security-Policy", buildContentSecurityPolicy(nonce));
 
   if (isHtmlResponse(headers.get("content-type"))) {
+    const privateDocument = hasPrivateCacheControl(headers);
     applyHtmlDocumentCacheHeaders(headers);
-    applyPublicStaticCache(headers, {
-      pathname: event.url.pathname,
-      method: event.req.method,
-      cookie: event.req.headers.get("cookie"),
-      status: result.status,
-      setCookie: headers.get("set-cookie"),
-    });
+    if (!privateDocument) {
+      applyPublicStaticCache(headers, {
+        pathname: event.url.pathname,
+        method: event.req.method,
+        cookie: event.req.headers.get("cookie"),
+        status: result.status,
+        setCookie: headers.get("set-cookie"),
+      });
+    }
   }
 
   if (!isHtmlResponse(headers.get("content-type")) || !result.body) {

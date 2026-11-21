@@ -8,7 +8,11 @@ import { overlayStoredLicensePhotos, writeStoredLicensePhoto } from "../src/lib/
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 function src(rel) {
-  return readFileSync(join(root, rel), "utf8");
+  const text = readFileSync(join(root, rel), "utf8");
+  // Queue mapping moved to the shared nonfinancial reader.
+  return rel === "src/lib/server/admin-centres.ts"
+    ? text + "\n" + readFileSync(join(root, "src/lib/server/admin-centre-queue.ts"), "utf8")
+    : text;
 }
 
 test("a stored claim or enroll file fills an empty daycare licence photo", async () => {

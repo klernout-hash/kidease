@@ -6,6 +6,11 @@ export type StaffCopy = {
   lead: string;
   centre: string;
   shiftTitle: string;
+  editShiftTitle: string;
+  editShift: string;
+  saveShiftChanges: string;
+  cancelShiftEdit: string;
+  shiftNotSaved: string;
   name: string;
   role: string;
   room: string;
@@ -46,6 +51,11 @@ const en: StaffCopy = {
   lead: "Add who is working and when. This is not payroll. KidEase does not text staff.",
   centre: "Centre",
   shiftTitle: "Add a shift",
+  editShiftTitle: "Edit shift",
+  editShift: "Edit",
+  saveShiftChanges: "Save changes",
+  cancelShiftEdit: "Cancel",
+  shiftNotSaved: "That shift was not saved. Try again.",
   name: "Staff name",
   role: "Role",
   room: "Room",
@@ -86,6 +96,11 @@ const fr: StaffCopy = {
   lead: "Ajoutez qui travaille et quand. Ce n’est pas la paie. KidEase n’envoie pas de texto au personnel.",
   centre: "Centre",
   shiftTitle: "Ajouter un quart",
+  editShiftTitle: "Modifier le quart",
+  editShift: "Modifier",
+  saveShiftChanges: "Enregistrer les modifications",
+  cancelShiftEdit: "Annuler",
+  shiftNotSaved: "Le quart n’a pas été enregistré. Réessayez.",
   name: "Nom",
   role: "Rôle",
   room: "Salle",

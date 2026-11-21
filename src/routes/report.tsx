@@ -73,7 +73,11 @@ export function ReportPage() {
       setBody("");
     } catch (err) {
       console.error("[kidease-report]", err);
-      const message = publicFormErrorMessage(err, t("contactSendFailed").replace("{email}", SUPPORT_INBOX_EMAIL));
+      const message = publicFormErrorMessage(
+        err,
+        t("contactSendFailed").replace("{email}", SUPPORT_INBOX_EMAIL),
+        t("turnstileRequired"),
+      );
       setFormError(message);
       toast.error(message);
       resetTurnstile();

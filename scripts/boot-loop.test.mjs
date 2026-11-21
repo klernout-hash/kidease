@@ -120,7 +120,7 @@ describe("home / session / splash cannot stay pending forever", () => {
     const index = src("src/routes/index.tsx");
     const shell = src("src/components/shell.tsx");
     const footer = src("src/components/site-footer.tsx");
-    const help = src("src/components/help-bot.tsx");
+    const help = src("src/components/help-launcher-shell.tsx");
     assert.match(drawer, /typeof document === "undefined" \|\| !open/);
     assert.doesNotMatch(drawer, /hidden=\{!open\}/);
     assert.match(css, /html\[data-channel="website"\] \.ke-app-only/);

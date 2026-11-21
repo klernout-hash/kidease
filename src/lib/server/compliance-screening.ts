@@ -154,6 +154,9 @@ export async function runScreeningJob() {
           to: centre.contact_email,
           subject: "KidEase: a staff record is due",
           text: "A staff screening date is due or expired. Open your daycare desk to update it.",
+          heading: "A staff record needs an update",
+          cta: { label: "Review staff records", href: "https://www.kidease.ca/centre-screening" },
+          reason: "You get this because your centre has a staff screening record on KidEase.",
           aboutTestListing: isAdminOnlyListing({
             name: centre.name,
             slug: centre.slug,

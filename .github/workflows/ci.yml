@@ -41,6 +41,8 @@ jobs:
         run: npx eslint .
       - name: Typecheck
         run: npx tsc --noEmit
+      - name: Install Chromium for component tests
+        run: npx playwright install --with-deps chromium
       - name: Unit tests
         run: npm test
 
@@ -116,6 +118,37 @@ jobs:
           path: artifacts/ci-build
       - name: Restore Vite build
         run: sh scripts/restore-ci-build.sh
+      - name: Admin bootstrap and parent navigation UI checks
+        if: matrix.shard == '1/8'
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          node scripts/desk-nonpayment-checks.mjs admin-ui
+          node scripts/desk-nonpayment-checks.mjs parent-ui
+      - name: Staff shift editing and occupancy CSV UI checks
+        if: matrix.shard == '1/8'
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types scripts/staff-shift-edit.browser.mjs
+          node --experimental-strip-types scripts/org-occupancy-export.browser.mjs
+      - name: Search radius and map target UI checks
+        if: matrix.shard == '1/8'
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          node scripts/visual-controls.browser.mjs
+          node scripts/home-search-hit-area.browser.mjs
+      - name: Retain synthetic search control evidence
+        if: always() && matrix.shard == '1/8'
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-search-control-ui
+          path: |
+            artifacts/visual-controls/after/
+            artifacts/home-search-hit-area/after/
+          if-no-files-found: error
+          retention-days: 7
       - name: Playwright version
         id: playwright-version
         uses: ./.github/actions/playwright-version
@@ -136,7 +169,13 @@ jobs:
         if: failure()
         with:
           name: e2e-artifacts-${{ strategy.job-index }}
-          path: artifacts/e2e/
+          path: |
+            artifacts/e2e/
+            artifacts/admin-bootstrap-client/
+            artifacts/parent-navigation/
+            artifacts/staff-shift-edit/
+            artifacts/org-occupancy-export/
+            artifacts/visual-controls/after/
           if-no-files-found: ignore
 
   # Desktop baselines were captured on GitHub ubuntu-latest. Keep this job on
@@ -271,6 +310,7 @@ jobs:
             artifacts/e2e/desktop-report.json
             artifacts/e2e/desktop-diff/
             artifacts/e2e/desktop-actual/
+            artifacts/layout-audit/report.json
           if-no-files-found: ignore
           retention-days: 7
 

@@ -25,7 +25,7 @@ export function searchCoverageCopy(value: unknown, locale: string) {
 
 export function searchMapCount(pins: number, total: number, value: SearchEvidence, locale: string) {
   const coverage = searchCoverageCopy(value, locale);
-  const mapped = locale === "fr" ? `${pins} centres sur la carte` : `${pins} mapped`;
+  const mapped = locale === "fr" ? `${pins} ${pins === 1 ? "centre" : "centres"} sur la carte` : `${pins} mapped`;
   return `${mapped} · ${coverage.count(total)}`;
 }
 

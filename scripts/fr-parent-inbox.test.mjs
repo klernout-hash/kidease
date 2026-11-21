@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { tx } from "../src/lib/copy.ts";
 import { deskFromPathname, loginErrorCallbackUrl, sanitizePostLoginNext, twoFactorPageUrl } from "../src/lib/desks.ts";
 import { accountDeskPath, deskHrefForLocale, inboxListPath, menuDeskPath, parentDeskPath, providerDeskPath, sidebarDestinations, supportDeskPath } from "../src/lib/desk-nav.ts";
 import { localeRedirectTarget } from "../src/lib/locale-geo.ts";
@@ -80,7 +79,9 @@ test("French parent and inbox URLs stay French", () => {
   assert.match(src("src/routeTree.gen.ts"), /fullPath: '\/fr\/support'/);
 });
 
-test("French sidebar strings are translated in every shipped locale", () => {
+test("French sidebar strings are translated in every shipped locale", async () => {
+  // Keep pricing-copy dependencies out of unrelated URL/auth test runs.
+  const { tx } = await import("../src/lib/copy.ts");
   for (const key of ["childrenLimit", "showTestListings", "childProfileSendLead"]) {
     assert.notEqual(tx("fr", key), tx("en", key));
     assert.doesNotMatch(tx("fr", key), /Up to 4 profiles|Show test listings|Save the child profile/);
@@ -174,7 +175,15 @@ test("offline page is not served for 401 or Unauthorized", () => {
   assert.equal(sanitizePostLoginNext("/fr/provider"), "/fr/provider");
   assert.equal(loginErrorCallbackUrl({ intent: "in", next: "/fr/parent", loginPath: "/fr/login" }), "/fr/login?intent=in&next=%2Ffr%2Fparent");
   assert.match(twoFactorPageUrl("/fr/parent"), /next=%2Ffr%2Fparent/);
-  assert.match(src("src/components/parent-desk.tsx"), /target !== urlTab/);
+  const desk = src("src/components/parent-desk.tsx");
+  const navigation = src("src/lib/use-parent-navigation.ts");
+  assert.match(desk, /useParentNavigation\(initialTab, navigateTab\)/);
+  assert.match(desk, /to: parentDeskPath\(pathname\), search: parentNavSearch\(id\), replace: true/);
+  // Re-selecting the current URL must cancel an interrupted departure too.
+  // The extracted hook deduplicates the target, not the current URL.
+  assert.match(navigation, /if \(!mounted\.current \|\| target\.current === id\) return/);
+  assert.match(navigation, /setTab\(next\);[\s\S]*navigate\(id\);[\s\S]*yieldToMain\(\)/);
+  assert.match(navigation, /target\.current = initialTab;[\s\S]*setTab\(initialTab\)/);
   assert.doesNotMatch(src("src/routes/inbox.$id.tsx"), /strict:\s*false/);
   assert.match(src("src/routes/inbox.$id.tsx"), /Route\.useParams\(\)/);
   assert.match(src("src/routes/fr.inbox.$id.tsx"), /Route\.useParams\(\)/);

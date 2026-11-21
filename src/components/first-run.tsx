@@ -1,3 +1,4 @@
+import { placeChecklistSlot } from "@/lib/checklist-slot";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouterState } from "@tanstack/react-router";
@@ -750,7 +751,7 @@ export function FirstRunHost() {
 
   return (
     <>
-      {checklistNode ? <ChecklistSlot>{checklistNode}</ChecklistSlot> : null}
+      {checklistNode ? <ChecklistSlot provider={checklist?.id === CHECKLIST_PROVIDER}>{checklistNode}</ChecklistSlot> : null}
       {showWelcome && welcomeKey && (welcomeKey === WELCOME_PARENT || welcomeKey === WELCOME_PROVIDER) ? (
         <WelcomeWalkthrough key={welcomeKey} tourKey={welcomeKey} onClose={closeWelcome} />
       ) : null}
@@ -759,30 +760,34 @@ export function FirstRunHost() {
   );
 }
 
-function ChecklistSlot({ children }: { children: ReactNode }) {
+function ChecklistSlot({ children, provider }: { children: ReactNode; provider: boolean }) {
   const [page, setPage] = useState<HTMLElement | null>(null);
   useEffect(() => {
     setPage(document.querySelector<HTMLElement>("[data-ke=page]"));
   }, []);
   if (!page) return null;
-  return <ChecklistPortal page={page}>{children}</ChecklistPortal>;
+  return <ChecklistPortal page={page} provider={provider}>{children}</ChecklistPortal>;
 }
 
-function ChecklistPortal({ page, children }: { page: HTMLElement; children: ReactNode }) {
+function ChecklistPortal({ page, children, provider }: { page: HTMLElement; children: ReactNode; provider: boolean }) {
   const host = useRef<HTMLDivElement | null>(null);
   const [node, setNode] = useState<HTMLDivElement | null>(null);
   useIsoLayout(() => {
     const el = document.createElement("div");
     el.dataset.ke = "first-run-checklist-slot";
-    const reserve = page.querySelector<HTMLElement>("[data-ke=provider-setup-reserve]");
-    if (reserve) reserve.replaceChildren(el);
-    else page.insertBefore(el, page.firstChild);
+    // The desk may finish loading after onboarding. Never place the provider
+    // card above the desk shell while its reserved column slot is still absent.
+    const place = () => placeChecklistSlot(page, el, provider);
+    place();
+    const observer = new MutationObserver(place);
+    observer.observe(page, { childList: true, subtree: true });
     host.current = el;
     setNode(el);
     return () => {
+      observer.disconnect();
       el.remove();
     };
-  }, [page]);
+  }, [page, provider]);
   if (!node) return null;
   return <PortalInto node={node}>{children}</PortalInto>;
 }

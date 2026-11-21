@@ -1,6 +1,5 @@
 import { useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { feePillPulses } from "@/lib/card-photo-pills";
 import { listingSubsidy, subsidyLabel, subsidyNote } from "@/lib/fee-program";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -29,7 +28,9 @@ export function SubsidyPill({
   if (!subsidy) return null;
   const loc = locale === "fr" ? "fr" : "en";
   const note = subsidyNote(subsidy, loc);
-  const pulse = feePillPulses(subsidy.subsidy_type);
+  const label = subsidy.subsidy_type === "ten" || subsidy.subsidy_type === "ten_max"
+    ? (loc === "fr" ? "10 $/jour" : "$10/day")
+    : subsidyLabel(subsidy, loc);
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger asChild>
@@ -39,15 +40,16 @@ export function SubsidyPill({
           data-subsidy-type={subsidy.subsidy_type}
           title={note}
           className={cn(
-            "pointer-events-auto inline-flex min-h-11 items-center px-3 touch-manipulation",
+            "pointer-events-auto inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-transparent p-0 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             className,
-            pulse && "ke-priority-pill bg-primary text-primary-fg",
           )}
           onClick={(event) => {
             event.stopPropagation();
           }}
         >
-          {subsidyLabel(subsidy, loc)}
+          <span data-ke="subsidy-tag" className="inline-flex h-[1.375rem] items-center justify-center whitespace-nowrap rounded-full bg-primary px-2 text-xs font-bold leading-none text-primary-fg shadow-card">
+            {label}
+          </span>
         </button>
       </Popover.Trigger>
       <Popover.Portal>

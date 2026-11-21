@@ -118,7 +118,7 @@ test("adapters never scrape and UI copy does not claim a government sync", () =>
   const adapters = src("src/lib/server/registry-adapters.ts");
   assert.doesNotMatch(adapters, /cheerio|puppeteer|playwright\.chromium|fetch\(j\.registryUrl/);
   const ui = src("src/components/admin-trust.tsx");
-  assert.match(ui, /does not pretend a scrape ran/);
+  assert.match(ui, /This is not a live registry check/);
   assert.doesNotMatch(ui, /Sync now/);
   const sql = src("migrations/0034_mb_registry_local.sql");
   assert.match(sql, /adapter_status = 'adapter_ready'/);

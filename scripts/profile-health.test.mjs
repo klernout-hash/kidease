@@ -70,7 +70,7 @@ test("ready cards sort first, then by score", () => {
 });
 
 test("admin queue, Approve guard and daycare desk share one scoring path", () => {
-  const admin = src("src/lib/server/admin-centres.ts");
+  const admin = src("src/lib/server/admin-centres.ts") + src("src/lib/server/admin-centre-queue.ts");
   assert.match(admin, /healthFromDaycareRow\(/);
   assert.match(admin, /loadDaycareHealth\(sql, data\.daycareId\)/);
   assert.match(admin, /if \(!minimum\.minimumMet\)/);

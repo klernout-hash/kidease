@@ -1117,14 +1117,14 @@ function OsmMapView({
         <div className="overflow-hidden rounded-full bg-surface text-xs font-medium shadow-card ring-1 ring-border">
           <button
             type="button"
-            className={cn("px-3 py-1.5", base === "roadmap" ? "bg-primary text-primary-fg" : "text-muted")}
+            className={cn("inline-flex min-h-11 min-w-11 items-center justify-center px-3 py-1.5 touch-manipulation", base === "roadmap" ? "bg-primary text-primary-fg" : "text-muted")}
             onClick={() => setBase("roadmap")}
           >
             {t("mapRoad")}
           </button>
           <button
             type="button"
-            className={cn("px-3 py-1.5", base === "satellite" ? "bg-primary text-primary-fg" : "text-muted")}
+            className={cn("inline-flex min-h-11 min-w-11 items-center justify-center px-3 py-1.5 touch-manipulation", base === "satellite" ? "bg-primary text-primary-fg" : "text-muted")}
             onClick={() => setBase("satellite")}
           >
             {t("mapSat")}
@@ -1302,7 +1302,7 @@ function MapPinPopup({
                 {t("live")}
               </span>
             ) : null}
-            <SubsidyPill item={item} className="inline-flex items-center rounded-full bg-[#1D4ED8] px-2 py-0.5 text-[10px] font-bold leading-none text-white" />
+            <SubsidyPill item={item} />
             {offerClaim ? <ClaimListingCta daycareId={item.id} name={name} source="card" /> : null}
           </div>
         ) : null}

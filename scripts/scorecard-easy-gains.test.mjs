@@ -19,22 +19,34 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("Playwright browsers install only on a versioned cache miss", () => {
+test("desktop Playwright uses its versioned cache and unit components always get Chromium", () => {
   const ci = src(".github/workflows/ci.yml");
+  const job = (name) => {
+    const body = ci.split(`\n  ${name}:\n`)[1]?.split(/\n {2}[\w-]+:\n/)[0];
+    assert.ok(body, `${name} remains a required CI job`);
+    return body;
+  };
+  const desktop = job("desktop-visual");
+  const check = job("check");
   const versionStep = src(".github/actions/playwright-version/action.yml");
   assert.match(versionStep, /npx playwright --version/);
   assert.match(versionStep, /::error::/);
-  assert.match(ci, /actions\/playwright-version/);
-  assert.match(ci, /actions\/cache\/restore@v4/);
-  assert.match(ci, /actions\/cache\/save@v4/);
-  assert.match(ci, /playwright-\$\{\{ runner\.os \}\}-\$\{\{ steps\.playwright-version\.outputs\.version \}\}-chromium/);
-  assert.match(ci, /if: steps\.playwright-cache\.outputs\.cache-hit != 'true'/);
-  assert.match(ci, /npx playwright install-deps chromium/);
-  assert.match(ci, /timeout 180 npx playwright install chromium/);
-  assert.match(ci, /timeout-minutes: 10/);
-  assert.match(ci, /fonts-liberation/);
-  assert.doesNotMatch(ci, /playwright install-deps chromium webkit/);
-  assert.doesNotMatch(ci, /playwright install --with-deps/);
+  assert.match(desktop, /actions\/playwright-version/);
+  assert.match(desktop, /actions\/cache\/restore@v4/);
+  assert.match(desktop, /actions\/cache\/save@v4/);
+  assert.match(desktop, /playwright-\$\{\{ runner\.os \}\}-\$\{\{ steps\.playwright-version\.outputs\.version \}\}-chromium/);
+  assert.match(desktop, /if: steps\.playwright-cache\.outputs\.cache-hit != 'true'/);
+  assert.match(desktop, /npx playwright install-deps chromium/);
+  assert.match(desktop, /timeout 180 npx playwright install chromium/);
+  assert.match(desktop, /timeout-minutes: 10/);
+  assert.match(desktop, /fonts-liberation/);
+  assert.doesNotMatch(desktop, /playwright install-deps chromium webkit/);
+  assert.doesNotMatch(desktop, /playwright install --with-deps/);
+  assert.match(
+    check,
+    /- name: Install Chromium for component tests\n {8}run: npx playwright install --with-deps chromium\n {6}- name: Unit tests\n {8}run: npm test/,
+  );
+  assert.doesNotMatch(check, /continue-on-error|^\s+if:/m);
   assert.doesNotMatch(versionStep, /package-lock\.json/);
 });
 

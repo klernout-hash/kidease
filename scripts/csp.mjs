@@ -225,8 +225,16 @@ export function isHtmlResponse(contentType) {
 export const HTML_DOCUMENT_CACHE_CONTROL = "no-cache, must-revalidate";
 export const HTML_DOCUMENT_CDN_CACHE_CONTROL = "no-store";
 
+/** An upstream private/no-store policy is stricter than document revalidation. */
+export function hasPrivateCacheControl(headers) {
+  const directives = String(headers.get("Cache-Control") || "")
+    .split(",")
+    .map((part) => part.trim().toLowerCase().split("=")[0].trim());
+  return directives.includes("private") || directives.includes("no-store");
+}
+
 export function applyHtmlDocumentCacheHeaders(headers) {
-  headers.set("Cache-Control", HTML_DOCUMENT_CACHE_CONTROL);
+  if (!hasPrivateCacheControl(headers)) headers.set("Cache-Control", HTML_DOCUMENT_CACHE_CONTROL);
   headers.set("CDN-Cache-Control", HTML_DOCUMENT_CDN_CACHE_CONTROL);
   headers.set("Cloudflare-CDN-Cache-Control", HTML_DOCUMENT_CDN_CACHE_CONTROL);
   headers.set("Vercel-CDN-Cache-Control", HTML_DOCUMENT_CDN_CACHE_CONTROL);

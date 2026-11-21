@@ -1,11 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useRouteContext, useRouterState } from "@tanstack/react-router";
-import { X } from "lucide-react";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { helpBubbleDistinctId, helpChatQuestion } from "@/lib/ai/help-bubble";
-import { helpLauncherVisible } from "@/lib/help-launcher";
 import { parentHelperEventProps } from "@/lib/ai/event-props";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { useCopy } from "@/lib/use-copy";
@@ -16,11 +13,9 @@ type ChatMsg = { id?: string; role: "user" | "assistant"; text: string; path?: s
 const CHAT_KEY = "kidease-help-chat";
 type AskError = "off" | "turnstile" | "rate_limited" | "ticket";
 
-export function HelpBot({ panelOnly = false, onClose }: { panelOnly?: boolean; onClose?: () => void } = {}) {
+export function HelpBotPanel() {
   const { t, locale } = useCopy();
-  const a11yPass = useRouteContext({ from: "__root__", select: (s) => Boolean(s.a11yPass) });
   const { user } = useCurrentUserState();
-  const [open, setOpen] = useState(panelOnly);
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState("");
   const [msgs, setMsgs] = useState<ChatMsg[]>([{ role: "assistant", text: t("helpBotHello") }]);
@@ -28,57 +23,18 @@ export function HelpBot({ panelOnly = false, onClose }: { panelOnly?: boolean; o
   const [chatToken, setChatToken] = useState("");
   const [needChallenge, setNeedChallenge] = useState(false);
   const { onToken, takeChallenge, resetSignal, reset } = useTurnstileToken();
-  const end = useRef<HTMLDivElement>(null);
+  const transcript = useRef<HTMLDivElement>(null);
   const starters = ["helpBotQ1", "helpBotQ2", "helpBotQ3", "helpBotQ4"] as const;
   const showStarters = msgs.every((m) => m.role !== "user");
 
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    // Keep new replies in view without moving keyboard focus or scrolling the page.
+    const node = transcript.current;
+    if (msgs.length > 1 && node) node.scrollTop = node.scrollHeight;
+  }, [msgs]);
 
   useEffect(() => {
-    end.current?.scrollIntoView({ behavior: "smooth" });
-  }, [msgs, open]);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const chrome = "[data-ke=listing-sticky-bar], [data-ke=compare-bar], [data-ke=app-tab-bar], [data-ke=cookie-consent], [data-ke=push-explainer]";
-    const apply = () => {
-      let top = window.innerHeight;
-      for (const node of document.querySelectorAll(chrome)) {
-        const rect = node.getBoundingClientRect();
-        if (rect.height < 8 || rect.bottom < 0 || rect.top > window.innerHeight) continue;
-        top = Math.min(top, rect.top);
-      }
-      const clear = Math.max(92, Math.ceil(window.innerHeight - top + 12));
-      root.style.setProperty("--ke-help-clear", `${clear}px`);
-    };
-    let frame = 0;
-    const resize = new ResizeObserver(apply);
-    const watch = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        resize.disconnect();
-        for (const node of document.querySelectorAll(chrome)) resize.observe(node);
-        apply();
-      });
-    };
-    watch();
-    const mutations = new MutationObserver(watch);
-    mutations.observe(document.body, { childList: true, subtree: true });
-    mutations.observe(root, { attributes: true, attributeFilter: ["data-cookie-banner"] });
-    window.addEventListener("resize", apply);
-    window.addEventListener("kidease-compare", apply);
-    return () => {
-      cancelAnimationFrame(frame);
-      resize.disconnect();
-      mutations.disconnect();
-      window.removeEventListener("resize", apply);
-      window.removeEventListener("kidease-compare", apply);
-      root.style.removeProperty("--ke-help-clear");
-    };
-  }, [pathname]);
-
-  useEffect(() => {
-    if (!open || !chatToken) return;
+    if (!chatToken) return;
     let stop = false;
     async function pull() {
       try {
@@ -106,7 +62,7 @@ export function HelpBot({ panelOnly = false, onClose }: { panelOnly?: boolean; o
       stop = true;
       window.clearInterval(timer);
     };
-  }, [open, chatToken]);
+  }, [chatToken]);
 
   function replyFor(error: AskError) {
     if (error === "turnstile") return t("helpBotChallenge");
@@ -161,7 +117,10 @@ export function HelpBot({ panelOnly = false, onClose }: { panelOnly?: boolean; o
         if (res.sessionToken) {
           setChatToken(res.sessionToken);
           try {
-            sessionStorage.setItem(CHAT_KEY, JSON.stringify({ token: res.sessionToken, code: res.code || "" }));
+            sessionStorage.setItem(
+              CHAT_KEY,
+              JSON.stringify({ token: res.sessionToken, code: res.code || "" }),
+            );
           } catch {
             /* private mode */
           }
@@ -170,7 +129,9 @@ export function HelpBot({ panelOnly = false, onClose }: { panelOnly?: boolean; o
         return;
       }
       const { askParentHelper } = await import("@/lib/server/parent-helper");
-      const res = await askParentHelper({ data: { question, distinctId, turnstileToken: token, locale } });
+      const res = await askParentHelper({
+        data: { question, distinctId, turnstileToken: token, locale },
+      });
       if ("error" in res) {
         if (res.error === "turnstile") setNeedChallenge(true);
         setMsgs((m) => [...m, { role: "assistant", text: replyFor(res.error) }]);
@@ -178,7 +139,10 @@ export function HelpBot({ panelOnly = false, onClose }: { panelOnly?: boolean; o
       }
       setNeedChallenge(false);
       reset();
-      capturePostHogEvent(res.known ? "parent_helper_asked" : "parent_helper_unknown", parentHelperEventProps({ path: res.path || "" }));
+      capturePostHogEvent(
+        res.known ? "parent_helper_asked" : "parent_helper_unknown",
+        parentHelperEventProps({ path: res.path || "" }),
+      );
       setMsgs((m) => [...m, { role: "assistant", text: res.answer, path: res.path }]);
     } catch {
       setMsgs((m) => [...m, { role: "assistant", text: t("helpBotFail") }]);
@@ -187,159 +151,98 @@ export function HelpBot({ panelOnly = false, onClose }: { panelOnly?: boolean; o
     }
   }
 
-  const panel = open ? (
-        <div
-          className="mb-3 flex h-[min(28rem,70dvh)] w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl bg-surface shadow-lift ring-1 ring-border"
-          role={a11yPass ? "dialog" : undefined}
-          aria-modal={a11yPass ? true : undefined}
-          aria-labelledby={a11yPass ? "help-bot-title" : undefined}
-        >
-          <div className="flex items-center justify-between gap-2 bg-primary px-4 py-3 text-primary-fg">
-            <div className="flex min-w-0 items-center gap-2">
-              <img
-                src="/logo-transparent.svg?v=17"
-                alt=""
-                width={32}
-                height={32}
-                className="size-8 shrink-0 rounded-full bg-surface object-contain p-0.5"
-              />
-              <div className="min-w-0">
-                <p id="help-bot-title" className="truncate text-sm font-semibold">{t("helpBot")}</p>
-                <p className="text-[11px] leading-4 text-primary-fg/80">{t("helpBotLead")}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-white/10"
-              onClick={() => {
-                setOpen(false);
-                onClose?.();
-              }}
-              aria-label={t("close")}
-            >
-              <X className="size-4" aria-hidden="true" />
-            </button>
-          </div>
-          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3" aria-live="polite">
-            {msgs.map((m, i) => (
-              <p
-                key={`${i}-${m.role}`}
-                className={cn(
-                  "max-w-[90%] rounded-2xl px-3 py-2 text-sm leading-5",
-                  m.role === "user" ? "ml-auto bg-primary text-primary-fg" : "bg-bg text-fg ring-1 ring-border",
-                )}
-              >
-                {m.text}
-                {m.path ? (
-                  <>
-                    {" "}
-                    <a href={m.path} className="font-medium text-primary underline">
-                      {t("parentHelperCite").replace("{path}", m.path)}
-                    </a>
-                  </>
-                ) : null}
-              </p>
-            ))}
-            {showStarters ? (
-              <div className="flex flex-col gap-2 pt-1">
-                {starters.map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void sendText(t(key))}
-                    className="min-h-11 w-full rounded-2xl bg-surface px-3 py-2 text-left text-sm font-medium leading-5 text-primary ring-1 ring-border"
-                  >
-                    {t(key)}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            {busy ? <p className="text-xs text-muted">{t("helpBotTyping")}</p> : null}
-            <div ref={end} />
-          </div>
-          {needChallenge ? (
-            <div className="border-t border-border px-3 py-2">
-              <p className="mb-2 text-sm">{t("helpBotChallenge")}</p>
-              <TurnstileField onToken={onToken} resetSignal={resetSignal} />
-            </div>
-          ) : null}
-          <p className="border-t border-border px-3 py-2 text-xs leading-4 text-muted">{t("helpBotPrivacy")}</p>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void sendText(draft);
-            }}
-            className="flex gap-2 border-t border-border p-2"
-          >
-            <label className="sr-only" htmlFor="help-bot-q">
-              {t("helpBotPh")}
-            </label>
-            <input
-              id="help-bot-q"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onFocus={(e) => e.currentTarget.scrollIntoView({ block: "nearest" })}
-              placeholder={t("helpBotPh")}
-              className="h-11 min-w-0 flex-1 rounded-full bg-bg px-3 text-base outline-none ring-1 ring-border"
-            />
-            <Button type="submit" disabled={busy || !draft.trim()} className="min-w-11 shrink-0 px-4">
-              {t("send")}
-            </Button>
-          </form>
-          {handedOff ? null : (
-            <div className="px-2 pb-2">
-              <Button
-                type="button"
-                variant="secondary"
-                className="h-auto min-h-11 w-full whitespace-normal px-3 text-center"
-                disabled={busy}
-                onClick={() => void sendText(t("helpBotAgent"), true)}
-              >
-                {t("helpBotAgent")}
-              </Button>
-            </div>
-          )}
-        </div>
-      ) : null;
-
-  if (panelOnly) return panel;
-
   return (
-    <div className="ke-help-bot" data-ke="help-launcher">
-      {panel}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex min-h-11 min-w-11 touch-manipulation select-none flex-col items-center gap-1 rounded-2xl bg-surface px-2.5 py-2 shadow-lift ring-1 ring-border"
+    <>
+      <div
+        ref={transcript}
+        className="min-h-24 flex-1 space-y-2 overflow-y-auto p-3"
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions text"
         aria-label={t("helpBot")}
-        aria-expanded={open}
       >
-        {open ? (
-          <X className="size-7 text-primary" />
-        ) : (
-          <img
-            src="/logo-transparent.svg?v=17"
-            alt=""
-            width={44}
-            height={44}
-            className="size-11 object-contain"
-            style={{ width: 44, height: 44, maxWidth: 44, maxHeight: 44, objectFit: "contain" }}
-          />
-        )}
-        <span className="max-w-[4.75rem] whitespace-normal text-center text-[11px] font-semibold leading-tight text-primary">{t("helpBot")}</span>
-      </button>
-    </div>
+        {msgs.map((m, i) => (
+          <p
+            key={`${i}-${m.role}`}
+            className={cn(
+              "max-w-[90%] break-words rounded-2xl px-3 py-2 text-sm leading-5",
+              m.role === "user"
+                ? "ml-auto bg-primary text-primary-fg"
+                : "bg-bg text-fg ring-1 ring-border",
+            )}
+          >
+            {m.text}
+            {m.path ? (
+              <>
+                {" "}
+                <a href={m.path} className="font-medium text-primary underline">
+                  {t("parentHelperCite").replace("{path}", m.path)}
+                </a>
+              </>
+            ) : null}
+          </p>
+        ))}
+        {showStarters ? (
+          <div className="flex flex-col gap-2 pt-1">
+            {starters.map((key) => (
+              <button
+                key={key}
+                type="button"
+                disabled={busy}
+                onClick={() => void sendText(t(key))}
+                className="min-h-11 w-full rounded-2xl bg-surface px-3 py-2 text-left text-sm font-medium leading-5 text-primary ring-1 ring-border"
+              >
+                {t(key)}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {busy ? <p className="text-xs text-muted">{t("helpBotTyping")}</p> : null}
+      </div>
+      {needChallenge ? (
+        <div className="shrink-0 border-t border-border px-3 py-2">
+          <p className="mb-2 text-sm">{t("helpBotChallenge")}</p>
+          <TurnstileField onToken={onToken} resetSignal={resetSignal} />
+        </div>
+      ) : null}
+      <p className="shrink-0 border-t border-border px-3 py-2 text-xs leading-4 text-muted">
+        {t("helpBotPrivacy")}
+      </p>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void sendText(draft);
+        }}
+        className="flex shrink-0 flex-wrap gap-2 border-t border-border p-2"
+      >
+        <label className="sr-only" htmlFor="help-bot-q">
+          {t("helpBotPh")}
+        </label>
+        <input
+          id="help-bot-q"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onFocus={(e) => e.currentTarget.scrollIntoView({ block: "nearest" })}
+          placeholder={t("helpBotPh")}
+          className="h-11 min-w-0 flex-[1_1_10rem] rounded-full bg-bg px-3 text-base ring-1 ring-border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        />
+        <Button type="submit" disabled={busy || !draft.trim()} className="min-w-11 shrink-0 px-4">
+          {t("send")}
+        </Button>
+      </form>
+      {handedOff ? null : (
+        <div className="shrink-0 px-2 pb-2">
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-auto min-h-11 w-full whitespace-normal px-3 text-center"
+            disabled={busy}
+            onClick={() => void sendText(t("helpBotAgent"), true)}
+          >
+            {t("helpBotAgent")}
+          </Button>
+        </div>
+      )}
+    </>
   );
-}
-
-export function HelpBotPanel({ onClose }: { onClose?: () => void }) {
-  return <HelpBot panelOnly onClose={onClose} />;
-}
-
-/** One launcher for the whole app. Video and phone screens opt out. */
-export function LiveChatSlot() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (!helpLauncherVisible(pathname)) return null;
-  return <HelpBot />;
 }

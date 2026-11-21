@@ -22,6 +22,46 @@ export type ShiftInput = {
   endsAt?: unknown;
 };
 
+export type ShiftDraft = {
+  staffName: string;
+  role: string;
+  roomBand: string;
+  startsAt: string;
+  endsAt: string;
+};
+
+/** Match the browser-local time used by the saved shift label. */
+export function shiftDateTimeInput(instant: string): string {
+  const date = new Date(instant);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${String(date.getFullYear()).padStart(4, "0")}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+export function shiftDraftFromSaved(shift: ShiftDraft): ShiftDraft {
+  return {
+    staffName: shift.staffName,
+    role: shift.role,
+    roomBand: shift.roomBand,
+    startsAt: shiftDateTimeInput(shift.startsAt),
+    endsAt: shiftDateTimeInput(shift.endsAt),
+  };
+}
+
+/** Untouched controls retain the original instant, including precision and DST offset. */
+export function shiftInputForEdit(draft: ShiftDraft, saved: Pick<ShiftDraft, "startsAt" | "endsAt">): ShiftDraft {
+  function instant(value: string, original: string): string {
+    if (value === shiftDateTimeInput(original)) return original;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toISOString();
+  }
+  return {
+    ...draft,
+    startsAt: instant(draft.startsAt, saved.startsAt),
+    endsAt: instant(draft.endsAt, saved.endsAt),
+  };
+}
+
 export type ParsedShift = {
   staffName: string;
   role: ShiftRole;

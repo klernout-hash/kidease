@@ -1,6 +1,10 @@
 /** Honest public-form errors: never imply mail succeeded when Resend failed. */
 
-export function publicFormErrorMessage(err: unknown, fallback: string): string {
+export function publicFormErrorMessage(
+  err: unknown,
+  fallback: string,
+  securityCheckMessage = "Please complete the security check, then try again.",
+): string {
   const raw = (err instanceof Error ? err.message : String(err || "")).toLowerCase();
   if (
     raw.includes("turnstile") ||
@@ -8,7 +12,7 @@ export function publicFormErrorMessage(err: unknown, fallback: string): string {
     raw.includes("captcha") ||
     raw.includes("challenge")
   ) {
-    return "Please complete the security check, then try again.";
+    return securityCheckMessage;
   }
   return fallback;
 }

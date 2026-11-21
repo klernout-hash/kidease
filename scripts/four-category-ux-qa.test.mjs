@@ -148,8 +148,8 @@ test("Admin: registry stub labels and chat/activity guidance", () => {
   assert.match(adapterStatusHint("manual"), /Fail closed/);
   const trust = src("src/components/admin-trust.tsx");
   assert.match(trust, /adapterStatusHint/);
-  assert.match(trust, /fail closed to operator manual review/);
-  assert.match(trust, /Ontario, Alberta, British Columbia, Saskatchewan, and Québec/);
+  assert.match(trust, /check the official registry before approving a claim/);
+  assert.match(trust, /In Manitoba, KidEase can compare a licence with its saved catalogue/);
   assert.match(CHAT_SCAFFOLD_MESSAGE, /not a chat product/i);
   assert.match(CHAT_SCAFFOLD_EMPTY, /\/inbox/);
   const activity = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
