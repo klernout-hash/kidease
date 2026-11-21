@@ -891,9 +891,9 @@ function ProfilePane() {
             </Button>
           </section>
         ) : null}
-        {section === "delete" && user ? (
+        {section === "delete" ? (
           <div data-ke="account-delete">
-            <DeleteAccountPanel signedIn />
+            <DeleteAccountPanel signedIn={Boolean(user) || (chrome.signedIn && !chrome.pending)} />
           </div>
         ) : null}
         {section === "security" && (user || (chrome.signedIn && !chrome.pending)) ? (

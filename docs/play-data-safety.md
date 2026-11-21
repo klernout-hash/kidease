@@ -2,6 +2,36 @@
 
 Support: support@kidease.ca
 
+Do not submit the store listing from this file. Kyle fills Play Console by hand.
+
+## Play Console checklist
+
+Developer account address (the legal mailing address, not a listing pin):
+
+- Street: 91 William Gibson Bay
+- City: Winnipeg
+- Province: MB
+- Postal code: R2C 5L7
+- Country: Canada
+- Legal name on the account: 10037493 Manitoba Ltd. (KidEase is the operating name)
+
+Account deletion URL, if the form asks for one: `https://www.kidease.ca/delete-account` (French: `https://www.kidease.ca/fr/delete-account`). The page asks the person to confirm, then the server schedules deletion and keeps invoices and tax records.
+
+Data safety answers, from the code in this repo. Do not add a category that is not in the tables below.
+
+- Data is collected. It is not sold. It is not used for ads or tracking.
+- Location: precise location, only while the app is open, after the person allows it, to search nearby centres. Not in the background. Manifest: `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION`.
+- Personal info: name and email on the account. Phone number if the person saves one.
+- Health info: allergies, medications, and medical notes a parent types for a child. Stored in KidEase. Not sent to PostHog or Sentry.
+- App activity: pages and product events, only after the person taps Allow analytics. Linked to the account when signed in.
+- Audio and photos/videos: camera and microphone only while a voice or video call is open (`CAMERA`, `RECORD_AUDIO`). Calls are not recorded.
+- Files: a centre can upload a licence or screening document.
+- Messages: support threads the person sends.
+- Financial info: the Android app does not open Stripe Checkout and does not sell plans. Leave payments off this form.
+- Not collected: contacts, SMS, call log, advertising ID, photo library, background location. Push permission is in the manifest, but sending stays off until `FEATURE_PUSH` and Firebase exist. Do not mark push as collected.
+
+Age: 18+. Not the Families program.
+
 Fill the Data safety form from this list. Do not add a row for an SDK that is not here. The application id in the project is `ca.kidease.app` (Capacitor `appId`, iOS bundle, and Android `applicationId`). `targetSdkVersion` and `compileSdk` are 36. The Play store file is an Android App Bundle from `./gradlew bundlePlayRelease` (`android/app/build/outputs/bundle/playRelease/app-play-release.aab`), not an APK. `assemblePlayRelease` builds an APK. Do not upload that APK. Samsung and Huawei use their own flavours (`docs/other-stores.md`).
 
 `assetlinks.json` lists the Play App Signing cert and the upload key. `ANDROID_CERT_SHA256S` on Vercel replaces that list when set.

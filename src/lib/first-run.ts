@@ -186,6 +186,15 @@ export function blocksAutoTour(role: string | null | undefined): boolean {
   return role === "admin" || role === "government";
 }
 
+/**
+ * Public home must not auto-open the coach. The hole and the scroll that
+ * centres it are the mobile home layout shift. Take the tour still starts it.
+ */
+export function autoCoachOnPath(pathname: string): boolean {
+  const path = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  return path !== "/" && path !== "/fr";
+}
+
 export function boxesOverlap(a: Box, b: Box, gap = 0): boolean {
   return !(
     a.left + a.width + gap <= b.left ||

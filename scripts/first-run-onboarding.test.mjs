@@ -26,6 +26,7 @@ import {
   serializeOnboardingState,
   shouldAutoShow,
   welcomeSlides,
+  autoCoachOnPath,
   blocksAutoTour,
   boxesOverlap,
   placeCoachBubble,
@@ -75,6 +76,10 @@ test("the first-run flag stays off unless the env turns it on", () => {
 });
 
 test("a seen welcome never auto-shows again, and replay does not clear it", () => {
+  assert.equal(autoCoachOnPath("/"), false);
+  assert.equal(autoCoachOnPath("/fr"), false);
+  assert.equal(autoCoachOnPath("/fr/"), false);
+  assert.equal(autoCoachOnPath("/search"), true);
   assert.equal(shouldAutoShow(EMPTY_ONBOARDING, WELCOME_PARENT), true);
   const seen = markSeen(EMPTY_ONBOARDING, WELCOME_PARENT);
   assert.equal(shouldAutoShow(seen, WELCOME_PARENT), false);

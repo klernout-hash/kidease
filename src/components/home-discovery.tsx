@@ -67,7 +67,16 @@ export function HomeDiscovery({
     <>
       <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={priorityFirst} visual />
       <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
-      <FacilityTypeRails items={shown} visual skipLiveLooking menu={!onCareType} selected={careType} onSelect={onCareType} city={city} />
+      <FacilityTypeRails
+        items={shown}
+        visual
+        skipLiveLooking
+        menu={!onCareType}
+        selected={careType}
+        onSelect={onCareType}
+        city={city}
+        eagerThumbs={priorityFirst && availableNow.length === 0}
+      />
     </>
   );
 }

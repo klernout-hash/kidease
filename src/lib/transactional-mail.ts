@@ -1,10 +1,10 @@
 /**
  * Transactional OTP / reset mail: Resend → SendGrid → Titan SMTP.
  *
- * Production today: Resend only has apex kidease.ca verified. Code still
- * prefers noreply@send.kidease.ca (once that host exists in Resend). Until
- * then, a 403/unverified domain must fall back — never pretend a code went
- * out. Titan SMTP From stays kyle@ / TITAN_USER. Reply-To stays kyle@.
+ * Sign-in codes go out as noreply@send.kidease.ca through Resend.
+ * Apex @kidease.ca is never a Resend From (its SPF is Titan-only).
+ * A rejected send host falls through to Titan SMTP, which stays on kyle@.
+ * Reply-To stays kyle@.
  *
  * No Start / DB. Tests inject fetch + Titan.
  */
@@ -14,7 +14,6 @@ import { resendCampaignTags } from "./email-suppressions.ts";
 import {
   DEFAULT_TRANSACTIONAL_MAIL_FROM,
   isApexKidEaseFrom,
-  isResendSendFrom,
   transactionalMailFrom,
 } from "./mail-from.ts";
 import { SUPPORT_INBOX_EMAIL } from "./support.ts";
@@ -234,20 +233,14 @@ export function emergencyResendMailFrom(env: EnvMap = process.env): string | nul
 }
 
 /**
- * Resend From candidates for OTP. Prefer the send subdomain once it exists,
- * but never *only* that host: after an unverified-domain reject we retry the
- * documented emergency / apex From (kidease.ca is verified in Resend today).
+ * Resend From for sign-in codes. Always the send subdomain.
+ * Apex @kidease.ca is Titan-only. Sending it through Resend fails SPF and lands in spam.
+ * A rejected send host falls through to Titan SMTP, which stays on the kyle@ mailbox.
  */
 export function otpResendFromCandidates(env: EnvMap = process.env): string[] {
-  const out: string[] = [];
-  const emergency = emergencyResendMailFrom(env);
   const preferred = transactionalMailFrom(env.MAIL_FROM);
-  if (emergency) out.push(emergency);
-  if (!out.includes(preferred)) out.push(preferred);
-  if (isResendSendFrom(preferred) && !out.includes(EMERGENCY_RESEND_MAIL_FROM)) {
-    out.push(EMERGENCY_RESEND_MAIL_FROM);
-  }
-  return out.filter(Boolean);
+  if (!preferred || isApexKidEaseFrom(preferred)) return [DEFAULT_TRANSACTIONAL_MAIL_FROM];
+  return [preferred];
 }
 
 export function titanSmtpFrom(env: EnvMap = process.env): string {

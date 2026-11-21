@@ -36,6 +36,7 @@ import {
   stepAnchors,
   targetBoxUsable,
   welcomeSlides,
+  autoCoachOnPath,
   blocksAutoTour,
   type ChecklistResult,
   type FirstRunLocale,
@@ -178,7 +179,9 @@ export function AnchoredCoach({
     // Scroll once per step. Rescans (timers, phone toolbar resize) must not yank the page mid-scroll.
     if (scrolledFor.current !== safeIndex) {
       scrolledFor.current = safeIndex;
-      node.scrollIntoView({ block: "center", inline: "nearest" });
+      const box = node.getBoundingClientRect();
+      const inView = box.top >= 0 && box.bottom <= window.innerHeight;
+      if (!inView) node.scrollIntoView({ block: "nearest", inline: "nearest" });
     }
     const rect = node.getBoundingClientRect();
     const nextSpot = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
@@ -694,12 +697,13 @@ export function FirstRunHost() {
   const welcomeSteps = welcomeKey === WELCOME_PARENT || welcomeKey === WELCOME_PROVIDER ? welcomeSlides(welcomeKey) : [];
   const welcomeOpening =
     anchorTick >= 0 && welcomeSteps.length > 0 && openingAnchor(welcomeSteps, anchorIsPresent) != null;
+  const autoCoach = autoCoachOnPath(pathname);
   const showWelcome =
     welcomeOpening &&
     replayTour == null &&
     welcomeKey != null &&
     replayOpens(welcomeKey, replayWelcome != null, progress) &&
-    (replayWelcome != null || !blocked);
+    (replayWelcome != null || (!blocked && autoCoach));
   const tourKey = replayTour ?? place.tour;
   const tourOpening = anchorTick >= 0 && tourKey != null && openingAnchor(TOURS[tourKey], anchorIsPresent) != null;
   const showTour =
@@ -708,7 +712,8 @@ export function FirstRunHost() {
     !showWelcome &&
     (replayTour != null
       ? replayOpens(tourKey, true, progress)
-      : !blocked &&
+      : autoCoach &&
+        !blocked &&
         screenTourReady.current === true &&
         replayOpens(tourKey, false, progress) &&
         !shouldAutoShow(progress, place.welcome));
