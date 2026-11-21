@@ -6,7 +6,7 @@ import type { ProfileChild } from "@/lib/server/profile-desk";
 import { formatAgeLabel } from "@/lib/templates";
 import { useCopy } from "@/lib/use-copy";
 
-export function ProfileChildren({ children }: { children: ProfileChild[] }) {
+export function ProfileChildren({ children, ready = true }: { children: ProfileChild[]; ready?: boolean }) {
   const { t, locale } = useCopy();
   const rows = children.slice(0, MAX_CHILDREN_PER_PARENT);
   const canAdd = rows.length < MAX_CHILDREN_PER_PARENT;
@@ -30,7 +30,11 @@ export function ProfileChildren({ children }: { children: ProfileChild[] }) {
         ) : null}
       </div>
       <p className="mt-1 text-sm text-muted">{t("profileChildrenLead")}</p>
-      {rows.length === 0 ? (
+      {!ready ? (
+        <p className="mt-3 text-sm text-muted" role="status" data-ke="profile-children-loading">
+          {t("loading")}
+        </p>
+      ) : rows.length === 0 ? (
         <p className="mt-3 text-sm text-muted" data-ke="profile-children-empty">
           {t("profileChildrenEmpty")}
         </p>

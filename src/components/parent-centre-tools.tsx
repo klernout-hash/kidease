@@ -11,10 +11,39 @@ export function ParentCentreToolsPanel() {
   const { locale } = useCopy();
   const copy = centreToolsCopy(locale);
   const [data, setData] = useState<Data | null>(null);
+  const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
   useEffect(() => {
-    void listParentCentreTools().then(setData).catch(() => setData(null));
+    let live = true;
+    void listParentCentreTools()
+      .then((next) => {
+        if (!live) return;
+        setData(next);
+        setPhase("ready");
+      })
+      .catch(() => {
+        if (!live) return;
+        setPhase("error");
+      });
+    return () => {
+      live = false;
+    };
   }, []);
-  if (!data || !data.kinds.length) {
+  if (phase === "loading") {
+    return (
+      <section className="rounded-xl border p-5" data-testid="parent-centre-tools-loading" aria-busy="true">
+        <p className="text-sm text-muted" role="status">{locale === "fr" ? "Chargement des dossiers…" : "Loading records…"}</p>
+      </section>
+    );
+  }
+  if (phase === "error" || !data) {
+    return (
+      <section className="rounded-xl border p-5" role="alert" data-testid="parent-centre-tools-error">
+        <h2 className="font-display text-2xl">{locale === "fr" ? "Les dossiers n’ont pas chargé" : "Records did not load"}</h2>
+        <p className="mt-2">{locale === "fr" ? "Réessayez dans un instant." : "Try again in a moment."}</p>
+      </section>
+    );
+  }
+  if (!data.kinds.length) {
     return (
       <section className="rounded-xl border p-5" data-testid="parent-centre-tools-off">
         <h2 className="font-display text-2xl">{copy.offTitle}</h2>

@@ -8,6 +8,7 @@ import { isNative } from "@/lib/native";
 import { confirmAction } from "@/lib/success-confirm";
 import {
   CANADA_TIME_ZONES,
+  alertTextForReader,
   alertsForAudience,
   defaultUnifiedSettings,
   unifiedUiCopy,
@@ -283,7 +284,9 @@ export function UnifiedAlertPanel({ mode = "all" }: { mode?: UnifiedAlertPanelMo
             <p className="text-sm text-muted">{t("loading")}</p>
           </li>
         ) : desk.events.length > 0 ? (
-          desk.events.map((item) => (
+          desk.events.map((item) => {
+            const text = alertTextForReader(item.typeId, loc, item);
+            return (
             <li key={item.id}>
               <a
                 href={item.href}
@@ -294,13 +297,14 @@ export function UnifiedAlertPanel({ mode = "all" }: { mode?: UnifiedAlertPanelMo
               >
                 <span className={`mt-2 size-2 shrink-0 rounded-full ${item.readAt ? "bg-border" : "bg-danger"}`} aria-hidden />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-medium text-fg">{item.title}</span>
-                  <span className="mt-0.5 block text-sm text-muted">{item.body}</span>
+                  <span className="block text-[15px] font-medium text-fg">{text.title}</span>
+                  <span className="mt-0.5 block text-sm text-muted">{text.body}</span>
                   {item.critical ? <span className="mt-0.5 block text-xs font-medium text-danger">{copy.critical}</span> : null}
                 </span>
               </a>
             </li>
-          ))
+            );
+          })
         ) : (
           <li className="px-4 py-5">
             <p className="text-sm font-medium text-fg">{copy.empty}</p>

@@ -5,6 +5,7 @@
  */
 
 import type { MenuIconId } from "@/lib/menu-icons";
+import { localePath } from "./locale-path.ts";
 
 export type ChromeRole = "guest" | "parent" | "provider" | "admin" | "support" | "government";
 
@@ -86,7 +87,9 @@ export function privateArea(pathname: string): PrivateArea {
     path.startsWith("/inbox/") ||
     path === "/notifications" ||
     path.startsWith("/notifications/") ||
-    path === "/delete-account"
+    path === "/delete-account" ||
+    path === "/invoices" ||
+    path.startsWith("/invoices/")
   ) {
     return "shared";
   }
@@ -175,11 +178,15 @@ export function destinationAfterSignIn(input: {
   next?: string | null;
   /** Centre owner or active centre staff. Ignored for admin and support. */
   ownsCentre?: boolean;
+  /** French sign-in keeps the French desk when the return path has no locale. */
+  locale?: "en" | "fr" | null;
 }): string {
+  const locale = input.locale === "fr" ? "fr" : "en";
+  const place = (path: string) => (locale === "fr" ? localePath(path, "fr") : path);
   if (chromeRole(input.role) === "government") {
     const next = String(input.next || "").trim();
-    if (next.startsWith("/gov") || next.startsWith("/fr/gov")) return next.split("?")[0] || "/gov";
-    return "/gov";
+    if (next.startsWith("/gov") || next.startsWith("/fr/gov")) return next.split("?")[0] || place("/gov");
+    return place("/gov");
   }
   const role = chromeRole(input.role);
   const daycare =
@@ -187,16 +194,16 @@ export function destinationAfterSignIn(input: {
     (input.ownsCentre === true && role !== "admin" && role !== "support");
   const home = daycare ? "/provider" : role === "guest" ? "/parent" : homeForRole(role);
   const next = String(input.next || "").trim();
-  if (!next.startsWith("/") || next.startsWith("//")) return home;
-  if (daycare && parentDeskNext(next)) return "/provider";
+  if (!next.startsWith("/") || next.startsWith("//")) return place(home);
+  if (daycare && parentDeskNext(next)) return place("/provider");
   const decision = guardPrivatePath({
     pathname: next,
     signedIn: true,
     role: daycare ? "provider" : input.role,
   });
   if (decision.kind === "allow") return next;
-  if (decision.kind === "home") return decision.to;
-  return home;
+  if (decision.kind === "home") return place(decision.to);
+  return place(home);
 }
 
 export function upgradeNavLabel(paid: boolean): "Upgrade" | "My plan" {

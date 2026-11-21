@@ -218,6 +218,11 @@ export type KidEaseMapInput = {
   signal?: AbortSignal;
   /** Google rejected the key after paint. The provider is already OpenFreeMap. */
   onAuthFailure?: () => void;
+  /**
+   * Government overview uses OpenFreeMap only. That map must paint without a
+   * Google Maps request.
+   */
+  provider?: "google" | "openfreemap";
 };
 
 function skipOpenFreeMapFallback(err: unknown) {
@@ -864,7 +869,7 @@ export async function createKidEaseMap(
     err.name = "MapUnavailableError";
     throw err;
   }
-  if (preferredMapProvider() === "google") {
+  if ((input.provider ?? preferredMapProvider()) === "google") {
     try {
       const created = await createGoogleKidEaseMap(el, input);
       return created as unknown as { map: KidEaseMap; maps: KidEaseMaps; tilesReady: boolean };

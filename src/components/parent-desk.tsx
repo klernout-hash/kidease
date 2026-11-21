@@ -288,18 +288,23 @@ export function ParentDesk({
           q: loc.label,
           startDate: soonestStartDate(startBookings),
         };
-        const rows = await withTimeout(
-          dedupedQuery(`parent-search:${uid}:${JSON.stringify(data)}`, QUERY_STALE_MS, () => searchDaycares({ data }), {
-            cacheIf: (value) => Array.isArray(value) && value.length > 0,
-            fresh,
-          }),
-          LOADER_SETTLE_MS,
-          "parent-search-timeout",
-        );
+        let rows: Card[] = [];
+        try {
+          rows = await withTimeout(
+            dedupedQuery(`parent-search:${uid}:${JSON.stringify(data)}`, QUERY_STALE_MS, () => searchDaycares({ data }), {
+              cacheIf: (value) => Array.isArray(value) && value.length > 0,
+              fresh,
+            }),
+            LOADER_SETTLE_MS,
+            "parent-search-timeout",
+          );
+        } catch {
+          rows = [];
+        }
         if (!current()) return;
-        const next = rows.length
-          ? rows
-          : await withTimeout(
+        if (!rows.length) {
+          try {
+            rows = await withTimeout(
               dedupedQuery(
                 `parent-featured:${uid}:${loc.lat},${loc.lng},${loc.label ?? ""}`,
                 QUERY_STALE_MS,
@@ -309,7 +314,15 @@ export function ParentDesk({
               LOADER_SETTLE_MS,
               "parent-featured-timeout",
             );
-        if (current()) startTransition(() => setExplore(asList(next)));
+          } catch {
+            if (current()) startTransition(() => setExploreError(true));
+            return;
+          }
+        }
+        if (current()) startTransition(() => {
+          setExplore(asList(rows));
+          setExploreError(false);
+        });
       } catch {
         if (current()) startTransition(() => setExploreError(true));
       } finally {
@@ -430,7 +443,6 @@ export function ParentDesk({
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
-    let cancelIdle: (() => void) | undefined;
     void yieldToMain()
       .then(() => {
         if (cancelled) return null;
@@ -438,11 +450,8 @@ export function ParentDesk({
       })
       .then((f) => {
         if (cancelled || !f) return;
-        cancelIdle = scheduleIdle(() => {
-          if (cancelled) return;
-          void loadExplore(f.bookings).catch(() => undefined);
-          void loadDeskExtras().catch(() => undefined);
-        });
+        void loadExplore(f.bookings).catch(() => undefined);
+        void loadDeskExtras().catch(() => undefined);
       })
       .catch(() => {
         if (cancelled) return;
@@ -454,7 +463,6 @@ export function ParentDesk({
       });
     return () => {
       cancelled = true;
-      cancelIdle?.();
     };
   }, [user?.id, loadFamily, loadExplore, loadDeskExtras]);
 
@@ -746,7 +754,9 @@ export function ParentDesk({
           </div>
           <div>
             <h3 className="font-display text-xl">{t("openBills")}</h3>
-            {bills.filter((b) => billIsOpen(b.status)).length ? (
+            {extrasState === "pending" ? (
+              <p className="mt-3 text-sm text-muted" role="status">{t("loading")}</p>
+            ) : bills.filter((b) => billIsOpen(b.status)).length ? (
               <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
                 {bills
                   .filter((b) => billIsOpen(b.status))
@@ -781,7 +791,9 @@ export function ParentDesk({
           <div>
             <h3 className="font-display text-xl">{t("paidBills")}</h3>
             <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
-              {bills.filter((b) => b.status === "paid" || b.status === "refunded").length === 0 &&
+              {extrasState !== "ready" ? (
+                <li className="p-4 text-sm text-muted" role="status">{t("loading")}</li>
+              ) : bills.filter((b) => b.status === "paid" || b.status === "refunded").length === 0 &&
               payments.length === 0 &&
               bills.filter((b) => billIsOpen(b.status)).length === 0 ? (
                 <li className="p-2">
@@ -858,7 +870,9 @@ export function ParentDesk({
                 : "You can look. You cannot change this family."}
             </p>
           )}
-          {children.length === 0 && !editing ? (
+          {!childrenReady ? (
+            <p className="text-sm text-muted" role="status">{t("loading")}</p>
+          ) : children.length === 0 && !editing ? (
             <EmptyState
               title={t("noChildren")}
               body={familyCanWrite ? t("noChildrenLead") : locale === "fr" ? "Le parent principal n’a pas encore ajouté d’enfant." : "The main parent has not added a child yet."}

@@ -49,6 +49,10 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
   const viewingGuest = chrome.guestView === true;
   const hideAdmin = useNativeHidesAdmin();
   const headerUser = viewingGuest ? null : user;
+  // Server role chrome is in the first HTML. Do not paint "For daycares" or a
+  // signed-out avatar while that session is still catching up on the client.
+  const headerSignedIn = (Boolean(headerUser) || chrome.signedIn) && !locallyOut && !viewingGuest;
+  const headerKnown = !chrome.pending || Boolean(headerUser);
   const [open, setOpen] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
 
@@ -171,7 +175,7 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
               </div>
             ) : null}
             <div className="relative z-20 ml-auto flex items-center gap-2 bg-bg pl-1 max-md:min-w-0 max-md:max-w-full max-md:gap-1.5 md:shrink-0 [[data-channel=website]_&]:flex">
-              {headerUser && !viewingGuest && chrome.role === "provider" ? (
+              {headerSignedIn && chrome.role === "provider" ? (
                 // A signed-in daycare already has a centre: send them to their desk, not the marketing page.
                 <Link
                   to={localePath("/provider", locale)}
@@ -181,7 +185,7 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
                 >
                   {t("daycareDeskTitle")}
                 </Link>
-              ) : !headerUser ? (
+              ) : headerKnown && !headerSignedIn ? (
                 <Link
                   to={localePath("/claim", locale)}
                   data-ke="list-your-daycare"
