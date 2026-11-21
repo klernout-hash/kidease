@@ -79,8 +79,35 @@ async function startProviderGrace(userId: string): Promise<number> {
 
 export async function healthAccessDecision(userId: string, audience: "parent" | "provider"): Promise<HealthFactorDecision> {
   const prefs = await readPrefs(userId);
+  const optedIn = prefs?.parent_opt_in === true;
+  const now = Date.now();
+  if (audience === "parent" && !optedIn) {
+    return healthFactorDecision({
+      audience,
+      seesHealth: false,
+      optedIn: false,
+      verified: false,
+      now,
+      graceStartedAt: null,
+    });
+  }
   const seesHealth = audience === "provider" ? await seesProviderHealth(userId) : false;
-  const isVerified = await verified(userId);
+  if (audience === "provider" && !seesHealth) {
+    return healthFactorDecision({
+      audience,
+      seesHealth: false,
+      optedIn,
+      verified: false,
+      now,
+      graceStartedAt: null,
+    });
+  }
+  let isVerified = false;
+  try {
+    isVerified = await verified(userId);
+  } catch {
+    isVerified = false;
+  }
   let graceStartedAt = prefs?.provider_grace_started_at ? new Date(prefs.provider_grace_started_at).getTime() : null;
   if (audience === "provider" && seesHealth && !isVerified && graceStartedAt == null) {
     try {
@@ -95,7 +122,7 @@ export async function healthAccessDecision(userId: string, audience: "parent" | 
     seesHealth,
     optedIn: prefs?.parent_opt_in === true,
     verified: isVerified,
-    now: Date.now(),
+    now,
     graceStartedAt: Number.isFinite(graceStartedAt) ? graceStartedAt : null,
   });
 }
