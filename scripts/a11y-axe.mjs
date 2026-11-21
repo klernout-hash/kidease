@@ -6,6 +6,7 @@
  *   BASE_URL=http://127.0.0.1:8081 node scripts/a11y-axe.mjs
  */
 import { spawn } from "node:child_process";
+import { copyFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -34,9 +35,20 @@ async function originReady(url) {
   throw new Error(`Preview did not answer ${url}`);
 }
 
+function stagePglite() {
+  const dest = join(root, ".vercel/output/functions/__server.func");
+  const srcDir = join(root, "node_modules/@electric-sql/pglite/dist");
+  for (const name of ["pglite.data", "pglite.wasm", "initdb.wasm"]) {
+    copyFileSync(join(srcDir, name), join(dest, name));
+  }
+}
+
 function bootPreview() {
   const env = { ...process.env };
-  if (!String(env.DATABASE_URL || "").trim()) delete env.VERCEL;
+  if (!String(env.DATABASE_URL || "").trim()) {
+    delete env.VERCEL;
+    stagePglite();
+  }
   const child = spawn("npm", ["run", "preview"], {
     cwd: root,
     stdio: ["ignore", "pipe", "pipe"],
