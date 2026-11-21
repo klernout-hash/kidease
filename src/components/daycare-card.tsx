@@ -167,8 +167,8 @@ function ListingAnchor({
       preload="intent"
       className={className}
       data-ke={dataKe}
-      aria-label={label}
     >
+      {label ? <span className="sr-only">{label}</span> : null}
       {children}
     </Link>
   );
