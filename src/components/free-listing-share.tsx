@@ -6,6 +6,7 @@ import { copyText, listingMailtoHref, listingShareUrl } from "@/lib/share";
 import { openDirections } from "@/lib/maps";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { cn } from "@/lib/utils";
 
 export function CopyListingLinkButton({
@@ -113,10 +114,11 @@ export function FreePageExplainer({
   }>;
 }) {
   const { t, locale } = useCopy();
+  const nativeShell = useInNativeShell();
   if (!listings.length) return null;
   return (
     <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
-      <h2 className="font-display text-2xl">{t("freePageTitle")}</h2>
+      <h2 className="font-display text-2xl">{t(nativeShell ? "freePageTitleApp" : "freePageTitle")}</h2>
       <p className="mt-2 text-sm text-muted">{t("freePageLead")}</p>
       <p className="mt-2 text-xs text-subtle">{t("freePageShareHint")}</p>
       <ul className="mt-4 space-y-4">
@@ -142,7 +144,7 @@ export function FreePageExplainer({
           );
         })}
       </ul>
-      <p className="mt-3 text-sm font-medium">{t("listingStayFree")}</p>
+      {nativeShell ? null : <p className="mt-3 text-sm font-medium">{t("listingStayFree")}</p>}
     </section>
   );
 }

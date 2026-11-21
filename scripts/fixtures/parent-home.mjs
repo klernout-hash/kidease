@@ -86,6 +86,7 @@ export function renderParentHomeFixture({
     "@/lib/lead-requests": { isLeadStatus, leadStatusCopyKey },
     "@/lib/spot-offer-copy": { spotOfferCopy },
     "@/components/role-chrome": { useRoleChrome: () => ({ role: "parent" }) },
+    "@/lib/use-native-shell": { useInNativeShell: () => false },
     "@/components/role-upgrade-card": {
       RoleUpgradeCard: () =>
         createElement("section", { "data-ke": "fixture-plan" }, "Synthetic plan slot"),
