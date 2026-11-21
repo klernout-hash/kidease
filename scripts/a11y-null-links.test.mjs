@@ -27,7 +27,7 @@ test("a missing or null slug is not a listing link and is a 404", () => {
   assert.match(home, /isSafeSitemapSlug\(item\.slug\)/);
   assert.match(card, /isSafeSitemapSlug\(slug\)/);
   assert.match(card, /if \(!isSafeSitemapSlug\(slug\)\) \{\s*return \(\s*<div/);
-  assert.match(card, /aria-label=\{label\}/);
+  assert.match(card, /<span className="sr-only">\{label\}<\/span>/);
   assert.match(card, /data-ke="card-view-details"/);
   assert.match(card, /data-ke="card-view-details" label=\{`\$\{t\("viewDetails"\)\} · \$\{name\}`\} className="[^"]*min-h-11/);
 });
