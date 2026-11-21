@@ -96,10 +96,12 @@ test("native commerce is guarded in the page and the component", () => {
   assert.match(src("docs/play-data-safety.md"), /twilio-video/);
   assert.match(src("src/lib/legal-copy.ts"), /Twilio, for voice and video calls/);
   assert.match(src("src/lib/store-listing.ts"), /secondaryCategory: "Productivity"/);
-  assert.match(src("ios/App/App/App.entitlements"), /aps-environment/); // PushKit call ring
+  assert.doesNotMatch(src("ios/App/App/App.entitlements"), /aps-environment/);
   assert.match(src("docs/store-review-notes.md"), /production database/);
   assert.match(src("docs/store-review-notes.md"), /Push notifications are not in this version/);
+  assert.match(src("docs/store-review-notes.md"), /Voice and video calling are not in this version/);
   assert.doesNotMatch(src("docs/store-review-notes.md"), /Push notifications for message/);
+  assert.doesNotMatch(src("docs/store-review-notes.md"), /video tour opens|Calls run while the app is on screen/);
 });
 
 test("key routes with the native user agent have no prices, Stripe, or upgrade text", async () => {
