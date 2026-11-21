@@ -76,6 +76,13 @@ export function GovFrame({
           >
             {copy.language}
           </a>
+          <a
+            href={fr ? "/fr/delete-account" : "/delete-account"}
+            data-ke="gov-delete-account"
+            className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium touch-manipulation"
+          >
+            {copy.deleteAccount}
+          </a>
           <button
             type="button"
             className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium touch-manipulation"

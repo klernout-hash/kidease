@@ -53,7 +53,7 @@ test("app home uses one location bar; website does not stack rails and the featu
   assert.doesNotMatch(webBlock, /heroCityBrowse/);
   assert.doesNotMatch(webBlock, /HomePopularCities/);
   assert.match(webBlock, /<HomeDiscovery/);
-  assert.match(src("src/components/home-discovery.tsx"), /FacilityTypeRails items=\{shown\} visual/);
+  assert.match(src("src/components/home-discovery.tsx"), /FacilityTypeRails[\s\S]*items=\{shown\}[\s\S]*visual/);
   assert.doesNotMatch(webBlock, /ke-web-grid/);
   assert.doesNotMatch(home, /const locationForm/);
   assert.doesNotMatch(home, /const \[manual, setManual\]/);

@@ -52,7 +52,7 @@ import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { featuredHomeAgreement, homeLiveStrip } from "@/lib/home-live-strip";
 import type { DaycareCard as Card } from "@/lib/types";
-import type { SearchAge } from "@/lib/now-loops";
+import { honestVacancy, homeRailItems, liveLookingOnly, type SearchAge } from "@/lib/now-loops";
 import type { SearchStart } from "@/lib/search-start";
 
 const RoleEnrollChooser = lazy(() =>
@@ -110,6 +110,17 @@ export async function loadProductHome(knownAirbnbUi?: boolean) {
 
 export type ProductHomeBoot = Awaited<ReturnType<typeof loadProductHome>>;
 
+/** Same photo the first home rail marks eager. Preload that one, not a later claimed card. */
+function homeLcpPhoto(rows: Card[]): string | undefined {
+  const open = uniqueById(
+    homeRailItems(liveLookingOnly(rows)).filter((row) => honestVacancy(row).kind === "open"),
+  ).slice(0, 18);
+  const pool = open.length ? open : rows;
+  return pool
+    .map((row) => listingThumb(row.photos))
+    .find((photo) => Boolean(photo && !photo.includes("storefront-placeholder")));
+}
+
 export const Route = createFileRoute("/")({
   validateSearch: homeValidateSearch,
   loader: ({ context }) => loadProductHome(context.airbnbUi),
@@ -120,10 +131,7 @@ export const Route = createFileRoute("/")({
   head: ({ loaderData }) => {
     const seo = pageSeoHead(MARKETING_PAGE_SEO.home);
     const rows = publicListings(Array.isArray(loaderData?.featured) ? loaderData.featured : []);
-    const claimed = rows.filter((row) => isClaimVerified(row));
-    const src = [...(claimed.length ? claimed : rows)]
-      .map((row) => listingThumb(row.photos))
-      .find((photo) => photo && !photo.includes("storefront-placeholder"));
+    const src = homeLcpPhoto(rows);
     if (!src) return seo;
     return {
       ...seo,

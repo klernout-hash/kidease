@@ -84,6 +84,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "support-inbox", label: "Support inbox", hint: "Live chats", labelKey: "adminNavSupportInbox", hintKey: "adminNavSupportInboxHint", href: "/admin-support" },
     { id: "new", label: "New case", hint: "Open a case", labelKey: "adminNavNewCase", hintKey: "adminNavNewCaseHint" },
     { id: "account", label: "Account", hint: "Profile and preferences", labelKey: "account", hintKey: "adminNavAccountHint", href: "/account", search: { tab: "profile", desk: "support" } },
+    { id: "delete", label: "Delete account", labelKey: "deleteAccount", href: "/account", search: { tab: "profile", section: "delete", desk: "support" } },
   ],
   daycare: [
     { id: "today", label: "Today", hint: "What needs you now", labelKey: "todayHome", hintKey: "deskNavTodayHint", href: "/provider", search: { desk: "today" } },
@@ -486,7 +487,7 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
   ],
   support: [
     { id: "cases", label: "Support", labelKey: "support", open: true, itemIds: ["inbox", "support-inbox", "new"] },
-    { id: "account", label: "Account", labelKey: "account", itemIds: ["account"] },
+    { id: "account", label: "Account", labelKey: "account", itemIds: ["account", "delete"] },
   ],
 };
 

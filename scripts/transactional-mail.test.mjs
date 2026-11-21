@@ -66,19 +66,20 @@ test("Titan fallback is allowed for kyle@ or when Resend is unhealthy", () => {
   );
 });
 
-test("OTP Resend From does not stay stuck on a missing send.kidease.ca host", () => {
+test("OTP Resend From stays on noreply@send.kidease.ca, never the apex mailbox", () => {
   assert.equal(emergencyResendMailFrom({ MAIL_FROM: "KidEase <kyle@kidease.ca>" }), "KidEase <kyle@kidease.ca>");
   assert.equal(emergencyResendMailFrom({ MAIL_FROM_RESEND: "KidEase <kyle@kidease.ca>" }), "KidEase <kyle@kidease.ca>");
   assert.equal(emergencyResendMailFrom({ MAIL_FROM: "KidEase <noreply@send.kidease.ca>" }), null);
   const candidates = otpResendFromCandidates({ MAIL_FROM: "KidEase <noreply@send.kidease.ca>" });
-  assert.equal(candidates[0], "KidEase <noreply@send.kidease.ca>");
-  assert.ok(candidates.includes(EMERGENCY_RESEND_MAIL_FROM));
+  assert.deepEqual(candidates, ["KidEase <noreply@send.kidease.ca>"]);
   const apexFirst = otpResendFromCandidates({ MAIL_FROM: "KidEase <kyle@kidease.ca>" });
-  assert.equal(apexFirst[0], "KidEase <kyle@kidease.ca>");
+  assert.deepEqual(apexFirst, ["KidEase <noreply@send.kidease.ca>"]);
+  assert.equal(candidates.includes(EMERGENCY_RESEND_MAIL_FROM), false);
+  assert.equal(apexFirst.includes("KidEase <kyle@kidease.ca>"), false);
   assert.equal(titanSmtpFrom(envBase()), "KidEase <kyle@kidease.ca>");
 });
 
-test("Resend 403 on send.kidease.ca retries apex From then Titan SMTP", async () => {
+test("Resend 403 on send.kidease.ca falls through to Titan SMTP without an apex From", async () => {
   resetOtpMailHealth();
   const froms = [];
   const logs = [];
@@ -117,8 +118,8 @@ test("Resend 403 on send.kidease.ca retries apex From then Titan SMTP", async ()
   assert.equal(result.via, "titan");
   assert.equal(result.fallbackFrom, "resend");
   assert.equal(titanTo, "kyle@kidease.ca");
-  assert.ok(froms.includes("KidEase <noreply@send.kidease.ca>"));
-  assert.ok(froms.includes(EMERGENCY_RESEND_MAIL_FROM));
+  assert.deepEqual(froms, ["KidEase <noreply@send.kidease.ca>"]);
+  assert.equal(froms.includes(EMERGENCY_RESEND_MAIL_FROM), false);
   assert.ok(logs.some((line) => line.includes("event=resend_fail") && line.includes("reason=domain_unverified")));
   assert.ok(logs.some((line) => line.includes("event=titan_fallback_success")));
   assert.equal(logs.some((line) => /re_test|not-a-real-password|123456/.test(line)), false);
@@ -129,40 +130,38 @@ test("Resend 403 on send.kidease.ca retries apex From then Titan SMTP", async ()
   assert.equal(health.titanConfigured, true);
 });
 
-test("Resend apex retry can succeed after send subdomain 403 without Titan", async () => {
+test("a rejected send.kidease.ca From is not retried as the apex mailbox", async () => {
   resetOtpMailHealth();
   let n = 0;
-  const result = await sendTransactionalMail(
-    {
-      purpose: "2fa",
-      to: "kyle@kidease.ca",
-      subject: "code",
-      text: "code",
-      html: "<p>code</p>",
-    },
-    {
-      fetch: async (_url, init) => {
-        n += 1;
-        const body = JSON.parse(init.body);
-        if (String(body.from).includes("send.kidease.ca")) {
-          return jsonResponse(403, { message: "The send.kidease.ca domain is not verified" });
-        }
-        return jsonResponse(200, { id: "49a3999c-0ce1-4ea6-ab68-afcd6dc2e794" });
-      },
-      sendTitan: async () => {
-        throw new Error("Titan should not run when Resend apex retry works");
-      },
-      env: envBase({
-        RESEND_API_KEY: "re_test",
-        MAIL_FROM: "KidEase <noreply@send.kidease.ca>",
-      }),
-      log: () => {},
-    },
+  const froms = [];
+  await assert.rejects(
+    () =>
+      sendTransactionalMail(
+        {
+          purpose: "2fa",
+          to: "parent@example.com",
+          subject: "code",
+          text: "code",
+          html: "<p>code</p>",
+        },
+        {
+          fetch: async (_url, init) => {
+            n += 1;
+            const body = JSON.parse(init.body);
+            froms.push(body.from);
+            return jsonResponse(403, { message: "The send.kidease.ca domain is not verified" });
+          },
+          env: envBase({
+            RESEND_API_KEY: "re_test",
+            MAIL_FROM: "KidEase <kyle@kidease.ca>",
+          }),
+          log: () => {},
+        },
+      ),
+    /could not be sent/i,
   );
-  assert.equal(result.status, "sent");
-  assert.equal(result.via, "resend");
-  assert.equal(n, 2);
-  assert.equal(readOtpMailHealth().lastEvent, "resend_retry_apex");
+  assert.equal(n, 1);
+  assert.deepEqual(froms, ["KidEase <noreply@send.kidease.ca>"]);
 });
 
 test("all providers failing throws and never reports sent", async () => {
