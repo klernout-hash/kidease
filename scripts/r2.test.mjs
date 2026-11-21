@@ -15,7 +15,14 @@ import {
   listingSrcToR2Key,
   parseR2Endpoint,
   presignS3Get,
+  isBlockedPublicMediaPath,
+  isPrivateDocKey,
+  parsePrivateObjectList,
+  privateDocCopyPlan,
+  PUBLIC_MEDIA_WAF_EXPRESSION,
   R2_DEFAULT_BUCKET,
+  R2_PRIVATE_BUCKET_DEFAULT,
+  resolvePrivateR2Config,
   R2_ORIGINALS_PREFIX,
   R2_SETUP_MESSAGE,
   r2KeyToListingSrc,
@@ -240,4 +247,46 @@ test("admin media route is registered and env example has names only", async () 
   assert.match(csp, /img-src[^;]*https:\/\/pub-9e5f137809844fcdb6d6671cd909f312\.r2\.dev/);
   assert.match(csp, /img-src[^;]*https:\/\/\*\.r2\.dev/);
   assert.doesNotMatch(csp, /r2\.cloudflarestorage\.com/);
+  assert.match(envExample, /R2_PRIVATE_BUCKET=kidease-private-docs/);
+});
+
+test("private documents use a separate bucket and never a public media path", () => {
+  const env = {
+    R2_ACCOUNT_ID: "0123456789abcdef0123456789abcdef",
+    R2_ACCESS_KEY_ID: "test-access-key",
+    R2_SECRET_ACCESS_KEY: "test-secret-key-not-real",
+  };
+  const resolved = resolvePrivateR2Config(env);
+  assert.equal(resolved.ok, true);
+  if (!resolved.ok) return;
+  assert.equal(resolved.config.bucket, R2_PRIVATE_BUCKET_DEFAULT);
+  assert.notEqual(resolved.config.bucket, R2_DEFAULT_BUCKET);
+  assert.equal(
+    resolvePrivateR2Config({ ...env, R2_PRIVATE_BUCKET: "kidease-media", R2_BUCKET: "kidease-media" }).ok,
+    false,
+  );
+  assert.equal(isPrivateDocKey("screening/centre/file.pdf"), true);
+  assert.equal(isPrivateDocKey("centre-docs/centre/file.pdf"), true);
+  assert.equal(isPrivateDocKey("originals/wpg/1001.jpg"), false);
+  assert.equal(isBlockedPublicMediaPath("/screening/centre/file.pdf"), true);
+  assert.equal(isBlockedPublicMediaPath("/licenses/centre/file.pdf"), true);
+  assert.equal(isBlockedPublicMediaPath("/photos/wpg/1001.jpg"), false);
+  assert.match(PUBLIC_MEDIA_WAF_EXPRESSION, /media\.kidease\.ca/);
+  assert.match(PUBLIC_MEDIA_WAF_EXPRESSION, /\/screening\//);
+  assert.match(PUBLIC_MEDIA_WAF_EXPRESSION, /\/licenses\//);
+  const listed = parsePrivateObjectList(
+    "<ListBucketResult><Key>screening/a.pdf</Key><Key>photos/wpg/1.jpg</Key><IsTruncated>false</IsTruncated></ListBucketResult>",
+  );
+  assert.deepEqual(listed.keys, ["screening/a.pdf"]);
+  const plan = privateDocCopyPlan({
+    publicBucket: "kidease-media",
+    privateBucket: "kidease-private-docs",
+    key: "licenses/centre/file.pdf",
+  });
+  assert.equal(plan?.destBucket, "kidease-private-docs");
+  assert.equal(plan?.copySource, "/kidease-media/licenses/centre/file.pdf");
+  assert.equal(
+    privateDocCopyPlan({ publicBucket: "kidease-media", privateBucket: "kidease-private-docs", key: "photos/a.jpg" }),
+    null,
+  );
 });

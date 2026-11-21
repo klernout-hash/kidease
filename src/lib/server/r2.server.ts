@@ -15,6 +15,7 @@ import {
   R2_CONTRACT_MAX_BYTES,
   R2_MAX_OBJECT_BYTES,
   R2_PRESIGN_TTL_SEC,
+  resolvePrivateR2Config,
   resolveR2Config,
   sanitizeObjectKey,
   signS3Request,
@@ -40,6 +41,16 @@ function requireConfig(env: Record<string, string | undefined> = process.env): R
   const resolved = resolveR2Config(env);
   if (!resolved.ok) throw new Error(resolved.error);
   return resolved.config;
+}
+
+function requirePrivateConfig(env: Record<string, string | undefined> = process.env): R2Config {
+  const resolved = resolvePrivateR2Config(env);
+  if (!resolved.ok) throw new Error(resolved.error);
+  return resolved.config;
+}
+
+function configForKey(key: string): R2Config {
+  return isPrivateDocKey(key) ? requirePrivateConfig() : requireConfig();
 }
 
 async function r2Fetch(
@@ -182,11 +193,11 @@ export async function putPrivateDoc(input: {
   contentType: string;
   body: Buffer;
 }): Promise<R2PutResult> {
-  const config = requireConfig();
   const key = sanitizeObjectKey(input.key);
   if (!isPrivateDocKey(key)) {
-    throw new Error("Private document key must stay under screening/, licenses/, or family-docs/.");
+    throw new Error("Private document key must stay under screening/, licenses/, family-docs/, or centre-docs/.");
   }
+  const config = requirePrivateConfig();
   const contentType = allowPrivateDocType(input.contentType);
   const body = input.body;
   if (!body.byteLength) throw new Error("Object body is required.");
@@ -219,10 +230,7 @@ export async function putPrivateDoc(input: {
 }
 
 /** Remove a parent vault object. Refuses every other prefix. */
-export async function deleteFamilyDocObject(keyInput: string): Promise<void> {
-  const config = requireConfig();
-  const key = sanitizeObjectKey(keyInput);
-  if (!key.startsWith("family-docs/")) throw new Error("File not found");
+async function deleteObject(config: R2Config, key: string): Promise<void> {
   const url = objectUrl(config, key);
   const signed = signS3Request({
     method: "DELETE",
@@ -239,6 +247,18 @@ export async function deleteFamilyDocObject(keyInput: string): Promise<void> {
   }
 }
 
+export async function deleteFamilyDocObject(keyInput: string): Promise<void> {
+  const key = sanitizeObjectKey(keyInput);
+  if (!key.startsWith("family-docs/")) throw new Error("File not found");
+  const privateResolved = resolvePrivateR2Config();
+  if (privateResolved.ok) await deleteObject(privateResolved.config, key);
+  const publicResolved = resolveR2Config();
+  if (publicResolved.ok) await deleteObject(publicResolved.config, key);
+  if (!privateResolved.ok && !publicResolved.ok) {
+    throw new Error(privateResolved.ok ? "Object not found." : privateResolved.error);
+  }
+}
+
 export async function headR2Object(keyInput: string): Promise<{
   key: string;
   exists: boolean;
@@ -246,8 +266,31 @@ export async function headR2Object(keyInput: string): Promise<{
   contentType: string | null;
   etag: string | null;
 }> {
-  const config = requireConfig();
   const key = sanitizeObjectKey(keyInput);
+  const config = isPrivateDocKey(key) ? resolvePrivateR2Config() : resolveR2Config();
+  if (!config.ok) {
+    if (!isPrivateDocKey(key)) throw new Error(config.error);
+    const pub = resolveR2Config();
+    if (!pub.ok) throw new Error(config.error);
+    return headWithConfig(pub.config, key);
+  }
+  const found = await headWithConfig(config.config, key);
+  if (found.exists || !isPrivateDocKey(key)) return found;
+  const pub = resolveR2Config();
+  if (!pub.ok || pub.config.bucket === config.config.bucket) return found;
+  return headWithConfig(pub.config, key);
+}
+
+async function headWithConfig(
+  config: R2Config,
+  key: string,
+): Promise<{
+  key: string;
+  exists: boolean;
+  bytes: number | null;
+  contentType: string | null;
+  etag: string | null;
+}> {
   const url = objectUrl(config, key);
   const signed = signS3Request({
     method: "HEAD",
@@ -274,9 +317,7 @@ export async function headR2Object(keyInput: string): Promise<{
   }
 }
 
-export async function getR2Object(keyInput: string): Promise<R2GetResult> {
-  const config = requireConfig();
-  const key = sanitizeObjectKey(keyInput);
+async function readObject(config: R2Config, key: string): Promise<R2GetResult> {
   const url = objectUrl(config, key);
   const signed = signS3Request({
     method: "GET",
@@ -299,12 +340,30 @@ export async function getR2Object(keyInput: string): Promise<R2GetResult> {
   }
 }
 
+export async function getR2Object(keyInput: string): Promise<R2GetResult> {
+  const key = sanitizeObjectKey(keyInput);
+  if (!isPrivateDocKey(key)) return readObject(requireConfig(), key);
+  const privateResolved = resolvePrivateR2Config();
+  if (privateResolved.ok) {
+    try {
+      return await readObject(privateResolved.config, key);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      if (!/not found/i.test(message)) throw err instanceof Error ? err : new Error("Object not found.");
+      console.error("[r2] private document is not in the private bucket yet");
+    }
+  } else {
+    console.error("[r2] private document bucket is not ready");
+  }
+  return readObject(requireConfig(), key);
+}
+
 export function presignR2Get(
   keyInput: string,
   expiresIn = R2_PRESIGN_TTL_SEC,
 ): { key: string; url: string; expiresIn: number } {
-  const config = requireConfig();
   const key = sanitizeObjectKey(keyInput);
+  const config = configForKey(key);
   const url = presignS3Get({
     url: objectUrl(config, key),
     accessKeyId: config.accessKeyId,

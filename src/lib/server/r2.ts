@@ -24,6 +24,8 @@ import { createHash, createHmac } from "node:crypto";
 import { r2PublicBaseUrl } from "../photo.ts";
 
 export const R2_DEFAULT_BUCKET = "kidease-media";
+/** Screening, licence, and other private files. Never the public media bucket. */
+export const R2_PRIVATE_BUCKET_DEFAULT = "kidease-private-docs";
 export const R2_REGION = "auto";
 export const R2_SERVICE = "s3";
 export const R2_HOST_SUFFIX = ".r2.cloudflarestorage.com";
@@ -41,6 +43,11 @@ const LISTING_PHOTO_RE = /^\/photos\/[a-z0-9/_-]+\.(jpe?g|png|webp|avif|gif)$/i;
 
 export const R2_SETUP_MESSAGE =
   "R2 is not configured. Set R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_ENDPOINT (or R2_ACCOUNT_ID) on the Vercel project. Bucket defaults to kidease-media.";
+
+export const R2_PRIVATE_SETUP_MESSAGE =
+  "Private documents need their own R2 bucket. Create kidease-private-docs (or set R2_PRIVATE_BUCKET) and keep R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_ENDPOINT. Do not store screening or licence files in the public media bucket.";
+
+const BUCKET_NAME_RE = /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/;
 
 export const R2_ALLOWED_TYPES = [
   "image/jpeg",
@@ -142,7 +149,7 @@ export function resolveR2Config(
   const accessKeyId = envStr(env, "R2_ACCESS_KEY_ID");
   const secretAccessKey = envStr(env, "R2_SECRET_ACCESS_KEY");
   const bucket = envStr(env, "R2_BUCKET") || R2_DEFAULT_BUCKET;
-  if (!/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(bucket)) {
+  if (!BUCKET_NAME_RE.test(bucket)) {
     return { ok: false, error: "R2_BUCKET is not a valid bucket name.", missing: ["R2_BUCKET"] };
   }
 
@@ -279,12 +286,76 @@ export function allowPrivateDocType(raw: string): string {
   return normalized;
 }
 
+const PRIVATE_DOC_PREFIXES = [R2_SCREENING_PREFIX, R2_LICENSE_PREFIX, R2_FAMILY_PREFIX, "centre-docs"] as const;
+
 export function isPrivateDocKey(key: string): boolean {
-  return (
-    key.startsWith(`${R2_SCREENING_PREFIX}/`) ||
-    key.startsWith(`${R2_LICENSE_PREFIX}/`) ||
-    key.startsWith(`${R2_FAMILY_PREFIX}/`)
-  );
+  return PRIVATE_DOC_PREFIXES.some((prefix) => key.startsWith(`${prefix}/`));
+}
+
+/** Paths that must never be served from media.kidease.ca. */
+export function isBlockedPublicMediaPath(pathname: string): boolean {
+  const path = String(pathname || "")
+    .split("?")[0]
+    .split("#")[0]
+    .replace(/^\/+/, "")
+    .toLowerCase();
+  return PRIVATE_DOC_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+}
+
+/**
+ * Cloudflare WAF custom rule for the zone that serves media.kidease.ca.
+ * Action: Block. The app cannot attach this rule without dashboard access.
+ */
+export const PUBLIC_MEDIA_WAF_EXPRESSION = `(http.host eq "media.kidease.ca" and (${PRIVATE_DOC_PREFIXES.map(
+  (prefix) => `starts_with(http.request.uri.path, "/${prefix}/")`,
+).join(" or ")}))`;
+
+export function resolvePrivateR2Config(
+  env: EnvMap = process.env,
+): { ok: true; config: R2Config } | { ok: false; error: string; missing: string[] } {
+  const resolved = resolveR2Config(env);
+  if (!resolved.ok) return resolved;
+  const bucket = envStr(env, "R2_PRIVATE_BUCKET") || R2_PRIVATE_BUCKET_DEFAULT;
+  if (!BUCKET_NAME_RE.test(bucket)) {
+    return { ok: false, error: "R2_PRIVATE_BUCKET is not a valid bucket name.", missing: ["R2_PRIVATE_BUCKET"] };
+  }
+  if (bucket === resolved.config.bucket) {
+    return {
+      ok: false,
+      error: "R2_PRIVATE_BUCKET must not be the public media bucket.",
+      missing: ["R2_PRIVATE_BUCKET"],
+    };
+  }
+  return { ok: true, config: { ...resolved.config, bucket } };
+}
+
+/** ListObjects XML → private keys only. The caller must not log the raw XML. */
+export function parsePrivateObjectList(xml: string): { keys: string[]; truncated: boolean; token: string } {
+  const keys: string[] = [];
+  for (const match of String(xml || "").matchAll(/<Key>([^<]*)<\/Key>/g)) {
+    const key = match[1].trim();
+    if (isPrivateDocKey(key)) keys.push(key);
+  }
+  const truncated = /<IsTruncated>\s*true\s*<\/IsTruncated>/i.test(xml);
+  const token = xml.match(/<NextContinuationToken>([^<]*)<\/NextContinuationToken>/)?.[1]?.trim() || "";
+  return { keys, truncated, token };
+}
+
+/** Server-side copy plan. Photo keys are refused. Bodies are not part of the plan. */
+export function privateDocCopyPlan(input: {
+  publicBucket: string;
+  privateBucket: string;
+  key: string;
+}): { method: "PUT"; copySource: string; destBucket: string; key: string } | null {
+  const key = String(input.key || "").replace(/^\/+/, "");
+  if (!isPrivateDocKey(key)) return null;
+  if (!input.publicBucket || !input.privateBucket || input.publicBucket === input.privateBucket) return null;
+  return {
+    method: "PUT",
+    copySource: `/${input.publicBucket}/${key}`,
+    destBucket: input.privateBucket,
+    key,
+  };
 }
 
 export function decodeObjectBody(bodyBase64: string): Buffer {

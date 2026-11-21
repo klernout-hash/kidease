@@ -10,6 +10,7 @@ import {
   CHANGE_PASSWORD_DESTINATION,
   CHANGE_PASSWORD_PATH,
   decideRequest,
+  isPrivateMediaPath,
   HIDDEN_LISTING_SLUGS,
   isApexKideaseHost,
   isDirectDemoListingPath,
@@ -23,6 +24,20 @@ import {
 } from "./request-guard.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+test("private document paths are not served", () => {
+  assert.equal(isPrivateMediaPath("/screening/centre/file.pdf"), true);
+  assert.equal(isPrivateMediaPath("/licenses/centre/file.pdf"), true);
+  assert.equal(isPrivateMediaPath("/photos/wpg/1.jpg"), false);
+  assert.deepEqual(decideRequest({ host: "media.kidease.ca", pathname: "/screening/centre/file.pdf" }), {
+    action: "not_found",
+    status: 404,
+  });
+  assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/licenses/centre/file.pdf" }), {
+    action: "not_found",
+    status: 404,
+  });
+});
 
 test("isVercelAppHost matches system domains including kidease-git", () => {
   assert.equal(isVercelAppHost("kidease-git.vercel.app"), true);
