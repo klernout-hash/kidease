@@ -478,6 +478,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         />
       )}
     >
+      <main className="w-full min-w-0">
       <div data-ke="launch-shell" role="status" aria-live="polite" className="w-full text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">KidEase</p>
         <p className="mt-3 text-base font-medium text-fg">
@@ -486,7 +487,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
       </div>
       <JsonLd json={organizationGraphJsonLdScript(locale === "fr" ? "fr" : "en")} />
       <div className="ke-home w-full min-w-0" data-ke="home-discovery-surface">
-      <h1 className="ke-gutter mx-auto hidden w-full pt-4 text-center text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em] md:block">
+      <h1 className="ke-gutter mx-auto w-full pt-4 text-center text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
         {t("tagline")}
       </h1>
       <div className="ke-home-web ke-web-only w-full [[data-channel=app]_&]:hidden">
@@ -670,6 +671,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         </section>
       </div>
       </div>
+      </main>
 
       <Suspense fallback={null}>
         <RoleEnrollDialog open={enrollOpen} onClose={() => setEnrollOpen(false)} />
