@@ -1,0 +1,112 @@
+name: DB restore test (quarterly)
+
+# Downloads the newest weekly dump from the private R2 bucket and restores it
+# into a throwaway Postgres container inside the job (not Neon, costs nothing).
+# Checks key tables have rows, then everything is discarded with the runner.
+on:
+  schedule:
+    - cron: "0 9 1 1,4,7,10 *" # 1st of Jan/Apr/Jul/Oct, 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  restore-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BUCKET: kidease-db-backups
+      PG_MAJOR: "18"
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: restore-test-only
+      PGDATABASE: restore_test
+    services:
+      postgres:
+        # PostGIS image: the schema uses postgis, pg_trgm and unaccent.
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_PASSWORD: restore-test-only
+          POSTGRES_DB: restore_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Check required secrets are set
+        env:
+          BACKUP_R2_ACCESS_KEY_ID: ${{ secrets.BACKUP_R2_ACCESS_KEY_ID }}
+          BACKUP_R2_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_R2_SECRET_ACCESS_KEY }}
+          BACKUP_R2_ACCOUNT_ID: ${{ secrets.BACKUP_R2_ACCOUNT_ID }}
+        run: |
+          missing=0
+          for v in BACKUP_R2_ACCESS_KEY_ID BACKUP_R2_SECRET_ACCESS_KEY BACKUP_R2_ACCOUNT_ID; do
+            if [ -z "${!v}" ]; then echo "::error::Missing repo secret $v (see docs/backups.md)"; missing=1; fi
+          done
+          exit $missing
+
+      - name: Install postgresql-client-${{ env.PG_MAJOR }} (PGDG)
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq "postgresql-client-${PG_MAJOR}"
+          echo "/usr/lib/postgresql/${PG_MAJOR}/bin" >> "$GITHUB_PATH"
+
+      - name: Download newest weekly dump
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ secrets.BACKUP_R2_ACCOUNT_ID }}
+          AWS_DEFAULT_REGION: auto
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+        run: |
+          set -euo pipefail
+          endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          key=$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix weekly/ --endpoint-url "$endpoint" \
+                  --query 'sort_by(Contents,&Key)[-1].Key' --output text)
+          if [ -z "$key" ] || [ "$key" = "None" ]; then echo "::error::No weekly dumps found"; exit 1; fi
+          mkdir -p "$RUNNER_TEMP/restore"
+          aws s3 cp "s3://${BUCKET}/${key}" "$RUNNER_TEMP/restore/db.dump" --endpoint-url "$endpoint" --only-show-errors
+          echo "restoring ${key} ($(stat -c %s "$RUNNER_TEMP/restore/db.dump") bytes)"
+          echo "### Restore test of \`${key}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Restore into throwaway Postgres
+        run: |
+          set -uo pipefail
+          psql -v ON_ERROR_STOP=1 -c "select version();"
+          # Neon-only roles/extensions may not exist here; --no-owner/--no-privileges
+          # skip role grants. Remaining errors are logged and judged by the row checks.
+          pg_restore --no-owner --no-privileges --jobs=4 --dbname "$PGDATABASE" \
+            "$RUNNER_TEMP/restore/db.dump" 2> "$RUNNER_TEMP/restore/errors.log"
+          rc=$?
+          errs=$(grep -c 'error:' "$RUNNER_TEMP/restore/errors.log" || true)
+          echo "pg_restore exit=$rc, errors=$errs"
+          grep 'error:' "$RUNNER_TEMP/restore/errors.log" | head -20 || true
+          echo "pg_restore errors (non-fatal unless row checks fail): $errs" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check key tables have rows
+        run: |
+          set -euo pipefail
+          fail=0
+          for t in daycares profiles; do
+            n=$(psql -Atc "select count(*) from public.${t}" 2>/dev/null || echo 0)
+            echo "${t}: ${n}"
+            echo "- \`${t}\`: ${n} rows" >> "$GITHUB_STEP_SUMMARY"
+            [ "${n:-0}" -gt 0 ] || { echo "::error::public.${t} is empty or missing after restore"; fail=1; }
+          done
+          tables=$(psql -Atc "select count(*) from information_schema.tables where table_schema='public'")
+          echo "public tables restored: ${tables}"
+          echo "- public tables: ${tables}" >> "$GITHUB_STEP_SUMMARY"
+          exit $fail
+
+      - name: Discard
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/restore"

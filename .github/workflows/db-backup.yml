@@ -1,0 +1,110 @@
+name: DB backup (weekly, R2)
+
+# Weekly off-site copy of the Neon database (neondb) to the PRIVATE R2
+# bucket kidease-db-backups. See docs/backups.md.
+# - Never uploads the dump as a workflow artifact.
+# - Never prints connection strings or keys.
+# - A failed run shows red in Actions and GitHub emails the repo owner.
+on:
+  schedule:
+    - cron: "30 8 * * 0" # Sundays 08:30 UTC (03:30 Toronto, EST)
+  workflow_dispatch:
+    inputs:
+      force_monthly:
+        description: "Also write monthly/YYYY-MM.dump even if it's not the first Sunday"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BUCKET: kidease-db-backups
+      PG_MAJOR: "18"
+    steps:
+      - name: Check required secrets are set
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          BACKUP_R2_ACCESS_KEY_ID: ${{ secrets.BACKUP_R2_ACCESS_KEY_ID }}
+          BACKUP_R2_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_R2_SECRET_ACCESS_KEY }}
+          BACKUP_R2_ACCOUNT_ID: ${{ secrets.BACKUP_R2_ACCOUNT_ID }}
+        run: |
+          missing=0
+          for v in BACKUP_DATABASE_URL BACKUP_R2_ACCESS_KEY_ID BACKUP_R2_SECRET_ACCESS_KEY BACKUP_R2_ACCOUNT_ID; do
+            if [ -z "${!v}" ]; then echo "::error::Missing repo secret $v (see docs/backups.md)"; missing=1; fi
+          done
+          exit $missing
+
+      - name: Install postgresql-client-${{ env.PG_MAJOR }} (PGDG)
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq "postgresql-client-${PG_MAJOR}"
+          echo "/usr/lib/postgresql/${PG_MAJOR}/bin" >> "$GITHUB_PATH"
+
+      - name: pg_dump (custom format)
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          pg_dump --version
+          mkdir -p "$RUNNER_TEMP/backup"
+          pg_dump --format=custom --no-owner --no-password \
+            --file "$RUNNER_TEMP/backup/db.dump" "$DATABASE_URL"
+          ls -l "$RUNNER_TEMP/backup/db.dump" | awk '{print "dump bytes:", $5}'
+
+      - name: Sanity-check dump with pg_restore --list
+        run: |
+          set -euo pipefail
+          pg_restore --list "$RUNNER_TEMP/backup/db.dump" > "$RUNNER_TEMP/backup/toc.txt"
+          entries=$(grep -vc '^;' "$RUNNER_TEMP/backup/toc.txt" || true)
+          echo "TOC entries: $entries"
+          for t in daycares profiles; do
+            if ! grep -qE "TABLE DATA public ${t}( |$)" "$RUNNER_TEMP/backup/toc.txt"; then
+              echo "::error::Dump has no table data for public.${t}"; exit 1
+            fi
+          done
+          [ "$entries" -gt 50 ] || { echo "::error::Dump TOC looks too small ($entries)"; exit 1; }
+
+      - name: Upload to R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ secrets.BACKUP_R2_ACCOUNT_ID }}
+          AWS_DEFAULT_REGION: auto
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          FORCE_MONTHLY: ${{ inputs.force_monthly || false }}
+        run: |
+          set -euo pipefail
+          endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          day=$(date -u +%F)
+          weekly="weekly/${day}.dump"
+          file="$RUNNER_TEMP/backup/db.dump"
+          size=$(stat -c %s "$file")
+          aws s3 cp "$file" "s3://${BUCKET}/${weekly}" --endpoint-url "$endpoint" --only-show-errors
+          remote=$(aws s3api head-object --bucket "$BUCKET" --key "$weekly" --endpoint-url "$endpoint" --query ContentLength --output text)
+          [ "$remote" = "$size" ] || { echo "::error::Size mismatch local=$size remote=$remote"; exit 1; }
+          echo "uploaded ${weekly} (${size} bytes)"
+          echo "### Weekly backup: \`${weekly}\` — ${size} bytes" >> "$GITHUB_STEP_SUMMARY"
+          # First Sunday of the month = day-of-month 1..7
+          if [ "$(date -u +%-d)" -le 7 ] || [ "$FORCE_MONTHLY" = "true" ]; then
+            monthly="monthly/$(date -u +%Y-%m).dump"
+            aws s3 cp "s3://${BUCKET}/${weekly}" "s3://${BUCKET}/${monthly}" --endpoint-url "$endpoint" --only-show-errors
+            echo "copied to ${monthly}"
+            echo "Monthly copy: \`${monthly}\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Remove local dump
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/backup"
