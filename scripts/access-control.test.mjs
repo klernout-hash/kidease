@@ -324,5 +324,6 @@ test("billing getBill / checkout use canReadBill and decideBillCheckout", () => 
   assert.match(billing, /decideBillCheckout/);
   assert.match(billing, /canCreateBillForCentre/);
   assert.match(billing, /parent_user_id = \$1/);
-  assert.match(billing, /p\.user_id = \$1 and p\.daycare_id = i\.daycare_id/);
+  assert.match(billing, /i\.daycare_id = any\(\$1::text\[\]\)/);
+  assert.doesNotMatch(billing, /or exists \(select 1 from provider_daycares/);
 });
