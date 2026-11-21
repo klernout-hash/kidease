@@ -24,6 +24,7 @@ import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 import { useRoleChrome } from "@/components/role-chrome";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { upgradeNavLabel } from "@/lib/role-access";
 
 function DeskItemIcon({ name, className }: { name?: DeskIcon; className?: string }) {
@@ -180,11 +181,12 @@ export function DeskShell({
   const { t } = useCopy();
   const { session } = useSessionDesks();
   const chrome = useRoleChrome();
+  const nativeShell = useInNativeShell();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const opts = {
     providerSubscriptions: session?.providerSubscriptions,
     showPayCtas: session?.showPayCtas,
-    subscriptionsEnabled: chrome.subscriptionsEnabled,
+    subscriptionsEnabled: nativeShell ? false : chrome.subscriptionsEnabled,
     centreOwner: session?.centreOwner,
     centreLinked: session?.centreLinked,
     centreGrants: session?.centreGrants,

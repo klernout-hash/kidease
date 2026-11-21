@@ -14,7 +14,11 @@
     "brace-expansion@1": "1.1.21",
     "brace-expansion@2": "2.1.7",
     "brace-expansion@5": "5.0.12",
-    "uuid": "11.1.1"
+    "uuid": "11.1.1",
+    "zod": "^4.6.7",
+    "gcp-metadata": {
+      "gaxios": "7.3.1"
+    }
   },
   "scripts": {
     "dev": "vite dev --host 0.0.0.0 --port 8080",
@@ -35,6 +39,7 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "e2e": "node scripts/e2e-smoke.mjs",
+    "a11y:axe": "node scripts/a11y-axe.mjs",
     "e2e:preview": "node scripts/e2e-smoke.mjs --start-preview",
     "e2e:browser-smoke": "node scripts/browser-smoke.mjs http://127.0.0.1:8081/ artifacts/e2e/browser-smoke.png",
     "e2e:inbox-layout": "node scripts/inbox-layout-smoke.mjs",
@@ -135,6 +140,7 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@capacitor/android": "^8.5.0",
     "@capacitor/cli": "^8.5.0",
     "@capacitor/ios": "^8.5.0",
@@ -156,6 +162,6 @@
     "prettier": "^3.4.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.56.1",
-    "vite": "^8.2.0"
+    "vite": "^8.3.8"
   }
 }

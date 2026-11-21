@@ -25,6 +25,8 @@ test("home has one visible heading and cards name their photo links", () => {
   const headings = home.match(/<h1\b[^>]*>/g) || [];
   assert.equal(headings.length, 1);
   assert.doesNotMatch(headings[0], /sr-only/);
+  assert.doesNotMatch(headings[0], /\bhidden\b/);
+  assert.match(home, /<main\b/);
   assert.match(home, /\{t\("tagline"\)\}/);
 
   const card = src("src/components/daycare-card.tsx");

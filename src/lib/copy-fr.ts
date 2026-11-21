@@ -893,6 +893,7 @@ export const fr = {
       "Nous transmettrons votre demande de visite et inviterons ce centre sur KidEase. Les familles connectées la retrouvent aussi sous Demandes.",
     plansNotOffered: "Les forfaits ne sont pas offerts sur ce site pour le moment. La fiche et la revendication restent gratuites.",
     freePageTitle: "Votre page KidEase gratuite",
+    freePageTitleApp: "Votre page KidEase",
     freePageLead:
       "Ajoutez ce lien sur Google Business et Facebook pour que les familles voient le permis, les âges et la photo.",
     freePageShareHint:
@@ -1059,6 +1060,7 @@ export const fr = {
     noSaved: "Votre liste est vide.",
     myShortlist: "Ma liste",
     shortlistLead: "Enregistrez des centres depuis la recherche ou une fiche. Notez vos appels et vos visites ici. Gratuit : 5 centres. Parent Plus : 10.",
+    shortlistLeadApp: "Enregistrez des centres depuis la recherche ou une fiche. Notez vos appels et vos visites ici.",
     shortlistLeadOpen: "Enregistrez des centres depuis la recherche ou une fiche. Notez vos appels et vos visites ici. Comparez jusqu’à 10 centres.",
     shortlistCompareLead: "Choisissez des centres pour comparer âges, heures, distance, langue et places.",
     shortlistCompareMax: "C’est la limite pour ce compte.",
