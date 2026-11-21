@@ -18,7 +18,7 @@
   },
   "scripts": {
     "dev": "vite dev --host 0.0.0.0 --port 8080",
-    "build": "vite build && node scripts/upload-posthog-sourcemaps.mjs && node scripts/check-ssr-bundle.mjs && node scripts/check-locale-chunks.mjs && node scripts/check-client-db.mjs && npm run db:migrate:check",
+    "build": "vite build && node scripts/upload-posthog-sourcemaps.mjs && node scripts/check-ssr-bundle.mjs && node scripts/check-locale-chunks.mjs && node scripts/check-client-db.mjs && node scripts/check-client-budget.mjs && npm run db:migrate:check",
     "db:migrate": "node --experimental-strip-types scripts/migrate.mjs",
     "db:migrate:check": "node --experimental-strip-types scripts/check-migrations.mjs",
     "ops:1password-checklist": "node scripts/1password-env-checklist.mjs",

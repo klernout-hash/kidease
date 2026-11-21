@@ -5,7 +5,9 @@ import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { HeroClaimStrip } from "@/components/hero-claim-strip";
-import { HomeHowVideo } from "@/components/home-how-video";
+const HomeHowVideo = lazy(() =>
+  import("@/components/home-how-video").then((m) => ({ default: m.HomeHowVideo })),
+);
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
 import { HomeCareTypeRow, type BrowseDaycareType } from "@/components/facility-type-rails";
@@ -538,7 +540,9 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           <h2 id="how-kidease-heading" className="text-center text-xl tracking-[-0.03em] text-fg md:text-2xl">
             {t("howVideoTitle")}
           </h2>
-          <HomeHowVideo />
+          <Suspense fallback={null}>
+            <HomeHowVideo />
+          </Suspense>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <Step
               n="1"
