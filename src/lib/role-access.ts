@@ -28,6 +28,15 @@ export type RoleNavItem = {
 /** First explicit parent/provider choice can land during sign-up. Later flips stay put. */
 export const ROLE_FLIP_WINDOW_MS = 30 * 60 * 1000;
 
+/** A server guest stays a guest while the browser session is still starting. */
+export function serverSaysGuest(
+  remote: { signedIn?: boolean; role?: string | null; degraded?: boolean } | null | undefined,
+  hasUser: boolean,
+): boolean {
+  if (!remote || hasUser) return false;
+  return !remote.signedIn && !remote.role && !remote.degraded;
+}
+
 export function chromeRole(role: string | null | undefined): ChromeRole {
   const value = String(role || "")
     .trim()

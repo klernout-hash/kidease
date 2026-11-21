@@ -8,6 +8,7 @@ import {
   showsOwnListingEdit,
   showsParentBrowseActions,
   navRoleForSession,
+  serverSaysGuest,
   privateReturnPath,
   bottomBarKind,
   roleFlipAllowed,
@@ -151,4 +152,13 @@ test("listing actions follow the viewer, and a role sticks after sign-up", () =>
   assert.equal(roleFlipAllowed("parent", "provider", 60_000), true);
   assert.equal(roleFlipAllowed("parent", "provider", 31 * 60 * 1000), false);
   assert.equal(roleFlipAllowed("admin", "parent", 0), false);
+});
+
+test("a server guest stays signed out while the browser session is still starting", () => {
+  const guest = { signedIn: false, role: null, degraded: false };
+  assert.equal(serverSaysGuest(guest, false), true);
+  assert.equal(serverSaysGuest(guest, true), false);
+  assert.equal(serverSaysGuest({ signedIn: true, role: null, degraded: false }, false), false);
+  assert.equal(serverSaysGuest({ signedIn: false, role: "parent", degraded: false }, false), false);
+  assert.equal(serverSaysGuest(null, false), false);
 });
