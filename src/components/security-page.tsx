@@ -83,14 +83,16 @@ export function SecurityPage({ locale }: { locale: "en" | "fr" }) {
                   setMessage(fr ? "La demande n'a pas été ouverte." : "The request was not opened.");
                   return;
                 }
-                setCaseId(result.caseId);
+                setCaseId(`${result.caseId} · ${result.contact}`);
               })
               .catch(() => setMessage(fr ? "La demande n'a pas été ouverte." : "The request was not opened."));
           }}
         >
           <h2 className="font-display text-xl">{fr ? "Demande de confidentialité" : "Privacy request"}</h2>
           <p className="mt-1 text-sm text-muted">
-            {fr ? "Accès, correction ou suppression. Aucun courriel n'est envoyé." : "Access, correction, or deletion. No email is sent."}
+            {fr
+              ? "Accès, correction ou suppression. La demande est déposée pour privacy@kidease.ca. Ce formulaire n'envoie pas de courriel et ne supprime rien."
+              : "Access, correction, or deletion. The request is filed for privacy@kidease.ca. This form does not send an email and does not delete anything."}
           </p>
           <label className="mt-3 block text-sm font-medium">
             {fr ? "Type" : "Type"}
