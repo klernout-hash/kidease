@@ -128,7 +128,7 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
     }
 
     /// The web view always fills the window at device width. A page wider than the screen
-    /// made WKWebView zoom out, so the desk showed shrunk and letterboxed; zoom is pinned to 1.
+    /// made WKWebView zoom out, so zoom-out stays blocked. Pinch in is allowed.
     override open func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         guard let webView = webView else { return }
