@@ -103,14 +103,13 @@ export const sendEarningsStatement = createServerFn({ method: "POST" })
 
 async function centreDesk(userId: string): Promise<EarningsResult> {
   const sql = await getSql();
-  const { explainBillsList, listOwnedDaycareIds, staffAreaError } = await import("@/lib/server/centre-access");
-  const decision = await explainBillsList(sql, userId);
-  if (!decision.ok) {
-    if (decision.reason === "permission") throw staffAreaError(decision);
-    return { ok: false };
-  }
-  const daycareIds = decision.daycareIds;
+  const { listOwnedDaycareIds } = await import("@/lib/server/centre-access");
+  const { resolveAdminAccess } = await import("@/lib/server/roles");
+  // Payouts, bank, and earnings totals are owner-only. Bill status is a separate grant.
   const owned = await listOwnedDaycareIds(sql, userId);
+  const admin = await resolveAdminAccess(userId).then((row) => row.ok).catch(() => false);
+  if (!owned.length && !admin) return { ok: false };
+  const daycareIds = owned;
   const start = new Date();
   start.setMonth(start.getMonth() - 23, 1);
   const startDay = start.toISOString().slice(0, 10);

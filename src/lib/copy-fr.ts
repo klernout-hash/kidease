@@ -3134,7 +3134,7 @@ export const fr = {
     employeeRoleManager: "Gestionnaire",
     employeeRoleStaff: "Personnel",
     employeeRoleReadOnly: "Lecture seule",
-    employeeRoleStaffAccess: "Aujourd'hui, l'arrivée et le départ, leurs heures, les messages, les demandes et les places. N'ouvre pas les factures.",
+    employeeRoleStaffAccess: "Aujourd'hui, l'arrivée et le départ, leurs heures, les messages, les demandes et les places. Peut voir si chaque famille de ce centre a payé. Ne peut pas envoyer, modifier ou annuler une facture, ni ouvrir les revenus, les versements ou les coordonnées bancaires.",
     employeeRoleManagerAccess: "Peut modifier les factures, les messages, les dossiers d'enfants, la fiche, le calendrier, l'horaire, les demandes et les documents. N'ouvre pas les versements, la banque, le contrat ni le permis.",
     employeePresetStaff: "Employé",
     employeePresetLead: "Responsable",
