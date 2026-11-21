@@ -3678,5 +3678,22 @@
   "adminVacancyNone": "ਇਸ ਨਮੂਨੇ ਵਿੱਚ ਕੋਈ ਨਹੀਂ।",
   "adminVacancyDryRun": "ਅਜ਼ਮਾਇਸ਼",
   "adminLoadStuck": "ਇਹ ਸਫ਼ਾ ਲੋਡ ਨਹੀਂ ਹੋਇਆ।",
-  "adminLoadReload": "ਦੁਬਾਰਾ ਲੋਡ"
+  "adminLoadReload": "ਦੁਬਾਰਾ ਲੋਡ",
+  "moneyDeskViewLead": "ਤੁਸੀਂ ਵੇਖ ਸਕਦੇ ਹੋ ਕਿ ਇਸ ਕੇਂਦਰ ਦੇ ਪਰਿਵਾਰਾਂ ਨੇ ਭੁਗਤਾਨ ਕੀਤਾ ਹੈ ਜਾਂ ਨਹੀਂ। ਤੁਸੀਂ ਬਿੱਲ ਨਹੀਂ ਭੇਜ ਸਕਦੇ ਜਾਂ ਬਦਲ ਸਕਦੇ।",
+  "adminNavTrustQueueHint": "ਰਿਪੋਰਟਾਂ ਅਤੇ ਪਛਾਣ",
+  "adminNavConnectHint": "Connect ਖਾਤੇ, ਭੁਗਤਾਨ ਅਤੇ ਖਰਚੇ",
+  "catalogueQueueTitle": "ਸਮੀਖਿਆ ਕਤਾਰ, ਜਨਤਕ ਸੂਚੀ ਨਹੀਂ",
+  "catalogueQueueLead": "ਇਹ ਗਿਣਤੀਆਂ ਇਸ ਡੈਸਕ ਉੱਤੇ ਲੋਡ ਹੋਏ ਕੇਂਦਰ ਹਨ। ਇਹ ਰਾਸ਼ਟਰੀ ਸੂਚੀ ਨਹੀਂ।",
+  "cataloguePublicPill": "ਜਨਤਕ ਸੂਚੀ",
+  "catalogueInQueue": "ਇਸ ਕਤਾਰ ਵਿੱਚ",
+  "catalogueClaimedQueue": "ਇਸ ਕਤਾਰ ਵਿੱਚ ਦਾਅਵਾ ਕੀਤਾ",
+  "adminSavedFilters": "ਸੰਭਾਲੇ ਫਿਲਟਰ",
+  "adminSavedFiltersLead": "ਇਹ ਸੂਚੀ ਸੰਭਾਲੋ, ਜਿਵੇਂ «ON ਵਿੱਚ ਬਿਨਾਂ ਦਾਅਵੇ» ਜਾਂ «ਦਸਤਾਵੇਜ਼ ਉਡੀਕ ਵਿੱਚ»।",
+  "adminSavedFiltersEmpty": "ਅਜੇ ਕੋਈ ਫਿਲਟਰ ਨਹੀਂ ਸੰਭਾਲਿਆ।",
+  "adminStatWaiting": "ਤੁਹਾਡੀ ਉਡੀਕ",
+  "adminStatIncomplete": "ਪੂਰਾ ਕਰਨਾ ਬਾਕੀ",
+  "adminStatLive": "ਲਾਈਵ",
+  "adminStatDeclined": "ਰੱਦ",
+  "adminOtherCounts": "ਹੋਰ ਗਿਣਤੀਆਂ",
+  "adminSearchQueue": "ਨਾਮ, ਸ਼ਹਿਰ, ਈਮੇਲ ਖੋਜੋ…"
 }

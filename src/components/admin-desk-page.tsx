@@ -655,7 +655,7 @@ export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: Admi
             <Stat label="Live" value={queueStat(counts.approved)} accent={stat === "live"} filterId="live" onSelect={() => onSelectStat("live")} />
           </div>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("adminSearchQueue")} className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
               <input type="checkbox" checked={showQaFixtures} onChange={(e) => setQaFixtures(e.target.checked)} />
@@ -690,7 +690,7 @@ export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: Admi
             <Stat label="Waiting claims" value={queueStat(waitingOnYou.length)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
           </div>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("adminSearchQueue")} className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
               <input type="checkbox" checked={showQaFixtures} onChange={(e) => setQaFixtures(e.target.checked)} />
@@ -763,14 +763,14 @@ export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: Admi
         <>
           <CatalogueHealthStrip rows={staffCentres} publicCatalogue={catalogHealth?.publicCount} />
           <div role="group" aria-label="Filter this list" className="mt-3 flex gap-1 overflow-x-auto rounded-full bg-surface p-1 ring-1 ring-border" data-ke="admin-queue-filters">
-            <Stat compact label="Waiting on you" value={queueStat(counts.waiting)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
-            <Stat compact label="Needs complete" value={queueStat(incompleteQueue.length)} accent={stat === "incomplete"} filterId="incomplete" onSelect={() => onSelectStat("incomplete")} />
-            <Stat compact label="Live" value={queueStat(counts.approved)} accent={stat === "live"} filterId="live" onSelect={() => onSelectStat("live")} />
-            <Stat compact label="Declined" value={queueStat(counts.declined)} accent={stat === "declined"} filterId="declined" onSelect={() => onSelectStat("declined")} />
+            <Stat compact label={t("adminStatWaiting")} value={queueStat(counts.waiting)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
+            <Stat compact label={t("adminStatIncomplete")} value={queueStat(incompleteQueue.length)} accent={stat === "incomplete"} filterId="incomplete" onSelect={() => onSelectStat("incomplete")} />
+            <Stat compact label={t("adminStatLive")} value={queueStat(counts.approved)} accent={stat === "live"} filterId="live" onSelect={() => onSelectStat("live")} />
+            <Stat compact label={t("adminStatDeclined")} value={queueStat(counts.declined)} accent={stat === "declined"} filterId="declined" onSelect={() => onSelectStat("declined")} />
           </div>
           <details className="mt-3 rounded-2xl bg-surface px-4 py-3 ring-1 ring-border" data-ke="admin-queue-aside">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm text-muted marker:content-none [&::-webkit-details-marker]:hidden">
-              <span>Other counts</span>
+              <span>{t("adminOtherCounts")}</span>
               <span className="text-xs text-subtle">Leads and the full list</span>
             </summary>
             <div className="mt-2 flex flex-wrap gap-2 pb-1">
@@ -782,7 +782,7 @@ export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: Admi
             </div>
           </details>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("adminSearchQueue")} className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
               <input type="checkbox" checked={showQaFixtures} onChange={(e) => setQaFixtures(e.target.checked)} />
@@ -827,10 +827,10 @@ export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: Admi
       ) : tab === "daycares" ? (
         <>
           <div role="group" aria-label="Filter this list" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Waiting on you" value={queueStat(counts.waiting)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
-            <Stat label="Needs complete" value={queueStat(incompleteQueue.length)} accent={stat === "incomplete"} filterId="incomplete" onSelect={() => onSelectStat("incomplete")} />
-            <Stat label="Live" value={queueStat(counts.approved)} accent={stat === "live"} filterId="live" onSelect={() => onSelectStat("live")} />
-            <Stat label="Declined" value={queueStat(counts.declined)} accent={stat === "declined"} filterId="declined" onSelect={() => onSelectStat("declined")} />
+            <Stat label={t("adminStatWaiting")} value={queueStat(counts.waiting)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
+            <Stat label={t("adminStatIncomplete")} value={queueStat(incompleteQueue.length)} accent={stat === "incomplete"} filterId="incomplete" onSelect={() => onSelectStat("incomplete")} />
+            <Stat label={t("adminStatLive")} value={queueStat(counts.approved)} accent={stat === "live"} filterId="live" onSelect={() => onSelectStat("live")} />
+            <Stat label={t("adminStatDeclined")} value={queueStat(counts.declined)} accent={stat === "declined"} filterId="declined" onSelect={() => onSelectStat("declined")} />
             <Stat label="In this list" value={queueStat(counts.all)} accent={stat === "all"} filterId="all" onSelect={() => onSelectStat("all")} />
             <Stat label="Open leads" value={leadCounts.open} accent={stat === "leads-open"} filterId="leads-open" onSelect={() => onSelectStat("leads-open")} />
             <Stat label="Leads confirmed" value={leadCounts.confirmed} accent={stat === "leads-confirmed"} filterId="leads-confirmed" onSelect={() => onSelectStat("leads-confirmed")} />
@@ -838,7 +838,7 @@ export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: Admi
             <Stat label="Leads declined" value={leadCounts.declined} accent={stat === "leads-declined"} filterId="leads-declined" onSelect={() => onSelectStat("leads-declined")} />
           </div>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("adminSearchQueue")} className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
               <input type="checkbox" checked={showQaFixtures} onChange={(e) => setQaFixtures(e.target.checked)} />

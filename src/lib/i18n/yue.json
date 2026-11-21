@@ -3678,5 +3678,22 @@
   "adminVacancyNone": "呢個樣本入面冇。",
   "adminVacancyDryRun": "試行",
   "adminLoadStuck": "呢頁未載入完。",
-  "adminLoadReload": "重新載入"
+  "adminLoadReload": "重新載入",
+  "moneyDeskViewLead": "你可以睇呢間中心嘅家庭有冇付款。你唔可以寄或者改帳單。",
+  "adminNavTrustQueueHint": "報告同身份",
+  "adminNavConnectHint": "Connect 帳戶、付款同收費",
+  "catalogueQueueTitle": "審核隊列，唔係公開目錄",
+  "catalogueQueueLead": "呢啲數字係呢張檯載入嘅中心。唔係全國目錄。",
+  "cataloguePublicPill": "公開目錄",
+  "catalogueInQueue": "呢個隊列",
+  "catalogueClaimedQueue": "呢個隊列已認領",
+  "adminSavedFilters": "已儲存嘅篩選",
+  "adminSavedFiltersLead": "儲存呢個清單，例如「安省未認領」或者「等緊文件」。",
+  "adminSavedFiltersEmpty": "未有已儲存嘅篩選。",
+  "adminStatWaiting": "等你處理",
+  "adminStatIncomplete": "未完成",
+  "adminStatLive": "已上線",
+  "adminStatDeclined": "已拒絕",
+  "adminOtherCounts": "其他數字",
+  "adminSearchQueue": "搜尋名稱、城市、電郵…"
 }

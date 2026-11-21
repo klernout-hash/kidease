@@ -3678,5 +3678,22 @@
   "adminVacancyNone": "Ninguno en esta muestra.",
   "adminVacancyDryRun": "prueba",
   "adminLoadStuck": "Esta página no terminó de cargar.",
-  "adminLoadReload": "Recargar"
+  "adminLoadReload": "Recargar",
+  "moneyDeskViewLead": "Puede ver si las familias de sus centros pagaron. No puede enviar ni cambiar una factura.",
+  "adminNavTrustQueueHint": "Informes e identidad",
+  "adminNavConnectHint": "Cuentas Connect, pagos y cargos",
+  "catalogueQueueTitle": "Cola de revisión, no el catálogo público",
+  "catalogueQueueLead": "Estas cifras son los centros cargados en este escritorio. No son el catálogo nacional.",
+  "cataloguePublicPill": "Catálogo público",
+  "catalogueInQueue": "En esta cola",
+  "catalogueClaimedQueue": "Reclamados en esta cola",
+  "adminSavedFilters": "Filtros guardados",
+  "adminSavedFiltersLead": "Guarde esta lista, por ejemplo «Sin reclamar en ON» o «Documentos en espera».",
+  "adminSavedFiltersEmpty": "Aún no hay filtros guardados.",
+  "adminStatWaiting": "Le esperan",
+  "adminStatIncomplete": "Por completar",
+  "adminStatLive": "En línea",
+  "adminStatDeclined": "Rechazado",
+  "adminOtherCounts": "Otras cifras",
+  "adminSearchQueue": "Buscar nombre, ciudad, correo…"
 }

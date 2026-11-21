@@ -26,7 +26,7 @@ test("French parent and inbox URLs stay French", () => {
   assert.equal(isFrenchDeskPath("/provider/subscription"), false);
   assert.deepEqual(
     [...FRENCH_DESK_PREFIXES],
-    ["/parent", "/inbox", "/account", "/menu", "/provider", "/support", "/notifications"],
+    ["/parent", "/inbox", "/account", "/menu", "/provider", "/support", "/admin", "/notifications"],
   );
   assert.equal(localePath("/notifications", "fr"), "/fr/notifications");
   assert.equal(localePath("/parent", "fr"), "/fr/parent");
@@ -35,6 +35,9 @@ test("French parent and inbox URLs stay French", () => {
   assert.equal(localePath("/menu", "fr"), "/fr/menu");
   assert.equal(localePath("/provider", "fr"), "/fr/provider");
   assert.equal(localePath("/support", "fr"), "/fr/support");
+  assert.equal(localePath("/admin", "fr"), "/fr/admin");
+  assert.equal(localeSwitchPath("/admin", "fr"), "/fr/admin");
+  assert.equal(localeSwitchPath("/fr/admin", "en"), "/admin");
   assert.equal(localePath("/provider/subscription", "fr"), "/provider/subscription");
   assert.equal(localeSwitchPath("/account", "fr"), "/fr/account");
   assert.equal(localeSwitchPath("/fr/menu", "en"), "/menu");

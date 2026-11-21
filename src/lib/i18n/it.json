@@ -3678,5 +3678,22 @@
   "adminVacancyNone": "Nessuno in questo campione.",
   "adminVacancyDryRun": "prova",
   "adminLoadStuck": "Questa pagina non ha finito di caricarsi.",
-  "adminLoadReload": "Ricarica"
+  "adminLoadReload": "Ricarica",
+  "moneyDeskViewLead": "Puoi vedere se le famiglie dei tuoi centri hanno pagato. Non puoi inviare o modificare una fattura.",
+  "adminNavTrustQueueHint": "Rapporti e identità",
+  "adminNavConnectHint": "Account Connect, pagamenti e addebiti",
+  "catalogueQueueTitle": "Coda di revisione, non il catalogo pubblico",
+  "catalogueQueueLead": "Questi numeri sono i centri caricati su questa scrivania. Non sono il catalogo nazionale.",
+  "cataloguePublicPill": "Catalogo pubblico",
+  "catalogueInQueue": "In questa coda",
+  "catalogueClaimedQueue": "Rivendicati in questa coda",
+  "adminSavedFilters": "Filtri salvati",
+  "adminSavedFiltersLead": "Salva questo elenco, per esempio «Non rivendicati in ON» o «Documenti in attesa».",
+  "adminSavedFiltersEmpty": "Nessun filtro salvato.",
+  "adminStatWaiting": "In attesa di te",
+  "adminStatIncomplete": "Da completare",
+  "adminStatLive": "Online",
+  "adminStatDeclined": "Rifiutato",
+  "adminOtherCounts": "Altri numeri",
+  "adminSearchQueue": "Cerca nome, città, email…"
 }

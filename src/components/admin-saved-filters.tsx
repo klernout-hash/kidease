@@ -10,6 +10,7 @@ import {
   type AdminSavedFilter,
 } from "@/lib/admin-saved-filters";
 import { adminSavedFiltersFlag } from "@/lib/server/admin-saved-filters";
+import { useCopy } from "@/lib/use-copy";
 
 /** Save, name, and delete the admin list view that is open. */
 export function AdminSavedFilters({
@@ -25,6 +26,7 @@ export function AdminSavedFilters({
   docs: boolean;
   onApply: (filter: AdminSavedFilter) => void;
 }) {
+  const { t } = useCopy();
   const [on, setOn] = useState(true);
   const [rows, setRows] = useState<AdminSavedFilter[]>([]);
   const [name, setName] = useState("");
@@ -44,8 +46,8 @@ export function AdminSavedFilters({
   if (!on) return null;
   return (
     <section className="mb-4 rounded-xl bg-surface px-4 py-3 ring-1 ring-border" data-ke="admin-saved-filters">
-      <h2 className="text-sm font-medium">Saved filters</h2>
-      <p className="mt-1 text-sm text-muted">Save this list, for example “Unclaimed in ON” or “Docs waiting”.</p>
+      <h2 className="text-sm font-medium">{t("adminSavedFilters")}</h2>
+      <p className="mt-1 text-sm text-muted">{t("adminSavedFiltersLead")}</p>
       {rows.length ? (
         <ul className="mt-2 flex flex-wrap gap-2">
           {rows.map((row) => (
@@ -69,7 +71,7 @@ export function AdminSavedFilters({
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-sm text-muted">No saved filters yet.</p>
+        <p className="mt-2 text-sm text-muted">{t("adminSavedFiltersEmpty")}</p>
       )}
       <form
         className="mt-3 flex flex-wrap items-end gap-2"

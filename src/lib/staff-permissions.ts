@@ -230,6 +230,19 @@ export function navGrantAllows(grants: StaffGrants | null | undefined, id: strin
   return allows(grants, area, "view");
 }
 
+/** Phone menu rows a staff login may open. Screening, listings, and Top Rated stay with the owner. */
+const STAFF_PHONE_HIDDEN = new Set(["licence", "contract", "claim", "screening", "top-rated", "listings"]);
+
+export function staffPhoneMarkerAllowed(
+  marker: string,
+  grants: StaffGrants | null | undefined,
+  canInvite: boolean,
+): boolean {
+  if (STAFF_PHONE_HIDDEN.has(marker)) return false;
+  if (marker === "employees") return canInvite;
+  return navGrantAllows(grants, marker);
+}
+
 export function areaForWriteAction(action: string): StaffArea | null {
   if (action === "document_upload") return "documents";
   if (action === "listing") return "listing";

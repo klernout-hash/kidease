@@ -19,6 +19,7 @@ import {
   type DeskId,
   type DeskItem,
 } from "@/lib/desk-nav";
+import { LanguageSelect } from "@/components/language-select";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import { cn } from "@/lib/utils";
@@ -228,6 +229,11 @@ export function DeskShell({
             <aside className={cn("md:sticky md:top-14 md:w-44 md:shrink-0", fitViewport && "shrink-0 md:static md:min-h-0 md:overflow-y-auto")}>
               <p className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-subtle md:block">{eyebrow}</p>
               <Heading className={cn("font-display text-[1.2rem] leading-tight md:mt-0.5", headingMode === "aside" && "max-md:sr-only")}>{title}</Heading>
+              {desk === "admin" ? (
+                <div className="mt-2" data-ke="admin-language">
+                  <LanguageSelect pill />
+                </div>
+              ) : null}
               {showSwitcher ? (
                 <div className="mt-2 hidden md:block" data-ke="desk-switcher-slot">
                   <DeskSwitcher />

@@ -28,6 +28,7 @@ export type CentreDocCopy = {
   handbookNote: string;
   licenceHint: string;
   screeningHint: string;
+  viewOnly: string;
   badge: string;
   filterAll: string;
   filterMissing: string;
@@ -66,6 +67,7 @@ const en: CentreDocCopy = {
   handbookNote: "The written note on the listing stays. This checklist also needs the PDF.",
   licenceHint: "The licence scan stays on the licence page.",
   screeningHint: "Staff screening stays on the screening page.",
+  viewOnly: "You can read this list. You cannot change the dates or the files.",
   badge: "Documents verified",
   filterAll: "All claimed centres",
   filterMissing: "Missing a file",
@@ -113,6 +115,7 @@ const fr: CentreDocCopy = {
   handbookNote: "La note écrite sur la fiche reste. Cette liste demande aussi le PDF.",
   licenceHint: "Le scan de la licence reste sur la page de la licence.",
   screeningHint: "Le filtrage du personnel reste sur la page de filtrage.",
+  viewOnly: "Vous pouvez lire cette liste. Vous ne pouvez pas changer les dates ni les fichiers.",
   badge: "Documents vérifiés",
   filterAll: "Tous les centres revendiqués",
   filterMissing: "Fichier manquant",

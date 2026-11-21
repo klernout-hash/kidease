@@ -3,7 +3,7 @@ import { MenuGlyph, MenuRow } from "@/components/menu-row";
 import { RoleSwitchPill } from "@/components/role-switch-pill";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/session-desks";
-import { navGrantAllows } from "@/lib/staff-permissions";
+import { staffPhoneMarkerAllowed } from "@/lib/staff-permissions";
 import { signOut } from "@/lib/auth/client";
 import { menuDeskPath, providerDeskPath } from "@/lib/desk-nav";
 import { localePath } from "@/lib/locale-path";
@@ -151,11 +151,7 @@ export function PhoneCategoryMenu({ host }: { host: boolean }) {
     .map((group) => ({
       ...group,
       rows: staffView
-        ? group.rows.filter((row) => {
-            if (row.marker === "licence" || row.marker === "contract" || row.marker === "claim") return false;
-            if (row.marker === "employees") return session?.centreCanInvite === true;
-            return navGrantAllows(grants, row.marker);
-          })
+        ? group.rows.filter((row) => staffPhoneMarkerAllowed(row.marker, grants, session?.centreCanInvite === true))
         : group.rows,
     }))
     .map((group) => ({
@@ -195,7 +191,15 @@ export function PhoneCategoryMenu({ host }: { host: boolean }) {
               key={row.marker}
               to={row.to}
               search={row.search}
-              label={fr ? row.fr : row.en}
+              label={
+                staffView && row.marker === "hours"
+                  ? fr
+                    ? "Vos heures"
+                    : "Your hours"
+                  : fr
+                    ? row.fr
+                    : row.en
+              }
               icon={row.icon}
               marker={`phone-${row.marker}`}
             />
