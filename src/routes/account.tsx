@@ -39,6 +39,7 @@ import { useInNativeShell, useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { SignedInDevices } from "@/components/signed-in-devices";
 import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
+import { AccountExportPanel } from "@/components/account-export-panel";
 import { AlertPushSettings } from "@/components/alert-push-settings";
 import { HostActionEmailPref } from "@/components/host-action-list";
 import { ReferFriendPanel } from "@/components/refer-friend-panel";
@@ -97,7 +98,7 @@ export function accountValidateSearch(s: Record<string, unknown>) {
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";
       desk?: "parent" | "director" | "staff" | "admin" | "support";
-      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer" | "wallet";
+      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer" | "wallet" | "export";
       edit?: "1";
       field?: "name" | "phone" | "email" | "work" | "about";
     } = {};
@@ -114,7 +115,8 @@ export function accountValidateSearch(s: Record<string, unknown>) {
       section === "email-sms" ||
       section === "documents" ||
       section === "refer" ||
-      section === "wallet"
+      section === "wallet" ||
+      section === "export"
     ) {
       out.section = section;
     }
@@ -566,7 +568,7 @@ function ProfilePane() {
           ? "profile"
           : (search.section ?? "profile");
   const sectionSearch = (
-    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer" | "wallet",
+    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer" | "wallet" | "export",
   ) => ({
     tab: "profile" as const,
     ...(search.desk ? { desk: search.desk } : {}),
@@ -576,6 +578,7 @@ function ProfilePane() {
     { id: "profile" as const, label: t("profile") },
     { id: "alerts" as const, label: t("accountAlerts") },
     { id: "security" as const, label: t("loginSecurity") },
+    { id: "export" as const, label: t("accountExport") },
     { id: "wallet" as const, label: t("walletTitle") },
     { id: "email-sms" as const, label: t("emailAndSms") },
     { id: "documents" as const, label: t("familyDocs") },
@@ -895,6 +898,12 @@ function ProfilePane() {
           <div data-ke="account-delete">
             <DeleteAccountPanel signedIn={Boolean(user) || (chrome.signedIn && !chrome.pending)} />
           </div>
+        ) : null}
+        {section === "export" ? (
+          <AccountExportPanel
+            signedIn={Boolean(user) || (chrome.signedIn && !chrome.pending)}
+            isAdmin={chrome.role === "admin"}
+          />
         ) : null}
         {section === "security" && (user || (chrome.signedIn && !chrome.pending)) ? (
           <div className="mt-8" data-ke="account-security">
