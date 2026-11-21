@@ -161,19 +161,37 @@ function listingOgImage(src: ListingSeoSource) {
   return listingOpenGraphImage(src);
 }
 
+/** Google shows about 60 characters. Stay at or under this. */
+export const LISTING_TITLE_MAX = 65;
+
+/** Keep the name. Add later bits only while the title still fits. */
+export function fitListingTitle(segments: readonly string[], max = LISTING_TITLE_MAX): string {
+  const tail = " · KidEase";
+  const room = max - tail.length;
+  let head = "";
+  for (const segment of segments) {
+    const bit = segment.trim();
+    if (!bit) continue;
+    const next = head ? `${head} · ${bit}` : bit;
+    if (next.length <= room) head = next;
+  }
+  if (!head) return "KidEase";
+  if (head.length > room) head = head.slice(0, room).trimEnd();
+  return `${head}${tail}`;
+}
+
 /**
  * Unique listing title. Fail closed to empty when name is missing —
- * callers must not invent a centre.
+ * callers must not invent a centre. Ages stay in the meta description
+ * when they do not fit in this short title.
  */
 export function listingPageTitle(src: ListingSeoSource, locale: ListingSeoLocale = "en") {
   const name = listingDisplayName(src, locale);
   if (!name) return "";
   const area = listingAreaLine(src);
   const ages = agePhrase(src, locale);
-  const parts = area ? [name, area] : [name];
-  const head = locale === "fr" && area ? `${name} à ${area}` : parts.join(" · ");
-  if (ages) return `${head} · ${ages} · KidEase`;
-  return `${head} · KidEase`;
+  if (locale === "fr" && area) return fitListingTitle([`${name} à ${area}`, ages]);
+  return fitListingTitle([name, area, ages]);
 }
 
 export function listingMetaDescription(src: ListingSeoSource, locale: ListingSeoLocale = "en") {
