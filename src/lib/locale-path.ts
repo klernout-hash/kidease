@@ -10,8 +10,8 @@
  * text). Listing and city-hub documents still have a French URL so the
  * language toggle, hreflang, and Quebec city pages resolve. Signed-in desks
  * with a French URL are `/fr/parent`, `/fr/inbox`, `/fr/account`, `/fr/menu`,
- * `/fr/provider`, and `/fr/support`. Nested French URLs exist for parent and
- * inbox only. `/admin` stays unprefixed. `/login` has a `/fr/login`
+ * `/fr/provider`, `/fr/support`, and `/fr/admin`. Nested French URLs exist for parent and
+ * inbox only. `/login` has a `/fr/login`
  * counterpart. Forgot-password, reset-password, and verify-2fa have `/fr`
  * twins too. Quebec geo opens those three only when FEATURE_FR_AUTH_QC is on.
  */
@@ -187,7 +187,7 @@ export function englishPath(pathname: string): string {
 }
 
 /** Signed-in desks that have a real `/fr` URL. Nested paths exist for parent and inbox only. */
-export const FRENCH_DESK_PREFIXES = ["/parent", "/inbox", "/account", "/menu", "/provider", "/support", "/notifications"] as const;
+export const FRENCH_DESK_PREFIXES = ["/parent", "/inbox", "/account", "/menu", "/provider", "/support", "/admin", "/notifications"] as const;
 
 const FRENCH_DESK_NESTED = new Set<string>(["/parent", "/inbox"]);
 

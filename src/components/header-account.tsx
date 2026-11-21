@@ -18,7 +18,7 @@ export function HeaderAccount() {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
   const chrome = useRoleChrome();
-  const { sticky } = useSessionDesks();
+  const { session, sticky } = useSessionDesks();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const headerUser = chrome.guestView ? null : user;
   // Role chrome is in the first HTML. A known signed-in role keeps the account
@@ -32,7 +32,7 @@ export function HeaderAccount() {
       {showAvatar ? (
         <Link
           to={accountDeskPath(pathname)}
-          search={accountSearch(sticky)}
+          search={accountSearch(sticky, session?.centreRole)}
           data-ke="header-avatar"
           aria-label={t("menuAccountSettings")}
           className="grid size-12 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full touch-manipulation"

@@ -3678,5 +3678,22 @@
   "adminVacancyNone": "Keine in dieser Auswahl.",
   "adminVacancyDryRun": "Testlauf",
   "adminLoadStuck": "Diese Seite wurde nicht fertig geladen.",
-  "adminLoadReload": "Neu laden"
+  "adminLoadReload": "Neu laden",
+  "moneyDeskViewLead": "Sie sehen, ob die Familien Ihrer Zentren bezahlt haben. Sie können keine Rechnung senden oder ändern.",
+  "adminNavTrustQueueHint": "Berichte und Identität",
+  "adminNavConnectHint": "Connect-Konten, Auszahlungen und Gebühren",
+  "catalogueQueueTitle": "Prüfwarteschlange, nicht der öffentliche Katalog",
+  "catalogueQueueLead": "Diese Zahlen sind die auf diesem Schreibtisch geladenen Zentren. Das ist nicht der nationale Katalog.",
+  "cataloguePublicPill": "Öffentlicher Katalog",
+  "catalogueInQueue": "In dieser Warteschlange",
+  "catalogueClaimedQueue": "Beansprucht in dieser Warteschlange",
+  "adminSavedFilters": "Gespeicherte Filter",
+  "adminSavedFiltersLead": "Speichern Sie diese Liste, zum Beispiel «Nicht beansprucht in ON» oder «Dokumente warten».",
+  "adminSavedFiltersEmpty": "Noch keine gespeicherten Filter.",
+  "adminStatWaiting": "Wartet auf Sie",
+  "adminStatIncomplete": "Unvollständig",
+  "adminStatLive": "Live",
+  "adminStatDeclined": "Abgelehnt",
+  "adminOtherCounts": "Weitere Zahlen",
+  "adminSearchQueue": "Name, Stadt, E-Mail suchen…"
 }

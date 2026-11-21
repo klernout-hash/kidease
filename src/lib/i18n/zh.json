@@ -3678,5 +3678,22 @@
   "adminVacancyNone": "此样本中没有。",
   "adminVacancyDryRun": "试运行",
   "adminLoadStuck": "此页面没有加载完。",
-  "adminLoadReload": "重新加载"
+  "adminLoadReload": "重新加载",
+  "moneyDeskViewLead": "您可以查看本中心家庭是否已付款。您不能发送或修改账单。",
+  "adminNavTrustQueueHint": "报告和身份",
+  "adminNavConnectHint": "Connect 账户、付款和收费",
+  "catalogueQueueTitle": "审核队列，不是公开目录",
+  "catalogueQueueLead": "这些数字是本台已加载的中心。这不是全国目录。",
+  "cataloguePublicPill": "公开目录",
+  "catalogueInQueue": "本队列",
+  "catalogueClaimedQueue": "本队列中已认领",
+  "adminSavedFilters": "已保存的筛选",
+  "adminSavedFiltersLead": "保存此列表，例如“安省未认领”或“待审文件”。",
+  "adminSavedFiltersEmpty": "还没有保存的筛选。",
+  "adminStatWaiting": "等你处理",
+  "adminStatIncomplete": "待补全",
+  "adminStatLive": "已上线",
+  "adminStatDeclined": "已拒绝",
+  "adminOtherCounts": "其他数字",
+  "adminSearchQueue": "搜索名称、城市、邮箱…"
 }

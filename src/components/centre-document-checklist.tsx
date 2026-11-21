@@ -145,6 +145,9 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
         {copy.score.replace("{n}", String(checklist.percent))}
       </p>
       <p className="mt-1 text-sm text-muted" data-ke="centre-documents-score-why">{copy.scoreWhy}</p>
+      {canUpload ? null : (
+        <p className="mt-2 text-sm text-muted" data-ke="centre-documents-view-only">{copy.viewOnly}</p>
+      )}
       <ul className="mt-4 space-y-3">
         {checklist.items.map((item) => (
           <li key={item.id} className="rounded-lg bg-bg p-3 ring-1 ring-border" data-ke="centre-document-row">
@@ -168,7 +171,7 @@ export function CentreDocumentChecklist({ daycareId }: { daycareId: string }) {
               </p>
             ) : null}
             {item.kind === "handbook" ? <p className="mt-1 text-sm text-muted">{copy.handbookNote}</p> : null}
-            {item.kind === "insurance" ? (
+            {canUpload && item.kind === "insurance" ? (
               <label className="mt-2 block text-sm">
                 {copy.expiry}
                 <input

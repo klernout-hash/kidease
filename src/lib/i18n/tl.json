@@ -3678,5 +3678,22 @@
   "adminVacancyNone": "Wala sa sample na ito.",
   "adminVacancyDryRun": "pagsubok",
   "adminLoadStuck": "Hindi natapos mag-load ang pahinang ito.",
-  "adminLoadReload": "I-reload"
+  "adminLoadReload": "I-reload",
+  "moneyDeskViewLead": "Makikita mo kung nabayaran na ng mga pamilya sa iyong mga sentro. Hindi ka maaaring magpadala o magbago ng bill.",
+  "adminNavTrustQueueHint": "Mga ulat at pagkakakilanlan",
+  "adminNavConnectHint": "Mga Connect account, bayad, at singil",
+  "catalogueQueueTitle": "Pila ng pagsusuri, hindi ang pampublikong talaan",
+  "catalogueQueueLead": "Ang mga bilang na ito ay ang mga sentrong nakarga sa desk na ito. Hindi ito ang pambansang talaan.",
+  "cataloguePublicPill": "Pampublikong talaan",
+  "catalogueInQueue": "Sa pilang ito",
+  "catalogueClaimedQueue": "Na-claim sa pilang ito",
+  "adminSavedFilters": "Naka-save na mga filter",
+  "adminSavedFiltersLead": "I-save ang listahang ito, halimbawa “Hindi na-claim sa ON” o “Hinihintay na mga dokumento”.",
+  "adminSavedFiltersEmpty": "Wala pang naka-save na filter.",
+  "adminStatWaiting": "Hinihintay ka",
+  "adminStatIncomplete": "Kulang pa",
+  "adminStatLive": "Live",
+  "adminStatDeclined": "Tinanggihan",
+  "adminOtherCounts": "Iba pang bilang",
+  "adminSearchQueue": "Maghanap ng pangalan, lungsod, email…"
 }

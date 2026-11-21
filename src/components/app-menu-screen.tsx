@@ -117,7 +117,7 @@ export function AppMenuScreen({
         <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t("navMenu")}</h1>
       )}
       {hostCards ? <HostCards initialEarnings={earnings} initialInsights={insights} /> : null}
-      {highlight === "create" ? (
+      {highlight === "create" && !staffViewer ? (
         <Link
           to={providerDeskPath(pathname)}
           search={{ desk: "listings" }}

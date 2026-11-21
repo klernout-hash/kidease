@@ -16,6 +16,7 @@ import {
   decidePermissionUpdate,
   grantsForMember,
   navGrantAllows,
+  staffPhoneMarkerAllowed,
   permissionChangeDetail,
   presetGrants,
 } from "../src/lib/staff-permissions.ts";
@@ -196,6 +197,12 @@ test("permission changes name who changed what, and the nav hides a closed area"
   }).map((item) => item.id);
   assert.equal(billsNav.includes("money"), true);
   assert.equal(billsNav.includes("employees"), false);
+  assert.equal(staffPhoneMarkerAllowed("listings", STAFF_GRANTS, false), false);
+  assert.equal(staffPhoneMarkerAllowed("screening", STAFF_GRANTS, false), false);
+  assert.equal(staffPhoneMarkerAllowed("hours", STAFF_GRANTS, false), true);
+  assert.equal(staffPhoneMarkerAllowed("centre-documents", STAFF_GRANTS, false), true);
+  assert.equal(staffPhoneMarkerAllowed("requests", STAFF_GRANTS, false), true);
+  assert.equal(staffPhoneMarkerAllowed("tours", STAFF_GRANTS, false), true);
 });
 
 test("bills endpoints call the 403 guard", () => {

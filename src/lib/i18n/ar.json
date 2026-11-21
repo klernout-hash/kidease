@@ -3678,5 +3678,22 @@
   "adminVacancyNone": "لا شيء في هذه العينة.",
   "adminVacancyDryRun": "تجربة",
   "adminLoadStuck": "لم تنتهِ هذه الصفحة من التحميل.",
-  "adminLoadReload": "إعادة التحميل"
+  "adminLoadReload": "إعادة التحميل",
+  "moneyDeskViewLead": "يمكنك أن ترى إن كانت عائلات مراكزك قد دفعت. لا يمكنك إرسال فاتورة أو تغييرها.",
+  "adminNavTrustQueueHint": "التقارير والهوية",
+  "adminNavConnectHint": "حسابات Connect والمدفوعات والرسوم",
+  "catalogueQueueTitle": "طابور المراجعة، وليس الدليل العام",
+  "catalogueQueueLead": "هذه الأعداد هي المراكز المحملة على هذا المكتب. ليست الدليل الوطني.",
+  "cataloguePublicPill": "الدليل العام",
+  "catalogueInQueue": "في هذا الطابور",
+  "catalogueClaimedQueue": "مُطالب بها في هذا الطابور",
+  "adminSavedFilters": "عوامل تصفية محفوظة",
+  "adminSavedFiltersLead": "احفظ هذه القائمة، مثلاً «غير مطالب بها في ON» أو «مستندات بانتظار».",
+  "adminSavedFiltersEmpty": "لا توجد عوامل تصفية محفوظة بعد.",
+  "adminStatWaiting": "بانتظارك",
+  "adminStatIncomplete": "ناقص",
+  "adminStatLive": "منشور",
+  "adminStatDeclined": "مرفوض",
+  "adminOtherCounts": "أعداد أخرى",
+  "adminSearchQueue": "ابحث عن اسم أو مدينة أو بريد…"
 }

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute, useLoaderData, useRouterState } from "@tanstack/react-router";
 import { beforeLoadAdminDesk, loadAdminQueueForRoute } from "@/lib/server/admin-route";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { ADMIN_LOGIN_SEARCH } from "@/lib/admin-desk-gate";
@@ -17,13 +17,7 @@ const AdminPage = lazy(() =>
   import("@/components/admin-desk-page").then((m) => ({ default: m.AdminPage })),
 );
 
-export const Route = createFileRoute("/admin")({
-  beforeLoad: beforeLoadAdminDesk,
-  staleTime: 0,
-  gcTime: 0,
-  shouldReload: true,
-  loader: ({ context }) => loadAdminQueueForRoute(context),
-  validateSearch: (s: Record<string, unknown>) => {
+export function adminValidateSearch(s: Record<string, unknown>) {
     const rawTab = typeof s.tab === "string" ? s.tab : null;
     const tab = isAdminDeskTab(rawTab) ? rawTab : undefined;
     const kindRaw = typeof s.kind === "string" ? s.kind : undefined;
@@ -53,7 +47,15 @@ export const Route = createFileRoute("/admin")({
     if (prov) out.prov = prov;
     if (docs) out.docs = docs;
     return out;
-  },
+}
+
+export const Route = createFileRoute("/admin")({
+  beforeLoad: beforeLoadAdminDesk,
+  staleTime: 0,
+  gcTime: 0,
+  shouldReload: true,
+  loader: ({ context }) => loadAdminQueueForRoute(context),
+  validateSearch: adminValidateSearch,
   head: () => ({
     meta: [{ title: "Admin · KidEase" }, { name: "robots", content: "noindex, nofollow" }],
   }),
@@ -80,8 +82,8 @@ function AdminGatePending() {
   );
 }
 
-function AdminRoute() {
-  const bootstrap = Route.useLoaderData();
+export function AdminRoute() {
+  const bootstrap = useLoaderData({ strict: false }) as Awaited<ReturnType<typeof loadAdminQueueForRoute>>;
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   if (
     pathname === "/admin/features" ||

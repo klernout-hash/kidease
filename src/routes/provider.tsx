@@ -291,6 +291,10 @@ export function ProviderPage() {
   const canEditBills = centreOwner || session?.centreGrants?.bills === "edit";
   const canInviteStaff = centreOwner || session?.centreCanInvite === true;
   const staffDesk = centreRole === "staff" || centreRole === "read_only";
+  useEffect(() => {
+    if (!staffDesk) return;
+    document.title = locale === "fr" ? "Bureau du personnel · KidEase" : "Staff desk · KidEase";
+  }, [staffDesk, locale]);
   const [hostToday, setHostToday] = useState(true);
   useEffect(() => {
     void hostTodayFlag()
