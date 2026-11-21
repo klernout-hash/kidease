@@ -28,6 +28,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 test("private document paths are not served", () => {
   assert.equal(isPrivateMediaPath("/screening/centre/file.pdf"), true);
   assert.equal(isPrivateMediaPath("/licenses/centre/file.pdf"), true);
+  assert.equal(isPrivateMediaPath("/contracts/centre/pack.pdf"), true);
   assert.equal(isPrivateMediaPath("/photos/wpg/1.jpg"), false);
   assert.deepEqual(decideRequest({ host: "media.kidease.ca", pathname: "/screening/centre/file.pdf" }), {
     action: "not_found",

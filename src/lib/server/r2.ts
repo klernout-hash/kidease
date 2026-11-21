@@ -287,9 +287,16 @@ export function allowPrivateDocType(raw: string): string {
 }
 
 const PRIVATE_DOC_PREFIXES = [R2_SCREENING_PREFIX, R2_LICENSE_PREFIX, R2_FAMILY_PREFIX, "centre-docs"] as const;
+/** Signed agreements live under contracts/ and must not be on the public media host. */
+const PRIVATE_STORAGE_PREFIXES = [...PRIVATE_DOC_PREFIXES, R2_CONTRACT_PREFIX] as const;
 
 export function isPrivateDocKey(key: string): boolean {
   return PRIVATE_DOC_PREFIXES.some((prefix) => key.startsWith(`${prefix}/`));
+}
+
+/** Private docs plus signed contract PDFs. Photos stay on the public bucket. */
+export function isPrivateStorageKey(key: string): boolean {
+  return PRIVATE_STORAGE_PREFIXES.some((prefix) => key.startsWith(`${prefix}/`));
 }
 
 /** Paths that must never be served from media.kidease.ca. */
@@ -299,14 +306,14 @@ export function isBlockedPublicMediaPath(pathname: string): boolean {
     .split("#")[0]
     .replace(/^\/+/, "")
     .toLowerCase();
-  return PRIVATE_DOC_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+  return PRIVATE_STORAGE_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
 }
 
 /**
  * Cloudflare WAF custom rule for the zone that serves media.kidease.ca.
  * Action: Block. The app cannot attach this rule without dashboard access.
  */
-export const PUBLIC_MEDIA_WAF_EXPRESSION = `(http.host eq "media.kidease.ca" and (${PRIVATE_DOC_PREFIXES.map(
+export const PUBLIC_MEDIA_WAF_EXPRESSION = `(http.host eq "media.kidease.ca" and (${PRIVATE_STORAGE_PREFIXES.map(
   (prefix) => `starts_with(http.request.uri.path, "/${prefix}/")`,
 ).join(" or ")}))`;
 
@@ -334,7 +341,7 @@ export function parsePrivateObjectList(xml: string): { keys: string[]; truncated
   const keys: string[] = [];
   for (const match of String(xml || "").matchAll(/<Key>([^<]*)<\/Key>/g)) {
     const key = match[1].trim();
-    if (isPrivateDocKey(key)) keys.push(key);
+    if (isPrivateStorageKey(key)) keys.push(key);
   }
   const truncated = /<IsTruncated>\s*true\s*<\/IsTruncated>/i.test(xml);
   const token = xml.match(/<NextContinuationToken>([^<]*)<\/NextContinuationToken>/)?.[1]?.trim() || "";
@@ -348,7 +355,7 @@ export function privateDocCopyPlan(input: {
   key: string;
 }): { method: "PUT"; copySource: string; destBucket: string; key: string } | null {
   const key = String(input.key || "").replace(/^\/+/, "");
-  if (!isPrivateDocKey(key)) return null;
+  if (!isPrivateStorageKey(key)) return null;
   if (!input.publicBucket || !input.privateBucket || input.publicBucket === input.privateBucket) return null;
   return {
     method: "PUT",

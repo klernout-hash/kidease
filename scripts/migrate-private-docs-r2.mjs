@@ -1,7 +1,7 @@
 /**
  * Copy private documents out of the public media bucket, then delete the public copies.
  *
- * Prefixes: screening/, licenses/, family-docs/, centre-docs/.
+ * Prefixes: screening/, licenses/, family-docs/, centre-docs/, contracts/.
  * Copy is server-side (x-amz-copy-source). This script does not download or print file bodies.
  * Default is dry-run. Nothing is deleted unless --apply and the private copy's size matches.
  *
@@ -13,12 +13,12 @@
  *   2. Set Vercel Production env R2_PRIVATE_BUCKET=kidease-private-docs
  *      (same R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_ENDPOINT as the media bucket).
  *   3. Cloudflare WAF custom rule on the zone that serves media.kidease.ca, action Block:
- *      (http.host eq "media.kidease.ca" and (starts_with(http.request.uri.path, "/screening/") or starts_with(http.request.uri.path, "/licenses/") or starts_with(http.request.uri.path, "/family-docs/") or starts_with(http.request.uri.path, "/centre-docs/")))
+ *      (http.host eq "media.kidease.ca" and (starts_with(http.request.uri.path, "/screening/") or starts_with(http.request.uri.path, "/licenses/") or starts_with(http.request.uri.path, "/family-docs/") or starts_with(http.request.uri.path, "/centre-docs/") or starts_with(http.request.uri.path, "/contracts/")))
  */
 import { fileURLToPath } from "node:url";
 import {
   encodeS3Path,
-  isPrivateDocKey,
+  isPrivateStorageKey,
   objectUrl,
   parsePrivateObjectList,
   privateDocCopyPlan,
@@ -29,7 +29,7 @@ import {
   signS3Request,
 } from "../src/lib/server/r2.ts";
 
-const PREFIXES = ["screening/", "licenses/", "family-docs/", "centre-docs/"];
+const PREFIXES = ["screening/", "licenses/", "family-docs/", "centre-docs/", "contracts/"];
 
 export function parsePrivateMigrateArgs(argv) {
   const args = { apply: false, help: false };
@@ -127,7 +127,7 @@ export async function runPrivateDocMigration(argv = [], env = process.env) {
   for (const prefix of PREFIXES) {
     keys.push(...(await listPrefix(pub.config, prefix)));
   }
-  const unique = [...new Set(keys)].filter((key) => isPrivateDocKey(key));
+  const unique = [...new Set(keys)].filter((key) => isPrivateStorageKey(key));
   const counts = countKeys(unique);
   if (!args.apply) {
     return { ok: true, ...report, counts, planned: unique.length };

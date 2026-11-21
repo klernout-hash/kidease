@@ -273,7 +273,7 @@ export function stripPrivateRoutePreloads(html) {
   );
 }
 
-const PRIVATE_MEDIA_PREFIXES = ["/screening/", "/licenses/", "/family-docs/", "/centre-docs/"];
+const PRIVATE_MEDIA_PREFIXES = ["/screening/", "/licenses/", "/family-docs/", "/centre-docs/", "/contracts/"];
 
 /** Private document keys must not be served as public pages or media paths. */
 export function isPrivateMediaPath(pathname) {

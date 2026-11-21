@@ -17,6 +17,7 @@ import {
   presignS3Get,
   isBlockedPublicMediaPath,
   isPrivateDocKey,
+  isPrivateStorageKey,
   parsePrivateObjectList,
   privateDocCopyPlan,
   PUBLIC_MEDIA_WAF_EXPRESSION,
@@ -268,12 +269,16 @@ test("private documents use a separate bucket and never a public media path", ()
   assert.equal(isPrivateDocKey("screening/centre/file.pdf"), true);
   assert.equal(isPrivateDocKey("centre-docs/centre/file.pdf"), true);
   assert.equal(isPrivateDocKey("originals/wpg/1001.jpg"), false);
+  assert.equal(isPrivateStorageKey("contracts/centre/pack.pdf"), true);
+  assert.equal(isPrivateDocKey("contracts/centre/pack.pdf"), false);
   assert.equal(isBlockedPublicMediaPath("/screening/centre/file.pdf"), true);
   assert.equal(isBlockedPublicMediaPath("/licenses/centre/file.pdf"), true);
+  assert.equal(isBlockedPublicMediaPath("/contracts/centre/pack.pdf"), true);
   assert.equal(isBlockedPublicMediaPath("/photos/wpg/1001.jpg"), false);
   assert.match(PUBLIC_MEDIA_WAF_EXPRESSION, /media\.kidease\.ca/);
   assert.match(PUBLIC_MEDIA_WAF_EXPRESSION, /\/screening\//);
   assert.match(PUBLIC_MEDIA_WAF_EXPRESSION, /\/licenses\//);
+  assert.match(PUBLIC_MEDIA_WAF_EXPRESSION, /\/contracts\//);
   const listed = parsePrivateObjectList(
     "<ListBucketResult><Key>screening/a.pdf</Key><Key>photos/wpg/1.jpg</Key><IsTruncated>false</IsTruncated></ListBucketResult>",
   );
@@ -288,5 +293,13 @@ test("private documents use a separate bucket and never a public media path", ()
   assert.equal(
     privateDocCopyPlan({ publicBucket: "kidease-media", privateBucket: "kidease-private-docs", key: "photos/a.jpg" }),
     null,
+  );
+  assert.equal(
+    privateDocCopyPlan({
+      publicBucket: "kidease-media",
+      privateBucket: "kidease-private-docs",
+      key: "contracts/centre/pack.pdf",
+    })?.destBucket,
+    "kidease-private-docs",
   );
 });

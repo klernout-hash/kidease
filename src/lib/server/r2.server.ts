@@ -10,6 +10,7 @@ import {
   decodeObjectBody,
   humanR2Error,
   isPrivateDocKey,
+  isPrivateStorageKey,
   objectUrl,
   presignS3Get,
   R2_CONTRACT_MAX_BYTES,
@@ -50,7 +51,13 @@ function requirePrivateConfig(env: Record<string, string | undefined> = process.
 }
 
 function configForKey(key: string): R2Config {
-  return isPrivateDocKey(key) ? requirePrivateConfig() : requireConfig();
+  return isPrivateStorageKey(key) ? requirePrivateConfig() : requireConfig();
+}
+
+function logPrivateWriteRefusal(bucket: string): void {
+  console.error(
+    `[r2] private upload failed for bucket ${bucket}. The public media bucket was not used.`,
+  );
 }
 
 async function r2Fetch(
@@ -154,9 +161,14 @@ export async function putR2Object(input: {
 }
 
 export async function putContractPdf(input: { key: string; body: Buffer }): Promise<R2PutResult> {
-  const config = requireConfig();
   const key = sanitizeObjectKey(input.key);
   if (!key.startsWith("contracts/")) throw new Error("Signed PDF key must stay under contracts/.");
+  const resolved = resolvePrivateR2Config();
+  if (!resolved.ok) {
+    logPrivateWriteRefusal("unset");
+    throw new Error(resolved.error);
+  }
+  const config = resolved.config;
   const contentType = allowContractPdfType("application/pdf");
   const body = input.body;
   if (!body.byteLength) throw new Error("Object body is required.");
@@ -184,6 +196,7 @@ export async function putContractPdf(input: { key: string; body: Buffer }): Prom
       etag: res.headers.get("etag"),
     };
   } catch (err) {
+    logPrivateWriteRefusal(config.bucket);
     throw new Error(humanR2Error(err, config.secretAccessKey));
   }
 }
@@ -197,7 +210,13 @@ export async function putPrivateDoc(input: {
   if (!isPrivateDocKey(key)) {
     throw new Error("Private document key must stay under screening/, licenses/, family-docs/, or centre-docs/.");
   }
-  const config = requirePrivateConfig();
+  let config: R2Config;
+  try {
+    config = requirePrivateConfig();
+  } catch (err) {
+    logPrivateWriteRefusal("unset");
+    throw err;
+  }
   const contentType = allowPrivateDocType(input.contentType);
   const body = input.body;
   if (!body.byteLength) throw new Error("Object body is required.");
@@ -225,6 +244,7 @@ export async function putPrivateDoc(input: {
       etag: res.headers.get("etag"),
     };
   } catch (err) {
+    logPrivateWriteRefusal(config.bucket);
     throw new Error(humanR2Error(err, config.secretAccessKey));
   }
 }
@@ -267,15 +287,16 @@ export async function headR2Object(keyInput: string): Promise<{
   etag: string | null;
 }> {
   const key = sanitizeObjectKey(keyInput);
-  const config = isPrivateDocKey(key) ? resolvePrivateR2Config() : resolveR2Config();
+  const config = isPrivateStorageKey(key) ? resolvePrivateR2Config() : resolveR2Config();
   if (!config.ok) {
-    if (!isPrivateDocKey(key)) throw new Error(config.error);
+    if (!isPrivateStorageKey(key)) throw new Error(config.error);
+    console.error("[r2] private bucket is not configured. The public media bucket was not written.");
     const pub = resolveR2Config();
     if (!pub.ok) throw new Error(config.error);
     return headWithConfig(pub.config, key);
   }
   const found = await headWithConfig(config.config, key);
-  if (found.exists || !isPrivateDocKey(key)) return found;
+  if (found.exists || !isPrivateStorageKey(key)) return found;
   const pub = resolveR2Config();
   if (!pub.ok || pub.config.bucket === config.config.bucket) return found;
   return headWithConfig(pub.config, key);
@@ -342,18 +363,23 @@ async function readObject(config: R2Config, key: string): Promise<R2GetResult> {
 
 export async function getR2Object(keyInput: string): Promise<R2GetResult> {
   const key = sanitizeObjectKey(keyInput);
-  if (!isPrivateDocKey(key)) return readObject(requireConfig(), key);
+  if (!isPrivateStorageKey(key)) return readObject(requireConfig(), key);
   const privateResolved = resolvePrivateR2Config();
   if (privateResolved.ok) {
     try {
       return await readObject(privateResolved.config, key);
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
-      if (!/not found/i.test(message)) throw err instanceof Error ? err : new Error("Object not found.");
-      console.error("[r2] private document is not in the private bucket yet");
+      if (!/not found/i.test(message)) {
+        console.error(
+          `[r2] private bucket read failed for ${privateResolved.config.bucket}. The public media bucket was not used.`,
+        );
+        throw err instanceof Error ? err : new Error("Object not found.");
+      }
+      console.error("[r2] private object is not in the private bucket yet");
     }
   } else {
-    console.error("[r2] private document bucket is not ready");
+    console.error("[r2] private bucket is not configured. The public media bucket was not written.");
   }
   return readObject(requireConfig(), key);
 }
