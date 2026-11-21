@@ -8,11 +8,10 @@ on:
     paths-ignore:
       - "docs/**"
       - "**/*.md"
+  # Pull requests always run. Branch protection requires the check and e2e
+  # jobs, and a docs-only change would otherwise never report them.
   pull_request:
     branches: [main]
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
   workflow_dispatch:
     inputs:
       base_url:
