@@ -1,6 +1,7 @@
 package ca.kidease.app;
 
 import android.net.Uri;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import com.getcapacitor.Bridge;
@@ -20,5 +21,13 @@ public class AdminWebOnlyClient extends BridgeWebViewClient {
             return true;
         }
         return super.shouldOverrideUrlLoading(view, request);
+    }
+
+    @Override
+    public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+        super.onReceivedError(view, request, error);
+        if (request != null && request.isForMainFrame() && view != null) {
+            OfflinePage.show(view.getContext(), view);
+        }
     }
 }

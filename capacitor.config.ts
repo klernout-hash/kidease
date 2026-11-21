@@ -41,6 +41,8 @@ const config: CapacitorConfig = {
     iosScheme: "https",
     hostname: hostnameOf(remote, CAP_PROD_HOSTNAME),
     url: remote,
+    // Bundled native-www/index.html. Shown when the live site cannot load.
+    errorPath: "index.html",
     cleartext: remote.startsWith("http://"),
   },
   plugins: {
