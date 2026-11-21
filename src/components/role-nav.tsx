@@ -3,7 +3,7 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { MenuRow } from "@/components/menu-row";
 import { chromeRoleInNativeShell } from "@/lib/native-admin";
 import { roleNavItems, type ChromeRole } from "@/lib/role-access";
-import { useNativeHidesAdmin } from "@/lib/use-native-shell";
+import { useInNativeShell, useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { deskHrefForLocale } from "@/lib/desk-nav";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
@@ -47,8 +47,9 @@ export function RoleNavLinks({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const chrome = useRoleChrome();
   const hideAdmin = useNativeHidesAdmin();
+  const nativeShell = useInNativeShell();
   const navRole = chromeRoleInNativeShell(role, hideAdmin);
-  const items = roleNavItems({ role: navRole, paid, subscriptionsOn: chrome.subscriptionsEnabled })
+  const items = roleNavItems({ role: navRole, paid, subscriptionsOn: nativeShell ? false : chrome.subscriptionsEnabled })
     .filter((item) => !(item.id === "signin" && appearance !== "header"))
     .filter((item) => !(item.id === "help" && appearance === "drawer"))
     .map((item) => ({

@@ -158,6 +158,9 @@ export function ParentDesk({
   const { session: desks, ready: desksReady } = useSessionDesks();
   const hideAdmin = useNativeHidesAdmin();
   const plansOn = !storeShell && desks?.subscriptionsEnabled === true;
+  useEffect(() => {
+    if (storeShell && contentTab === "subscription") selectParentTab("explore");
+  }, [storeShell, contentTab, selectParentTab]);
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
@@ -706,7 +709,7 @@ export function ParentDesk({
         </div>
       ) : null}
 
-      {contentTab === "subscription" ? (
+      {contentTab === "subscription" && !storeShell ? (
         <div className="mt-6 w-full" data-ke="parent-subscription">
           <h2 className="font-display text-2xl">{t(chrome.paid ? "navMyPlan" : "navUpgrade")}</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted">{t("parentPlusLead")}</p>
