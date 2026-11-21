@@ -131,10 +131,11 @@ export async function menuLoader({
       }
     }
     const chrome = context.roleChrome;
-    const host = chrome?.role === "provider" || (chrome?.ownedSlugs?.length ?? 0) > 0;
+    const owns = (chrome?.ownedSlugs?.length ?? 0) > 0;
+    const host = chrome?.role === "provider" || owns;
     if (!host) return { earnings: null, insights: null, desk: null, payments: null, connect: null, centres: [] };
     const [earnings, insights] = await Promise.all([
-      loadHostEarnings().catch(() => null),
+      owns ? loadHostEarnings().catch(() => null) : Promise.resolve(null),
       loadHostInsights().catch(() => null),
     ]);
     return { earnings, insights, desk: null, payments: null, connect: null, centres: [] };

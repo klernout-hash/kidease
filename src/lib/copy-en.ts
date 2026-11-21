@@ -178,6 +178,8 @@ export const en = {
     howVideoSoundOff: "Turn sound off",
     howVideoPlayWithSound: "Play with sound",
     daycareDeskTitle: "Daycare desk",
+    staffDeskEyebrow: "Staff",
+    staffDeskTitle: "Staff desk",
     familyDeskTitle: "Family desk",
     deskNavTodayHint: "What needs you now",
     deskNavMessagesHint: "Parent inquiries + tours",

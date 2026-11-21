@@ -1,4 +1,5 @@
 import type { CopyKey } from "./copy.ts";
+import { toolsForBillAccess } from "./centre-tools.ts";
 import { navGrantAllows, type StaffGrants } from "./staff-permissions.ts";
 import type { ParentUrlTab } from "./parent-tab.ts";
 import { CENTRE_TOOLS } from "./centre-tools.ts";
@@ -397,7 +398,10 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.id === "learning") return opts?.curriculumPack === true;
     if (item.id === "family") return opts?.coparentLink === true || opts?.coparentEmail === true;
     if (item.id === "hours") return opts?.staffTimesheets === true;
-    if (item.id === "tools") return (opts?.centreTools?.length ?? 0) > 0;
+    if (item.id === "tools") {
+      const canEditBills = opts?.centreOwner === true || opts?.centreGrants?.bills === "edit";
+      return toolsForBillAccess(opts?.centreTools ?? [], canEditBills).length > 0;
+    }
     if (item.id === "centre-tools") return (opts?.centreTools ?? []).some((id) => PARENT_TOOL_IDS.has(id));
     if (item.id === "documents") return opts?.familyVault === true;
     if (item.id === "centre-care") return opts?.careDesk === true;

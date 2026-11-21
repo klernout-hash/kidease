@@ -12,7 +12,7 @@ import { DeskSkeleton } from "@/components/page-skeleton";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { HistoryBack } from "@/components/history-back";
 import { historyHref } from "@/lib/screen-history";
-import { DESK_PATH, accountDeskFor, deskQueryValue, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
+import { DESK_PATH, accountDeskFor, accountDeskParam, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
 import { accountDeskPath, menuDeskPath, parentDeskPath, parentNavSearch, providerDeskPath, providerNavSearch, supportDeskPath } from "@/lib/desk-nav";
 import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -96,7 +96,7 @@ export function accountHead({
 export function accountValidateSearch(s: Record<string, unknown>) {
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";
-      desk?: "parent" | "director" | "admin" | "support";
+      desk?: "parent" | "director" | "staff" | "admin" | "support";
       section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer" | "wallet";
       edit?: "1";
       field?: "name" | "phone" | "email" | "work" | "about";
@@ -118,8 +118,8 @@ export function accountValidateSearch(s: Record<string, unknown>) {
     ) {
       out.section = section;
     }
-    const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
-    if (desk) out.desk = deskQueryValue(desk);
+    const desk = accountDeskParam(typeof s.desk === "string" ? s.desk : "");
+    if (desk) out.desk = desk;
     const editRaw = typeof s.edit === "string" ? s.edit.replace(/^"|"$/g, "") : s.edit;
     if (editRaw === "1" || editRaw === 1) out.edit = "1";
     if (s.field === "name" || s.field === "phone" || s.field === "email" || s.field === "work" || s.field === "about") {

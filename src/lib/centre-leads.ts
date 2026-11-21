@@ -9,6 +9,12 @@ import { linkedParentName } from "./parent-display-name.ts";
 import { quietHourInZone } from "./family-time.ts";
 import { resolveTourCentre, type TourCentreDecision } from "./tour-phase0.ts";
 
+/** Drop an empty daycare id so /provider/leads does not redirect to ?daycareId= */
+export function leadsPageSearch(search: Record<string, unknown>): { daycareId?: string } {
+  const raw = typeof search.daycareId === "string" ? search.daycareId.trim().slice(0, 80) : "";
+  return raw ? { daycareId: raw } : {};
+}
+
 export const CENTRE_LEAD_STAGES = [
   "inquiry",
   "contacted",

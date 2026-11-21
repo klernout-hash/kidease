@@ -179,6 +179,8 @@ export const fr = {
     howVideoSoundOff: "Couper le son",
     howVideoPlayWithSound: "Lire avec le son",
     daycareDeskTitle: "Bureau garderie",
+    staffDeskEyebrow: "Personnel",
+    staffDeskTitle: "Bureau du personnel",
     familyDeskTitle: "Bureau famille",
     deskNavTodayHint: "Ce qui vous attend maintenant",
     deskNavMessagesHint: "Demandes des parents et visites",
