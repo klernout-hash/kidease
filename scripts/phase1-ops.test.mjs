@@ -107,4 +107,9 @@ test("reports, audit, security claims, and privacy cases stay narrow", () => {
   const privacy = privacyCase({ type: "deletion", requesterId: "guardian-1" });
   assert.equal(privacy.visibleTo, "privacy_officer");
   assert.equal(privacy.contact, "privacy@kidease.ca");
+  assert.equal(privacy.sendsEmail, false);
+  const again = privacyCase({ type: "deletion", requesterId: "guardian-1", nonce: "abc" });
+  assert.notEqual(again.caseId, privacy.caseId);
+  assert.equal(again.sendsEmail, false);
+  assert.equal(again.contact, "privacy@kidease.ca");
 });
