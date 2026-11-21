@@ -53,7 +53,6 @@ import {
   continueAfterSignIn,
   LOGIN_STALL_MS,
   loginErrorCallbackUrl,
-  markContinued,
   twoFactorPageUrl,
   waitForSignedInSession,
 } from "@/lib/auth/login-funnel";

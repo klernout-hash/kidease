@@ -57,7 +57,7 @@ test("login and 2FA use the shared continue helper", () => {
   const twoFa = src("src/routes/verify-2fa.tsx");
   const gates = src("src/lib/auth/gates.tsx");
   assert.match(login, /continueAfterSignIn/);
-  assert.match(login, /markContinued\(dest, \{ method: "social" \}\)/);
+  assert.doesNotMatch(login, /markContinued\(dest, \{ method: "social" \}\)/);
   assert.match(login, /session_pending/);
   assert.match(login, /function openDesk/);
   assert.match(login, /twoFactorPageUrl/);

@@ -197,6 +197,7 @@ const CentreAgreementEditor = lazy(() =>
 );
 
 const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "top-rated", "tours", "calendar", "licence", "documents", "contract", "contracts", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools", "care"];
+const DEFAULT_DESK: DaycareDesk = "today";
 const COACH_FOCUS = new Set<ListingCoachFocus>([
   "license",
   "province",
@@ -319,7 +320,7 @@ export function ProviderPage() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const searchStr = useRouterState({ select: (s) => s.location.searchStr });
   const deskPath = providerDeskPath(pathname);
-  const urlDesk = providerDeskFromQuery(search.desk, searchStr);
+  const urlDesk = providerDeskFromQuery(search.desk, searchStr) || DEFAULT_DESK;
   // Pages nested under this one (provider.<name>.tsx). Each must show its own
   // screen through the outlet, not the Today desk.
   const childRoute = ["/provider/subscription", "/provider/leads", "/provider/families"].some(
