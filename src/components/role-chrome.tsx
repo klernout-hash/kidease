@@ -70,7 +70,7 @@ export function useRoleChrome(): RoleChromeState {
   if (serverSaysGuest(remote, Boolean(user))) {
     return {
       ...GUEST,
-      e2e: remote?.e2e,
+      e2e: remote?.e2e === true,
       subscriptionsEnabled: remote?.subscriptionsEnabled === true,
       govPortalLink: remote?.govPortalLink === true,
     };
