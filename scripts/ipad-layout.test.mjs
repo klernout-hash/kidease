@@ -121,6 +121,7 @@ test("fold and split-view resize stays on one page", () => {
   assert.match(boot, /addEventListener\("resize", paintFrame\)/);
   assert.match(boot, /keShape/);
   assert.match(bridge, /viewWillTransition/);
+  assert.match(bridge, /allowsBackForwardNavigationGestures = true/);
   assert.doesNotMatch(bridge, /webView\?\.reload|UIScreen\.main/);
   assert.match(src("src/styles.css"), /html\[data-channel="app"\] \.ke-video-stage video:not\(\.ke-video-self\)[\s\S]*object-fit: contain/);
   assert.match(video, /object-cover/);
