@@ -17,7 +17,7 @@ The iPhone and Android apps are a Capacitor shell around https://www.kidease.ca.
 
 Push notifications are not in this version. The app does not ask for notification permission.
 
-- Voice and video calls use the camera and microphone only while the call screen is open. Twilio’s scripts load on those pages. The app does not record the call. The reviewer parent account has complimentary Parent Plus, so a video tour opens with the normal join button. No purchase and no price. A parent without Parent Plus sees a closed note with no price and no subscribe button. There is no background-audio mode and no VoIP mode. Calls run while the app is on screen.
+- Voice and video calls use the camera and microphone only while the call screen is open. Twilio’s scripts load on those pages. The app does not record the call. The reviewer parent account has complimentary Parent Plus, so a video tour opens with the normal join button. No purchase and no price. A parent without Parent Plus sees a closed note with no price and no subscribe button. Info.plist has no `UIBackgroundModes` key: no background audio, no VoIP, and no remote notifications. Calls run while the app is on screen.
 
 ## Reviewer sign-in
 
@@ -48,7 +48,7 @@ Reviewers outside Canada can search **Winnipeg, Manitoba**. The directory is Can
 ## Still needed before the binary is uploaded
 
 - Apple Team ID (not enrolment id B7UM5AC9JQ), Services ID, Sign in with Apple `.p8`, and the four `APPLE_*` env vars. See `docs/apple-sign-in.md`.
-- Push is not part of this version. Do not add an APNs key for this upload. `aps-environment` is not in the entitlements.
+- Push is not part of this version. Do not add an APNs key for this upload. `aps-environment` is not in the entitlements. Info.plist does not declare `UIBackgroundModes`.
 - Play App Signing SHA-256 in `ANDROID_CERT_SHA256S`.
 - Numeric App Store id in `VITE_APPLE_APP_STORE_ID` after App Store Connect assigns it.
 - Archive the iOS app with Xcode 26 and the iOS 26 SDK.

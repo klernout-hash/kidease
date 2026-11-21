@@ -65,7 +65,8 @@ describe("when-in-use location purpose", () => {
     assert.match(patch, /RECORD_AUDIO/);
     assert.match(patch, /NSCameraUsageDescription/);
     assert.match(patch, /NSMicrophoneUsageDescription/);
-    assert.match(patch, /remote-notification/);
+    assert.match(patch, /Strip every UIBackgroundModes array, including voip, audio, remote-notification, and location/);
+    assert.doesNotMatch(patch, /keeps voip/);
     assert.match(patch, /stripAndroidPermission[\s\S]*ACCESS_BACKGROUND_LOCATION/);
     assert.match(patch, /stripPlistKey[\s\S]*NSLocationAlways/);
     assert.match(patch, /ensureAndroidAppLinks|autoVerify/);
@@ -97,12 +98,13 @@ describe("native project scaffolding", () => {
       if (m) assert.match(m[1], /only while you search/);
     }
     assert.doesNotMatch(info, /<string>location<\/string>/);
-    // Call ring: CallKit/PushKit need voip + remote-notification background modes.
-    assert.match(info, /<string>voip<\/string>/);
-    assert.match(info, /<string>remote-notification<\/string>/);
+    // Push, VoIP, and background audio are held. Apple 2.5.4 rejects unused modes.
+    assert.doesNotMatch(info, /<key>UIBackgroundModes<\/key>/);
+    assert.doesNotMatch(info, /<string>voip<\/string>/);
+    assert.doesNotMatch(info, /<string>audio<\/string>/);
+    assert.doesNotMatch(info, /<string>remote-notification<\/string>/);
     assert.match(info, /NSCameraUsageDescription/);
     assert.match(info, /NSMicrophoneUsageDescription/);
-    assert.match(info, /UIBackgroundModes/);
 
     const manifest = read("android/app/src/main/AndroidManifest.xml");
     assert.match(manifest, /ACCESS_COARSE_LOCATION/);
@@ -122,7 +124,7 @@ describe("native project scaffolding", () => {
     assert.match(entitlements, /applinks:www\.kidease\.ca/);
     assert.match(entitlements, /applinks:kidease\.ca/);
     assert.match(entitlements, /webcredentials:www\.kidease\.ca/);
-    assert.match(entitlements, /aps-environment/); // PushKit call ring
+    assert.doesNotMatch(entitlements, /aps-environment/);
     assert.match(entitlements, /com\.apple\.developer\.applesignin/);
     assert.match(read("ios/App/App.xcodeproj/project.pbxproj"), /CODE_SIGN_ENTITLEMENTS = App\/App.entitlements/);
     assert.doesNotMatch(read("ios/App/App.xcodeproj/project.pbxproj"), /DEVELOPMENT_TEAM = [A-Z0-9]{10}/);

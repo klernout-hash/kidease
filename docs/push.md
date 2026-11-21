@@ -61,8 +61,8 @@ Do **not** put `.p8` files, `google-services.json`, `GoogleService-Info.plist`, 
 2. Identifiers → `ca.kidease.app` → enable **Push Notifications**.
 3. Xcode / Capacitor iOS target (after Apple enrollment):
    - Signing & Capabilities → **+ Push Notifications**.
-   - **Background Modes** → Remote notifications. v1 does not list `remote-notification` in Info.plist. Add it when push ships.
-   - Entitlements: add `aps-environment` when push ships (`development` for debug, **`production` for TestFlight and App Store**). v1 does not set it. TestFlight uses the production APNs environment — set `APNS_PRODUCTION=1` on Vercel before relying on TestFlight.
+   - **Background Modes** → Remote notifications. This version does not list `remote-notification`, `voip`, or `audio` in Info.plist. There is no `UIBackgroundModes` key. Add `remote-notification` only in the build that ships push.
+   - Entitlements: add `aps-environment` when push ships (`development` for debug, **`production` for TestFlight and App Store**). This version does not set it. TestFlight uses the production APNs environment — set `APNS_PRODUCTION=1` on Vercel before relying on TestFlight.
 4. When push ships, add the plugin and run `npx cap sync ios`. v1 does not include `@capacitor/push-notifications`. A web-only Vercel deploy does not add the entitlement.
 5. Confirm the provisioned profile includes Push. Archive → TestFlight. First launch after `FEATURE_PUSH=1` should prompt once and `POST /api/push/register`.
 

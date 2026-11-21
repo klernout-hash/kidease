@@ -16,9 +16,10 @@ App name: **KidEase**
 - `native-www/` — tiny fallback shell (production builds use the remote URL).
 - `resources/` — icon + splash generated from the existing pin pipeline (`public/logo-transparent.png`).
 - `ios/` and `android/` — Capacitor 8 native projects, permission strings, and icons. Regenerable (see below).
-- `ios/App/App/App.entitlements` — Associated Domains and Sign in with Apple. Push is not in v1, so `aps-environment` is not set. Archive with Xcode 26 and the iOS 26 SDK. This repo cannot archive on Linux. Deployment target stays iOS 15.0.
+- `ios/App/App/App.entitlements` — Associated Domains and Sign in with Apple. Push is not in this version, so `aps-environment` is not set. Archive with Xcode 26 and the iOS 26 SDK. This repo cannot archive on Linux. Deployment target stays iOS 15.0.
+- `ios/App/App/Info.plist` — no `UIBackgroundModes` key. This binary does not declare `voip`, `audio`, `remote-notification`, or `location`. Add a mode only in the build that actually uses it.
 - `AndroidManifest.xml` — App Links `autoVerify` for those hosts plus `KidEase://` / `ca.kidease.app://`.
-- Location is **while-using only**. No background location permission, no `UIBackgroundModes: location`.
+- Location is **while-using only**. No background location permission, and no `UIBackgroundModes` key at all.
 
 Do not commit signing secrets, `.p12`, keystores, `android/key.properties`, or `local.properties`.
 
@@ -139,7 +140,7 @@ Purpose string (English), also in `fr.lproj` / `values-fr`:
 
 | Platform | Present | Must not be present |
 | --- | --- | --- |
-| iOS | `NSLocationWhenInUseUsageDescription` | `NSLocationAlways*`, `UIBackgroundModes` location |
+| iOS | `NSLocationWhenInUseUsageDescription` | `NSLocationAlways*`, any `UIBackgroundModes` entry (`location`, `voip`, `audio`, `remote-notification`) |
 | Android | `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` | `ACCESS_BACKGROUND_LOCATION` |
 
 Parents can still search by city / postal code if they tap Don’t Allow.

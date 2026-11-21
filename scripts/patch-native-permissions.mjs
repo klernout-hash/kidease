@@ -134,6 +134,10 @@ function associatedDomainsEntitlementsXml() {
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 ${domains}
@@ -146,7 +150,7 @@ ${domains}
 async function writeIosAssociatedDomainsEntitlements() {
   const entitlements = join(root, "ios/App/App/App.entitlements");
   await writeFile(entitlements, associatedDomainsEntitlementsXml());
-  console.log("[native-permissions] wrote ios App.entitlements (Associated Domains)");
+  console.log("[native-permissions] wrote ios App.entitlements (Sign in with Apple + Associated Domains, no push)");
 }
 
 async function ensurePbxEntitlements() {
@@ -217,14 +221,9 @@ ${schemes}
     );
     plist = stripPlistKey(plist, "NSLocationAlwaysUsageDescription");
     plist = stripPlistKey(plist, "NSLocationAlwaysAndWhenInUseUsageDescription");
-    plist = plist.replace(
-      /\s*<key>UIBackgroundModes<\/key>\s*<array>[\s\S]*?<string>location<\/string>[\s\S]*?<\/array>/,
-      "",
-    );
-    plist = plist.replace(/\s*<string>location<\/string>/g, "");
-    // Background call ring (PR: feat/call-push-background-ring) keeps voip, audio and
-    // remote-notification background modes. Ringing stays off until FEATURE_CALL_PUSH is set.
-    plist = plist.replace(/\s*<key>UIBackgroundModes<\/key>\s*<array>\s*<\/array>/g, "");
+    // Push, VoIP, and background audio are not in this version (Apple 2.5.4 / 2.3).
+    // Strip every UIBackgroundModes array, including voip, audio, remote-notification, and location.
+    plist = plist.replace(/\s*<key>UIBackgroundModes<\/key>\s*<array>[\s\S]*?<\/array>/g, "");
     await writeFile(infoPlist, plist);
     console.log("[native-permissions] patched ios Info.plist");
 
