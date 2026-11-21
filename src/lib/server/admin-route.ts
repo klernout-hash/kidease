@@ -2,6 +2,7 @@ import { notFound, redirect } from "@tanstack/react-router";
 import { adminDeskGateRedirect } from "@/lib/admin-desk-gate";
 import { assertAdminDesk } from "@/lib/server/roles";
 import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
+import { loadAdminQueueBootstrap } from "@/lib/server/admin-queue-bootstrap";
 
 /**
  * beforeLoad for /admin, /admin-chat, /admin-contracts, /admin-email-health, /admin-ranking, /admin-ai.
@@ -12,7 +13,20 @@ export async function beforeLoadAdminDesk() {
   // The loopback role cookie never opens this desk, including when
   // E2E_ROLE_FIXTURE is set. Role and 2FA stay on assertAdminDesk.
   try {
-    await withTimeout(assertAdminDesk(), SQL_SETTLE_MS, "admin-gate-timeout");
+    const gate = await withTimeout(assertAdminDesk(), SQL_SETTLE_MS, "admin-gate-timeout");
+    return { adminQueueSsrEnabled: gate?.queueSsrEnabled === true };
+  } catch (err) {
+    const dest = adminDeskGateRedirect(err);
+    if ("notFound" in dest) throw notFound();
+    throw redirect(dest);
+  }
+}
+
+/** Disabled routes perform no bootstrap request. Bound middleware as well as the handler. */
+export async function loadAdminQueueForRoute(context: { adminQueueSsrEnabled?: boolean }) {
+  if (!context.adminQueueSsrEnabled) return null;
+  try {
+    return await withTimeout(loadAdminQueueBootstrap(), SQL_SETTLE_MS, "admin-gate-timeout");
   } catch (err) {
     const dest = adminDeskGateRedirect(err);
     if ("notFound" in dest) throw notFound();

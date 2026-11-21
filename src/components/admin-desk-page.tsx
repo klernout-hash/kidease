@@ -108,6 +108,8 @@ import { DAYCARE_INBOX_HREF, emptyLeadCounts, type LeadCounts } from "@/lib/lead
 import type { CatalogRuntime } from "@/lib/catalog-source";
 import { paymentSourceLabel } from "@/lib/payment-source";
 import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
+import { AdminQueueBootstrapFallback } from "@/components/admin-queue-bootstrap";
+import type { AdminQueueBootstrap } from "@/lib/server/admin-queue-bootstrap";
 
 const PROV_ORDER = PROVINCES.map((p) => p.code);
 const PROV_NAME = Object.fromEntries(PROVINCES.map((p) => [p.code, p.name]));
@@ -149,7 +151,7 @@ function downloadAdminListCsv(rows: Array<{ name: string; city: string; province
   URL.revokeObjectURL(url);
 }
 
-export function AdminPage() {
+export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: AdminQueueBootstrap } = {}) {
   const { t } = useCopy();
   const { user, isPending } = useCurrentUserState();
   const locallySignedOut = useLocallySignedOut();
@@ -578,6 +580,7 @@ export function AdminPage() {
   // Not found unless profiles.role = admin. Signed-out visitors get the same page.
   if (locallySignedOut) return <AdminSignedOut />;
   if (isPending) {
+    if (initialBootstrap) return <AdminQueueBootstrapFallback initial={initialBootstrap} />;
     return (
       <Shell>
         <div className="p-8" data-ke="admin-session-pending">
@@ -591,6 +594,7 @@ export function AdminPage() {
   }
   if (!user) return <AdminSignedOut />;
   if (!ready) {
+    if (initialBootstrap) return <AdminQueueBootstrapFallback initial={initialBootstrap} />;
     return (
       <Shell>
         <p className="p-8 text-muted">Loading…</p>
@@ -600,7 +604,7 @@ export function AdminPage() {
   if (!admin) return <PageNotFound />;
 
   return (
-    <TwoFactorGate next={adminDeskHref(search)}>
+    <TwoFactorGate next={adminDeskHref(search)} pending={initialBootstrap ? <AdminQueueBootstrapFallback initial={initialBootstrap} /> : undefined}>
     <LoginFunnelDeskLand desk="admin" />
     <DeskShell desk="admin" active={tab === "payouts" ? "connect" : tab} onSelect={(id) => setTab(id as AdminDeskTab)}>
       <AdminSavedFilters

@@ -7,7 +7,7 @@ import { deskWaitlistVisible, isPublicListing, listingVisibilityInputFromDb } fr
 import { spotOfferMailEnabled, waitlistToolsEnabled } from "@/lib/features";
 import { moveInLine, placeFromRank, type RankRow } from "@/lib/gap-features";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
-import { brandedNotice } from "@/lib/email-layout";
+import { brandedNotice, renderBrandedEmail, renderBrandedText } from "@/lib/email-layout";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import {
   auditRowsForOffer,
@@ -241,25 +241,27 @@ async function emailOffer(sql: Sql, offer: SpotOffer) {
   const centre = centres[0];
   const name = centre?.name || "A daycare";
   const href = `${SITEMAP_ORIGIN}/offer/${encodeURIComponent(token)}`;
-  const text = `${name} offered you a spot on KidEase. You have 48 hours to answer. There is no waitlist fee. ${href}`;
+  const branded = brandedNotice({
+    heading: `${name} offered you a spot`,
+    text: `${name} offered you a spot on KidEase. You have 48 hours to answer. There is no waitlist fee.`,
+    cta: { label: "Answer now", href },
+    reason: "You get this because you asked KidEase about a spot.",
+    unsubscribeUrl: `${SITEMAP_ORIGIN}/unsubscribe`,
+  });
   await sendTransactionalMail({
     purpose: "spot_offer",
     to,
     subject: `${name} offered you a spot`,
-    text,
-    html: `<p>${name} offered you a spot on KidEase. You have 48 hours to answer. There is no waitlist fee.</p><p><a href="${href}">Answer now</a></p>`,
+    text: renderBrandedText(branded),
+    html: renderBrandedEmail(branded),
+    unsubscribeUrl: branded.unsubscribeUrl,
     aboutTestListing: isAdminOnlyListing({
       name,
       slug: centre?.slug,
       visibility: centre?.visibility,
       isTest: centre?.is_test,
     }),
-    branded: brandedNotice({
-      heading: `${name} offered you a spot`,
-      text: `${name} offered you a spot on KidEase. You have 48 hours to answer. There is no waitlist fee.`,
-      cta: { label: "Answer now", href },
-      reason: "You get this because you asked KidEase about a spot.",
-    }),
+    branded: branded,
   });
   return true;
 }

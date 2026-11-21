@@ -242,7 +242,7 @@ export const TurnstileField = memo(function TurnstileField({
       {/* No cf-turnstile class: implicit api.js auto-renders that class
           without our callback, so Success never enables the button. */}
       <div ref={host} className="w-full max-w-full" data-ke-turnstile-host="" />
-      {loadError ? <p className="mt-2 text-sm text-danger">{loadError}</p> : null}
+      {loadError ? <p className="mt-2 text-sm text-danger" role="alert">{loadError}</p> : null}
     </div>
   );
 });

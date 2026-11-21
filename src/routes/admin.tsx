@@ -1,9 +1,10 @@
 import { lazy, Suspense } from "react";
 import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
-import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
+import { beforeLoadAdminDesk, loadAdminQueueForRoute } from "@/lib/server/admin-route";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { ADMIN_LOGIN_SEARCH } from "@/lib/admin-desk-gate";
 import { AdminSignedOut } from "@/components/admin-signed-out";
+import { AdminQueueBootstrapFallback } from "@/components/admin-queue-bootstrap";
 import {
   isAdminDeskTab,
   parseAdminActivityKind,
@@ -18,17 +19,30 @@ const AdminPage = lazy(() =>
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: beforeLoadAdminDesk,
+  staleTime: 0,
+  gcTime: 0,
+  shouldReload: true,
+  loader: ({ context }) => loadAdminQueueForRoute(context),
   validateSearch: (s: Record<string, unknown>) => {
     const rawTab = typeof s.tab === "string" ? s.tab : null;
     const tab = isAdminDeskTab(rawTab) ? rawTab : undefined;
     const kindRaw = typeof s.kind === "string" ? s.kind : undefined;
     const kind = kindRaw ? parseAdminActivityKind(kindRaw) : undefined;
-    const role = s.role === "parent" || s.role === "provider" ? (s.role as AccountNotifyRole) : undefined;
+    const role =
+      s.role === "parent" || s.role === "provider" ? (s.role as AccountNotifyRole) : undefined;
     const q = typeof s.q === "string" && s.q.trim() ? s.q : undefined;
     const stat = parseAdminStatFilter(typeof s.stat === "string" ? s.stat : undefined);
     const prov = typeof s.prov === "string" && /^[A-Z]{2}$/.test(s.prov) ? s.prov : undefined;
     const docs = s.docs === "1" || s.docs === 1 ? (1 as const) : undefined;
-    const out: { tab?: AdminDeskTab; kind?: string; role?: AccountNotifyRole; q?: string; stat?: AdminStatFilter; prov?: string; docs?: 1 } = {};
+    const out: {
+      tab?: AdminDeskTab;
+      kind?: string;
+      role?: AccountNotifyRole;
+      q?: string;
+      stat?: AdminStatFilter;
+      prov?: string;
+      docs?: 1;
+    } = {};
     if (tab) out.tab = tab;
     else if (role) out.tab = "people";
     else if (kind && kind !== "all") out.tab = "activity";
@@ -41,10 +55,7 @@ export const Route = createFileRoute("/admin")({
     return out;
   },
   head: () => ({
-    meta: [
-      { title: "Admin · KidEase" },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
+    meta: [{ title: "Admin · KidEase" }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: AdminRoute,
   pendingComponent: AdminGatePending,
@@ -58,7 +69,11 @@ function AdminGatePending() {
       <div className="mt-4">
         <DeskSkeleton />
       </div>
-      <Link to="/login" search={ADMIN_LOGIN_SEARCH} className="mt-6 inline-flex min-h-11 items-center text-sm font-medium text-primary">
+      <Link
+        to="/login"
+        search={ADMIN_LOGIN_SEARCH}
+        className="mt-6 inline-flex min-h-11 items-center text-sm font-medium text-primary"
+      >
         Sign in
       </Link>
     </div>
@@ -66,17 +81,27 @@ function AdminGatePending() {
 }
 
 function AdminRoute() {
+  const bootstrap = Route.useLoaderData();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (pathname === "/admin/features" || pathname === "/admin/outbound" || pathname === "/admin/government") return <Outlet />;
+  if (
+    pathname === "/admin/features" ||
+    pathname === "/admin/outbound" ||
+    pathname === "/admin/government"
+  )
+    return <Outlet />;
   return (
     <Suspense
       fallback={
-        <div className="p-8">
-          <DeskSkeleton />
-        </div>
+        bootstrap ? (
+          <AdminQueueBootstrapFallback initial={bootstrap} />
+        ) : (
+          <div className="p-8">
+            <DeskSkeleton />
+          </div>
+        )
       }
     >
-      <AdminPage />
+      <AdminPage initialBootstrap={bootstrap} />
     </Suspense>
   );
 }

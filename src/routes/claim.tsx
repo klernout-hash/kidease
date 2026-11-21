@@ -29,6 +29,7 @@ import { trackProductEvent } from "@/lib/track-product-event";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload } from "@/lib/signup-funnel";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
 import { isListingPhotoTooBig } from "@/lib/upload-limits";
+import { startClaimLookup, type ClaimLookupState } from "@/lib/claim-lookup";
 
 function claimPhotoSrc(photo: string) {
   if (!photo || !isRealListingPhoto(photo) || isFailedPhotoUrl(photo)) return LISTING_PLACEHOLDER;
@@ -88,7 +89,10 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
   const [q, setQ] = useState(q0);
-  const [hits, setHits] = useState<ClaimHit[]>([]);
+  const [lookup, setLookup] = useState<ClaimLookupState<ClaimHit>>({ query: "", status: "idle", hits: [] });
+  const [lookupRetry, setLookupRetry] = useState(0);
+  const hits = lookup.status === "ready" && lookup.query === q.trim() ? lookup.hits : [];
+  const lookupBusy = q.trim().length >= 2 && (lookup.query !== q.trim() || lookup.status === "loading");
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<{ daycareId: string; name: string; delivery: ClaimDeliveryView } | null>(null);
@@ -109,37 +113,9 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
   const enrollChallenge = useTurnstileToken();
 
   useEffect(() => {
-    const term = q.trim();
-    if (term.length < 2) {
-      setHits([]);
-      setOpen(false);
-      setBusy(false);
-      return;
-    }
-    let live = true;
-    setHits([]);
-    const tmr = window.setTimeout(() => {
-      setBusy(true);
-      void searchClaimable({ data: term })
-        .then((rows) => {
-          if (!live) return;
-          setHits(rows);
-          setOpen(true);
-        })
-        .catch(() => {
-          if (!live) return;
-          setHits([]);
-          setOpen(true);
-        })
-        .finally(() => {
-          if (live) setBusy(false);
-        });
-    }, 180);
-    return () => {
-      live = false;
-      window.clearTimeout(tmr);
-    };
-  }, [q]);
+    setOpen(q.trim().length >= 2);
+    return startClaimLookup(q, (term, signal) => searchClaimable({ data: term, signal }), setLookup);
+  }, [q, lookupRetry]);
 
   useEffect(() => {
     if (!id0 || !user) return;
@@ -477,28 +453,46 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
               </p>
             ) : null}
             <div ref={box} className="relative mt-6">
+              <label htmlFor="claim-find" className="mb-2 block text-sm font-medium">
+                {t("claimSearchPh")}
+              </label>
               <input
+                id="claim-find"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                onFocus={() => hits.length > 0 && setOpen(true)}
+                onFocus={() => q.trim().length >= 2 && setOpen(true)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setOpen(false);
+                }}
                 placeholder={t("claimSearchPh")}
                 autoComplete="off"
                 data-ke="claim-find"
-                className="h-12 w-full rounded-full bg-surface px-5 shadow-card ring-1 ring-border outline-none focus:ring-2 focus:ring-primary"
+                aria-describedby={open && !lookupBusy && lookup.status === "error" ? "claim-lookup-error" : undefined}
+                className="h-12 min-h-[44px] w-full rounded-full bg-surface px-5 shadow-card ring-1 ring-border outline-none focus:ring-2 focus:ring-primary"
               />
-              {busy && q.trim().length >= 2 ? (
-                <p className="absolute right-3 top-3.5 text-xs text-muted">{t("loading")}</p>
-              ) : null}
               {open && q.trim().length >= 2 ? (
-                <ul className="z-20 mt-2 max-h-[min(60vh,28rem)] w-full overflow-y-auto rounded-xl bg-surface py-1 shadow-card ring-1 ring-border">
-                  {hits.length === 0 && !busy ? (
+                <ul aria-busy={lookupBusy} className="z-20 mt-2 max-h-[min(60vh,28rem)] w-full overflow-y-auto rounded-xl bg-surface py-1 shadow-card ring-1 ring-border">
+                  {lookupBusy ? (
+                    <li className="px-4 py-6 text-center text-sm text-muted" role="status">{t("loading")}</li>
+                  ) : lookup.status === "error" ? (
+                    <li className="space-y-3 px-4 py-4">
+                      <p id="claim-lookup-error" role="alert" className="text-sm text-muted" data-ke="claim-lookup-error">
+                        {locale === "fr"
+                          ? "La recherche n’a pas abouti. Réessayez pour trouver votre centre."
+                          : "We couldn’t search for your centre. Try again."}
+                      </p>
+                      <Button type="button" variant="secondary" onClick={() => setLookupRetry((attempt) => attempt + 1)}>
+                        {t("tryAgain")}
+                      </Button>
+                    </li>
+                  ) : lookup.status === "ready" && hits.length === 0 ? (
                     <li className="px-4 py-6 text-center text-sm text-muted" role="status">{t("claimNoMatch")}</li>
                   ) : (
                     hits.map((h) => (
                       <li key={h.id}>
                         <button
                           type="button"
-                          disabled={h.claimed || busy || isPending}
+                          disabled={h.claimed || busy || lookupBusy || isPending}
                           onClick={() => void begin(h.id, h.name)}
                           className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-bg disabled:opacity-60"
                         >

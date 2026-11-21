@@ -48,6 +48,10 @@ export class UnauthorizedError extends Error {
 export type VerifiedUser = { id: string; email: string | null };
 
 export type VerifiedAuthSession = VerifiedUser & {
+  /** Public session identifier; unlike token this is not an authentication credential. */
+  sessionId: string | null;
+  expiresAtMs: number;
+  /** Server-only credential. Never serialize a VerifiedAuthSession into route data. */
   token: string | null;
   createdAtMs: number;
 };
@@ -98,6 +102,8 @@ export async function getVerifiedAuthSession(
   return {
     id: session.user.id,
     email: session.user.email ?? null,
+    sessionId: typeof session.session?.id === "string" ? session.session.id : null,
+    expiresAtMs: parseTimestampMs(session.session?.expiresAt),
     token,
     createdAtMs: parseTimestampMs(session.session?.createdAt),
   };

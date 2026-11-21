@@ -1,38 +1,11 @@
-import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { storiesCopy } from "@/lib/learning-stories-copy";
 import { LEARNING_FRAMEWORKS, type LearningFramework } from "@/lib/learning-stories";
-import { listCentreStories, listParentStories, saveLearningStory, storiesStatus } from "@/lib/server/learning-stories";
+import { listCentreStories, listParentStories, saveLearningStory } from "@/lib/server/learning-stories";
 import { useCopy } from "@/lib/use-copy";
-
-export function StoriesDeskLink({ forParent = false }: { forParent?: boolean }) {
-  const { locale } = useCopy();
-  const copy = storiesCopy(locale);
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    void storiesStatus().then((row) => setOn(row.enabled)).catch(() => setOn(false));
-  }, []);
-  if (!on) return null;
-  if (forParent) {
-    return (
-      <p className="px-4 pt-4">
-        <Link to="/parent" search={{ tab: "stories" }} className="inline-flex min-h-11 items-center font-semibold text-primary underline-offset-4 hover:underline">
-          {copy.title}
-        </Link>
-      </p>
-    );
-  }
-  return (
-    <p className="mb-4">
-      <Link to="/provider" search={{ desk: "stories" }} className="inline-flex min-h-11 items-center font-semibold text-primary underline-offset-4 hover:underline">
-        {copy.title}
-      </Link>
-    </p>
-  );
-}
 
 export function LearningStoriesDesk() {
   const { locale } = useCopy();

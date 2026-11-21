@@ -30,7 +30,11 @@ import { normalizeAdminClaimStatus } from "../src/lib/listing-queue.ts";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 function src(rel) {
-  return readFileSync(join(root, rel), "utf8");
+  const text = readFileSync(join(root, rel), "utf8");
+  // Queue mapping moved to the shared nonfinancial reader.
+  return rel === "src/lib/server/admin-centres.ts"
+    ? text + "\n" + readFileSync(join(root, "src/lib/server/admin-centre-queue.ts"), "utf8")
+    : text;
 }
 
 const edmonton = geocode("Edmonton");

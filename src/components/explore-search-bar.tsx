@@ -517,6 +517,10 @@ export function ExploreSearchBar({
             segmentClass("name", 2),
             prominent ? "max-lg:pr-16 lg:min-w-0" : "lg:min-w-[14rem] lg:pr-1.5",
           )}
+          onClick={prominent ? (event) => {
+            if (event.target instanceof Element && event.target.closest("a,button,input,label,select,textarea,[role=button]")) return;
+            document.getElementById(nameId)?.focus();
+          } : undefined}
         >
           <div className="flex min-w-0 items-center gap-2">
             <div className="min-w-0 flex-1">
@@ -558,7 +562,7 @@ export function ExploreSearchBar({
           ) : null}
         </div>
         {prominent ? (
-          <div className="absolute right-2 bottom-1.5 z-10 lg:static lg:right-auto lg:bottom-auto lg:z-auto lg:flex lg:items-center lg:self-center lg:pr-1.5">
+          <div className="absolute right-2 bottom-1.5 z-40 lg:static lg:right-auto lg:bottom-auto lg:z-auto lg:flex lg:items-center lg:self-center lg:pr-1.5">
             {submitControl}
           </div>
         ) : null}

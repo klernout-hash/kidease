@@ -49,10 +49,12 @@ export function ParentDeskRails({
   items,
   children = [],
   bookings = [],
+  matchOnly = false,
 }: {
   items: Card[];
   children?: Child[];
   bookings?: Booking[];
+  matchOnly?: boolean;
 }) {
   const { t, locale } = useCopy();
   const located = useAppStore((s) => s.located);
@@ -107,11 +109,17 @@ export function ParentDeskRails({
   }, [looking.length]);
 
   if (!looking.length) {
+    if (matchOnly) return <p className="text-sm text-muted">{t("parentRailsEmptyLead")}</p>;
     return (
       <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
         <EmptyState title={t("noResults")} body={t("parentRailsEmptyLead")} action={t("emptyFindCare")} actionTo={localePath("/search", locale)} />
       </div>
     );
+  }
+
+  if (matchOnly) {
+    if (!match.length) return <p className="text-sm text-muted">{t("parentRailsEmptyLead")}</p>;
+    return <ListingRail title={t("railBestMatch")} items={match} limit={4} seeAllHref={localePath(parentRailSearchHref({ sort: "match" }), locale)} visual eagerThumbs={false} />;
   }
 
   return (

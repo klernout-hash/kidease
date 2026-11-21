@@ -150,41 +150,56 @@ const NOTICE = {
     invite: {
       subject: "You are invited to a KidEase family",
       text: "A parent invited you to share their KidEase family. Sign in with this email and accept the invite. It expires in 7 days. We do not accept it for you.",
+      action: "Review the family invite",
     },
     linked: {
       subject: "A parent joined your KidEase family",
       text: "The other parent accepted the invite with their own login. A daycare still has to confirm them before pickup or the child file.",
+      action: "View your family",
     },
     unlinked: {
       subject: "A parent was removed from your KidEase family",
       text: "The family link was removed. That login no longer shares this family.",
+      action: "Review family access",
     },
     pickups: {
       subject: "Pickup people were updated on KidEase",
       text: "Authorized pickup people on your family were updated.",
+      action: "Review pickup people",
     },
   },
   fr: {
     invite: {
       subject: "Invitation à une famille KidEase",
       text: "Un parent vous invite à partager sa famille KidEase. Connectez-vous avec ce courriel et acceptez l’invitation. Elle expire dans 7 jours. Nous ne l’acceptons pas à votre place.",
+      action: "Voir l’invitation familiale",
     },
     linked: {
       subject: "Un parent a rejoint votre famille KidEase",
       text: "L’autre parent a accepté l’invitation avec son propre compte. La garderie doit encore le confirmer avant le départ ou le dossier de l’enfant.",
+      action: "Voir votre famille",
     },
     unlinked: {
       subject: "Un parent a été retiré de votre famille KidEase",
       text: "Le lien familial a été retiré. Ce compte ne partage plus cette famille.",
+      action: "Vérifier l’accès familial",
     },
     pickups: {
       subject: "Les personnes autorisées ont changé sur KidEase",
       text: "Les personnes autorisées à venir chercher l’enfant ont été mises à jour.",
+      action: "Vérifier les personnes autorisées",
     },
   },
 } as const;
 
 export function familyNotice(locale: string, kind: FamilyNoticeKind) {
   const pack = locale === "fr" ? NOTICE.fr : NOTICE.en;
-  return pack[kind];
+  const reason = locale === "fr"
+    ? kind === "invite"
+      ? "Vous recevez ce courriel parce qu’un parent vous a invité à partager sa famille KidEase."
+      : "Vous recevez ce courriel parce qu’un changement concerne votre lien familial sur KidEase."
+    : kind === "invite"
+      ? "You get this because a parent invited you to share their KidEase family."
+      : "You get this because a change affects your family link on KidEase.";
+  return { ...pack[kind], reason };
 }

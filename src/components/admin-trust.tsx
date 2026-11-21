@@ -34,16 +34,15 @@ export function AdminTrustPanel({
   const rows = jurisdictions.length ? jurisdictions : JURISDICTIONS;
   const { locale } = useCopy();
   const frCa = useFrCaPack();
-  const registries = frCaScreen("government", "registries", locale, frCa);
   const reportsLead = frCaScreen("government", "reports", locale, frCa);
   return (
     <div className="space-y-10">
       <section>
-        <h2 className="font-display text-2xl">Jurisdictions</h2>
+        <h2 className="font-display text-2xl">{locale === "fr" ? "Registres provinciaux et territoriaux" : "Provincial and territorial registries"}</h2>
         <p className="mt-1 text-sm text-muted">
-          {frCa && locale === "fr"
-            ? registries
-            : "All Canadian provinces and territories. Manitoba can match a licence against the bundled KidEase catalogue. Ontario, Alberta, British Columbia, Saskatchewan, and Québec have documented adapter stubs that fail closed to operator manual review: not live registry matches. Other jurisdictions stay adapter stubs. This list does not pretend a scrape ran."}
+          {locale === "fr"
+            ? "Consultez les registres officiels de chaque province et territoire. Au Manitoba, KidEase peut comparer un permis à son catalogue enregistré. Ce n’est pas une vérification en direct. Le personnel doit encore vérifier le permis. Ailleurs, vérifiez le registre officiel avant d’approuver une demande."
+            : "Find the official registry for each province and territory. In Manitoba, KidEase can compare a licence with its saved catalogue. This is not a live registry check. Staff must still verify the licence. Elsewhere, check the official registry before approving a claim."}
         </p>
         <ul className="mt-5 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
           {rows.map((j) => (
@@ -71,11 +70,11 @@ export function AdminTrustPanel({
                   {j.registryUrl ? (
                     <p className="mt-2">
                       <a href={j.registryUrl} target="_blank" rel="noreferrer" className="text-primary underline-offset-4 hover:underline">
-                        Official registry
+                        {locale === "fr" ? "Registre officiel" : "Official registry"}
                       </a>
                     </p>
                   ) : (
-                    <p className="mt-2 text-xs text-subtle">Registry URL not stored: left null rather than guessed.</p>
+                    <p className="mt-2 text-xs text-subtle">{locale === "fr" ? "Aucun lien vers le registre au dossier." : "No registry link is on file."}</p>
                   )}
                 </div>
               </div>

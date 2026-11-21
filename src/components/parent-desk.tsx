@@ -1,5 +1,5 @@
 import { Component, lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, Navigate, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, Navigate, useBlocker, useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
 import type { UpgradeSearch } from "@/components/checkout-return";
@@ -9,7 +9,6 @@ import { ParentShortlist } from "@/components/parent-shortlist";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { ChildHealthLog } from "@/components/child-health-log";
-import { EceJobDesk } from "@/components/ece-job-desk";
 import { ChildCareCard } from "@/components/child-care-card";
 import { CareReminderForm } from "@/components/care-reminder-form";
 import { CoparentDesk } from "@/components/coparent-desk";
@@ -46,19 +45,22 @@ import { doorDistanceKm } from "@/lib/card-distance";
 import { useAppStore } from "@/lib/store";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
-import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
+import { LOADER_SETTLE_MS, withTimeout } from "@/lib/timeout";
 import { parentDeskPath, parentNavSearch } from "@/lib/desk-nav";
 import { MAX_CHILDREN_PER_PARENT } from "@/lib/children-limit";
-import { parentDeskTabOrDefault } from "@/lib/parent-tab";
 import { useStoreShell } from "@/lib/use-native-shell";
 import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { PARENT_UPGRADE_PLANS } from "@/lib/upgrade-plans";
 import { ParentHome } from "@/components/parent-home";
+import { ParentHomeCare } from "@/components/parent-home-care";
 import { ParentAttention } from "@/components/attention-list";
 import { useRoleChrome } from "@/components/role-chrome";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
 import { DeleteChildControl } from "@/components/delete-child-control";
+import { useParentNavigation } from "@/lib/use-parent-navigation";
+import { useParentRequestScope } from "@/lib/use-parent-request-scope";
+import { childProfileEntryIntent, completedChildProfileSearch, confirmChildProfileDiscard } from "@/lib/child-profile-unsaved";
 
 const ParentPlusPanel = lazy(() =>
   import("@/components/parent-plus").then((m) => ({ default: m.ParentPlusPanel })),
@@ -142,13 +144,13 @@ export function ParentDesk({
 }) {
   const { user } = useCurrentUserState();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const urlTab = useRouterState({
-    select: (s) => {
-      const tab = (s.location.search as { tab?: unknown }).tab;
-      return typeof tab === "string" ? tab : "";
-    },
-  });
+  const locationHref = useRouterState({ select: (s) => s.location.href });
   const navigate = useNavigate();
+  const navigateTab = useCallback((id: string) => {
+    void navigate({ to: parentDeskPath(pathname), search: parentNavSearch(id), replace: true });
+  }, [navigate, pathname]);
+  const { tab, contentTab, selectTab: selectParentTab } = useParentNavigation(initialTab, navigateTab);
+  const { issue: issueRequest } = useParentRequestScope(user?.id);
   const storeShell = useStoreShell();
   const chrome = useRoleChrome();
   const plus = useParentPlusAccess();
@@ -159,10 +161,9 @@ export function ParentDesk({
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
-  const [tab, setTab] = useState<ParentTab>(initialTab ?? "explore");
-  const [contentTab, setContentTab] = useState<ParentTab>(initialTab ?? "explore");
   const [explore, setExplore] = useState<Card[]>([]);
   const [exploreReady, setExploreReady] = useState(false);
+  const [exploreError, setExploreError] = useState(false);
   const [saved, setSaved] = useState<Card[]>(() => asList(initialSaved));
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -173,7 +174,32 @@ export function ParentDesk({
   const [centreMessages, setCentreMessages] = useState(0);
   const [upgradeDismissed, setUpgradeDismissed] = useState(false);
   const [homeSettled, setHomeSettled] = useState(false);
+  const [homeError, setHomeError] = useState(false);
+  const [extrasState, setExtrasState] = useState<"pending" | "ready" | "error">("pending");
   const [editing, setEditing] = useState<Child | null | "new">(null);
+  const [editorVersion, setEditorVersion] = useState(0);
+  const [childHealthVersion, setChildHealthVersion] = useState(0);
+  const childDirty = useRef(false);
+  const childEditorLocation = useRef(locationHref);
+  const appliedChildIntent = useRef<string | null>(null);
+  const onChildDirtyChange = useCallback((dirty: boolean) => {
+    childDirty.current = dirty;
+  }, []);
+  const confirmChildDiscard = useCallback(() =>
+    confirmChildProfileDiscard(childDirty.current, locale === "fr", (message) => window.confirm(message)),
+  [locale]);
+  const discardChildEdits = useCallback(() => {
+    if (!confirmChildDiscard()) return false;
+    childDirty.current = false;
+    return true;
+  }, [confirmChildDiscard]);
+  const childBeforeUnload = useCallback(() => childDirty.current, []);
+  // A failed/cancelled router transition must leave the current draft guarded.
+  const blockChildNavigation = useCallback(() => !confirmChildDiscard(), [confirmChildDiscard]);
+  useBlocker({
+    shouldBlockFn: blockChildNavigation,
+    enableBeforeUnload: childBeforeUnload,
+  });
   const [childFocus, setChildFocus] = useState<string | null>(null);
   const [childOpen, setChildOpen] = useState(false);
   const [childrenReady, setChildrenReady] = useState(false);
@@ -185,21 +211,67 @@ export function ParentDesk({
   const [shortlistShared, setShortlistShared] = useState(initialShared);
   const acceptedShare = useRef<string | null>(null);
 
-  const selectTab = useCallback((id: string) => {
-    const next = parentDeskTabOrDefault(id);
-    setTab(next);
-    const search = parentNavSearch(id);
-    const target = search.tab ?? "";
-    if (target && target !== urlTab) {
-      void navigate({ to: parentDeskPath(pathname), search, replace: true });
+  useEffect(() => {
+    if (childEditorLocation.current === locationHref) return;
+    childEditorLocation.current = locationHref;
+    if (childDirty.current) setEditorVersion((current) => current + 1);
+    childDirty.current = false;
+    setEditing(null);
+  }, [locationHref]);
+
+  function selectTab(id: string) {
+    if (id !== tab) {
+      if (!discardChildEdits()) return;
+      setEditing(null);
     }
-    void yieldToMain().then(() => {
-      startTransition(() => setContentTab(next));
-    });
-  }, [navigate, pathname, urlTab]);
+    // The hook must also cancel a pending departure from the rendered tab.
+    selectParentTab(id);
+  }
+
+  function editChild(next: Child | "new") {
+    if (!discardChildEdits()) return;
+    setEditorVersion((current) => current + 1);
+    setEditing(next);
+    setChildOpen(true);
+  }
+
+  function closeChildEditor(closeDetail = false) {
+    if (!discardChildEdits()) return;
+    setEditing(null);
+    if (closeDetail) setChildOpen(false);
+  }
+
+  async function finishChildEdit(childId?: string) {
+    childDirty.current = false;
+    setEditing(null);
+    setChildFocus(childId ?? null);
+    setChildOpen(Boolean(childId));
+    setChildHealthVersion((current) => current + 1);
+    if (initialChild || initialFocus) {
+      // Commit the completed entry intent before refreshing authoritative facts.
+      await navigate({
+        from: parentDeskPath(pathname),
+        to: parentDeskPath(pathname),
+        search: (current) => completedChildProfileSearch(current),
+        replace: true,
+      }).catch(() => undefined);
+    }
+    try {
+      await load();
+    } catch {
+      toast.error(locale === "fr"
+        ? "Le changement est enregistré. Rechargez la page pour l’afficher."
+        : "Your change is saved. Reload the page to see it.");
+    }
+  }
 
   const loadExplore = useCallback(
     async (startBookings: Booking[], fresh = false) => {
+      const request = issueRequest("explore");
+      const uid = request.viewerId;
+      const current = request.isCurrent;
+      if (!uid || !current()) return;
+      setExploreError(false);
       try {
         if (!(origin.label || "").trim()) {
           startTransition(() => setExplore([]));
@@ -216,104 +288,120 @@ export function ParentDesk({
           q: loc.label,
           startDate: soonestStartDate(startBookings),
         };
-        const rows = await withTimeoutFallback(
-          dedupedQuery(`parent-search:${JSON.stringify(data)}`, QUERY_STALE_MS, () => searchDaycares({ data }), {
+        const rows = await withTimeout(
+          dedupedQuery(`parent-search:${uid}:${JSON.stringify(data)}`, QUERY_STALE_MS, () => searchDaycares({ data }), {
             cacheIf: (value) => Array.isArray(value) && value.length > 0,
             fresh,
           }),
           LOADER_SETTLE_MS,
-          [] as Card[],
+          "parent-search-timeout",
         );
+        if (!current()) return;
         const next = rows.length
           ? rows
-          : await withTimeoutFallback(
+          : await withTimeout(
               dedupedQuery(
-                `parent-featured:${loc.lat},${loc.lng},${loc.label ?? ""}`,
+                `parent-featured:${uid}:${loc.lat},${loc.lng},${loc.label ?? ""}`,
                 QUERY_STALE_MS,
                 () => featuredDaycares({ data: loc }),
                 { cacheIf: (value) => Array.isArray(value) && value.length > 0, fresh },
               ),
               LOADER_SETTLE_MS,
-              [] as Card[],
+              "parent-featured-timeout",
             );
-        startTransition(() => setExplore(asList(next)));
+        if (current()) startTransition(() => setExplore(asList(next)));
+      } catch {
+        if (current()) startTransition(() => setExploreError(true));
       } finally {
-        startTransition(() => setExploreReady(true));
+        if (current()) startTransition(() => setExploreReady(true));
       }
     },
-    [origin, radiusKm],
+    [origin, radiusKm, issueRequest],
   );
 
-  const familySeq = useRef(0);
   const loadFamily = useCallback(async (fresh = false) => {
-    const seq = ++familySeq.current;
-    if (shareToken && acceptedShare.current !== shareToken) {
-      const result = await acceptShortlistShare({ data: { token: shareToken } }).catch(() => null);
-      acceptedShare.current = shareToken;
-      if (result?.ok) toast.success(t("shareShortlistAccepted"));
-      else if (result && !result.ok) {
-        const key =
-          result.reason === "email"
-            ? "shareShortlistMismatch"
-            : result.reason === "used"
-              ? "shareShortlistUsed"
-              : result.reason === "self"
-                ? "shareShortlistSelf"
-                : "shareShortlistBad";
-        toast.error(t(key));
+    const request = issueRequest("family");
+    const uid = request.viewerId;
+    if (!uid || uid !== user?.id || !request.isCurrent()) return null;
+    try {
+      if (shareToken && acceptedShare.current !== shareToken) {
+        const result = await withTimeout(acceptShortlistShare({ data: { token: shareToken } }), LOADER_SETTLE_MS, "parent-share-timeout").catch(() => null);
+        if (!request.isCurrent()) return null;
+        acceptedShare.current = shareToken;
+        if (result?.ok) toast.success(t("shareShortlistAccepted"));
+        else if (result && !result.ok) {
+          const key =
+            result.reason === "email"
+              ? "shareShortlistMismatch"
+              : result.reason === "used"
+                ? "shareShortlistUsed"
+                : result.reason === "self"
+                  ? "shareShortlistSelf"
+                  : "shareShortlistBad";
+          toast.error(t(key));
+        }
       }
+      if (!request.isCurrent()) return null;
+      const f = await withTimeout(dedupedQuery(`parent-family:${uid}`, QUERY_STALE_MS, () => getFamily(), {
+        fresh: fresh || Boolean(shareToken),
+        cacheIf: (family) => family.viewerId === uid,
+      }), LOADER_SETTLE_MS, "parent-family-timeout");
+      if (!request.isCurrent()) return null;
+      if (f.viewerId !== uid) throw new Error("Family viewer changed");
+      await yieldToMain();
+      if (!request.isCurrent()) return null;
+      startTransition(() => {
+        setSaved(asList(f?.saved));
+        setBookings(asList(f?.bookings));
+        setPayments(asList(f?.payments));
+        setChildren(asList(f?.children));
+        setChildrenReady(true);
+        setFamilyCanWrite(f?.familyCanWrite !== false);
+        setCentreMessages(f.centreMessages ?? 0);
+        setUpgradeDismissed(Boolean(f.upgradeCardDismissed));
+        setShortlistShared(Boolean(f.shortlistShared));
+        setHomeSettled(true);
+        setHomeError(false);
+      });
+      return f;
+    } catch (error) {
+      if (!request.isCurrent()) return null;
+      throw error;
     }
-    const f = await dedupedQuery(`parent-family:${user?.id ?? ""}`, QUERY_STALE_MS, () => getFamily(), {
-      fresh: fresh || Boolean(shareToken),
-    });
-    if (seq !== familySeq.current) return f;
-    await yieldToMain();
-    if (seq !== familySeq.current) return f;
-    startTransition(() => {
-      setSaved(asList(f?.saved));
-      setBookings(asList(f?.bookings));
-      setPayments(asList(f?.payments));
-      setChildren(asList(f?.children));
-      setChildrenReady(true);
-      setFamilyCanWrite(f?.familyCanWrite !== false);
-      setCentreMessages(f.centreMessages ?? 0);
-      setUpgradeDismissed(Boolean(f.upgradeCardDismissed));
-      setShortlistShared(Boolean(f.shortlistShared));
-    });
-    return f;
-  }, [shareToken, t, user?.id]);
+  }, [shareToken, t, user?.id, issueRequest]);
 
   const loadDeskExtras = useCallback(async (fresh = false) => {
-    const uid = user?.id ?? "";
-    const [billed, tourRows, leadRows] = await Promise.all([
-      dedupedQuery(
-        `parent-bills:${uid}`,
-        QUERY_STALE_MS,
-        () => listParentBills().catch(() => ({ bills: [] as Bill[] })),
-        { fresh },
-      ),
-      dedupedQuery(
-        `parent-tours:${uid}`,
-        QUERY_STALE_MS,
-        () => listTourRequests({ data: { desk: "parent" } }).catch(() => [] as TourRequest[]),
-        { fresh },
-      ),
-      dedupedQuery(
-        `parent-leads:${uid}`,
-        QUERY_STALE_MS,
-        () => listLeadRequests({ data: { desk: "parent" } }).catch(() => [] as LeadRequest[]),
-        { fresh },
-      ),
+    const request = issueRequest("extras");
+    const uid = request.viewerId;
+    if (!uid || uid !== user?.id || !request.isCurrent()) return;
+    setExtrasState("pending");
+    const [billed, tourRows, leadRows] = await Promise.allSettled([
+      withTimeout(dedupedQuery(`parent-bills:${uid}`, QUERY_STALE_MS, () => listParentBills(), { fresh }), LOADER_SETTLE_MS, "parent-bills-timeout"),
+      withTimeout(dedupedQuery(`parent-tours:${uid}`, QUERY_STALE_MS, () => listTourRequests({ data: { desk: "parent" } }), { fresh }), LOADER_SETTLE_MS, "parent-tours-timeout"),
+      withTimeout(dedupedQuery(`parent-leads:${uid}`, QUERY_STALE_MS, () => listLeadRequests({ data: { desk: "parent" } }), { fresh }), LOADER_SETTLE_MS, "parent-leads-timeout"),
     ]);
+    if (!request.isCurrent()) return;
     startTransition(() => {
-      setBills(asList(billed?.bills));
-      setTours(asList(tourRows));
-      setLeads(asList(leadRows));
+      if (billed.status === "fulfilled") setBills(asList(billed.value.bills));
+      if (tourRows.status === "fulfilled") setTours(asList(tourRows.value));
+      if (leadRows.status === "fulfilled") setLeads(asList(leadRows.value));
+      setExtrasState([billed, tourRows, leadRows].every((result) => result.status === "fulfilled") ? "ready" : "error");
     });
-  }, [user?.id]);
+  }, [user?.id, issueRequest]);
+
+  function retryHome() {
+    const request = issueRequest("retry");
+    if (!request.isCurrent()) return;
+    setHomeError(false);
+    setHomeSettled(false);
+    void load().catch(() => { if (request.isCurrent()) setHomeError(true); });
+  }
 
   async function load() {
+    const request = issueRequest("home");
+    if (!request.isCurrent()) return;
     const f = await loadFamily(true);
+    if (!f || !request.isCurrent()) return;
     await Promise.all([loadExplore(f.bookings, true), loadDeskExtras(true)]);
   }
 
@@ -328,9 +416,14 @@ export function ParentDesk({
     setCentreMessages(0);
     setUpgradeDismissed(false);
     setHomeSettled(false);
+    setHomeError(false);
+    setExtrasState("pending");
+    setExploreError(false);
     setExplore([]);
     setExploreReady(false);
     setPicked({});
+    childDirty.current = false;
+    appliedChildIntent.current = null;
     setEditing(null);
   }, [user?.id]);
 
@@ -341,11 +434,10 @@ export function ParentDesk({
     void yieldToMain()
       .then(() => {
         if (cancelled) return null;
-        return loadFamily();
+        return loadFamily(true);
       })
       .then((f) => {
         if (cancelled || !f) return;
-        startTransition(() => setHomeSettled(true));
         cancelIdle = scheduleIdle(() => {
           if (cancelled) return;
           void loadExplore(f.bookings).catch(() => undefined);
@@ -353,9 +445,11 @@ export function ParentDesk({
         });
       })
       .catch(() => {
+        if (cancelled) return;
         startTransition(() => {
           setExploreReady(true);
           setChildrenReady(true);
+          setHomeError(true);
         });
       });
     return () => {
@@ -365,8 +459,14 @@ export function ParentDesk({
   }, [user?.id, loadFamily, loadExplore, loadDeskExtras]);
 
   useEffect(() => {
-    if (!initialChild || !childrenReady) return;
+    if (!initialChild) {
+      appliedChildIntent.current = null;
+      return;
+    }
+    const entryIntent = childProfileEntryIntent(locationHref, initialChild, initialFocus);
+    if (!entryIntent || !childrenReady || childDirty.current || appliedChildIntent.current === entryIntent) return;
     if (initialChild === "new") {
+      appliedChildIntent.current = entryIntent;
       if (children.length >= MAX_CHILDREN_PER_PARENT) {
         setEditing(null);
         return;
@@ -377,10 +477,11 @@ export function ParentDesk({
     }
     const found = children.find((child) => child.id === initialChild);
     if (!found) return;
+    appliedChildIntent.current = entryIntent;
     setChildFocus(found.id);
     setChildOpen(true);
     setEditing(initialFocus ? found : null);
-  }, [children, childrenReady, initialChild, initialFocus]);
+  }, [children, childrenReady, initialChild, initialFocus, locationHref]);
 
   useEffect(() => {
     if (contentTab !== "saved") {
@@ -400,18 +501,15 @@ export function ParentDesk({
   }, [contentTab]);
 
   useEffect(() => {
-    if (!initialTab) return;
-    setTab(initialTab);
-    startTransition(() => setContentTab(initialTab));
-  }, [initialTab]);
-
-  useEffect(() => {
     function refresh() {
-      void loadFamily(true).catch(() => undefined);
+      const request = issueRequest("refresh");
+      void loadFamily(true).catch(() => {
+        if (request.isCurrent()) setHomeError(true);
+      });
     }
     window.addEventListener("kidease-shortlist", refresh);
     return () => window.removeEventListener("kidease-shortlist", refresh);
-  }, [loadFamily]);
+  }, [loadFamily, issueRequest]);
 
   const deferredSaved = useDeferredValue(saved);
   const rankedSaved = useMemo(() => {
@@ -442,9 +540,6 @@ export function ParentDesk({
     }
   }, [bookings, children, contentTab, deferredSaved, located, origin, radiusKm]);
 
-  void explore;
-  void exploreReady;
-  void ParentDeskRails;
   if (!user) return <DeskSkeleton />;
   const upgradeBuyer = {
     role: desks?.role,
@@ -475,7 +570,6 @@ export function ParentDesk({
 
       {contentTab === "explore" ? (
         <>
-        <ParentAttention userId={user.id} tours={tours} bills={bills} childIds={children.map((child) => child.id)} />
         <ParentHome
           saved={saved}
           bookings={bookings}
@@ -487,18 +581,32 @@ export function ParentDesk({
           messages={centreMessages}
           dismissed={upgradeDismissed}
           settled={homeSettled}
+          loadError={homeError}
+          extrasState={extrasState}
+          bills={bills}
+          onRetry={retryHome}
+          care={<ParentHomeCare bookings={bookings} userId={user.id} />}
+          attention={extrasState === "ready" ? <ParentAttention userId={user.id} tours={tours} bills={bills} childIds={children.map((child) => child.id)} /> : null}
+          matches={
+            <section data-ke="parent-home-matches" className="min-h-56">
+              {!exploreReady ? <p role="status" className="text-sm text-muted">{locale === "fr" ? "Recherche de garderies près de chez vous…" : "Finding care near you…"}</p> : exploreError ? (
+                <div role="alert">
+                  <p className="text-sm text-muted">{locale === "fr" ? "Les garderies n’ont pas pu être chargées." : "Daycares could not load."}</p>
+                  <Button variant="secondary" className="mt-3" onClick={() => { setExploreReady(false); void loadExplore(bookings, true); }}>{locale === "fr" ? "Réessayer" : "Try again"}</Button>
+                </div>
+              ) : explore.length ? (
+                <Suspense fallback={<p role="status">{locale === "fr" ? "Préparation des résultats…" : "Preparing your results…"}</p>}>
+                  <ParentDeskRails items={explore} children={children} bookings={bookings} matchOnly />
+                </Suspense>
+              ) : <EmptyState title={t("parentHomeFindTitle")} body={t("parentHomeFindBody")} />}
+            </section>
+          }
           onDismiss={() => {
             void dismissUpgradeCard()
               .then(() => setUpgradeDismissed(true))
               .catch(() => setUpgradeDismissed(false));
           }}
         />
-        <details className="mt-8 rounded-xl border border-border bg-surface p-4">
-          <summary className="flex min-h-11 cursor-pointer items-center font-medium">{t("findDaycareJobs")}</summary>
-          <div className="mt-4">
-            <EceJobDesk mode="parent" />
-          </div>
-        </details>
         </>
       ) : null}
 
@@ -734,7 +842,7 @@ export function ParentDesk({
 
       {contentTab === "children" ? (
         <div className="mt-6 space-y-4">
-          <ChildHealthLog />
+          <ChildHealthLog key={`${user.id}:${childHealthVersion}`} />
           <PortfolioGaps children={children} />
           <div>
             <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>
@@ -755,7 +863,7 @@ export function ParentDesk({
               title={t("noChildren")}
               body={familyCanWrite ? t("noChildrenLead") : locale === "fr" ? "Le parent principal n’a pas encore ajouté d’enfant." : "The main parent has not added a child yet."}
               action={familyCanWrite ? t("emptyAddChild") : undefined}
-              onAction={familyCanWrite ? () => { setEditing("new"); setChildOpen(true); } : undefined}
+              onAction={familyCanWrite ? () => editChild("new") : undefined}
             />
           ) : (
           <div className="ke-split" data-ke="children-split" data-selected={childOpen || editing ? "true" : "false"}>
@@ -768,6 +876,7 @@ export function ParentDesk({
                       aria-pressed={activeChild?.id === c.id}
                       className="flex min-h-11 w-full items-center px-4 text-left font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                       onClick={() => {
+                        if (!discardChildEdits()) return;
                         setChildFocus(c.id);
                         setChildOpen(true);
                         setEditing(null);
@@ -779,13 +888,13 @@ export function ParentDesk({
                 ))}
               </ul>
               {familyCanWrite && children.length < MAX_CHILDREN_PER_PARENT ? (
-                <Button className="mt-3" onClick={() => { setEditing("new"); setChildOpen(true); }}>
+                <Button className="mt-3" onClick={() => editChild("new")}>
                   {children.length ? t("newChild") : t("addChild")}
                 </Button>
               ) : null}
             </div>
             <div className="ke-split-detail min-w-0" data-ke="children-detail">
-              <Button variant="ghost" className="mb-3 md:hidden" onClick={() => { setChildOpen(false); setEditing(null); }}>
+              <Button variant="ghost" className="mb-3 md:hidden" onClick={() => closeChildEditor(true)}>
                 {t("back")}
               </Button>
               {editing ? (
@@ -793,13 +902,12 @@ export function ParentDesk({
               <h2 className="mb-4 text-base font-semibold">{editing === "new" ? t("newChild") : t("profileEdit")}</h2>
               <Suspense fallback={<div className="ke-skel h-48 rounded-xl" aria-hidden="true" />}>
                 <ChildProfileForm
+                  key={`${editing === "new" ? "new" : editing.id}:${editorVersion}`}
                   initial={editing === "new" ? null : editing}
                   focus={initialFocus}
-                  onSaved={() => {
-                    setEditing(null);
-                    void load();
-                  }}
-                  onCancel={() => setEditing(null)}
+                  onDirtyChange={onChildDirtyChange}
+                  onSaved={(childId) => { void finishChildEdit(childId); }}
+                  onCancel={() => closeChildEditor()}
                 />
               </Suspense>
             </div>
@@ -816,7 +924,7 @@ export function ParentDesk({
                           <button
                             type="button"
                             data-ke="child-profile-edit"
-                            onClick={() => setEditing(c)}
+                            onClick={() => editChild(c)}
                             className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-primary touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                           >
                             {t("profileEdit")}
@@ -830,10 +938,7 @@ export function ParentDesk({
                       <div className="px-3 pb-3">
                         <DeleteChildControl
                           child={{ id: c.id, name: c.name }}
-                          onDeleted={() => {
-                            setEditing(null);
-                            void load();
-                          }}
+                          onDeleted={() => { void finishChildEdit(); }}
                         />
                       </div>
                       <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">
@@ -852,7 +957,7 @@ export function ParentDesk({
                                 const on = selected.includes(d.id);
                                 return (
                                   <li key={d.id}>
-                                    <label className="flex min-h-10 cursor-pointer items-center gap-2 text-sm">
+                                    <label data-ke="child-share-centre" className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm touch-manipulation">
                                       <input
                                         type="checkbox"
                                         className="size-4 accent-primary"

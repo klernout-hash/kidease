@@ -46,6 +46,7 @@ import { readMobileSearchV2 } from "@/lib/mobile-search-flag";
 import { SmartMatchEntry } from "@/components/smart-match";
 import { resolveLocationQuery } from "@/components/place-search";
 import { compactExploreSearch, readLiveSearchFlag } from "@/lib/explore-search";
+import { compactSearchRadius } from "@/lib/search-radius";
 import { LocationConsentCard } from "@/components/location-consent";
 import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
@@ -262,6 +263,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
     const age = extra?.age || undefined;
     const start = extra?.start || homeStart || undefined;
     const search = {
+      ...compactSearchRadius({ km: radiusKm }),
       q: fields.q,
       name: fields.name,
       from: fields.from,
@@ -342,7 +344,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           <MobileSearchHome
             origin={origin}
             onCommit={(params) => {
-              void navigate({ to: locale === "fr" ? "/fr/search" : "/search", search: params });
+              void navigate({ to: locale === "fr" ? "/fr/search" : "/search", search: { ...params, ...compactSearchRadius({ km: radiusKm }) } });
             }}
           />
         </div>

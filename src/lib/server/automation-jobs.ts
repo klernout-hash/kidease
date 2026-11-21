@@ -70,7 +70,7 @@ async function sendOne(input: {
   automation: string;
   dedupeKey: string;
   recipient: string | null;
-  letter: { subject: string; text: string; html: string };
+  letter: { subject: string; text: string; html: string; branded?: import("@/lib/email-layout").BrandedEmailInput };
   mode: AutomationMode;
   quiet: boolean;
   bag: Count;
@@ -86,6 +86,7 @@ async function sendOne(input: {
     subject: input.letter.subject,
     text: input.letter.text,
     html: input.letter.html,
+    branded: input.letter.branded,
     mode: input.mode,
     quiet: input.quiet,
     allowlist: allowlist(),
@@ -579,7 +580,7 @@ export async function runTourFollowupsJob(options: { dryRun?: boolean; now?: Dat
           recipient: row.email || "",
           subject: letter.subject,
           text: letter.text,
-          html: `<p>${letter.text}</p>`,
+          html: letter.html,
           occurredAt: row.tour_at || "",
           dedupeKey: `tour-follow:${row.id}`,
         });

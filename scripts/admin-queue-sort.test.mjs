@@ -8,7 +8,11 @@ import { asIsoString, compareTimeDesc, sortTime } from "../src/lib/sort-time.ts"
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 function src(rel) {
-  return readFileSync(join(root, rel), "utf8");
+  const text = readFileSync(join(root, rel), "utf8");
+  // Queue mapping moved to the shared nonfinancial reader.
+  return rel === "src/lib/server/admin-centres.ts"
+    ? text + "\n" + readFileSync(join(root, "src/lib/server/admin-centre-queue.ts"), "utf8")
+    : text;
 }
 
 test("old submittedAt localeCompare throws on Date (the production crash)", () => {

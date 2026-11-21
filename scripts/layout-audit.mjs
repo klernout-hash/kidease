@@ -39,6 +39,10 @@ export function auditPage(minTap) {
   const W = innerWidth;
   const hiddenUp = (e) => {
     for (let p = e; p && p !== d.body; p = p.parentElement) {
+      if (p !== e && p.tagName === "DETAILS" && !p.open) {
+        const summary = [...p.children].find((child) => child.tagName === "SUMMARY");
+        if (!summary?.contains(e)) return true;
+      }
       const s = getComputedStyle(p);
       if (s.display === "none" || s.visibility === "hidden" || Number(s.opacity) === 0) return true;
     }
@@ -92,8 +96,17 @@ export function auditPage(minTap) {
     if (!issues.overflow.length) issues.overflow.push(`page is ${scrollWidth}px wide`);
   }
 
+  // Inert content can still overflow or spill text, but its controls cannot be
+  // activated. Native modal dialogs escape inherited (not explicit) inertness.
+  const inertControl = (element) => {
+    for (let node = element; node; node = node.parentElement) {
+      if (node.hasAttribute("inert")) return true;
+      if (node.matches("dialog:modal")) return false;
+    }
+    return false;
+  };
   const controls = [...d.querySelectorAll('a[href],button,input:not([type=hidden]),select,textarea,summary,[role=button],[role=tab]')]
-    .filter(visible)
+    .filter((element) => visible(element) && !inertControl(element))
     .map((e) => ({ e, r: shown(e), fixed: fixed(e) }))
     .filter(({ r }) => r.right - r.left > 1 && r.bottom - r.top > 1);
   const seen = new Set();
@@ -135,7 +148,42 @@ export function auditPage(minTap) {
     if (/(hidden|clip|auto|scroll)/.test(s.overflowX)) continue;
     issues.spill.push(`${name(e)} ${e.scrollWidth}px in ${e.clientWidth}px`);
   }
-  return { width: W, scrollWidth, issues };
+  const faces = d.fonts ? [...d.fonts].map((face) => ({ family: face.family, status: face.status })) : [];
+  const finalUrl = new URL(d.location.href);
+  finalUrl.username = "";
+  finalUrl.password = "";
+  finalUrl.hash = "";
+  for (const key of new Set(finalUrl.searchParams.keys())) {
+    if (key !== "q" && key !== "look") finalUrl.searchParams.set(key, "[redacted]");
+  }
+  return {
+    width: W, scrollWidth, issues,
+    finalUrl: finalUrl.href,
+    fonts: {
+      status: d.fonts?.status ?? "unavailable",
+      // FontFaceSet has settled; this does not establish which face rendered.
+      ready: d.fonts?.status === "loaded",
+      bodyFamily: getComputedStyle(d.body).fontFamily,
+      loadedFamilies: [...new Set(faces.filter((face) => face.status === "loaded").map((face) => face.family))].sort(),
+      faces,
+    },
+  };
+}
+
+/** Preserve navigation diagnostics without changing the existing audit timing/policy. */
+export async function auditLayoutPage(page, url) {
+  let navigationStatus = null;
+  let navigationError = null;
+  try {
+    const response = await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
+    navigationStatus = response?.status() ?? null;
+  } catch (error) {
+    // Names suffice for attribution; messages/stacks can contain URL credentials.
+    navigationError = error instanceof Error ? error.name : "NavigationError";
+    await page.waitForLoadState("load");
+  }
+  await page.waitForTimeout(800);
+  return { ...(await page.evaluate(auditPage, MIN_TAP)), navigationStatus, navigationError };
 }
 
 async function waitFor(url, ms) {
@@ -187,14 +235,12 @@ async function main() {
         for (const path of LAYOUT_PAGES) {
           const url = new URL(path, base);
           url.searchParams.set("look", look);
-          await page.goto(url.href, { waitUntil: "networkidle", timeout: 60000 }).catch(() => page.waitForLoadState("load"));
-          await page.waitForTimeout(800);
-          const result = await page.evaluate(auditPage, MIN_TAP);
+          const result = await auditLayoutPage(page, url.href);
           const { overflow, overlap, spill, small } = result.issues;
           const smallFails = look === "clean" ? small : [];
           const bad = overflow.length + overlap.length + spill.length + smallFails.length;
           failures += bad;
-          report.push({ look, width, path, ...result.issues });
+          report.push({ look, width, path, ...result.issues, finalUrl: result.finalUrl, navigationStatus: result.navigationStatus, navigationError: result.navigationError, fonts: result.fonts });
           if (bad) console.log(`[layout] ${look} ${width}px ${path}: ${bad} issue(s)`);
         }
         await context.close();

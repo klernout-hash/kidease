@@ -168,6 +168,9 @@ export async function runCalendarJob(now = new Date()) {
         to: centre.contact_email,
         subject: "KidEase: a compliance date is coming up",
         text: `A ${row.kind.replaceAll("_", " ")} date is in ${plan.day} days. Open your daycare desk to review it.`,
+        heading: "A compliance date is coming up",
+        cta: { label: "Review the date", href: "https://www.kidease.ca/centre-compliance" },
+        reason: "You get this because your centre has a compliance date saved on KidEase.",
         aboutTestListing: isAdminOnlyListing({
           name: centre.name,
           slug: centre.slug,

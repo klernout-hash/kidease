@@ -15,11 +15,14 @@ export type OrgCopy = {
   notConfirmed: string;
   total: string;
   readyOf: string;
+  downloadCsv: string;
+  csvSummary: string;
 };
 
 const en: OrgCopy = {
   offTitle: "Centre totals are off",
-  offBody: "When this is on, you can see capacity, enrolled children, and open spots for every centre you run. KidEase does not guess a number.",
+  offBody:
+    "When this is on, you can see capacity, enrolled children, and open spots for every centre you run. KidEase does not guess a number.",
   home: "Back to today",
   title: "Your centres",
   lead: "Occupancy uses the licensed capacity on the listing and children with an accepted booking. A blank stays blank.",
@@ -34,11 +37,14 @@ const en: OrgCopy = {
   notConfirmed: "Not confirmed",
   total: "Centres with both numbers",
   readyOf: "of",
+  downloadCsv: "Download this table (CSV)",
+  csvSummary: "Displayed summary",
 };
 
 const fr: OrgCopy = {
   offTitle: "Les totaux des centres sont éteints",
-  offBody: "Quand c'est actif, vous voyez la capacité, les enfants inscrits et les places libres de chaque centre que vous dirigez. KidEase n'invente pas un chiffre.",
+  offBody:
+    "Quand c'est actif, vous voyez la capacité, les enfants inscrits et les places libres de chaque centre que vous dirigez. KidEase n'invente pas un chiffre.",
   home: "Retour à aujourd'hui",
   title: "Vos centres",
   lead: "L'occupation utilise la capacité permise sur la fiche et les enfants avec une inscription acceptée. Une case vide reste vide.",
@@ -53,6 +59,8 @@ const fr: OrgCopy = {
   notConfirmed: "Pas confirmé",
   total: "Centres avec les deux chiffres",
   readyOf: "sur",
+  downloadCsv: "Télécharger ce tableau (CSV)",
+  csvSummary: "Résumé affiché",
 };
 
 export function orgCopy(locale: string | null | undefined): OrgCopy {

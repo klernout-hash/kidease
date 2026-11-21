@@ -2482,10 +2482,13 @@ export const fr = {
     donateToKids: "Faire un don aux enfants",
     donateTitle: "Faire un don aux enfants",
     donateLead:
-      "Soutenez les hôpitaux pour enfants au Canada. KidEase vous dirige vers la page de don officielle de chaque fondation : nous ne traitons pas les dons sur ce site.",
-    donateMatch: "Les dons sur cette page vont à la fondation que vous choisissez. KidEase n’égale pas les dons.",
+      "Soutenez les enfants au Canada et dans le monde. Faites un don sur le site officiel de chaque organisme. KidEase ne collecte pas ces dons.",
+    donateMatch: "Les dons vont à l’organisme que vous choisissez. KidEase n’égale pas les dons.",
     donateOptional:
       "Le don est facultatif. Vous n’avez pas besoin de donner pour chercher, enregistrer des fiches ou utiliser KidEase.",
+    donateUnicefName: "UNICEF Canada",
+    donateUnicefWhy: "Aidez l’UNICEF à soutenir la santé, l’éducation et la protection des enfants dans le monde. Donnez directement à UNICEF Canada.",
+    donateUnicefCta: "Donner à UNICEF Canada",
     donateSickKidsName: "Fondation SickKids",
     donateSickKidsWhy:
       "La Fondation SickKids est le plus important bailleur de fonds caritatif de la recherche et des soins pédiatriques au Canada : un nom que les parents connaissent déjà. Les dons soutiennent la recherche qui sauve des vies, l’équipement pédiatrique de pointe et les programmes d’accompagnement des familles dont un enfant est gravement malade.",
@@ -2495,7 +2498,7 @@ export const fr = {
       "La CCHF est un réseau collectif qui appuie 13 fondations d’hôpitaux pour enfants au Canada : dont BC Children’s, Alberta Children’s, le CHEO et le IWK Health Centre. Un don par la CCHF peut soutenir un hôpital plus près de chez vous, pour un impact local partout où vivent les familles KidEase.",
     donateCchfCta: "Donner à la CCHF",
     donateExternalNote:
-      "Les sites officiels des fondations s’ouvrent dans un nouvel onglet. Les reçus officiels sont délivrés par la fondation, pas par KidEase.",
+      "Les sites des organismes s’ouvrent dans un nouvel onglet. Chaque organisme gère ses dons et ses reçus. Ces liens ne signifient pas un partenariat avec KidEase ni un appui à KidEase.",
     team: "L’équipe",
     teamIntro:
       "Kyle et Kevin ont créé KidEase, une entreprise canadienne, pour que les familles trouvent une garderie permise partout au pays.",
@@ -3020,7 +3023,7 @@ export const fr = {
     ageNotConfirmedHide: "Masquer les fiches sans âge confirmé",
     cardGapAges: "Âges non indiqués",
     cardGapFees: "Tarif non confirmé",
-    cardGapPhoto: "Photo en attente",
+    cardGapPhoto: "Aucune photo du centre",
     availabilityUnknown: "Disponibilité inconnue",
     confirmWithCentre: "Confirmer auprès du centre",
     unclaimedRequestNote:

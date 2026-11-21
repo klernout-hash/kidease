@@ -7,6 +7,7 @@
  */
 
 import { haversineKm } from "./geo.ts";
+import { renderBrandedEmail, renderBrandedText, type BrandedEmailInput } from "./email-layout.ts";
 import {
   OPEN_SPOT_DAILY_CAP,
   spotMatchesWatch,
@@ -181,14 +182,6 @@ export function planAreaWaitlistHits(input: {
   return hits;
 }
 
-function esc(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 export function areaAgeLabel(ageBand: string, locale: "en" | "fr"): string {
   const table = locale === "fr" ? AGE_FR : AGE_EN;
   return table[ageBand] || table.any || "Any age";
@@ -206,7 +199,7 @@ export function areaWaitlistLetter(input: {
   ageBand: string;
   url: string;
   manageUrl: string;
-}): { subject: string; text: string; html: string } {
+}): { subject: string; text: string; html: string; branded: BrandedEmailInput } {
   const centre = input.centre.replace(/\s+/g, " ").trim().slice(0, 80) || "A centre";
   const city = input.city.replace(/\s+/g, " ").trim().slice(0, 80);
   const place = input.place.replace(/\s+/g, " ").trim().slice(0, 80) || "your area";
@@ -221,11 +214,8 @@ export function areaWaitlistLetter(input: {
       `Elle est à environ ${km} km de ${place}.`,
       `Groupe d'âge : ${age}.`,
       "Ce n'est pas une place réservée. Demandez à la garderie si elle est encore libre.",
-      `Ouvrir la fiche : ${url}`,
-      `Gérer votre liste de secteur : ${manage}`,
     ].join("\n\n");
-    const html = `<p>${esc(text.split("\n\n")[0] || "")}</p><p>${esc(`Elle est à environ ${km} km de ${place}.`)}</p><p>Groupe d'âge : ${esc(age)}.</p><p>Ce n'est pas une place réservée. Demandez à la garderie si elle est encore libre.</p><p><a href="${esc(url)}">Ouvrir la fiche</a></p><p><a href="${esc(manage)}">Gérer votre liste de secteur</a></p>`;
-    return { subject, text, html };
+    return areaLetter(subject, text, input.locale, url, manage);
   }
   const subject = `KidEase: a spot may be open near ${place}`;
   const text = [
@@ -233,11 +223,27 @@ export function areaWaitlistLetter(input: {
     `It is about ${km} km from ${place}.`,
     `Age group: ${age}.`,
     "This is not a reserved spot. Ask the centre if it is still open.",
-    `Open the listing: ${url}`,
-    `Manage your area waitlist: ${manage}`,
   ].join("\n\n");
-  const html = `<p>${esc(`KidEase found a possible open spot at ${centre}${city ? ` in ${city}` : ""}.`)}</p><p>${esc(`It is about ${km} km from ${place}.`)}</p><p>Age group: ${esc(age)}.</p><p>This is not a reserved spot. Ask the centre if it is still open.</p><p><a href="${esc(url)}">Open the listing</a></p><p><a href="${esc(manage)}">Manage your area waitlist</a></p>`;
-  return { subject, text, html };
+  return areaLetter(subject, text, input.locale, url, manage);
+}
+
+function areaLetter(subject: string, text: string, locale: "en" | "fr", url: string, manage: string) {
+  const fr = locale === "fr";
+  const branded: BrandedEmailInput = {
+    locale,
+    heading: subject,
+    preheader: subject,
+    blocks: [
+      ...text.split("\n\n").map((paragraph) => ({ kind: "p" as const, text: paragraph })),
+      { kind: "button", label: fr ? "Ouvrir la fiche" : "Open the listing", href: url },
+      { kind: "button", label: fr ? "Gérer votre liste de secteur" : "Manage your area waitlist", href: manage },
+    ],
+    reason: fr
+      ? "Vous recevez ce courriel parce que vous avez une alerte de secteur sur KidEase."
+      : "You get this because you have an area alert on KidEase.",
+    unsubscribeUrl: "https://www.kidease.ca/unsubscribe",
+  };
+  return { subject, text: renderBrandedText(branded), html: renderBrandedEmail(branded), branded };
 }
 
 export function areaWaitlistSms(input: { centre: string; city: string }): string {

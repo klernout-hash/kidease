@@ -23,7 +23,6 @@ import { airbnbCopy, type AirbnbCopy } from "@/lib/airbnb-ui-copy";
 import { applyDocumentLocale, languageMeta, shippedLanguages } from "@/lib/languages";
 import { localePath, localeSwitchHref } from "@/lib/locale-path";
 import { writeLocaleChoiceCookie } from "@/lib/locale-geo";
-import { feePillPulses } from "@/lib/card-photo-pills";
 import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import { photoUrl } from "@/lib/photo";
 import { saveMyLocale } from "@/lib/server/account-prefs";
@@ -136,7 +135,7 @@ export function AirbnbHome({
           const ages = ageRangeLabel(row.ageMinMonths, row.ageMaxMonths, locale);
           const fresh = freshnessLine(row.spotsUpdatedAt || row.lastVacancyUpdatedAt, locale);
           const subsidy = listingSubsidy(row);
-          const fee = subsidy ? subsidyLabel(subsidy, locale) : "";
+          const fee = subsidy ? ((subsidy.subsidy_type === "ten" || subsidy.subsidy_type === "ten_max") ? (locale === "fr" ? "10 $/jour" : "$10/day") : subsidyLabel(subsidy, locale)) : "";
           return (
             <Link
               key={row.id}
@@ -150,7 +149,7 @@ export function AirbnbHome({
                   <span
                     data-ke="card-fee-pill"
                     data-subsidy-type={subsidy.subsidy_type}
-                    className={cn("ke-airbnb-fee", feePillPulses(subsidy.subsidy_type) && "ke-priority-pill")}
+                    className="ke-airbnb-fee"
                   >
                     {fee}
                   </span>

@@ -111,7 +111,8 @@ test("staff and a daycare with no centre do not get the owner setup card", () =>
   assert.match(provider, /data-ke="staff-today"/);
   assert.match(provider, /data-ke="staff-hours-link"/);
   const host = readFileSync(new URL("../src/components/first-run.tsx", import.meta.url), "utf8");
-  assert.match(host, /provider-setup-reserve/);
+  assert.match(host, /placeChecklistSlot/);
+  assert.match(read("src/lib/checklist-slot.ts"), /provider-setup-reserve/);
   assert.match(host, /showProviderSetupCard/);
 });
 
