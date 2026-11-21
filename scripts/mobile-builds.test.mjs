@@ -126,7 +126,19 @@ describe("native project scaffolding", () => {
     assert.match(entitlements, /webcredentials:www\.kidease\.ca/);
     assert.doesNotMatch(entitlements, /aps-environment/);
     assert.match(entitlements, /com\.apple\.developer\.applesignin/);
-    assert.match(read("ios/App/App.xcodeproj/project.pbxproj"), /CODE_SIGN_ENTITLEMENTS = App\/App.entitlements/);
+    const storeConfig = read("ios/App/App/Store.xcconfig");
+    assert.match(storeConfig, /^CODE_SIGN_ENTITLEMENTS = App\/App\.entitlements$/m);
+    assert.match(storeConfig, /\/\/ INFOPLIST_KEY_UIBackgroundModes = voip audio remote-notification/);
+    assert.match(storeConfig, /\/\/ INFOPLIST_KEY_KIDEASEPushCalling = YES/);
+    assert.match(storeConfig, /\/\/ CODE_SIGN_ENTITLEMENTS = App\/App\.push\.entitlements/);
+    assert.doesNotMatch(storeConfig, /^INFOPLIST_KEY_UIBackgroundModes/m);
+    assert.doesNotMatch(storeConfig, /^INFOPLIST_KEY_KIDEASEPushCalling/m);
+    assert.match(read("ios/debug.xcconfig"), /App\/App\/Store\.xcconfig/);
+    assert.match(read("ios/App/App.xcodeproj/project.pbxproj"), /Store\.xcconfig/);
+    assert.doesNotMatch(read("ios/App/App.xcodeproj/project.pbxproj"), /CODE_SIGN_ENTITLEMENTS = /);
+    assert.match(read("ios/App/App/App.push.entitlements"), /<key>aps-environment<\/key>/);
+    assert.match(read("ios/App/App/CallKitVoipPlugin.swift"), /KIDEASEPushCalling/);
+    assert.match(read("ios/App/App/CallKitVoipPlugin.swift"), /PKPushRegistry/);
     assert.doesNotMatch(read("ios/App/App.xcodeproj/project.pbxproj"), /DEVELOPMENT_TEAM = [A-Z0-9]{10}/);
 
     const strings = read("android/app/src/main/res/values/strings.xml");
@@ -165,6 +177,9 @@ describe("mobile build docs stay honest", () => {
     assert.doesNotMatch(doc, /store listing is live|listed on the App Store/i);
     assert.match(doc, /not\*\* live|are \*\*not\*\* live/);
     assert.match(doc, /store-readiness\.md/);
+    assert.match(doc, /ios\/App\/App\/Store\.xcconfig/);
+    assert.match(doc, /INFOPLIST_KEY_UIBackgroundModes = voip audio remote-notification/);
+    assert.match(doc, /App\.push\.entitlements/);
     assert.match(doc, /STORE-LAUNCH\.md/);
     assert.doesNotMatch(doc, /-----BEGIN|AuthKey_|sk_live_|AIza[0-9A-Za-z_-]{20,}/);
   });

@@ -17,7 +17,7 @@ Payloads hold only the ring id, the thread id, the media type, and the caller's 
 
 ## Keys still needed (env names only; never commit values)
 
-- **APNs VoIP:** `APNS_KEY` (.p8 with APNs enabled), `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID`, `APNS_PRODUCTION=1`. The App ID needs Push Notifications and VoIP background mode. The checked-in Info.plist does not declare `voip`. Add that mode only in the build that ships the ring.
+- **APNs VoIP:** `APNS_KEY` (.p8 with APNs enabled), `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID`, `APNS_PRODUCTION=1`. The App ID needs Push Notifications and VoIP background mode. The store archive does not declare `voip`. Uncomment the three push lines in `ios/App/App/Store.xcconfig` only in the build that ships the ring. See `docs/mobile-builds.md`.
 - **FCM:** `FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY` (Firebase service account), plus `google-services.json` in the Android build.
 - **HMS:** `HMS_APP_ID`, `HMS_CLIENT_ID`, `HMS_CLIENT_SECRET` (AppGallery Connect), plus `agconnect-services.json` injected from `AGCONNECT_SERVICES_JSON` into the huawei source set. The service is already in that source set. `FEATURE_CALL_PUSH` stays off.
 - **ADM:** `ADM_CLIENT_ID`, `ADM_CLIENT_SECRET` (Amazon Developer security profile), plus `api_key.txt` in the Amazon build.

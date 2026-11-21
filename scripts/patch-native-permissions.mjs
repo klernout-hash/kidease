@@ -125,16 +125,19 @@ export function ensureAndroidAppLinks(manifest) {
   return next;
 }
 
-function associatedDomainsEntitlementsXml() {
+function associatedDomainsEntitlementsXml(includePush) {
   const domains = CAP_ASSOCIATED_HOSTS.flatMap((host) => [
     `\t\t<string>applinks:${host}</string>`,
     `\t\t<string>webcredentials:${host}</string>`,
   ]).join("\n");
+  const push = includePush
+    ? `\t<key>aps-environment</key>\n\t<string>production</string>\n`
+    : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>com.apple.developer.applesignin</key>
+${push}	<key>com.apple.developer.applesignin</key>
 	<array>
 		<string>Default</string>
 	</array>
@@ -149,21 +152,22 @@ ${domains}
 
 async function writeIosAssociatedDomainsEntitlements() {
   const entitlements = join(root, "ios/App/App/App.entitlements");
-  await writeFile(entitlements, associatedDomainsEntitlementsXml());
-  console.log("[native-permissions] wrote ios App.entitlements (Sign in with Apple + Associated Domains, no push)");
+  const pushEntitlements = join(root, "ios/App/App/App.push.entitlements");
+  await writeFile(entitlements, associatedDomainsEntitlementsXml(false));
+  await writeFile(pushEntitlements, associatedDomainsEntitlementsXml(true));
+  console.log("[native-permissions] wrote App.entitlements (no push) and App.push.entitlements");
 }
 
 async function ensurePbxEntitlements() {
   const pbxPath = join(root, "ios/App/App.xcodeproj/project.pbxproj");
   if (!(await pathExists(pbxPath))) return;
   let pbx = await readFile(pbxPath, "utf8");
-  if (!pbx.includes("CODE_SIGN_ENTITLEMENTS")) {
-    pbx = pbx.replaceAll(
-      "INFOPLIST_FILE = App/Info.plist;",
-      "CODE_SIGN_ENTITLEMENTS = App/App.entitlements;\n\t\t\t\tINFOPLIST_FILE = App/Info.plist;",
-    );
-    await writeFile(pbxPath, pbx);
-    console.log("[native-permissions] set CODE_SIGN_ENTITLEMENTS in project.pbxproj");
+  // Store.xcconfig selects the entitlements file. A target-level
+  // CODE_SIGN_ENTITLEMENTS overrides that switch, so do not write one here.
+  const next = pbx.replace(/\r?\n\t\t\t\tCODE_SIGN_ENTITLEMENTS = App\/App\.entitlements;/g, "");
+  if (next !== pbx) {
+    await writeFile(pbxPath, next);
+    console.log("[native-permissions] left CODE_SIGN_ENTITLEMENTS to Store.xcconfig");
   }
 }
 
