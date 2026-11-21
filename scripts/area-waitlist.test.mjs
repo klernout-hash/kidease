@@ -123,7 +123,14 @@ test("area email stays off and the draft is English and French", () => {
   assert.match(fr.subject, /place pourrait être libre/);
   assert.match(fr.text, /pas une place réservée/);
   assert.match(fr.text, /Groupe d'âge : Poupon/);
-  assert.doesNotMatch(en.text + fr.text, /—|maps\.google|@/);
+  assert.doesNotMatch(en.text + fr.text, /—|maps\.google/);
+  for (const letter of [en, fr]) {
+    assert.match(letter.text, /support@kidease\.ca/);
+    assert.match(letter.html, /class="ke-btn"/);
+    assert.equal(letter.branded.blocks.filter((block) => block.kind === "button").length, 2);
+    assert.equal(letter.html.split("Winnipeg, Manitoba, Canada").length - 1, 1);
+    assert.doesNotMatch(letter.branded.blocks.map((block) => block.text || "").join(" "), /https:|support@/);
+  }
   assert.equal(fr.html.includes("<Sunny"), false);
   const sms = areaWaitlistSms({ centre: "Sunny Side", city: "Winnipeg" });
   assert.match(sms, /STOP/);

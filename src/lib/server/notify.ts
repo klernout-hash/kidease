@@ -314,7 +314,14 @@ function digestCopy(
     </td></tr>
   </table>
 </body></html>`;
-  return { title, text, html };
+  const branded = brandedNotice({
+    heading: "Daily digest",
+    preheader: `${day} · ${rows.length} events in the last 24 hours`,
+    text: [`${rows.length} event${rows.length === 1 ? "" : "s"} in the last 24 hours.`, summary, lines.join("\n")].join("\n\n"),
+    cta: { label: "Open admin", href: admin },
+    reason: "You get this because you manage KidEase.",
+  });
+  return { title, text, html, branded };
 }
 
 async function ensureDigestTable() {
@@ -358,11 +365,11 @@ export async function sendDailyDigest() {
     return { ok: true as const, skipped: true as const, empty: true as const, day };
   }
 
-  const { title, text, html } = digestCopy(day, rows);
+  const { title, text, html, branded } = digestCopy(day, rows);
   let status = "queued";
   let error: string | null = null;
   try {
-    status = await deliverEmail(title, text, html);
+    status = await deliverEmail(title, text, html, ADMIN_EMAIL, undefined, { branded });
   } catch (err) {
     status = "failed";
     error = err instanceof Error ? err.message : "send failed";

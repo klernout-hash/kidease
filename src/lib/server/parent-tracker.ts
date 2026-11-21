@@ -160,7 +160,7 @@ Un parent vous invite à voir et modifier sa liste de garderies sur KidEase. Ouv
       <p style="margin:24px 0 0;">
         <a href="${escapeAttr(url)}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:600;">Open the shortlist</a>
       </p>
-      <p style="margin:20px 0 0;font-size:13px;color:#5c6578;">Un parent vous invite à voir et modifier sa liste. Textos et clavardage : à venir.</p>
+      <p style="margin:20px 0 0;font-size:13px;color:#5c6578;">Un parent vous invite à voir et modifier sa liste.</p>
     </td></tr>
   </table>
 </body></html>`;

@@ -4,6 +4,8 @@
  */
 import { quietHourInZone } from "./family-time.ts";
 import { buildTourIcs } from "./tour-ics.ts";
+import { CASL_SENDER } from "./casl.ts";
+import { brandedNotice, renderBrandedEmail, renderBrandedText, type BrandedEmailInput } from "./email-layout.ts";
 
 export type TourNotice = "booked" | "rescheduled" | "cancelled";
 
@@ -169,15 +171,32 @@ export function tourNextStepLetter(input: {
   locale: "en" | "fr";
   centre: string;
   applyPath: string;
-}): { subject: string; text: string } {
-  if (input.locale === "fr") {
-    return {
-      subject: `Prochaine étape après la visite à ${input.centre}`,
-      text: `La visite est passée. Si vous voulez une place, demandez-la ici : ${input.applyPath}. Ceci n’est pas une offre.`,
-    };
-  }
+}): { subject: string; text: string; html: string; branded: BrandedEmailInput } {
+  const fr = input.locale === "fr";
+  const subject = fr
+    ? `Prochaine étape après la visite à ${input.centre}`
+    : `Next step after your tour at ${input.centre}`;
+  const branded: BrandedEmailInput = {
+    ...brandedNotice({
+      locale: input.locale,
+      heading: subject,
+      text: fr
+        ? "La visite est passée. Si vous voulez une place, demandez-la dans KidEase. Ceci n’est pas une offre."
+        : "The tour is over. If you want a spot, ask in KidEase. This is not an offer.",
+      cta: {
+        label: fr ? "Demander une place" : "Ask for a spot",
+        href: input.applyPath.startsWith("/") ? `${CASL_SENDER.web}${input.applyPath}` : input.applyPath,
+      },
+      reason: fr
+        ? "Vous recevez ce courriel parce que vous avez réservé une visite sur KidEase."
+        : "You get this because you booked a tour on KidEase.",
+    }),
+    unsubscribeUrl: `${CASL_SENDER.web}${CASL_SENDER.unsubscribePath}`,
+  };
   return {
-    subject: `Next step after your tour at ${input.centre}`,
-    text: `The tour is over. If you want a spot, ask here: ${input.applyPath}. This is not an offer.`,
+    subject,
+    text: renderBrandedText(branded),
+    html: renderBrandedEmail(branded),
+    branded,
   };
 }

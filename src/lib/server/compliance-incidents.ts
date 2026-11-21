@@ -254,6 +254,9 @@ export async function runIncidentJob(now = new Date()) {
         to: email,
         subject: "KidEase: a note from your daycare",
         text: "Your daycare filed a same-day note. Sign in to KidEase to read it. This is not a text.",
+        heading: "A note from your daycare",
+        cta: { label: "Read the daycare note", href: "https://www.kidease.ca/family-incidents" },
+        reason: "You get this because your daycare filed a note for your family on KidEase.",
         aboutTestListing: centre
           ? isAdminOnlyListing({
               name: centre.name,

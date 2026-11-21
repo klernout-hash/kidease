@@ -50,10 +50,13 @@ async function deliver(input: { body: string; audience: Audience; actorId: strin
     `;
     if (emailPlan === "send" && centre.contact_email) {
       const result = await sendComplianceEmail({
-            essential: true,
+        essential: true,
         to: centre.contact_email,
         subject: "KidEase: a notice for your area",
         text: input.body,
+        heading: "A notice for your area",
+        cta: { label: "Open your daycare desk", href: "https://www.kidease.ca/provider" },
+        reason: "You get this because your centre is in the area covered by this notice.",
         aboutTestListing: isAdminOnlyListing({
           name: centre.name,
           slug: centre.slug,
@@ -88,6 +91,9 @@ async function deliver(input: { body: string; audience: Audience; actorId: strin
             to: emailRow[0].email,
             subject: "KidEase: a notice for your area",
             text: input.body,
+            heading: "A notice for your area",
+            cta: { label: "Open your family desk", href: "https://www.kidease.ca/parent" },
+            reason: "You get this because your family has a booking at a centre in the area covered by this notice.",
             aboutTestListing: isAdminOnlyListing({
               name: centre.name,
               slug: centre.slug,
