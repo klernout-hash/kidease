@@ -49,11 +49,12 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
         guard let webView = webView else { return }
         if webView.frame != view.bounds { webView.frame = view.bounds }
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        if #available(iOS 14.0, *) { webView.pageZoom = 1 }
+        // Keep the page from zooming out and letterboxing. Pinch in stays on.
+        if #available(iOS 14.0, *), webView.pageZoom < 1 { webView.pageZoom = 1 }
         let scroll = webView.scrollView
         scroll.minimumZoomScale = 1
-        scroll.maximumZoomScale = 1
-        if scroll.zoomScale != 1 { scroll.setZoomScale(1, animated: false) }
+        scroll.maximumZoomScale = 3
+        if scroll.zoomScale < 1 { scroll.setZoomScale(1, animated: false) }
         scroll.contentInsetAdjustmentBehavior = .never
     }
 

@@ -98,6 +98,8 @@ test("iPhone sizes, landscape, and Dynamic Type are in the viewport pass", () =>
   assert.match(css, /calc\(14px \* var\(--ke-text-scale, 1\)\)/);
   const bridge = src("ios/App/App/KidEaseBridgeViewController.swift");
   assert.match(bridge, /preferredContentSizeCategory/);
+  assert.match(bridge, /maximumZoomScale = 3/);
+  assert.doesNotMatch(bridge, /maximumZoomScale = 1/);
   assert.match(bridge, /accessibilityExtraExtraExtraLarge/);
   assert.match(bridge, /--ke-text-scale/);
   assert.match(src("capacitor.config.ts"), /contentInset: "never"/);
