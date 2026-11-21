@@ -61,7 +61,7 @@ export function AppMenuScreen({
   const { session, sticky } = useSessionDesks();
   const native = useInNativeShell();
   const showStores = showStoreComingSoon(useStoreChannel());
-  const plansOn = chrome.subscriptionsEnabled === true;
+  const plansOn = !native && chrome.subscriptionsEnabled === true;
   const airbnb = useAirbnbUi();
   const currentDesk = highlightDesk("/menu", sticky, null);
   const ownsCentre = Boolean(session?.ownsCentre);

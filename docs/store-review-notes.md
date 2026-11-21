@@ -15,9 +15,7 @@ The iPhone and Android apps are a Capacitor shell around https://www.kidease.ca.
 - Saved centres stay on the phone when the network is off.
 - Sign in with Apple on iPhone, when the Apple keys are set.
 
-Push notifications are not in this version. The app does not ask for notification permission.
-
-- Voice and video calls use the camera and microphone only while the call screen is open. Twilio’s scripts load on those pages. The app does not record the call. The reviewer parent account has complimentary Parent Plus, so a video tour opens with the normal join button. No purchase and no price. A parent without Parent Plus sees a closed note with no price and no subscribe button. There is no background-audio mode and no VoIP mode. Calls run while the app is on screen.
+Push notifications are not in this version. Voice and video calling are not in this version. The app does not ask for notification permission. It does not show a call button or an incoming-call screen. Info.plist has no `UIBackgroundModes` key. The signed entitlements file has no `aps-environment`. No purchase and no price.
 
 ## Reviewer sign-in
 
@@ -31,7 +29,7 @@ Kyle runs this once, from a machine that already has the production database URL
 2. Run `npm run ops:reviewer-demo` when `REVIEWER_ACCOUNT_PASSWORD` is already exported.
 3. Confirm the fictional centre `qa-reviewer-demo-centre` (North Elm Family Daycare, Winnipeg, Manitoba) stays `admin_only` with `is_test = 1`, and that public search does not list it. It is not a real licensed daycare. No fee or rating is stored. Hours are Monday to Friday, 7:30 a.m. to 5:30 p.m. Photos are KidEase sample rooms, not pictures of this centre. The parent has two fictional child profiles, a message thread, a tour request, and a waitlist entry. Re-running the seed updates those same rows. It does not change the John Doe or Jonny Doey accounts.
 4. Confirm the parent profile has complimentary Parent Plus (`plus_plan` plus, `plus_status` active) and no Stripe subscription id. The daycare profile does not get Plus. Both accounts have email already verified and two-factor turned off.
-5. Sign in on https://www.kidease.ca/login with each account and that password. No email code is sent. Open Search, Saved, Messages, and Account. The parent sees the message thread. The daycare sees the same thread, the tour request, and the waitlist. From Messages, the parent can open a video tour. The app shows the join button. It does not show a price or a subscribe button.
+5. Sign in on https://www.kidease.ca/login with each account and that password. No email code is sent. Open Search, Saved, Messages, and Account. The parent sees the message thread. The daycare sees the same thread, the tour request, and the waitlist. There is no call button. Calling is not in this version.
 
 Defaults if the email vars are unset: `reviewer.parent@kidease.ca` and `reviewer.daycare@kidease.ca`. Both profiles are marked test accounts. The parent account’s Parent Plus is complimentary. Nothing is charged.
 
@@ -48,7 +46,7 @@ Reviewers outside Canada can search **Winnipeg, Manitoba**. The directory is Can
 ## Still needed before the binary is uploaded
 
 - Apple Team ID (not enrolment id B7UM5AC9JQ), Services ID, Sign in with Apple `.p8`, and the four `APPLE_*` env vars. See `docs/apple-sign-in.md`.
-- Push is not part of this version. Do not add an APNs key for this upload. `aps-environment` is not in the entitlements.
+- Push is not part of this version. Calling is not part of this version. Do not add an APNs key for this upload. Do not uncomment the push lines in `ios/App/App/Store.xcconfig`. `aps-environment` is not in the signed entitlements. Info.plist does not declare `UIBackgroundModes`.
 - Play App Signing SHA-256 in `ANDROID_CERT_SHA256S`.
 - Numeric App Store id in `VITE_APPLE_APP_STORE_ID` after App Store Connect assigns it.
 - Archive the iOS app with Xcode 26 and the iOS 26 SDK.

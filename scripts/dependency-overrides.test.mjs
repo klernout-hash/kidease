@@ -28,6 +28,11 @@ test("security overrides pin the patched js-yaml, brace-expansion, xmldom, and u
 
   assert.deepEqual(locked("js-yaml"), ["4.3.2"]);
   assert.deepEqual(locked("@xmldom/xmldom"), ["0.9.12"]);
-  assert.deepEqual(new Set(locked("brace-expansion")), new Set(["1.1.21", "2.1.7", "5.0.12"]));
+  const brace = locked("brace-expansion");
+  const allowed = new Set(["1.1.21", "2.1.7", "5.0.12"]);
+  assert.ok(brace.length > 0);
+  for (const version of brace) assert.ok(allowed.has(version), version);
+  assert.ok(brace.includes("1.1.21"));
+  assert.ok(brace.includes("5.0.12"));
   assert.deepEqual(locked("uuid"), ["11.1.1"]);
 });

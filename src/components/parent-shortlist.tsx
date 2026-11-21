@@ -21,7 +21,7 @@ import { parentListingFeesVisible, parentListingMonthlyFee } from "@/lib/public-
 import { useCopy } from "@/lib/use-copy";
 import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { RuntimePaused } from "@/components/runtime-paused";
-import { useStoreChannel } from "@/lib/use-native-shell";
+import { useStoreChannel, useStoreShell } from "@/lib/use-native-shell";
 import { StoreMapFallback } from "@/components/store-map-fallback";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
 
@@ -58,8 +58,9 @@ export function ParentShortlist({
   const publicMap = useRuntimeSwitches().publicMap;
   const feesOn = parentListingFeesVisible();
   const storeChannel = useStoreChannel();
+  const storeShell = useStoreShell();
   const { plusOpen } = useParentPlusAccess();
-  const leadKey = plusOpen ? "shortlistLeadOpen" : "shortlistLead";
+  const leadKey = storeShell ? "shortlistLeadApp" : plusOpen ? "shortlistLeadOpen" : "shortlistLead";
   const origin = useAppStore((s) => s.origin);
   const radiusKm = useAppStore((s) => s.radiusKm);
   const [picked, setPicked] = useState<string[]>([]);

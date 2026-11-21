@@ -63,7 +63,7 @@ test("Sign in with Apple, Universal Links, and the review sheet are already pres
   const entitlements = src("ios/App/App/App.entitlements");
   assert.match(entitlements, /com\.apple\.developer\.applesignin/);
   assert.match(entitlements, /applinks:www\.kidease\.ca/);
-  assert.match(entitlements, /aps-environment/);
+  assert.doesNotMatch(entitlements, /aps-environment/);
   const aasa = src("public/.well-known/apple-app-site-association.json");
   assert.match(aasa, /GAUC28WJXZ\.ca\.kidease\.app/);
   assert.match(src("ios/App/App/AppleSignInPlugin.swift"), /ASAuthorizationAppleIDProvider/);
