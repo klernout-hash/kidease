@@ -33,7 +33,8 @@ test("explore and search share six daycare-type rows with in-row show more", () 
   assert.match(rails, /BROWSE_RAIL_PAGE = 12/);
   assert.match(rails, /expandable/);
   assert.match(rails, /pageSize=\{BROWSE_RAIL_PAGE\}/);
-  assert.match(src("src/components/home-discovery.tsx"), /FacilityTypeRails items=\{shown\} visual/);
+  assert.match(src("src/components/home-discovery.tsx"), /FacilityTypeRails[\s\S]*items=\{shown\}[\s\S]*visual/);
+  assert.match(src("src/components/home-discovery.tsx"), /eagerThumbs=\{priorityFirst && availableNow\.length === 0\}/);
   assert.match(search, /DaycareTypeRails/);
   assert.match(search, /data-ke="search-result-list"/);
   assert.match(search, /writeBrowseType/);

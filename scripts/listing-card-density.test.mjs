@@ -65,7 +65,7 @@ test("rails, search skeletons, and featured grids share the tighter footprint", 
   assert.match(search, /ke-result-stack/);
   assert.match(search, /ke-skel ke-card-photo/);
   assert.doesNotMatch(search, /lg:grid-cols-5 xl:grid-cols-6/);
-  assert.match(home, /FacilityTypeRails items=\{shown\} visual/);
+  assert.match(home, /FacilityTypeRails[\s\S]*items=\{shown\}[\s\S]*visual/);
   assert.doesNotMatch(home, /ke-web-grid/);
   assert.match(photo, /200px/);
   assert.match(photo, /CARD_WIDTHS = \[320, 480, 768\]/);
