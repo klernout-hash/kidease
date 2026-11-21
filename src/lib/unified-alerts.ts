@@ -821,6 +821,31 @@ function clean(raw: string | null | undefined, max: number): string {
     .slice(0, max);
 }
 
+function pullAlertToken(template: string, value: string, token: "{name}" | "{status}"): string {
+  const parts = template.split(token);
+  if (parts.length !== 2) return "";
+  const [before, after] = parts;
+  if (!value.startsWith(before) || (after && !value.endsWith(after))) return "";
+  const end = after ? value.length - after.length : value.length;
+  return value.slice(before.length, end).trim();
+}
+
+/** Stored rows were written in English. Rebuild them in the reader's language. */
+export function alertTextForReader(
+  typeId: string,
+  locale: AlertLocale,
+  stored: { title: string; body: string },
+): { title: string; body: string } {
+  const english = unifiedAlertType(typeId)?.en;
+  const name = english
+    ? pullAlertToken(english.body, stored.body, "{name}") || pullAlertToken(english.title, stored.title, "{name}")
+    : "";
+  const status = english
+    ? pullAlertToken(english.body, stored.body, "{status}") || pullAlertToken(english.title, stored.title, "{status}")
+    : "";
+  return alertText(typeId, locale, { name, status });
+}
+
 export function alertText(
   typeId: string,
   locale: AlertLocale,
@@ -958,7 +983,7 @@ export function unifiedUiCopy(locale: AlertLocale) {
       findCare: "Chercher une place",
       openCentre: "Ouvrir votre centre",
       hidden: "Certaines alertes attendent le partage familial, la garde, ou une liste de contrôles de salle. Elles ne sont pas envoyées.",
-      critical: "Important",
+      critical: "Urgent",
       groups: { parent: "Parents", daycare: "Garderies", staff: "Personnel", admin: "Bureau" },
     };
   }

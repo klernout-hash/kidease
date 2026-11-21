@@ -64,6 +64,7 @@ test("daycare actions map to confirm / decline / answered", () => {
 test("existing tour and booking statuses map into lead track statuses", () => {
   assert.equal(tourStatusToLead("pending"), "requested");
   assert.equal(tourStatusToLead("accepted"), "confirmed");
+  assert.equal(tourStatusToLead("confirmed"), "confirmed");
   assert.equal(tourStatusToLead("declined"), "declined");
   assert.equal(tourStatusToLead("lost"), "declined");
   assert.equal(tourStatusToLead("completed"), "closed");

@@ -319,7 +319,9 @@ export const listProviderBills = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
+    const { daycareIdsForArea } = await import("@/lib/server/centre-access");
     const daycareIds = await billsScope(sql, context.userId);
+    const editable = new Set(await daycareIdsForArea(sql, context.userId, "bills", "edit"));
     const rows = daycareIds.length
       ? await sql.query<InvoiceRow>(
           `select ${INVOICE_SELECT}
@@ -327,20 +329,19 @@ export const listProviderBills = createServerFn({ method: "GET" })
        join daycares d on d.id = i.daycare_id
        left join children ch on ch.id = i.child_id
        left join "user" u on u.id = i.parent_user_id
-       where i.daycare_id = any($2::text[])
-          or exists (
-            select 1 from provider_daycares p
-            where p.user_id = $1 and p.daycare_id = i.daycare_id
-          )
+       where i.daycare_id = any($1::text[])
        order by i.created_at desc
        limit 200`,
-          [context.userId, daycareIds],
+          [daycareIds],
         ).catch(() => [])
       : [];
+    const moneyDesk = editable.size > 0;
     return {
-      stripeLive: parentBillCardLive(),
-      platformFeeBps: platformFeeBps(),
-      bills: rows.map((row) => ({ ...mapBill(row), parentEmail: null })),
+      stripeLive: moneyDesk ? parentBillCardLive() : false,
+      platformFeeBps: moneyDesk ? platformFeeBps() : null,
+      bills: rows
+        .map((row) => ({ ...mapBill(row), parentEmail: null }))
+        .filter((bill) => editable.has(bill.daycareId) || bill.status !== "draft"),
     };
   });
 

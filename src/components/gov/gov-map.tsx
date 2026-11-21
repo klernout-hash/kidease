@@ -32,6 +32,7 @@ export function GovMap({ data }: { data: GovDashboard }) {
           cooperative: true,
           tileWaitMs: 8000,
           signal: ac.signal,
+          provider: "openfreemap",
         });
         if (dead) {
           created.map.destroy();
@@ -53,6 +54,10 @@ export function GovMap({ data }: { data: GovDashboard }) {
             }),
           );
         }
+        const bounds = new created.maps.LatLngBounds();
+        for (const point of points) bounds.extend({ lat: point.lat, lng: point.lng });
+        if (!bounds.isEmpty()) created.map.fitBounds(bounds, 48);
+        created.map.resize();
         if (!dead) setPhase(created.tilesReady ? "ready" : "failed");
       } catch {
         if (!dead) setPhase("failed");
@@ -81,7 +86,10 @@ export function GovMap({ data }: { data: GovDashboard }) {
       ) : phase === "failed" ? (
         <p className="mt-3 text-sm text-muted" role="alert" data-ke="gov-map-failed">{copy.mapFailed}</p>
       ) : (
-        <div className="relative mt-3 h-[min(70dvh,28rem)] w-full overflow-hidden rounded-2xl bg-surface-2">
+        <div
+          className="relative mt-3 w-full overflow-hidden rounded-2xl bg-surface-2"
+          style={{ height: "min(70dvh, 28rem)", minHeight: "16rem" }}
+        >
           {phase === "loading" ? (
             <p className="absolute inset-x-0 top-3 z-10 px-3 text-center text-sm text-muted" role="status" data-ke="gov-map-loading">
               {copy.mapLoading}

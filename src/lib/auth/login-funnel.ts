@@ -93,27 +93,36 @@ export function markContinued(dest: string, extra?: Pick<LoginFunnelProps, "meth
   });
 }
 
+async function readMyDesks() {
+  try {
+    return await getMyDesks();
+  } catch {
+    return null;
+  }
+}
+
 export async function resolveContinueDest(input: {
   next?: string | null;
   desk?: DeskKey | null;
   role?: "parent" | "provider" | "admin" | null;
   sticky?: DeskKey | null;
+  locale?: "en" | "fr" | null;
 }): Promise<string> {
   const next = sanitizePostLoginNext(input.next);
   // hinted next/desk/role still matter for analytics; the stored profile role wins the landing.
   const hinted = Boolean(next || input.desk || input.role || input.sticky);
   void hinted;
-  const stored = await withTimeoutFallback(
-    getMyDesks().catch(() => null),
-    DESK_RESOLVE_MS,
-    null,
-  );
+  let stored = await withTimeoutFallback(readMyDesks(), DESK_RESOLVE_MS, null);
+  if (!stored?.role) {
+    stored = await withTimeoutFallback(readMyDesks(), DESK_RESOLVE_MS, null);
+  }
   const storedRole = stored?.role ?? null;
   const staff = storedRole === "admin" || storedRole === "support" || storedRole === "support_lead";
   const dest = destinationAfterSignIn({
     role: storedRole ?? input.role,
     next,
     ownsCentre: !staff && (stored?.ownsCentre === true || stored?.centreLinked === true),
+    locale: input.locale,
   });
   const desk = deskFromPathname(dest);
   if (desk) writeStickyDesk(desk);
@@ -199,12 +208,17 @@ function fallbackDest(input: {
   desk?: DeskKey | null;
   role?: "parent" | "provider" | "admin" | null;
   sticky?: DeskKey | null;
+  locale?: "en" | "fr" | null;
 }): string {
-  return resolvePostLoginPath({
-    next: input.next,
-    desk: input.desk,
+  return destinationAfterSignIn({
     role: input.role,
-    sticky: input.sticky,
+    next: resolvePostLoginPath({
+      next: input.next,
+      desk: input.desk,
+      role: input.role,
+      sticky: input.sticky,
+    }),
+    locale: input.locale,
   });
 }
 
@@ -213,6 +227,7 @@ export async function continueAfterSignIn(input: {
   desk?: DeskKey | null;
   role?: "parent" | "provider" | "admin" | null;
   sticky?: DeskKey | null;
+  locale?: "en" | "fr" | null;
   method: "email" | "social" | "session";
 }): Promise<string> {
   try {

@@ -1,5 +1,5 @@
 import { useRouteContext } from "@tanstack/react-router";
-import { chromeRole, type ChromeRole } from "@/lib/role-access";
+import { chromeRole, serverSaysGuest, type ChromeRole } from "@/lib/role-access";
 import type { RoleChromePayload } from "@/lib/server/role-route";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
@@ -64,6 +64,15 @@ export function useRoleChrome(): RoleChromeState {
       e2e: remote.e2e,
       subscriptionsEnabled: remote.subscriptionsEnabled === true,
       govPortalLink: remote.govPortalLink === true,
+    };
+  }
+
+  if (serverSaysGuest(remote, Boolean(user))) {
+    return {
+      ...GUEST,
+      e2e: remote?.e2e === true,
+      subscriptionsEnabled: remote?.subscriptionsEnabled === true,
+      govPortalLink: remote?.govPortalLink === true,
     };
   }
 

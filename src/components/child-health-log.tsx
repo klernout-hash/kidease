@@ -51,10 +51,10 @@ export function ChildHealthLog() {
         {rows.map((row) => (
           <li key={row.id} className="text-sm">
             <p className="font-medium">{row.name}</p>
-            <p>{fr ? "Vaccins" : "Immunization"}: {row.immunizationStatus || (fr ? "Rien d'enregistré." : "Nothing saved.")}</p>
+            <p>{fr ? "Vaccins\u00a0:" : "Immunization:"} {row.immunizationStatus || (fr ? "Rien d'enregistré." : "Nothing saved.")}</p>
             {row.immunizationNote ? <p>{row.immunizationNote}</p> : null}
-            <p>{fr ? "Allergies" : "Allergies"}: {row.allergies || (fr ? "Rien d'enregistré." : "Nothing saved.")}</p>
-            <p>{fr ? "Médicaments" : "Medications"}: {row.medications || (fr ? "Rien d'enregistré." : "Nothing saved.")}</p>
+            <p>{fr ? "Allergies\u00a0:" : "Allergies:"} {row.allergies || (fr ? "Rien d'enregistré." : "Nothing saved.")}</p>
+            <p>{fr ? "Médicaments\u00a0:" : "Medications:"} {row.medications || (fr ? "Rien d'enregistré." : "Nothing saved.")}</p>
           </li>
         ))}
       </ul>

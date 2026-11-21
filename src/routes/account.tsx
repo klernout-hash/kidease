@@ -807,7 +807,7 @@ function ProfilePane() {
               onEditPhoto={() => inputRef.current?.click()}
             />
             {roleId === "parent" ? (
-              <ProfileChildren children={profileDesk?.ok ? profileDesk.children : []} />
+              <ProfileChildren ready={profileDesk?.ok === true} children={profileDesk?.ok ? profileDesk.children : []} />
             ) : null}
             {roleId === "parent" ? <ChildCheckHistory /> : null}
             <ProfileFacts rows={profileFactRows()} bio={bio} />

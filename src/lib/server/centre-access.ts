@@ -169,8 +169,10 @@ export async function daycareIdsForArea(
     import("@/lib/server/roles").then((mod) => mod.resolveAdminAccess(userId).then((row) => row.ok).catch(() => false)),
   ]);
   if (admin) return [...new Set([...owned, ...memberships.map((row) => row.daycareId)])];
-  const decision = decideBillsList({ ownedIds: owned, memberships });
-  if (area === "bills") return decision.ok ? decision.daycareIds : [];
+  if (area === "bills") {
+    const decision = decideBillsList({ ownedIds: owned, memberships, need });
+    return decision.ok ? decision.daycareIds : [];
+  }
   const ids = new Set<string>(owned);
   for (const row of memberships) {
     const gate = decideStaffArea({

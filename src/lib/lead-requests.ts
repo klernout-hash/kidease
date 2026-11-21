@@ -142,10 +142,9 @@ export function nextLeadStatus(current: string, action: LeadAction): LeadStatus 
 }
 
 export function tourStatusToLead(status: string | null | undefined): LeadStatus {
-  if (status === "accepted") return "confirmed";
-  if (status === "declined" || status === "lost" || status === "expired") return "declined";
-  if (status === "completed" || status === "enrolled") return "closed";
-  return "requested";
+  // "confirmed" and "accepted" are the same visit. Counting only one of them
+  // made the parent home say 1 confirmed tour and the requests page say 0.
+  return leadStatusForTour(status) ?? "requested";
 }
 
 export function bookingStatusToLead(status: string | null | undefined): LeadStatus {

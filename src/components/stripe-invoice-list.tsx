@@ -58,9 +58,6 @@ export function StripeInvoiceList({
   useEffect(() => {
     if (initial) return;
     let cancel = false;
-    const slow = window.setTimeout(() => {
-      if (!cancel) setFailed(true);
-    }, 8000);
     void listMyStripeInvoices()
       .then((result) => {
         if (cancel) return;
@@ -69,11 +66,9 @@ export function StripeInvoiceList({
       })
       .catch(() => {
         if (!cancel) setFailed(true);
-      })
-      .finally(() => window.clearTimeout(slow));
+      });
     return () => {
       cancel = true;
-      window.clearTimeout(slow);
     };
   }, [initial]);
 
@@ -99,6 +94,9 @@ export function StripeInvoiceList({
           </Button>
         </div>
       </div>
+      {rows == null && !failed ? (
+        <p className="text-sm text-muted" role="status">{t("loading")}</p>
+      ) : null}
       {failed && !rows ? (
         <EmptyState
           title={t("invoicesLoadError")}

@@ -57,13 +57,15 @@ export function ProviderMoneyPanel({ showPayouts = true, canEdit = true }: { sho
 
   useEffect(() => {
     void load().catch(() => undefined);
-    void loadEarningsDesk()
-      .then((desk) => {
-        if (desk.ok) setPayouts(desk.payouts);
-      })
-      .catch(() => undefined);
+    if (showPayouts) {
+      void loadEarningsDesk()
+        .then((desk) => {
+          if (desk.ok) setPayouts(desk.payouts);
+        })
+        .catch(() => undefined);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- first paint only
-  }, []);
+  }, [showPayouts]);
 
   const party = parties.find((p) => `${p.userId}:${p.daycareId}` === form.partyKey) ?? null;
   const amountCad = Number(form.amountCad) || 0;
@@ -78,12 +80,18 @@ export function ProviderMoneyPanel({ showPayouts = true, canEdit = true }: { sho
       <div>
         <h2 className="font-display text-2xl" data-tour="provider-money-title">{t("deskNavMoney")}</h2>
         <p className="mt-1 text-sm text-muted">{t("moneyDeskLead")}</p>
-        {ready && stripeLive ? (
+        {canEdit && ready && stripeLive ? (
           <p className="mt-2 text-sm text-muted">{t("newBillLiveHint")}</p>
-        ) : (
+        ) : canEdit ? (
           <LedgerHonesty stripeLive={stripeLive} className="mt-2" ready={ready} />
+        ) : (
+          <p className="mt-2 text-sm text-muted">
+            {fr
+              ? "Vous voyez si les familles de vos centres ont payé. Vous ne pouvez pas envoyer ni modifier une facture."
+              : "You can see whether families at your centres have paid. You cannot send or change a bill."}
+          </p>
         )}
-        {ready ? (
+        {canEdit && ready ? (
           <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3" data-ke="earnings-summary">
             <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
               <dt className="text-sm text-muted">{fr ? "À recevoir" : "Owed to you"}</dt>
@@ -280,7 +288,7 @@ export function ProviderMoneyPanel({ showPayouts = true, canEdit = true }: { sho
         busy={busy}
       />
 
-      <StripeInvoiceList audience="daycare" />
+      {canEdit ? <StripeInvoiceList audience="daycare" /> : null}
     </section>
   );
 }
@@ -334,7 +342,7 @@ function BillList({
                   {b.dueAt ? ` · ${t("billDue")} ${b.dueAt}` : ""}
                 </p>
                 {b.memo ? <p className="mt-1 text-sm text-subtle">{b.memo}</p> : null}
-                {stripeLive && b.status !== "void" ? (
+                {stripeLive && onSend && b.status !== "void" ? (
                   <p className="mt-1 text-sm text-muted">
                     {t("youReceive")} {money(billDollars(b), locale)} {t("afterKidEaseFee")}
                   </p>

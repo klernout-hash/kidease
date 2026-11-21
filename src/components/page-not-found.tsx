@@ -14,7 +14,7 @@ export function PageNotFound({
   title?: string;
   body?: string;
   action?: string;
-  actionTo?: "/search" | "/parent" | "/provider";
+  actionTo?: string;
 }) {
   const { t } = useCopy();
   const heading = title ?? t("pageNotFoundTitle");
@@ -79,5 +79,16 @@ export function AdmissionsForward() {
 export function DefaultNotFound() {
   const path = useRouterState({ select: (state) => state.location.pathname });
   if (path === "/admissions" || path === "/fr/admissions") return <AdmissionsForward />;
+  if (path === "/gov" || path.startsWith("/gov/") || path === "/fr/gov" || path.startsWith("/fr/gov/")) {
+    const french = path.startsWith("/fr/");
+    return (
+      <PageNotFound
+        title={french ? "Cette page du bureau n’est pas là" : "That desk page is not here"}
+        body={french ? "Retournez à l’aperçu du bureau gouvernemental." : "Go back to the government overview."}
+        action={french ? "Ouvrir l’aperçu" : "Open the overview"}
+        actionTo={french ? "/fr/gov" : "/gov"}
+      />
+    );
+  }
   return <PageNotFound />;
 }

@@ -37,9 +37,12 @@ export const STAFF_AREA_DENIED = "You do not have access to that.";
 
 const RANK: Record<StaffLevel, number> = { none: 0, view: 1, edit: 2 };
 
-/** What a staff login can do today, including check-in and their own hours. */
+/**
+ * What a staff login can do today, including check-in and their own hours.
+ * Bills are view-only: status for families at this centre. Not earnings or payouts.
+ */
 export const STAFF_GRANTS: StaffGrants = {
-  bills: "none",
+  bills: "view",
   messages: "edit",
   children: "none",
   listing: "view",
@@ -181,15 +184,17 @@ export function decideStaffArea(input: {
   return { ok: true };
 }
 
-/** Centre bills list. A staff login with no Bills access is 403. A stranger is absent. */
+/** Centre bills list. View is bill status. Edit is create, send, and void. A stranger is absent. */
 export function decideBillsList(input: {
   isAdmin?: boolean;
   ownedIds: readonly string[];
   memberships: readonly MemberAccess[];
+  need?: "view" | "edit";
 }): { ok: true; daycareIds: string[] } | { ok: false; status: 403; reason: "permission" | "absent" } {
+  const need = input.need ?? "view";
   const ids = new Set<string>(input.ownedIds);
   for (const row of input.memberships) {
-    if (input.isAdmin || allows(grantsForMember(row), "bills", "view")) ids.add(row.daycareId);
+    if (input.isAdmin || allows(grantsForMember(row), "bills", need)) ids.add(row.daycareId);
   }
   if (ids.size > 0) return { ok: true, daycareIds: [...ids] };
   if (!input.isAdmin && input.memberships.length > 0) return { ok: false, status: 403, reason: "permission" };

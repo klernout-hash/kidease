@@ -2,23 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { GovDashboardView } from "@/components/gov/gov-dashboard";
 import { GovNativeNote } from "@/components/gov/gov-login";
 import { guardGovDesk, govRobotsHead, govRobotsHeaders } from "@/lib/gov/desk-guard";
+import { govDeskSearch, govFilter } from "@/lib/gov/search";
 import { getGovDashboard } from "@/lib/server/gov-portal";
 
 export const Route = createFileRoute("/gov")({
-  validateSearch: (search: Record<string, unknown>) => {
-    const centre = typeof search.centre === "string" ? search.centre.slice(0, 140) : "";
-    return {
-      province: typeof search.province === "string" ? search.province : "",
-      region: typeof search.region === "string" ? search.region : "",
-      city: typeof search.city === "string" ? search.city : "",
-      ...(centre ? { centre } : {}),
-    };
-  },
+  validateSearch: (search: Record<string, unknown>) => govDeskSearch(search, { centre: true }),
   beforeLoad: ({ context }) => guardGovDesk("en", Boolean((context as { nativeShell?: boolean }).nativeShell)),
   loaderDeps: ({ search }) => ({
-    province: search.province,
-    region: search.region,
-    city: search.city,
+    province: govFilter(search.province),
+    region: govFilter(search.region),
+    city: govFilter(search.city),
   }),
   loader: async ({ context, deps }) => {
     const gate = context as { nativeOnly?: boolean };
