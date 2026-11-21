@@ -103,7 +103,8 @@ async function main() {
     await originReady(`${origin}/`);
   }
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
   const reports = [];
   try {
     for (const item of AXE_PAGES) reports.push(await scan(page, item.id, item.path));
@@ -114,6 +115,7 @@ async function main() {
     if (listingFr) reports.push(await scan(page, "listing-fr", listingFr));
     else reports.push({ id: "listing-fr", path: "/fr/search", status: 0, blocking: [{ id: "missing-listing", impact: "critical", help: "French search did not link to a listing.", nodes: [] }] });
   } finally {
+    await context.close();
     await browser.close();
     stopPreview(preview);
   }
