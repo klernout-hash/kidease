@@ -35,7 +35,7 @@ import type { LicenseReviewAction } from "@/lib/server/trust";
 import { trustBadgesFor, type TrustListing } from "@/lib/trust";
 import { useCopy } from "@/lib/use-copy";
 import { ViewAsButton } from "@/components/view-as-button";
-import { cn } from "@/lib/utils";
+import { cn, displayCentreName } from "@/lib/utils";
 import { queueStorefrontSrc } from "@/lib/queue-photo";
 import { LISTING_PLACEHOLDER } from "@/lib/listing-photo";
 import { HealthChecklist, HealthRing } from "@/components/profile-health-card";
@@ -462,7 +462,7 @@ export function AdminReviewCard({
     >
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-display text-lg leading-tight tracking-tight">{centre.name}</h3>
+          <h3 className="font-display text-lg leading-tight tracking-tight">{displayCentreName(centre.name)}</h3>
           <p className="mt-0.5 text-sm text-muted">{place || "Location not on file"}</p>
           {centre.addonLine ? (
             <p className="mt-1 text-sm text-fg" data-ke="admin-centre-addons">

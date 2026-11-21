@@ -5,7 +5,10 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://developer.huawei.com/repo/' }
+        maven {
+            url 'https://developer.huawei.com/repo/'
+            content { includeGroupByRegex 'com\\.huawei.*' }
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.13.0'
@@ -23,7 +26,10 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://developer.huawei.com/repo/' }
+        maven {
+            url 'https://developer.huawei.com/repo/'
+            content { includeGroupByRegex 'com\\.huawei.*' }
+        }
     }
 }
 

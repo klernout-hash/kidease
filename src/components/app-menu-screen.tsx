@@ -17,7 +17,7 @@ import { signOut } from "@/lib/auth/client";
 import { safetyText } from "@/lib/safety";
 import { notificationSettingsCopy } from "@/lib/notification-settings-copy";
 import { menuGroupLinks, menuHighlight, type MenuGroupId } from "@/lib/app-menu";
-import { accountSearch, highlightDesk } from "@/lib/desks";
+import { accountSearch, deskQueryForViewer, highlightDesk } from "@/lib/desks";
 import { accountDeskPath, menuDeskPath, parentDeskPath, providerDeskPath } from "@/lib/desk-nav";
 import { footerLinkLabel } from "@/lib/site-footer-nav";
 import { isFrPath, localePath } from "@/lib/locale-path";
@@ -66,7 +66,9 @@ export function AppMenuScreen({
   const currentDesk = highlightDesk("/menu", sticky, null);
   const ownsCentre = Boolean(session?.ownsCentre);
   const highlight = menuHighlight({ role: chrome.role, ownsCentre, currentDesk });
-  const hostCards = highlight === "create";
+  const ownsListing = chrome.ownedSlugs.length > 0 || session?.centreOwner === true;
+  const staffViewer = session?.centreRole === "staff" || session?.centreRole === "read_only";
+  const hostCards = highlight === "create" && ownsListing && !staffViewer;
   const signedIn = Boolean(user) || chrome.signedIn;
 
   if (section) {
@@ -178,9 +180,9 @@ export function AppMenuScreen({
           to={highlight === "create" || user ? accountDeskPath(pathname) : localePath("/login", locale)}
           search={
             highlight === "create"
-              ? { tab: "profile", desk: "director" }
+              ? { tab: "profile", desk: deskQueryForViewer("provider", session?.centreRole) }
               : user
-                ? accountSearch(sticky)
+                ? accountSearch(sticky, session?.centreRole)
                 : { next: isFrPath(pathname) ? "/fr/account?tab=profile" : "/account?tab=profile" }
           }
           label={t("menuAccountSettings")}

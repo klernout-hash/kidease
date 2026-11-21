@@ -7,7 +7,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { centreToolIds } from "@/lib/features";
-import { KIND_TOOL, PARENT_KINDS, RECORD_KINDS, parentKindsFor, tapToPayDecision, type RecordKind } from "@/lib/centre-tools";
+import { KIND_TOOL, PARENT_KINDS, RECORD_KINDS, parentKindsFor, tapToPayDecision, toolsForBillAccess, type RecordKind } from "@/lib/centre-tools";
 import { ENROLLED_BOOKING_STATUSES } from "@/lib/review-gate";
 import { nid } from "@/lib/utils";
 import { listAccessibleDaycareIds } from "./centre-access";
@@ -59,9 +59,9 @@ export const listCentreTools = createServerFn({ method: "GET" })
     month: /^\d{4}-\d{2}$/.test(String(input?.month || "")) ? String(input?.month) : new Date().toISOString().slice(0, 7),
   }))
   .handler(async ({ context, data }) => {
-    const tools = centreToolIds() as string[];
-    const empty = { tools, centres: [] as { id: string; name: string }[], daycareId: "", roster: [] as { bookingId: string; childName: string }[], records: [] as ReturnType<typeof toRecord>[], attendance: {} as Record<string, string[]>, terminalConfigured: false };
-    if (!tools.length) return empty;
+    const flagged = centreToolIds() as string[];
+    const empty = { tools: flagged, centres: [] as { id: string; name: string }[], daycareId: "", roster: [] as { bookingId: string; childName: string }[], records: [] as ReturnType<typeof toRecord>[], attendance: {} as Record<string, string[]>, terminalConfigured: false };
+    if (!flagged.length) return empty;
     const sql = await getSql();
     const ids = await listAccessibleDaycareIds(sql, context.userId);
     if (!ids.length) return empty;
@@ -70,6 +70,9 @@ export const listCentreTools = createServerFn({ method: "GET" })
       .catch(() => []);
     const daycareId = centres.some((c) => c.id === data.daycareId) ? data.daycareId : centres[0]?.id || "";
     if (!daycareId) return { ...empty, centres };
+    const { explainStaffArea } = await import("@/lib/server/centre-access");
+    const billEdit = await explainStaffArea(sql, context.userId, daycareId, "bills", "edit");
+    const tools = toolsForBillAccess(flagged, billEdit.ok);
     const roster = await sql
       .query<{ booking_id: string; child_name: string }>(
         `select b.id as booking_id, coalesce(c.name, 'Child') as child_name
@@ -119,11 +122,15 @@ export const saveCentreToolRecord = createServerFn({ method: "POST" })
     payload: cleanPayload(input?.payload),
   }))
   .handler(async ({ context, data }) => {
-    const tools = centreToolIds() as string[];
-    if (!kindAllowed(data.kind, tools)) return { ok: false as const, reason: "off" as const };
+    const flagged = centreToolIds() as string[];
     const sql = await getSql();
-    const { assertCanWrite } = await import("@/lib/server/centre-access");
-    await assertCanWrite(sql, context.userId, data.daycareId, "meal_plan");
+    const { assertCanWrite, assertStaffArea } = await import("@/lib/server/centre-access");
+    if (data.kind === "bill" || data.kind === "tap_receipt") {
+      await assertStaffArea(sql, context.userId, data.daycareId, "bills", "edit");
+    } else {
+      await assertCanWrite(sql, context.userId, data.daycareId, "meal_plan");
+    }
+    if (!kindAllowed(data.kind, flagged)) return { ok: false as const, reason: "off" as const };
     let bookingId: string | null = null;
     if (data.bookingId) {
       const rows = await sql<{ id: string }>`

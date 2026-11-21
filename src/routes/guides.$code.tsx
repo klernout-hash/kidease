@@ -43,6 +43,9 @@ export function GuideView({
     fundingFr: string;
     fundingUrl: string;
     fundingUrlFr?: string;
+    parentSubsidyEn?: string;
+    parentSubsidyFr?: string;
+    parentSubsidyUrl?: string;
   };
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -85,8 +88,14 @@ export function GuideView({
         <section className="mt-8">
           <h2 className="font-display text-2xl">{copy.subsidyTitle}</h2>
           <p className="mt-2 text-muted">{copy.subsidyBody}</p>
+          {pt.parentSubsidyEn ? (
+            <p className="mt-2 text-muted">{lang === "fr" ? pt.parentSubsidyFr : pt.parentSubsidyEn}</p>
+          ) : null}
           <p className="mt-2">
-            <a className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" href={fundingHref}>
+            <a
+              className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline"
+              href={pt.parentSubsidyUrl || fundingHref}
+            >
               {copy.official}
             </a>
           </p>

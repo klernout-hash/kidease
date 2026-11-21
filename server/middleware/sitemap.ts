@@ -101,9 +101,14 @@ export async function listingSitemapXml(pathname = SITEMAP_LISTINGS_PATH): Promi
   const cached = cachedXml.get(pathname);
   if (cached && now - cached.at < SLUG_TTL_MS) return cached.xml;
   const slugs = await resolveListingSitemapSlugs();
-  const xml = listingSitemapXmlForPath(slugs, pathname) ?? safeListingSitemapXml([]);
-  cachedXml.set(pathname, { at: now, xml });
-  return xml;
+  const xml = listingSitemapXmlForPath(slugs, pathname);
+  if (xml === "") {
+    cachedXml.set(pathname, { at: now, xml: "" });
+    return "";
+  }
+  const body = xml ?? safeListingSitemapXml([]);
+  cachedXml.set(pathname, { at: now, xml: body });
+  return body;
 }
 
 interface SitemapEvent {
@@ -135,7 +140,11 @@ export default async function sitemapListingsMiddleware(
   }
   if (!isListingSitemapPath(event.url.pathname)) return next();
   try {
-    return xmlResponse(method, await listingSitemapXml(event.url.pathname));
+    const xml = await listingSitemapXml(event.url.pathname);
+    if (!xml) {
+      return new Response(null, { status: 404, headers: { "cache-control": "public, max-age=300" } });
+    }
+    return xmlResponse(method, xml);
   } catch {
     return xmlResponse(method, safeListingSitemapXml([]));
   }

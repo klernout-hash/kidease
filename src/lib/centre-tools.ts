@@ -40,6 +40,14 @@ export const KIND_TOOL: Record<RecordKind, CentreToolId> = {
   tap_receipt: "tap",
 };
 
+/** Billing, payroll, and payouts. Staff may see bill status on Money, not these tools. */
+export const MONEY_TOOL_IDS = ["quickbooks", "tap", "attendance", "payroll", "subsidy"] as const;
+
+export function toolsForBillAccess(tools: readonly string[], canEditBills: boolean): string[] {
+  if (canEditBills) return [...tools];
+  return tools.filter((id) => !(MONEY_TOOL_IDS as readonly string[]).includes(id));
+}
+
 export function enabledToolIds(isOn: (flag: CentreToolFlag) => boolean): CentreToolId[] {
   return CENTRE_TOOLS.filter((tool) => isOn(tool.flag)).map((tool) => tool.id);
 }

@@ -4,7 +4,7 @@ import { privateReturnPath } from "@/lib/role-access";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
-import { centreCanAccessPrivileged, centreCanMutateListingDetails, centreCanWriteLeads } from "@/lib/centre-roles";
+import { centreCanAccessPrivileged, centreCanWriteLeads } from "@/lib/centre-roles";
 import { canUseOperatorTools } from "@/lib/operator-tools";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
@@ -197,7 +197,6 @@ const CentreAgreementEditor = lazy(() =>
 );
 
 const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "top-rated", "tours", "calendar", "licence", "documents", "contract", "contracts", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools", "care"];
-const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 const DEFAULT_DESK: DaycareDesk = "today";
 const COACH_FOCUS = new Set<ListingCoachFocus>([
   "license",
@@ -286,7 +285,7 @@ export function ProviderPage() {
   const chrome = useRoleChrome();
   const { t, locale } = useCopy();
   const { session } = useSessionDesks();
-  const centreOwner = session?.centreOwner !== false;
+  const centreOwner = session?.centreOwner === true;
   const centreRole = session?.centreRole;
   const canBills = centreOwner || (session?.centreGrants != null && session.centreGrants.bills !== "none");
   const canEditBills = centreOwner || session?.centreGrants?.bills === "edit";
@@ -300,7 +299,13 @@ export function ProviderPage() {
   }, []);
   const canWrite = centreRole ? centreCanWriteLeads(centreRole) : centreOwner;
   const canContracts = centreRole ? centreCanAccessPrivileged(centreRole) : centreOwner;
-  const canDocuments = centreRole ? centreCanMutateListingDetails(centreRole) : centreOwner;
+  const documentsLevel = session?.centreGrants?.documents;
+  const canViewDocuments =
+    centreOwner ||
+    documentsLevel === "view" ||
+    documentsLevel === "edit" ||
+    centreRole === "owner" ||
+    centreRole === "manager";
   const hostListingKnown = session != null && typeof session.hostListing === "boolean";
   const hostListing = session?.hostListing === true;
   const topRated = session?.topRated === true;
@@ -315,7 +320,7 @@ export function ProviderPage() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const searchStr = useRouterState({ select: (s) => s.location.searchStr });
   const deskPath = providerDeskPath(pathname);
-  const urlDesk = providerDeskFromQuery(search.desk, searchStr);
+  const urlDesk = providerDeskFromQuery(search.desk, searchStr) || DEFAULT_DESK;
   // Pages nested under this one (provider.<name>.tsx). Each must show its own
   // screen through the outlet, not the Today desk.
   const childRoute = ["/provider/subscription", "/provider/leads", "/provider/families"].some(
@@ -412,16 +417,8 @@ export function ProviderPage() {
 
   useEffect(() => {
     if (childRoute) return;
-    const next = providerDeskFromQuery(search.desk, searchStr);
-    const blockedDesk =
-      OWNER_DESKS.has(next) && deskSettled && !centreOwner && !(next === "money" && canBills);
-    if (blockedDesk) {
-      setDesk(DEFAULT_DESK);
-      void navigate({ to: deskPath, search: { desk: "today" }, replace: true });
-      return;
-    }
-    setDesk(next);
-  }, [search.desk, searchStr, centreOwner, canBills, deskSettled, navigate, childRoute, deskPath]);
+    setDesk(providerDeskFromQuery(search.desk, searchStr));
+  }, [search.desk, searchStr, childRoute]);
 
   useEffect(() => {
     const focus = search.focus;
@@ -540,10 +537,6 @@ export function ProviderPage() {
           });
           return;
         }
-        if (OWNER_DESKS.has(id as DaycareDesk) && !centreOwner && !(id === "money" && canBills)) {
-          setDesk(DEFAULT_DESK);
-          return;
-        }
         const nextDesk = id as DaycareDesk;
         setDesk(nextDesk);
         void navigate({ to: deskPath, search: { ...search, desk: nextDesk }, replace: true });
@@ -558,15 +551,6 @@ export function ProviderPage() {
         <p className="mb-4 rounded-xl bg-surface px-4 py-3 text-sm ring-1 ring-border" role="status" data-ke="read-only-banner">
           {locale === "fr" ? "Vous pouvez regarder ce centre. Vous ne pouvez pas le modifier." : "You can look at this centre. You cannot change it."}
         </p>
-      ) : null}
-      {desk === "documents" ? (
-        deskSettled && canDocuments && listings[0] ? (
-          <CentreDocumentChecklist daycareId={listings[0].id} />
-        ) : deskSettled ? (
-          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="desk-no-access">
-            {locale === "fr" ? "Vous n’avez pas accès à ces documents." : "You do not have access to these documents."}
-          </p>
-        ) : null
       ) : null}
       {desk === "contracts" ? (
         canContracts ? (
@@ -917,9 +901,13 @@ export function ProviderPage() {
         </>
       ) : null}
       {desk === "documents" ? (
-        listings[0] ? (
+        session && deskSettled && canViewDocuments && listings[0] ? (
           <CentreDocumentChecklist daycareId={(listings.find((row) => row.id === search.centre) || listings[0]).id} />
-        ) : (
+        ) : session && deskSettled && !canViewDocuments ? (
+          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="desk-no-access">
+            {locale === "fr" ? "Vous n’avez pas accès à ces documents." : "You do not have access to these documents."}
+          </p>
+        ) : listings[0] ? null : (
           <EmptyState
             title={t("deskNavDocuments")}
             body={t("providerOnboardingLead")}

@@ -12,7 +12,7 @@ function src(rel) {
 
 test("daycare account settings stays on the daycare profile", () => {
   const menu = src("src/components/app-menu-screen.tsx");
-  assert.match(menu, /desk: "director"/);
+  assert.match(menu, /deskQueryForViewer\("provider", session\?\.centreRole\)/);
   assert.match(menu, /highlight === "create"/);
   assert.match(menu, /label=\{t\("children"\)\}/);
   assert.match(menu, /search=\{\{ tab: "children" \}\}/);

@@ -3,6 +3,7 @@ import { PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import {
   AGE_VACANCY_SITEMAP_PATH,
   buildAgeVacancyPages,
+  canonicalAgeVacancyPages,
   cityAgeSlug,
   isAgeVacancyGroup,
   renderAgeVacancySitemapXml,
@@ -69,12 +70,12 @@ export async function loadAgeVacancyPage(city: string, age: string): Promise<Age
   if (!isAgeVacancyGroup(age)) return null;
   const slug = cityAgeSlug(city);
   if (!slug) return null;
-  const pages = buildAgeVacancyPages(await loadAgeVacancyRows());
+  const pages = canonicalAgeVacancyPages(buildAgeVacancyPages(await loadAgeVacancyRows()));
   return pages.find((page) => page.citySlug === slug && page.age === age) ?? null;
 }
 
 export async function ageVacancySitemapXml(): Promise<string> {
-  const paths = buildAgeVacancyPages(await loadAgeVacancyRows()).map(
+  const paths = canonicalAgeVacancyPages(buildAgeVacancyPages(await loadAgeVacancyRows())).map(
     (page) => `/daycare/${page.citySlug}/${page.age}`,
   );
   return renderAgeVacancySitemapXml(paths);

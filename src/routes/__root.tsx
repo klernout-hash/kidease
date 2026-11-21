@@ -84,8 +84,9 @@ function manifestHref(channel: StoreChannel | undefined, dynamicMicrosoft = fals
 }
 
 /** Warm the map host. Huawei keeps the static fallback and skips this. */
-function mapDnsPrefetch(channel: StoreChannel | undefined): { rel: "dns-prefetch"; href: string }[] {
+function mapDnsPrefetch(channel: StoreChannel | undefined, pathname?: string): { rel: "dns-prefetch"; href: string }[] {
   if (channel === "huawei") return [];
+  if (pathname === "/" || pathname === "/fr") return [];
   const hosts =
     preferredMapProvider() === "google"
       ? ["https://maps.googleapis.com", "https://maps.gstatic.com", "https://tiles.openfreemap.org"]
@@ -257,7 +258,7 @@ export const Route = createRootRoute({
         crossOrigin: "anonymous",
       },
       { rel: "preload", href: "/logo-transparent.svg?v=17", as: "image", type: "image/svg+xml" },
-      ...mapDnsPrefetch(match.context.storeChannel),
+      ...mapDnsPrefetch(match.context.storeChannel, (match as { pathname?: string }).pathname),
     ],
   }),
   component: RootDocument,

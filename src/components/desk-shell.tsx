@@ -6,7 +6,7 @@ import { CountBadge } from "@/components/count-badge";
 import { DeskMenuProvider } from "@/components/desk-menu";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { attentionForItem } from "@/lib/attention";
-import { showDeskSwitcher } from "@/lib/desks";
+import { deskQueryForViewer, showDeskSwitcher } from "@/lib/desks";
 import {
   DESK_META,
   bindDeskGroup,
@@ -128,10 +128,14 @@ function DeskNavLink({
 }) {
   const plan = item.id === "subscription" || item.id === "upgrade";
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { session } = useSessionDesks();
+  const search = item.search?.desk === "director"
+    ? { ...item.search, desk: deskQueryForViewer("provider", session?.centreRole) }
+    : item.search;
   return (
     <Link
       to={deskHrefForLocale(item.href!, pathname)}
-      {...(item.search ? { search: item.search } : {})}
+      {...(search ? { search } : {})}
       data-ke="desk-primary-pill"
       data-nav={plan ? "upgrade" : item.id}
       className={cn(navClass(on), "w-full text-left")}
@@ -206,8 +210,13 @@ export function DeskShell({
     return planned;
   };
   const allItems = visibleDeskNav(desk, opts).map(labelPlan);
-  const eyebrow = meta.eyebrowKey ? t(meta.eyebrowKey) : meta.eyebrow;
-  const title = meta.titleKey ? t(meta.titleKey) : meta.title;
+  const staffViewer = session?.centreRole === "staff" || session?.centreRole === "read_only";
+  const eyebrow = desk === "daycare" && staffViewer
+    ? t("staffDeskEyebrow")
+    : meta.eyebrowKey ? t(meta.eyebrowKey) : meta.eyebrow;
+  const title = desk === "daycare" && staffViewer
+    ? t("staffDeskTitle")
+    : meta.titleKey ? t(meta.titleKey) : meta.title;
   const Heading = headingMode === "aside" ? "p" : "h1";
   const showSwitcher = Boolean(session && showDeskSwitcher(session.desks, session.role, session.email));
 

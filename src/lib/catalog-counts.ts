@@ -4,17 +4,31 @@
  * same honesty rules as the listing cards: no placeholder, logo, or the
  * catalogue fee guess of 218.
  */
+import { cityHubPlaceKeys, cityHubDefBySlug } from "./city-hubs.ts";
+import { CITY_SEARCH_KEY_EXPR } from "./city-search-key.ts";
 import { PUBLIC_LISTING_SQL } from "./listing-visibility.ts";
+
+/** Same city keys as the Winnipeg hub, including Wpg and the Winnpeg spelling. */
+export function winnipegHubCityKeys(): string[] {
+  const hub = cityHubDefBySlug("winnipeg");
+  return hub ? cityHubPlaceKeys(hub) : ["winnipeg"];
+}
+
+const WINNIPEG_CITY_SQL = winnipegHubCityKeys()
+  .map((key) => `'${key.replace(/'/g, "")}'`)
+  .join(", ");
 
 export const CATALOG_COUNT_TTL_MS = 60_000;
 
 export const CATALOG_COUNT_SQL = `
 select
   count(*) filter (where ${PUBLIC_LISTING_SQL})::int as listings_total,
-  count(*) filter (
+  count(distinct lower(btrim(slug))) filter (
     where ${PUBLIC_LISTING_SQL}
+      and lower(btrim(coalesce(slug, ''))) not in ('', 'null', 'undefined')
+      and length(btrim(coalesce(name, ''))) > 0
       and upper(btrim(coalesce(province, ''))) in ('MB', 'MANITOBA')
-      and lower(regexp_replace(btrim(coalesce(city, '')), '[''’.]', '', 'g')) in ('winnipeg', 'wpg', 'winnpeg')
+      and ${CITY_SEARCH_KEY_EXPR} in (${WINNIPEG_CITY_SQL})
   )::int as winnipeg_total,
   count(*) filter (
     where ${PUBLIC_LISTING_SQL}

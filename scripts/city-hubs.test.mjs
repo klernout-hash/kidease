@@ -69,6 +69,8 @@ test("city hub URLs sit under /daycare/city and never invent empty cities", () =
   assert.equal(cityHubUrl("winnipeg"), "https://www.kidease.ca/daycare/city/winnipeg");
   assert.equal(cityHubPath("quebec-city"), "/daycare/city/quebec-city");
   assert.equal(cityHubDefForPlace("Winnipeg", "MB")?.slug, "winnipeg");
+  assert.equal(cityHubDefForPlace("Wpg", "MANITOBA")?.slug, "winnipeg");
+  assert.equal(cityHubDefForPlace("Winnpeg", "Manitoba")?.slug, "winnipeg");
   assert.equal(cityHubDefForPlace("Montréal", "QC")?.slug, "montreal");
   assert.equal(cityHubDefForPlace("Edmonton", "AB")?.slug, "edmonton");
   assert.equal(cityHubDefForPlace("Québec", "QC")?.slug, "quebec-city");

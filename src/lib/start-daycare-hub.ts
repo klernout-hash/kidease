@@ -21,6 +21,9 @@ export type StartDaycarePt = {
   fundingUrl: string;
   fundingUrlFr?: string;
   competitive: boolean;
+  parentSubsidyEn?: string;
+  parentSubsidyFr?: string;
+  parentSubsidyUrl?: string;
 };
 
 export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
@@ -104,6 +107,11 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
       "Les centres sans but lucratif et les milieux familiaux/de groupe permis peuvent demander une subvention de démarrage unique dans l’année suivant le permis de nouvelles places: généralement environ 300 $/place en milieu familial, 450 $/place en pouponnière, préscolaire ou parascolaire, 245 $/place en prématernelle: pour l’équipement lié au permis, pas les salaires ni le loyer. Des subventions de fonctionnement existent pour les OBNL admissibles. Discrétionnaire et limitée au budget. Parlez à votre coordonnateur avant d’acheter.",
     fundingUrl: "https://manitoba.ca/education/childcare/centres_homeproviders/providers_resources/grants.html",
     competitive: true,
+    parentSubsidyUrl: "https://www.gov.mb.ca/education/childcare/families/childcare_subsidies.html",
+    parentSubsidyEn:
+      "As of 21 November 2026, Manitoba says that from 13 September 2026 the family contribution and the non-subsidized daily fee are removed for eligible families in the Child Care Subsidy Program. This is not free care for every family. Eligibility still depends on income, family size, and the reason for care (Child Care Regulation M.R. 62/86).",
+    parentSubsidyFr:
+      "Au 21 novembre 2026, le Manitoba indique que depuis le 13 septembre 2026 la contribution familiale et les frais quotidiens non subventionnés sont retirés pour les familles admissibles au programme de subvention. Ce n'est pas gratuit pour toutes les familles. L'admissibilité dépend encore du revenu, de la taille de la famille et de la raison de la garde (règlement M.R. 62/86).",
   },
   {
     code: "ON",

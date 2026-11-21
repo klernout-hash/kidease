@@ -5,6 +5,7 @@ import { LiveSupportChat } from "@/components/live-support-chat";
 import { liveSupportPack, supportRoleText } from "@/lib/live-support";
 import { listLiveSupportInbox, liveSupportStatus } from "@/lib/server/live-support";
 import { MIN_POLL_MS } from "@/lib/fn-query";
+import { SESSION_SETTLE_MS } from "@/lib/timeout";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -18,12 +19,13 @@ type ThreadCard = {
 };
 
 export function AdminSupportInbox({ initialThread = "" }: { initialThread?: string }) {
-  const { locale } = useCopy();
+  const { locale, t } = useCopy();
   const copy = liveSupportPack(locale);
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [threads, setThreads] = useState<ThreadCard[]>([]);
   const [active, setActive] = useState(initialThread);
   const [forbidden, setForbidden] = useState(false);
+  const [stuck, setStuck] = useState(false);
 
   useEffect(() => {
     setActive(initialThread);
@@ -47,6 +49,7 @@ export function AdminSupportInbox({ initialThread = "" }: { initialThread?: stri
       void liveSupportStatus()
         .then((row) => {
           if (stop) return;
+          setStuck(false);
           setEnabled(row.enabled);
           if (!row.enabled) return;
           return listLiveSupportInbox().then((list) => {
@@ -66,10 +69,14 @@ export function AdminSupportInbox({ initialThread = "" }: { initialThread?: stri
     };
 
     load();
+    const stuckTimer = window.setTimeout(() => {
+      if (!stop) setStuck(true);
+    }, SESSION_SETTLE_MS);
     timer = window.setInterval(load, MIN_POLL_MS);
     return () => {
       stop = true;
       window.clearInterval(timer);
+      window.clearTimeout(stuckTimer);
     };
   }, []);
 
@@ -130,7 +137,23 @@ export function AdminSupportInbox({ initialThread = "" }: { initialThread?: stri
         if (id !== "support-inbox" && typeof window !== "undefined") window.location.assign("/admin");
       }}
     >
-      {enabled === null ? <p className="text-sm text-muted">{copy.inboxTitle}</p> : body}
+      {enabled === null ? (
+        <section data-ke="admin-support-inbox">
+          <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]">{copy.inboxTitle}</h2>
+          <p className="mt-2 text-sm text-muted" role="status">
+            {stuck ? t("adminLoadStuck") : t("loading")}
+          </p>
+          {stuck ? (
+            <button
+              type="button"
+              className="mt-4 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
+              onClick={() => window.location.reload()}
+            >
+              {t("adminLoadReload")}
+            </button>
+          ) : null}
+        </section>
+      ) : body}
     </DeskShell>
   );
 }

@@ -86,8 +86,9 @@ function polishCentreName(value: string) {
 /** Registry typos we refuse to show on parent-facing cards. Display only — the master row stays as stored. */
 export function displayCentreName(value: string | null | undefined) {
   const decoded = decodeHtml(value)
-    .replace(/[“”]/g, "\"")
-    .replace(/(^|\s)"+|"+(\s|$)/g, "$1$2")
+    .replace(/[“”«»]/g, "\"")
+    .replace(/[‘’]/g, "'")
+    .replace(/(^|\s)["']+|["']+(\s|$)/g, "$1$2")
     .replace(/\bCetnre\b/g, "Centre")
     .replace(/\bCetnres\b/g, "Centres")
     .replace(/\b(\d+)(St|Nd|Rd|Th)\b/g, (_, n: string, suf: string) => `${n}${suf.toLowerCase()}`)

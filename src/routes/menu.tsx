@@ -1,5 +1,6 @@
-import { createFileRoute, useLoaderData, useSearch } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData, useRouterState, useSearch } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
+import { EmptyState } from "@/components/empty-state";
 import { ShellLite } from "@/components/shell-lite";
 import { AppMenuScreen } from "@/components/app-menu-screen";
 import { BlockedListScreen } from "@/components/blocked-list";
@@ -44,6 +45,22 @@ type MenuLoader = {
   payments: PaymentsResult | null;
   connect: ConnectPublicState | null;
   centres: { id: string; name: string }[];
+  signedOut?: boolean;
+};
+
+function menuGuest(context: { roleChrome?: { role?: string | null } | null } | undefined): boolean {
+  const role = context?.roleChrome?.role;
+  return !role || role === "guest";
+}
+
+const GUEST_MENU: MenuLoader = {
+  earnings: null,
+  insights: null,
+  desk: null,
+  payments: null,
+  connect: null,
+  centres: [],
+  signedOut: true,
 };
 
 export function menuValidateSearch(
@@ -64,6 +81,9 @@ export async function menuLoader({
   deps: { screen?: MenuScreen };
   context: { roleChrome?: { role?: string | null; ownedSlugs?: string[] } };
 }): Promise<MenuLoader> {
+    if (menuGuest(context) && (deps.screen === "earnings" || deps.screen === "insights" || deps.screen === "payments")) {
+      return GUEST_MENU;
+    }
     if (deps.screen === "earnings") {
       try {
         const connect = await connectPaymentsPublic();
@@ -111,10 +131,11 @@ export async function menuLoader({
       }
     }
     const chrome = context.roleChrome;
-    const host = chrome?.role === "provider" || (chrome?.ownedSlugs?.length ?? 0) > 0;
+    const owns = (chrome?.ownedSlugs?.length ?? 0) > 0;
+    const host = chrome?.role === "provider" || owns;
     if (!host) return { earnings: null, insights: null, desk: null, payments: null, connect: null, centres: [] };
     const [earnings, insights] = await Promise.all([
-      loadHostEarnings().catch(() => null),
+      owns ? loadHostEarnings().catch(() => null) : Promise.resolve(null),
       loadHostInsights().catch(() => null),
     ]);
     return { earnings, insights, desk: null, payments: null, connect: null, centres: [] };
@@ -143,9 +164,31 @@ export const Route = createFileRoute("/menu")({
 
 export function MenuPage() {
   const { section, screen, view, bill, period } = useSearch({ strict: false }) as ReturnType<typeof menuValidateSearch>;
-  const { earnings, insights, desk, payments, connect, centres } = useLoaderData({ strict: false }) as MenuLoader;
+  const { earnings, insights, desk, payments, connect, centres, signedOut } = useLoaderData({ strict: false }) as MenuLoader;
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useCurrentUserState();
   const airbnb = useAirbnbUi();
+  if (signedOut && (screen === "insights" || screen === "earnings" || screen === "payments")) {
+    const french = pathname.startsWith("/fr");
+    const next = `${pathname}?screen=${screen}`;
+    const login = `${french ? "/fr/login" : "/login"}?intent=in&next=${encodeURIComponent(next)}`;
+    return (
+      <ShellLite appTabs>
+        <main className="ke-gutter mx-auto w-full max-w-lg py-10">
+          <EmptyState
+            title={french ? "Connectez-vous pour voir ceci" : "Sign in to see this"}
+            body={
+              french
+                ? "Ces pages sont pour un compte KidEase. Connectez-vous, puis revenez ici."
+                : "This page is for a KidEase account. Sign in, then come back here."
+            }
+            action={french ? "Connexion" : "Sign in"}
+            actionTo={login}
+          />
+        </main>
+      </ShellLite>
+    );
+  }
   if ((screen === "account" || screen === "language") && airbnb) {
     return (
       <ShellLite appTabs>

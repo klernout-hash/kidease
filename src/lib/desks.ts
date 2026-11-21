@@ -24,6 +24,7 @@ export const DESK_LABEL: Record<DeskKey, string> = {
 export const DESK_QUERY_ALIASES: Record<string, DeskKey> = {
   parent: "parent",
   director: "provider",
+  staff: "provider",
   centre: "provider",
   center: "provider",
   daycare: "provider",
@@ -172,11 +173,24 @@ export function clearSessionHint(): void {
 }
 
 /** Shared Account settings — keep `?desk=` so the pill stays on the current desk. */
-export function accountSearch(desk?: DeskKey | null): {
+export function accountSearch(
+  desk?: DeskKey | null,
+  centreRole?: "owner" | "manager" | "staff" | "read_only" | null,
+): {
   tab: "profile";
-  desk?: "parent" | "director" | "admin" | "support";
+  desk?: "parent" | "director" | "staff" | "admin" | "support";
 } {
-  return desk ? { tab: "profile", desk: deskQueryValue(desk) } : { tab: "profile" };
+  return desk ? { tab: "profile", desk: deskQueryForViewer(desk, centreRole) } : { tab: "profile" };
+}
+
+/** Keep `staff` in the account URL. Other aliases still become director, parent, admin, or support. */
+export function accountDeskParam(
+  raw: string | null | undefined,
+): "parent" | "director" | "staff" | "admin" | "support" | undefined {
+  const value = (raw || "").trim().toLowerCase();
+  if (value === "staff") return "staff";
+  const desk = parseDeskQuery(value);
+  return desk ? deskQueryValue(desk) : undefined;
 }
 
 export function parseDeskQuery(raw: string | null | undefined): DeskKey | null {
@@ -193,6 +207,15 @@ export function isProviderTabKey(raw: string | null | undefined): boolean {
 export function deskQueryValue(desk: DeskKey): "parent" | "director" | "admin" | "support" {
   if (desk === "provider") return "director";
   return desk;
+}
+
+/** Staff and read-only links say staff, not director. Both still open the daycare desk. */
+export function deskQueryForViewer(
+  desk: DeskKey,
+  centreRole?: "owner" | "manager" | "staff" | "read_only" | null,
+): "parent" | "director" | "staff" | "admin" | "support" {
+  if (desk === "provider" && (centreRole === "staff" || centreRole === "read_only")) return "staff";
+  return deskQueryValue(desk);
 }
 
 export function loginRoleFromDesk(desk: DeskKey): "parent" | "provider" | "admin" {

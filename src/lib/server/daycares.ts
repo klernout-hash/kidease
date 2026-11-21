@@ -640,7 +640,7 @@ async function runSearch(data: SearchInput): Promise<SearchCandidates> {
   for (const d of listings.rows) {
     cards.push(toCard(d, origin, data.fsa));
   }
-  cards = filterByLocationLock(cards, lock);
+  if (!directory) cards = filterByLocationLock(cards, lock);
   if (corridor?.rows.length) {
     const kept = new Set(cards.map((card) => card.id));
     for (const row of corridor.rows) {

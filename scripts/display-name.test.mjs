@@ -9,6 +9,9 @@ test("display names clean scraped registry text without rewriting mixed-case nam
     "Little Fox Child Care Centre is a licensed child care centre in Winnipeg.",
   );
   assert.equal(displayCentreName('"Hummingbird" Ihmacc'), "Hummingbird Ihmacc");
+  assert.equal(displayCentreName("'Hummingbird' Ihmacc"), "Hummingbird Ihmacc");
+  assert.equal(displayCentreName("«Hummingbird» Ihmacc"), "Hummingbird Ihmacc");
+  assert.equal(displayCentreName("St. Mary's Daycare"), "St. Mary's Daycare");
   assert.equal(displayCentreName("1St Ave Montessori"), "1st Ave Montessori");
   assert.equal(displayCentreName("ABC MONTESSORI"), "ABC Montessori");
   assert.equal(displayCentreName("YMCA Child Care"), "YMCA Child Care");
