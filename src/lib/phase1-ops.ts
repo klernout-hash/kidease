@@ -108,11 +108,21 @@ export function securityStatementAllowed(input: { claim: string; evidenceReviewe
   return !/certified|soc 2|iso 27001|hipaa/i.test(input.claim);
 }
 
-export function privacyCase(input: { type: "access" | "correction" | "deletion"; requesterId: string }): {
+export function privacyCase(input: {
+  type: "access" | "correction" | "deletion";
+  requesterId: string;
+  /** Extra unique piece so a second request is not dropped. */
+  nonce?: string;
+}): {
   caseId: string;
   visibleTo: "privacy_officer";
   contact: "privacy@kidease.ca";
+  /** The form records the request for this address. It does not send email. */
+  sendsEmail: false;
 } {
-  const caseId = `pr-${input.type}-${input.requesterId.slice(0, 8)}`;
-  return { caseId, visibleTo: "privacy_officer", contact: "privacy@kidease.ca" };
+  const nonce = input.nonce?.trim();
+  const caseId = nonce
+    ? `pr-${input.type}-${input.requesterId.slice(0, 8)}-${nonce}`
+    : `pr-${input.type}-${input.requesterId.slice(0, 8)}`;
+  return { caseId, visibleTo: "privacy_officer", contact: "privacy@kidease.ca", sendsEmail: false };
 }
