@@ -40,6 +40,18 @@ test("native commerce is guarded in the page and the component", () => {
   assert.doesNotMatch(account, /search\.section === "alerts"/);
   assert.match(account, /section === "alerts" && user/);
   assert.match(account, /nativeShell && item\.id === "subscription"/);
+  const shortlist = src("src/components/parent-shortlist.tsx");
+  const parentDesk = src("src/components/parent-desk.tsx");
+  assert.match(shortlist, /storeShell \? "shortlistLeadApp"/);
+  assert.match(src("src/lib/copy-en.ts"), /shortlistLeadApp: "Save centres from search or a listing/);
+  assert.match(src("src/lib/copy-fr.ts"), /shortlistLeadApp:/);
+  assert.doesNotMatch(src("src/lib/copy-en.ts").match(/shortlistLeadApp: "([^"]+)"/)?.[1] || "", /Parent Plus|Upgrade|Premium|Pro/);
+  assert.match(parentDesk, /contentTab === "subscription" && !storeShell/);
+  assert.match(src("src/components/role-nav.tsx"), /nativeShell \? false : chrome\.subscriptionsEnabled/);
+  assert.match(src("src/components/desk-shell.tsx"), /subscriptionsEnabled: nativeShell \? false : chrome\.subscriptionsEnabled/);
+  assert.match(src("src/components/app-menu-screen.tsx"), /plansOn = !native && chrome\.subscriptionsEnabled === true/);
+  assert.match(src("src/routes/provider.tsx"), /nativeShell && next === "promote"/);
+  assert.match(src("src/components/parent-home.tsx"), /card && !nativeShell/);
   assert.match(alerts, /if \(nativeShell \|\| onGovDesk \|\| !open\) return null/);
   assert.match(rootDoc, /nativeShell \? null : <GetAlertsPrompt \/>/);
   const video = src("src/components/video-room-panel.tsx");
