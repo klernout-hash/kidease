@@ -162,15 +162,16 @@ export function faqPageJsonLdScript(items: FaqSeoItem[]) {
 }
 
 /**
- * Organization facts we can stand behind: a Canadian company,
- * Canada-wide licensed child care discovery, free to search. No street
- * address, ratings, or review counts.
+ * Organization facts we can stand behind: legal name, DBA, and the
+ * Winnipeg office. No ratings or review counts.
  */
 export function organizationJsonLd(locale: "en" | "fr" = "en") {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "KidEase",
+    legalName: "10037493 Manitoba Ltd.",
+    alternateName: "KidEase",
     url: `${SITEMAP_ORIGIN}/`,
     logo: LOGO_URL,
     email: SUPPORT_INBOX_EMAIL,
@@ -181,6 +182,10 @@ export function organizationJsonLd(locale: "en" | "fr" = "en") {
     },
     address: {
       "@type": "PostalAddress",
+      streetAddress: "91 William Gibson Bay",
+      addressLocality: "Winnipeg",
+      addressRegion: "MB",
+      postalCode: "R2C 5L7",
       addressCountry: "CA",
     },
     sameAs: [INSTAGRAM_PROFILE_URL, FACEBOOK_PROFILE_URL],

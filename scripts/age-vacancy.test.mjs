@@ -7,6 +7,7 @@ import {
   AGE_VACANCY_MIN_LISTINGS,
   ageVacancySitemapPaths,
   buildAgeVacancyPages,
+  canonicalAgeVacancyPages,
   cityAgeSlug,
   listingServesAge,
   renderAgeVacancySitemapXml,
@@ -68,4 +69,14 @@ test("city age pages need 5 real aged listings and skip thin cities", () => {
   assert.match(robots, /Sitemap: https:\/\/www\.kidease\.ca\/sitemap-age-vacancy\.xml/);
   assert.match(readFileSync(join(root, "src/lib/server/age-vacancy.ts"), "utf8"), /PUBLIC_LISTING_SQL/);
   assert.match(readFileSync(join(root, "server/middleware/sitemap.ts"), "utf8"), /sitemap-age-vacancy\.xml/);
+});
+
+test("the same city slug and age keeps one page, the one with more centres", () => {
+  const mb = Array.from({ length: 5 }, (_, i) => row(i, "London", 0, 12));
+  const on = Array.from({ length: 8 }, (_, i) => row(i + 20, "London", 0, 12, { province: "ON" }));
+  const pages = canonicalAgeVacancyPages(buildAgeVacancyPages([...mb, ...on]));
+  const infant = pages.filter((page) => page.citySlug === "london" && page.age === "infant");
+  assert.equal(infant.length, 1);
+  assert.equal(infant[0]?.province, "ON");
+  assert.equal(infant[0]?.centres, 8);
 });

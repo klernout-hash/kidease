@@ -761,7 +761,7 @@ export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: Admi
         </>
       ) : tab === "queue" ? (
         <>
-          <CatalogueHealthStrip rows={staffCentres} />
+          <CatalogueHealthStrip rows={staffCentres} publicCatalogue={catalogHealth?.publicCount} />
           <div role="group" aria-label="Filter this list" className="mt-3 flex gap-1 overflow-x-auto rounded-full bg-surface p-1 ring-1 ring-border" data-ke="admin-queue-filters">
             <Stat compact label="Waiting on you" value={queueStat(counts.waiting)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
             <Stat compact label="Needs complete" value={queueStat(incompleteQueue.length)} accent={stat === "incomplete"} filterId="incomplete" onSelect={() => onSelectStat("incomplete")} />

@@ -129,39 +129,41 @@ export function parseSupportPriority(raw: string | null | undefined): SupportPri
   return isSupportPriority(raw) ? raw : "normal";
 }
 
-export function supportStatusLabel(status: SupportCaseStatus): string {
+export function supportStatusLabel(status: SupportCaseStatus, locale: "en" | "fr" = "en"): string {
+  const fr = locale === "fr";
   switch (status) {
     case "open":
-      return "Open";
+      return fr ? "Ouvert" : "Open";
     case "waiting_parent":
-      return "Waiting on parent";
+      return fr ? "En attente du parent" : "Waiting on parent";
     case "waiting_centre":
-      return "Waiting on centre";
+      return fr ? "En attente de la garderie" : "Waiting on centre";
     case "waiting_stripe":
-      return "Waiting on Stripe";
+      return fr ? "En attente de Stripe" : "Waiting on Stripe";
     case "resolved":
-      return "Resolved";
+      return fr ? "Réglé" : "Resolved";
     case "closed":
-      return "Closed";
+      return fr ? "Fermé" : "Closed";
   }
 }
 
-export function supportTypeLabel(type: SupportCaseType): string {
+export function supportTypeLabel(type: SupportCaseType, locale: "en" | "fr" = "en"): string {
+  const fr = locale === "fr";
   switch (type) {
     case "billing":
-      return "Billing";
+      return fr ? "Facturation" : "Billing";
     case "claim":
-      return "Claim";
+      return fr ? "Revendication" : "Claim";
     case "listing":
-      return "Listing";
+      return fr ? "Fiche" : "Listing";
     case "account":
-      return "Account";
+      return fr ? "Compte" : "Account";
     case "trust":
-      return "Trust";
+      return fr ? "Confiance" : "Trust";
     case "abuse":
-      return "Abuse";
+      return fr ? "Abus" : "Abuse";
     case "other":
-      return "Other";
+      return fr ? "Autre" : "Other";
   }
 }
 

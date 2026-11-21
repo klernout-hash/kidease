@@ -140,12 +140,29 @@ export function buildAgeVacancyPages(rows: readonly AgeVacancyInput[]): AgeVacan
   return pages.sort((a, b) => a.province.localeCompare(b.province) || a.city.localeCompare(b.city) || a.age.localeCompare(b.age));
 }
 
+/** One public URL per city slug and age. The larger centre list wins. A tie keeps the earlier province code. */
+export function canonicalAgeVacancyPages(pages: readonly AgeVacancyPage[]): AgeVacancyPage[] {
+  const best = new Map<string, AgeVacancyPage>();
+  for (const page of pages) {
+    const key = `${page.citySlug}|${page.age}`;
+    const current = best.get(key);
+    if (!current) {
+      best.set(key, page);
+      continue;
+    }
+    const moreCentres = page.centres > current.centres;
+    const sameSizeEarlierProvince = page.centres === current.centres && page.province.localeCompare(current.province) < 0;
+    if (moreCentres || sameSizeEarlierProvince) best.set(key, page);
+  }
+  return [...best.values()].sort((a, b) => a.citySlug.localeCompare(b.citySlug) || a.age.localeCompare(b.age));
+}
+
 export function ageVacancyPath(citySlug: string, age: AgeVacancyGroup): string {
   return `/daycare/${citySlug}/${age}`;
 }
 
 export function ageVacancySitemapPaths(rows: readonly AgeVacancyInput[]): string[] {
-  return buildAgeVacancyPages(rows).map((page) => ageVacancyPath(page.citySlug, page.age));
+  return canonicalAgeVacancyPages(buildAgeVacancyPages(rows)).map((page) => ageVacancyPath(page.citySlug, page.age));
 }
 
 export function renderAgeVacancySitemapXml(paths: readonly string[], origin = "https://www.kidease.ca"): string {

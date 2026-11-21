@@ -32,6 +32,7 @@ type Tab = "inbox" | "new";
 type Scope = "all" | "mine" | "unassigned";
 
 export function SupportDesk({ initialTab = "inbox" }: { initialTab?: Tab }) {
+  const { t } = useCopy();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [status, setStatus] = useState<SupportCaseStatus | "all">("all");
   const [type, setType] = useState<SupportCaseType | "all">("all");
@@ -60,10 +61,7 @@ export function SupportDesk({ initialTab = "inbox" }: { initialTab?: Tab }) {
   return (
     <DeskShell desk="support" active={tab} onSelect={(id) => setTab(id === "new" ? "new" : "inbox")}>
       <div data-ke="support-inbox">
-      <p className="text-sm text-muted">
-        Case inbox is {SUPPORT_INBOX_EMAIL}. Refunds are a billing case type on that inbox, not a
-        separate mailbox.
-      </p>
+      <p className="text-sm text-muted">{t("supportDeskLead").replace("{email}", SUPPORT_INBOX_EMAIL)}</p>
       <ThreadReferenceLookup />
       {tab === "new" ? (
         <NewCaseForm
@@ -111,7 +109,8 @@ function Inbox({
   onScope: (v: Scope) => void;
   onNew: () => void;
 }) {
-  const { locale } = useCopy();
+  const { locale, t } = useCopy();
+  const lang = locale === "fr" ? "fr" : "en";
   const openish = useMemo(
     () => cases.filter((c) => c.status !== "resolved" && c.status !== "closed").length,
     [cases],
@@ -125,10 +124,10 @@ function Inbox({
           value={status}
           onChange={(e) => onStatus(e.target.value as SupportCaseStatus | "all")}
         >
-          <option value="all">All statuses</option>
+          <option value="all">{lang === "fr" ? "Tous les statuts" : "All statuses"}</option>
           {SUPPORT_CASE_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {supportStatusLabel(s)}
+              {supportStatusLabel(s, lang)}
             </option>
           ))}
         </select>
@@ -137,10 +136,10 @@ function Inbox({
           value={type}
           onChange={(e) => onType(e.target.value as SupportCaseType | "all")}
         >
-          <option value="all">All types</option>
+          <option value="all">{lang === "fr" ? "Tous les types" : "All types"}</option>
           {SUPPORT_CASE_TYPES.map((s) => (
             <option key={s} value={s}>
-              {supportTypeLabel(s)}
+              {supportTypeLabel(s, lang)}
             </option>
           ))}
         </select>
@@ -164,14 +163,22 @@ function Inbox({
         ))}
       </div>
       <p className="text-xs text-subtle">
-        {busy ? "Loading…" : `${cases.length} in this filter · ${openish} still open`}
+        {busy
+          ? t("loading")
+          : lang === "fr"
+            ? `${cases.length} dans ce filtre · ${openish} encore ouverts`
+            : `${cases.length} in this filter · ${openish} still open`}
       </p>
       {cases.length === 0 && !busy ? (
         <div className="overflow-hidden rounded-2xl bg-surface ring-1 ring-border">
           <EmptyState
-            title="No cases"
-            body="Open a case when a parent or centre needs help."
-            action="New case"
+            title={lang === "fr" ? "Aucun dossier" : "No cases"}
+            body={
+              lang === "fr"
+                ? "Ouvrez un dossier quand un parent ou une garderie a besoin d'aide."
+                : "Open a case when a parent or centre needs help."
+            }
+            action={lang === "fr" ? "Nouveau dossier" : "New case"}
             onAction={onNew}
           />
         </div>
@@ -186,10 +193,10 @@ function Inbox({
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p className="font-medium">{c.subject}</p>
-                  <p className="text-xs text-subtle">{supportStatusLabel(c.status)}</p>
+                  <p className="text-xs text-subtle">{supportStatusLabel(c.status, lang)}</p>
                 </div>
                 <p className="mt-1 text-sm text-muted">
-                  {supportTypeLabel(c.type)}
+                  {supportTypeLabel(c.type, lang)}
                   {c.parentName || c.parentEmail ? ` · ${c.parentName || c.parentEmail}` : ""}
                   {c.centreName ? ` · ${c.centreName}` : ""}
                   {c.assigneeName ? ` · ${c.assigneeName}` : " · Unassigned"}
@@ -204,6 +211,8 @@ function Inbox({
 }
 
 function NewCaseForm({ onCreated }: { onCreated: () => void }) {
+  const { locale } = useCopy();
+  const lang = locale === "fr" ? "fr" : "en";
   const [subject, setSubject] = useState("");
   const [type, setType] = useState<SupportCaseType>("other");
   const [priority, setPriority] = useState<SupportPriority>("normal");
@@ -284,7 +293,7 @@ function NewCaseForm({ onCreated }: { onCreated: () => void }) {
           >
             {SUPPORT_CASE_TYPES.map((s) => (
               <option key={s} value={s}>
-                {supportTypeLabel(s)}
+                {supportTypeLabel(s, lang)}
               </option>
             ))}
           </select>

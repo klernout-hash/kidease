@@ -102,6 +102,7 @@ export const CITY_HUB_DEFS: readonly CityHubDef[] = [
     cityEn: "Winnipeg",
     cityFr: "Winnipeg",
     province: "MB",
+    aliases: ["wpg", "winnpeg"],
     subsidyUrl: "https://www.gov.mb.ca/education/childcare/families/childcare_subsidies.html",
     subsidyLabel: "Manitoba Child Care Subsidy",
   },
@@ -234,11 +235,35 @@ export function cityHubMapSearchQuery(hub: Pick<CityHubDef, "city" | "cityEn" | 
   return `${hub.cityEn || hub.city}, ${hub.province}`;
 }
 
+const PROVINCE_NAME_TO_CODE: Record<string, string> = {
+  ALBERTA: "AB",
+  "BRITISH COLUMBIA": "BC",
+  MANITOBA: "MB",
+  "NEW BRUNSWICK": "NB",
+  "NEWFOUNDLAND AND LABRADOR": "NL",
+  "NORTHWEST TERRITORIES": "NT",
+  "NOVA SCOTIA": "NS",
+  NUNAVUT: "NU",
+  ONTARIO: "ON",
+  "PRINCE EDWARD ISLAND": "PE",
+  QUEBEC: "QC",
+  SASKATCHEWAN: "SK",
+  YUKON: "YT",
+};
+
+function hubProvinceCode(raw: string | null | undefined): string {
+  const key = String(raw ?? "")
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  if (!key) return "";
+  return PROVINCE_NAME_TO_CODE[key] || key;
+}
+
 export function cityHubDefForPlace(city: string | null | undefined, province: string | null | undefined) {
   const cityKey = normalizeCityKey(city);
-  const provinceKey = String(province ?? "")
-    .trim()
-    .toUpperCase();
+  const provinceKey = hubProvinceCode(province);
   if (!cityKey || !provinceKey) return null;
   return (
     CITY_HUB_DEFS.find(

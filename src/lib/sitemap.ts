@@ -19,7 +19,8 @@ export const LISTING_SITEMAP_CAP = 5000;
 /** Hard stop for the bundled slug list — Google's per-sitemap URL ceiling. */
 export const LISTING_SITEMAP_TOTAL_CAP = 50_000;
 export const SITEMAP_LISTINGS_PATH = "/sitemap-listings.xml";
-export const SITEMAP_LASTMOD = "2026-09-08";
+/** Date this marketing sitemap was last edited. Listing pages use the day they are generated. */
+export const SITEMAP_LASTMOD = "2026-11-21";
 const LISTING_SITEMAP_PAGE_RE = /^\/sitemap-listings-([1-9]\d*)\.xml$/;
 
 export const SITEMAP_STATIC_PATHS = [
@@ -333,7 +334,7 @@ export function listingSitemapXmlForPath(
     const page = listingSitemapPageNumber(trimmed);
     if (page == null) return null;
     if (pages === 0 || page > pages) {
-      return renderSitemapXml({ paths: [], listingSlugs: [], lastmod });
+      return "";
     }
     const start = (page - 1) * LISTING_SITEMAP_CAP;
     return renderSitemapXml({

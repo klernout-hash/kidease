@@ -48,6 +48,7 @@ import {
   writeStickyDesk,
 } from "@/lib/desks";
 import {
+  assignPostAuthDest,
   captureLoginFunnel,
   continueAfterSignIn,
   LOGIN_STALL_MS,
@@ -483,25 +484,41 @@ export function LoginScreen({
         await withTimeoutFallback(setRole({ data: role }), LOGIN_CONTINUE_MS, undefined);
       }
       if (attempt.current !== id) return;
+      const signInLocale = loginPath === "/fr/login" ? "fr" : "en";
+      await waitForSignedInSession(() => authClient.getSession());
+      if (attempt.current !== id) return;
       await withTimeout(
         continueAfterSignIn({
           next: search.next,
           desk: deskHint,
           role: role ?? null,
           sticky: readStickyDesk(),
+          locale: signInLocale,
           method: "session",
         }),
         LOGIN_CONTINUE_MS,
         "continue-timeout",
       );
-    })().catch(() => {
+    })().catch((err: unknown) => {
       if (attempt.current !== id) return;
+      const message = err instanceof Error ? err.message : "";
+      if (message.includes("continue-timeout")) {
+        const signInLocale = loginPath === "/fr/login" ? "fr" : "en";
+        const fallback = resolvePostLoginPath({
+          next: search.next,
+          desk: deskHint,
+          role: role ?? null,
+          sticky: readStickyDesk(),
+        });
+        assignPostAuthDest(localePath(fallback, signInLocale));
+        return;
+      }
       const released = releaseStuckLogin("open-failed");
       continued.current = released.keepContinued;
       setError(released.error);
       setBusy(released.busy);
     });
-  }, [sessionPending, user, dest, busy, search.next, search.intent, search.step, search.error, deskHint, role, urlOperator, mode]);
+  }, [sessionPending, user, dest, busy, search.next, search.intent, search.step, search.error, deskHint, role, urlOperator, mode, loginPath]);
 
   function passkeyMessage(err: unknown): string {
     if (err instanceof PasskeyRequestError && (err.code === "PASSKEY_RATE_LIMIT" || err.status === 429)) {
@@ -796,7 +813,6 @@ export function LoginScreen({
         dest_path: funnelDestPath(dest),
         desk: deskFromPathname(dest) ?? undefined,
       });
-      markContinued(dest, { method: "social" });
       const socialDest =
         !operator && isCloudflareAccessPath(dest) ? (role === "provider" ? "/provider" : "/parent") : dest;
       const staged = socialSignupCallbackPath({

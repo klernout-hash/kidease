@@ -34,9 +34,9 @@ function ProvincialVacancyPage() {
   const runs = Array.isArray(report?.runs) ? report.runs : [];
   const unconfirmedRows = Array.isArray(unconfirmed?.rows) ? unconfirmed.rows : [];
   const sections = [
-    ["Matched", Array.isArray(report?.matched) ? report.matched : []],
-    ["Unmatched", Array.isArray(report?.unmatched) ? report.unmatched : []],
-    ["Changed", Array.isArray(report?.changed) ? report.changed : []],
+    [t("adminVacancyMatched"), Array.isArray(report?.matched) ? report.matched : []],
+    [t("adminVacancyUnmatched"), Array.isArray(report?.unmatched) ? report.unmatched : []],
+    [t("adminVacancyChanged"), Array.isArray(report?.changed) ? report.changed : []],
   ] as const;
   return (
     <Shell>
@@ -53,9 +53,7 @@ function ProvincialVacancyPage() {
             </a>
           </p>
         )}
-        <p className="mt-2 text-sm text-muted">
-          New Brunswick's published file lists licensed capacity, not current openings. When that file has no opening column, the import is marked failed and no number is written.
-        </p>
+        <p className="mt-2 text-sm text-muted">{t("adminVacancyNbNote")}</p>
         <section className="mt-8" data-ke="vacancy-unconfirmed">
           <h2 className="font-display text-xl">
             {fr ? "Non confirmées depuis 30 jours" : "Unconfirmed for 30 days or more"}
@@ -104,10 +102,10 @@ function ProvincialVacancyPage() {
               <li key={`${run.province}-${run.fetched_at}-${i}`} className="p-4 text-sm">
                 <p className="font-medium">
                   {run.province} · {run.status}
-                  {run.dry_run ? " · dry run" : ""}
+                  {run.dry_run ? ` · ${t("adminVacancyDryRun")}` : ""}
                 </p>
                 <p className="mt-1 text-muted">
-                  Matched {run.matched} · Unmatched {run.unmatched} · Changed {run.changed}
+                  {t("adminVacancyMatched")} {run.matched} · {t("adminVacancyUnmatched")} {run.unmatched} · {t("adminVacancyChanged")} {run.changed}
                   {run.reason ? ` · ${run.reason}` : ""}
                 </p>
                 <p className="mt-1 text-xs text-subtle">
@@ -140,7 +138,7 @@ function ProvincialVacancyPage() {
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-muted">None in this sample.</p>
+              <p className="mt-2 text-sm text-muted">{t("adminVacancyNone")}</p>
             )}
           </section>
         ))}

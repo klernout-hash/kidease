@@ -7,6 +7,8 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canVisitDesk } from "@/lib/desks";
 import { cn } from "@/lib/utils";
+import { SESSION_SETTLE_MS } from "@/lib/timeout";
+import { useCopy } from "@/lib/use-copy";
 
 type CampaignRow = {
   campaign: string;
@@ -34,6 +36,8 @@ function pct(value: number) {
 export function EmailHealthPage() {
   const { user, isPending } = useCurrentUserState();
   const { session, ready } = useSessionDesks();
+  const { t } = useCopy();
+  const [settled, setSettled] = useState(false);
   const [days, setDays] = useState<7 | 30>(7);
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,11 +46,18 @@ export function EmailHealthPage() {
   const admin = Boolean(ready && session && canVisitDesk(session.desks, "admin", session.role));
 
   useEffect(() => {
+    const timer = window.setTimeout(() => setSettled(true), SESSION_SETTLE_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     if (!user || !admin) return;
     let cancelled = false;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), SESSION_SETTLE_MS);
     setLoading(true);
     setError(null);
-    void fetch(`/api/admin/email-suppressions?view=stats&days=${days}`, { credentials: "same-origin" })
+    void fetch(`/api/admin/email-suppressions?view=stats&days=${days}`, { credentials: "same-origin", signal: controller.signal })
       .then(async (res) => {
         const data = (await res.json()) as HealthPayload;
         if (!res.ok || !data.ok) throw new Error(data.error || "Could not load email health");
@@ -58,22 +69,42 @@ export function EmailHealthPage() {
       .catch((err: unknown) => {
         if (!cancelled) {
           setHealth(null);
-          setError(err instanceof Error ? err.message : "Could not load email health");
+          const aborted = err instanceof DOMException && err.name === "AbortError";
+          setError(aborted ? t("adminLoadStuck") : err instanceof Error ? err.message : "Could not load email health");
         }
       })
       .finally(() => {
+        window.clearTimeout(timer);
         if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
+      controller.abort();
+      window.clearTimeout(timer);
     };
-  }, [user, admin, days]);
+  }, [user, admin, days, t]);
 
+  if ((isPending || !ready) && !settled) {
+    return (
+      <DeskShell desk="admin" active="email-health" onSelect={() => {}}>
+        <p className="p-8 text-muted" role="status">{t("loading")}</p>
+      </DeskShell>
+    );
+  }
   if (isPending || !ready) {
     return (
-      <Shell>
-        <p className="p-8 text-muted">Loading…</p>
-      </Shell>
+      <DeskShell desk="admin" active="email-health" onSelect={() => {}}>
+        <main className="mx-auto max-w-lg px-4 py-10">
+          <h1 className="font-display text-3xl">{t("adminLoadStuck")}</h1>
+          <button
+            type="button"
+            className="mt-4 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
+            onClick={() => window.location.reload()}
+          >
+            {t("adminLoadReload")}
+          </button>
+        </main>
+      </DeskShell>
     );
   }
   if (!user) return <RedirectToSignIn />;

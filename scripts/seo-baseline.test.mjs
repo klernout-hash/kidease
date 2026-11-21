@@ -173,8 +173,7 @@ test("listings sitemap paginates past the 5000-URL file cap", async () => {
   assert.equal(reversedPage2, page2);
 
   const empty = listingSitemapXmlForPath(overflow, "/sitemap-listings-9.xml");
-  assert.match(empty, /<urlset /);
-  assert.doesNotMatch(empty, /<loc>/);
+  assert.equal(empty, "");
   assert.equal(listingSitemapXmlForPath(overflow, "/robots.txt"), null);
 });
 
