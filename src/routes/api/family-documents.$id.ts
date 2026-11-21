@@ -21,6 +21,8 @@ export const Route = createFileRoute("/api/family-documents/$id")({
           if (!familyVaultEnabled()) return Response.json({ ok: false, error: "off" }, { status: 404 });
           const { requireUserId } = await import("@/lib/auth/verify.server");
           const userId = await requireUserId();
+          const { assertSensitiveFileAccess } = await import("@/lib/server/second-factor");
+          await assertSensitiveFileAccess(userId, "parent");
           const { loadFamilyDocumentFor } = await import("@/lib/server/family-vault");
           const row = await loadFamilyDocumentFor({ userId, documentId: params.id });
           if (String(row.storageRef || "").startsWith("qa-synthetic/")) {
