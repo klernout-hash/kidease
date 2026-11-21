@@ -23,6 +23,7 @@ export function blockingViolations(violations) {
 export function listingPathFromHref(href) {
   if (!href) return null;
   const path = href.startsWith("http") ? new URL(href).pathname : href.split(/[?#]/)[0];
-  if (!path.startsWith("/daycare/") || path.startsWith("/daycare/city")) return null;
+  const bare = path.replace(/^\/fr(?=\/)/, "");
+  if (!bare.startsWith("/daycare/") || bare.startsWith("/daycare/city")) return null;
   return path;
 }

@@ -21,6 +21,8 @@ test("only serious and critical axe results block", () => {
 
 test("listing links stay on a centre page", () => {
   assert.equal(listingPathFromHref("/daycare/centre-one"), "/daycare/centre-one");
+  assert.equal(listingPathFromHref("/fr/daycare/centre-one"), "/fr/daycare/centre-one");
   assert.equal(listingPathFromHref("/daycare/city/winnipeg"), null);
+  assert.equal(listingPathFromHref("/fr/daycare/city/winnipeg"), null);
   assert.equal(listingPathFromHref("https://www.kidease.ca/daycare/centre-one?x=1"), "/daycare/centre-one");
 });

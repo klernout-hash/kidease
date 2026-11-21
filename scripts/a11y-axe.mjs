@@ -89,11 +89,13 @@ async function scan(page, id, path) {
 }
 
 async function firstListing(page, searchPath) {
-  await page.goto(new URL(searchPath, origin).href, { waitUntil: "domcontentloaded", timeout: 45000 });
-  const hrefs = await page.locator('a[href*="/daycare/"]').evaluateAll((nodes) =>
-    nodes.map((node) => node.getAttribute("href") || ""),
-  );
-  return hrefs.map(listingPathFromHref).find(Boolean) || null;
+  const url = new URL(searchPath, origin);
+  if (!url.searchParams.has("q")) url.searchParams.set("q", "Winnipeg, MB");
+  await page.goto(url.href, { waitUntil: "domcontentloaded", timeout: 45000 });
+  const link = page.locator('a[href*="/daycare/"]:not([href*="/daycare/city"])').first();
+  const found = await link.waitFor({ state: "attached", timeout: 20000 }).then(() => true).catch(() => false);
+  if (!found) return null;
+  return listingPathFromHref((await link.getAttribute("href")) || "");
 }
 
 async function main() {
