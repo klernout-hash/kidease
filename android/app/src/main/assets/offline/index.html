@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <title>KidEase</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f6f3ee;
+        --fg: #1c2438;
+        --muted: #5c6578;
+        --brand: #1a3790;
+        --surface: #fffcf8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14161c;
+          --fg: #f6f3ee;
+          --muted: #c5c9d4;
+          --surface: #1e222b;
+        }
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main {
+        box-sizing: border-box;
+        max-width: 28rem;
+        margin: 0 auto;
+        padding: calc(1.5rem + env(safe-area-inset-top)) 1.25rem calc(2rem + env(safe-area-inset-bottom));
+      }
+      .langs {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .langs button,
+      .retry {
+        min-height: 2.75rem;
+        min-width: 2.75rem;
+        touch-action: manipulation;
+        border-radius: 999px;
+        font: inherit;
+        font-weight: 600;
+      }
+      .langs button {
+        padding: 0 1rem;
+        border: 1px solid var(--brand);
+        background: transparent;
+        color: var(--brand);
+      }
+      .langs button[aria-pressed="true"] {
+        background: var(--brand);
+        color: #fff;
+      }
+      h1 {
+        margin: 1rem 0 0;
+        font-size: clamp(1.75rem, 6vw, 2.25rem);
+        letter-spacing: -0.03em;
+      }
+      p {
+        margin: 0.75rem 0 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .retry {
+        margin-top: 1.25rem;
+        padding: 0 1.25rem;
+        border: 0;
+        background: var(--brand);
+        color: #fff;
+      }
+      h2 {
+        margin: 1.75rem 0 0;
+        font-size: 1.1rem;
+      }
+      ul {
+        margin: 0.75rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      li {
+        margin-top: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: var(--surface);
+        border-radius: 0.75rem;
+      }
+      li span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      a {
+        color: var(--brand);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="langs">
+        <button type="button" id="lang-en" aria-pressed="true">English</button>
+        <button type="button" id="lang-fr" aria-pressed="false">Français</button>
+      </div>
+      <p class="kicker">KidEase</p>
+      <h1 id="title">You're offline</h1>
+      <p id="lead">
+        KidEase needs a connection to search licensed daycares. Centres you saved on this phone are still here.
+      </p>
+      <button type="button" class="retry" id="retry">Try again</button>
+      <h2 id="saved-title">Saved on this phone</h2>
+      <ul id="saved"></ul>
+      <p id="saved-empty">Nothing saved on this phone yet.</p>
+      <p><a href="mailto:support@kidease.ca">support@kidease.ca</a></p>
+    </main>
+    <script>
+      (function () {
+        var copy = {
+          en: {
+            title: "You're offline",
+            lead: "KidEase needs a connection to search licensed daycares. Centres you saved on this phone are still here.",
+            retry: "Try again",
+            saved: "Saved on this phone",
+            empty: "Nothing saved on this phone yet."
+          },
+          fr: {
+            title: "Vous êtes hors ligne",
+            lead: "KidEase a besoin d'une connexion pour chercher des garderies autorisées. Les centres enregistrés sur ce téléphone sont encore ici.",
+            retry: "Réessayer",
+            saved: "Enregistré sur ce téléphone",
+            empty: "Rien d'enregistré sur ce téléphone pour le moment."
+          }
+        };
+        var lang = /^fr/i.test(navigator.language || "") ? "fr" : "en";
+
+        function paint(next) {
+          lang = next === "fr" ? "fr" : "en";
+          var text = copy[lang];
+          document.documentElement.lang = lang;
+          document.getElementById("title").textContent = text.title;
+          document.getElementById("lead").textContent = text.lead;
+          document.getElementById("retry").textContent = text.retry;
+          document.getElementById("saved-title").textContent = text.saved;
+          document.getElementById("saved-empty").textContent = text.empty;
+          document.getElementById("lang-en").setAttribute("aria-pressed", lang === "en" ? "true" : "false");
+          document.getElementById("lang-fr").setAttribute("aria-pressed", lang === "fr" ? "true" : "false");
+        }
+
+        window.keRenderSaved = function (raw) {
+          var rows = [];
+          try {
+            rows = typeof raw === "string" ? JSON.parse(raw || "[]") : raw;
+          } catch (e) {
+            rows = [];
+          }
+          if (!Array.isArray(rows)) rows = [];
+          var list = document.getElementById("saved");
+          var empty = document.getElementById("saved-empty");
+          list.replaceChildren();
+          rows.slice(0, 30).forEach(function (row) {
+            if (!row || !row.name) return;
+            var item = document.createElement("li");
+            item.textContent = String(row.name);
+            if (row.city) {
+              var city = document.createElement("span");
+              city.textContent = String(row.city);
+              item.appendChild(city);
+            }
+            list.appendChild(item);
+          });
+          empty.hidden = list.children.length > 0;
+        };
+
+        document.getElementById("lang-en").addEventListener("click", function () { paint("en"); });
+        document.getElementById("lang-fr").addEventListener("click", function () { paint("fr"); });
+        document.getElementById("retry").addEventListener("click", function () {
+          location.replace("https://www.kidease.ca/");
+        });
+        paint(lang);
+
+        try {
+          if (window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.SplashScreen) {
+            Capacitor.Plugins.SplashScreen.hide();
+          }
+        } catch (e) {}
+
+        var prefs = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Preferences;
+        if (prefs && prefs.get) {
+          prefs.get({ key: "ke-offline-shortlist" }).then(function (res) {
+            if (res && res.value) window.keRenderSaved(res.value);
+          }).catch(function () {});
+        }
+      })();
+    </script>
+  </body>
+</html>
