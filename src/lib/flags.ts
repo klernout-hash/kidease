@@ -1427,7 +1427,7 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_PDF_EXPORT", defaultOn: false, docs: "docs/flags.md", summary: "Check report lines before a PDF. Off. No new PDF vendor." },
   { key: "FEATURE_AUDIT_LOG", defaultOn: false, docs: "docs/flags.md", summary: "Append-only audit log. Off. Owners see only their centres." },
   { key: "FEATURE_SECURITY_PAGE", defaultOn: false, docs: "docs/flags.md", summary: "Public security statements with evidence. Off. No certification claim." },
-  { key: "FEATURE_PRIVACY_REQUESTS", defaultOn: false, docs: "docs/flags.md", summary: "Privacy request case for the privacy officer. Off." },
+  { key: "FEATURE_PRIVACY_REQUESTS", defaultOn: false, docs: "docs/flags.md", summary: "Privacy request filed for privacy@kidease.ca on Account > Export and Security. Off. No email is sent. Propose FEATURE_PRIVACY_REQUESTS=1. Do not turn it on in production from this change." },
   { key: "FEATURE_START_DATE_SEARCH", defaultOn: false, docs: "docs/flags.md", summary: "Match a stored opening date. Off. A missing date stays unknown." },
   { key: "FEATURE_LEAD_CSV", defaultOn: false, docs: "docs/flags.md", summary: "Import leads from a spreadsheet. Off. A row without a name is skipped. No email is sent." },
   { key: "FEATURE_LEAD_TEMPLATES", defaultOn: false, docs: "docs/flags.md", summary: "Lead notes in English and French. Off. Nothing is sent." },
