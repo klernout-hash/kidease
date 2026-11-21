@@ -39,6 +39,7 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "e2e": "node scripts/e2e-smoke.mjs",
+    "a11y:axe": "node scripts/a11y-axe.mjs",
     "e2e:preview": "node scripts/e2e-smoke.mjs --start-preview",
     "e2e:browser-smoke": "node scripts/browser-smoke.mjs http://127.0.0.1:8081/ artifacts/e2e/browser-smoke.png",
     "e2e:inbox-layout": "node scripts/inbox-layout-smoke.mjs",
@@ -139,6 +140,7 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@capacitor/android": "^8.6.2",
     "@capacitor/cli": "^8.6.2",
     "@capacitor/ios": "^8.6.2",
