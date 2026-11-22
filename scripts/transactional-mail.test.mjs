@@ -79,55 +79,122 @@ test("OTP Resend From stays on noreply@send.kidease.ca, never the apex mailbox",
   assert.equal(titanSmtpFrom(envBase()), "KidEase <kyle@kidease.ca>");
 });
 
-test("Resend 403 on send.kidease.ca falls through to Titan SMTP without an apex From", async () => {
+test("sign-in codes use Titan SMTP first and do not call Resend when Titan accepts", async () => {
   resetOtpMailHealth();
-  const froms = [];
   const logs = [];
-  let titanTo = "";
-  const fetchMock = async (_url, init) => {
-    const body = JSON.parse(init.body);
-    froms.push(body.from);
-    assert.equal(body.reply_to, "kyle@kidease.ca");
-    assert.doesNotMatch(JSON.stringify(init.headers), /re_live|re_test_secret/);
-    return jsonResponse(403, { name: "validation_error", message: "domain send.kidease.ca is not verified" });
-  };
+  let titanCalls = 0;
+  let resendCalls = 0;
   const result = await sendTransactionalMail(
     {
       purpose: "2fa",
-      to: "kyle@kidease.ca",
+      to: "parent@example.com",
       subject: "Your KidEase sign-in code",
-      text: "code",
-      html: "<p>code</p>",
+      text: "123456",
+      html: "<p>123456</p>",
       replyTo: "kyle@kidease.ca",
     },
     {
-      fetch: fetchMock,
+      fetch: async () => {
+        resendCalls += 1;
+        return jsonResponse(200, { id: "should-not-send" });
+      },
       sendTitan: async (input) => {
-        titanTo = input.to;
+        titanCalls += 1;
+        assert.equal(input.to, "parent@example.com");
+        assert.equal(input.subject, "Your KidEase sign-in code");
         return { ok: true, via: "titan" };
       },
       env: envBase({
         RESEND_API_KEY: "re_test",
+        SENDGRID_API_KEY: "sg_test",
         TITAN_APP_PASSWORD: "not-a-real-password",
         MAIL_FROM: "KidEase <noreply@send.kidease.ca>",
       }),
       log: (line) => logs.push(line),
     },
   );
+  assert.equal(titanSmtpFrom(envBase()), "KidEase <kyle@kidease.ca>");
+  assert.equal(titanCalls, 1);
+  assert.equal(resendCalls, 0);
   assert.equal(result.status, "sent");
   assert.equal(result.via, "titan");
-  assert.equal(result.fallbackFrom, "resend");
-  assert.equal(titanTo, "kyle@kidease.ca");
+  assert.equal(result.fallbackFrom, undefined);
+  assert.ok(logs.some((line) => line.includes("event=titan_ok") && line.includes("via=titan")));
+  assert.equal(logs.some((line) => /re_test|sg_test|not-a-real-password|123456/.test(line)), false);
+  assert.equal(readOtpMailHealth().lastVia, "titan");
+});
+
+test("a Titan error falls back to Resend and then SendGrid", async () => {
+  resetOtpMailHealth();
+  const order = [];
+  const logs = [];
+  const result = await sendTransactionalMail(
+    {
+      purpose: "2fa",
+      to: "staff@example.com",
+      subject: "Your KidEase sign-in code",
+      text: "654321",
+      html: "<p>654321</p>",
+    },
+    {
+      fetch: async (url) => {
+        order.push(String(url));
+        if (String(url).includes("resend.com")) return jsonResponse(403, { message: "domain is not verified" });
+        return jsonResponse(202, "");
+      },
+      sendTitan: async () => {
+        order.push("titan");
+        throw new Error("Titan SMTP AUTH failed");
+      },
+      env: envBase({
+        RESEND_API_KEY: "re_test",
+        SENDGRID_API_KEY: "sg_test",
+        TITAN_APP_PASSWORD: "not-a-real-password",
+      }),
+      log: (line) => logs.push(line),
+    },
+  );
+  assert.deepEqual(order, ["titan", "https://api.resend.com/emails", "https://api.sendgrid.com/v3/mail/send"]);
+  assert.equal(result.status, "sent");
+  assert.equal(result.via, "sendgrid");
+  assert.equal(result.fallbackFrom, "titan");
+  assert.ok(logs.some((line) => line.includes("event=titan_fail") && line.includes("via=titan")));
+  assert.ok(logs.some((line) => line.includes("event=sendgrid_ok") && line.includes("via=sendgrid")));
+  assert.equal(logs.some((line) => /not-a-real-password|654321|re_test|sg_test/.test(line)), false);
+});
+
+test("an empty Titan password skips Titan and uses Resend", async () => {
+  resetOtpMailHealth();
+  let titanCalls = 0;
+  const froms = [];
+  const result = await sendTransactionalMail(
+    {
+      purpose: "verify_email",
+      to: "parent@example.com",
+      subject: "code",
+      text: "code",
+      html: "<p>code</p>",
+    },
+    {
+      fetch: async (_url, init) => {
+        froms.push(JSON.parse(init.body).from);
+        return jsonResponse(200, { id: "resend-id" });
+      },
+      sendTitan: async () => {
+        titanCalls += 1;
+        throw new Error("Titan should not run without a password");
+      },
+      env: envBase({
+        RESEND_API_KEY: "re_test",
+        TITAN_APP_PASSWORD: "   ",
+        MAIL_FROM: "KidEase <kyle@kidease.ca>",
+      }),
+      log: () => {},
+    },
+  );
+  assert.equal(titanCalls, 0);
+  assert.equal(result.via, "resend");
   assert.deepEqual(froms, ["KidEase <noreply@send.kidease.ca>"]);
-  assert.equal(froms.includes(EMERGENCY_RESEND_MAIL_FROM), false);
-  assert.ok(logs.some((line) => line.includes("event=resend_fail") && line.includes("reason=domain_unverified")));
-  assert.ok(logs.some((line) => line.includes("event=titan_fallback_success")));
-  assert.equal(logs.some((line) => /re_test|not-a-real-password|123456/.test(line)), false);
-  const health = readOtpMailHealth();
-  assert.equal(health.lastEvent, "titan_fallback_success");
-  assert.equal(health.lastVia, "titan");
-  assert.equal(health.lastReason, "domain_unverified");
-  assert.equal(health.titanConfigured, true);
 });
 
 test("a rejected send.kidease.ca From is not retried as the apex mailbox", async () => {
@@ -193,12 +260,12 @@ test("all providers failing throws and never reports sent", async () => {
   assert.equal(readOtpMailHealth().lastEvent, "all_failed");
 });
 
-test("SendGrid is tried after Resend fail and before Titan", async () => {
+test("non-code mail still tries SendGrid after Resend and before Titan", async () => {
   resetOtpMailHealth();
   const hosts = [];
   const result = await sendTransactionalMail(
     {
-      purpose: "password_reset",
+      purpose: "claim",
       to: "parent@example.com",
       subject: "reset",
       text: "link",
