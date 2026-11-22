@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -12,9 +12,11 @@ import {
   Shield,
   Wallet,
 } from "lucide-react";
+import { DaycareLicensingChecklist } from "@/components/daycare-licensing-checklist";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { canadaFallbackUrl } from "@/lib/province-registry";
+import { LICENSING_LAST_REGION_KEY } from "@/lib/daycare-licensing-checklist";
 import { localeLine } from "@/lib/french-type";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import {
@@ -107,6 +109,7 @@ function ProvincePanel({ pt, locale }: { pt: StartDaycarePt; locale: string }) {
           </p>
         </section>
       </div>
+      <DaycareLicensingChecklist key={pt.code} code={pt.code} locale={locale} officialUrl={pt.licensingUrl} />
     </article>
   );
 }
@@ -119,6 +122,15 @@ export function StartADaycarePage() {
   const selected = startDaycarePt(search.pt)?.code;
   const pt = startDaycarePt(selected) ?? (filtered.length === 1 ? filtered[0] : undefined);
   const finderPath = startDaycarePath(locale);
+  const [recentRegion, setRecentRegion] = useState<StartDaycarePt>();
+  useEffect(() => {
+    try {
+      if (selected) window.localStorage.setItem(LICENSING_LAST_REGION_KEY, selected);
+      setRecentRegion(startDaycarePt(window.localStorage.getItem(LICENSING_LAST_REGION_KEY)));
+    } catch {
+      // The finder still works when browser storage is blocked.
+    }
+  }, [selected]);
 
   return (
     <Shell>
@@ -184,6 +196,16 @@ export function StartADaycarePage() {
             {t("startDaycareFinderT")}
           </h2>
           <p className="mt-2 text-sm text-muted">{t("startDaycareFinderHint")}</p>
+          {!selected && !query && recentRegion && (
+            <Link
+              to={finderPath}
+              search={{ pt: recentRegion.code }}
+              hash="start-daycare-pt"
+              className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-4"
+            >
+              {locale === "fr" ? "Reprendre : " + recentRegion.nameFr : "Continue: " + recentRegion.nameEn}
+            </Link>
+          )}
           <form method="get" action={finderPath} className="mt-5" role="search">
             {selected ? <input type="hidden" name="pt" value={selected} /> : null}
             <label className="block">
