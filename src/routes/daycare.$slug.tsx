@@ -27,7 +27,7 @@ import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo
 import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto, primaryListingPhoto } from "@/lib/listing-photo";
 import { isMissingCatalogueBuilding } from "@/lib/catalogue-buildings";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
-import { DETAIL_SIZES, HERO_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
+import { DETAIL_SIZES, LISTING_LCP_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
 import { getDaycare, getHiddenReviewRedirect, getListingSeo, type CentreJobPost } from "@/lib/server/daycares";
 import { cityHubCityName, cityHubDefForPlace } from "@/lib/city-hubs";
@@ -174,8 +174,8 @@ export const Route = createFileRoute("/daycare/$slug")({
           {
             rel: "preload" as const,
             as: "image" as const,
-            href: photoUrl(hero, 768),
-            imageSrcSet: photoSrcSet(hero, HERO_WIDTHS),
+            href: photoUrl(hero, 480),
+            imageSrcSet: photoSrcSet(hero, LISTING_LCP_WIDTHS),
             imageSizes: DETAIL_SIZES,
             fetchPriority: "high" as const,
           },
