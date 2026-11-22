@@ -10,12 +10,12 @@ export const Route = createFileRoute("/fr/jobs")({
   head: ({ loaderData }) =>
     pageSeoHead({
       ...MARKETING_PAGE_SEO_FR.jobs,
-      description: loaderData?.enabled ? LIVE_JOBS_DESCRIPTION_FR : MARKETING_PAGE_SEO_FR.jobs.description,
+      description: loaderData?.enabled || loaderData?.staffBoard ? LIVE_JOBS_DESCRIPTION_FR : MARKETING_PAGE_SEO_FR.jobs.description,
     }),
   component: FrJobs,
 });
 
 function FrJobs() {
   const data = Route.useLoaderData();
-  return <Jobs enabled={data.enabled} jobs={data.jobs} />;
+  return <Jobs {...data} />;
 }

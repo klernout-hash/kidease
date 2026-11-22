@@ -1,19 +1,42 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { JobsInterestForm } from "@/components/jobs-interest-form";
+import { StaffHiringDesk } from "@/components/staff-hiring-desk";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { useInNativeShell } from "@/lib/use-native-shell";
+import { staffJobBoardFlag } from "@/lib/server/staff-jobs";
+
+/** FEATURE_STAFF_JOB_BOARD. Off keeps the page exactly as before. */
+export async function loadJobsPostPage(): Promise<{ staffBoard: boolean }> {
+  const staffBoard = await staffJobBoardFlag().catch(() => false);
+  return { staffBoard: staffBoard === true };
+}
 
 export const Route = createFileRoute("/jobs_/post")({
+  loader: () => loadJobsPostPage(),
   head: () => pageSeoHead(MARKETING_PAGE_SEO.jobsPost),
-  component: JobsPost,
+  component: JobsPostRoute,
 });
 
-export function JobsPost() {
+function JobsPostRoute() {
+  const data = Route.useLoaderData();
+  return <JobsPost staffBoard={data.staffBoard} />;
+}
+
+export function JobsPost({ staffBoard = false }: { staffBoard?: boolean } = {}) {
   const { t, locale } = useCopy();
   const nativeShell = useInNativeShell();
+  if (staffBoard) {
+    return (
+      <Shell>
+        <main className="ke-gutter mx-auto max-w-2xl py-12 md:py-16" data-ke="jobs-post" data-staff-board="on">
+          <StaffHiringDesk />
+        </main>
+      </Shell>
+    );
+  }
   return (
     <Shell>
       <main

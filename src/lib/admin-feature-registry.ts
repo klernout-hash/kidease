@@ -220,6 +220,7 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_SAVED_CENTRE_AGE_ALERTS: "parent",
   FEATURE_SEARCH_MEMORY: "parent",
   FEATURE_COMPARE_PARENT_FEE: "parent",
+  FEATURE_STAFF_JOB_BOARD: "daycare",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {

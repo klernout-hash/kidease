@@ -231,6 +231,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_SAVED_CENTRE_AGE_ALERTS",
   "FEATURE_SEARCH_MEMORY",
   "FEATURE_COMPARE_PARENT_FEE",
+  "FEATURE_STAFF_JOB_BOARD",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -663,6 +664,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_SEARCH_MEMORY: true,
   /** Compare shows the parent fee and distance from a saved commute. On. No messages. */
   FEATURE_COMPARE_PARENT_FEE: true,
+  /** Staff job board: staff profile, 3-step job post, explainable match, vetting checklist. Off. Sends nothing. */
+  FEATURE_STAFF_JOB_BOARD: false,
 };
 
 /**
@@ -1588,6 +1591,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Compare shows the fee parents pay and distance from a saved commute address. On. A missing fee stays “Ask the centre”. No messages.",
+  },
+  {
+    key: "FEATURE_STAFF_JOB_BOARD",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Staff job board on /jobs and /jobs/post: one staff profile, a 3-step job post, a plain-words match score and a provider checklist. Off. Short profile until the person applies. Sends no email or text.",
   },
 ];
 

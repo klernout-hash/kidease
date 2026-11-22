@@ -18,6 +18,7 @@ import {
   FOOTER_COLUMNS,
   FOOTER_LEGAL,
   footerLinkLabel,
+  withStaffJobLinks,
   type FooterColumnId,
   type FooterLinkDef,
 } from "@/lib/site-footer-nav";
@@ -134,8 +135,15 @@ export function SiteFooter() {
   const hideCommerce = useInNativeShell();
   const hidePlans = chrome.subscriptionsEnabled !== true;
   const fr = locale === "fr";
-  const helpAndKidEase = [...FOOTER_COLUMNS.support, ...FOOTER_COLUMNS.kidease]
-    .filter((link) => link.to !== "/get-app");
+  const staffJobs = withStaffJobLinks(
+    {
+      daycares: FOOTER_COLUMNS.daycares,
+      support: [...FOOTER_COLUMNS.support, ...FOOTER_COLUMNS.kidease].filter((link) => link.to !== "/get-app"),
+    },
+    chrome.staffJobsLink === true,
+  );
+  const daycareLinks = staffJobs.daycares;
+  const helpAndKidEase = staffJobs.support;
 
   return (
     <footer className="ke-site-footer mt-auto">
@@ -152,7 +160,7 @@ export function SiteFooter() {
             <Column
               id="daycares"
               title={fr ? "Garderies" : "Daycares"}
-              links={footerLinks(linksForRole(FOOTER_COLUMNS.daycares, chrome.role, "daycares", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)}
+              links={footerLinks(linksForRole(daycareLinks, chrome.role, "daycares", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)}
               locale={locale}
               t={t}
             />

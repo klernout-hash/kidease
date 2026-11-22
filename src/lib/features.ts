@@ -440,6 +440,14 @@ export function compareParentFeeEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_COMPARE_PARENT_FEE", env);
 }
 
+/**
+ * Staff job board: staff profile, 3-step job post, explainable match and
+ * vetting checklist on /jobs and /jobs/post. Default off. Sends nothing.
+ */
+export function staffJobBoardEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_STAFF_JOB_BOARD", env);
+}
+
 /** Enrolment e-sign, sign page, and signed PDF. Default off. */
 export function enrolmentEsignEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_ENROLMENT_ESIGN", env);

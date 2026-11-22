@@ -123,6 +123,7 @@ import { Route as AdminEscalationsRouteImport } from './routes/admin_.escalation
 import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
 import { Route as ApiAlexaRouteImport } from './routes/api/alexa'
 import { Route as ApiAutomationsRouteImport } from './routes/api/automations'
+import { Route as ApiStaffResumeRouteImport } from './routes/api/staff-resume'
 import { Route as ApiCentreLeadAlertsRouteImport } from './routes/api/centre-lead-alerts'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
@@ -927,6 +928,11 @@ const ApiAlexaRoute = ApiAlexaRouteImport.update({
 const ApiAutomationsRoute = ApiAutomationsRouteImport.update({
   id: '/api/automations',
   path: '/api/automations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStaffResumeRoute = ApiStaffResumeRouteImport.update({
+  id: '/api/staff-resume',
+  path: '/api/staff-resume',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCentreLeadAlertsRoute = ApiCentreLeadAlertsRouteImport.update({
@@ -2218,6 +2224,7 @@ export interface FileRoutesByFullPath {
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2566,6 +2573,7 @@ export interface FileRoutesByTo {
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2917,6 +2925,7 @@ export interface FileRoutesById {
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -3269,6 +3278,7 @@ export interface FileRouteTypes {
     | '/api/account-purge'
     | '/api/alexa'
     | '/api/automations'
+    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3617,6 +3627,7 @@ export interface FileRouteTypes {
     | '/api/account-purge'
     | '/api/alexa'
     | '/api/automations'
+    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3967,6 +3978,7 @@ export interface FileRouteTypes {
     | '/api/account-purge'
     | '/api/alexa'
     | '/api/automations'
+    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -4315,6 +4327,7 @@ export interface RootRouteChildren {
   ApiAccountPurgeRoute: typeof ApiAccountPurgeRoute
   ApiAlexaRoute: typeof ApiAlexaRoute
   ApiAutomationsRoute: typeof ApiAutomationsRoute
+  ApiStaffResumeRoute: typeof ApiStaffResumeRoute
   ApiCentreLeadAlertsRoute: typeof ApiCentreLeadAlertsRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
@@ -5235,6 +5248,13 @@ declare module '@tanstack/react-router' {
       path: '/api/automations'
       fullPath: '/api/automations'
       preLoaderRoute: typeof ApiAutomationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/staff-resume': {
+      id: '/api/staff-resume'
+      path: '/api/staff-resume'
+      fullPath: '/api/staff-resume'
+      preLoaderRoute: typeof ApiStaffResumeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/centre-lead-alerts': {
@@ -7388,6 +7408,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAccountPurgeRoute: ApiAccountPurgeRoute,
   ApiAlexaRoute: ApiAlexaRoute,
   ApiAutomationsRoute: ApiAutomationsRoute,
+  ApiStaffResumeRoute: ApiStaffResumeRoute,
   ApiCentreLeadAlertsRoute: ApiCentreLeadAlertsRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,

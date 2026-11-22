@@ -15,6 +15,8 @@ export type RoleChromeState = {
   subscriptionsEnabled: boolean;
   /** FEATURE_GOV_PORTAL. Default false. */
   govPortalLink: boolean;
+  /** FEATURE_STAFF_JOB_BOARD. Default false. Footer links only. */
+  staffJobsLink: boolean;
   /** Operator is looking at the public site as a signed-out visitor. */
   guestView?: boolean;
 };
@@ -30,6 +32,7 @@ const GUEST: RoleChromeState = {
   e2e: false,
   subscriptionsEnabled: false,
   govPortalLink: false,
+  staffJobsLink: false,
 };
 
 /**
@@ -49,6 +52,7 @@ export function useRoleChrome(): RoleChromeState {
       guestView: true,
       subscriptionsEnabled: remote.subscriptionsEnabled === true,
       govPortalLink: remote.govPortalLink === true,
+      staffJobsLink: remote.staffJobsLink === true,
     };
   }
 
@@ -64,6 +68,7 @@ export function useRoleChrome(): RoleChromeState {
       e2e: remote.e2e,
       subscriptionsEnabled: remote.subscriptionsEnabled === true,
       govPortalLink: remote.govPortalLink === true,
+      staffJobsLink: remote.staffJobsLink === true,
     };
   }
 
@@ -73,6 +78,7 @@ export function useRoleChrome(): RoleChromeState {
       e2e: remote?.e2e === true,
       subscriptionsEnabled: remote?.subscriptionsEnabled === true,
       govPortalLink: remote?.govPortalLink === true,
+      staffJobsLink: remote?.staffJobsLink === true,
     };
   }
 
@@ -87,5 +93,6 @@ export function useRoleChrome(): RoleChromeState {
     e2e: remote.e2e,
     subscriptionsEnabled: remote.subscriptionsEnabled === true,
     govPortalLink: remote.govPortalLink === true,
+    staffJobsLink: remote.staffJobsLink === true,
   };
 }
