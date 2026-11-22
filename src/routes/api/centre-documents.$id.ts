@@ -49,6 +49,8 @@ export const Route = createFileRoute("/api/centre-documents/$id")({
         try {
           const { requireUserId } = await import("@/lib/auth/verify.server");
           const userId = await requireUserId();
+          const { assertSensitiveFileAccess } = await import("@/lib/server/second-factor");
+          await assertSensitiveFileAccess(userId, "provider");
           const row = await authorizeCentreDocument({ userId, documentId: params.id });
           const file = await loadPrivateDoc(row.storage_ref, row.mime, row.filename);
           return privateDocResponse(file);

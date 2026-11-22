@@ -18,6 +18,7 @@ import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
 import { openHealth, revealChildHealth, sealHealth } from "@/lib/child-health-crypto";
+import { hideHealthText } from "@/lib/second-factor-policy";
 import { logChildProfileAccess } from "@/lib/server/child-access-log";
 import { childBirthdateMessage, childBirthdateProblem } from "@/lib/child-birthdate";
 import type { AgeGroup, Booking, BookingStatus, Child, Conversation, Locale, Message, PayMethod, Schedule } from "@/lib/types";
@@ -313,13 +314,12 @@ export const getFamily = createServerFn({ method: "GET" })
       join conversations c on c.id = m.conversation_id
       where c.user_id = ${homeId} and m.sender = 'parent'
     `;
+    const { healthAccessDecision } = await import("@/lib/server/second-factor");
+    const parentGate = await healthAccessDecision(context.userId, "parent");
+    const revealed = children.map((row) => mapChild(revealChildHealth(row)));
+    const shown = parentGate.redact ? revealed.map((child) => hideHealthText(child)) : revealed;
     const { childrenForViewer } = await import("@/lib/server/child-portfolio");
-    const viewedChildren = await childrenForViewer(
-      sql,
-      context.userId,
-      home,
-      children.map((row) => mapChild(revealChildHealth(row))),
-    );
+    const viewedChildren = await childrenForViewer(sql, context.userId, home, shown);
     return {
       viewerId: context.userId,
       role: (profile[0]?.role === "admin" ? "admin" : profile[0]?.role === "provider" ? "provider" : "parent") as

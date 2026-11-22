@@ -3721,5 +3721,14 @@
   "adminStatLive": "已上線",
   "adminStatDeclined": "已拒絕",
   "adminOtherCounts": "其他數字",
-  "adminSearchQueue": "搜尋名稱、城市、電郵…"
+  "adminSearchQueue": "搜尋名稱、城市、電郵…",
+  "emailCodeTitle": "電郵驗證碼",
+  "emailCodeLead": "開啟之後，登入時會收到一封有驗證碼的電郵。密碼仍然可以用。未輸入驗證碼之前，健康備註會保持隱藏。",
+  "emailCodeOn": "開啟電郵驗證碼",
+  "emailCodeOff": "關閉電郵驗證碼",
+  "emailCodeSavedOn": "電郵驗證碼已開啟。下次登入時，我們會先寄驗證碼，然後你先睇到健康備註。",
+  "emailCodeSavedOff": "電郵驗證碼已關閉。",
+  "healthCodePrompt": "請喺 {date} 之前加上電郵驗證碼，咁孩子嘅健康備註同文件就只俾你睇。",
+  "healthCodeLocked": "未加上電郵驗證碼之前，孩子嘅健康備註同文件會保持隱藏。",
+  "healthCodeAction": "加上電郵驗證碼"
 }
