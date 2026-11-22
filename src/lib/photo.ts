@@ -5,6 +5,8 @@ export const PHOTO_WIDTHS = [320, 480, 768, 1200] as const;
 export const CARD_WIDTHS = [320, 480, 768] as const;
 /** Listing detail hero (~720px CSS; 1200 covers 1.5–2x). */
 export const HERO_WIDTHS = [480, 768, 1200] as const;
+/** Phone listing LCP. 1200 is for a wide desktop hero, not the first phone paint. */
+export const LISTING_LCP_WIDTHS = [480, 768] as const;
 export const CARD_SIZES = "(max-width: 767px) 172px, (max-width: 1023px) 30vw, 200px";
 export const HERO_SIZES = "(max-width: 767px) 100vw, 560px";
 export const DETAIL_SIZES = "(max-width: 767px) 100vw, 720px";

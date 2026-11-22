@@ -10,11 +10,14 @@ import { useCopy } from "@/lib/use-copy";
 import { RuntimePaused } from "@/components/runtime-paused";
 import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { useRoleChrome } from "@/components/role-chrome";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: string }) {
   const { locale } = useCopy();
   const waitlistOn = useRuntimeSwitches().waitlistSpots;
-  const plansOn = useRoleChrome().subscriptionsEnabled === true;
+  const nativeShell = useInNativeShell();
+  const chrome = useRoleChrome();
+  const plansOn = !nativeShell && chrome.subscriptionsEnabled === true;
   const copy = spotOfferCopy(locale);
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();

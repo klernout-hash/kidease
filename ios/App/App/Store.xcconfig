@@ -1,0 +1,20 @@
+// Store archive for ca.kidease.app.
+//
+// Push and calling code stays compiled in. FEATURE_PUSH, FEATURE_CALL_PUSH,
+// FEATURE_VOICE, and FEATURE_VIDEO stay off. This archive does not declare
+// background modes or the push entitlement.
+//
+// Do not set CODE_SIGN_ENTITLEMENTS on the App target. A target value overrides
+// this file. Debug includes this file from ios/debug.xcconfig. Release uses it
+// as its base configuration.
+
+CODE_SIGN_ENTITLEMENTS = App/App.entitlements
+
+// When push and calling go live, comment out the CODE_SIGN_ENTITLEMENTS line
+// above and uncomment the three lines below. Then archive again. Do not paste
+// UIBackgroundModes into Info.plist. Xcode merges INFOPLIST_KEY_* at build time.
+// Leave the feature flags off until the credentials exist and you mean to send.
+//
+// CODE_SIGN_ENTITLEMENTS = App/App.push.entitlements
+// INFOPLIST_KEY_UIBackgroundModes = voip audio remote-notification
+// INFOPLIST_KEY_KIDEASEPushCalling = YES

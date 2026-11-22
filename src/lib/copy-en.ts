@@ -890,6 +890,7 @@ export const en = {
       "We'll forward your tour request and invite this centre to KidEase. Signed-in families also find it under Requests.",
     plansNotOffered: "Plans are not offered on this site yet. Listing and claim stay free.",
     freePageTitle: "Your free KidEase page",
+    freePageTitleApp: "Your KidEase page",
     freePageLead:
       "Add this link on Google Business and Facebook so families see licence, ages, and photo.",
     freePageShareHint:
@@ -1054,6 +1055,7 @@ export const en = {
     noSaved: "Your shortlist is empty.",
     myShortlist: "My shortlist",
     shortlistLead: "Save centres from search or a listing. Track calls and tours here. Free compares 5 centres. Parent Plus compares 10.",
+    shortlistLeadApp: "Save centres from search or a listing. Track calls and tours here.",
     shortlistLeadOpen: "Save centres from search or a listing. Track calls and tours here. Compare up to 10 centres.",
     shortlistCompareLead: "Pick centres to compare ages, hours, distance, language, and open spots.",
     shortlistCompareMax: "That is the limit for this account.",

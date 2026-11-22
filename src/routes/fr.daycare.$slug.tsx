@@ -2,7 +2,7 @@ import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { Listing, ListingRetryPage } from "@/routes/daycare.$slug";
 import { listingCanonicalUrl, listingSeoHeadTags, listingBreadcrumbJsonLdScript, listingJsonLdScript } from "@/lib/listing-seo";
 import { primaryListingPhoto } from "@/lib/listing-photo";
-import { DETAIL_SIZES, HERO_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
+import { DETAIL_SIZES, LISTING_LCP_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
 import { hreflangLinks } from "@/lib/locale-path";
 import { decideListingLoader, listingNotFoundHead, shouldNotFoundListing } from "@/lib/listing-not-found";
 import { rethrowRouterControl } from "@/lib/listing-loader-errors";
@@ -57,8 +57,8 @@ export const Route = createFileRoute("/fr/daycare/$slug")({
           {
             rel: "preload" as const,
             as: "image" as const,
-            href: photoUrl(hero, 768),
-            imageSrcSet: photoSrcSet(hero, HERO_WIDTHS),
+            href: photoUrl(hero, 480),
+            imageSrcSet: photoSrcSet(hero, LISTING_LCP_WIDTHS),
             imageSizes: DETAIL_SIZES,
             fetchPriority: "high" as const,
           },
