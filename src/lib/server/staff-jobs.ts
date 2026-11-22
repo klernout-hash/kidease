@@ -558,6 +558,100 @@ export const requestMatchReview = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export type MatchReviewRow = {
+  id: string;
+  side: "staff" | "provider";
+  jobId: string | null;
+  message: string;
+  status: "open" | "answered";
+  createdAt: string;
+  answeredAt: string | null;
+  email: string | null;
+  name: string | null;
+  dueBy: string;
+};
+
+const REVIEW_ANSWER_DAYS = 30;
+
+function isoOf(value: string | Date | null): string | null {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : String(value);
+}
+
+/** Admin queue for match review requests. Admin only. Sends no email. */
+export const listMatchReviewRequests = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    if (!staffJobBoardEnabled()) return OFF;
+    try {
+      const { requireAdmin } = await import("@/lib/server/roles");
+      await requireAdmin(context.userId);
+    } catch {
+      return { ok: false as const, reason: "forbidden" as const };
+    }
+    const sql = await getSql();
+    const rows = await sql<{
+      id: string;
+      side: string;
+      job_id: string | null;
+      message: string;
+      status: string;
+      created_at: string | Date;
+      answered_at: string | Date | null;
+      email: string | null;
+      name: string | null;
+    }>`
+      select r.id, r.side, r.job_id, r.message, r.status, r.created_at, r.answered_at, u.email, u.name
+      from staff_match_review_requests r
+      left join "user" u on u.id = r.user_id
+      order by (r.status = 'open') desc, r.created_at asc
+      limit 100
+    `.catch(() => null);
+    if (!rows) return { ok: false as const, reason: "unavailable" as const };
+    return {
+      ok: true as const,
+      requests: rows.map((row): MatchReviewRow => {
+        const created = isoOf(row.created_at) as string;
+        return {
+          id: row.id,
+          side: row.side === "provider" ? "provider" : "staff",
+          jobId: row.job_id,
+          message: row.message,
+          status: row.status === "answered" ? "answered" : "open",
+          createdAt: created,
+          answeredAt: isoOf(row.answered_at),
+          email: row.email,
+          name: row.name,
+          dueBy: new Date(new Date(created).getTime() + REVIEW_ANSWER_DAYS * 86_400_000).toISOString(),
+        };
+      }),
+    };
+  });
+
+/** Admin marks a match review request answered after replying to the person. */
+export const markMatchReviewAnswered = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string }) => ({ id: String(input?.id || "").trim().slice(0, 80) }))
+  .handler(async ({ context, data }) => {
+    if (!staffJobBoardEnabled()) return OFF;
+    if (!data.id) return { ok: false as const, reason: "missing" as const };
+    try {
+      const { requireAdmin } = await import("@/lib/server/roles");
+      await requireAdmin(context.userId);
+    } catch {
+      return { ok: false as const, reason: "forbidden" as const };
+    }
+    const sql = await getSql();
+    const done = await sql<{ id: string }>`
+      update staff_match_review_requests
+      set status = 'answered', answered_at = now()
+      where id = ${data.id} and status = 'open'
+      returning id
+    `.catch(() => null);
+    if (!done) return { ok: false as const, reason: "unavailable" as const };
+    return { ok: true as const, changed: done.length === 1 };
+  });
+
 // ---------------------------------------------------------------------------
 // Provider side
 // ---------------------------------------------------------------------------

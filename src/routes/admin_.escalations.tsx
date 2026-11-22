@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { WiringDesk } from "@/components/wiring-desk";
+import { MatchReviewQueue } from "@/components/match-review-queue";
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { privateReturnPath } from "@/lib/role-access";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
@@ -38,6 +39,7 @@ function Page() {
           .catch(() => setNote(fr ? "Admin seulement." : "Admin only."));
       }}>{fr ? "Vérifier les délais" : "Check deadlines"}</Button>
       {note ? <p className="mt-3 text-sm" role="status">{note}</p> : null}
+      <MatchReviewQueue fr={fr} />
     </WiringDesk>
   );
 }
