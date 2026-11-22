@@ -47,6 +47,8 @@ const virtual = {
   isolation: `export function assertSameSiteRequest() {
     if (globalThis.${stateKey}.crossSite) throw Object.assign(new Error("Cross-site request"), { status: 403 });
   }`,
+  twoFactor: `export function isCurrentUserTwoFactorVerified() { return true; }
+    export function assertTwoFactorVerified() {}`,
   privateAuth: `export const authMiddleware = { run: () => { throw new Error("Wrong auth middleware"); } };`,
   centreAccess: `export const listAccessibleDaycareIds = () => { throw new Error("Private centre lookup is not part of government reads"); };`,
   roles: `export const requireAdmin = () => { throw new Error("Government reads must not invoke admin access"); };`,
@@ -56,6 +58,7 @@ const mockFiles = new Map([
   ["src/lib/features.ts", "features"],
   ["src/lib/auth/verify.server.ts", "verify"],
   ["src/lib/auth/isolation.server.ts", "isolation"],
+  ["src/lib/server/two-factor.server.ts", "twoFactor"],
   ["src/lib/auth/middleware.ts", "privateAuth"],
   ["src/lib/server/centre-access.ts", "centreAccess"],
   ["src/lib/server/roles.ts", "roles"],
