@@ -16,11 +16,7 @@
     <loc>https://www.kidease.ca/terms</loc>
     <lastmod>2026-11-21</lastmod>
   </url>
-  <url>
-    <loc>https://www.kidease.ca/login</loc>
-    <lastmod>2026-11-21</lastmod>
-  </url>
-  <url>
+    <url>
     <loc>https://www.kidease.ca/about</loc>
     <lastmod>2026-11-21</lastmod>
   </url>
@@ -100,11 +96,7 @@
     <loc>https://www.kidease.ca/how-it-works</loc>
     <lastmod>2026-11-21</lastmod>
   </url>
-  <url>
-    <loc>https://www.kidease.ca/forgot-password</loc>
-    <lastmod>2026-11-21</lastmod>
-  </url>
-  <url>
+    <url>
     <loc>https://www.kidease.ca/security</loc>
     <lastmod>2026-11-21</lastmod>
   </url>
@@ -120,15 +112,7 @@
     <loc>https://www.kidease.ca/compare</loc>
     <lastmod>2026-11-21</lastmod>
   </url>
-  <url>
-    <loc>https://www.kidease.ca/unsubscribe</loc>
-    <lastmod>2026-11-21</lastmod>
-  </url>
-  <url>
-    <loc>https://www.kidease.ca/delete-account</loc>
-    <lastmod>2026-11-21</lastmod>
-  </url>
-  <url>
+      <url>
     <loc>https://www.kidease.ca/status</loc>
     <lastmod>2026-11-21</lastmod>
   </url>
@@ -237,11 +221,7 @@
     <loc>https://www.kidease.ca/fr/benefits</loc>
     <lastmod>2026-11-21</lastmod>
   </url>
-  <url>
-    <loc>https://www.kidease.ca/fr/login</loc>
-    <lastmod>2026-11-21</lastmod>
-  </url>
-  <url>
+    <url>
     <loc>https://www.kidease.ca/fr/signup</loc>
     <lastmod>2026-11-21</lastmod>
   </url>
@@ -287,9 +267,7 @@
   <url><loc>https://www.kidease.ca/fr/daycare-requirements</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://www.kidease.ca/fr/tour-checklist</loc><lastmod>2026-11-21</lastmod></url>
   <url><loc>https://www.kidease.ca/fr/team</loc><lastmod>2026-11-21</lastmod></url>
-  <url><loc>https://www.kidease.ca/fr/unsubscribe</loc><lastmod>2026-11-21</lastmod></url>
-  <url><loc>https://www.kidease.ca/fr/delete-account</loc><lastmod>2026-11-21</lastmod></url>
-  <url><loc>https://www.kidease.ca/fr/status</loc><lastmod>2026-11-21</lastmod></url>
+      <url><loc>https://www.kidease.ca/fr/status</loc><lastmod>2026-11-21</lastmod></url>
   <url>
     <loc>https://www.kidease.ca/daycare/city/toronto</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://www.kidease.ca/daycare/city/toronto"/>

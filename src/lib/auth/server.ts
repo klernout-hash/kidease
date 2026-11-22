@@ -90,6 +90,13 @@ import { AUTH_FORGOT_MAX, AUTH_LOGIN_MAX, AUTH_SIGNUP_MAX } from "@/lib/auth-rat
 import { passkeyPlugin } from "./passkey-plugin";
 import { PASSKEY_RATE_MAX } from "@/lib/passkey-policy";
 import { persistentSessionsEnabled, WEB_REMEMBER_SEC } from "@/lib/persistent-session";
+import {
+  authHostAllowed,
+  isProductionAuthEnv,
+  NATIVE_APP_ORIGINS,
+  PRODUCTION_AUTH_HOSTS,
+  PRODUCTION_AUTH_ORIGINS,
+} from "./trusted-origins";
 
 // Kick (and share) PGLite bootstrap as soon as the auth server module loads.
 void ensureDbReady();
@@ -162,26 +169,25 @@ const LOCAL_DEV_ORIGINS: string[] = [
   "http://127.0.0.1:8081",
   "http://[::1]:8081",
 ];
-// Public custom domain + platform aliases. BETTER_AUTH_URL is kidease.grok.me,
-// so without these, kidease.ca POSTs 403 Invalid origin and OAuth state cookies
-// are set on the wrong host.
-const PRODUCTION_HOSTS: string[] = [
-  "kidease.ca",
-  "www.kidease.ca",
+// Production trusts only the public site. Preview keeps its own hosts, including
+// grok.me and kidease*.vercel.app. Those lookalikes are not production origins.
+const PREVIEW_SITE_HOSTS = [
   "kidease.grok.me",
   "kidease.vercel.app",
   "kidease-git.vercel.app",
   "kidease-klernout-1129s-projects.vercel.app",
 ];
-const PRODUCTION_ORIGINS = PRODUCTION_HOSTS.map((h) => `https://${h}`);
+const productionAuth = isProductionAuthEnv();
+const PRODUCTION_HOSTS: string[] = productionAuth
+  ? [...PRODUCTION_AUTH_HOSTS]
+  : [...PRODUCTION_AUTH_HOSTS, ...PREVIEW_SITE_HOSTS];
+const PRODUCTION_ORIGINS = productionAuth
+  ? [...PRODUCTION_AUTH_ORIGINS, ...NATIVE_APP_ORIGINS]
+  : [...PRODUCTION_HOSTS.map((h) => `https://${h}`), ...NATIVE_APP_ORIGINS];
 const baseURL = {
-  allowedHosts: [
-    ...PRODUCTION_HOSTS,
-    ...previewAllowedHosts,
-    "localhost",
-    "127.0.0.1",
-    "[::1]",
-  ],
+  allowedHosts: productionAuth
+    ? [...PRODUCTION_AUTH_HOSTS]
+    : [...PRODUCTION_HOSTS, ...previewAllowedHosts, "localhost", "127.0.0.1", "[::1]"],
   protocol: "auto" as const,
   fallback: explicitBaseURL ?? "https://www.kidease.ca",
 };
@@ -199,27 +205,24 @@ function requestOrigin(request?: Request): string | undefined {
 }
 
 function hostAllowed(host: string): boolean {
-  const h = host.toLowerCase();
-  if (PRODUCTION_HOSTS.includes(h)) return true;
-  if (h.endsWith(".grok-sandbox.com") || h === "grok-sandbox.com") return true;
-  if (h.endsWith(".grok.me") || h === "grok.me") return true;
-  if (h.includes("kidease") && h.endsWith(".vercel.app")) return true;
-  if (h === "localhost" || h === "127.0.0.1" || h === "[::1]") return true;
-  return false;
+  if (PRODUCTION_HOSTS.includes(host.toLowerCase())) return true;
+  return authHostAllowed(host);
 }
 
 // Origins Better Auth accepts on credentialed POSTs (email sign-up/sign-in, …).
 // Missing entries here surface as FORBIDDEN "Invalid origin".
-const staticTrustedOrigins: string[] = [
-  ...(explicitBaseURL ? [explicitBaseURL] : []),
-  ...PRODUCTION_ORIGINS,
-  "https://*.grok-sandbox.com",
-  "http://*.grok-sandbox.com",
-  "https://*.grok.me",
-  ...previewAllowedHosts,
-  ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
-  ...LOCAL_DEV_ORIGINS,
-];
+const staticTrustedOrigins: string[] = productionAuth
+  ? [...PRODUCTION_ORIGINS]
+  : [
+      ...(explicitBaseURL ? [explicitBaseURL] : []),
+      ...PRODUCTION_ORIGINS,
+      "https://*.grok-sandbox.com",
+      "http://*.grok-sandbox.com",
+      "https://*.grok.me",
+      ...previewAllowedHosts,
+      ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
+      ...LOCAL_DEV_ORIGINS,
+    ];
 
 const trustedOrigins = (request?: Request) => {
   const extra: string[] = [];
@@ -403,12 +406,10 @@ export const auth = betterAuth({
   // local loopback variants, or clients get "Invalid origin".
   trustedOrigins,
 
-  // Encrypt broker-issued OAuth tokens at rest, and treat the broker's upstreams
-  // as trusted first-party identities. The broker owns identity and some emails
-  // can be unverified, so WITHOUT this a login can fail with
-  // `account_not_linked` (Better Auth refuses to attach an untrusted, unverified
-  // identity to an existing user). Google and Facebook carry DISTINCT emails, so
-  // this never merges them into one user — they stay separate identities.
+  // Encrypt broker-issued OAuth tokens at rest. Trusted providers may link only
+  // when the existing account email is already verified. An unverified password
+  // signup cannot be merged into a later Google sign-in. Google and Facebook
+  // carry distinct emails, so they stay separate identities.
   account: {
     // OAuth state lives in the verification table. Better Auth 1.7 still also
     // sets a signed state cookie and rejects the callback when that cookie is
@@ -428,7 +429,10 @@ export const auth = betterAuth({
         "huawei",
         "amazon",
       ],
-      requireLocalEmailVerified: false,
+      // A password account must already have a verified email before Google
+      // (or any other provider) can merge into it. Otherwise someone can
+      // register the parent's email first and inherit the Google sign-in.
+      requireLocalEmailVerified: true,
     },
   },
 
@@ -445,10 +449,14 @@ export const auth = betterAuth({
     updateAge: 60 * 10,
   },
 
-  // Production enables rate limits (3 / 10s on /sign-in/*). Cloudflare + Vercel
-  // send a multi-hop X-Forwarded-For; without a single-IP header Better Auth
-  // falls back to one shared bucket and every parent/daycare/admin POST fails.
+  // Counts live in the rateLimit table (migration 0019) so a new Vercel
+  // instance does not reset the window. Store-reviewer mailboxes skip Turnstile
+  // only. They still hit these rules. Cloudflare should rate-limit
+  // /api/auth/sign-in/email (and the other /api/auth/sign-in, sign-up, and
+  // passkey login paths), not only the /login page.
   rateLimit: {
+    enabled: true,
+    storage: "database",
     window: 60,
     max: 120,
     customRules: {

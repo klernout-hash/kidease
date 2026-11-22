@@ -16,6 +16,7 @@ import {
   type QcHomeLocale,
   type QcHomePublicListing,
 } from "@/lib/qc-home-daycare";
+import { QC_LIST_CAP } from "@/lib/public-endpoint-guard";
 
 type PublicRow = {
   id: string;
@@ -114,7 +115,7 @@ export const listQcHomeDaycares = createServerFn({ method: "GET" })
           or postal_fsa = ${fsa}
         )
         order by municipality nulls last, slug
-        limit 60
+        limit ${QC_LIST_CAP}
       `;
       const mapped = rows.map((row) => mapRow(row, data.locale));
       const preview = previewListing(data.locale);
@@ -170,6 +171,27 @@ export const revealQcHomeContact = createServerFn({ method: "POST" })
     if (qcHomePreviewFixtureAllowed(process.env) && data.slug === "preview-qc-home") {
       return { value: data.channel === "email" ? "preview@example.com" : "514-555-0100" };
     }
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const { imageRequestAllowed, QC_CONTACT_MAX, QC_CONTACT_WINDOW_MS } = await import("@/lib/public-endpoint-guard");
+    const { clientAddress, takeDurableLimit } = await import("@/lib/server/durable-limit");
+    const request = getRequest();
+    const tooMany = "Too many tries. Please wait and try again. Trop d'essais. Attendez, puis réessayez.";
+    if (
+      !request ||
+      !imageRequestAllowed({
+        secFetchSite: request.headers.get("sec-fetch-site"),
+        origin: request.headers.get("origin"),
+        requestHost: request.headers.get("x-forwarded-host") || request.headers.get("host"),
+      })
+    ) {
+      throw new Error(tooMany);
+    }
+    const allowed = await takeDurableLimit(
+      `qc-contact:${clientAddress(request.headers)}`,
+      QC_CONTACT_MAX,
+      QC_CONTACT_WINDOW_MS,
+    );
+    if (!allowed) throw new Error(tooMany);
     const sql = await getSql();
     const rows = await sql<{ phone: string | null; email: string | null }>`
       select phone, email from qc_home_daycares where slug = ${data.slug} limit 1

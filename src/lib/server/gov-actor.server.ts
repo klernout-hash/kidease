@@ -133,6 +133,9 @@ export async function actorFromApiKey(rawKey: string): Promise<GovActor | null> 
 }
 
 export async function mintGovApiKey(actor: GovActor): Promise<{ prefix: string; token: string }> {
+  const { isCurrentUserTwoFactorVerified } = await import("@/lib/server/two-factor.server");
+  const { assertGovSecondFactorVerified } = await import("@/lib/gov/second-factor");
+  assertGovSecondFactorVerified(isCurrentUserTwoFactorVerified(actor.userId));
   assertGovWritable(actor);
   const token = `kegov_${newGovToken()}`;
   const sql = await getSql();

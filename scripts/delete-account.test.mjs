@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { funnelDestPath } from "../src/lib/desks.ts";
 import { guestPathKind } from "../src/lib/access-control.ts";
-import { SITEMAP_STATIC_PATHS } from "../src/lib/sitemap.ts";
+import { SITEMAP_STATIC_PATHS, sitemapPublicPaths } from "../src/lib/sitemap.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -45,7 +45,14 @@ test("in-app Delete my account lives on Account only; public footer and desks do
 test("sitemap and legal copy advertise the same path; guests stay public", () => {
   assert.ok(SITEMAP_STATIC_PATHS.includes("/delete-account"));
   assert.ok(SITEMAP_STATIC_PATHS.includes("/unsubscribe"));
-  assert.match(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/delete-account/);
+  const published = sitemapPublicPaths();
+  assert.equal(published.includes("/delete-account"), false);
+  assert.equal(published.includes("/unsubscribe"), false);
+  assert.equal(published.includes("/login"), false);
+  assert.equal(published.includes("/fr/login"), false);
+  assert.doesNotMatch(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/delete-account/);
+  assert.doesNotMatch(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/unsubscribe/);
+  assert.doesNotMatch(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/login/);
   assert.match(src("src/lib/legal-copy.ts"), /\/delete-account/);
   assert.equal(guestPathKind("/delete-account"), "public");
   assert.equal(guestPathKind("/unsubscribe"), "public");

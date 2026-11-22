@@ -346,14 +346,14 @@ function RootDocument() {
         <style
           dangerouslySetInnerHTML={{
             __html:
-              "html,body{margin:0;background:#f3f1ec;color:#1c1915}" +
+              "html,body{margin:0;background:#f7f7f8;color:#141210}" +
               "html[data-ke-launch-hold] [data-ke=home-discovery-surface]{display:none!important}" +
               "[data-ke=launch-shell]{display:none}" +
               "html[data-ke-launch-hold] [data-ke=launch-shell]{display:flex!important;min-height:70dvh;align-items:center;justify-content:center;padding:24px}" +
-              'html[data-resolved-theme="dark"],html[data-resolved-theme="dark"] body{background:#14161c;color:#f3efe8}' +
-              ".ke-skel{border-radius:14px;background:#eee8df}" +
-              'html[data-resolved-theme="dark"] .ke-skel{background:#262b36}' +
-              "img.ke-photo{background-color:#eee8df}" +
+              'html[data-resolved-theme="dark"],html[data-resolved-theme="dark"] body{background:#101218;color:#f4f1ea}' +
+              ".ke-skel{border-radius:14px;background:#ececef}" +
+              'html[data-resolved-theme="dark"] .ke-skel{background:#272d3a}' +
+              "img.ke-photo{background-color:#ececef}" +
               "[data-ke-mark]{display:inline-flex;flex-direction:column}" +
               "[data-ke-mark] img{display:block;object-fit:contain;max-width:80px;max-height:80px}" +
               "[data-ke-mark=sm] img{width:36px;height:36px}" +

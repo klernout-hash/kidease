@@ -5,6 +5,7 @@ import { resetPostHogIdentity } from "@/lib/posthog";
 import { clearSearchCache } from "@/lib/search-cache";
 import { clearShortlistCache, takePendingSave } from "@/lib/shortlist";
 import { parseRetryAfterSeconds, rateLimitWaitCopy } from "@/lib/auth-rate-limit";
+import { safePostLoginUrl } from "@/lib/auth/trusted-origins";
 import { LOGIN_BOUNCE_KEY } from "@/lib/auth/login-stall";
 import { rejectAfter } from "@/lib/timeout";
 import { attachTurnstileToRequest } from "@/lib/turnstile-widget";
@@ -165,11 +166,9 @@ export async function signIn(
         /* session store will recover */
       }
       if (typeof window !== "undefined") {
-        const dest = new URL(callbackURL, window.location.origin);
-        const here = window.location;
-        if (dest.origin !== here.origin || dest.pathname !== here.pathname || dest.search !== here.search) {
-          window.location.href = callbackURL;
-        }
+        const next = safePostLoginUrl(callbackURL, window.location.origin);
+        const here = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        if (next !== here) window.location.href = next;
       }
       return;
     }
@@ -220,11 +219,9 @@ export async function signIn(
       /* session store will recover */
     }
     if (typeof window !== "undefined") {
-      const dest = new URL(callbackURL, window.location.origin);
-      const here = window.location;
-      if (dest.origin !== here.origin || dest.pathname !== here.pathname || dest.search !== here.search) {
-        window.location.href = callbackURL;
-      }
+      const next = safePostLoginUrl(callbackURL, window.location.origin);
+      const here = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      if (next !== here) window.location.href = next;
     }
     return;
   }

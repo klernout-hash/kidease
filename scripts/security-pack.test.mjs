@@ -7,6 +7,7 @@ import {
   AUTH_FORGOT_MAX,
   AUTH_LOGIN_MAX,
   AUTH_SIGNUP_MAX,
+  CLOUDFLARE_AUTH_RATE_EXPRESSION,
   parseRetryAfterSeconds,
   rateLimitWaitCopy,
   TWO_FACTOR_HOURLY_MAX,
@@ -163,6 +164,11 @@ describe("4) rate limits", () => {
     assert.match(src("src/lib/auth/client.ts"), /retry-after/);
     assert.doesNotMatch(src("src/routes/login.tsx"), /turnstile.*retry|retry.*turnstile/i);
     assert.match(src("src/lib/server/two-factor.ts"), /twoFactorHourlyWait/);
+    assert.match(src("src/lib/auth/server.ts"), /storage: "database"/);
+    assert.match(CLOUDFLARE_AUTH_RATE_EXPRESSION, /\/api\/auth\/sign-in\//);
+    assert.doesNotMatch(CLOUDFLARE_AUTH_RATE_EXPRESSION, /uri\.path eq "\/login"/);
+    assert.match(src("src/lib/reviewer-accounts.ts"), /rate limits still run/);
+    assert.doesNotMatch(src("src/routes/api/auth/$.ts"), /reviewerSignInSkipsTurnstile[\s\S]{0,200}rateLimit/);
   });
 });
 

@@ -48,7 +48,7 @@ describe("shell does not wait on catalogue", () => {
 
   it("critical CSS and the media preconnect sit ahead of boot scripts", () => {
     const rootHtml = src("src/routes/__root.tsx");
-    const cssAt = rootHtml.indexOf("html,body{margin:0;background:#f3f1ec");
+    const cssAt = rootHtml.indexOf("html,body{margin:0;background:#f7f7f8");
     const preloadAt = rootHtml.indexOf('rel="preload" href={appCss}');
     const mediaAt = rootHtml.indexOf('rel="preconnect" href="https://media.kidease.ca"');
     const bootAt = rootHtml.indexOf('src="/channel-boot.js?v=10"');
@@ -74,7 +74,7 @@ describe("images are in the first HTML", () => {
   it("a listing hero can paint from the seo payload", () => {
     const listing = src("src/routes/daycare.$slug.tsx");
     assert.match(listing, /primaryListingPhoto/);
-    assert.match(listing, /imageSrcSet: photoSrcSet\(hero, HERO_WIDTHS\)/);
+    assert.match(listing, /imageSrcSet: photoSrcSet\(hero, LISTING_LCP_WIDTHS\)/);
     assert.equal(primaryListingPhoto(["/photos/buildings/mb-1001.jpg"]), "");
     assert.equal(
       primaryListingPhoto(["/photos/buildings/mb-1052.jpg"]),

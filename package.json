@@ -22,7 +22,7 @@
   },
   "scripts": {
     "dev": "vite dev --host 0.0.0.0 --port 8080",
-    "build": "vite build && node scripts/upload-posthog-sourcemaps.mjs && node scripts/check-ssr-bundle.mjs && node scripts/check-locale-chunks.mjs && node scripts/check-client-db.mjs && npm run db:migrate:check",
+    "build": "vite build && node scripts/upload-posthog-sourcemaps.mjs && node scripts/check-ssr-bundle.mjs && node scripts/check-locale-chunks.mjs && node scripts/check-client-db.mjs && node scripts/check-client-budget.mjs && npm run db:migrate:check",
     "db:migrate": "node --experimental-strip-types scripts/migrate.mjs",
     "db:migrate:check": "node --experimental-strip-types scripts/check-migrations.mjs",
     "ops:1password-checklist": "node scripts/1password-env-checklist.mjs",
@@ -39,6 +39,7 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "e2e": "node scripts/e2e-smoke.mjs",
+    "a11y:axe": "node scripts/a11y-axe.mjs",
     "e2e:preview": "node scripts/e2e-smoke.mjs --start-preview",
     "e2e:browser-smoke": "node scripts/browser-smoke.mjs http://127.0.0.1:8081/ artifacts/e2e/browser-smoke.png",
     "e2e:inbox-layout": "node scripts/inbox-layout-smoke.mjs",
@@ -52,6 +53,9 @@
     "photos:encode-feel": "node scripts/encode-feel-photos.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "format:check": "prettier --check README.md package.json .prettierrc .github/dependabot.yml .github/workflows/codeql.yml",
+    "test:coverage": "mkdir -p coverage && node --experimental-strip-types --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage/lcov.info 'scripts/**/*.test.mjs'",
+    "prepare": "node scripts/install-git-hooks.mjs",
     "icons": "node scripts/make-app-icons.mjs",
     "cap:assets": "node scripts/sync-native-assets.mjs",
     "cap:permissions": "node scripts/patch-native-permissions.mjs",
@@ -61,12 +65,15 @@
     "cap:prepare": "npm run cap:assets && npm run cap:permissions && npx cap sync",
     "cap:version": "node scripts/bump-native-version.mjs"
   },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,css,json,md,yml}": "prettier --write"
+  },
   "dependencies": {
     "@capacitor-community/in-app-review": "^8.0.0",
     "@capacitor/app": "^8.1.2",
     "@capacitor/browser": "^8.0.5",
     "@capacitor/core": "^8.6.2",
-    "@capacitor/geolocation": "^8.2.3",
+    "@capacitor/geolocation": "^8.2.5",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/keyboard": "^8.0.6",
     "@capacitor/preferences": "^8.0.1",
@@ -139,9 +146,10 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
-    "@capacitor/android": "^8.5.0",
-    "@capacitor/cli": "^8.5.0",
-    "@capacitor/ios": "^8.5.0",
+    "@axe-core/playwright": "^4.14.0",
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/cli": "^8.6.2",
+    "@capacitor/ios": "^8.6.2",
     "@eslint/js": "^9.20.0",
     "@types/node": "^22.16.5",
     "@types/pg": "^8.11.10",
@@ -155,6 +163,7 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
     "lightningcss": "^1.28.0",
+    "lint-staged": "^17.6.1",
     "nitro": "3.0.260610-beta",
     "playwright": "^1.62.0",
     "prettier": "^3.4.0",

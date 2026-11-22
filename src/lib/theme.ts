@@ -9,7 +9,7 @@ export const DEFAULT_THEME_PREFERENCE: ThemePreference = "dark";
 /** Brand navy — matches the existing theme-color meta. */
 export const THEME_COLOR_LIGHT = "#1A3790";
 /** Header / page background in dark appearance. */
-export const THEME_COLOR_DARK = "#14161c";
+export const THEME_COLOR_DARK = "#101218";
 
 export function parseThemePreference(value: unknown): ThemePreference {
   return value === "light" || value === "dark" || value === "system" ? value : DEFAULT_THEME_PREFERENCE;

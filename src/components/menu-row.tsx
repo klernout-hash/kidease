@@ -10,7 +10,7 @@ const drawerClass =
 
 export function MenuGlyph({ id, className }: { id: MenuIconId; className?: string }) {
   const Icon = menuIcon(id);
-  return <Icon className={cn("size-5 shrink-0 text-muted", className)} strokeWidth={1.7} aria-hidden />;
+  return <Icon className={cn("size-5 shrink-0 text-fg", className)} strokeWidth={2.25} aria-hidden />;
 }
 
 export function MenuRow({

@@ -87,6 +87,12 @@ test("applyScriptNonces stamps tags without double-noncing", () => {
   assert.match(out, /<script nonce="n1">window\.__TSR=1<\/script>/);
   assert.match(out, /<script nonce="keep-me" src="\/already\.js">/);
   assert.equal((out.match(/nonce="n1"/g) ?? []).length, 3);
+  const foreign = applyScriptNonces(
+    '<script type="application/ld+json">{"name":"A < B"}</script><script src="https://evil.example/a.js"></script>',
+    "n1",
+  );
+  assert.doesNotMatch(foreign, /nonce="n1"/);
+  assert.match(foreign, /application\/ld\+json/);
   assert.equal(isHtmlResponse("text/html; charset=utf-8"), true);
   assert.equal(isHtmlResponse("application/json"), false);
   const token = generateNonce();

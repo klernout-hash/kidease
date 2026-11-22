@@ -2,6 +2,11 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
 const PREFIX = "ke1:";
 
+/** Production must not store a health note in plaintext. */
+export function healthEncryptionRequired(env: NodeJS.ProcessEnv = process.env): boolean {
+  return (env.VERCEL_ENV || "").trim() === "production";
+}
+
 /** 32-byte key from CHILD_HEALTH_KEY (64 hex chars or standard base64). */
 export function childHealthKey(env: NodeJS.ProcessEnv = process.env): Buffer | null {
   const raw = String(env.CHILD_HEALTH_KEY || "").trim();
@@ -10,12 +15,21 @@ export function childHealthKey(env: NodeJS.ProcessEnv = process.env): Buffer | n
   return buf.length === 32 ? buf : null;
 }
 
-/** Encrypt a health note. Plaintext stays plaintext until the key is set. */
+/** Encrypt a health note. Production refuses to store plaintext when the key is missing. */
 export function sealHealth(value: string | null | undefined, env: NodeJS.ProcessEnv = process.env): string | null {
   const text = String(value ?? "").trim();
   if (!text) return null;
   const key = childHealthKey(env);
-  if (!key || text.startsWith(PREFIX)) return text;
+  if (!key) {
+    if (healthEncryptionRequired(env)) {
+      console.error(
+        "[child-health] CHILD_HEALTH_KEY is missing or not a 32-byte key. Refusing to store a health note.",
+      );
+      throw new Error("Health notes are unavailable right now.");
+    }
+    return text;
+  }
+  if (text.startsWith(PREFIX)) return text;
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key, iv);
   const enc = Buffer.concat([cipher.update(text, "utf8"), cipher.final()]);

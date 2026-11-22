@@ -227,6 +227,27 @@ export function NativeBoot() {
   }, [msBadging]);
 
   useEffect(() => {
+    if (!isNative()) return;
+    let remove = () => {};
+    void import("@capacitor/app").then(({ App }) =>
+      App.addListener("appUrlOpen", (event) => {
+        void import("@/lib/app-link").then(({ appLinkPath }) => {
+          const path = appLinkPath(event.url);
+          if (!path) return;
+          const here = window.location.hostname;
+          if (here === "www.kidease.ca" || here === "kidease.ca") window.location.assign(path);
+          else window.location.assign(`https://www.kidease.ca${path}`);
+        });
+      }).then((handle) => {
+        remove = () => {
+          void handle.remove();
+        };
+      }),
+    );
+    return () => remove();
+  }, []);
+
+  useEffect(() => {
     if (huaweiAppLinking !== true && huaweiAlertPush !== true) return;
     let remove = () => {};
     if (huaweiAlertPush === true) {
