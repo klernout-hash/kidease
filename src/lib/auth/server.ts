@@ -446,10 +446,14 @@ export const auth = betterAuth({
     updateAge: 60 * 10,
   },
 
-  // Production enables rate limits (3 / 10s on /sign-in/*). Cloudflare + Vercel
-  // send a multi-hop X-Forwarded-For; without a single-IP header Better Auth
-  // falls back to one shared bucket and every parent/daycare/admin POST fails.
+  // Counts live in the rateLimit table (migration 0019) so a new Vercel
+  // instance does not reset the window. Store-reviewer mailboxes skip Turnstile
+  // only. They still hit these rules. Cloudflare should rate-limit
+  // /api/auth/sign-in/email (and the other /api/auth/sign-in, sign-up, and
+  // passkey login paths), not only the /login page.
   rateLimit: {
+    enabled: true,
+    storage: "database",
     window: 60,
     max: 120,
     customRules: {
