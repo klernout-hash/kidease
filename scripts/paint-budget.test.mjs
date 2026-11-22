@@ -74,7 +74,7 @@ describe("images are in the first HTML", () => {
   it("a listing hero can paint from the seo payload", () => {
     const listing = src("src/routes/daycare.$slug.tsx");
     assert.match(listing, /primaryListingPhoto/);
-    assert.match(listing, /imageSrcSet: photoSrcSet\(hero, HERO_WIDTHS\)/);
+    assert.match(listing, /imageSrcSet: photoSrcSet\(hero, LISTING_LCP_WIDTHS\)/);
     assert.equal(primaryListingPhoto(["/photos/buildings/mb-1001.jpg"]), "");
     assert.equal(
       primaryListingPhoto(["/photos/buildings/mb-1052.jpg"]),
