@@ -3,6 +3,7 @@ import { getGovSession } from "@/lib/server/gov-portal";
 import { govPath } from "@/lib/gov/copy";
 import type { GovLocale } from "@/lib/gov/aggregate";
 import { govPortalFooterEnabled } from "@/lib/features";
+import { govVerifyPath } from "@/lib/gov/second-factor";
 
 /** Home while FEATURE_GOV_PORTAL is off. The desk is not a public page. */
 function govClosedHome(locale: GovLocale): string {
@@ -21,6 +22,7 @@ export async function guardGovDesk(locale: GovLocale, nativeShell: boolean) {
   const session = await getGovSession();
   if (!session.ok) {
     if (portalClosed(session)) throw redirect({ href: govClosedHome(locale) });
+    if (session.needSecondFactor) throw redirect({ href: govVerifyPath(locale, govPath(locale)) });
     throw redirect({ href: govPath(locale, "login") });
   }
   return { nativeOnly: false as const };
@@ -31,6 +33,7 @@ export async function guardGovLogin(locale: GovLocale, nativeShell: boolean) {
   if (typeof window === "undefined" && !govPortalFooterEnabled()) throw redirect({ href: govClosedHome(locale) });
   const session = await getGovSession();
   if (portalClosed(session)) throw redirect({ href: govClosedHome(locale) });
+  if (!session.ok && session.needSecondFactor) throw redirect({ href: govVerifyPath(locale, govPath(locale)) });
   if (session.ok) throw redirect({ href: govPath(locale) });
 }
 
