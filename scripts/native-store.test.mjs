@@ -151,3 +151,13 @@ test("a call opened from messages can use the camera and microphone", () => {
   assert.match(src("src/lib/native-shell-request.ts"), /readNativeShell/);
   assert.match(src("src/lib/store-channel-request.ts"), /readServerStoreChannel/);
 });
+
+test("Capacitor iOS and Android are past the 8.5.0 bridge advisory", () => {
+  const pkg = JSON.parse(src("package.json"));
+  for (const name of ["@capacitor/android", "@capacitor/ios", "@capacitor/cli", "@capacitor/core"]) {
+    const spec = pkg.dependencies[name] || pkg.devDependencies[name] || "";
+    assert.match(spec, /^[\^~]?8\.(?:[6-9]|[1-9]\d+)\./, name);
+  }
+  assert.match(src("ios/App/CapApp-SPM/Package.swift"), /exact: "8\.6\./);
+  assert.doesNotMatch(src("ios/App/CapApp-SPM/Package.swift"), /exact: "8\.5\.0"/);
+});
