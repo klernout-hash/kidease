@@ -365,6 +365,13 @@ test("uses the app name in the injected title tag", () => {
   assert.match(out, /apple-mobile-web-app-title" content="Wild Race"/);
 });
 
+test("an existing app manifest is not joined by a second one", () => {
+  const html = '<html><head><link rel="manifest" href="/manifest.webmanifest?v=20"></head><body></body></html>';
+  const out = injectGrokPwaHead(html, { host: "www.kidease.ca" });
+  assert.equal((out.match(/rel="manifest"/g) || []).length, 1);
+  assert.doesNotMatch(out, /__grok\/manifest/);
+});
+
 test("streaming injector handles </head> split across chunks", () => {
   const injector = createHeadInjector({ appName: "Wild Race" });
   const chunks = [
