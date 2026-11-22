@@ -58,6 +58,8 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - name: Install Chromium for component tests
+        run: npx playwright install --with-deps chromium
       - name: Coverage report
         run: npm run test:coverage
       - uses: actions/upload-artifact@v4
