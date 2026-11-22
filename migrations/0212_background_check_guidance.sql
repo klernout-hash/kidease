@@ -1,7 +1,7 @@
 -- Background-check guidance. Flags stay off.
 -- The centre records that it saw an official result. KidEase does not verify it.
 -- A file, if the centre adds one, is optional and is not the personnel file.
--- To undo: see migrations/down/0211_background_check_guidance.sql
+-- To undo: see migrations/down/0212_background_check_guidance.sql
 
 create table if not exists background_check_records (
   id text primary key,
