@@ -52,6 +52,10 @@ const modules = {
     export const isActiveCentreMember = unused;
     export const listOwnedDaycareIds = unused;`,
   twoFactor: `
+    export function isCurrentUserTwoFactorVerified() {
+      const state = globalThis.${key};
+      return !state.twoFactorError;
+    }
     export function assertTwoFactorVerified() {
       const state = globalThis.${key}; state.proofs.push("2fa");
       if (state.twoFactorError) throw state.twoFactorError;
