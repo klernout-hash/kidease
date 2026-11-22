@@ -54,6 +54,7 @@ const CentrePipeline = lazy(() =>
 import type { PipelineCard } from "@/lib/crm-pipeline";
 import { TourCard } from "@/components/tour-card";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import type { CopyKey } from "@/lib/copy";
 import { storedCentreName } from "@/lib/utils";
 import { FOUNDING_PAGE, foundingLocale } from "@/lib/founding-period";
@@ -284,6 +285,7 @@ export function ProviderPage() {
   const locallyOut = useLocallySignedOut();
   const chrome = useRoleChrome();
   const { t, locale } = useCopy();
+  const nativeShell = useInNativeShell();
   const { session } = useSessionDesks();
   const centreOwner = session?.centreOwner === true;
   const centreRole = session?.centreRole;
@@ -421,8 +423,9 @@ export function ProviderPage() {
 
   useEffect(() => {
     if (childRoute) return;
-    setDesk(providerDeskFromQuery(search.desk, searchStr));
-  }, [search.desk, searchStr, childRoute]);
+    const next = providerDeskFromQuery(search.desk, searchStr);
+    setDesk(nativeShell && next === "promote" ? DEFAULT_DESK : next);
+  }, [search.desk, searchStr, childRoute, nativeShell]);
 
   useEffect(() => {
     const focus = search.focus;
@@ -1207,7 +1210,7 @@ export function ProviderPage() {
         )
       ) : null}
 
-      {desk === "promote" ? (
+      {desk === "promote" && !nativeShell ? (
         <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>
       ) : null}
       </Suspense>
@@ -1218,11 +1221,12 @@ export function ProviderPage() {
 
 function ProviderOnboarding() {
   const { t } = useCopy();
+  const nativeShell = useInNativeShell();
   return (
     <section className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20" data-ke="provider-claim-only">
       <h2 className="font-display text-2xl">{t("providerOnboardingTitle")}</h2>
       <p className="mt-2 text-sm text-muted">{t("providerOnboardingLead")}</p>
-      <p className="mt-2 text-sm font-medium">{t("listingStayFree")}</p>
+      {nativeShell ? null : <p className="mt-2 text-sm font-medium">{t("listingStayFree")}</p>}
       <div className="mt-5">
         <Button asChild>
           <Link to="/claim">{t("providerOnboardingClaim")}</Link>

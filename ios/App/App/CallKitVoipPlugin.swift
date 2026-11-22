@@ -35,7 +35,20 @@ public class CallKitVoipPlugin: CAPPlugin, CAPBridgedPlugin, PKPushRegistryDeleg
         provider = p
     }
 
+    /// Store.xcconfig leaves this unset. PushKit starts only after that file
+    /// sets KIDEASEPushCalling and the voip background mode for a later archive.
+    static var declarationsPresent: Bool {
+        let raw = Bundle.main.object(forInfoDictionaryKey: "KIDEASEPushCalling")
+        if let flag = raw as? Bool { return flag }
+        let text = String(describing: raw ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return text == "1" || text == "yes" || text == "true"
+    }
+
     @objc func register(_ call: CAPPluginCall) {
+        guard Self.declarationsPresent else {
+            call.resolve()
+            return
+        }
         DispatchQueue.main.async {
             let r = PKPushRegistry(queue: .main)
             r.delegate = self

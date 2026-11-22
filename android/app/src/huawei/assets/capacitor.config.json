@@ -8,6 +8,7 @@
 		"iosScheme": "https",
 		"hostname": "www.kidease.ca",
 		"url": "https://www.kidease.ca",
+		"errorPath": "index.html",
 		"cleartext": false
 	},
 	"plugins": {

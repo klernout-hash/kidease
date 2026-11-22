@@ -1,4 +1,5 @@
 import Capacitor
+import Network
 import UIKit
 import WebKit
 
@@ -7,6 +8,10 @@ import WebKit
 /// Dynamic Type writes --ke-text-scale so larger system text grows the layout.
 class KidEaseBridgeViewController: CAPBridgeViewController {
     private var textScaleScript: WKUserScript?
+    private var offlineTimer: DispatchWorkItem?
+    private var offlineWaits = 0
+    private let pathMonitor = NWPathMonitor()
+    private var showingOffline = false
     override open func instanceDescriptor() -> InstanceDescriptor {
         let descriptor = super.instanceDescriptor()
         descriptor.appendedUserAgentString = Self.ensureNativeToken(Self.withoutForeignStoreToken(descriptor.appendedUserAgentString))
@@ -40,6 +45,86 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
             name: UIContentSizeCategory.didChangeNotification,
             object: nil
         )
+        startOfflineWatch()
+    }
+
+    /// The live site never loaded, or the network dropped. Show the bundled page.
+    private func startOfflineWatch() {
+        scheduleOfflineCheck(after: 12)
+        pathMonitor.pathUpdateHandler = { [weak self] path in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if path.status == .satisfied {
+                    if self.remotePageReady { self.showingOffline = false }
+                    return
+                }
+                self.showOfflinePage()
+            }
+        }
+        pathMonitor.start(queue: DispatchQueue(label: "ca.kidease.offline"))
+    }
+
+    private func scheduleOfflineCheck(after seconds: TimeInterval) {
+        offlineTimer?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.offlineTimedOut()
+        }
+        offlineTimer = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: work)
+    }
+
+    private func offlineTimedOut() {
+        if remotePageReady {
+            offlineTimer?.cancel()
+            return
+        }
+        if remotePageStarted, webView?.isLoading == true, offlineWaits < 1 {
+            offlineWaits += 1
+            scheduleOfflineCheck(after: 8)
+            return
+        }
+        showOfflinePage()
+    }
+
+    private var remotePageStarted: Bool {
+        guard let url = webView?.url, let host = url.host?.lowercased() else { return false }
+        let scheme = url.scheme?.lowercased() ?? ""
+        if scheme == "capacitor" || scheme == "kidease" || scheme == "file" { return false }
+        return host == "www.kidease.ca" || host == "kidease.ca"
+    }
+
+    private var remotePageReady: Bool {
+        remotePageStarted && webView?.isLoading == false
+    }
+
+    private func showOfflinePage() {
+        guard let webView else { return }
+        if showingOffline { return }
+        let path = webView.url?.path ?? ""
+        if path.hasSuffix("/index.html") && !remotePageStarted { return }
+        showingOffline = true
+        offlineTimer?.cancel()
+        if let errorURL = bridge?.config.errorPathURL {
+            webView.load(URLRequest(url: errorURL))
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            self?.injectSavedShortlist()
+            self?.bridge?.eval(js: "try{Capacitor.Plugins.SplashScreen.hide()}catch(e){}")
+        }
+    }
+
+    private func injectSavedShortlist() {
+        let raw = UserDefaults.standard.string(forKey: "CapacitorStorage.ke-offline-shortlist") ?? "[]"
+        let js = "window.keRenderSaved && window.keRenderSaved(\(Self.jsonLiteral(raw)))"
+        webView?.evaluateJavaScript(js, completionHandler: nil)
+    }
+
+    private static func jsonLiteral(_ raw: String) -> String {
+        let data = Data(raw.utf8)
+        guard let parsed = try? JSONSerialization.jsonObject(with: data),
+              let safe = try? JSONSerialization.data(withJSONObject: parsed),
+              let text = String(data: safe, encoding: .utf8) else { return "[]" }
+        return text
     }
 
     /// The web view always fills the window at device width. A page wider than the screen
@@ -49,6 +134,7 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
         guard let webView = webView else { return }
         if webView.frame != view.bounds { webView.frame = view.bounds }
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        webView.allowsBackForwardNavigationGestures = true
         if #available(iOS 14.0, *) { webView.pageZoom = 1 }
         let scroll = webView.scrollView
         scroll.minimumZoomScale = 1
@@ -58,6 +144,8 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
     }
 
     deinit {
+        offlineTimer?.cancel()
+        pathMonitor.cancel()
         NotificationCenter.default.removeObserver(self)
     }
 
