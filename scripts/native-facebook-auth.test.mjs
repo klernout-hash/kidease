@@ -105,11 +105,14 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.match(broker, /grokClientId = env\("GROK_AUTH_CLIENT_ID"\) \?\? \(grokPreviewBroker \? PREVIEW_CLIENT_ID/);
   });
 
-  it("trusts kidease-git.vercel.app and existing kidease.ca hosts", () => {
+  it("production trusts kidease.ca and preview keeps kidease-git.vercel.app", () => {
+    const origins = read("src/lib/auth/trusted-origins.ts");
     const server = read("src/lib/auth/server.ts");
-    assert.match(server, /"kidease\.ca"/);
-    assert.match(server, /"www\.kidease\.ca"/);
+    assert.match(origins, /"kidease\.ca"/);
+    assert.match(origins, /"www\.kidease\.ca"/);
     assert.match(server, /"kidease-git\.vercel\.app"/);
+    assert.match(server, /isProductionAuthEnv/);
+    assert.match(origins, /isProductionAuthEnv\(env\)\) return false/);
   });
 
   it("documents BETTER_AUTH_SECRET + FACEBOOK_CLIENT_* and does not mint secrets", () => {

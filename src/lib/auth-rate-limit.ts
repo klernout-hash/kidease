@@ -1,5 +1,12 @@
 /** Honest wait copy for OTP / login / forgot-password soft caps. Never silent. */
 
+/**
+ * Cloudflare custom rate-limit rule. Sign-in is a POST to /api/auth/sign-in/email.
+ * A rule that only matches /login does not see it.
+ */
+export const CLOUDFLARE_AUTH_RATE_EXPRESSION =
+  '(http.host in {"kidease.ca" "www.kidease.ca"} and (starts_with(http.request.uri.path, "/api/auth/sign-in/") or starts_with(http.request.uri.path, "/api/auth/sign-up/") or starts_with(http.request.uri.path, "/api/auth/forget-password") or starts_with(http.request.uri.path, "/api/auth/request-password-reset") or starts_with(http.request.uri.path, "/api/auth/passkey/login")))';
+
 export const AUTH_LOGIN_WINDOW_S = 60;
 export const AUTH_LOGIN_MAX = 30;
 export const AUTH_SIGNUP_MAX = 15;

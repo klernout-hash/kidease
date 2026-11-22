@@ -75,8 +75,7 @@ async function sendCodeEmail(to: string, code: string) {
       locale: french ? "fr" : "en",
     }),
   });
-  if (result.via === "resend") console.info("[kidease-2fa] resend", result.via);
-  if (result.status === "logged") console.info("[kidease-2fa]", to, code);
+  console.info(`[kidease-2fa] via=${result.via} status=${result.status}`);
   return result.status;
 }
 
@@ -171,6 +170,10 @@ export const startTwoFactor = createServerFn({ method: "POST" })
       status = await sendCodeEmail(email, code);
     } catch (err) {
       throw new Error(friendlyTwoFactorMailError(err));
+    }
+    // A logged or unsent code is not a code the person can use. Do not store it.
+    if (status !== "sent") {
+      return { ok: true as const, emailed, status, sent: false as const };
     }
     // Persist after a successful send. A mint replaces every unused code for this user.
     await sql`delete from login_challenges where user_id = ${context.userId}`;

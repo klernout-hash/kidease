@@ -191,7 +191,8 @@ test("sendCodeEmail uses shared fallback sender, reply-to ADMIN_EMAIL, and logs 
   assert.match(sendBlock, /sendTransactionalMail/);
   assert.match(sendBlock, /purpose:\s*"2fa"/);
   assert.match(sendBlock, /replyTo:\s*ADMIN_EMAIL/);
-  assert.match(sendBlock, /\[kidease-2fa\] resend/);
+  assert.match(sendBlock, /\[kidease-2fa\] via=/);
+  assert.doesNotMatch(sendBlock, /console\.info\(\s*["']\[kidease-2fa\]["']\s*,\s*to\s*,\s*code/);
   assert.doesNotMatch(sendBlock, /kyle@kidease\.ca/);
   assert.doesNotMatch(sendBlock, /re_[A-Za-z0-9]/);
 });

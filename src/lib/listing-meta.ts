@@ -51,14 +51,31 @@ function placeLabel(input: ListingMetaInput): string {
   return [city, province].filter(Boolean).join(", ");
 }
 
+const LISTING_TITLE_MAX = 65;
+
+function fitMetaTitle(segments: readonly string[]): string {
+  const tail = ` · ${LISTING_META_BRAND}`;
+  const room = LISTING_TITLE_MAX - tail.length;
+  let head = "";
+  for (const segment of segments) {
+    const bit = segment.trim();
+    if (!bit) continue;
+    const next = head ? `${head} · ${bit}` : bit;
+    if (next.length <= room) head = next;
+  }
+  if (!head) return LISTING_META_BRAND;
+  if (head.length > room) head = head.slice(0, room).trimEnd();
+  return `${head}${tail}`;
+}
+
 export function listingPageTitle(input: ListingMetaInput): string {
   const name = listingDisplayName(input.name);
   const place = placeLabel(input);
   const kind = listingKind(input);
-  if (name && place) return `${name} · ${kind.label} in ${place} · ${LISTING_META_BRAND}`;
-  if (name) return `${name} · ${facilityTypeSeoKind(kind.type)} · ${LISTING_META_BRAND}`;
+  if (name && place) return fitMetaTitle([name, `${kind.label} in ${place}`]);
+  if (name) return fitMetaTitle([name, facilityTypeSeoKind(kind.type)]);
   const fromSlug = listingLabelFromSlug(input.slug);
-  if (fromSlug) return `${fromSlug} · Licensed daycare · ${LISTING_META_BRAND}`;
+  if (fromSlug) return fitMetaTitle([fromSlug, "Licensed daycare"]);
   return `Licensed daycare · ${LISTING_META_BRAND}`;
 }
 

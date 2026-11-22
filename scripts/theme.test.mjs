@@ -75,7 +75,7 @@ describe("theme preference", () => {
     assert.equal(rootEl.dataset.theme, "dark");
     assert.equal(rootEl.dataset.resolvedTheme, "dark");
     assert.equal(rootEl.style.colorScheme, "dark");
-    assert.equal(meta.content, "#14161c");
+    assert.equal(meta.content, "#101218");
   });
 });
 
@@ -98,7 +98,7 @@ describe("appearance is wired across public + desks chrome", () => {
     assert.match(css, /data-resolved-theme="dark"/);
     assert.match(css, /prefers-color-scheme: dark/);
     assert.match(css, /html:not\(\[data-theme="light"\]\)/);
-    assert.match(css, /--color-bg: #14161c/);
+    assert.match(css, /html\[data-theme="dark"\],\s*html\[data-resolved-theme="dark"\] \{[^}]*--color-bg: #101218;/);
     assert.match(css, /color-scheme: dark/);
   });
 

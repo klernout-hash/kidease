@@ -38,12 +38,37 @@ jobs:
       - run: npm ci
       - name: ESLint
         run: npx eslint .
+      - name: Prettier
+        run: npm run format:check
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Install Chromium for component tests
         run: npx playwright install --with-deps chromium
       - name: Unit tests
         run: npm test
+
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium for component tests
+        run: npx playwright install --with-deps chromium
+      - name: Coverage report
+        run: npm run test:coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          if-no-files-found: ignore
+          retention-days: 7
 
   # One production build shared by the smoke shards, desktop visual, and signed-in.
   # This repo is Vite + Nitro, not Next. vite preview reads

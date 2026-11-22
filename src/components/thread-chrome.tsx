@@ -30,10 +30,10 @@ function PersonFace({ name, image, large = false }: { name: string; image?: stri
   const box = large ? "size-10 text-xs" : "size-8 text-[11px]";
   const px = large ? 40 : 32;
   if (image) {
-    return <img src={image} alt="" width={px} height={px} className={cn(box, "shrink-0 rounded-full object-cover")} />;
+    return <img src={image} alt="" width={px} height={px} className={cn(box, "ke-avatar shrink-0 rounded-full object-cover")} />;
   }
   return (
-    <span className={cn("grid shrink-0 place-items-center rounded-full bg-surface-2 font-semibold text-fg", box)} aria-hidden>
+    <span className={cn("ke-avatar grid shrink-0 place-items-center rounded-full bg-surface-2 font-semibold text-fg", box)} aria-hidden>
       {participantInitials(name)}
     </span>
   );

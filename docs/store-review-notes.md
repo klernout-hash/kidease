@@ -2,51 +2,70 @@
 
 Support: support@kidease.ca
 
-KidEase is for adults. Parents and daycare providers. Accounts confirm they are 18 or older. Do not place it in the Kids category or the Google Play Families program.
+## Purpose and audience
 
-Nothing is sold in the app. There is no Apple In-App Purchase and no Google Play Billing in this version. A daycare plan already bought on https://www.kidease.ca still unlocks after sign-in. The app does not link out to a subscribe or pay page.
+KidEase helps adults in Canada find licensed daycare and talk to the centre. Parents search, save centres, and request a tour. Daycare owners claim their listing and answer those parents. Accounts confirm they are 18 or older. Do not place it in the Kids category or the Google Play Families program.
 
-## What works in this version (Apple guideline 4.2)
+The iPhone app is a Capacitor shell around https://www.kidease.ca. The same account works on the website and in the app.
 
-The iPhone and Android apps are a Capacitor shell around https://www.kidease.ca. The bottom bar (Search, Saved, Messages, Account) is the website navigation inside the app. It is not a separate iOS tab bar.
+## Business model (guidelines 3.1.3(e) and 3.1.5)
+
+Nothing digital is sold in this app. There is no Apple In-App Purchase and no Google Play Billing. There is no subscription, plan, upgrade, trial, or digital unlock for sale in the app. No purchase and no price.
+
+Real-world childcare is the only payment. A daycare sends a parent a bill, an invoice, or a deposit for care at the centre. The parent pays that bill with Stripe. KidEase keeps a 3% service fee on that real-world payment. The centre receives the bill amount. That fee is for facilitating a real-world service, not for digital content.
+
+Nobody buys a KidEase subscription inside the app. A daycare tool already bought on https://www.kidease.ca still unlocks after sign-in. The app does not show a subscribe button and does not link out to a paywall. Search, saved centres, messages, account, and claiming a listing stay available without any purchase.
+
+## What works in this version (guideline 4.2)
+
+The bottom bar (Search, Saved, Messages, Account) is the website navigation inside the app. It is not a separate iOS tab bar.
 
 - Search licensed daycares, including a map. Location is used only while searching.
 - Share a listing with the system share sheet.
-- Saved centres stay on the phone when the network is off.
-- Sign in with Apple on iPhone, when the Apple keys are set.
+- A light haptic tap on some buttons.
+- Saved centres stay on the phone when the network is off. If the site cannot load, the app shows an English and French offline page with Try again.
+- Swipe in from the left edge to go back.
+- Pinch in to zoom. The page does not zoom out.
+- Sign in with Apple on the sign-in screen, next to Google and Facebook when those buttons are shown. On iPhone, Google and Facebook are hidden unless Sign in with Apple is beside them.
+- Account → Delete account is the first row under settings for a parent and for a daycare. Type DELETE. The account can be restored for 30 days.
+- In a message thread: Report this conversation, and Block this daycare or Block this family.
+- On a review: Report this review.
 
-Push notifications are not in this version. Voice and video calling are not in this version. The app does not ask for notification permission. It does not show a call button or an incoming-call screen. Info.plist has no `UIBackgroundModes` key. The signed entitlements file has no `aps-environment`. No purchase and no price.
+Push notifications are not in this version. Voice and video calling are not in this version. The app does not ask for notification permission. It does not show a call button or an incoming-call screen. Info.plist has no `UIBackgroundModes` key. The signed entitlements file has no `aps-environment`.
 
 ## Reviewer sign-in
 
-App Review signs in on the live site, https://www.kidease.ca. The two accounts have to exist in the production database before you submit.
+App Review signs in on the live site, https://www.kidease.ca. The two accounts have to exist in the production database before you submit. The passwords are in App Store Connect. They are not in this file and not in git.
 
-Do not put passwords in this file or in git. Do not print them. Do not commit `DATABASE_URL`.
+- Parent: reviewer.parent@kidease.ca
+- Daycare: reviewer.daycare@kidease.ca
 
-Kyle runs this once, from a machine that already has the production database URL in the environment:
+Both accounts are test accounts. Email is already verified and two-factor is off. No email code is sent. The parent account has complimentary Parent Plus. Nothing is charged. The daycare account does not get Plus.
 
-1. Export `REVIEWER_ACCOUNT_PASSWORD`. The same password is used for both accounts. Optional email overrides: `REVIEWER_PARENT_EMAIL` and `REVIEWER_DAYCARE_EMAIL`. To generate the password into a file instead of the shell history, run `node scripts/seed-reviewer-demo.mjs --password-file /path/demo-accounts.txt` on a machine that already has `DATABASE_URL`. The script writes the file mode 0600 and does not print the password.
-2. Run `npm run ops:reviewer-demo` when `REVIEWER_ACCOUNT_PASSWORD` is already exported.
-3. Confirm the fictional centre `qa-reviewer-demo-centre` (North Elm Family Daycare, Winnipeg, Manitoba) stays `admin_only` with `is_test = 1`, and that public search does not list it. It is not a real licensed daycare. No fee or rating is stored. Hours are Monday to Friday, 7:30 a.m. to 5:30 p.m. Photos are KidEase sample rooms, not pictures of this centre. The parent has two fictional child profiles, a message thread, a tour request, and a waitlist entry. Re-running the seed updates those same rows. It does not change the John Doe or Jonny Doey accounts.
-4. Confirm the parent profile has complimentary Parent Plus (`plus_plan` plus, `plus_status` active) and no Stripe subscription id. The daycare profile does not get Plus. Both accounts have email already verified and two-factor turned off.
-5. Sign in on https://www.kidease.ca/login with each account and that password. No email code is sent. Open Search, Saved, Messages, and Account. The parent sees the message thread. The daycare sees the same thread, the tour request, and the waitlist. There is no call button. Calling is not in this version.
+The fictional centre is `qa-reviewer-demo-centre` (North Elm Family Daycare, Winnipeg, Manitoba). It stays `admin_only` with `is_test = 1`. Public search does not list it. It is not a real licensed daycare. No fee or rating is stored. Hours are Monday to Friday, 7:30 a.m. to 5:30 p.m. Photos are KidEase sample rooms, not pictures of this centre. The parent has two fictional child profiles, a message thread, a tour request, and a waitlist entry.
 
-Defaults if the email vars are unset: `reviewer.parent@kidease.ca` and `reviewer.daycare@kidease.ca`. Both profiles are marked test accounts. The parent account’s Parent Plus is complimentary. Nothing is charged.
+Open Search, Saved, Messages, and Account with each account. The parent sees the message thread. The daycare sees the same thread, the tour request, and the waitlist. There is no call button. Calling is not in this version.
 
-This document does not run that command.
+## External services
+
+This build does not use Apple Push Notification service or Firebase Cloud Messaging.
+
+- Stripe, for real-world childcare bills only
+- Email delivery, for account mail such as password reset
+- Map tiles, while a parent is searching
+
+## Region
+
+The directory is Canadian provinces and territories. Reviewers outside Canada can search **Winnipeg, Manitoba**. The app is in English and French.
 
 ## How to delete an account
 
-Account → Delete account. Type DELETE. The account can be restored for 30 days. Sign in with Apple tokens are revoked when deletion is confirmed, when Apple keys are set. Billing rows the tax rules require are kept.
+Account → Delete account. It is the first settings row. Type DELETE. The account can be restored for 30 days. Sign in with Apple tokens are revoked when deletion is confirmed, when Apple keys are set. Billing rows the tax rules require are kept.
 
-## If location search is empty
+## If the site does not load
 
-Reviewers outside Canada can search **Winnipeg, Manitoba**. The directory is Canadian provinces and territories.
+The app shows “You’re offline” / “Vous êtes hors ligne” and Try again. Saved centres on the phone are listed there when any were saved before.
 
 ## Still needed before the binary is uploaded
 
-- Apple Team ID (not enrolment id B7UM5AC9JQ), Services ID, Sign in with Apple `.p8`, and the four `APPLE_*` env vars. See `docs/apple-sign-in.md`.
-- Push is not part of this version. Calling is not part of this version. Do not add an APNs key for this upload. Do not uncomment the push lines in `ios/App/App/Store.xcconfig`. `aps-environment` is not in the signed entitlements. Info.plist does not declare `UIBackgroundModes`.
-- Play App Signing SHA-256 in `ANDROID_CERT_SHA256S`.
-- Numeric App Store id in `VITE_APPLE_APP_STORE_ID` after App Store Connect assigns it.
-- Archive the iOS app with Xcode 26 and the iOS 26 SDK.
+Do not uncomment the push lines in `ios/App/App/Store.xcconfig`. Do not add an APNs key for this upload. Archive with Xcode 26 and the iOS 26 SDK. This file does not upload the binary.

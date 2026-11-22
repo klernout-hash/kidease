@@ -61,6 +61,7 @@ export type TransactionalMailEvent =
   | "resend_retry_apex"
   | "sendgrid_ok"
   | "sendgrid_fail"
+  | "titan_ok"
   | "titan_fallback_success"
   | "titan_fail"
   | "all_failed"
@@ -79,7 +80,7 @@ export type OtpMailHealth = {
 export type TransactionalMailResult = {
   status: "sent" | "logged";
   via: TransactionalMailProvider;
-  fallbackFrom?: "resend" | "sendgrid";
+  fallbackFrom?: "resend" | "sendgrid" | "titan";
   reason?: TransactionalMailReason;
 };
 
@@ -397,8 +398,9 @@ async function defaultSendTitan(input: {
 }
 
 /**
- * Deliver OTP / reset mail. Resend first (send subdomain, then emergency
- * apex From after unverified-domain), then SendGrid, then Titan SMTP.
+ * Sign-in and account codes go Titan SMTP first, From kyle@kidease.ca,
+ * when TITAN_APP_PASSWORD is set. A missing password or a Titan error
+ * falls through to Resend, then SendGrid. Other mail stays Resend first.
  */
 export async function sendTransactionalMail(
   input: TransactionalMailInput,
@@ -444,6 +446,40 @@ export async function sendTransactionalMail(
 
   let resendUnhealthy = !providers.resendConfigured;
   let lastReason: TransactionalMailReason | undefined;
+  let titanTried = false;
+  const codeFirst = ESSENTIAL_MAIL_PURPOSES.has(input.purpose);
+
+  async function sendViaTitan(reason?: TransactionalMailReason): Promise<TransactionalMailResult | null> {
+    if (!providers.titanConfigured || titanTried) return null;
+    titanTried = true;
+    try {
+      const sendTitan = deps.sendTitan ?? defaultSendTitan;
+      await sendTitan({
+        to,
+        subject: input.subject,
+        text: input.text,
+        html: input.html,
+      });
+      const event = codeFirst ? "titan_ok" : "titan_fallback_success";
+      emit(deps, input.purpose, event, { via: "titan", reason: sentReason(reason) });
+      return {
+        status: "sent",
+        via: "titan",
+        fallbackFrom: codeFirst ? undefined : providers.resendConfigured ? "resend" : providers.sendgridConfigured ? "sendgrid" : undefined,
+        reason: sentReason(reason),
+      };
+    } catch {
+      lastReason = lastReason ?? "rejected";
+      emit(deps, input.purpose, "titan_fail", { reason: lastReason, via: "titan" });
+      return null;
+    }
+  }
+
+  if (codeFirst) {
+    const titanFirst = await sendViaTitan();
+    if (titanFirst) return titanFirst;
+  }
+
   const resendKey = env.RESEND_API_KEY?.trim();
   if (resendKey) {
     const candidates = otpResendFromCandidates(env);
@@ -469,7 +505,12 @@ export async function sendTransactionalMail(
           via: "resend",
           reason: sentReason(),
         });
-        return { status: "sent", via: "resend", reason: sentReason() };
+        return {
+          status: "sent",
+          via: "resend",
+          fallbackFrom: titanTried ? "titan" : undefined,
+          reason: sentReason(),
+        };
       }
       lastReason = classifyMailFailure(result.status, result.text);
       emit(deps, input.purpose, "resend_fail", { reason: lastReason, via: "resend", status: result.status });
@@ -506,7 +547,7 @@ export async function sendTransactionalMail(
       return {
         status: "sent",
         via: "sendgrid",
-        fallbackFrom: providers.resendConfigured ? "resend" : undefined,
+        fallbackFrom: titanTried ? "titan" : providers.resendConfigured ? "resend" : undefined,
         reason: sentReason(lastReason),
       };
     }
@@ -515,6 +556,7 @@ export async function sendTransactionalMail(
   }
 
   if (
+    !codeFirst &&
     titanFallbackAllowed({
       to,
       titanConfigured: providers.titanConfigured,
@@ -522,28 +564,8 @@ export async function sendTransactionalMail(
       env,
     })
   ) {
-    try {
-      const sendTitan = deps.sendTitan ?? defaultSendTitan;
-      await sendTitan({
-        to,
-        subject: input.subject,
-        text: input.text,
-        html: input.html,
-      });
-      emit(deps, input.purpose, "titan_fallback_success", {
-        via: "titan",
-        reason: sentReason(lastReason ?? (resendUnhealthy ? "domain_unverified" : undefined)),
-      });
-      return {
-        status: "sent",
-        via: "titan",
-        fallbackFrom: providers.resendConfigured ? "resend" : providers.sendgridConfigured ? "sendgrid" : undefined,
-        reason: sentReason(lastReason),
-      };
-    } catch {
-      lastReason = lastReason ?? "rejected";
-      emit(deps, input.purpose, "titan_fail", { reason: lastReason, via: "titan" });
-    }
+    const titanLater = await sendViaTitan(lastReason ?? (resendUnhealthy ? "domain_unverified" : undefined));
+    if (titanLater) return titanLater;
   }
 
   if (!providers.resendConfigured && !providers.sendgridConfigured && !providers.titanConfigured) {

@@ -122,9 +122,19 @@ export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
   };
 }
 
+/** Keep `<` out of a script body so a name cannot close the tag. */
+export function escapeJsonForScript(json: string): string {
+  return String(json)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 export function breadcrumbJsonLdScript(items: BreadcrumbItem[]) {
   const node = breadcrumbJsonLd(items);
-  return node ? JSON.stringify(node) : "";
+  return node ? escapeJsonForScript(JSON.stringify(node)) : "";
 }
 
 export type FaqSeoItem = {
@@ -158,7 +168,7 @@ export function faqPageJsonLd(items: FaqSeoItem[]) {
 
 export function faqPageJsonLdScript(items: FaqSeoItem[]) {
   const node = faqPageJsonLd(items);
-  return node ? JSON.stringify(node) : "";
+  return node ? escapeJsonForScript(JSON.stringify(node)) : "";
 }
 
 /**
@@ -232,7 +242,7 @@ export function organizationGraphJsonLd(locale: "en" | "fr" = "en") {
 }
 
 export function organizationGraphJsonLdScript(locale: "en" | "fr" = "en") {
-  return JSON.stringify(organizationGraphJsonLd(locale));
+  return escapeJsonForScript(JSON.stringify(organizationGraphJsonLd(locale)));
 }
 
 /** Unique title + description per public marketing route. Do not reuse home copy. */

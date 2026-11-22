@@ -59,15 +59,16 @@ test("Open Graph skips building paths that 404 on the media host", () => {
 
 test("listing SEO title and description use name, city, province, ages", () => {
   const title = listingPageTitle(centre, "en");
+  assert.ok(title.length <= 65, title);
   assert.match(title, /Sunny Side Child Care/);
   assert.match(title, /Winnipeg/);
   assert.match(title, /MB/);
-  assert.match(title, /Infant: 0\u201318 months/);
-  assert.match(title, /Toddler: 18\u201336 months/);
-  assert.match(title, /Preschool: 36\u201360 months/);
-  assert.doesNotMatch(title, /School-age/);
   assert.match(title, /KidEase/);
   const desc = listingMetaDescription(centre, "en");
+  assert.match(desc, /Infant: 0\u201318 months/);
+  assert.match(desc, /Toddler: 18\u201336 months/);
+  assert.match(desc, /Preschool: 36\u201360 months/);
+  assert.doesNotMatch(desc, /School-age/);
   assert.match(desc, /Licensed child care centre at Sunny Side Child Care/);
   assert.match(desc, /Winnipeg/);
   assert.doesNotMatch(desc, /\$10/);
@@ -79,8 +80,10 @@ test("listing SEO title and description use name, city, province, ages", () => {
   const fundedJson = JSON.stringify(listingJsonLd({ ...centre, feeProgram: "mb-10-day" }));
   assert.doesNotMatch(fundedJson, /218|price|offers/i);
   const fr = listingPageTitle(centre, "fr");
+  assert.ok(fr.length <= 65, fr);
   assert.match(fr, /Garderie Sunny Side/);
-  assert.match(fr, /Nourrisson : 0\u201318 mois/);
+  const frDesc = listingMetaDescription(centre, "fr");
+  assert.match(frDesc, /Nourrisson : 0\u201318 mois/);
 });
 
 test("listing SEO and JSON-LD fail closed when name, url, or area is missing", () => {

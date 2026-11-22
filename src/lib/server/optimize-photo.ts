@@ -66,7 +66,51 @@ export async function encodePerListingPlaceholder(
   return pipeline.toBuffer();
 }
 
+const imageBuckets = new Map<string, { count: number; start: number }>();
+
+function imageClient(headers: Headers): string {
+  return (
+    headers.get("cf-connecting-ip") ||
+    headers.get("x-real-ip") ||
+    headers.get("x-forwarded-for")?.split(",")[0] ||
+    "unknown"
+  )
+    .trim()
+    .slice(0, 64);
+}
+
 export async function optimizePhoto(request: Request): Promise<Response> {
+  const { imageRequestAllowed, IMAGE_MAX, IMAGE_WINDOW_MS, limitAllows } = await import("../public-endpoint-guard.ts");
+  if (
+    !imageRequestAllowed({
+      secFetchSite: request.headers.get("sec-fetch-site"),
+      origin: request.headers.get("origin"),
+      requestHost: request.headers.get("x-forwarded-host") || request.headers.get("host"),
+    })
+  ) {
+    try {
+      const { getSessionUser } = await import("@/lib/auth/verify.server");
+      if (!(await getSessionUser())) return new Response("forbidden", { status: 403 });
+    } catch {
+      return new Response("forbidden", { status: 403 });
+    }
+  }
+  const now = Date.now();
+  const bucketKey = imageClient(request.headers);
+  const bucket = imageBuckets.get(bucketKey);
+  const count = !bucket || now - bucket.start >= IMAGE_WINDOW_MS ? 1 : bucket.count + 1;
+  imageBuckets.set(bucketKey, {
+    count,
+    start: !bucket || now - bucket.start >= IMAGE_WINDOW_MS ? now : bucket.start,
+  });
+  if (!limitAllows(count, IMAGE_MAX)) {
+    return new Response("too many requests", { status: 429, headers: { "retry-after": "60" } });
+  }
+  const { takeDurableLimit } = await import("./durable-limit.ts").catch(() => ({ takeDurableLimit: null }));
+  if (takeDurableLimit) {
+    const durable = await takeDurableLimit(`img:${bucketKey}`, IMAGE_MAX, IMAGE_WINDOW_MS);
+    if (!durable) return new Response("too many requests", { status: 429, headers: { "retry-after": "60" } });
+  }
   const url = new URL(request.url);
   const src = url.searchParams.get("src") || "";
   const widthRaw = Number(url.searchParams.get("w") || "480");
