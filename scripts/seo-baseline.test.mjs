@@ -14,7 +14,6 @@ const PUBLIC_PATHS = [
   "/privacy",
   "/cookies",
   "/terms",
-  "/login",
   "/about",
   "/donate",
   "/verify",
@@ -69,7 +68,10 @@ test("sitemap.xml lists canonical www public pages and omits admin paths", () =>
   assert.doesNotMatch(sitemap, /\/provider\/subscription/);
   assert.doesNotMatch(sitemap, /test-ghost-claim-lab/);
   assert.doesNotMatch(sitemap, /\/daycare\/test-ghost</);
-  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/delete-account/);
+  assert.doesNotMatch(sitemap, /https:\/\/www\.kidease\.ca\/login</);
+  assert.doesNotMatch(sitemap, /https:\/\/www\.kidease\.ca\/forgot-password</);
+  assert.doesNotMatch(sitemap, /https:\/\/www\.kidease\.ca\/unsubscribe</);
+  assert.doesNotMatch(sitemap, /https:\/\/www\.kidease\.ca\/delete-account</);
 });
 
 test("vercel CSP does not allowlist grok.com and still keeps product hosts", () => {

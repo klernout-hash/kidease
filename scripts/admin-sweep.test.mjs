@@ -42,7 +42,7 @@ test("support sends a signed-out visitor to sign-in before the loading shell", (
   assert.match(src("src/components/security-page.tsx"), /to=\{fr \? "\/fr" : "\/"\}/);
   const sitemap = src("public/sitemap.xml");
   assert.match(sitemap, /https:\/\/www\.kidease\.ca\/how-it-works</);
-  assert.match(sitemap, /https:\/\/www\.kidease\.ca\/forgot-password</);
+  assert.doesNotMatch(sitemap, /https:\/\/www\.kidease\.ca\/forgot-password</);
   assert.match(sitemap, /https:\/\/www\.kidease\.ca\/security</);
   assert.doesNotMatch(sitemap, /https:\/\/www\.kidease\.ca\/plans</);
   assert.doesNotMatch(sitemap, /https:\/\/www\.kidease\.ca\/fr\/plans</);

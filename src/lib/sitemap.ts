@@ -75,8 +75,24 @@ export const SITEMAP_STATIC_PATHS = [
   "/guides/nu",
 ] as const;
 
+/** Pages that send noindex. They stay reachable, and they stay out of the sitemap. */
+const SITEMAP_NOINDEX = new Set([
+  "/login",
+  "/forgot-password",
+  "/reset-password",
+  "/unsubscribe",
+  "/delete-account",
+]);
+
+export function isSitemapNoindexPath(path: string): boolean {
+  const bare = path.startsWith("/fr/") ? path.slice(3) : path;
+  return SITEMAP_NOINDEX.has(bare);
+}
+
 function sitemapBasePaths() {
-  return [...SITEMAP_STATIC_PATHS, ...SITEMAP_FR_PATHS, ...blogArticlePaths()];
+  return [...SITEMAP_STATIC_PATHS, ...SITEMAP_FR_PATHS, ...blogArticlePaths()].filter(
+    (path) => !isSitemapNoindexPath(path),
+  );
 }
 
 /** Marketing pages plus generated city hubs. Hubs are passed in by write-sitemap. */

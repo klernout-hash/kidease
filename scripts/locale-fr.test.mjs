@@ -15,7 +15,7 @@ import {
   stripLocalePrefix,
 } from "../src/lib/locale-path.ts";
 import { LEGAL_PAGE_SEO_FR, MARKETING_PAGE_SEO_FR, pageSeoHead } from "../src/lib/page-seo.ts";
-import { sitemapPublicPaths } from "../src/lib/sitemap.ts";
+import { isSitemapNoindexPath, sitemapPublicPaths } from "../src/lib/sitemap.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -109,7 +109,13 @@ test("sitemap lists shipped FR URLs and omits redirect-only pairs", () => {
   assert.ok(SITEMAP_FR_PATHS.includes("/fr/login"));
   assert.ok(!SITEMAP_FR_PATHS.includes("/fr/explore"));
   const paths = sitemapPublicPaths();
-  for (const path of SITEMAP_FR_PATHS) assert.ok(paths.includes(path), path);
+  for (const path of SITEMAP_FR_PATHS) {
+    if (isSitemapNoindexPath(path)) {
+      assert.equal(paths.includes(path), false, path);
+      continue;
+    }
+    assert.ok(paths.includes(path), path);
+  }
   const sitemap = src("public/sitemap.xml");
   for (const path of [
     "/fr",
@@ -123,7 +129,6 @@ test("sitemap lists shipped FR URLs and omits redirect-only pairs", () => {
     "/fr/get-app",
     "/fr/benefits",
     "/fr/donate",
-    "/fr/login",
     "/fr/jobs",
     "/fr/jobs/post",
     "/fr/start-a-daycare",
@@ -131,6 +136,7 @@ test("sitemap lists shipped FR URLs and omits redirect-only pairs", () => {
     assert.match(sitemap, new RegExp(`<loc>https://www.kidease.ca${path}</loc>`));
   }
   assert.doesNotMatch(sitemap, /https:\/\/www\.kidease\.ca\/fr\/explore</);
+  assert.doesNotMatch(sitemap, /https:\/\/www\.kidease\.ca\/fr\/login</);
 });
 
 test("security.txt still prefers English and French", () => {
