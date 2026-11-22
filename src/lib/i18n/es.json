@@ -3721,5 +3721,14 @@
   "adminStatLive": "En línea",
   "adminStatDeclined": "Rechazado",
   "adminOtherCounts": "Otras cifras",
-  "adminSearchQueue": "Buscar nombre, ciudad, correo…"
+  "adminSearchQueue": "Buscar nombre, ciudad, correo…",
+  "emailCodeTitle": "Código por correo",
+  "emailCodeLead": "Actívelo si quiere un código por correo al entrar. La contraseña sigue funcionando. Las notas de salud quedan ocultas hasta que escriba el código.",
+  "emailCodeOn": "Activar el código por correo",
+  "emailCodeOff": "Desactivar el código por correo",
+  "emailCodeSavedOn": "El código por correo está activo. La próxima vez le enviaremos un código antes de mostrar las notas de salud.",
+  "emailCodeSavedOff": "El código por correo está desactivado.",
+  "healthCodePrompt": "Añada un código por correo antes del {date} para que las notas de salud y los documentos queden solo para usted.",
+  "healthCodeLocked": "Las notas de salud y los documentos quedan ocultos hasta que añada un código por correo.",
+  "healthCodeAction": "Añadir un código por correo"
 }
