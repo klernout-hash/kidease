@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { formatCad } from "@/lib/payroll/money.ts";
 import { payCopy, statusLabel, varianceWords, type PayCopy } from "@/lib/payroll/copy.ts";
+import { extraTaxTooltip } from "@/lib/payroll/extra-tax.ts";
+import { sampleHome, sampleMonth, sampleSentence, type PayScreen } from "@/lib/payroll/view.ts";
 import type { Deadline } from "@/lib/payroll/deadlines.ts";
 import type { MonthBreakdown } from "@/lib/payroll/remittance.ts";
 import { invoiceJournal, stripeBalance } from "@/lib/payroll/books.ts";
