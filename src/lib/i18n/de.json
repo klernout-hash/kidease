@@ -3721,5 +3721,14 @@
   "adminStatLive": "Live",
   "adminStatDeclined": "Abgelehnt",
   "adminOtherCounts": "Weitere Zahlen",
-  "adminSearchQueue": "Name, Stadt, E-Mail suchen…"
+  "adminSearchQueue": "Name, Stadt, E-Mail suchen…",
+  "emailCodeTitle": "E-Mail-Code",
+  "emailCodeLead": "Schalten Sie das ein, wenn Sie beim Anmelden einen Code per E-Mail wollen. Das Passwort funktioniert weiter. Gesundheitsnotizen bleiben verborgen, bis Sie den Code eingeben.",
+  "emailCodeOn": "E-Mail-Code einschalten",
+  "emailCodeOff": "E-Mail-Code ausschalten",
+  "emailCodeSavedOn": "Der E-Mail-Code ist an. Beim nächsten Anmelden schicken wir erst einen Code, dann sehen Sie die Gesundheitsnotizen.",
+  "emailCodeSavedOff": "Der E-Mail-Code ist aus.",
+  "healthCodePrompt": "Fügen Sie vor dem {date} einen E-Mail-Code hinzu, damit Gesundheitsnotizen und Dokumente nur für Sie sichtbar sind.",
+  "healthCodeLocked": "Gesundheitsnotizen und Dokumente bleiben verborgen, bis Sie einen E-Mail-Code hinzufügen.",
+  "healthCodeAction": "E-Mail-Code hinzufügen"
 }
