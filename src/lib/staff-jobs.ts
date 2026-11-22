@@ -9,8 +9,10 @@
  * gender, family status, religion, ethnicity, disability, language or any other
  * protected ground, and it does not guess one. The provider decides every step.
  *
- * Pure module: no imports, so `node --experimental-strip-types --test` can load it.
+ * Pure validation and data projection; runnable directly in Node tests.
  */
+
+import { exactCity } from "./geo.ts";
 
 export const STAFF_DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 export type StaffDay = (typeof STAFF_DAYS)[number];
@@ -588,14 +590,14 @@ export type LimitedStaffProfile = {
   certLevel: string;
   /** City and province only. Never a postal code. */
   area: string;
-  availability: StaffAvailability;
-  highlights: string;
-  /** Expired papers are flagged before the provider sees the card. */
-  flags: MatchFlag[];
+  availability: Omit<StaffAvailability, "startDate">;
 };
 
 export type FullStaffProfile = Omit<LimitedStaffProfile, "view"> & {
   view: "full";
+  availability: StaffAvailability;
+  highlights: string;
+  flags: MatchFlag[];
   lastName: string;
   email: string;
   phone: string;
@@ -622,6 +624,11 @@ export function hasFullAccess(access: CentreAccess): boolean {
   return access.applied === true || access.acceptedInvite === true || access.hired === true;
 }
 
+/** The provider must be authorized for a centre with an explicit staff connection. */
+export function mayReadStaffResume(isSelf: boolean, hiringCentreAccess: readonly CentreAccess[]): boolean {
+  return isSelf || hiringCentreAccess.some(hasFullAccess);
+}
+
 export function profileFlags(profile: Pick<StaffProfileRecord, "certLevel" | "certExpiresOn" | "firstAidExpiresOn">, today: string): MatchFlag[] {
   const flags: MatchFlag[] = [];
   if (findCertLevel(profile.certLevel)) {
@@ -634,37 +641,40 @@ export function profileFlags(profile: Pick<StaffProfileRecord, "certLevel" | "ce
 }
 
 export function generalArea(profile: Pick<StaffProfileRecord, "city" | "province">): string {
-  return [profile.city, profile.province].filter(Boolean).join(", ");
+  const city = exactCity(profile.city);
+  return city?.province === profile.province ? city.label : profile.province;
 }
 
 /**
- * The only way a provider-facing profile is built. Without access, the result
- * has no last name, contact, resume, postal code or exact distance fields at all.
+ * Keep the limited preview to a first name, published certificate level, coarse
+ * area and schedule. The opaque ref supports an invite, not document access.
  */
 export function providerProfileView(
   profile: StaffProfileRecord,
   access: CentreAccess,
   today: string,
 ): LimitedStaffProfile | FullStaffProfile {
+  const firstName = cleanName(profile.firstName);
   const limited: LimitedStaffProfile = {
     view: "limited",
     ref: profile.ref,
-    firstName: profile.firstName,
-    certLevel: profile.certLevel,
+    firstName: /^[\p{L}\p{M} .'’-]+$/u.test(firstName) ? firstName : "",
+    certLevel: findCertLevel(profile.certLevel)?.id ?? "",
     area: generalArea(profile),
     availability: {
       days: [...profile.days],
       shifts: [...profile.shifts],
       workTypes: [...profile.workTypes],
-      startDate: profile.startDate,
     },
-    highlights: profile.highlights,
-    flags: profileFlags(profile, today),
   };
   if (!hasFullAccess(access)) return limited;
   return {
     ...limited,
     view: "full",
+    firstName: profile.firstName,
+    availability: { ...limited.availability, startDate: profile.startDate },
+    highlights: profile.highlights,
+    flags: profileFlags(profile, today),
     lastName: profile.lastName,
     email: profile.email,
     phone: profile.phone,

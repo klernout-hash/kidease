@@ -30,7 +30,7 @@ export type RoleChromePayload = {
   /** FEATURE_GOV_PORTAL. Default false. The desk stays off. Public pages do not link to it. */
   govPortalLink: boolean;
   /** FEATURE_STAFF_JOB_BOARD. Default false. Footer links only (never the header menu or drawer). */
-  staffJobsLink: boolean;
+  staffJobsLink?: boolean; // Older route fallbacks omit this flag; omitted means off.
   paid: boolean;
   planLabel: string | null;
   renewsOn: string | null;

@@ -266,8 +266,13 @@ function SuggestedRow({ card, jobId, l, onInvited }: { card: SuggestedCard; jobI
     <li className="rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="staff-suggested" data-view={card.profile.view}>
       <p className="text-xs font-medium uppercase tracking-wide text-muted">{t("shortProfile")}</p>
       <ProfileName profile={card.profile} l={l} />
-      {card.profile.highlights ? <p className="mt-2 text-sm">“{card.profile.highlights}”</p> : null}
-      <MatchReasons match={card.match} l={l} />
+      <p className="mt-2 text-sm text-muted">
+        {[
+          card.profile.availability.days.map((x) => dayWord(l, x)).join(", "),
+          card.profile.availability.shifts.map((x) => shiftWord(l, x)).join(", "),
+          card.profile.availability.workTypes.map((x) => workWord(l, x)).join(", "),
+        ].filter(Boolean).join(" · ")}
+      </p>
       <p className="mt-2 text-xs text-muted">{t("shortProfileNote")}</p>
       <div className="mt-3">
         {state === "done" ? (
@@ -347,26 +352,28 @@ function JobPeople({ jobId, onOpen, onBack }: { jobId: string; onOpen: (applicat
             ))}
           </ul>
         ) : (
-          <EmptyState icon={Users} title={t("noApplicants")} body={t("noApplicantsBody")} />
+          <EmptyState icon={Users} title={t("noApplicants")} body={data.job.open ? t("noApplicantsBody") : undefined} />
         )}
       </section>
-      <section className="mt-8">
-        <h3 className="font-display text-xl">{t("suggested")}</h3>
-        {notice ? (
-          <p className="mt-2 text-sm" role="status">
-            {notice}
-          </p>
-        ) : null}
-        {data.suggested.length ? (
-          <ul className="mt-3 space-y-3">
-            {data.suggested.map((card) => (
-              <SuggestedRow key={card.profile.ref} card={card} jobId={jobId} l={l} onInvited={() => setNotice(t("inviteSent"))} />
-            ))}
-          </ul>
-        ) : (
-          <EmptyState icon={Users} title={t("noSuggested")} body={t("noSuggestedBody")} />
-        )}
-      </section>
+      {data.job.open ? (
+        <section className="mt-8">
+          <h3 className="font-display text-xl">{t("suggested")}</h3>
+          {notice ? (
+            <p className="mt-2 text-sm" role="status">
+              {notice}
+            </p>
+          ) : null}
+          {data.suggested.length ? (
+            <ul className="mt-3 space-y-3">
+              {data.suggested.map((card) => (
+                <SuggestedRow key={card.profile.ref} card={card} jobId={jobId} l={l} onInvited={() => setNotice(t("inviteSent"))} />
+              ))}
+            </ul>
+          ) : (
+            <EmptyState icon={Users} title={t("noSuggested")} body={t("noSuggestedBody")} />
+          )}
+        </section>
+      ) : null}
       <AutomatedMatchNotice side="provider" jobId={jobId} />
     </div>
   );
@@ -447,8 +454,8 @@ function ApplicantDetail({ applicationId, onBack }: { applicationId: string; onB
       <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted">{full ? t("fullProfile") : t("shortProfile")}</p>
       <h2 className="font-display text-2xl">{full ? `${full.firstName} ${full.lastName}` : profile.firstName}</h2>
       <p className="mt-1 text-sm text-muted">{[certLevelLabel(profile.certLevel, l), profile.area].filter(Boolean).join(" · ")}</p>
-      <FlagPills flags={profile.flags} l={l} />
-      {profile.highlights ? <p className="mt-3">“{profile.highlights}”</p> : null}
+      {full ? <FlagPills flags={full.flags} l={l} /> : null}
+      {full?.highlights ? <p className="mt-3">“{full.highlights}”</p> : null}
       <MatchReasons match={data.match} l={l} />
       {full ? (
         <dl className="mt-4 grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">

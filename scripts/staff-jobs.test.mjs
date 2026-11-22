@@ -15,6 +15,7 @@ import {
   canSetStage,
   expiryState,
   jobStepErrors,
+  mayReadStaffResume,
   profileFlags,
   profileStepErrors,
   providerProfileView,
@@ -90,11 +91,17 @@ test("staff job board flag defaults off and is wired like other flags", () => {
 test("providers see only a limited profile until the person applies, accepts an invite, or is hired", () => {
   const limited = providerProfileView(profile(), NO_ACCESS, TODAY);
   assert.equal(limited.view, "limited");
-  assert.deepEqual(Object.keys(limited).sort(), ["area", "availability", "certLevel", "firstName", "flags", "highlights", "ref", "view"]);
+  assert.deepEqual(Object.keys(limited).sort(), ["area", "availability", "certLevel", "firstName", "ref", "view"]);
   assert.equal(limited.firstName, "Maya");
   assert.equal(limited.area, "Winnipeg, MB");
+  assert.equal(limited.certLevel, "mb_ece2");
+  const unverified = providerProfileView(profile({ city: "123 Example Street", firstName: "maya@example.com" }), NO_ACCESS, TODAY);
+  assert.equal(unverified.area, "MB");
+  assert.equal(unverified.firstName, "");
+  assert.deepEqual(Object.keys(limited.availability).sort(), ["days", "shifts", "workTypes"]);
+  assert.equal(providerProfileView(profile({ certLevel: "unpublished" }), NO_ACCESS, TODAY).certLevel, "");
   const text = JSON.stringify(limited);
-  for (const secret of ["Tremblay", "maya@example.com", "204-555-0101", "R3C", "resume", "fr\"", "yearsExperience"]) {
+  for (const secret of ["Tremblay", "maya@example.com", "204-555-0101", "R3C", "resume", "fr\"", "yearsExperience", "Calm with toddlers", "2026-12-01", "flags"]) {
     assert.equal(text.includes(secret), false, `limited profile leaks ${secret}`);
   }
   for (const access of [
@@ -108,7 +115,43 @@ test("providers see only a limited profile until the person applies, accepts an 
     assert.equal(full.email, "maya@example.com");
     assert.equal(full.postalCode, "R3C 4T3");
     assert.equal(full.hasResume, true);
+    assert.equal(full.availability.startDate, "2026-12-01");
+    assert.equal(full.highlights, "Calm with toddlers.");
   }
+});
+
+test("resume access stays scoped to a connected hiring centre", () => {
+  const unrelated = NO_ACCESS;
+  const applicant = { ...NO_ACCESS, applied: true };
+  const accepted = { ...NO_ACCESS, acceptedInvite: true };
+  const activeMember = { ...NO_ACCESS, hired: true };
+  assert.equal(mayReadStaffResume(true, []), true);
+  assert.equal(mayReadStaffResume(false, []), false);
+  assert.equal(mayReadStaffResume(false, [unrelated]), false);
+  for (const access of [applicant, accepted, activeMember]) {
+    assert.equal(mayReadStaffResume(false, [unrelated, access]), true);
+  }
+  const server = read("src/lib/server/staff-jobs.ts");
+  const gate = server.slice(server.indexOf("export async function authorizeStaffResume"), server.indexOf("export async function saveStaffResume"));
+  assert.match(gate, /hiringCentreIds\(sql, input.userId\)/);
+  assert.match(gate, /centreAccess\(sql, row.user_id, id\)/);
+  assert.match(gate, /mayReadStaffResume\(false, \[access\]\)/);
+  assert.match(gate, /throw new Error\("File not found"\);\s*}$/m);
+  assert.doesNotMatch(gate, /"Not authorized"/);
+  const api = read("src/routes/api/staff-resume.ts");
+  assert.ok(api.indexOf("await authorizeStaffResume") < api.indexOf("await assertSensitiveFileAccess"));
+  assert.ok(api.indexOf("await assertSensitiveFileAccess") < api.indexOf("await loadPrivateDoc"));
+});
+
+test("closed jobs retain applicants but skip discovery and invites", () => {
+  const server = read("src/lib/server/staff-jobs.ts");
+  const people = server.slice(server.indexOf("export const getStaffJobPeople"), server.indexOf("export const inviteStaffToJob"));
+  assert.ok(people.indexOf("applicants.push") < people.indexOf("if (!toJob(job).open)"));
+  assert.ok(people.indexOf("if (!toJob(job).open)") < people.indexOf("const [pool, invited, employees]"));
+  const shortCards = people.slice(people.indexOf("const suggested: SuggestedCard[]"));
+  assert.doesNotMatch(shortCards, /matchFor|profileFlags|scoreMatch/);
+  const invite = server.slice(server.indexOf("export const inviteStaffToJob"), server.indexOf("insert into staff_job_invites"));
+  assert.match(invite, /if \(!toJob\(job\).open\)/);
 });
 
 test("staff choose who can find them, and can hide from their current employer", () => {
@@ -187,14 +230,16 @@ test("the scorer never uses or infers a protected ground", () => {
   assert.match(sj("fr", "automatedBody"), /jamais l’âge, le genre, la famille, la religion, l’origine, la santé, la langue/);
 });
 
-test("expired papers are flagged before a provider sees the person", () => {
+test("expired papers are flagged only on an authorized full profile", () => {
   const expired = profile({ certExpiresOn: "2026-10-01", firstAidExpiresOn: "2026-01-01" });
   const result = scoreMatch(toStaffMatchInput({ ...expired, distanceKm: 4 }), JOB, TODAY);
   assert.deepEqual(result.flags.sort(), ["cert_expired", "first_aid_expired"]);
   assert.match(explainMatch("en", result).check, /ECE II expired/);
   assert.ok(result.score < scoreMatch(staffInput(), JOB, TODAY).score);
   const limited = providerProfileView(expired, NO_ACCESS, TODAY);
-  assert.deepEqual([...limited.flags].sort(), ["cert_expired", "first_aid_expired"]);
+  const full = providerProfileView(expired, { ...NO_ACCESS, applied: true }, TODAY);
+  assert.equal("flags" in limited, false);
+  assert.deepEqual([...full.flags].sort(), ["cert_expired", "first_aid_expired"]);
   assert.deepEqual(profileFlags(profile(), TODAY), []);
   assert.equal(expiryState("2026-11-21", TODAY), "expired");
   assert.equal(expiryState("2026-12-15", TODAY), "soon");

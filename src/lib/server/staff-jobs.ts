@@ -32,6 +32,7 @@ import {
   hasFullAccess,
   joinList,
   jobStepErrors,
+  mayReadStaffResume,
   payCents,
   pickCareGroups,
   pickDays,
@@ -307,7 +308,7 @@ async function centreAccess(sql: Sql, staffUserId: string, daycareId: string): P
     sql<{ n: number }>`
       select count(*)::int as n from centre_members
       where user_id = ${staffUserId} and daycare_id = ${daycareId} and status = 'active'
-    `.catch(() => [{ n: 0 }]),
+    `,
   ]);
   const member = (members[0]?.n ?? 0) > 0;
   return {
@@ -565,10 +566,10 @@ export type HiringJob = StaffJob & { applicants: number };
 export type ApplicantCard = {
   applicationId: string;
   stage: ApplicationStage;
-  profile: LimitedStaffProfile | FullStaffProfile;
+  profile: FullStaffProfile;
   match: MatchResult;
 };
-export type SuggestedCard = { profile: LimitedStaffProfile; match: MatchResult; invited: boolean };
+export type SuggestedCard = { profile: LimitedStaffProfile; invited: boolean };
 
 export const getHiringDesk = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -691,13 +692,16 @@ export const getStaffJobPeople = createServerFn({ method: "GET" })
     const applicants: ApplicantCard[] = [];
     for (const row of apps) {
       const access = await centreAccess(sql, row.user_id, job.daycare_id);
+      const profile = providerProfileView(toRecord(row), access, today);
+      if (profile.view !== "full") continue;
       applicants.push({
         applicationId: row.application_id,
         stage: pickStage(row.stage),
-        profile: providerProfileView(toRecord(row), access, today),
+        profile,
         match: matchFor(row, job, today),
       });
     }
+    if (!toJob(job).open) return { enabled: true as const, job: toJob(job), applicants, suggested: [] as SuggestedCard[] };
     const appliedUsers = new Set(apps.map((row) => row.user_id));
     const [pool, invited, employees] = await Promise.all([
       sql
@@ -717,7 +721,7 @@ export const getStaffJobPeople = createServerFn({ method: "GET" })
       `.catch(() => [] as { staff_user_id: string }[]),
       sql<{ user_id: string }>`
         select user_id from centre_members where daycare_id = ${job.daycare_id} and status = 'active'
-      `.catch(() => [] as { user_id: string }[]),
+      `,
     ]);
     const invitedSet = new Set(invited.map((row) => row.staff_user_id));
     const employeeSet = new Set(employees.map((row) => row.user_id));
@@ -733,9 +737,8 @@ export const getStaffJobPeople = createServerFn({ method: "GET" })
       )
       .map((row) => {
         const view = providerProfileView(toRecord(row), { applied: false, acceptedInvite: false, hired: false }, today);
-        return { profile: view as LimitedStaffProfile, match: matchFor(row, job, today), invited: invitedSet.has(row.user_id) };
+        return { profile: view as LimitedStaffProfile, invited: invitedSet.has(row.user_id) };
       })
-      .sort((a, b) => b.match.score - a.match.score)
       .slice(0, SUGGEST_SHOW);
     return { enabled: true as const, job: toJob(job), applicants, suggested };
   });
@@ -750,6 +753,7 @@ export const inviteStaffToJob = createServerFn({ method: "POST" })
     if (!staffJobBoardEnabled()) return OFF;
     const sql = await getSql();
     const job = await jobForHirer(sql, context.userId, data.jobId);
+    if (!toJob(job).open) throw new Error("This job is closed. Reopen it before sending an invite.");
     const recent = await sql<{ n: number }>`
       select count(*)::int as n from staff_job_invites
       where invited_by = ${context.userId} and created_at > now() - interval '24 hours'
@@ -806,6 +810,7 @@ export const getStaffApplicant = createServerFn({ method: "GET" })
     }
     const record = toRecord(row);
     const profile = providerProfileView(record, access, today);
+    if (profile.view !== "full") throw new Error("That profile is not here anymore.");
     const saved = await sql<{ item: string; state: string; note: string }>`
       select item, state, note from staff_vetting_checks where application_id = ${app.id}
     `.catch(() => [] as { item: string; state: string; note: string }[]);
@@ -815,7 +820,7 @@ export const getStaffApplicant = createServerFn({ method: "GET" })
         savedMap[s.item as VettingItem] = { state: pickVettingState(s.state), note: s.note };
       }
     }
-    const fullName = profile.view === "full" ? `${profile.firstName} ${profile.lastName}` : "";
+    const fullName = `${profile.firstName} ${profile.lastName}`;
     const checklist: VettingRow[] = vettingChecklist({
       certLevel: record.certLevel,
       certExpiresOn: record.certExpiresOn,
@@ -919,13 +924,14 @@ export async function authorizeStaffResume(input: { userId: string; ref: string 
   `;
   const row = rows[0];
   if (!row?.resume_ref) throw new Error("File not found");
-  if (row.user_id === input.userId) return { ...row, audience: "self" as const };
+  if (mayReadStaffResume(row.user_id === input.userId, [])) return { ...row, audience: "self" as const };
   const ids = await hiringCentreIds(sql, input.userId);
   for (const id of ids) {
     const access = await centreAccess(sql, row.user_id, id);
-    if (hasFullAccess(access)) return { ...row, audience: "provider" as const };
+    if (mayReadStaffResume(false, [access])) return { ...row, audience: "provider" as const };
   }
-  throw new Error("Not authorized");
+  // A short-profile viewer cannot tell whether a resume was uploaded.
+  throw new Error("File not found");
 }
 
 export async function saveStaffResume(input: { userId: string; body: Buffer; mime: string; filename: string }) {
