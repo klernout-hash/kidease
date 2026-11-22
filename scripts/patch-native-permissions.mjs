@@ -72,6 +72,48 @@ function stripAndroidPermission(manifest, name) {
   );
 }
 
+function stripAndroidFeature(manifest, name) {
+  return manifest.replace(
+    new RegExp(`\\s*<uses-feature[^>]*android:name="${name}"[^>]*/>`, "g"),
+    "",
+  );
+}
+
+// Push and calling stay in the source. This store build does not declare them.
+// Set this to false, then run `npm run cap:permissions`, when those features ship.
+const HOLD_CALL_AND_PUSH_PERMISSIONS = true;
+
+const CALL_AND_PUSH_PERMISSIONS = [
+  "android.permission.POST_NOTIFICATIONS",
+  "android.permission.USE_FULL_SCREEN_INTENT",
+  "android.permission.CAMERA",
+  "android.permission.RECORD_AUDIO",
+  "android.permission.MODIFY_AUDIO_SETTINGS",
+];
+
+function applyCallAndPushPermissions(manifest) {
+  if (HOLD_CALL_AND_PUSH_PERMISSIONS) {
+    for (const name of CALL_AND_PUSH_PERMISSIONS) {
+      manifest = stripAndroidPermission(manifest, name);
+    }
+    manifest = stripAndroidFeature(manifest, "android.hardware.camera");
+    manifest = stripAndroidFeature(manifest, "android.hardware.microphone");
+    return manifest;
+  }
+  for (const name of CALL_AND_PUSH_PERMISSIONS) {
+    manifest = ensureAndroidPermission(manifest, name);
+  }
+  for (const feature of ["android.hardware.camera", "android.hardware.microphone"]) {
+    if (!manifest.includes(`android:name="${feature}"`)) {
+      manifest = manifest.replace(
+        "<application",
+        `    <uses-feature android:name="${feature}" android:required="false" />\n\n    <application`,
+      );
+    }
+  }
+  return manifest;
+}
+
 function upsertXmlString(xml, name, value) {
   const tag = `<string name="${name}">${escapeXml(value)}</string>`;
   const re = new RegExp(`<string name="${name}">[\\s\\S]*?</string>`);
@@ -259,19 +301,8 @@ ${schemes}
     let manifest = await readFile(manifestPath, "utf8");
     manifest = ensureAndroidPermission(manifest, "android.permission.ACCESS_COARSE_LOCATION");
     manifest = ensureAndroidPermission(manifest, "android.permission.ACCESS_FINE_LOCATION");
-    manifest = ensureAndroidPermission(manifest, "android.permission.POST_NOTIFICATIONS");
-    manifest = ensureAndroidPermission(manifest, "android.permission.CAMERA");
-    manifest = ensureAndroidPermission(manifest, "android.permission.RECORD_AUDIO");
-    manifest = ensureAndroidPermission(manifest, "android.permission.MODIFY_AUDIO_SETTINGS");
+    manifest = applyCallAndPushPermissions(manifest);
     manifest = stripAndroidPermission(manifest, "android.permission.ACCESS_BACKGROUND_LOCATION");
-    for (const feature of ["android.hardware.camera", "android.hardware.microphone"]) {
-      if (!manifest.includes(`android:name="${feature}"`)) {
-        manifest = manifest.replace(
-          "<application",
-          `    <uses-feature android:name="${feature}" android:required="false" />\n\n    <application`,
-        );
-      }
-    }
     manifest = ensureAndroidAppLinks(manifest);
     if (!manifest.includes("android.hardware.location.gps")) {
       manifest = manifest.replace(
@@ -281,6 +312,14 @@ ${schemes}
     }
     await writeFile(manifestPath, manifest);
     console.log("[native-permissions] patched AndroidManifest.xml");
+  }
+
+  const huaweiManifestPath = join(root, "android/app/src/huawei/AndroidManifest.xml");
+  if (await pathExists(huaweiManifestPath)) {
+    let huawei = await readFile(huaweiManifestPath, "utf8");
+    huawei = applyCallAndPushPermissions(huawei);
+    await writeFile(huaweiManifestPath, huawei);
+    console.log("[native-permissions] patched Huawei AndroidManifest.xml");
   }
 
   const stringsEn = join(root, "android/app/src/main/res/values/strings.xml");
