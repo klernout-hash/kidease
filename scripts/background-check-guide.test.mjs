@@ -183,7 +183,10 @@ test("flags stay off and the footer link is gated", () => {
   assert.equal(FLAG_DEFAULTS.FEATURE_SCREENING_STATUS, false);
   assert.equal(FOOTER_DAYCARES.some((link) => link.to === "/background-checks"), false);
   assert.match(src("src/components/site-footer.tsx"), /withBackgroundCheckLink/);
-  assert.match(src("src/lib/site-footer-nav.ts"), /bgGuide === true/);
+  // Linked from the page footer and the daycare desk only: the menu and drawer don't change.
+  assert.doesNotMatch(src("src/lib/site-footer-nav.ts"), /bgGuide/);
+  assert.doesNotMatch(src("src/components/nav-drawer.tsx"), /bgCheckGuide/);
+  assert.match(src("src/components/background-check-records.tsx"), /\/background-checks/);
   assert.match(src(".env.example"), /^FEATURE_BG_CHECK_GUIDE=0$/m);
   assert.match(src(".env.example"), /^FEATURE_BG_CHECK_RECORDS=0$/m);
   assert.match(src(".env.example"), /^FEATURE_BG_CHECK_ATTESTATION=0$/m);

@@ -5,6 +5,7 @@ import { Shell } from "@/components/shell";
 import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
+import { useRoleChrome } from "@/components/role-chrome";
 
 export const Route = createFileRoute("/daycare-requirements")({
   head: () =>
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/daycare-requirements")({
 
 export function DaycareRequirementsPage() {
   const { t, locale } = useCopy();
+  const chrome = useRoleChrome();
   const items = [
     { icon: Home, title: t("reqParentsTitle"), body: t("reqParentsBody") },
     { icon: Users, title: t("reqDaycaresTitle"), body: t("reqDaycaresBody") },
@@ -46,6 +48,25 @@ export function DaycareRequirementsPage() {
             </li>
           ))}
         </ul>
+        {chrome.bgCheckGuide ? (
+          <Link
+            to={localePath("/background-checks", locale)}
+            className="mt-6 flex min-h-11 items-center justify-between gap-3 rounded-xl bg-surface p-5 ring-1 ring-border hover:ring-primary/40"
+            data-ke="req-background-checks"
+          >
+            <span>
+              <span className="block text-lg font-semibold">
+                {locale === "fr" ? "Vérifications d’antécédents, par province" : "Background checks, by province"}
+              </span>
+              <span className="mt-1 block text-sm leading-6 text-muted">
+                {locale === "fr"
+                  ? "Qui doit être vérifié, où le demander et à quelle fréquence."
+                  : "Who needs a check, where to get one, and how often."}
+              </span>
+            </span>
+            <span aria-hidden="true" className="text-primary">→</span>
+          </Link>
+        ) : null}
         <p className="mt-8 text-sm leading-6 text-muted">{t("reqPrivacyBody")}</p>
         <p className="mt-6 text-sm">
           <Link to={localePath("/verify", locale)} className="font-medium text-primary underline-offset-4 hover:underline">

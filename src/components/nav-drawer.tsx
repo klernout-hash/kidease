@@ -87,11 +87,7 @@ function GuestDrawerLinks({
   // SUBSCRIPTIONS_ENABLED is the one switch for plans on the website too.
   const nativeShell = useInNativeShell();
   const showPlans = !nativeShell && chrome.subscriptionsEnabled === true;
-  const groups = guestDrawerMenuGroupsForShell({
-    native: nativeShell,
-    plansOn: showPlans,
-    bgGuide: chrome.bgCheckGuide === true,
-  });
+  const groups = guestDrawerMenuGroupsForShell({ native: nativeShell, plansOn: showPlans });
   return (
     <nav data-ke="role-nav" data-role="guest" aria-label={title}>
       <DrawerSection title={t("navFindCare")} marker="drawer-find-care" startOpen>
