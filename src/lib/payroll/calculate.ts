@@ -63,6 +63,10 @@ export type PayInput = {
   vacationBps: number;
   vacationMode: "payout" | "bank";
   ytd?: Partial<PayYtd>;
+  /** Bonus entered on the pay card, in cents. Taxed with CRA's bonus method. */
+  bonusCents?: number;
+  /** Bonuses already paid this year, in cents. */
+  ytdBonusCents?: number;
   td1FederalCents?: number;
   td1ProvincialCents?: number;
   cppExempt?: boolean;
@@ -101,6 +105,10 @@ export type PayEstimate = {
   periods: number;
   cashGrossCents: number;
   vacationCents: number;
+  /** Bonus inside cashGrossCents. */
+  bonusCents: number;
+  /** Tax on the bonus (federal + provincial), already inside the tax totals. */
+  bonusTaxCents: number;
   taxableBenefitCents: number;
   nontaxCashCents: number;
   pensionableCents: number;
@@ -293,15 +301,21 @@ export function estimatePay(input: PayInput): PayEstimate {
   const vacationCents =
     input.vacationMode === "payout" ? Math.round((Math.max(0, input.regularGrossCents) * input.vacationBps) / 10_000) : 0;
 
-  let cash = Math.max(0, input.regularGrossCents) + vacationCents;
+  const cardBonus = Math.max(0, Math.round(input.bonusCents ?? 0));
+  let bonus = cardBonus;
+  let cash = Math.max(0, input.regularGrossCents) + vacationCents + cardBonus;
   let benefit = 0;
   let nontax = 0;
   let pensionableCash = cash;
   let insurableCash = cash;
+  if (cardBonus > 0) {
+    lines.push({ code: "bonus", cents: cardBonus, verified: true, note: "Bonus. Tax uses CRA's bonus method. CPP or QPP and EI apply as normal pay." });
+  }
 
   for (const addon of input.addons ?? []) {
     const row = classifyAddon(addon);
     if (!row.verified) unverified.push(row.note);
+    if (addon.kind === "bonus") bonus += row.cashCents;
     cash += row.cashCents;
     benefit += row.benefitCents;
     nontax += row.nontaxCashCents;
@@ -320,15 +334,14 @@ export function estimatePay(input: PayInput): PayEstimate {
   const payDate = input.payDate ?? DEFAULT_PAY_DATE;
   const rrsp = Math.max(0, input.rrspCents ?? 0);
 
-  const hasBonus = (input.addons ?? []).some((addon) => addon.kind === "bonus" && addon.amountCents > 0);
-  const engine = hasBonus
-    ? ({ ok: false, reason: "no_table", message: "Bonuses use CRA's separate bonus method, which KidEase does not do yet. Pay the bonus in your partner's system." } as const)
-    : isProvinceCode(province)
+  const engine = isProvinceCode(province)
     ? calculateDeductions({
         province,
         frequency: (input.frequency in PERIODS ? input.frequency : "biweekly") as Frequency,
         payDate,
-        taxableCents: Math.max(0, cash + benefit),
+        taxableCents: Math.max(0, cash + benefit - bonus),
+        bonusCents: bonus,
+        ytdBonusCents: Math.max(0, input.ytdBonusCents ?? 0),
         pensionableCents: pensionable,
         insurableCents: insurable,
         rrspCents: rrsp,
@@ -356,6 +369,8 @@ export function estimatePay(input: PayInput): PayEstimate {
       periods,
       cashGrossCents: cash,
       vacationCents,
+      bonusCents: bonus,
+      bonusTaxCents: 0,
       taxableBenefitCents: benefit,
       nontaxCashCents: nontax,
       pensionableCents: pensionable,
@@ -438,6 +453,8 @@ export function estimatePay(input: PayInput): PayEstimate {
     periods,
     cashGrossCents: cash,
     vacationCents,
+    bonusCents: bonus,
+    bonusTaxCents: engine.bonusFederalTaxCents + engine.bonusProvincialTaxCents,
     taxableBenefitCents: benefit,
     nontaxCashCents: nontax,
     pensionableCents: pensionable,

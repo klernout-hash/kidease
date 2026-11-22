@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { PGlite } from "@electric-sql/pglite";
-import { approvePeriod, checkIn, loadDesk, loadPeople, loadStubs, payAccess, saveFlag, saveOverride } from "../src/lib/payroll/pay-store.ts";
+import { approvePeriod, checkIn, listEditors, loadDesk, loadPeople, loadStubs, payAccess, saveFlag, saveOverride, setEditor, setWageClass } from "../src/lib/payroll/pay-store.ts";
 
 async function setup() {
   const db = new PGlite();
@@ -12,6 +12,10 @@ async function setup() {
     create table provider_daycares (user_id text, daycare_id text, primary key (user_id, daycare_id));
     insert into daycares values ('centre-a', 'Oak'), ('centre-b', 'Birch');
     insert into provider_daycares values ('owner-a', 'centre-a'), ('owner-b', 'centre-b');
+    create table "user" (id text primary key, name text, email text);
+    create table centre_members (id text primary key, daycare_id text, user_id text, role text, status text default 'active');
+    insert into "user" values ('staff-1', 'Amira Saleh', 'a@example.test'), ('staff-2', 'Leo Chen', 'l@example.test');
+    insert into centre_members values ('m1', 'centre-a', 'staff-1', 'staff', 'active'), ('m2', 'centre-a', 'staff-2', 'manager', 'active');
   `);
   for (const file of ["0225_provider_payroll", "0226_extra_tax_requests", "0227_employee_forms", "0228_payroll_pay_runs"]) {
     await db.exec(await readFile(new URL(`../migrations/${file}.sql`, import.meta.url), "utf8"));
@@ -113,6 +117,42 @@ test("a pay period is approved once by the owner, then later day changes are cor
     assert.deepEqual(change, { ok: true, id: "o9", correction: true });
     assert.equal((await loadStubs(sql, { userId: "owner-a", daycareId: "centre-a", from: "2026-01-01", to: "2026-12-31" })).length, 1);
     assert.equal((await loadStubs(sql, { userId: "owner-b", daycareId: "centre-a", from: "2026-01-01", to: "2026-12-31" })).length, 0);
+  } finally {
+    await db.close();
+  }
+});
+
+test("the owner gives and removes pay access with an audit row, and an editor can do everything, including approve", async () => {
+  const { db, sql } = await setup();
+  try {
+    assert.equal(await setEditor(sql, { id: "a0", userId: "staff-1", daycareId: "centre-a", memberId: "staff-2", grant: true }), false);
+    assert.equal(await setEditor(sql, { id: "a1", userId: "owner-a", daycareId: "centre-a", memberId: "stranger", grant: true }), false);
+    assert.equal(await setEditor(sql, { id: "a2", userId: "owner-a", daycareId: "centre-a", memberId: "staff-2", grant: true }), true);
+    assert.deepEqual((await listEditors(sql, "owner-a", "centre-a")).map((row) => [row.name, row.editor]), [["Amira Saleh", false], ["Leo Chen", true]]);
+    assert.deepEqual(await listEditors(sql, "staff-2", "centre-a"), []);
+    assert.deepEqual(await payAccess(sql, "staff-2", "centre-a"), { owner: false, editor: true });
+
+    // The editor changes the bonus and marks a student, then approves.
+    const bonus = await saveOverride(sql, { id: "b1", userId: "staff-2", daycareId: "centre-a", employeeId: "e1", field: "bonus_cents", keyDate: "2026-11-15", oldValue: "0", newValue: "50000", reason: "Bonus", expectedId: "" });
+    assert.equal(bonus.ok, true);
+    assert.equal((await desk(sql, "staff-2")).bonusOverride, 50_000);
+    assert.equal(await setWageClass(sql, { id: "w1", userId: "staff-2", daycareId: "centre-a", employeeId: "e1", wageClass: "student", reason: "Marked as a student", today: "2026-11-22" }), true);
+    assert.equal((await desk(sql, "owner-a")).person.wageClass, "student");
+    assert.equal(await setWageClass(sql, { id: "w2", userId: "staff-1", daycareId: "centre-a", employeeId: "e1", wageClass: "general", reason: "x", today: "2026-11-22" }), false);
+    const approved = await approvePeriod(sql, { periodId: "per9", userId: "staff-2", daycareId: "centre-a", start: "2026-11-15", end: "2026-11-28", payDate: "2026-12-04", stubs: [], drafts: [] });
+    assert.deepEqual(approved, { ok: true, stubs: 0 });
+    assert.deepEqual((await db.query("select approved_by from payroll_periods where id = 'per9'")).rows, [{ approved_by: "staff-2" }]);
+    assert.equal((await loadStubs(sql, { userId: "staff-2", daycareId: "centre-a", from: "2026-01-01", to: "2026-12-31" })).length, 0);
+
+    assert.equal(await setEditor(sql, { id: "a3", userId: "owner-a", daycareId: "centre-a", memberId: "staff-2", grant: false }), true);
+    assert.deepEqual(await payAccess(sql, "staff-2", "centre-a"), { owner: false, editor: false });
+    const audit = (await db.query("select user_id, action, actor_id from payroll_editor_audits order by created_at, id")).rows;
+    assert.deepEqual(audit, [
+      { user_id: "staff-2", action: "grant", actor_id: "owner-a" },
+      { user_id: "staff-2", action: "remove", actor_id: "owner-a" },
+    ]);
+    const changes = (await db.query("select field, actor_id from payroll_overrides order by created_at, id")).rows;
+    assert.deepEqual(changes.map((row) => row.actor_id), ["staff-2", "staff-2"]);
   } finally {
     await db.close();
   }

@@ -13,6 +13,8 @@ alter table payroll_employees add column if not exists gst_number text;
 alter table payroll_employees add column if not exists hire_date date;
 alter table payroll_employees add column if not exists end_date date;
 alter table payroll_employees add column if not exists td1_status text not null default 'missing';
+-- general, student (Ontario and Alberta), or tipped. Set only by the owner or a payroll editor.
+alter table payroll_employees add column if not exists wage_class text not null default 'general';
 
 -- Owner-granted pay permission. Without a row here only the owner can change pay.
 create table if not exists payroll_editors (
@@ -23,9 +25,19 @@ create table if not exists payroll_editors (
   primary key (daycare_id, user_id)
 );
 
+-- Append-only record of who gave or removed pay access, and when.
+create table if not exists payroll_editor_audits (
+  id text primary key,
+  daycare_id text not null,
+  user_id text not null,
+  action text not null,
+  actor_id text not null,
+  created_at timestamptz not null default now()
+);
+
 -- Append-only. Each row is one change: who, when, old value, new value, reason.
 -- field: day_minutes (work_date set; an empty new_value means reset to check-in times),
--- rate_cents or pay_type (period_start set).
+-- rate_cents, pay_type or bonus_cents (period_start set), wage_class (period_start = day of the change).
 -- supersedes_id is the row the editor saw. A stale edit (someone changed it since) is refused.
 create table if not exists payroll_overrides (
   id text primary key,

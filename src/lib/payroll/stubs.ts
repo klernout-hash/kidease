@@ -21,6 +21,9 @@ export type ApprovedStub = {
   overtimeMinutes: number;
   grossCents: number;
   vacationCents: number;
+  /** Bonus inside grossCents, and the tax withheld on it (inside the tax fields). */
+  bonusCents: number;
+  bonusTaxCents: number;
   taxableBenefitCents: number;
   nontaxCents: number;
   pensionableCents: number;
@@ -81,6 +84,8 @@ export function stubFromCard(input: {
       ...base,
       grossCents: 0,
       vacationCents: 0,
+      bonusCents: 0,
+      bonusTaxCents: 0,
       taxableBenefitCents: 0,
       nontaxCents: 0,
       pensionableCents: 0,
@@ -110,6 +115,8 @@ export function stubFromCard(input: {
     ...base,
     grossCents: pay.cashGrossCents,
     vacationCents: pay.vacationCents,
+    bonusCents: pay.bonusCents,
+    bonusTaxCents: pay.bonusTaxCents,
     taxableBenefitCents: pay.taxableBenefitCents,
     nontaxCents: pay.nontaxCashCents,
     pensionableCents: pay.pensionableCents,
@@ -158,6 +165,8 @@ export function parseStub(value: unknown): ApprovedStub | null {
     overtimeMinutes: int("overtimeMinutes"),
     grossCents: int("grossCents"),
     vacationCents: int("vacationCents"),
+    bonusCents: int("bonusCents"),
+    bonusTaxCents: int("bonusTaxCents"),
     taxableBenefitCents: int("taxableBenefitCents"),
     nontaxCents: int("nontaxCents"),
     pensionableCents: int("pensionableCents"),

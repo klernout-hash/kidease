@@ -36,6 +36,14 @@ export type EngineInput = {
   insurableCents: number;
   /** RRSP or RPP taken off this pay (F). */
   rrspCents?: number;
+  /**
+   * Bonus paid with this pay (B), in cents. Already inside pensionable and
+   * insurable earnings, NOT inside taxableCents. Tax on it uses CRA's bonus
+   * method (Revenu Québec's gratuity method for Quebec tax).
+   */
+  bonusCents?: number;
+  /** Bonuses already paid this year (B1). */
+  ytdBonusCents?: number;
   /** Year to date before this pay. */
   ytd?: {
     pensionableCents?: number;
@@ -97,6 +105,9 @@ export type EngineResult =
       qpipCents: number;
       federalTaxCents: number;
       provincialTaxCents: number | null;
+      /** Part of the federal and provincial tax that is for the bonus. Already inside the totals. */
+      bonusFederalTaxCents: number;
+      bonusProvincialTaxCents: number;
       employerCppCents: number;
       employerCpp2Cents: number;
       employerEiCents: number;
@@ -113,6 +124,12 @@ export type EngineResult =
       notes: string[];
     }
   | { ok: false; reason: "no_table" | "no_quebec_table"; message: string };
+
+/** Shown when a Quebec pay is dated in a year Revenu Québec has not published yet. */
+export const QUEBEC_2027_BLOCKED = {
+  en: "Revenu Québec hasn't published its 2027 figures yet. Pays dated in 2027 for Quebec staff can be run once they are out.",
+  fr: "Revenu Québec n’a pas encore publié ses chiffres de 2027. Les paies datées de 2027 pour le personnel du Québec pourront être faites dès leur parution.",
+} as const;
 
 /** Round half up to the cent, the T4127 "third digit" rule. */
 export function round2(value: number): number {
@@ -202,7 +219,7 @@ export function calculateDeductions(input: EngineInput): EngineResult {
     return {
       ok: false,
       reason: "no_quebec_table",
-      message: "Revenu Québec has not published its tables for this pay date in KidEase yet. Quebec pay is blocked until it is added.",
+      message: QUEBEC_2027_BLOCKED.en,
     };
   }
   const P = PAY_PERIODS[input.frequency];
@@ -220,100 +237,160 @@ export function calculateDeductions(input: EngineInput): EngineResult {
   const D1 = Math.max(0, ytd.eiCents ?? 0) / 100;
   const DQPIP = Math.max(0, ytd.qpipCents ?? 0) / 100;
 
-  // CPP or QPP (C) and the second additional contribution (C2).
+  const B = Math.max(0, input.bonusCents ?? 0) / 100;
+  const B1 = Math.max(0, input.ytdBonusCents ?? 0) / 100;
+
+  // CPP or QPP (C) and the second additional contribution (C2). A bonus is normal earnings for these.
   const plan = isQuebec ? edition.qpp : edition.cpp;
-  let C = 0;
-  let C2 = 0;
-  if (!input.cppExempt && PI > 0) {
-    const exemptionPerPay = trunc2(plan.exemption / P);
-    const room = round2(plan.maxTotal * (PM / 12) - D);
-    C = Math.max(0, Math.min(room, round2(plan.totalRate * Math.max(0, PI - exemptionPerPay))));
-    const W = Math.max(PIYTD, plan.ympe * (PM / 12));
-    const room2 = round2(plan.maxSecond * (PM / 12) - D2);
-    C2 = Math.max(0, Math.min(room2, round2((PIYTD + PI - W) * plan.secondRate)));
-  }
-
-  // EI.
   const ei = isQuebec ? edition.eiQuebec : edition.ei;
-  const EI = input.eiExempt || IE <= 0 ? 0 : Math.max(0, Math.min(round2(ei.maxPremium - D1), round2(ei.rate * IE)));
+  function contributions(pi: number, ie: number) {
+    let c = 0;
+    let c2 = 0;
+    if (!input.cppExempt && pi > 0) {
+      const exemptionPerPay = trunc2(plan.exemption / P);
+      const room = round2(plan.maxTotal * (PM / 12) - D);
+      c = Math.max(0, Math.min(room, round2(plan.totalRate * Math.max(0, pi - exemptionPerPay))));
+      const W = Math.max(PIYTD, plan.ympe * (PM / 12));
+      const room2 = round2(plan.maxSecond * (PM / 12) - D2);
+      c2 = Math.max(0, Math.min(room2, round2((PIYTD + pi - W) * plan.secondRate)));
+    }
+    const e = input.eiExempt || ie <= 0 ? 0 : Math.max(0, Math.min(round2(ei.maxPremium - D1), round2(ei.rate * ie)));
+    return { c, c2, e };
+  }
+  const total = contributions(PI, IE);
+  const regular = B > 0 ? contributions(Math.max(0, PI - B), Math.max(0, IE - B)) : total;
+  const C = total.c;
+  const C2 = total.c2;
+  const EI = total.e;
 
-  // QPIP (Quebec only). QPIP follows the province, not EI exemption, but an
-  // EI-exempt worker in this build is also treated as QPIP-exempt and noted.
+  // QPIP (Quebec only). An EI-exempt worker in this build is also treated as QPIP-exempt.
   let QPIP = 0;
   if (isQuebec && IE > 0 && !input.eiExempt) {
     const q = edition.qpip;
     QPIP = Math.max(0, Math.min(round2(q.maxEmployee - DQPIP), round2(q.employeeRate * Math.min(IE, q.maxInsurable))));
   }
 
-  // Federal tax, Option 1.
-  const F5 = C === 0 && C2 === 0 ? 0 : C * (plan.firstAdditionalRate / plan.totalRate) + C2;
-  let annualF5 = P * F5;
+  // Enhanced CPP deduction: F5A on regular pay, F5B on the bonus.
+  const firstShare = plan.firstAdditionalRate / plan.totalRate;
+  const F5A = regular.c === 0 && regular.c2 === 0 ? 0 : regular.c * firstShare + regular.c2;
+  const F5all = C === 0 && C2 === 0 ? 0 : C * firstShare + C2;
+  const F5B = Math.max(0, F5all - F5A);
+  let annualF5 = P * F5A;
   if (input.method === "t4032" && !input.cppExempt) {
     const yearly = P * PI;
-    const firstAdditional = Math.min(P * C, plan.maxTotal) * (plan.firstAdditionalRate / plan.totalRate);
+    const firstAdditional = Math.min(P * C, plan.maxTotal) * firstShare;
     const second = Math.min(Math.max(0, Math.min(yearly, plan.yampe) - plan.ympe) * plan.secondRate, plan.maxSecond);
     annualF5 = firstAdditional + second;
   }
-  const A = Math.max(0, P * (I - F) - annualF5);
-  const NI = A;
-  const R = bracketFor(A, edition.federal.brackets);
-  const TC = input.td1FederalCents != null ? Math.max(0, input.td1FederalCents) / 100 : bpaf(NI, edition);
-  const lowest = edition.federal.lowestRate;
-  const K1 = lowest * TC;
-  const basePart = plan.baseRate / plan.totalRate;
-  const cppCreditBase = Math.min(P * C * basePart, plan.maxBase * (PM / 12));
-  const eiCreditBase = Math.min(P * EI, ei.maxPremium);
-  const qpipCreditBase = isQuebec ? Math.min(P * IE * edition.qpip.employeeRate, edition.qpip.maxEmployee) : 0;
-  const K2 = lowest * cppCreditBase + lowest * eiCreditBase + lowest * qpipCreditBase;
-  const K4 = Math.min(lowest * A, lowest * edition.federal.cea);
-  const T3 = Math.max(0, R.rate * A - R.k - K1 - K2 - K4);
-  const T1 = isQuebec ? Math.max(0, T3 - edition.federal.quebecAbatement * T3) : T3;
 
-  // Provincial tax.
-  let T2: number | null = null;
-  let TCP: number | null = null;
-  let provincialVerified = true;
-  if (!isQuebec) {
+  // Credits use regular pay only, so a bonus does not inflate them.
+  const lowest = edition.federal.lowestRate;
+  const basePart = plan.baseRate / plan.totalRate;
+  const cppCreditBase = Math.min(P * regular.c * basePart, plan.maxBase * (PM / 12));
+  const eiCreditBase = Math.min(P * regular.e, ei.maxPremium);
+  const regularIE = Math.max(0, IE - B);
+  const qpipCreditBase = isQuebec ? Math.min(P * regularIE * edition.qpip.employeeRate, edition.qpip.maxEmployee) : 0;
+
+  /** Annual federal tax T1 for annual taxable income A (Option 1, Step 2 and 3). */
+  function federalFor(A: number): { t1: number; tc: number } {
+    const R = bracketFor(A, edition!.federal.brackets);
+    const TC = input.td1FederalCents != null ? Math.max(0, input.td1FederalCents) / 100 : bpaf(A, edition!);
+    const K1 = lowest * TC;
+    const K2 = lowest * cppCreditBase + lowest * eiCreditBase + lowest * qpipCreditBase;
+    const K4 = Math.min(lowest * A, lowest * edition!.federal.cea);
+    const T3 = Math.max(0, R.rate * A - R.k - K1 - K2 - K4);
+    return { t1: isQuebec ? Math.max(0, T3 - edition!.federal.quebecAbatement * T3) : T3, tc: TC };
+  }
+
+  /** Annual provincial tax T2 outside Quebec (Step 5). */
+  function provincialFor(A: number): { t2: number; tcp: number } {
     const code = province as NonQuebec;
-    const table = edition.provinces[code];
+    const table = edition!.provinces[code];
     const V = bracketFor(A, table.brackets);
     const lowRate = table.brackets[0].rate;
-    TCP = input.td1ProvincialCents != null ? Math.max(0, input.td1ProvincialCents) / 100 : provincialBasic(code, NI, edition);
-    const K1P = lowRate * TCP;
+    const tcp = input.td1ProvincialCents != null ? Math.max(0, input.td1ProvincialCents) / 100 : provincialBasic(code, A, edition!);
+    const K1P = lowRate * tcp;
     const K2P = lowRate * cppCreditBase + lowRate * eiCreditBase;
-    const K4P = code === "YT" ? Math.min(lowRate * A, lowRate * edition.special.yukonCea) : 0;
-    const K5P = code === "AB" ? Math.max(0, (K1P + K2P - edition.special.albertaK5p.threshold) * edition.special.albertaK5p.rate) : 0;
+    const K4P = code === "YT" ? Math.min(lowRate * A, lowRate * edition!.special.yukonCea) : 0;
+    const K5P = code === "AB" ? Math.max(0, (K1P + K2P - edition!.special.albertaK5p.threshold) * edition!.special.albertaK5p.rate) : 0;
     const T4 = Math.max(0, V.rate * A - V.k - K1P - K2P - K4P - K5P);
     let V1 = 0;
     let V2 = 0;
     let S = 0;
     if (code === "ON") {
-      V1 = ontarioSurtax(T4, edition);
+      V1 = ontarioSurtax(T4, edition!);
       V2 = ontarioHealthPremium(A);
-      const y = Math.max(0, Math.floor(input.ontarioDependants ?? 0)) * edition.special.ontarioReduction.perDependant;
-      S = Math.max(0, Math.min(T4 + V1, 2 * (edition.special.ontarioReduction.s2 + y) - (T4 + V1)));
+      const y = Math.max(0, Math.floor(input.ontarioDependants ?? 0)) * edition!.special.ontarioReduction.perDependant;
+      S = Math.max(0, Math.min(T4 + V1, 2 * (edition!.special.ontarioReduction.s2 + y) - (T4 + V1)));
     } else if (code === "BC") {
-      S = bcReduction(A, T4, edition);
+      S = bcReduction(A, T4, edition!);
     }
-    T2 = Math.max(0, T4 + V1 + V2 - S);
+    return { t2: Math.max(0, T4 + V1 + V2 - S), tcp };
+  }
+
+  /** Revenu Québec: Y = T x I - K - K1 - 0.14 x E, with I already annual. */
+  function quebecFor(QI: number): { t2: number; tcp: number } {
+    const table = quebecTable!;
+    const row = bracketFor(QI, table.brackets);
+    const tcp = input.td1ProvincialCents != null ? Math.max(0, input.td1ProvincialCents) / 100 : table.basicPersonal;
+    return { t2: Math.max(0, row.rate * QI - row.k - table.creditRate * tcp), tcp };
+  }
+
+  // Regular (periodic) annual income and tax.
+  const A = Math.max(0, P * (I - F) - annualF5);
+  const regularFederal = federalFor(A);
+  const T1 = regularFederal.t1;
+  const TC = regularFederal.tc;
+  let T2: number | null = null;
+  let TCP: number | null = null;
+  let provincialVerified = true;
+  let quebecRegularI = 0;
+  let quebecH = 0;
+  if (!isQuebec) {
+    const regularProvincial = provincialFor(A);
+    T2 = regularProvincial.t2;
+    TCP = regularProvincial.tcp;
   } else if (quebecTable) {
-    // Quebec: I = P x (G - F - H - CSA) - J - J1; Y = T x I - K - K1 - 0.14 x E.
-    const H = Math.min(quebecTable.workerDeduction.rate * I, quebecTable.workerDeduction.max / P);
-    const CSA = C === 0 && C2 === 0 ? 0 : C * (plan.firstAdditionalRate / plan.totalRate) + C2;
-    const QI = Math.max(0, P * (I - F - H - CSA));
-    const row = bracketFor(QI, quebecTable.brackets);
-    TCP = input.td1ProvincialCents != null ? Math.max(0, input.td1ProvincialCents) / 100 : quebecTable.basicPersonal;
-    T2 = Math.max(0, row.rate * QI - row.k - quebecTable.creditRate * TCP);
+    quebecH = Math.min(quebecTable.workerDeduction.rate * I, quebecTable.workerDeduction.max / P);
+    quebecRegularI = Math.max(0, P * (I - F - quebecH - F5A));
+    const q = quebecFor(quebecRegularI);
+    T2 = q.t2;
+    TCP = q.tcp;
     provincialVerified = quebecTable.formulaReadFromPdf;
     notes.push("Quebec tax uses Revenu Québec amounts. The formula shape was read from a quoted copy of TP-1015.F-V, not the PDF.");
   }
 
-  // Per-pay tax. Combined T is rounded once, then split so the parts add up.
-  const federalPer = toCents(T1 / P);
+  // Bonus: tax on (income + earlier bonuses + this bonus) minus tax on (income + earlier bonuses).
+  let bonusFederal = 0;
+  let bonusProvincial = 0;
+  if (B > 0) {
+    const without = Math.max(0, A + B1);
+    const withBonus = Math.max(0, A + B1 + B - F5B);
+    bonusFederal = Math.max(0, federalFor(withBonus).t1 - federalFor(without).t1);
+    if (!isQuebec) {
+      bonusProvincial = Math.max(0, provincialFor(withBonus).t2 - provincialFor(without).t2);
+    } else if (quebecTable) {
+      const estimatedYear = P * I + B1 + B;
+      if (estimatedYear <= quebecTable.gratuityThreshold) {
+        bonusProvincial = quebecTable.gratuityFlatRate * B;
+        notes.push("Quebec tax on this bonus is a flat 7%, because the year's pay with the bonus is not over the Revenu Québec threshold.");
+      } else {
+        const qWithout = quebecRegularI + B1;
+        const qWith = quebecRegularI + B1 + B - F5B;
+        bonusProvincial = Math.max(0, quebecFor(qWith).t2 - quebecFor(qWithout).t2);
+      }
+    }
+  }
+  const bonusFederalCents = toCents(bonusFederal);
+  const bonusProvincialCents = toCents(bonusProvincial);
+
+  // Per-pay tax. Combined T is rounded once, then split so the parts add up. Bonus tax is added on top.
+  const federalPer = toCents(T1 / P) + bonusFederalCents;
   let provincialPer: number | null = null;
   if (T2 != null) {
+    const regularFederalPer = federalPer - bonusFederalCents;
     const combined = toCents(isQuebec ? T1 / P : (T1 + T2) / P);
-    provincialPer = isQuebec ? toCents(T2 / P) : combined - federalPer;
+    provincialPer = (isQuebec ? toCents(T2 / P) : combined - regularFederalPer) + bonusProvincialCents;
   }
 
   const cppCents = toCents(C);
@@ -361,6 +438,8 @@ export function calculateDeductions(input: EngineInput): EngineResult {
     qpipCents,
     federalTaxCents: federalPer,
     provincialTaxCents: provincialPer,
+    bonusFederalTaxCents: bonusFederalCents,
+    bonusProvincialTaxCents: bonusProvincialCents,
     employerCppCents: cppCents,
     employerCpp2Cents: cpp2Cents,
     employerEiCents,

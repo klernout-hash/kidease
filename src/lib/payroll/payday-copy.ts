@@ -69,6 +69,18 @@ const EN = {
   flagSend: "Tell the owner",
   flagSaved: "Saved. The owner will see it on Pay day.",
   notOnPay: "You are not on this centre's pay list yet. Ask the owner.",
+  wageAsOf: "Minimum wage rates as of",
+  wageNote: "Rates change, usually once a year. KidEase uses the rate in force on each day worked.",
+  bonus: "Bonus (optional)",
+  bonusTax: "Tax on the bonus",
+  bonusHint: "Leave empty if there is no bonus.",
+  student: "Student (minimum wage)",
+  editors: "Who can do pay",
+  editorsLead: "People you add here can do everything on Pay day, including approve. Every change records who made it.",
+  editorAdd: "Give pay access",
+  editorRemove: "Remove",
+  editorNone: "Only you can do pay right now.",
+  editorPick: "Choose a team member",
 } as const;
 
 export type PaydayCopy = { [K in keyof typeof EN]: string };
@@ -142,6 +154,18 @@ const FR: PaydayCopy = {
   flagSend: "Avertir le propriétaire",
   flagSaved: "Enregistré. Le propriétaire le verra au jour de paie.",
   notOnPay: "Vous n’êtes pas encore sur la liste de paie de ce centre. Demandez au propriétaire.",
+  wageAsOf: "Salaires minimums en date du",
+  wageNote: "Les taux changent, en général une fois par année. KidEase utilise le taux en vigueur chaque jour travaillé.",
+  bonus: "Prime (facultatif)",
+  bonusTax: "Impôt sur la prime",
+  bonusHint: "Laissez vide s’il n’y a pas de prime.",
+  student: "Aux études (salaire minimum)",
+  editors: "Qui peut faire la paie",
+  editorsLead: "Les personnes ajoutées ici peuvent tout faire au jour de paie, y compris approuver. Chaque changement indique qui l’a fait.",
+  editorAdd: "Donner l’accès à la paie",
+  editorRemove: "Retirer",
+  editorNone: "Vous seul pouvez faire la paie pour l’instant.",
+  editorPick: "Choisir un membre de l’équipe",
 };
 
 export function paydayCopy(locale: "en" | "fr"): PaydayCopy {
@@ -162,13 +186,14 @@ type CheckCode =
   | "overtime_unverified"
   | "vacation_below_law"
   | "flagged_day"
-  | "no_table";
+  | "no_table"
+  | "student_rate";
 
 const CHECK_EN: Record<CheckCode, string> = {
   missing_td1: "No approved TD1. CRA's basic amount is used until it is in.",
   over_60_hours: "More than 60 hours in one week. Check the days.",
   under_minimum_wage: "The rate is under the province's minimum wage.",
-  minimum_wage_unverified: "We could not confirm this province's minimum wage. Check the official page.",
+  minimum_wage_unverified: "KidEase has no minimum wage on file for this date. Check the official page.",
   missed_checkout: "A day has no check-out. Fix that day first.",
   zero_pay: "Pay is $0 for this period.",
   mid_period_start: "Started during this period. Check the first day.",
@@ -177,13 +202,14 @@ const CHECK_EN: Record<CheckCode, string> = {
   vacation_below_law: "Vacation pay is lower than the law asks for after these years.",
   flagged_day: "Staff flagged a day as wrong.",
   no_table: "KidEase cannot work out this pay. Nothing is shown as final.",
+  student_rate: "You marked this person as a student. The student minimum wage is used.",
 };
 
 const CHECK_FR: Record<CheckCode, string> = {
   missing_td1: "Aucun TD1 approuvé. Le montant de base de l’ARC est utilisé en attendant.",
   over_60_hours: "Plus de 60 heures dans une semaine. Vérifiez les jours.",
   under_minimum_wage: "Le taux est sous le salaire minimum de la province.",
-  minimum_wage_unverified: "Nous n’avons pas pu confirmer le salaire minimum de cette province. Vérifiez la page officielle.",
+  minimum_wage_unverified: "KidEase n’a pas de salaire minimum pour cette date. Vérifiez la page officielle.",
   missed_checkout: "Un jour n’a pas de départ pointé. Corrigez ce jour d’abord.",
   zero_pay: "La paie est de 0 $ pour cette période.",
   mid_period_start: "A commencé pendant cette période. Vérifiez le premier jour.",
@@ -192,10 +218,39 @@ const CHECK_FR: Record<CheckCode, string> = {
   vacation_below_law: "La paie de vacances est plus basse que ce que la loi demande après ces années.",
   flagged_day: "Le personnel a signalé un jour faux.",
   no_table: "KidEase ne peut pas calculer cette paie. Rien n’est affiché comme final.",
+  student_rate: "Vous avez indiqué que cette personne est aux études. Le salaire minimum étudiant est utilisé.",
 };
 
 export function checkWords(code: CheckCode, locale: "en" | "fr"): string {
   return (locale === "fr" ? CHECK_FR : CHECK_EN)[code];
+}
+
+function cad(cents: number, locale: "en" | "fr"): string {
+  return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" }).format(cents / 100);
+}
+
+function longDate(date: string, locale: "en" | "fr"): string {
+  if (locale === "fr" && date.endsWith("-01")) {
+    const month = new Date(`${date}T12:00:00Z`).toLocaleDateString("fr-CA", { month: "long", timeZone: "UTC" });
+    return `1er ${month} ${date.slice(0, 4)}`;
+  }
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+}
+
+/** A check with its numbers filled in (minimum wage names the rate and the day). */
+export function checkText(check: { code: CheckCode; amountCents?: number; date?: string; detail?: string }, locale: "en" | "fr"): string {
+  if (check.code === "under_minimum_wage" && check.amountCents != null && check.date) {
+    const rate = check.detail ? cad(Number(check.detail), locale) : "";
+    return locale === "fr"
+      ? `Le taux${rate ? ` de ${rate}` : ""} est sous le salaire minimum de ${cad(check.amountCents, locale)} l’heure en vigueur le ${longDate(check.date, locale)}. Corrigez le taux avant d’approuver.`
+      : `The rate${rate ? ` of ${rate}` : ""} is under the ${cad(check.amountCents, locale)} an hour minimum wage in force on ${longDate(check.date, locale)}. Fix the rate before you approve.`;
+  }
+  if (check.code === "student_rate" && check.amountCents != null) {
+    return locale === "fr"
+      ? `Taux étudiant utilisé : ${cad(check.amountCents, locale)} l’heure. Vous avez indiqué que cette personne est aux études.`
+      : `Student rate used: ${cad(check.amountCents, locale)} an hour. You marked this person as a student.`;
+  }
+  return checkWords(check.code, locale);
 }
 
 /** Error code from a server function ("payroll:stale") to plain words. */

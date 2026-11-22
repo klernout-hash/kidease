@@ -38,7 +38,7 @@ const sum = (rows: readonly ApprovedStub[], pick: (row: ApprovedStub) => number)
 export function payRegisterCsv(stubs: readonly ApprovedStub[]): string {
   const header = [
     "pay_date", "period_start", "period_end", "person", "province", "pay_type", "regular_hours", "overtime_hours",
-    "gross", "vacation", "taxable_benefits", "non_taxable", "cpp", "cpp2", "qpp", "qpp2", "ei", "qpip",
+    "gross", "vacation", "bonus", "bonus_tax", "taxable_benefits", "non_taxable", "cpp", "cpp2", "qpp", "qpp2", "ei", "qpip",
     "federal_tax", "provincial_tax", "net", "contractor_fee", "contractor_gst_hst", "correction", "table_edition", "as_of",
   ];
   const rows = [...stubs]
@@ -46,7 +46,7 @@ export function payRegisterCsv(stubs: readonly ApprovedStub[]): string {
     .map((s) => [
       s.payDate, s.periodStart, s.periodEnd, s.name, s.province, s.payType,
       (s.regularMinutes / 60).toFixed(2), (s.overtimeMinutes / 60).toFixed(2),
-      money(s.grossCents), money(s.vacationCents), money(s.taxableBenefitCents), money(s.nontaxCents),
+      money(s.grossCents), money(s.vacationCents), money(s.bonusCents), money(s.bonusTaxCents), money(s.taxableBenefitCents), money(s.nontaxCents),
       money(s.cppCents), money(s.cpp2Cents), money(s.qppCents), money(s.qpp2Cents), money(s.eiCents), money(s.qpipCents),
       money(s.federalTaxCents), money(s.provincialTaxCents), money(s.netCents),
       money(s.contractorFeeCents), money(s.salesTaxCents), money(s.correctionCents), s.edition ?? "", s.asOf ?? "",
@@ -166,12 +166,13 @@ export function ytdCsv(stubs: readonly ApprovedStub[], year: number): string {
     list.push(stub);
     people.set(stub.personId, list);
   }
-  const lines: (string | number)[][] = [["person", "pay_type", "gross", "cpp_or_qpp", "cpp2_or_qpp2", "ei", "qpip", "federal_tax", "provincial_tax", "net", "contractor_fee"]];
+  const lines: (string | number)[][] = [["person", "pay_type", "gross", "bonus", "cpp_or_qpp", "cpp2_or_qpp2", "ei", "qpip", "federal_tax", "provincial_tax", "net", "contractor_fee"]];
   for (const rows of people.values()) {
     const last = rows[rows.length - 1];
     lines.push([
       last.name, last.payType,
       money(sum(rows, (s) => s.grossCents)),
+      money(sum(rows, (s) => s.bonusCents)),
       money(sum(rows, (s) => s.cppCents + s.qppCents)),
       money(sum(rows, (s) => s.cpp2Cents + s.qpp2Cents)),
       money(sum(rows, (s) => s.eiCents)),
@@ -269,6 +270,7 @@ export function packPdfLines(input: { centreName: string; from: string; to: stri
     `${fr ? "Période" : "Period"}: ${input.from} - ${input.to}`,
     `${fr ? "Talons" : "Pay stubs"}: ${input.stubs.length}`,
     `${fr ? "Brut" : "Gross"}: ${money(sum(input.stubs, (s) => s.grossCents))}`,
+    `${fr ? "Primes (incluses dans le brut)" : "Bonuses (in gross)"}: ${money(sum(input.stubs, (s) => s.bonusCents))}`,
     `${fr ? "Net" : "Net"}: ${money(sum(input.stubs, (s) => s.netCents))}`,
     "",
     fr ? "Retenues" : "Deductions",

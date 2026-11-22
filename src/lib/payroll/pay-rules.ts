@@ -23,8 +23,6 @@ export type ProvinceRules = {
   vacation: Verified<readonly VacationTier[]>;
   overtime: Verified<OvertimeRule>;
   holiday: Verified<HolidayRule>;
-  /** General adult minimum wage per hour, in cents, and the date it started. */
-  minimumWage: Verified<{ cents: number; since: string }>;
 };
 
 function yes<T>(value: T, source: string): Verified<T> {
@@ -54,81 +52,67 @@ export const PAY_RULES: Record<Province, ProvinceRules> = {
       },
       "https://www.ontario.ca/document/your-guide-employment-standards-act-0/public-holidays",
     ),
-    // News reports say $17.95 from Oct 1, 2026. The ontario.ca minimum wage page we read still showed an old chart.
-    minimumWage: no("https://www.ontario.ca/document/your-guide-employment-standards-act-0/minimum-wage", "The official page we read showed an out-of-date chart."),
   },
   AB: {
     vacation: yes(FOUR_SIX, "https://www.alberta.ca/vacation-pay"),
     overtime: no("https://www.alberta.ca/overtime", NOT_READ),
     holiday: no("https://www.alberta.ca/general-holidays-pay", NOT_READ),
-    minimumWage: no("https://www.alberta.ca/minimum-wage", "The official page gives $15 but no start date."),
   },
   BC: {
     vacation: yes(FOUR_SIX, "https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards/time-off/vacation"),
     overtime: no("https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards/hours-of-work-and-overtime/overtime", NOT_READ),
     holiday: no("https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards/statutory-holidays", NOT_READ),
-    minimumWage: yes({ cents: 1_825, since: "2026-06-01" }, "https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards/wages/minimum-wage"),
   },
   MB: {
     // Manitoba: 4% for years 1 to 5, 6% once 5 years are complete.
     vacation: yes(FOUR_SIX, "https://www.gov.mb.ca/labour/standards/doc,vacations,factsheet.html"),
     overtime: yes({ dailyHours: 8, weeklyHours: 40, multiplier: 1.5 }, "https://www.gov.mb.ca/labour/standards/doc,overtime,factsheet.html"),
     holiday: no("https://www.gov.mb.ca/labour/standards/doc,general-holidays,factsheet.html", NOT_READ),
-    minimumWage: yes({ cents: 1_640, since: "2026-10-01" }, "https://www.gov.mb.ca/labour/standards/doc,minimum-wage,factsheet.html"),
   },
   NB: {
     vacation: no("https://www2.gnb.ca/content/gnb/en/departments/post-secondary_education_training_and_labour/People/content/EmploymentStandards.html", "The official site blocks automated readers."),
     overtime: no("https://www2.gnb.ca/content/gnb/en/departments/post-secondary_education_training_and_labour/People/content/EmploymentStandards.html", "The official site blocks automated readers."),
     holiday: no("https://www2.gnb.ca/content/gnb/en/departments/post-secondary_education_training_and_labour/People/content/EmploymentStandards.html", "The official site blocks automated readers."),
-    minimumWage: no("https://www2.gnb.ca/content/gnb/en/departments/post-secondary_education_training_and_labour/People/content/EmploymentStandards/MinimumWage.html", "The official site blocks automated readers."),
   },
   NL: {
     vacation: no("https://www.gov.nl.ca/ecc/labour/lra/", NOT_READ),
     overtime: no("https://www.gov.nl.ca/ecc/labour/lra/", NOT_READ),
     holiday: no("https://www.gov.nl.ca/ecc/labour/lra/", NOT_READ),
-    minimumWage: no("https://www.gov.nl.ca/ecc/labour/lsminimumwage/", NOT_READ),
   },
   NS: {
     vacation: no("https://novascotia.ca/lae/employmentrights/vacationpay.asp", NOT_READ),
     overtime: no("https://novascotia.ca/lae/employmentrights/hoursofwork.asp", NOT_READ),
     holiday: no("https://novascotia.ca/lae/employmentrights/holidaysandvacation.asp", NOT_READ),
-    minimumWage: yes({ cents: 1_700, since: "2026-10-01" }, "https://novascotia.ca/lae/employmentrights/minimumwage.asp"),
   },
   NT: {
     vacation: no("https://www.ece.gov.nt.ca/en/services/employment-standards", NOT_READ),
     overtime: no("https://www.ece.gov.nt.ca/en/services/employment-standards", NOT_READ),
     holiday: no("https://www.ece.gov.nt.ca/en/services/employment-standards", NOT_READ),
-    minimumWage: no("https://www.ece.gov.nt.ca/en/services/employment-standards/minimum-wage", "The official page we read showed a 2021 rate, which looks out of date."),
   },
   NU: {
     vacation: no("https://nu-lsco.ca/", NOT_READ),
     overtime: no("https://nu-lsco.ca/", NOT_READ),
     holiday: no("https://nu-lsco.ca/", NOT_READ),
-    minimumWage: no("https://nu-lsco.ca/", NOT_READ),
   },
   PE: {
     vacation: no("https://www.princeedwardisland.ca/en/topic/employment-standards", NOT_READ),
     overtime: no("https://www.princeedwardisland.ca/en/topic/employment-standards", NOT_READ),
     holiday: no("https://www.princeedwardisland.ca/en/topic/employment-standards", NOT_READ),
-    minimumWage: no("https://www.princeedwardisland.ca/en/information/economic-development-workforce-and-labour/minimum-wage-order", NOT_READ),
   },
   QC: {
     vacation: no("https://www.cnesst.gouv.qc.ca/en/working-conditions/leave/annual-vacation", NOT_READ),
     overtime: no("https://www.cnesst.gouv.qc.ca/en/working-conditions/hours-work/overtime", NOT_READ),
     holiday: no("https://www.cnesst.gouv.qc.ca/en/working-conditions/leave/statutory-holidays", NOT_READ),
-    minimumWage: no("https://www.cnesst.gouv.qc.ca/en/working-conditions/wages-pay/minimum-wage", NOT_READ),
   },
   SK: {
     vacation: no("https://www.saskatchewan.ca/business/employment-standards", NOT_READ),
     overtime: no("https://www.saskatchewan.ca/business/employment-standards", NOT_READ),
     holiday: no("https://www.saskatchewan.ca/business/employment-standards", NOT_READ),
-    minimumWage: no("https://www.saskatchewan.ca/business/employment-standards/wages-and-pay/minimum-wage", NOT_READ),
   },
   YT: {
     vacation: no("https://yukon.ca/en/employment-standards", NOT_READ),
     overtime: no("https://yukon.ca/en/employment-standards", NOT_READ),
     holiday: no("https://yukon.ca/en/employment-standards", NOT_READ),
-    minimumWage: no("https://yukon.ca/en/minimum-wage", NOT_READ),
   },
 };
 
@@ -156,12 +140,73 @@ export function minimumVacationBps(province: Province, hireDate: string | null |
   return bps;
 }
 
-/** Minimum wage in cents on a date, or null when not verified or not yet in force. */
+/**
+ * General hourly minimum wage, by province, with history so a past date still
+ * resolves. Research done 2026-11-22 from government pages and releases.
+ * `from: null` means "in force before the next change; start date not recorded".
+ * Rates change, usually once a year. Re-check each spring and fall.
+ */
+export const MINIMUM_WAGE_AS_OF = "2026-11-22";
+
+export type WageStep = { cents: number; from: string | null; announced?: boolean };
+export type WageClass = "general" | "student" | "tipped";
+
+export type MinimumWageRule = {
+  source: string;
+  /** Where the latest change was announced, when the link is a department page. */
+  sourceNote?: string;
+  general: readonly WageStep[];
+  /** Special rates. Never applied unless the owner marks the person (student: ON and AB only). */
+  student?: readonly WageStep[];
+  tipped?: readonly WageStep[];
+};
+
+export const MINIMUM_WAGES: Record<Province, MinimumWageRule> = {
+  AB: { source: "https://www.alberta.ca/minimum-wage", general: [{ cents: 1_500, from: "2018-10-01" }], student: [{ cents: 1_300, from: null }] },
+  BC: { source: "https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards/wages/minimum-wage", general: [{ cents: 1_785, from: null }, { cents: 1_825, from: "2026-06-01" }] },
+  MB: { source: "https://www.gov.mb.ca/labour/standards/doc,minimum-wage,factsheet.html", general: [{ cents: 1_600, from: null }, { cents: 1_640, from: "2026-10-01" }] },
+  NB: { source: "https://www2.gnb.ca/content/gnb/en/departments/post-secondary_education_training_and_labour/People/content/EmploymentStandards/MinimumWage.html", general: [{ cents: 1_565, from: null }, { cents: 1_590, from: "2026-04-01" }] },
+  NL: { source: "https://www.gov.nl.ca/releases/", sourceNote: "Government of NL news release, 2026-02-26", general: [{ cents: 1_600, from: null }, { cents: 1_635, from: "2026-04-01" }] },
+  NS: { source: "https://novascotia.ca/lae/employmentrights/minimumwage.asp", general: [{ cents: 1_675, from: "2026-04-01" }, { cents: 1_700, from: "2026-10-01" }] },
+  ON: { source: "https://www.ontario.ca/minimumwage", general: [{ cents: 1_760, from: null }, { cents: 1_795, from: "2026-10-01" }], student: [{ cents: 1_690, from: "2026-10-01" }] },
+  PE: {
+    source: "https://www.princeedwardisland.ca/en/information/economic-development-workforce-and-labour/minimum-wage-order",
+    general: [
+      { cents: 1_700, from: "2026-04-01" },
+      { cents: 1_730, from: "2026-10-01" },
+      { cents: 1_760, from: "2027-04-01", announced: true },
+    ],
+  },
+  QC: { source: "https://www.cnesst.gouv.qc.ca/en/working-conditions/wages-pay/minimum-wage", general: [{ cents: 1_610, from: null }, { cents: 1_660, from: "2026-05-01" }], tipped: [{ cents: 1_330, from: "2026-05-01" }] },
+  SK: { source: "https://www.saskatchewan.ca/government/news-and-media", sourceNote: "Saskatchewan news release, 2026-06-29", general: [{ cents: 1_535, from: null }, { cents: 1_570, from: "2026-10-01" }] },
+  YT: { source: "https://yukon.ca/en/find-minimum-wage-yukon", general: [{ cents: 1_794, from: null }, { cents: 1_851, from: "2026-04-01" }] },
+  NT: { source: "https://www.gov.nt.ca/en/newsroom", sourceNote: "GNWT public service announcement, 2026-07-31", general: [{ cents: 1_695, from: null }, { cents: 1_720, from: "2026-09-01" }] },
+  NU: { source: "https://www.gov.nu.ca/en/newsroom", sourceNote: "Government of Nunavut announcement (Sept 1, 2026 rate)", general: [{ cents: 1_975, from: null }, { cents: 2_017, from: "2026-09-01" }] },
+};
+
+function stepOn(steps: readonly WageStep[] | undefined, onDate: string): WageStep | null {
+  if (!steps?.length) return null;
+  let found: WageStep | null = null;
+  for (const step of steps) {
+    if (step.from == null || step.from <= onDate) found = step;
+  }
+  // Before the first known start date, only a step with an unknown start (null) applies.
+  return found;
+}
+
+/** Minimum wage in force on the day the hours were worked, or null when no rate is known for that day. */
+export function minimumWageOn(province: Province, workDate: string, wageClass: WageClass = "general"): { cents: number; from: string | null; wageClass: WageClass } | null {
+  const rule = MINIMUM_WAGES[province];
+  const special = wageClass === "student" && (province === "ON" || province === "AB") ? rule.student : wageClass === "tipped" ? rule.tipped : undefined;
+  const pickSpecial = special ? stepOn(special, workDate) : null;
+  if (pickSpecial) return { cents: pickSpecial.cents, from: pickSpecial.from, wageClass };
+  const step = stepOn(rule.general, workDate);
+  return step ? { cents: step.cents, from: step.from, wageClass: "general" } : null;
+}
+
+/** Kept for callers that want only cents. */
 export function minimumWageCents(province: Province, onDate: string): number | null {
-  const rule = PAY_RULES[province].minimumWage;
-  if (!rule.verified) return null;
-  if (onDate < rule.value.since) return null;
-  return rule.value.cents;
+  return minimumWageOn(province, onDate)?.cents ?? null;
 }
 
 export type DayMinutes = { date: string; minutes: number };
@@ -212,7 +257,7 @@ export function holidayPayCents(province: Province, wagesLastWeeksCents: number,
 export function unverifiedRules(): { province: Province; rule: keyof ProvinceRules; source: string; why: string }[] {
   const out: { province: Province; rule: keyof ProvinceRules; source: string; why: string }[] = [];
   for (const [province, rules] of Object.entries(PAY_RULES) as [Province, ProvinceRules][]) {
-    for (const key of ["vacation", "overtime", "holiday", "minimumWage"] as const) {
+    for (const key of ["vacation", "overtime", "holiday"] as const) {
       const rule = rules[key];
       if (!rule.verified) out.push({ province, rule: key, source: rule.source, why: rule.why });
     }

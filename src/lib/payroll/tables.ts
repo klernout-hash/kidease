@@ -323,12 +323,21 @@ export const QUEBEC_2026 = {
   creditRate: 0.14,
   basicPersonal: 18_952,
   workerDeduction: { rate: 0.06, max: 1_450 },
+  /**
+   * Gratuities (bonuses): flat 7% when the year's estimated pay including the
+   * gratuity is not over $18,952; otherwise the additional-deduction method.
+   * Revenu Québec "Gratuities and retroactive pay" and "Principal changes for 2026".
+   */
+  gratuityThreshold: 18_952,
+  gratuityFlatRate: 0.07,
   formulaReadFromPdf: false,
   sources: {
     amounts: "https://www.revenuquebec.ca/en/businesses/source-deductions-and-employer-contributions/employers-principal-changes-for-2026/",
     deductions:
       "https://www.revenuquebec.ca/en/businesses/source-deductions-and-employer-contributions/calculating-source-deductions-and-contributions/source-deductions-of-quebec-income-tax/reducing-the-remuneration-subject-to-source-deductions/",
     guide: "https://www.revenuquebec.ca/en/online-services/forms-and-publications/current-details/tp-1015-f-v/",
+    gratuities:
+      "https://www.revenuquebec.ca/en/businesses/source-deductions-and-employer-contributions/calculating-source-deductions-and-contributions/special-cases-source-deductions-and-employer-contributions/gratuities-and-retroactive-pay/",
   },
 } as const;
 

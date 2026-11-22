@@ -56,6 +56,7 @@ type EmployeeRow = {
   contractor_basis: string | null;
   gst_registered: boolean | null;
   gst_number: string | null;
+  wage_class: string | null;
 };
 
 function toPerson(row: EmployeeRow): PayPerson | null {
@@ -87,12 +88,13 @@ function toPerson(row: EmployeeRow): PayPerson | null {
     contractorBasis: row.contractor_basis === "base" ? "base" : "flat",
     gstRegistered: row.gst_registered === true,
     gstNumber: row.gst_number,
+    wageClass: row.wage_class === "student" ? "student" : row.wage_class === "tipped" ? "tipped" : "general",
   };
 }
 
 const EMPLOYEE_COLUMNS = `e.id, e.display_name, e.province, e.pay_type, e.worker_type, e.rate_cents, e.pay_frequency,
   e.vacation_bps, e.vacation_mode, e.td1_federal_cents, e.td1_provincial_cents, e.td1_status, e.cpp_exempt, e.ei_exempt,
-  e.extra_tax_cents, e.hire_date, e.end_date, e.contractor_basis, e.gst_registered, e.gst_number`;
+  e.extra_tax_cents, e.hire_date, e.end_date, e.contractor_basis, e.gst_registered, e.gst_number, e.wage_class`;
 
 /** Everyone on the centre's pay list, for the staff picker. Owner or payroll editor only. */
 export async function loadPeople(sql: Rows, userId: string, daycareId: string): Promise<PayPerson[]> {
@@ -128,6 +130,10 @@ export type PayDesk = {
   payTypeToken: string;
   rateOverride: number | null;
   payTypeOverride: PayType | null;
+  bonusToken: string;
+  bonusOverride: number | null;
+  /** Bonuses on approved stubs earlier this year. */
+  ytdBonusCents: number;
   history: { field: string; date: string; oldValue: string; newValue: string; reason: string; actorId: string; at: string }[];
   lockedThrough: string | null;
   ytdStubs: ApprovedStub[];
@@ -206,6 +212,8 @@ export async function loadDesk(
   const lastOf = (field: string) => [...changes].reverse().find((row) => row.field === field);
   const rate = lastOf("rate_cents");
   const payType = lastOf("pay_type");
+  const bonus = lastOf("bonus_cents");
+  const ytdStubs = stubs.map((row) => parseStub(safeJson(row.stub_json))).filter((row): row is ApprovedStub => row != null);
   return {
     person,
     days,
@@ -214,6 +222,9 @@ export async function loadDesk(
     payTypeToken: payType?.id ?? "",
     rateOverride: rate && rate.new_value !== "" ? Number(rate.new_value) : null,
     payTypeOverride: payType && ["hourly", "salary", "contractor"].includes(payType.new_value) ? (payType.new_value as PayType) : null,
+    bonusToken: bonus?.id ?? "",
+    bonusOverride: bonus && bonus.new_value !== "" && Number(bonus.new_value) > 0 ? Math.round(Number(bonus.new_value)) : null,
+    ytdBonusCents: ytdStubs.reduce((sum, row) => sum + row.bonusCents, 0),
     history: input.selfOnly
       ? []
       : changes.map((row) => ({
@@ -226,7 +237,7 @@ export async function loadDesk(
           at: iso(row.created_at),
         })),
     lockedThrough,
-    ytdStubs: stubs.map((row) => parseStub(safeJson(row.stub_json))).filter((row): row is ApprovedStub => row != null),
+    ytdStubs,
   };
 }
 
@@ -252,7 +263,7 @@ export async function saveOverride(
     userId: string;
     daycareId: string;
     employeeId: string;
-    field: "day_minutes" | "rate_cents" | "pay_type";
+    field: "day_minutes" | "rate_cents" | "pay_type" | "bonus_cents";
     /** work_date for day_minutes, the period start for rate and pay type. */
     keyDate: string;
     oldValue: string;
@@ -341,7 +352,7 @@ export async function checkIn(sql: Rows, input: { id: string; daycareId: string;
 
 /**
  * Approve a pay period: the period row, every stub, and contractor invoice
- * drafts in one statement. Owner only. A period that was already approved
+ * drafts in one statement. Owner or payroll editor; approved_by records who. A period that was already approved
  * is not approved twice.
  */
 export async function approvePeriod(
@@ -358,7 +369,7 @@ export async function approvePeriod(
   },
 ): Promise<{ ok: true; stubs: number } | { ok: false; error: "permission" | "already_approved" }> {
   const rows = await sql.query<{ periods: number; stubs: number }>(
-    `with allowed as (select 1 as ok where ${OWNER}),
+    `with allowed as (select 1 as ok where ${EDITOR}),
      p as (
        insert into payroll_periods (id, daycare_id, period_start, period_end, pay_date, status, approved_by)
        select $3, $2, $4::date, $5::date, $6::date, 'approved', $1 from allowed
@@ -393,16 +404,82 @@ export async function approvePeriod(
   );
   if (rows[0]?.periods === 1) return { ok: true, stubs: rows[0].stubs };
   const access = await payAccess(sql, input.userId, input.daycareId);
-  return { ok: false, error: access.owner ? "already_approved" : "permission" };
+  return { ok: false, error: access.editor ? "already_approved" : "permission" };
 }
 
-/** Approved stubs between two pay dates. Owner only. */
+/** Approved stubs between two pay dates. Owner or payroll editor. */
 export async function loadStubs(sql: Rows, input: { userId: string; daycareId: string; from: string; to: string }): Promise<ApprovedStub[]> {
   const rows = await sql.query<{ stub_json: string }>(
     `select s.stub_json from payroll_stubs s
-     where s.daycare_id = $2 and ${OWNER} and s.pay_date between $3::date and $4::date
+     where s.daycare_id = $2 and ${EDITOR} and s.pay_date between $3::date and $4::date
      order by s.pay_date, s.id`,
     [input.userId, input.daycareId, input.from, input.to],
   );
   return rows.map((row) => parseStub(safeJson(row.stub_json))).filter((row): row is ApprovedStub => row != null);
+}
+
+/**
+ * Mark a person as student, tipped, or general for minimum wage. One statement:
+ * the access check, the person update, and the audit row (old, new, who, reason).
+ */
+export async function setWageClass(
+  sql: Rows,
+  input: { id: string; userId: string; daycareId: string; employeeId: string; wageClass: "general" | "student" | "tipped"; reason: string; today: string },
+): Promise<boolean> {
+  const rows = await sql.query<{ id: string }>(
+    `with target as (
+       select e.id, e.wage_class from payroll_employees e
+       where e.id = $3 and e.daycare_id = $2 and ${EDITOR}
+     ),
+     changed as (
+       update payroll_employees set wage_class = $4
+       where id = (select id from target) and daycare_id = $2
+       returning id
+     )
+     insert into payroll_overrides (id, daycare_id, employee_id, field, period_start, old_value, new_value, reason, actor_id, supersedes_id)
+     select $5, $2, $3, 'wage_class', $7::date, (select wage_class from target), $4, $6, $1, $5
+     from changed
+     returning id`,
+    [input.userId, input.daycareId, input.employeeId, input.wageClass, input.id, input.reason, input.today],
+  );
+  return rows.length === 1;
+}
+
+export type EditorRow = { userId: string; name: string; editor: boolean };
+
+/** Active team members and whether each has pay access. Owner only. */
+export async function listEditors(sql: Rows, userId: string, daycareId: string): Promise<EditorRow[]> {
+  const rows = await sql.query<{ user_id: string; name: string | null; editor: boolean }>(
+    `select m.user_id, coalesce(nullif(u.name, ''), u.email, m.user_id) as name,
+       exists (select 1 from payroll_editors pe where pe.daycare_id = m.daycare_id and pe.user_id = m.user_id) as editor
+     from centre_members m
+     left join "user" u on u.id = m.user_id
+     where m.daycare_id = $2 and m.status = 'active' and m.role <> 'owner' and ${OWNER}
+     order by 2, 1`,
+    [userId, daycareId],
+  );
+  return rows.map((row) => ({ userId: row.user_id, name: row.name ?? row.user_id, editor: row.editor === true }));
+}
+
+/** Give or remove pay access, with an audit row, in one statement. Owner only; the person must be an active member. */
+export async function setEditor(
+  sql: Rows,
+  input: { id: string; userId: string; daycareId: string; memberId: string; grant: boolean },
+): Promise<boolean> {
+  const change = input.grant
+    ? `insert into payroll_editors (daycare_id, user_id, granted_by)
+       select $2, $3, $1 where ${OWNER}
+         and exists (select 1 from centre_members m where m.daycare_id = $2 and m.user_id = $3 and m.status = 'active')
+       on conflict do nothing
+       returning user_id`
+    : `delete from payroll_editors where daycare_id = $2 and user_id = $3 and ${OWNER}
+       returning user_id`;
+  const rows = await sql.query<{ user_id: string }>(
+    `with changed as (${change})
+     insert into payroll_editor_audits (id, daycare_id, user_id, action, actor_id)
+     select $4, $2, $3, $5, $1 from changed
+     returning id`,
+    [input.userId, input.daycareId, input.memberId, input.id, input.grant ? "grant" : "remove"],
+  );
+  return rows.length === 1;
 }

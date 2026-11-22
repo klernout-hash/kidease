@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { minimumVacationBps, minimumWageCents, holidayPayCents, PAY_RULES, splitOvertime, unverifiedRules, yearsOfService } from "../src/lib/payroll/pay-rules.ts";
+import { minimumVacationBps, minimumWageCents, minimumWageOn, MINIMUM_WAGES, MINIMUM_WAGE_AS_OF, holidayPayCents, PAY_RULES, splitOvertime, unverifiedRules, yearsOfService } from "../src/lib/payroll/pay-rules.ts";
 import { cntCents, employerCosts, yearlyHealthTaxCents } from "../src/lib/payroll/employer-costs.ts";
 import { contractorPay, validGstNumber } from "../src/lib/payroll/contractor.ts";
 import { correctionLines, dayRows, parseHours, planAdjust, planFlag, planReset, staffDayView, totalMinutes } from "../src/lib/payroll/hours-adjust.ts";
@@ -12,9 +12,11 @@ import { PROVINCE_CODES } from "../src/lib/payroll/tables.ts";
 
 const NOW = new Date("2026-11-20T20:00:00Z");
 
-test("every province has all four pay rules, each with an official link and as-of date", () => {
+test("every province has its pay rules and a minimum wage, each with an official link and as-of date", () => {
   for (const code of PROVINCE_CODES) {
-    for (const key of ["vacation", "overtime", "holiday", "minimumWage"]) {
+    assert.match(MINIMUM_WAGES[code].source, /^https:\/\//, `${code} minimum wage`);
+    assert.ok(MINIMUM_WAGES[code].general.length >= 1);
+    for (const key of ["vacation", "overtime", "holiday"]) {
       const rule = PAY_RULES[code][key];
       assert.match(rule.source, /^https:\/\//, `${code} ${key}`);
       assert.equal(rule.asOf, "2026-11-22");
@@ -34,12 +36,42 @@ test("vacation pay follows years of service where verified, and stays empty wher
   assert.equal(minimumVacationBps("ON", null, "2026-11-20"), null);
 });
 
-test("minimum wage is only a number where the official page confirmed it", () => {
-  assert.equal(minimumWageCents("BC", "2026-11-20"), 1_825);
-  assert.equal(minimumWageCents("MB", "2026-11-20"), 1_640);
-  assert.equal(minimumWageCents("MB", "2026-09-30"), null);
-  assert.equal(minimumWageCents("NS", "2026-11-20"), 1_700);
-  assert.equal(minimumWageCents("ON", "2026-11-20"), null);
+// [province, date before the latest change, rate then, latest change date, latest rate]
+const WAGES = [
+  ["AB", "2018-09-30", null, "2018-10-01", 1_500],
+  ["BC", "2026-05-31", 1_785, "2026-06-01", 1_825],
+  ["MB", "2026-09-30", 1_600, "2026-10-01", 1_640],
+  ["NB", "2026-03-31", 1_565, "2026-04-01", 1_590],
+  ["NL", "2026-03-31", 1_600, "2026-04-01", 1_635],
+  ["NS", "2026-09-30", 1_675, "2026-10-01", 1_700],
+  ["ON", "2026-09-30", 1_760, "2026-10-01", 1_795],
+  ["PE", "2026-09-30", 1_700, "2026-10-01", 1_730],
+  ["QC", "2026-04-30", 1_610, "2026-05-01", 1_660],
+  ["SK", "2026-09-30", 1_535, "2026-10-01", 1_570],
+  ["YT", "2026-03-31", 1_794, "2026-04-01", 1_851],
+  ["NT", "2026-08-31", 1_695, "2026-09-01", 1_720],
+  ["NU", "2026-08-31", 1_975, "2026-09-01", 2_017],
+];
+
+for (const [province, before, oldRate, from, rate] of WAGES) {
+  test(`minimum wage ${province}: ${rate / 100} from ${from}, the earlier rate the day before`, () => {
+    assert.equal(minimumWageCents(province, from), rate);
+    assert.equal(minimumWageCents(province, "2026-11-22"), rate);
+    assert.equal(minimumWageCents(province, before), oldRate);
+  });
+}
+
+test("minimum wage history: PEI's announced April 2027 rate, Nova Scotia's April 2026 step, student and tipped rates", () => {
+  assert.equal(minimumWageCents("PE", "2027-04-01"), 1_760);
+  assert.equal(minimumWageCents("PE", "2027-03-31"), 1_730);
+  assert.equal(minimumWageCents("NS", "2026-04-01"), 1_675);
+  assert.equal(minimumWageCents("NS", "2026-03-31"), null);
+  assert.equal(minimumWageOn("ON", "2026-11-02", "student").cents, 1_690);
+  assert.equal(minimumWageOn("AB", "2026-11-02", "student").cents, 1_300);
+  // Student rates are only for Ontario and Alberta.
+  assert.equal(minimumWageOn("BC", "2026-11-02", "student").wageClass, "general");
+  assert.equal(minimumWageOn("QC", "2026-11-02", "tipped").cents, 1_330);
+  assert.equal(MINIMUM_WAGE_AS_OF, "2026-11-22");
 });
 
 test("overtime: Ontario weekly 44, Manitoba daily 8 and weekly 40, others not estimated", () => {
@@ -217,7 +249,7 @@ test("pre-flight flags TD1, long weeks, low rate, missed check-out, $0 pay, and 
   assert.ok(codes.includes("missing_td1"));
   assert.ok(codes.includes("over_60_hours"));
   assert.ok(codes.includes("mid_period_start"));
-  assert.ok(codes.includes("minimum_wage_unverified"));
+  assert.ok(!codes.includes("minimum_wage_unverified"));
   assert.equal(canApprove([card]), true);
   const bc = buildPayCard({ person: { ...person, province: "BC", rateCents: 1_700, endDate: "2026-11-15" }, period, days: fullDays(480) });
   const bcCodes = bc.checks.map((check) => check.code);
@@ -316,9 +348,7 @@ test("unsupported pay is blocked, never shown as a partial number", () => {
   assert.equal(canApprove([qc2027]), false);
   const early = buildPayCard({ person, period: { start: "2026-06-07", end: "2026-06-20", payDate: "2026-06-26" }, days: fullDays(480) });
   assert.equal(canApprove([early]), false);
-  const bonus = buildPayCard({ person, period, days: fullDays(480), addons: [{ kind: "bonus", amountCents: 50_000 }] });
-  assert.match(bonus.employee.blocked, /bonus/i);
-  assert.equal(canApprove([bonus]), false);
+  assert.match(qc2027.employee.blocked, /hasn't published its 2027 figures/);
 });
 
 test("pay day words exist in English and French, and the default period is two weeks", async () => {
@@ -350,4 +380,54 @@ test("the pay server checks the flag, never trusts browser amounts, and moves no
   assert.doesNotMatch(migration, /\bdrop\b/i);
   const down = readFileSync(new URL("../migrations/down/0228_payroll_pay_runs.sql", import.meta.url), "utf8");
   assert.match(down, /drop table if exists payroll_overrides/);
+});
+
+test("a period that spans a minimum wage change checks each day against the rate in force that day", async () => {
+  const { checkText } = await import("../src/lib/payroll/payday-copy.ts");
+  const spanPeriod = { start: "2026-09-20", end: "2026-10-03", payDate: "2026-10-09" };
+  const days = [];
+  for (const date of ["2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02"]) {
+    days.push({ date, checkIn: null, checkOut: null, autoMinutes: 480, minutes: 480, adjusted: false, originalMinutes: null, reason: null, adjustedBy: null, adjustedAt: null, missedCheckout: false, flagged: false, flagNote: null, locked: false });
+  }
+  // $17.70 is above Ontario's $17.60 (September) but under $17.95 (from October 1).
+  const card = buildPayCard({ person: { ...person, rateCents: 1_770 }, period: spanPeriod, days });
+  const stops = card.checks.filter((check) => check.code === "under_minimum_wage");
+  assert.equal(stops.length, 1);
+  assert.equal(stops[0].date, "2026-10-01");
+  assert.equal(stops[0].amountCents, 1_795);
+  assert.equal(canApprove([card]), false);
+  assert.match(checkText(stops[0], "en"), /\$17\.95 an hour minimum wage in force on October 1, 2026/);
+  assert.match(checkText(stops[0], "fr"), /17,95\s\$ l’heure en vigueur le 1er octobre 2026/);
+  // Under both rates: one stop per rate.
+  const low = buildPayCard({ person: { ...person, rateCents: 1_700 }, period: spanPeriod, days });
+  assert.deepEqual(low.checks.filter((check) => check.code === "under_minimum_wage").map((check) => check.amountCents), [1_760, 1_795]);
+  // A student in Ontario uses the student rate, with a note.
+  const student = buildPayCard({ person: { ...person, rateCents: 1_700, wageClass: "student" }, period: { start: "2026-11-08", end: "2026-11-21", payDate: "2026-11-27" }, days: fullDays(480) });
+  assert.ok(student.checks.some((check) => check.code === "student_rate"));
+  assert.equal(student.checks.some((check) => check.code === "under_minimum_wage"), false);
+  // Salary is checked as pay per hour worked.
+  const salary = buildPayCard({ person: { ...person, payType: "salary", rateCents: 2_600_000 }, period, days: fullDays(600) });
+  assert.ok(salary.checks.some((check) => check.code === "under_minimum_wage"));
+});
+
+test("a bonus on the pay card is taxed with the bonus method and shows on the stub, register, pack, and slips", () => {
+  const card = buildPayCard({ person, period, days: fullDays(480), overrides: { bonusCents: 100_000 } });
+  const plain = buildPayCard({ person, period, days: fullDays(480) });
+  assert.equal(card.bonusCents, 100_000);
+  assert.equal(card.grossCents, plain.grossCents + 100_000);
+  assert.ok(card.bonusTaxCents > 0);
+  assert.equal(card.employee.federalTaxCents + card.employee.provincialTaxCents, plain.employee.federalTaxCents + plain.employee.provincialTaxCents + card.bonusTaxCents);
+  assert.ok(card.employee.employeeCppCents > plain.employee.employeeCppCents);
+  assert.ok(card.employee.employeeEiCents > plain.employee.employeeEiCents);
+  assert.equal(canApprove([card]), true);
+  const stub = stubFromCard({ id: "sb", periodId: "p", periodStart: period.start, periodEnd: period.end, payDate: period.payDate, province: "ON", card });
+  assert.equal(stub.bonusCents, 100_000);
+  assert.equal(stub.bonusTaxCents, card.bonusTaxCents);
+  const files = packFiles({ stubs: [stub], remitter: "regular", year: 2026 });
+  assert.match(files["pay-register.csv"].split("\r\n")[0], /,bonus,bonus_tax,/);
+  assert.match(files["pay-register.csv"], /,1000\.00,/);
+  assert.equal(t4Slips([stub], 2026)[0].box14, stub.grossCents);
+  const qc = buildPayCard({ person: { ...person, province: "QC" }, period, days: fullDays(480), overrides: { bonusCents: 100_000 } });
+  const qcStub = stubFromCard({ id: "sq", periodId: "p", periodStart: period.start, periodEnd: period.end, payDate: period.payDate, province: "QC", card: qc });
+  assert.equal(rl1Slips([qcStub], 2026)[0].A, qcStub.grossCents);
 });

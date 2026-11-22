@@ -288,3 +288,50 @@ test("exempt workers pay no CPP or EI, and zero pay takes nothing off", () => {
   const zero = calculateDeductions({ province: "SK", frequency: "weekly", payDate: PAY_DATE, taxableCents: 0, pensionableCents: 0, insurableCents: 0 });
   assert.equal(zero.federalTaxCents + zero.provincialTaxCents + zero.cppCents + zero.eiCents, 0);
 });
+
+test("CRA bonus method by hand: Ontario biweekly $2,000 pay with a $1,000 bonus", () => {
+  // Regular CPP: 0.0595 x (2,000 - 134.61) = 110.99. With the bonus: 0.0595 x (3,000 - 134.61) = 170.49.
+  // F5A = 110.99 x (0.01 / 0.0595) = 18.6538; F5 on all pay = 28.6538; F5B = 10.00.
+  // A without the bonus = 26 x (2,000 - 18.6538) = 51,515.00. A with = 51,515.00 + 1,000 - 10.00 = 52,505.00.
+  // Credits use regular pay only. Both A are in the 14% federal bracket, so
+  // federal tax on the bonus = 0.14 x 990 = 138.60.
+  // Ontario: both A in the 5.05% bracket, no surtax, health premium already at $600 in both:
+  // 0.0505 x 990 = 49.995 -> 50.00. Bonus tax = 188.60.
+  const result = calculateDeductions({ province: "ON", frequency: "biweekly", payDate: PAY_DATE, taxableCents: 200_000, pensionableCents: 300_000, insurableCents: 300_000, bonusCents: 100_000 });
+  assert.equal(result.cppCents, 17_049);
+  assert.equal(result.eiCents, 4_890);
+  assert.equal(result.bonusFederalTaxCents, 13_860);
+  assert.ok(Math.abs(result.bonusProvincialTaxCents - 5_000) <= 1);
+  const regular = calculateDeductions({ province: "ON", frequency: "biweekly", payDate: PAY_DATE, taxableCents: 200_000, pensionableCents: 200_000, insurableCents: 200_000 });
+  assert.equal(result.federalTaxCents, regular.federalTaxCents + 13_860);
+  assert.equal(result.provincialTaxCents, regular.provincialTaxCents + result.bonusProvincialTaxCents);
+});
+
+test("Revenu Québec gratuity method by hand: biweekly $2,000 with a $1,000 bonus, and the 7% flat rate", () => {
+  // QPP regular 0.063 x 1,865.39 = 117.52; with bonus 180.52. CSA on the bonus (F5B) = 10.00.
+  // H = 1,450 / 26 = 55.7692. I = 26 x (2,000 - 55.7692 - 18.6540) = 50,065.00.
+  // Year with the bonus = 53,000, over $18,952, so: Y(51,055) - Y(50,065) = 0.14 x 990 = 138.60.
+  // Federal (Quebec): 0.14 x 990 = 138.60, less the 16.5% abatement = 115.73.
+  const result = calculateDeductions({ province: "QC", frequency: "biweekly", payDate: PAY_DATE, taxableCents: 200_000, pensionableCents: 300_000, insurableCents: 300_000, bonusCents: 100_000 });
+  assert.equal(result.cppCents, 18_052);
+  assert.equal(result.bonusProvincialTaxCents, 13_860);
+  assert.equal(result.bonusFederalTaxCents, 11_573);
+  // $300 a week plus a $500 bonus: year = 16,100, not over $18,952, so 7% of 500 = 35.00.
+  const flat = calculateDeductions({ province: "QC", frequency: "weekly", payDate: PAY_DATE, taxableCents: 30_000, pensionableCents: 80_000, insurableCents: 80_000, bonusCents: 50_000 });
+  assert.equal(flat.bonusProvincialTaxCents, 3_500);
+});
+
+test("earlier bonuses this year raise the bracket for the next one", () => {
+  const first = calculateDeductions({ province: "AB", frequency: "monthly", payDate: PAY_DATE, taxableCents: 480_000, pensionableCents: 680_000, insurableCents: 680_000, bonusCents: 200_000 });
+  const later = calculateDeductions({ province: "AB", frequency: "monthly", payDate: PAY_DATE, taxableCents: 480_000, pensionableCents: 680_000, insurableCents: 680_000, bonusCents: 200_000, ytdBonusCents: 500_000 });
+  assert.ok(later.bonusFederalTaxCents > first.bonusFederalTaxCents);
+});
+
+test("Quebec 2027 is blocked with a plain message", async () => {
+  const { QUEBEC_2027_BLOCKED } = await import("../src/lib/payroll/engine.ts");
+  const result = calculateDeductions({ province: "QC", frequency: "weekly", payDate: "2027-01-08", taxableCents: 100_000, pensionableCents: 100_000, insurableCents: 100_000 });
+  assert.equal(result.message, QUEBEC_2027_BLOCKED.en);
+  assert.match(QUEBEC_2027_BLOCKED.fr, /2027/);
+  const ok2026 = calculateDeductions({ province: "QC", frequency: "weekly", payDate: "2026-12-31", taxableCents: 100_000, pensionableCents: 100_000, insurableCents: 100_000 });
+  assert.equal(ok2026.ok, true);
+});

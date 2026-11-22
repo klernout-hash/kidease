@@ -14,7 +14,20 @@ import { packFiles, packJson, packPdfLines } from "@/lib/payroll/accountant-pack
 import { parseHours, staffDayView, validAdjustReason } from "@/lib/payroll/hours-adjust.ts";
 import { buildPayCard, canApprove, type PayCard, type PayType } from "@/lib/payroll/pay-card.ts";
 import type { PayYtd } from "@/lib/payroll/calculate.ts";
-import { approvePeriod, loadDesk, loadPeople, loadStubs, myEmployeeId, payAccess, saveFlag, saveOverride, type PayDesk } from "@/lib/payroll/pay-store.ts";
+import {
+  approvePeriod,
+  listEditors,
+  loadDesk,
+  loadPeople,
+  loadStubs,
+  myEmployeeId,
+  payAccess,
+  saveFlag,
+  saveOverride,
+  setEditor,
+  setWageClass,
+  type PayDesk,
+} from "@/lib/payroll/pay-store.ts";
 import { stubFromCard, type ApprovedStub } from "@/lib/payroll/stubs.ts";
 import type { RemitterType } from "@/lib/payroll/remittance.ts";
 
@@ -57,9 +70,11 @@ export function cardFromDesk(desk: PayDesk, period: { start: string; end: string
     period,
     days: desk.days,
     ytd: ytdFromStubs(desk.ytdStubs),
+    ytdBonusCents: desk.ytdBonusCents,
     overrides: {
       payType: desk.payTypeOverride ?? undefined,
       rateCents: desk.rateOverride ?? undefined,
+      bonusCents: desk.bonusOverride ?? undefined,
     },
   });
 }
@@ -119,7 +134,12 @@ export const payrollChange = createServerFn({ method: "POST" })
       daycareId: id(input?.daycareId),
       employeeId: id(input?.employeeId),
       ...periodOf(input),
-      kind: (input?.kind === "rate" || input?.kind === "pay_type" || input?.kind === "reset" ? input.kind : "hours") as "hours" | "rate" | "pay_type" | "reset",
+      kind: (input?.kind === "rate" || input?.kind === "pay_type" || input?.kind === "reset" || input?.kind === "bonus" ? input.kind : "hours") as
+        | "hours"
+        | "rate"
+        | "pay_type"
+        | "reset"
+        | "bonus",
       workDate: day(input?.workDate),
       value: String(input?.value ?? "").trim().slice(0, 40),
       reason: String(input?.reason ?? "").trim().slice(0, 200),
@@ -132,10 +152,10 @@ export const payrollChange = createServerFn({ method: "POST" })
     const sql = await getSql();
     const desk = await loadDesk(sql, { userId: context.userId, daycareId: data.daycareId, employeeId: data.employeeId, from: data.start, to: data.end, now: new Date() });
     if (!desk) throw new Error("payroll:permission");
-    const reason = data.kind === "reset" ? data.reason || "Reset to check-in times" : data.reason;
+    const reason = data.kind === "reset" ? data.reason || "Reset to check-in times" : data.kind === "bonus" ? data.reason || "Bonus" : data.reason;
     if (!validAdjustReason(reason)) throw new Error("payroll:reason");
 
-    let field: "day_minutes" | "rate_cents" | "pay_type";
+    let field: "day_minutes" | "rate_cents" | "pay_type" | "bonus_cents";
     let keyDate: string;
     let oldValue: string;
     let newValue: string;
@@ -153,6 +173,14 @@ export const payrollChange = createServerFn({ method: "POST" })
         if (minutes == null) throw new Error("payroll:hours");
         newValue = String(minutes);
       }
+    } else if (data.kind === "bonus") {
+      // Empty clears the bonus. Whole cents only.
+      const cents = data.value === "" ? 0 : Math.round(Number(data.value.replace(",", ".")) * 100);
+      if (!Number.isFinite(cents) || cents < 0 || cents > 100_000_000) throw new Error("payroll:bonus");
+      field = "bonus_cents";
+      keyDate = data.start;
+      oldValue = String(desk.bonusOverride ?? 0);
+      newValue = cents > 0 ? String(cents) : "";
     } else if (data.kind === "rate") {
       const cents = Math.round(Number(data.value) * 100);
       if (!Number.isFinite(cents) || cents <= 0 || cents > 100_000_000) throw new Error("payroll:rate");
@@ -237,7 +265,7 @@ export const payrollApprove = createServerFn({ method: "POST" })
     requireOn();
     const sql = await getSql();
     const access = await payAccess(sql, context.userId, data.daycareId);
-    if (!access.owner) throw new Error("payroll:owner_only");
+    if (!access.editor) throw new Error("payroll:permission");
     const people = await loadPeople(sql, context.userId, data.daycareId);
     const period = { start: data.start, end: data.end, payDate: data.payDate };
     const cards: PayCard[] = [];
@@ -276,7 +304,7 @@ function packArgs(input: PackInput) {
   };
 }
 
-/** One-click accountant pack: CSV files plus printable lines. Owner only. */
+/** One-click accountant pack: CSV files plus printable lines. Owner or payroll editor. */
 export const payrollAccountantPack = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(packArgs)
@@ -284,7 +312,7 @@ export const payrollAccountantPack = createServerFn({ method: "POST" })
     noStore();
     requireOn();
     const sql = await getSql();
-    if (!(await payAccess(sql, context.userId, data.daycareId)).owner) throw new Error("payroll:owner_only");
+    if (!(await payAccess(sql, context.userId, data.daycareId)).editor) throw new Error("payroll:permission");
     const stubs = await loadStubs(sql, { userId: context.userId, daycareId: data.daycareId, from: data.from, to: data.to });
     const files = packFiles({ stubs, remitter: data.remitter, year: Number(data.to.slice(0, 4)) });
     if (!xeroSyncEnabled()) delete files["xero-manual-journal.csv"];
@@ -295,7 +323,7 @@ export const payrollAccountantPack = createServerFn({ method: "POST" })
     };
   });
 
-/** Read-only JSON for future API partners. Behind the payroll flag, owner sign-in only. */
+/** Read-only JSON for future API partners. Behind the payroll flag; owner or payroll editor sign-in. */
 export const payrollPackJson = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator(packArgs)
@@ -303,7 +331,53 @@ export const payrollPackJson = createServerFn({ method: "GET" })
     noStore();
     requireOn();
     const sql = await getSql();
-    if (!(await payAccess(sql, context.userId, data.daycareId)).owner) throw new Error("payroll:owner_only");
+    if (!(await payAccess(sql, context.userId, data.daycareId)).editor) throw new Error("payroll:permission");
     const stubs = await loadStubs(sql, { userId: context.userId, daycareId: data.daycareId, from: data.from, to: data.to });
     return packJson({ daycareId: data.daycareId, from: data.from, to: data.to, stubs, remitter: data.remitter, year: Number(data.to.slice(0, 4)) });
+  });
+
+/** Mark a person as a student (Ontario, Alberta) or back to general minimum wage. Recorded with who and why. */
+export const payrollWageClass = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; employeeId?: string; wageClass?: string; reason?: string }) => ({
+    daycareId: id(input?.daycareId),
+    employeeId: id(input?.employeeId),
+    wageClass: (input?.wageClass === "student" ? "student" : "general") as "general" | "student",
+    reason: String(input?.reason ?? "").trim().slice(0, 200),
+  }))
+  .handler(async ({ context, data }) => {
+    requireOn();
+    const reason = data.reason || (data.wageClass === "student" ? "Marked as a student" : "Back to general minimum wage");
+    const today = new Date().toISOString().slice(0, 10);
+    const saved = await setWageClass(await getSql(), { id: nid(), userId: context.userId, ...data, reason, today });
+    if (!saved) throw new Error("payroll:permission");
+    return { ok: true as const };
+  });
+
+/** Team members and who has pay access. Owner only. */
+export const payrollEditors = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string }) => ({ daycareId: id(input?.daycareId) }))
+  .handler(async ({ context, data }) => {
+    noStore();
+    requireOn();
+    const sql = await getSql();
+    if (!(await payAccess(sql, context.userId, data.daycareId)).owner) return { owner: false as const, members: [] };
+    return { owner: true as const, members: await listEditors(sql, context.userId, data.daycareId) };
+  });
+
+/** Give or remove pay access. Owner only. Writes an audit row. */
+export const payrollSetEditor = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; memberId?: string; grant?: boolean }) => ({
+    daycareId: id(input?.daycareId),
+    memberId: id(input?.memberId),
+    grant: input?.grant === true,
+  }))
+  .handler(async ({ context, data }) => {
+    requireOn();
+    if (!data.memberId || data.memberId === context.userId) throw new Error("payroll:permission");
+    const saved = await setEditor(await getSql(), { id: nid(), userId: context.userId, ...data });
+    if (!saved) throw new Error("payroll:permission");
+    return { ok: true as const, sent: false as const };
   });

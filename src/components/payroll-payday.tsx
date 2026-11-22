@@ -4,7 +4,8 @@ import { downloadPdf } from "@/lib/earnings-pdf";
 import { formatCad } from "@/lib/payroll/money.ts";
 import { formatMinutes, type DayRow } from "@/lib/payroll/hours-adjust.ts";
 import { buildPayCard, canApprove, searchPeople, SEARCHABLE_AFTER, type PayCard, type PayType } from "@/lib/payroll/pay-card.ts";
-import { checkWords, defaultPeriod, payErrorWords, paydayCopy, type PaydayCopy } from "@/lib/payroll/payday-copy.ts";
+import { checkText, defaultPeriod, payErrorWords, paydayCopy, type PaydayCopy } from "@/lib/payroll/payday-copy.ts";
+import { MINIMUM_WAGE_AS_OF } from "@/lib/payroll/pay-rules.ts";
 import type { PayDesk } from "@/lib/payroll/pay-store.ts";
 import type { PayYtd } from "@/lib/payroll/calculate.ts";
 import {
@@ -12,9 +13,12 @@ import {
   payrollApprove,
   payrollChange,
   payrollDesk,
+  payrollEditors,
   payrollFlagDay,
   payrollMyHours,
   payrollPeople,
+  payrollSetEditor,
+  payrollWageClass,
 } from "@/lib/server/payroll-pay";
 
 type Locale = "en" | "fr";
@@ -47,16 +51,18 @@ function dayLabel(date: string, locale: Locale): string {
   return new Date(`${date}T12:00:00Z`).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 }
 
-function cardFrom(loaded: Loaded, period: Period, draft: { payType?: PayType; rateCents?: number; regularMinutes?: number }): PayCard {
+function cardFrom(loaded: Loaded, period: Period, draft: { payType?: PayType; rateCents?: number; regularMinutes?: number; bonusCents?: number }): PayCard {
   return buildPayCard({
     person: loaded.desk.person,
     period,
     days: loaded.desk.days,
     ytd: loaded.ytd,
+    ytdBonusCents: loaded.desk.ytdBonusCents,
     overrides: {
       payType: draft.payType ?? loaded.desk.payTypeOverride ?? undefined,
       rateCents: draft.rateCents ?? loaded.desk.rateOverride ?? undefined,
       regularMinutes: draft.regularMinutes,
+      bonusCents: draft.bonusCents ?? loaded.desk.bonusOverride ?? undefined,
     },
   });
 }
@@ -67,6 +73,7 @@ export function PayDay({ locale, daycareId }: { locale: Locale; daycareId: strin
   const [period, setPeriod] = useState<Period>(() => defaultPeriod(todayLocal()));
   const [people, setPeople] = useState<Person[] | null>(null);
   const [owner, setOwner] = useState(false);
+  const [editor, setEditor] = useState(false);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
   const [personId, setPersonId] = useState("");
@@ -80,6 +87,7 @@ export function PayDay({ locale, daycareId }: { locale: Locale; daycareId: strin
       .then((row) => {
         if (!live) return;
         setOwner(row.owner);
+        setEditor(row.editor);
         setPeople(row.people);
       })
       .catch((err: unknown) => live && setError(errorText(err, locale)));
@@ -113,7 +121,8 @@ export function PayDay({ locale, daycareId }: { locale: Locale; daycareId: strin
         </div>
       ) : null}
       {!people && !error ? <p className="text-sm text-muted">{copy.loading}</p> : null}
-      {people && people.length === 0 ? <p className="rounded-xl bg-surface p-4 text-sm ring-1 ring-border">{copy.nobody}</p> : null}
+      {people && !editor ? <p className="rounded-xl bg-surface p-4 text-sm ring-1 ring-border">{copy.permission}</p> : null}
+      {people && editor && people.length === 0 ? <p className="rounded-xl bg-surface p-4 text-sm ring-1 ring-border">{copy.nobody}</p> : null}
       {people && people.length > 0 ? (
         <div className="space-y-2" data-ke="staff-picker">
           {searchable ? (
@@ -137,8 +146,9 @@ export function PayDay({ locale, daycareId }: { locale: Locale; daycareId: strin
         </div>
       ) : null}
       {personId ? <PayCardPanel key={`${personId}-${period.start}-${period.end}-${period.payDate}`} locale={locale} copy={copy} daycareId={daycareId} employeeId={personId} period={period} /> : null}
-      {people && people.length > 0 && owner ? <ApproveSection locale={locale} copy={copy} daycareId={daycareId} people={people} period={period} /> : null}
-      {owner ? <AccountantPack locale={locale} copy={copy} daycareId={daycareId} /> : null}
+      {people && people.length > 0 && editor ? <ApproveSection locale={locale} copy={copy} daycareId={daycareId} people={people} period={period} /> : null}
+      {editor ? <AccountantPack locale={locale} copy={copy} daycareId={daycareId} /> : null}
+      {owner ? <EditorsPanel locale={locale} copy={copy} daycareId={daycareId} /> : null}
     </section>
   );
 }
@@ -149,6 +159,7 @@ function PayCardPanel({ locale, copy, daycareId, employeeId, period }: { locale:
   const [attempt, setAttempt] = useState(0);
   const [payType, setPayType] = useState<PayType | null>(null);
   const [rate, setRate] = useState("");
+  const [bonus, setBonus] = useState("");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
@@ -162,6 +173,7 @@ function PayCardPanel({ locale, copy, daycareId, employeeId, period }: { locale:
         setLoaded(row as unknown as Loaded);
         setPayType(null);
         setRate("");
+        setBonus("");
         setReason("");
       })
       .catch((err: unknown) => live && setError(errorText(err, locale)));
@@ -172,9 +184,18 @@ function PayCardPanel({ locale, copy, daycareId, employeeId, period }: { locale:
 
   const draftRateCents = rate.trim() ? Math.round(Number(rate.replace(",", ".")) * 100) : undefined;
   const validRate = draftRateCents == null || (Number.isFinite(draftRateCents) && draftRateCents > 0);
+  const draftBonusCents = bonus.trim() ? Math.round(Number(bonus.replace(",", ".")) * 100) : undefined;
+  const validBonus = draftBonusCents == null || (Number.isFinite(draftBonusCents) && draftBonusCents >= 0);
   const card = useMemo(
-    () => (loaded ? cardFrom(loaded, period, { payType: payType ?? undefined, rateCents: validRate ? draftRateCents : undefined }) : null),
-    [loaded, period, payType, draftRateCents, validRate],
+    () =>
+      loaded
+        ? cardFrom(loaded, period, {
+            payType: payType ?? undefined,
+            rateCents: validRate ? draftRateCents : undefined,
+            bonusCents: validBonus ? draftBonusCents : undefined,
+          })
+        : null,
+    [loaded, period, payType, draftRateCents, validRate, draftBonusCents, validBonus],
   );
 
   if (error) {
@@ -192,7 +213,10 @@ function PayCardPanel({ locale, copy, daycareId, employeeId, period }: { locale:
   const desk = loaded.desk;
   const savedType = desk.payTypeOverride ?? desk.person.payType;
   const savedRate = desk.rateOverride ?? desk.person.rateCents;
-  const dirty = (payType != null && payType !== savedType) || (draftRateCents != null && draftRateCents !== savedRate);
+  const savedBonus = desk.bonusOverride ?? 0;
+  const bonusDirty = draftBonusCents != null && validBonus && draftBonusCents !== savedBonus;
+  const dirty = (payType != null && payType !== savedType) || (draftRateCents != null && draftRateCents !== savedRate) || bonusDirty;
+  const studentAllowed = desk.person.province === "ON" || desk.person.province === "AB";
   const money = (cents: number) => formatCad(cents, locale);
   const rateLabel = card.payType === "salary" ? copy.salary : card.payType === "contractor" ? copy.agreed : copy.rate;
 
@@ -206,6 +230,23 @@ function PayCardPanel({ locale, copy, daycareId, employeeId, period }: { locale:
       if (draftRateCents != null && draftRateCents !== savedRate) {
         await payrollChange({ data: { daycareId, employeeId, ...period, kind: "rate", value: (draftRateCents / 100).toFixed(2), reason, expectedId: desk.rateToken } });
       }
+      if (bonusDirty && draftBonusCents != null) {
+        await payrollChange({ data: { daycareId, employeeId, ...period, kind: "bonus", value: (draftBonusCents / 100).toFixed(2), reason, expectedId: desk.bonusToken } });
+      }
+      setNote(copy.saved);
+    } catch (err) {
+      setNote(errorText(err, locale));
+    } finally {
+      setBusy(false);
+      setAttempt((n) => n + 1);
+    }
+  }
+
+  async function toggleStudent(next: boolean) {
+    setBusy(true);
+    setNote("");
+    try {
+      await payrollWageClass({ data: { daycareId, employeeId, wageClass: next ? "student" : "general" } });
       setNote(copy.saved);
     } catch (err) {
       setNote(errorText(err, locale));
@@ -241,6 +282,33 @@ function PayCardPanel({ locale, copy, daycareId, employeeId, period }: { locale:
           />
         </label>
       </div>
+      {card.payType !== "contractor" ? (
+        <label className="block text-sm font-medium">
+          {copy.bonus}
+          <input
+            inputMode="decimal"
+            className={INPUT}
+            value={bonus}
+            placeholder={savedBonus ? (savedBonus / 100).toFixed(2) : copy.bonusHint}
+            onFocus={focusIn}
+            onChange={(event) => setBonus(event.target.value)}
+            aria-invalid={!validBonus}
+            data-ke="pay-bonus"
+          />
+        </label>
+      ) : null}
+      {studentAllowed && card.payType === "hourly" ? (
+        <label className="flex min-h-11 items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            className="size-5"
+            checked={desk.person.wageClass === "student"}
+            disabled={busy}
+            onChange={(event) => void toggleStudent(event.target.checked)}
+          />
+          {copy.student}
+        </label>
+      ) : null}
       {dirty ? (
         <div className="space-y-2 rounded-xl bg-soft p-3">
           <p className="text-sm">{copy.edited}</p>
@@ -249,10 +317,10 @@ function PayCardPanel({ locale, copy, daycareId, employeeId, period }: { locale:
             <input className={INPUT} value={reason} placeholder={copy.reasonHint} onFocus={focusIn} onChange={(event) => setReason(event.target.value)} maxLength={200} />
           </label>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="secondary" disabled={busy || reason.trim().length < 3 || !validRate} onClick={() => void saveDraft()}>
+            <Button type="button" variant="secondary" disabled={busy || (reason.trim().length < 3 && !(bonusDirty && payType == null && draftRateCents == null)) || !validRate || !validBonus} onClick={() => void saveDraft()}>
               {copy.save}
             </Button>
-            <Button type="button" variant="ghost" onClick={() => { setPayType(null); setRate(""); setReason(""); }}>
+            <Button type="button" variant="ghost" onClick={() => { setPayType(null); setRate(""); setBonus(""); setReason(""); }}>
               {copy.cancel}
             </Button>
           </div>
@@ -276,6 +344,8 @@ function PayNumbers({ card, copy, money }: { card: PayCard; copy: PaydayCopy; mo
   if (!blocked) {
     rows.push([copy.gross, money(card.grossCents)]);
     if (card.vacationCents) rows.push([copy.vacation, money(card.vacationCents)]);
+    if (card.bonusCents) rows.push([copy.bonus, money(card.bonusCents)]);
+    if (card.bonusTaxCents) rows.push([copy.bonusTax, money(card.bonusTaxCents)]);
     if (card.contractor?.salesTaxCents) rows.push([copy.salesTax, money(card.contractor.salesTaxCents)]);
     if (card.payType !== "contractor") rows.push([copy.deductions, money(card.deductionsCents)]);
   }
@@ -314,8 +384,8 @@ function ChecksList({ card, copy, locale }: { card: PayCard; copy: PaydayCopy; l
       {card.checks.length === 0 ? <p className="text-sm text-muted">{copy.allClear}</p> : null}
       <ul className="space-y-2">
         {card.checks.map((check) => (
-          <li key={`${check.code}-${check.detail ?? ""}`} className={`rounded-xl p-3 text-sm ${check.level === "stop" ? "bg-danger/10" : "bg-soft"}`}>
-            <span>{checkWords(check.code, locale)}</span>
+          <li key={`${check.code}-${check.date ?? ""}-${check.amountCents ?? ""}`} className={`rounded-xl p-3 text-sm ${check.level === "stop" ? "bg-danger/10" : "bg-soft"}`}>
+            <span>{checkText(check, locale)}</span>
             {check.source ? (
               <a className={`${LINK} ml-1`} href={check.source} target="_blank" rel="noreferrer">
                 {copy.source}
@@ -324,6 +394,9 @@ function ChecksList({ card, copy, locale }: { card: PayCard; copy: PaydayCopy; l
           </li>
         ))}
       </ul>
+      <p className="text-xs text-muted">
+        {copy.wageAsOf} {MINIMUM_WAGE_AS_OF}. {copy.wageNote}
+      </p>
     </section>
   );
 }
@@ -631,5 +704,80 @@ export function MyPayHours({ locale, daycareId }: { locale: Locale; daycareId: s
         ))}
       </ul>
     </section>
+  );
+}
+
+/** Owner only: who else can do pay. Every change is recorded. */
+function EditorsPanel({ locale, copy, daycareId }: { locale: Locale; copy: PaydayCopy; daycareId: string }) {
+  const [members, setMembers] = useState<{ userId: string; name: string; editor: boolean }[] | null>(null);
+  const [pick, setPick] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let live = true;
+    void payrollEditors({ data: { daycareId } })
+      .then((row) => live && setMembers(row.members))
+      .catch((err: unknown) => live && setMessage(errorText(err, locale)));
+    return () => {
+      live = false;
+    };
+  }, [daycareId, attempt, locale]);
+
+  async function change(memberId: string, grant: boolean) {
+    setBusy(true);
+    setMessage("");
+    try {
+      await payrollSetEditor({ data: { daycareId, memberId, grant } });
+      setPick("");
+      setMessage(copy.saved);
+    } catch (err) {
+      setMessage(errorText(err, locale));
+    } finally {
+      setBusy(false);
+      setAttempt((n) => n + 1);
+    }
+  }
+
+  const editors = (members ?? []).filter((row) => row.editor);
+  const others = (members ?? []).filter((row) => !row.editor);
+  return (
+    <details className="rounded-2xl bg-surface ring-1 ring-border" data-ke="pay-editors">
+      <summary className="flex min-h-11 cursor-pointer items-center px-4 font-medium">{copy.editors}</summary>
+      <div className="space-y-3 px-4 pb-4">
+        <p className="text-sm text-muted">{copy.editorsLead}</p>
+        {members && editors.length === 0 ? <p className="text-sm">{copy.editorNone}</p> : null}
+        <ul className="space-y-1">
+          {editors.map((row) => (
+            <li key={row.userId} className="flex min-h-11 flex-wrap items-center justify-between gap-2">
+              <span>{row.name}</span>
+              <button type="button" className={LINK} disabled={busy} onClick={() => void change(row.userId, false)}>
+                {copy.editorRemove}
+              </button>
+            </li>
+          ))}
+        </ul>
+        {others.length ? (
+          <div className="space-y-2">
+            <label className="block text-sm">
+              {copy.editorPick}
+              <select className={INPUT} value={pick} onChange={(event) => setPick(event.target.value)}>
+                <option value="">{copy.editorPick}</option>
+                {others.map((row) => (
+                  <option key={row.userId} value={row.userId}>
+                    {row.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button type="button" variant="secondary" disabled={busy || !pick} onClick={() => void change(pick, true)}>
+              {copy.editorAdd}
+            </Button>
+          </div>
+        ) : null}
+        {message ? <p className="text-sm" role="status">{message}</p> : null}
+      </div>
+    </details>
   );
 }

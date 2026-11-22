@@ -6,7 +6,7 @@
 import { estimatePay, type PayAddon, type PayEstimate, type PayFrequency, type PayYtd } from "./calculate.ts";
 import { contractorPay, type ContractorPay } from "./contractor.ts";
 import type { DayRow } from "./hours-adjust.ts";
-import { minimumVacationBps, minimumWageCents, PAY_RULES, splitOvertime } from "./pay-rules.ts";
+import { MINIMUM_WAGES, minimumVacationBps, minimumWageOn, PAY_RULES, splitOvertime, type WageClass } from "./pay-rules.ts";
 import { PAY_PERIODS, type Province } from "./tables.ts";
 
 export type PayType = "hourly" | "salary" | "contractor";
@@ -33,6 +33,8 @@ export type PayPerson = {
   contractorBasis?: "flat" | "base";
   gstRegistered?: boolean;
   gstNumber?: string | null;
+  /** Owner marks a student (Ontario and Alberta). Never set automatically. */
+  wageClass?: WageClass;
 };
 
 export type PayPeriod = { start: string; end: string; payDate: string };
@@ -43,6 +45,8 @@ export type CardOverrides = {
   regularMinutes?: number;
   overtimeMinutes?: number;
   extraCents?: number;
+  /** Bonus this pay, whole cents. Empty by default. */
+  bonusCents?: number;
 };
 
 export type PayCard = {
@@ -59,6 +63,8 @@ export type PayCard = {
   correctionCents: number;
   grossCents: number;
   vacationCents: number;
+  bonusCents: number;
+  bonusTaxCents: number;
   deductionsCents: number;
   netCents: number;
   employee: PayEstimate | null;
@@ -79,10 +85,15 @@ export type PreflightCheck = {
     | "overtime_unverified"
     | "vacation_below_law"
     | "flagged_day"
-    | "no_table";
+    | "no_table"
+    | "student_rate";
   level: "stop" | "check";
   source?: string;
   detail?: string;
+  /** Minimum wage that applies, for the message. */
+  amountCents?: number;
+  /** Day the hours were worked, or the date a rate started. */
+  date?: string;
 };
 
 /** Split days into Sunday-to-Saturday weeks. */
@@ -103,6 +114,7 @@ export function buildPayCard(input: {
   period: PayPeriod;
   days: readonly DayRow[];
   ytd?: Partial<PayYtd>;
+  ytdBonusCents?: number;
   addons?: PayAddon[];
   corrections?: readonly { cents: number }[];
   overrides?: CardOverrides;
@@ -147,6 +159,8 @@ export function buildPayCard(input: {
   let contractor: ContractorPay | null = null;
   let grossCents: number;
   let vacationCents = 0;
+  let bonusCents = 0;
+  let bonusTaxCents = 0;
   let deductionsCents = 0;
   let netCents: number;
 
@@ -176,11 +190,15 @@ export function buildPayCard(input: {
       cppExempt: person.cppExempt,
       eiExempt: person.eiExempt,
       addons: input.addons,
+      bonusCents: Math.max(0, Math.round(o.bonusCents ?? 0)),
+      ytdBonusCents: input.ytdBonusCents,
       extraTaxCents: person.extraTaxCents,
       extraTaxApproved: person.extraTaxApproved,
     });
     grossCents = employee.cashGrossCents;
     vacationCents = employee.vacationCents;
+    bonusCents = employee.bonusCents;
+    bonusTaxCents = employee.bonusTaxCents;
     netCents = employee.netCents;
     deductionsCents = employee.blocked ? 0 : grossCents + employee.nontaxCashCents - netCents;
     if (employee.blocked) checks.push({ code: "no_table", level: "stop", detail: employee.blocked });
@@ -197,11 +215,37 @@ export function buildPayCard(input: {
   }
   if (input.days.some((row) => row.missedCheckout)) checks.push({ code: "missed_checkout", level: "stop" });
   if (input.days.some((row) => row.flagged)) checks.push({ code: "flagged_day", level: "check" });
+  // Minimum wage: the rate in force on each day the hours were worked.
+  if (payType !== "contractor") {
+    const worked = input.days.filter((row) => row.minutes > 0);
+    const wageClass = person.wageClass ?? "general";
+    const source = MINIMUM_WAGES[person.province].source;
+    const effective =
+      payType === "hourly"
+        ? rateCents
+        : regularMinutes > 0
+          ? Math.floor((regularCents * 60) / regularMinutes)
+          : null;
+    const seen = new Set<string>();
+    for (const row of worked) {
+      const floor = minimumWageOn(person.province, row.date, wageClass);
+      if (!floor) {
+        if (!seen.has("unknown")) checks.push({ code: "minimum_wage_unverified", level: "check", source, date: row.date });
+        seen.add("unknown");
+        continue;
+      }
+      if (floor.wageClass === "student" && !seen.has("student")) {
+        checks.push({ code: "student_rate", level: "check", source, amountCents: floor.cents });
+        seen.add("student");
+      }
+      const key = `${floor.cents}`;
+      if (effective != null && effective < floor.cents && !seen.has(key)) {
+        checks.push({ code: "under_minimum_wage", level: "stop", source, amountCents: floor.cents, date: row.date, detail: String(effective) });
+        seen.add(key);
+      }
+    }
+  }
   if (payType === "hourly") {
-    const floor = minimumWageCents(person.province, input.period.end);
-    const rule = PAY_RULES[person.province].minimumWage;
-    if (floor != null && rateCents < floor) checks.push({ code: "under_minimum_wage", level: "stop", source: rule.source, detail: String(floor) });
-    if (floor == null) checks.push({ code: "minimum_wage_unverified", level: "check", source: rule.source });
     if (overtimeMinutes === 0 && !overtimeVerified) {
       const weekly = weeksOf(input.days).some((week) => week.reduce((sum, row) => sum + row.minutes, 0) > 40 * 60);
       if (weekly) checks.push({ code: "overtime_unverified", level: "check", source: PAY_RULES[person.province].overtime.source });
@@ -229,6 +273,8 @@ export function buildPayCard(input: {
     correctionCents,
     grossCents,
     vacationCents,
+    bonusCents,
+    bonusTaxCents,
     deductionsCents,
     netCents,
     employee,

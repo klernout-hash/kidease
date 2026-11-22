@@ -1147,13 +1147,8 @@ export function ProviderPage() {
       {desk === "pay" && session?.providerPayroll && centreOwner ? (
         <PayrollAttendanceReview key={user?.id} locale={locale === "fr" ? "fr" : "en"} />
       ) : null}
-      {desk === "pay" && session?.providerPayroll && centreOwner && listings[0]?.id ? (
+      {desk === "pay" && session?.providerPayroll && listings[0]?.id ? (
         <PayDay key={listings[0].id} locale={locale === "fr" ? "fr" : "en"} daycareId={listings[0].id} />
-      ) : null}
-      {desk === "pay" && session?.providerPayroll && !centreOwner ? (
-        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">
-          {locale === "fr" ? "Seul le propriétaire du centre peut vérifier les heures de paie." : "Only the centre owner can review hours for payroll."}
-        </p>
       ) : null}
       {desk === "pay" && session && !session.providerPayroll ? (
         <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="payroll-off">
