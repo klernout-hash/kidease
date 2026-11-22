@@ -284,7 +284,7 @@ test("CI builds once, shards smoke, and keeps desktop visual blocking on main", 
   assert.match(ci, /paths-ignore:[\s\S]*?docs\/\*\*/);
   assert.match(ci, /\*\*\/\*\.md/);
   assert.match(ci, /mcr\.microsoft\.com\/playwright:v1\.62\.1-jammy/);
-  assert.equal((ci.match(/mcr\.microsoft\.com\/playwright:v1\.62\.1-jammy/g) || []).length, 2);
+  assert.equal((ci.match(/mcr\.microsoft\.com\/playwright:v1\.62\.1-jammy/g) || []).length, 3);
   assert.match(ci, /playwright install-deps chromium/);
   assert.doesNotMatch(ci, /playwright install-deps chromium webkit/);
   assert.doesNotMatch(ci, /playwright install chromium webkit/);
