@@ -19,6 +19,7 @@ import {
   FOOTER_LEGAL,
   footerLinkLabel,
   withStaffJobLinks,
+  withBackgroundCheckLink,
   type FooterColumnId,
   type FooterLinkDef,
 } from "@/lib/site-footer-nav";
@@ -137,7 +138,7 @@ export function SiteFooter() {
   const fr = locale === "fr";
   const staffJobs = withStaffJobLinks(
     {
-      daycares: FOOTER_COLUMNS.daycares,
+      daycares: withBackgroundCheckLink(FOOTER_COLUMNS.daycares, chrome.bgCheckGuide === true),
       support: [...FOOTER_COLUMNS.support, ...FOOTER_COLUMNS.kidease].filter((link) => link.to !== "/get-app"),
     },
     chrome.staffJobsLink === true,

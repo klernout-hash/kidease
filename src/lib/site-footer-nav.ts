@@ -102,6 +102,24 @@ export function withStaffJobLinks(
   return { daycares, support };
 }
 
+const BACKGROUND_CHECK_LINK: FooterLinkDef = {
+  to: "/background-checks",
+  localePaired: true,
+  labelEn: "Background checks",
+  labelFr: "Vérifications d’antécédents",
+};
+
+/** Shown in the daycares column only when the guide flag is on. */
+export function withBackgroundCheckLink(links: readonly FooterLinkDef[], enabled: boolean): FooterLinkDef[] {
+  if (!enabled) return [...links];
+  if (links.some((link) => link.to === "/background-checks")) return [...links];
+  if (!links.some((link) => link.to === "/daycare-requirements")) return [...links];
+  const next = [...links];
+  const index = next.findIndex((link) => link.to === "/daycare-requirements");
+  next.splice(index + 1, 0, BACKGROUND_CHECK_LINK);
+  return next;
+}
+
 function isPlansPath(to: string): boolean {
   const bare = String(to || "").split("?")[0].replace(/\/$/, "") || "/";
   return bare === "/plans" || bare === "/fr/plans" || bare.endsWith("/plans");
@@ -115,6 +133,8 @@ export function footerLinksForShell(
   input: { native: boolean; plansOn: boolean },
   links: readonly FooterLinkDef[] = footerPageLinks(),
 ): FooterLinkDef[] {
+  // The menu and drawer stay unchanged. The background-check guide is linked from
+  // the page footer's Daycares column and from the daycare desk, not the menu.
   return links.filter((link) => {
     if (!input.plansOn && isPlansPath(link.to)) return false;
     if (input.native && (isPlansPath(link.to) || link.to === "/donate" || link.to === "/fr/donate")) return false;

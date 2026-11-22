@@ -91,6 +91,76 @@ async function dismissCookieBar(page) {
   if (!hidden) await page.evaluate(() => document.querySelector('[data-ke="cookie-consent"]')?.remove());
 }
 
+async function daycareLicensingSmoke(browser, base) {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, locale: "en-CA" });
+  const prefix = "kidease.daycare-licensing.v1.";
+  const regionKey = prefix + "last-region";
+  const open = async (path) => {
+    const response = await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    if (response?.status() !== 200) throw new Error("Expected a public licensing guide");
+    await dismissCookieBar(page);
+  };
+  const assertFits = async (region) => {
+    const fits = await region.evaluate((node) => node.scrollWidth <= node.clientWidth + 1);
+    if (!fits) throw new Error("The licensing checklist does not fit its viewport");
+  };
+  try {
+    await open("/start-a-daycare?pt=AB#start-daycare-pt");
+    const checklist = page.getByRole("region", { name: "Your licensing checklist" });
+    await checklist.waitFor({ timeout: timeoutMs });
+    await page.waitForFunction((key) => localStorage.getItem(key) === "AB", regionKey);
+    if (await checklist.getByRole("checkbox").count() !== 6) throw new Error("Expected six checklist steps");
+    const first = checklist.getByRole("checkbox").first();
+    await first.focus();
+    await page.keyboard.press("Space");
+    await page.waitForFunction((key) => localStorage.getItem(key) === '["pathway"]', prefix + "AB");
+    await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.waitForFunction(() => document.querySelector('input[aria-describedby="licensing-detail-pathway"]')?.checked);
+    await assertFits(checklist);
+    await checklist.screenshot({ path: join(dirname(outDir), "licensing-checklist-390.png"), timeout: timeoutMs });
+
+    await open("/start-a-daycare?pt=PE#start-daycare-pt");
+    await page.waitForFunction((key) => localStorage.getItem(key) === "PE", regionKey);
+    if (await first.isChecked()) throw new Error("Progress crossed jurisdiction boundaries");
+    await open("/start-a-daycare");
+    await page.getByRole("link", { name: "Continue: Prince Edward Island" }).waitFor({ timeout: timeoutMs });
+
+    await open("/start-a-daycare?pt=MB#start-daycare-pt");
+    const mbCentre = checklist.getByRole("link", { name: "Centre or nursery school information session" });
+    const mbHome = checklist.getByRole("link", { name: "Home-based child care information session" });
+    await mbCentre.waitFor({ timeout: timeoutMs });
+    await mbHome.waitFor({ timeout: timeoutMs });
+    if (!(await mbCentre.getAttribute("href"))?.includes("/centrebased_childcare/") ||
+        !(await mbHome.getAttribute("href"))?.includes("/homebased_childcare/")) {
+      throw new Error("Manitoba's English centre and home links must point to their own sessions");
+    }
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await open("/fr/start-a-daycare?pt=MB#start-daycare-pt");
+    const mbFr = page.getByRole("region", { name: "Votre liste de vérification pour le permis" });
+    for (const [name, path] of [["Séance d’information : centre ou prématernelle", "/centrebased_childcare/"], ["Séance d’information : garderie familiale", "/homebased_childcare/"]]) {
+      const session = mbFr.getByRole("link", { name });
+      await session.waitFor({ timeout: timeoutMs });
+      const href = await session.getAttribute("href");
+      if (!href?.includes(path) || !href.endsWith("orientation_session.fr.html")) {
+        throw new Error("Manitoba's French links must point to the French centre or home session");
+      }
+    }
+
+    await open("/fr/start-a-daycare?pt=AB#start-daycare-pt");
+    const french = page.getByRole("region", { name: "Votre liste de vérification pour le permis" });
+    await french.waitFor({ timeout: timeoutMs });
+    await page.waitForFunction(() => document.querySelector('input[aria-describedby="licensing-detail-pathway"]')?.checked);
+    await assertFits(french);
+    await french.screenshot({ path: join(dirname(outDir), "licensing-checklist-1280-fr.png"), timeout: timeoutMs });
+    record("daycare-licensing-guest", true, { note: "390 EN and 1280 FR, keyboard, reload, remembered jurisdiction, isolated progress and distinct Manitoba links" });
+  } catch (err) {
+    record("daycare-licensing-guest", false, { note: err instanceof Error ? err.message : String(err) });
+  } finally {
+    await page.close();
+  }
+}
+
 async function settleMockCheckout(page) {
   // The panel assigns the mock Checkout URL. Wait until that navigation commits
   // so the next page.goto is not interrupted. The script never pays.
@@ -2117,6 +2187,7 @@ try {
   await rankingSortSmoke(page, base);
   await frenchCityHubSmoke(page, base);
   await frenchChromeSmoke(page, base);
+  if (args.startPreview && !args.explicitUrl) await daycareLicensingSmoke(browser, base);
 
   const healthResp = await page.request.get(new URL(HEALTH_SMOKE_PATH, base).href).catch(() => null);
   const healthBody = (await healthResp?.text().catch(() => "")) || "";

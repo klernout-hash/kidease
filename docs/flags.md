@@ -293,6 +293,8 @@ A paused screen says what is off and offers a way to search.
 - Migrations `0220`–`0224` are additive and are not applied by this PR.
 - Flag off: `/jobs` and `/jobs/post` render exactly as before. Links sit in the page footer only (not the header menu or drawer).
 
+`FEATURE_BG_CHECK_GUIDE`, `FEATURE_BG_CHECK_RECORDS`, and `FEATURE_BG_CHECK_ATTESTATION` are off. The public guide explains where a centre gets required checks. The centre can record that it saw a result and see in-app reminders. An optional file is a private copy and does not replace the licence holder’s personnel file. A listing may show a sentence the centre wrote. It is not a “background checked” or “verified” badge. Nothing is emailed or texted. Do not turn on `FEATURE_SCREENING_STATUS` or `screening_on_file` for this.
+
 ## Later (not this PR)
 
 - Per-user or % rollouts (today the server uses one distinct id).

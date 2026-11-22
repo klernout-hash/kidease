@@ -59,17 +59,13 @@
         <receiver android:name=".CallDeclineReceiver" android:exported="false" />
     </application>
 
-    <!-- Internet, when-in-use location, and call camera/mic. No notification permission in v1. -->
+    <!-- Internet, vibration, and when-in-use location.
+         Camera, microphone, notifications, and full-screen intent are held.
+         Push and calling code stays in the app with the flags off.
+         See docs/mobile-builds.md to put the declarations back. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 </manifest>

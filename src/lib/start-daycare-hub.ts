@@ -16,6 +16,7 @@ export type StartDaycarePt = {
   licensingFirstEn: string;
   licensingFirstFr: string;
   licensingUrl: string;
+  licensingUrlFr?: string;
   fundingEn: string;
   fundingFr: string;
   fundingUrl: string;
@@ -100,7 +101,8 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
       "Attend a required information session, then apply for a licence. Centres must follow The Community Child Care Standards Act. Contact cdcinfo@gov.mb.ca to register for a session.",
     licensingFirstFr:
       "Assistez à une séance d’information obligatoire, puis demandez un permis. Les centres suivent la Loi sur les normes des services de garde. Inscrivez-vous à une séance via cdcinfo@gov.mb.ca.",
-    licensingUrl: "https://manitoba.ca/education/childcare/centres_homeproviders/centrebased_childcare.html",
+    licensingUrl: "https://www.manitoba.ca/education/childcare/centres_homeproviders/index.html",
+    licensingUrlFr: "https://www.manitoba.ca/education/childcare/centres_homeproviders/index.fr.html",
     fundingEn:
       "Eligible licensed non-profit centres and family/group homes may apply for a one-time start-up grant within one year of licensing new or expanded spaces: typically about $300/home space, $450/infant, preschool or school-age centre space, $245/nursery-school space: for licensing equipment, not wages or rent. Operating grants exist for eligible non-profits. Discretionary and budget-limited. Ask your Child Care Coordinator before purchasing.",
     fundingFr:

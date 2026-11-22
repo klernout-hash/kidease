@@ -2,14 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Sensitive permissions this flavor uses. Each has an en and fr rationale string.
-         Location is while you search. Camera and microphone are for a call on screen.
-         Notifications are for an incoming call. That ring stays off until FEATURE_CALL_PUSH. -->
+    <!-- Location is while you search. Camera, microphone, and notifications are held
+         in this store build, same as the main manifest. Rationale strings stay in
+         values/strings.xml for the build that turns calling back on. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Drop permissions a library might merge in. This flavor does not read the
          phone state, contacts, SMS, storage, or the list of other apps. -->

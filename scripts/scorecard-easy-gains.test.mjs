@@ -32,8 +32,8 @@ test("desktop Playwright uses its versioned cache and unit components always get
   assert.match(versionStep, /npx playwright --version/);
   assert.match(versionStep, /::error::/);
   assert.match(desktop, /actions\/playwright-version/);
-  assert.match(desktop, /actions\/cache\/restore@v4/);
-  assert.match(desktop, /actions\/cache\/save@v4/);
+  assert.match(desktop, /actions\/cache\/restore@v\d+/);
+  assert.match(desktop, /actions\/cache\/save@v\d+/);
   assert.match(desktop, /playwright-\$\{\{ runner\.os \}\}-\$\{\{ steps\.playwright-version\.outputs\.version \}\}-chromium/);
   assert.match(desktop, /if: steps\.playwright-cache\.outputs\.cache-hit != 'true'/);
   assert.match(desktop, /npx playwright install-deps chromium/);

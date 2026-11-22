@@ -182,6 +182,9 @@ const ProviderCareDesk = lazy(() =>
 const ProviderScreeningPanel = lazy(() =>
   import("@/components/provider-screening").then((m) => ({ default: m.ProviderScreeningPanel })),
 );
+const BackgroundCheckDesk = lazy(() =>
+  import("@/components/background-check-records").then((m) => ({ default: m.BackgroundCheckDesk })),
+);
 const HostCalendarDesk = lazy(() =>
   import("@/components/host-calendar-desk").then((m) => ({ default: m.HostCalendarDesk })),
 );
@@ -1119,6 +1122,7 @@ export function ProviderPage() {
           </details>
       ) : null}
 
+      {desk === "employees" ? <BackgroundCheckDesk /> : null}
       {desk === "employees" ? (
         <CentreEmployeesPanel canInvite={canInviteStaff} canEditPermissions={centreOwner} />
       ) : null}
@@ -1132,6 +1136,7 @@ export function ProviderPage() {
       {desk === "learning" ? <CurriculumPackDesk /> : null}
       {desk === "sites" ? <OrgOccupancyDesk /> : null}
 
+      {desk === "screening" ? <BackgroundCheckDesk /> : null}
       {desk === "screening" ? <ProviderScreeningPanel /> : null}
 
       {desk === "licence" && !centreOwner ? (
