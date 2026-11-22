@@ -1649,6 +1649,8 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Allows pay-date email, push, and SMS when those channels are already on. Default off. This build has no sender.",
+  },
+  {
     key: "FEATURE_STAFF_JOB_BOARD",
     defaultOn: false,
     docs: "docs/flags.md",
