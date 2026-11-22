@@ -198,7 +198,15 @@ async function harness() {
   const db = await database();
   const base = modulesFor(db.sql, {}, {});
   const centreAccess = load("centre-access", base);
-  const privateDocsServer = load("private-docs", { ...base, "@/lib/server/r2": { resolveR2Config: () => ({ ok: false }), R2_SETUP_MESSAGE: "off" } });
+  const privateDocsServer = load("private-docs", {
+    ...base,
+    "@/lib/server/r2": {
+      resolveR2Config: () => ({ ok: false }),
+      resolvePrivateR2Config: () => ({ ok: false }),
+      R2_SETUP_MESSAGE: "off",
+      R2_PRIVATE_SETUP_MESSAGE: "off",
+    },
+  });
   const modules = modulesFor(db.sql, privateDocsServer, centreAccess);
   const files = {
     "child-checkin": load("child-checkin", modules),

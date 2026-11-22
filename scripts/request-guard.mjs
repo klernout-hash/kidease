@@ -273,6 +273,14 @@ export function stripPrivateRoutePreloads(html) {
   );
 }
 
+const PRIVATE_MEDIA_PREFIXES = ["/screening/", "/licenses/", "/family-docs/", "/centre-docs/", "/contracts/"];
+
+/** Private document keys must not be served as public pages or media paths. */
+export function isPrivateMediaPath(pathname) {
+  const path = normalizePath(pathname).toLowerCase();
+  return PRIVATE_MEDIA_PREFIXES.some((prefix) => path === prefix.slice(0, -1) || path.startsWith(prefix));
+}
+
 /**
  * @param {{ host?: string | null, pathname?: string | null, search?: string | null, method?: string | null, cookie?: string | null }} input
  * @returns {{ action: "next" } | { action: "redirect", status: 301 | 302 | 303 | 308, location: string } | { action: "not_found", status: 404 } | { action: "asset_miss", status: 404 }}
@@ -280,6 +288,10 @@ export function stripPrivateRoutePreloads(html) {
 export function decideRequest(input = {}) {
   const path = normalizePath(input.pathname);
   const method = String(input.method || "GET").toUpperCase();
+
+  if (isPrivateMediaPath(path)) {
+    return { action: "not_found", status: 404 };
+  }
 
   if (isHashedBuildAsset(path)) {
     return { action: "asset_miss", status: 404 };
