@@ -1981,7 +1981,18 @@ async function runWebkitSearchGuard(base) {
     }
     async function openOk(path) {
       crashes.length = 0;
-      const response = await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      let response = null;
+      const url = new URL(path, base).href;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+          break;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          if (attempt === 1 || !/interrupted by another navigation/i.test(message)) throw err;
+          await page.waitForLoadState("domcontentloaded").catch(() => {});
+        }
+      }
       await page.waitForTimeout(400);
       const text = (await page.locator("body").innerText().catch(() => "")) || "";
       const threw = crashes.some((message) => /trim is not a function|something went wrong/i.test(message));
