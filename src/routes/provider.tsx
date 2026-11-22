@@ -19,6 +19,7 @@ import { BlockFamilyButton } from "@/components/block-user";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityPill } from "@/components/priority-pill";
 import { TwoFactorGate } from "@/lib/auth/gates";
+import { HealthSecondFactorBanner } from "@/components/email-code-setting";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useLocallySignedOut, useSettledUser } from "@/lib/auth/use-current-user";
 import { createListing, getProvider } from "@/lib/server/family";
@@ -526,6 +527,7 @@ export function ProviderPage() {
   return (
     <TwoFactorGate next={search.desk ? `/provider?desk=${search.desk}` : "/provider"}>
     <LoginFunnelDeskLand desk="provider" />
+    <HealthSecondFactorBanner />
     {search.preview === "support" && operatorTools ? <SupportPreviewBanner /> : null}
     <DeskShell
       desk="daycare"

@@ -3,6 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { mapChild, type ChildRow } from "@/lib/child-profile";
 import { openHealth, revealChildHealth } from "@/lib/child-health-crypto";
+import { hideHealthText } from "@/lib/second-factor-policy";
 import { logChildProfileAccess } from "@/lib/server/child-access-log";
 import type { AgeGroup, BookingStatus, Child, Schedule, SpotRequest } from "@/lib/types";
 import { createSpotRequest, updateRequestStatus } from "@/lib/server/family";
@@ -127,7 +128,10 @@ export const listDaycareIncoming = createServerFn({ method: "GET" })
       .filter((row) => visibleIds.has(row.id))
       .map((r) => mapRequest(r, r.child_id ? byId.get(r.child_id) ?? null : null));
     const { decorateCentreRequests } = await import("@/lib/server/child-portfolio");
-    return decorateCentreRequests(sql, mapped);
+    const decorated = await decorateCentreRequests(sql, mapped);
+    const { healthAccessDecision } = await import("@/lib/server/second-factor");
+    const gate = await healthAccessDecision(context.userId, "provider");
+    return gate.redact ? decorated.map((row) => hideHealthText(row)) : decorated;
   });
 
 export const decideParentRequest = createServerFn({ method: "POST" })
