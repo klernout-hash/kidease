@@ -280,7 +280,11 @@ export default defineConfig(({ command, isPreview, mode }) => {
     ? { define: { "import.meta.env.VITE_GOOGLE_MAPS_API_KEY": JSON.stringify(mapsBrowserKey) } }
     : {}),
   build: {
-    sourcemap: Boolean(process.env.POSTHOG_CLI_API_KEY || process.env.POSTHOG_PERSONAL_API_KEY),
+    sourcemap: Boolean(
+      process.env.POSTHOG_CLI_API_KEY ||
+        process.env.POSTHOG_PERSONAL_API_KEY ||
+        String(process.env.SENTRY_UPLOAD_SOURCEMAPS || "").trim() === "1",
+    ),
     rolldownOptions: {
       output: {
         codeSplitting: {

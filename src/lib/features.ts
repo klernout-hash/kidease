@@ -333,6 +333,21 @@ export function govPortalFooterEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_GOV_PORTAL", env);
 }
 
+/** Public background-check guide. Default off. Does not run a check. */
+export function backgroundCheckGuideEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_BG_CHECK_GUIDE", env);
+}
+
+/** Centre dates for checks the centre saw. Default off. No email or SMS. */
+export function backgroundCheckRecordsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_BG_CHECK_RECORDS", env);
+}
+
+/** Optional listing sentence from the centre. Default off. Not a verified badge. */
+export function backgroundCheckAttestationEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_BG_CHECK_ATTESTATION", env);
+}
+
 /** Named PostHog product events. Default off. Does not add personal details. */
 export function productEventsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PRODUCT_EVENTS", env);
