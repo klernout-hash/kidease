@@ -423,3 +423,22 @@ test("the bilingual sharing notice precedes Apply and Accept and describes each 
     assert.doesNotMatch(sj(locale, "privacyLead"), highlights);
   }
 });
+
+test("match review requests reach an admin queue with a 30-day answer date", () => {
+  const server = read("src/lib/server/staff-jobs.ts");
+  for (const name of ["listMatchReviewRequests", "markMatchReviewAnswered"]) {
+    const start = server.indexOf(`export const ${name}`);
+    assert.ok(start > 0, name);
+    const body = server.slice(start, server.indexOf("\n  });\n", start));
+    assert.match(body, /if \(!staffJobBoardEnabled\(\)\) return OFF;/, name);
+    assert.match(body, /await requireAdmin\(context\.userId\)/, name);
+    assert.doesNotMatch(body, /sendEmail|sendMail|sms/i, name);
+  }
+  assert.match(server, /const REVIEW_ANSWER_DAYS = 30;/);
+  assert.match(server, /where id = \$\{data\.id\} and status = 'open'/);
+  const queue = read("src/components/match-review-queue.tsx");
+  assert.match(queue, /privacy@kidease\.ca/);
+  assert.match(queue, /Demandes de révision d’un jumelage/);
+  assert.match(queue, /Match review requests/);
+  assert.match(read("src/routes/admin_.escalations.tsx"), /<MatchReviewQueue fr=\{fr\} \/>/);
+});
