@@ -16,9 +16,11 @@ App name: **KidEase**
 - `native-www/` — tiny fallback shell (production builds use the remote URL).
 - `resources/` — icon + splash generated from the existing pin pipeline (`public/logo-transparent.png`).
 - `ios/` and `android/` — Capacitor 8 native projects, permission strings, and icons. Regenerable (see below).
-- `ios/App/App/App.entitlements` — Associated Domains and Sign in with Apple. Push is not in v1, so `aps-environment` is not set. Archive with Xcode 26 and the iOS 26 SDK. This repo cannot archive on Linux. Deployment target stays iOS 15.0.
+- `ios/App/App/App.entitlements` — Associated Domains and Sign in with Apple. This is the file the store archive signs. `aps-environment` is not in it. Archive with Xcode 26 and the iOS 26 SDK. This repo cannot archive on Linux. Deployment target stays iOS 15.0.
+- `ios/App/App/Store.xcconfig` — the switch for push and calling declarations. The store lines are active. The push lines are comments. See below.
+- `ios/App/App/Info.plist` — no `UIBackgroundModes` key. Do not add `voip`, `audio`, or `remote-notification` here. The build setting in `Store.xcconfig` adds them when you uncomment it.
 - `AndroidManifest.xml` — App Links `autoVerify` for those hosts plus `KidEase://` / `ca.kidease.app://`.
-- Location is **while-using only**. No background location permission, no `UIBackgroundModes: location`.
+- Location is **while-using only**. No background location permission, and no `UIBackgroundModes` key at all.
 
 Do not commit signing secrets, `.p12`, keystores, `android/key.properties`, or `local.properties`.
 
@@ -65,6 +67,40 @@ Needs Kyle’s Apple ID / paid Apple Developer Program. This PR does not create 
 6. App Store Connect → TestFlight → wait for processing → add internal testers. External TestFlight needs Beta App Review later — not this PR.
 
 Xcode will ask you to register the bundle ID in the developer portal the first time. That is account work, not repo work.
+
+### Push and calling declarations
+
+The push and calling source stays in the app. `FEATURE_PUSH`, `FEATURE_CALL_PUSH`, `FEATURE_VOICE`, and `FEATURE_VIDEO` stay off. With those flags off the app does not ask for notification permission, does not show a call button, and does not start PushKit.
+
+This archive also leaves the declarations off. `ios/App/App/Store.xcconfig` is the switch. Debug includes it from `ios/debug.xcconfig`. Release uses it as the App target base configuration. Do not set `CODE_SIGN_ENTITLEMENTS` on the target. A target value overrides the file.
+
+Store archive, leave these as they are:
+
+```
+CODE_SIGN_ENTITLEMENTS = App/App.entitlements
+// CODE_SIGN_ENTITLEMENTS = App/App.push.entitlements
+// INFOPLIST_KEY_UIBackgroundModes = voip audio remote-notification
+// INFOPLIST_KEY_KIDEASEPushCalling = YES
+```
+
+`App/App.entitlements` has Sign in with Apple and Associated Domains. It has no `aps-environment`. `Info.plist` has no `UIBackgroundModes`. `CallKitVoipPlugin.register` returns without creating a PushKit registry unless the built Info.plist has `KIDEASEPushCalling` set to YES.
+
+To put the declarations back in a later archive, when push and calling are ready to ship:
+
+1. Open `ios/App/App/Store.xcconfig`.
+2. Comment out `CODE_SIGN_ENTITLEMENTS = App/App.entitlements`.
+3. Uncomment these three lines, in this order, below the store line:
+
+```
+CODE_SIGN_ENTITLEMENTS = App/App.push.entitlements
+INFOPLIST_KEY_UIBackgroundModes = voip audio remote-notification
+INFOPLIST_KEY_KIDEASEPushCalling = YES
+```
+
+4. Archive again with Xcode 26 and the iOS 26 SDK. Do not edit `Info.plist` to add the modes. Xcode merges `INFOPLIST_KEY_UIBackgroundModes` into the signed Info.plist. `App.push.entitlements` is the same as the store file plus `aps-environment` = `production`.
+5. Turn `FEATURE_PUSH` and `FEATURE_CALL_PUSH` on only after the credentials exist and you mean to send. The declarations and the flags are separate. Flags stay off for this submission.
+
+`npm run cap:permissions` rewrites `App.entitlements` without `aps-environment` and rewrites `App.push.entitlements` with it. It also strips any `UIBackgroundModes` array from the source `Info.plist`. It does not change `Store.xcconfig`.
 
 ## Android — `bundleRelease` → Play internal
 
@@ -139,7 +175,7 @@ Purpose string (English), also in `fr.lproj` / `values-fr`:
 
 | Platform | Present | Must not be present |
 | --- | --- | --- |
-| iOS | `NSLocationWhenInUseUsageDescription` | `NSLocationAlways*`, `UIBackgroundModes` location |
+| iOS | `NSLocationWhenInUseUsageDescription` | `NSLocationAlways*`, any `UIBackgroundModes` entry (`location`, `voip`, `audio`, `remote-notification`) |
 | Android | `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` | `ACCESS_BACKGROUND_LOCATION` |
 
 Parents can still search by city / postal code if they tap Don’t Allow.

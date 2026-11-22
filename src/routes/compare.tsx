@@ -22,6 +22,7 @@ import { compareParentFeeFlag } from "@/lib/server/compare-fields";
 import { compareEmptyKey } from "@/lib/copy-keys";
 import { useCopy } from "@/lib/use-copy";
 import { useRoleChrome } from "@/components/role-chrome";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
@@ -68,7 +69,9 @@ function CompareRoute() {
 
 export function ComparePage({ slugs }: { slugs: string[] }) {
   const { t, locale } = useCopy();
-  const plansOn = useRoleChrome().subscriptionsEnabled === true;
+  const nativeShell = useInNativeShell();
+  const chrome = useRoleChrome();
+  const plansOn = !nativeShell && chrome.subscriptionsEnabled === true;
   const feesOn = parentListingFeesVisible();
   const { compareMax } = useParentPlusAccess();
   const origin = useAppStore((s) => s.origin);

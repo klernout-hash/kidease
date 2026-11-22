@@ -1,6 +1,10 @@
 package ca.kidease.app;
 
+import android.net.ConnectivityManager;
+import android.net.Network;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.webkit.WebView;
 import androidx.webkit.WebSettingsCompat;
@@ -19,6 +23,9 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     private static final String TAG = "KidEase";
     private static final String NATIVE_TOKEN = "KidEaseNative";
+    private final Handler offlineHandler = new Handler(Looper.getMainLooper());
+    private int offlineWaits = 0;
+    private ConnectivityManager.NetworkCallback offlineCallback;
 
     @Override
     protected void load() {
@@ -34,6 +41,8 @@ public class MainActivity extends BridgeActivity {
         if (!"samsung".equals(flavor)) {
             dropSamsungStoreLink();
         }
+        scheduleOfflineCheck();
+        watchNetwork();
     }
 
     /** Admin and Cloudflare Access never leave the WebView for the system browser. */
@@ -73,6 +82,65 @@ public class MainActivity extends BridgeActivity {
         if (changed) {
             webView.reload();
         }
+    }
+
+    private void scheduleOfflineCheck() {
+        offlineHandler.postDelayed(this::offlineTimedOut, 12000);
+    }
+
+    private void offlineTimedOut() {
+        WebView web = webViewOrNull();
+        if (web == null) return;
+        String url = web.getUrl();
+        boolean remote = url != null && (url.startsWith("https://www.kidease.ca") || url.startsWith("https://kidease.ca"));
+        if (remote && web.getProgress() >= 90) {
+            OfflinePage.reset();
+            return;
+        }
+        if (remote && offlineWaits < 1) {
+            offlineWaits += 1;
+            offlineHandler.postDelayed(this::offlineTimedOut, 8000);
+            return;
+        }
+        OfflinePage.show(this, web);
+    }
+
+    private void watchNetwork() {
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        if (manager == null || offlineCallback != null) return;
+        offlineCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onLost(Network network) {
+                runOnUiThread(() -> OfflinePage.show(MainActivity.this, webViewOrNull()));
+            }
+
+            @Override
+            public void onAvailable(Network network) {
+                runOnUiThread(OfflinePage::reset);
+            }
+        };
+        try {
+            manager.registerDefaultNetworkCallback(offlineCallback);
+        } catch (RuntimeException ex) {
+            Log.w(TAG, "Network callback was not registered", ex);
+            offlineCallback = null;
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        offlineHandler.removeCallbacksAndMessages(null);
+        if (offlineCallback != null) {
+            ConnectivityManager manager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+            if (manager != null) {
+                try {
+                    manager.unregisterNetworkCallback(offlineCallback);
+                } catch (RuntimeException ex) {
+                    Log.w(TAG, "Network callback was already gone", ex);
+                }
+            }
+        }
+        super.onDestroy();
     }
 
     /** Play, Samsung, Huawei, and Amazon must send KidEaseNative so the site can tell a shell from the website. */

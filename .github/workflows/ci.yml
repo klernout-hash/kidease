@@ -8,11 +8,10 @@ on:
     paths-ignore:
       - "docs/**"
       - "**/*.md"
+  # Pull requests always run. Branch protection requires the check and e2e
+  # jobs, and a docs-only change would otherwise never report them.
   pull_request:
     branches: [main]
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
   workflow_dispatch:
     inputs:
       base_url:
@@ -398,17 +397,49 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  a11y:
+    name: a11y
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-jammy
+      options: --user root
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Download Vite build
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-build
+          path: artifacts/ci-build
+      - name: Restore Vite build
+        run: sh scripts/restore-ci-build.sh
+      - name: Axe on key pages in English and French
+        run: node scripts/a11y-axe.mjs --start-preview
+
   # Same check name as before (`e2e`) so branch protection still matches.
   # Smoke shards must pass. A desktop-visual pixel miss is a warning on pull
   # requests and main; a preview or install failure still fails the check.
+  # The axe job must pass too. Serious and critical violations fail it.
   e2e:
     name: e2e
-    needs: [build, e2e-shard, desktop-visual]
+    needs: [build, e2e-shard, desktop-visual, a11y]
     if: >-
       always() &&
       needs.build.result != 'cancelled' &&
       needs.e2e-shard.result != 'cancelled' &&
-      needs.desktop-visual.result != 'cancelled'
+      needs.desktop-visual.result != 'cancelled' &&
+      needs.a11y.result != 'cancelled'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -418,6 +449,7 @@ jobs:
           SHARDS: ${{ needs.e2e-shard.result }}
           VISUAL_JOB: ${{ needs.desktop-visual.result }}
           VISUAL_STEP: ${{ needs.desktop-visual.outputs.outcome }}
+          A11Y: ${{ needs.a11y.result }}
           EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
@@ -425,12 +457,17 @@ jobs:
           echo "smoke shards: ${SHARDS}"
           echo "desktop visual job: ${VISUAL_JOB}"
           echo "desktop visual step: ${VISUAL_STEP}"
+          echo "axe: ${A11Y}"
           if [ "${BUILD}" != "success" ]; then
             echo "::error::Vite build did not pass (${BUILD})."
             exit 1
           fi
           if [ "${SHARDS}" != "success" ]; then
             echo "::error::Smoke shards did not pass (${SHARDS})."
+            exit 1
+          fi
+          if [ "${A11Y}" != "success" ]; then
+            echo "::error::Axe check did not pass (${A11Y})."
             exit 1
           fi
           if [ "${VISUAL_JOB}" != "success" ]; then
