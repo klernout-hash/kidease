@@ -91,7 +91,8 @@ export function isPrivateR2Key(ref: string | null | undefined): boolean {
   return (
     key.startsWith(`${R2_SCREENING_PREFIX}/`) ||
     key.startsWith(`${R2_LICENSE_PREFIX}/`) ||
-    key.startsWith(`${R2_FAMILY_PREFIX}/`)
+    key.startsWith(`${R2_FAMILY_PREFIX}/`) ||
+    key.startsWith(`${R2_CENTRE_DOC_PREFIX}/`)
   );
 }
 
