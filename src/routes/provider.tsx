@@ -173,6 +173,9 @@ const StaffSchedulingDesk = lazy(() =>
 const StaffTimesheetDesk = lazy(() =>
   import("@/components/staff-timesheet-desk").then((m) => ({ default: m.StaffTimesheetDesk })),
 );
+const PayrollAttendanceReview = lazy(() =>
+  import("@/components/payroll-attendance-review").then((m) => ({ default: m.PayrollAttendanceReview })),
+);
 const PayrollDesk = lazy(() =>
   import("@/components/payroll-desk").then((m) => ({ default: m.PayrollDesk })),
 );
@@ -1131,7 +1134,14 @@ export function ProviderPage() {
       {desk === "employees" ? <EceJobDesk mode="staff" /> : null}
       {desk === "staff" ? <StaffSchedulingDesk /> : null}
       {desk === "hours" ? <StaffTimesheetDesk /> : null}
-      {desk === "pay" && session?.providerPayroll ? <PayrollDesk locale={locale === "fr" ? "fr" : "en"} owner={centreOwner} /> : null}
+      {desk === "pay" && session?.providerPayroll && centreOwner ? (
+        <PayrollAttendanceReview key={user?.id} locale={locale === "fr" ? "fr" : "en"} />
+      ) : null}
+      {desk === "pay" && session?.providerPayroll && !centreOwner ? (
+        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">
+          {locale === "fr" ? "Seul le propriétaire du centre peut vérifier les heures de paie." : "Only the centre owner can review hours for payroll."}
+        </p>
+      ) : null}
       {desk === "pay" && session && !session.providerPayroll ? (
         <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="payroll-off">
           {locale === "fr" ? "Le jour de paie est fermé." : "Pay day is turned off."}

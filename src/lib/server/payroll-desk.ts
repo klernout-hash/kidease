@@ -4,9 +4,11 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseHeader } from "@tanstack/react-start/server";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { decideClock, decidePayBooks, staffHoursView } from "@/lib/payroll/access.ts";
+import { readAttendanceReview, type AttendanceReview } from "@/lib/payroll/attendance-review.ts";
 import { sandboxAdapter } from "@/lib/payroll/adapter.ts";
 import { deliverPayrollNotice, planDeadlineNotices, payrollAttentionFacts } from "@/lib/payroll/deadlines.ts";
 import { decideExtraTaxApprove, decideExtraTaxSubmit } from "@/lib/payroll/extra-tax.ts";
@@ -26,6 +28,19 @@ async function centreRole(userId: string, daycareId: string) {
   const role = await loadCentreRole(sql, userId, daycareId);
   return { sql, isOwner: role === "owner", role };
 }
+
+export const payrollAttendanceReview = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; employeeId?: string } | undefined) => ({
+    daycareId: String(input?.daycareId || "").trim(),
+    employeeId: String(input?.employeeId || "").trim(),
+  }))
+  .handler(async ({ context, data }): Promise<AttendanceReview> => {
+    setResponseHeader("Cache-Control", "private, no-store");
+    if (!providerPayrollEnabled()) return { kind: "off" };
+    if (data.daycareId.length > 128 || data.employeeId.length > 128) return { kind: "denied" };
+    return readAttendanceReview(await getSql(), context.userId, data.daycareId, data.employeeId);
+  });
 
 export const payrollAttention = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
