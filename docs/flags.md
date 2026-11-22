@@ -285,6 +285,14 @@ A paused screen says what is off and offers a way to search.
 
 `FEATURE_COMPARE_PARENT_FEE` is on. Compare shows the fee parents pay and the distance from a saved commute address. A centre with no confirmed fee says “Ask the centre”. Nothing is sent.
 
+`FEATURE_PROVIDER_PAYROLL` is off. The centre owner can open Pay day: check-in, hours, a practice pay day, and the government-money jar. Staff see only their own check-in and hours. No money moves. The sandbox partner does not send pay.
+
+`FEATURE_PROVIDER_BOOKS` is off. Money in and money out from saved fees. No Stripe call. Child care fees stay exempt.
+
+`FEATURE_XERO_SYNC` is off. A CSV only. KidEase does not call Xero.
+
+`FEATURE_PAYROLL_ALERTS` is off. Pay-date reminders are not created. `FEATURE_PAYROLL_ALERTS_LIVE` is off. Even when alerts are on, this build does not email, push, or text, and it does not replay old dates.
+
 ## Later (not this PR)
 
 - Per-user or % rollouts (today the server uses one distinct id).

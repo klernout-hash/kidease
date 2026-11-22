@@ -151,6 +151,7 @@ import { Route as DaycaresCityRouteImport } from './routes/daycares_.$city'
 import { Route as FrIndexRouteImport } from './routes/fr.index'
 import { Route as FrAboutRouteImport } from './routes/fr.about'
 import { Route as FrAccountRouteImport } from './routes/fr.account'
+import { Route as FrAdminRouteImport } from './routes/fr.admin'
 import { Route as FrBenefitsRouteImport } from './routes/fr.benefits'
 import { Route as FrBlogRouteImport } from './routes/fr.blog'
 import { Route as FrCalculatorRouteImport } from './routes/fr.calculator'
@@ -198,7 +199,6 @@ import { Route as FrSecurityRouteImport } from './routes/fr.security'
 import { Route as FrSignupRouteImport } from './routes/fr.signup'
 import { Route as FrStartADaycareRouteImport } from './routes/fr.start-a-daycare'
 import { Route as FrStatusRouteImport } from './routes/fr.status'
-import { Route as FrAdminRouteImport } from './routes/fr.admin'
 import { Route as FrSupportRouteImport } from './routes/fr.support'
 import { Route as FrTeamRouteImport } from './routes/fr.team'
 import { Route as FrTermsRouteImport } from './routes/fr.terms'
@@ -1069,6 +1069,11 @@ const FrAccountRoute = FrAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => FrRoute,
 } as any)
+const FrAdminRoute = FrAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrBenefitsRoute = FrBenefitsRouteImport.update({
   id: '/benefits',
   path: '/benefits',
@@ -1303,11 +1308,6 @@ const FrStartADaycareRoute = FrStartADaycareRouteImport.update({
 const FrStatusRoute = FrStatusRouteImport.update({
   id: '/status',
   path: '/status',
-  getParentRoute: () => FrRoute,
-} as any)
-const FrAdminRoute = FrAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => FrRoute,
 } as any)
 const FrSupportRoute = FrSupportRouteImport.update({
@@ -2245,6 +2245,7 @@ export interface FileRoutesByFullPath {
   '/daycares/$city': typeof DaycaresCityRoute
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
+  '/fr/admin': typeof FrAdminRoute
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/blog': typeof FrBlogRoute
   '/fr/calculator': typeof FrCalculatorRoute
@@ -2292,7 +2293,6 @@ export interface FileRoutesByFullPath {
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/status': typeof FrStatusRoute
-  '/fr/admin': typeof FrAdminRoute
   '/fr/support': typeof FrSupportRoute
   '/fr/team': typeof FrTeamRoute
   '/fr/terms': typeof FrTermsRoute
@@ -2593,6 +2593,7 @@ export interface FileRoutesByTo {
   '/daycares/$city': typeof DaycaresCityRoute
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
+  '/fr/admin': typeof FrAdminRoute
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/blog': typeof FrBlogRoute
   '/fr/calculator': typeof FrCalculatorRoute
@@ -2640,7 +2641,6 @@ export interface FileRoutesByTo {
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/status': typeof FrStatusRoute
-  '/fr/admin': typeof FrAdminRoute
   '/fr/support': typeof FrSupportRoute
   '/fr/team': typeof FrTeamRoute
   '/fr/terms': typeof FrTermsRoute
@@ -2944,6 +2944,7 @@ export interface FileRoutesById {
   '/daycares_/$city': typeof DaycaresCityRoute
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
+  '/fr/admin': typeof FrAdminRoute
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/blog': typeof FrBlogRoute
   '/fr/calculator': typeof FrCalculatorRoute
@@ -2991,7 +2992,6 @@ export interface FileRoutesById {
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/status': typeof FrStatusRoute
-  '/fr/admin': typeof FrAdminRoute
   '/fr/support': typeof FrSupportRoute
   '/fr/team': typeof FrTeamRoute
   '/fr/terms': typeof FrTermsRoute
@@ -3296,6 +3296,7 @@ export interface FileRouteTypes {
     | '/daycares/$city'
     | '/fr/about'
     | '/fr/account'
+    | '/fr/admin'
     | '/fr/benefits'
     | '/fr/blog'
     | '/fr/calculator'
@@ -3343,7 +3344,6 @@ export interface FileRouteTypes {
     | '/fr/signup'
     | '/fr/start-a-daycare'
     | '/fr/status'
-    | '/fr/admin'
     | '/fr/support'
     | '/fr/team'
     | '/fr/terms'
@@ -3644,6 +3644,7 @@ export interface FileRouteTypes {
     | '/daycares/$city'
     | '/fr/about'
     | '/fr/account'
+    | '/fr/admin'
     | '/fr/benefits'
     | '/fr/blog'
     | '/fr/calculator'
@@ -3691,7 +3692,6 @@ export interface FileRouteTypes {
     | '/fr/signup'
     | '/fr/start-a-daycare'
     | '/fr/status'
-    | '/fr/admin'
     | '/fr/support'
     | '/fr/team'
     | '/fr/terms'
@@ -3994,6 +3994,7 @@ export interface FileRouteTypes {
     | '/daycares_/$city'
     | '/fr/about'
     | '/fr/account'
+    | '/fr/admin'
     | '/fr/benefits'
     | '/fr/blog'
     | '/fr/calculator'
@@ -4041,7 +4042,6 @@ export interface FileRouteTypes {
     | '/fr/signup'
     | '/fr/start-a-daycare'
     | '/fr/status'
-    | '/fr/admin'
     | '/fr/support'
     | '/fr/team'
     | '/fr/terms'
@@ -5433,6 +5433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrAccountRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/admin': {
+      id: '/fr/admin'
+      path: '/admin'
+      fullPath: '/fr/admin'
+      preLoaderRoute: typeof FrAdminRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/benefits': {
       id: '/fr/benefits'
       path: '/benefits'
@@ -5760,13 +5767,6 @@ declare module '@tanstack/react-router' {
       path: '/status'
       fullPath: '/fr/status'
       preLoaderRoute: typeof FrStatusRouteImport
-      parentRoute: typeof FrRoute
-    }
-    '/fr/admin': {
-      id: '/fr/admin'
-      path: '/admin'
-      fullPath: '/fr/admin'
-      preLoaderRoute: typeof FrAdminRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/support': {
@@ -6953,6 +6953,7 @@ const FrParentRouteWithChildren = FrParentRoute._addFileChildren(
 interface FrRouteChildren {
   FrAboutRoute: typeof FrAboutRoute
   FrAccountRoute: typeof FrAccountRoute
+  FrAdminRoute: typeof FrAdminRoute
   FrBenefitsRoute: typeof FrBenefitsRoute
   FrBlogRoute: typeof FrBlogRoute
   FrCalculatorRoute: typeof FrCalculatorRoute
@@ -7000,7 +7001,6 @@ interface FrRouteChildren {
   FrSignupRoute: typeof FrSignupRoute
   FrStartADaycareRoute: typeof FrStartADaycareRoute
   FrStatusRoute: typeof FrStatusRoute
-  FrAdminRoute: typeof FrAdminRoute
   FrSupportRoute: typeof FrSupportRoute
   FrTeamRoute: typeof FrTeamRoute
   FrTermsRoute: typeof FrTermsRoute
@@ -7048,6 +7048,7 @@ interface FrRouteChildren {
 const FrRouteChildren: FrRouteChildren = {
   FrAboutRoute: FrAboutRoute,
   FrAccountRoute: FrAccountRoute,
+  FrAdminRoute: FrAdminRoute,
   FrBenefitsRoute: FrBenefitsRoute,
   FrBlogRoute: FrBlogRoute,
   FrCalculatorRoute: FrCalculatorRoute,
@@ -7095,7 +7096,6 @@ const FrRouteChildren: FrRouteChildren = {
   FrSignupRoute: FrSignupRoute,
   FrStartADaycareRoute: FrStartADaycareRoute,
   FrStatusRoute: FrStatusRoute,
-  FrAdminRoute: FrAdminRoute,
   FrSupportRoute: FrSupportRoute,
   FrTeamRoute: FrTeamRoute,
   FrTermsRoute: FrTermsRoute,

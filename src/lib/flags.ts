@@ -231,6 +231,11 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_SAVED_CENTRE_AGE_ALERTS",
   "FEATURE_SEARCH_MEMORY",
   "FEATURE_COMPARE_PARENT_FEE",
+  "FEATURE_PROVIDER_PAYROLL",
+  "FEATURE_PROVIDER_BOOKS",
+  "FEATURE_XERO_SYNC",
+  "FEATURE_PAYROLL_ALERTS",
+  "FEATURE_PAYROLL_ALERTS_LIVE",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -663,6 +668,16 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_SEARCH_MEMORY: true,
   /** Compare shows the parent fee and distance from a saved commute. On. No messages. */
   FEATURE_COMPARE_PARENT_FEE: true,
+  /** Centre pay day, hours, and government-money jar. Off. No money moves. */
+  FEATURE_PROVIDER_PAYROLL: false,
+  /** Centre books. Off. No Stripe call. */
+  FEATURE_PROVIDER_BOOKS: false,
+  /** Xero CSV only. Off. No Xero call. */
+  FEATURE_XERO_SYNC: false,
+  /** Pay-date notices. Off. Nothing is sent. */
+  FEATURE_PAYROLL_ALERTS: false,
+  /** Email, push, and SMS for those notices. Off. This build still does not send. */
+  FEATURE_PAYROLL_ALERTS_LIVE: false,
 };
 
 /**
@@ -1588,6 +1603,37 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Compare shows the fee parents pay and distance from a saved commute address. On. A missing fee stays “Ask the centre”. No messages.",
+  },
+  {
+    key: "FEATURE_PROVIDER_PAYROLL",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Centre pay day, check-in, and the government-money jar. Default off. A sandbox partner does not move money. Staff see only their own hours.",
+  },
+  {
+    key: "FEATURE_PROVIDER_BOOKS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Centre books from saved fees and pay. Default off. No Stripe call. Child care fees stay exempt.",
+  },
+  {
+    key: "FEATURE_XERO_SYNC",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "A CSV the centre can upload to Xero. Default off. KidEase does not connect to Xero.",
+  },
+  {
+    key: "FEATURE_PAYROLL_ALERTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Pay-date reminders for the centre owner. Default off. Nothing is sent. No backlog.",
+  },
+  {
+    key: "FEATURE_PAYROLL_ALERTS_LIVE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Allows pay-date email, push, and SMS when those channels are already on. Default off. This build has no sender.",
   },
 ];
 

@@ -16,6 +16,7 @@ export const ATTENTION_DETAILS = [
   "overdueInvoice",
   "staffCert",
   "listingGap",
+  "payrollDue",
 ] as const;
 
 export type AttentionDetail = (typeof ATTENTION_DETAILS)[number];

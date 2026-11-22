@@ -172,6 +172,12 @@ const StaffSchedulingDesk = lazy(() =>
 const StaffTimesheetDesk = lazy(() =>
   import("@/components/staff-timesheet-desk").then((m) => ({ default: m.StaffTimesheetDesk })),
 );
+const PayrollDesk = lazy(() =>
+  import("@/components/payroll-desk").then((m) => ({ default: m.PayrollDesk })),
+);
+const PayrollPreview = lazy(() =>
+  import("@/components/payroll-desk").then((m) => ({ default: m.PayrollPreview })),
+);
 const CentreToolsDesk = lazy(() =>
   import("@/components/centre-tools-desk").then((m) => ({ default: m.CentreToolsDesk })),
 );
@@ -197,7 +203,7 @@ const CentreAgreementEditor = lazy(() =>
   import("@/components/parent-agreement-panel").then((m) => ({ default: m.CentreAgreementEditor })),
 );
 
-const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "top-rated", "tours", "calendar", "licence", "documents", "contract", "contracts", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools", "care"];
+const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "top-rated", "tours", "calendar", "licence", "documents", "contract", "contracts", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools", "care", "pay", "books", "shift"];
 const DEFAULT_DESK: DaycareDesk = "today";
 const COACH_FOCUS = new Set<ListingCoachFocus>([
   "license",
@@ -1123,6 +1129,15 @@ export function ProviderPage() {
       {desk === "employees" ? <EceJobDesk mode="staff" /> : null}
       {desk === "staff" ? <StaffSchedulingDesk /> : null}
       {desk === "hours" ? <StaffTimesheetDesk /> : null}
+      {desk === "pay" && session?.providerPayroll ? <PayrollDesk locale={locale === "fr" ? "fr" : "en"} owner={centreOwner} /> : null}
+      {desk === "pay" && session && !session.providerPayroll ? (
+        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="payroll-off">
+          {locale === "fr" ? "Le jour de paie est fermé." : "Pay day is turned off."}
+        </p>
+      ) : null}
+      {desk === "books" && session?.providerBooks && centreOwner ? <PayrollPreview locale={locale === "fr" ? "fr" : "en"} screen="books" /> : null}
+      {desk === "books" && session?.providerBooks && !centreOwner ? <PayrollDesk locale={locale === "fr" ? "fr" : "en"} owner={false} /> : null}
+      {desk === "shift" && session?.providerPayroll ? <PayrollPreview locale={locale === "fr" ? "fr" : "en"} screen="staff" /> : null}
       {desk === "tools" ? <CentreToolsDesk /> : null}
       {desk === "care" ? <ProviderCareDesk daycareId={listings[0]?.id} owner={centreOwner} /> : null}
       {desk === "staff" ? <EceJobDesk mode="staff" /> : null}

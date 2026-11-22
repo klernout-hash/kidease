@@ -513,6 +513,28 @@ export const UNIFIED_ALERT_TYPES: readonly UnifiedAlertType[] = [
     en: { label: "New block", detail: "Someone blocked a person or a centre.", title: "A block was added", body: "Someone blocked a person or a centre." },
     fr: { label: "Nouveau blocage", detail: "Quelqu'un a bloqué une personne ou un centre.", title: "Un blocage a été ajouté", body: "Quelqu'un a bloqué une personne ou un centre." },
   },
+  daycare(
+    "daycare_payroll_due",
+    "partial",
+    "unified",
+    "Owner only. In-app when pay-day alerts are on. Email and push wait for the live flag. No SMS from this registry.",
+    { label: "Pay date", detail: "A pay or government date needs you.", title: "A pay date needs you", body: "{name}: {status}" },
+    { label: "Date de paie", detail: "Une date de paie ou du gouvernement a besoin de vous.", title: "Une date de paie a besoin de vous", body: "{name} : {status}" },
+    { critical: false, digestable: true, respectBlocks: false },
+  ),
+  {
+    id: "admin_payroll_due",
+    audience: "admin",
+    readiness: "partial",
+    emailOwner: "unified",
+    critical: true,
+    digestable: false,
+    webOnly: false,
+    respectBlocks: false,
+    note: "KidEase admin only. Immediate when a centre is late or short. No send until the live flag is on.",
+    en: { label: "Centre pay date", detail: "A centre is late or short on government money.", title: "A centre is late", body: "{name}: {status}" },
+    fr: { label: "Date de paie d'un centre", detail: "Un centre est en retard ou il manque de l'argent du gouvernement.", title: "Un centre est en retard", body: "{name} : {status}" },
+  },
 ];
 
 const TYPE_BY_ID = new Map(UNIFIED_ALERT_TYPES.map((row) => [row.id, row]));

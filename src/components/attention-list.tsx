@@ -31,6 +31,7 @@ const DETAIL_KEY: Record<AttentionDetail, CopyKey> = {
   overdueInvoice: "attentionOverdueInvoice",
   staffCert: "attentionStaffCert",
   listingGap: "attentionListingGap",
+  payrollDue: "attentionPayrollDue",
 };
 
 export function AttentionList({
