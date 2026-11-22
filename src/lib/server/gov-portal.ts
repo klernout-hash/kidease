@@ -69,6 +69,11 @@ export const getGovSession = createServerFn({ method: "GET" })
     if (!user) return { ok: false as const };
     const actor = await loadGovActor(user.id);
     if (!actor) return { ok: false as const };
+    const { isCurrentUserTwoFactorVerified } = await import("@/lib/server/two-factor.server");
+    const { govCallAllowed } = await import("@/lib/gov/second-factor");
+    if (!govCallAllowed(isCurrentUserTwoFactorVerified(user.id))) {
+      return { ok: false as const, needSecondFactor: true as const };
+    }
     return {
       ok: true as const,
       orgName: actor.orgName,
