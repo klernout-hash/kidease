@@ -242,6 +242,9 @@ test("the edition is picked by pay date", () => {
   const early = calculateDeductions({ province: "ON", frequency: "weekly", payDate: "2026-06-26", taxableCents: 100_000, pensionableCents: 100_000, insurableCents: 100_000 });
   assert.equal(early.ok, false);
   assert.equal(provincialTaxReady("QC", "2027-02-01"), false);
+  const qc2027 = calculateDeductions({ province: "QC", frequency: "weekly", payDate: "2027-01-08", taxableCents: 100_000, pensionableCents: 100_000, insurableCents: 100_000 });
+  assert.equal(qc2027.ok, false);
+  assert.equal(qc2027.reason, "no_quebec_table");
   assert.equal(provincialTaxReady("QC", "2026-12-01"), true);
   assert.equal(provincialTaxReady("NU", "2027-02-01"), true);
 });

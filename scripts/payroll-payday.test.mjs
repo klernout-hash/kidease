@@ -308,3 +308,46 @@ test("saved stubs parse back with whole cents and nothing extra", () => {
   assert.equal("bank" in parsed, false);
   assert.equal(parseStub(null), null);
 });
+
+test("unsupported pay is blocked, never shown as a partial number", () => {
+  const qc2027 = buildPayCard({ person: { ...person, province: "QC" }, period: { start: "2027-01-03", end: "2027-01-16", payDate: "2027-01-22" }, days: fullDays(480) });
+  assert.equal(qc2027.netCents, 0);
+  assert.equal(qc2027.employee.blocked !== null, true);
+  assert.equal(canApprove([qc2027]), false);
+  const early = buildPayCard({ person, period: { start: "2026-06-07", end: "2026-06-20", payDate: "2026-06-26" }, days: fullDays(480) });
+  assert.equal(canApprove([early]), false);
+  const bonus = buildPayCard({ person, period, days: fullDays(480), addons: [{ kind: "bonus", amountCents: 50_000 }] });
+  assert.match(bonus.employee.blocked, /bonus/i);
+  assert.equal(canApprove([bonus]), false);
+});
+
+test("pay day words exist in English and French, and the default period is two weeks", async () => {
+  const { paydayCopy, PAYDAY_COPY_KEYS, checkWords, defaultPeriod, payErrorWords } = await import("../src/lib/payroll/payday-copy.ts");
+  const en = paydayCopy("en");
+  const fr = paydayCopy("fr");
+  for (const key of PAYDAY_COPY_KEYS) {
+    assert.ok(en[key].length > 0 && fr[key].length > 0, key);
+  }
+  assert.notEqual(en.approve, fr.approve);
+  assert.match(checkWords("no_table", "fr"), /KidEase/);
+  assert.deepEqual(defaultPeriod("2026-11-22"), { start: "2026-11-08", end: "2026-11-21", payDate: "2026-11-27" });
+  assert.equal(payErrorWords("payroll:stale", "en"), en.stale);
+});
+
+test("the pay server checks the flag, never trusts browser amounts, and moves no money", async () => {
+  const { readFileSync } = await import("node:fs");
+  const server = readFileSync(new URL("../src/lib/server/payroll-pay.ts", import.meta.url), "utf8");
+  assert.match(server, /providerPayrollEnabled/);
+  assert.match(server, /authMiddleware/);
+  assert.match(server, /canApprove\(cards\)/);
+  assert.match(server, /moneyMoved: false/);
+  assert.doesNotMatch(server, /stripe\.|fetch\(|twilio/i);
+  const store = readFileSync(new URL("../src/lib/payroll/pay-store.ts", import.meta.url), "utf8");
+  assert.match(store, /supersedes_id/);
+  assert.match(store, /clock_out_at is null/);
+  const migration = readFileSync(new URL("../migrations/0228_payroll_pay_runs.sql", import.meta.url), "utf8");
+  assert.match(migration, /payroll_punches_one_open_idx/);
+  assert.doesNotMatch(migration, /\bdrop\b/i);
+  const down = readFileSync(new URL("../migrations/down/0228_payroll_pay_runs.sql", import.meta.url), "utf8");
+  assert.match(down, /drop table if exists payroll_overrides/);
+});

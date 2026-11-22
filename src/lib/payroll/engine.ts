@@ -112,7 +112,7 @@ export type EngineResult =
       lines: EngineLine[];
       notes: string[];
     }
-  | { ok: false; reason: "no_table"; message: string };
+  | { ok: false; reason: "no_table" | "no_quebec_table"; message: string };
 
 /** Round half up to the cent, the T4127 "third digit" rule. */
 export function round2(value: number): number {
@@ -197,6 +197,14 @@ export function calculateDeductions(input: EngineInput): EngineResult {
   const province = input.province;
   const isQuebec = province === "QC";
   const quebecTable = isQuebec ? quebecForPayDate(input.payDate) : null;
+  if (isQuebec && !quebecTable) {
+    // Never give a pay with Quebec tax missing. Block the whole calculation.
+    return {
+      ok: false,
+      reason: "no_quebec_table",
+      message: "Revenu Québec has not published its tables for this pay date in KidEase yet. Quebec pay is blocked until it is added.",
+    };
+  }
   const P = PAY_PERIODS[input.frequency];
   const PM = Math.min(12, Math.max(0, input.pensionMonths ?? 12));
   const notes: string[] = [];
@@ -298,8 +306,6 @@ export function calculateDeductions(input: EngineInput): EngineResult {
     T2 = Math.max(0, row.rate * QI - row.k - quebecTable.creditRate * TCP);
     provincialVerified = quebecTable.formulaReadFromPdf;
     notes.push("Quebec tax uses Revenu Québec amounts. The formula shape was read from a quoted copy of TP-1015.F-V, not the PDF.");
-  } else {
-    notes.push("Revenu Québec has not published its 2027 tables in this build. Quebec income tax is not estimated for this pay date.");
   }
 
   // Per-pay tax. Combined T is rounded once, then split so the parts add up.

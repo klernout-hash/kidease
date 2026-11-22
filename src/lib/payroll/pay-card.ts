@@ -182,8 +182,8 @@ export function buildPayCard(input: {
     grossCents = employee.cashGrossCents;
     vacationCents = employee.vacationCents;
     netCents = employee.netCents;
-    deductionsCents = grossCents + employee.nontaxCashCents - netCents;
-    if (employee.edition == null) checks.push({ code: "no_table", level: "stop" });
+    deductionsCents = employee.blocked ? 0 : grossCents + employee.nontaxCashCents - netCents;
+    if (employee.blocked) checks.push({ code: "no_table", level: "stop", detail: employee.blocked });
     if (person.td1 !== "approved") checks.push({ code: "missing_td1", level: "check" });
     const lawBps = minimumVacationBps(person.province, person.hireDate, input.period.end);
     if (lawBps != null && person.vacationBps < lawBps) {

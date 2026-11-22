@@ -82,10 +82,10 @@ export const payrollClock = createServerFn({ method: "POST" })
     if (!gate.ok) throw new Error(`payroll:${gate.reason}`);
     const id = nid();
     if (data.action === "in") {
-      await sql`
-        insert into payroll_punches (id, daycare_id, employee_id, clock_in_at, source, created_by)
-        values (${id}, ${data.daycareId}, ${data.employeeId}, now(), 'phone', ${context.userId})
-      `;
+      // One open shift per person: refused when already checked in.
+      const { checkIn } = await import("@/lib/payroll/pay-store.ts");
+      const started = await checkIn(sql, { id, daycareId: data.daycareId, employeeId: data.employeeId, actorId: context.userId });
+      if (!started) throw new Error("payroll:already_in");
     } else {
       await sql`
         update payroll_punches

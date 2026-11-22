@@ -287,6 +287,11 @@ A paused screen says what is off and offers a way to search.
 `FEATURE_COMPARE_PARENT_FEE` is on. Compare shows the fee parents pay and the distance from a saved commute address. A centre with no confirmed fee says “Ask the centre”. Nothing is sent.
 
 `FEATURE_PROVIDER_PAYROLL` is off. The centre owner can open Pay day: check-in, hours, a practice pay day, and the government-money jar. Staff see only their own check-in and hours. No money moves. The sandbox partner does not send pay.
+- When on, Pay day works out CPP, CPP2, QPP, EI, QPIP, and federal and provincial tax for all 13 provinces and territories from CRA T4127 (July 2026 and January 2027 editions) and Revenu Québec 2026 amounts. Pay it cannot work out in full (pay dates before July 1, 2026, Quebec pay in 2027, bonuses) is blocked, not shown as a partial number.
+- The owner or a named payroll editor (`payroll_editors`) can change a day's hours, the rate, or the pay type with a reason. Each change is one statement with a stale-edit guard and an append-only row (who, when, old, new, reason). Approved periods lock; later changes are corrections.
+- Contractors: agreed flat or base amount, no deductions, optional GST/HST, invoice draft only, T4A box 048 at year end.
+- Accountant pack (CSV + printable PDF) and a read-only JSON server function for the owner. The Xero journal CSV is included only when `FEATURE_XERO_SYNC` is on.
+- Migrations `0225`–`0228` are additive and are not applied by this PR.
 
 `FEATURE_PROVIDER_BOOKS` is off. Money in and money out from saved fees. No Stripe call. Child care fees stay exempt.
 

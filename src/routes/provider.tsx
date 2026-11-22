@@ -176,6 +176,12 @@ const StaffTimesheetDesk = lazy(() =>
 const PayrollAttendanceReview = lazy(() =>
   import("@/components/payroll-attendance-review").then((m) => ({ default: m.PayrollAttendanceReview })),
 );
+const PayDay = lazy(() =>
+  import("@/components/payroll-payday").then((m) => ({ default: m.PayDay })),
+);
+const MyPayHours = lazy(() =>
+  import("@/components/payroll-payday").then((m) => ({ default: m.MyPayHours })),
+);
 const PayrollDesk = lazy(() =>
   import("@/components/payroll-desk").then((m) => ({ default: m.PayrollDesk })),
 );
@@ -1141,6 +1147,9 @@ export function ProviderPage() {
       {desk === "pay" && session?.providerPayroll && centreOwner ? (
         <PayrollAttendanceReview key={user?.id} locale={locale === "fr" ? "fr" : "en"} />
       ) : null}
+      {desk === "pay" && session?.providerPayroll && centreOwner && listings[0]?.id ? (
+        <PayDay key={listings[0].id} locale={locale === "fr" ? "fr" : "en"} daycareId={listings[0].id} />
+      ) : null}
       {desk === "pay" && session?.providerPayroll && !centreOwner ? (
         <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">
           {locale === "fr" ? "Seul le propriétaire du centre peut vérifier les heures de paie." : "Only the centre owner can review hours for payroll."}
@@ -1154,6 +1163,9 @@ export function ProviderPage() {
       {desk === "books" && session?.providerBooks && centreOwner ? <PayrollPreview locale={locale === "fr" ? "fr" : "en"} screen="books" /> : null}
       {desk === "books" && session?.providerBooks && !centreOwner ? <PayrollDesk locale={locale === "fr" ? "fr" : "en"} owner={false} /> : null}
       {desk === "shift" && session?.providerPayroll ? <PayrollPreview locale={locale === "fr" ? "fr" : "en"} screen="staff" /> : null}
+      {desk === "shift" && session?.providerPayroll && listings[0]?.id ? (
+        <MyPayHours key={listings[0].id} locale={locale === "fr" ? "fr" : "en"} daycareId={listings[0].id} />
+      ) : null}
       {desk === "tools" ? <CentreToolsDesk /> : null}
       {desk === "care" ? <ProviderCareDesk daycareId={listings[0]?.id} owner={centreOwner} /> : null}
       {desk === "staff" ? <EceJobDesk mode="staff" /> : null}

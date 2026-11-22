@@ -132,6 +132,12 @@ export type PayEstimate = {
   edition: string | null;
   asOf: string | null;
   payDate: string;
+  /**
+   * Set when KidEase cannot work this pay out in full (no table for the date,
+   * unknown province, or a pay type the engine does not support yet).
+   * Every money field is then zero and the screen must not offer Approve.
+   */
+  blocked: string | null;
 };
 
 const ZERO_YTD: PayYtd = {
@@ -314,7 +320,10 @@ export function estimatePay(input: PayInput): PayEstimate {
   const payDate = input.payDate ?? DEFAULT_PAY_DATE;
   const rrsp = Math.max(0, input.rrspCents ?? 0);
 
-  const engine = isProvinceCode(province)
+  const hasBonus = (input.addons ?? []).some((addon) => addon.kind === "bonus" && addon.amountCents > 0);
+  const engine = hasBonus
+    ? ({ ok: false, reason: "no_table", message: "Bonuses use CRA's separate bonus method, which KidEase does not do yet. Pay the bonus in your partner's system." } as const)
+    : isProvinceCode(province)
     ? calculateDeductions({
         province,
         frequency: (input.frequency in PERIODS ? input.frequency : "biweekly") as Frequency,
@@ -339,7 +348,8 @@ export function estimatePay(input: PayInput): PayEstimate {
     : null;
 
   if (!engine || !engine.ok) {
-    unverified.push(engine && !engine.ok ? engine.message : "This province code is not known. Nothing was taken off.");
+    const blocked = engine && !engine.ok ? engine.message : "This province code is not known. KidEase cannot work out this pay.";
+    unverified.push(blocked);
     return {
       label: ESTIMATE_LABEL,
       province,
@@ -367,14 +377,15 @@ export function estimatePay(input: PayInput): PayEstimate {
       provincialVerified: false,
       extraTaxCents: 0,
       extraTaxAuthority: null,
-      netCents: cash + nontax,
-      employerCostCents: cash + nontax,
+      netCents: 0,
+      employerCostCents: 0,
       governmentCents: 0,
       lines,
       unverified,
       edition: null,
       asOf: null,
       payDate,
+      blocked,
     };
   }
 
@@ -456,6 +467,7 @@ export function estimatePay(input: PayInput): PayEstimate {
     edition: engine.edition.label,
     asOf: engine.edition.asOf,
     payDate,
+    blocked: null,
   };
 }
 
