@@ -3721,5 +3721,14 @@
   "adminStatLive": "Live",
   "adminStatDeclined": "Tinanggihan",
   "adminOtherCounts": "Iba pang bilang",
-  "adminSearchQueue": "Maghanap ng pangalan, lungsod, email…"
+  "adminSearchQueue": "Maghanap ng pangalan, lungsod, email…",
+  "emailCodeTitle": "Code sa email",
+  "emailCodeLead": "I-on ito kung gusto ninyo ng code sa email kapag nag-sign in. Gumagana pa rin ang password. Nakatago ang health notes hanggang ilagay ninyo ang code.",
+  "emailCodeOn": "I-on ang email code",
+  "emailCodeOff": "I-off ang email code",
+  "emailCodeSavedOn": "Naka-on na ang email code. Sa susunod na sign-in, magpapadala kami ng code bago ninyo makita ang health notes.",
+  "emailCodeSavedOff": "Naka-off ang email code.",
+  "healthCodePrompt": "Magdagdag ng email code bago ang {date} para sa inyo lang ang health notes at documents ng bata.",
+  "healthCodeLocked": "Nakatago ang health notes at documents hanggang magdagdag kayo ng email code.",
+  "healthCodeAction": "Magdagdag ng email code"
 }
