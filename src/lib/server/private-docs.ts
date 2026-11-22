@@ -11,6 +11,7 @@ import {
   R2_FAMILY_PREFIX,
   R2_LICENSE_PREFIX,
   R2_SCREENING_PREFIX,
+  R2_STAFF_RESUME_PREFIX,
   safeDocKeyPart,
 } from "@/lib/private-docs";
 import { R2_PRIVATE_SETUP_MESSAGE, R2_SETUP_MESSAGE, resolvePrivateR2Config } from "@/lib/server/r2";
@@ -20,7 +21,8 @@ export type PrivateDocPrefix =
   | typeof R2_SCREENING_PREFIX
   | typeof R2_LICENSE_PREFIX
   | typeof R2_FAMILY_PREFIX
-  | typeof R2_CENTRE_DOC_PREFIX;
+  | typeof R2_CENTRE_DOC_PREFIX
+  | typeof R2_STAFF_RESUME_PREFIX;
 
 export type LoadedPrivateDoc = {
   body: Buffer;

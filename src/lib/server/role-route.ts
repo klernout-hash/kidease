@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { notFound, redirect } from "@tanstack/react-router";
 import { sessionBearerMiddleware } from "@/lib/auth/middleware";
-import { govPortalFooterEnabled, subscriptionsEnabled } from "@/lib/features";
+import { backgroundCheckGuideEnabled, govPortalFooterEnabled, staffJobBoardEnabled, subscriptionsEnabled } from "@/lib/features";
 import { requestHasSessionMaterial } from "@/lib/anonymous-request";
 import { e2eChromeFromRequest } from "@/lib/e2e-role-cookie";
 import { isFrPath } from "@/lib/locale-path";
@@ -29,6 +29,10 @@ export type RoleChromePayload = {
   role: "parent" | "provider" | "admin" | "support" | "government" | null;
   /** FEATURE_GOV_PORTAL. Default false. The desk stays off. Public pages do not link to it. */
   govPortalLink: boolean;
+  /** FEATURE_STAFF_JOB_BOARD. Default false. Footer links only (never the header menu or drawer). */
+  staffJobsLink?: boolean; // Older route fallbacks omit this flag; omitted means off.
+  /** FEATURE_BG_CHECK_GUIDE. Default false. Footer link to the public guide. */
+  bgCheckGuide: boolean;
   paid: boolean;
   planLabel: string | null;
   renewsOn: string | null;
@@ -57,6 +61,8 @@ const EMPTY: RoleChromePayload = {
   degraded: false,
   subscriptionsEnabled: false,
   govPortalLink: false,
+  staffJobsLink: false,
+  bgCheckGuide: false,
 };
 
 const DEGRADED: RoleChromePayload = {
@@ -70,6 +76,8 @@ const DEGRADED: RoleChromePayload = {
   degraded: true,
   subscriptionsEnabled: false,
   govPortalLink: false,
+  staffJobsLink: false,
+  bgCheckGuide: false,
 };
 
 const chromeByRequest = new WeakMap<Request, Promise<RoleChromePayload>>();
@@ -163,10 +171,12 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
   });
   const plansOn = subscriptionsEnabled();
   const govPortalLink = govPortalFooterEnabled();
-  if (fixture) return { ...fixture, subscriptionsEnabled: plansOn, govPortalLink };
+  const staffJobsLink = staffJobBoardEnabled();
+  const bgCheckGuide = backgroundCheckGuideEnabled();
+  if (fixture) return { ...fixture, subscriptionsEnabled: plansOn, govPortalLink, staffJobsLink, bgCheckGuide };
 
   if (!requestHasSessionMaterial(cookie, bearerFrom(req, bearer) || req?.headers.get("authorization"))) {
-    return { ...EMPTY, subscriptionsEnabled: plansOn, govPortalLink };
+    return { ...EMPTY, subscriptionsEnabled: plansOn, govPortalLink, staffJobsLink, bgCheckGuide };
   }
 
   const { getSessionUser } = await import("@/lib/auth/verify.server");
@@ -174,9 +184,9 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
   try {
     user = await withTimeout(getSessionUser(bearerFrom(req, bearer)), SQL_SETTLE_MS, "role-chrome-auth");
   } catch {
-    return { ...DEGRADED, subscriptionsEnabled: plansOn, govPortalLink };
+    return { ...DEGRADED, subscriptionsEnabled: plansOn, govPortalLink, staffJobsLink, bgCheckGuide };
   }
-  if (!user) return { ...EMPTY, subscriptionsEnabled: plansOn, govPortalLink };
+  if (!user) return { ...EMPTY, subscriptionsEnabled: plansOn, govPortalLink, staffJobsLink, bgCheckGuide };
 
   const { guestViewApplies, requestPathname } = await import("@/lib/guest-view");
   if (
@@ -186,7 +196,7 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
       pathname: requestPathname(req?.url),
     })
   ) {
-    return { ...EMPTY, subscriptionsEnabled: plansOn, govPortalLink, guestView: true };
+    return { ...EMPTY, subscriptionsEnabled: plansOn, govPortalLink, staffJobsLink, bgCheckGuide, guestView: true };
   }
 
   try {
@@ -232,9 +242,11 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
       degraded: false,
       subscriptionsEnabled: plansOn,
       govPortalLink,
+      staffJobsLink,
+      bgCheckGuide,
     };
   } catch {
-    return { ...DEGRADED, subscriptionsEnabled: plansOn, govPortalLink };
+    return { ...DEGRADED, subscriptionsEnabled: plansOn, govPortalLink, staffJobsLink, bgCheckGuide };
   }
 }
 

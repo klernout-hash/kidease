@@ -137,6 +137,9 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_CREDENTIAL_REMINDERS: "daycare",
   FEATURE_SCREENING_DOCS: "daycare",
   FEATURE_SCREENING_STATUS: "daycare",
+  FEATURE_BG_CHECK_GUIDE: "shared",
+  FEATURE_BG_CHECK_RECORDS: "daycare",
+  FEATURE_BG_CHECK_ATTESTATION: "shared",
   FEATURE_CENTRE_SWITCHER: "daycare",
   FEATURE_BILLING_ONLY_ROLE: "daycare",
   FEATURE_FAMILY_MESSAGING_DENY: "daycare",
@@ -225,6 +228,7 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_XERO_SYNC: "daycare",
   FEATURE_PAYROLL_ALERTS: "daycare",
   FEATURE_PAYROLL_ALERTS_LIVE: "admin",
+  FEATURE_STAFF_JOB_BOARD: "daycare",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {

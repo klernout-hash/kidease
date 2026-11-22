@@ -487,7 +487,7 @@ test("the server gate is owner-only and does not send or call Stripe", () => {
   assert.match(source, /deliverPayrollNotice/);
   assert.match(source, /delivered: 0/);
   assert.doesNotMatch(source, /stripe\.|fetch\(|twilio/i);
-  const migration = readFileSync(new URL("../migrations/0211_provider_payroll.sql", import.meta.url), "utf8");
+  const migration = readFileSync(new URL("../migrations/0225_provider_payroll.sql", import.meta.url), "utf8");
   assert.match(migration, /bank_token/);
   assert.doesNotMatch(migration, /account_number|sin\b/i);
 });

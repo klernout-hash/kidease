@@ -1,13 +1,16 @@
 /**
- * Client JS budget from the production build on 21 Nov 2026:
- * 854 files, 4,173,126 bytes gzip. The caps sit just above that measure.
+ * Client JS budget. First set from the production build on 21 Nov 2026:
+ * 854 files, 4,173,126 bytes gzip.
+ * Re-measured 22 Nov 2026 after background checks, Recharts 3, the licensing
+ * checklist and the staff job board: 878 files, 4,253,394 bytes gzip.
+ * The caps sit about 3% above that measure. Raise them only with a new measure.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
-const MAX_JS_FILES = 880;
-const MAX_GZIP_BYTES = 4_250_000;
+const MAX_JS_FILES = 905;
+const MAX_GZIP_BYTES = 4_380_000;
 
 const roots = [
   ".vercel/output/static/assets",

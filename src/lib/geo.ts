@@ -253,7 +253,7 @@ function aliasMatches(query: string, alias: string) {
 }
 
 /** City name or alias, before a province name. "Québec" is the city, not Montréal. */
-function exactCity(query: string): CityHit | undefined {
+export function exactCity(query: string): CityHit | undefined {
   const q = foldPlace(query);
   if (!q) return undefined;
   return CITIES.find((city) => {

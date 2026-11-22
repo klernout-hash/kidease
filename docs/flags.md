@@ -138,6 +138,7 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_NEED_CARE_FAST` | no | Default **off**. Set `1` to sort Need care fast by open spots, then distance. |
 | `FEATURE_INCLUSIVE_FILTERS` | no | Default **off**. Set `1` to let a centre publish diet and extra-support details. |
 | `FEATURE_ECE_JOBS` | no | Default **off**. Set `1` to let a centre post a role and read applicants. No charge. |
+| `FEATURE_STAFF_JOB_BOARD` | no | Default **off**. Set `1` for the staff job board on `/jobs` and `/jobs/post`. Sends no email or text. |
 | `FEATURE_DIGITAL_ATTENDANCE` | no | Default **off**. Set `1` to replace the check-in camera with arrival and pickup. No photo of a child. |
 | `FEATURE_STAFF_SCHEDULING` | no | Default **off**. Set `1` to open staff shifts. Does not turn on subscriptions or SMS. |
 | `FEATURE_LEARNING_PORTFOLIOS` | no | Default **off**. Set `1` to open private learning stories. No photos. |
@@ -292,6 +293,15 @@ A paused screen says what is off and offers a way to search.
 `FEATURE_XERO_SYNC` is off. A CSV only. KidEase does not call Xero.
 
 `FEATURE_PAYROLL_ALERTS` is off. Pay-date reminders are not created. `FEATURE_PAYROLL_ALERTS_LIVE` is off. Even when alerts are on, this build does not email, push, or text, and it does not replay old dates.
+
+`FEATURE_STAFF_JOB_BOARD` is off. When on, `/jobs` lets a staff member build one profile (name, province certificate level and end date, first aid end date, years, rooms, days, times, kind of job, start date, city and travel distance, languages, one-line highlights, optional private resume, who can find them). `/jobs/post` lets a daycare post a job in 3 steps (role and level, days and pay range, about the centre), see applicants and people open to work, invite, move each step and keep a checklist (certificate, first aid, background check from `background_check_records` when that table exists, references).
+- **Privacy:** a daycare sees only first name, published certificate level, coarse area and general availability until the person applies there, accepts that daycare's invite, or works there. Full name, email, phone, postal code and resume come after. Closed jobs retain applicants but stop new discovery and invites. A staff member can hide from the daycare they work at now.
+- **Matching:** a fixed score in `src/lib/staff-jobs.ts` with reasons in plain words (“ECE II · 4 km away · available weekdays · works with toddlers”). It reads only certificate, distance from the chosen city, days, times, rooms, kind of job, years (capped at 5) and start date. It never reads name, age, gender, family status, religion, ethnicity, disability or language. Private score details and expiry flags are not shown to providers before connection. No one is hidden or turned down by the score. Quebec Law 25 notice and a “Ask a person to review” request (`staff_match_review_requests`) are on both sides.
+- **Hiring:** “Hire and add to my team” saves a pending staff invite (`centre_invites`) without sending mail; the person joins from their KidEase page. No email or text is sent by this flag.
+- Migrations `0220`–`0224` are additive and are not applied by this PR.
+- Flag off: `/jobs` and `/jobs/post` render exactly as before. Links sit in the page footer only (not the header menu or drawer).
+
+`FEATURE_BG_CHECK_GUIDE`, `FEATURE_BG_CHECK_RECORDS`, and `FEATURE_BG_CHECK_ATTESTATION` are off. The public guide explains where a centre gets required checks. The centre can record that it saw a result and see in-app reminders. An optional file is a private copy and does not replace the licence holder’s personnel file. A listing may show a sentence the centre wrote. It is not a “background checked” or “verified” badge. Nothing is emailed or texted. Do not turn on `FEATURE_SCREENING_STATUS` or `screening_on_file` for this.
 
 ## Later (not this PR)
 

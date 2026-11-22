@@ -80,16 +80,13 @@ test("HMS push is huawei-only and the AppGallery plugin waits for the json file"
   assert.equal(existsSync(join(root, "android/app/agconnect-services.json")), false);
 });
 
-test("Huawei manifest declares location, camera, mic, and notifications with en and fr rationale", () => {
+test("Huawei manifest declares location and holds call permissions, with en and fr rationale ready", () => {
   const manifest = src("android/app/src/huawei/AndroidManifest.xml");
-  for (const permission of [
-    "ACCESS_COARSE_LOCATION",
-    "ACCESS_FINE_LOCATION",
-    "CAMERA",
-    "RECORD_AUDIO",
-    "POST_NOTIFICATIONS",
-  ]) {
+  for (const permission of ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]) {
     assert.match(manifest, new RegExp(permission));
+  }
+  for (const permission of ["android.permission.CAMERA", "RECORD_AUDIO", "POST_NOTIFICATIONS"]) {
+    assert.doesNotMatch(manifest, new RegExp(permission));
   }
   assert.match(manifest, /KidEaseHmsMessageService/);
   assert.match(manifest, /FirebaseInitProvider/);

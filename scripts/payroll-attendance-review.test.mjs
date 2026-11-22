@@ -14,7 +14,7 @@ test("payroll review uses only owner centres and stable employee IDs; no rates o
       insert into provider_daycares values ('owner-a', 'centre-a'), ('owner-b', 'centre-b'), ('owner-a', 'centre-c');
     `);
     await db.exec(
-      await readFile(new URL("../migrations/0211_provider_payroll.sql", import.meta.url), "utf8"),
+      await readFile(new URL("../migrations/0225_provider_payroll.sql", import.meta.url), "utf8"),
     );
     await db.exec(`
       insert into payroll_employees

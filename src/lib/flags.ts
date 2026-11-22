@@ -148,6 +148,9 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_CREDENTIAL_REMINDERS",
   "FEATURE_SCREENING_DOCS",
   "FEATURE_SCREENING_STATUS",
+  "FEATURE_BG_CHECK_GUIDE",
+  "FEATURE_BG_CHECK_RECORDS",
+  "FEATURE_BG_CHECK_ATTESTATION",
   "FEATURE_CENTRE_SWITCHER",
   "FEATURE_BILLING_ONLY_ROLE",
   "FEATURE_FAMILY_MESSAGING_DENY",
@@ -236,6 +239,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_XERO_SYNC",
   "FEATURE_PAYROLL_ALERTS",
   "FEATURE_PAYROLL_ALERTS_LIVE",
+  "FEATURE_STAFF_JOB_BOARD",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -510,6 +514,12 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_CREDENTIAL_REMINDERS: false,
   FEATURE_SCREENING_DOCS: false,
   FEATURE_SCREENING_STATUS: false,
+  /** Public background-check guide. Off. KidEase does not run checks. */
+  FEATURE_BG_CHECK_GUIDE: false,
+  /** Centre records of checks it has seen, plus in-app reminders. Off. No email or SMS. */
+  FEATURE_BG_CHECK_RECORDS: false,
+  /** Optional centre attestation on a listing. Off. Not a verified badge. */
+  FEATURE_BG_CHECK_ATTESTATION: false,
   FEATURE_CENTRE_SWITCHER: false,
   FEATURE_BILLING_ONLY_ROLE: false,
   FEATURE_FAMILY_MESSAGING_DENY: false,
@@ -678,6 +688,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_PAYROLL_ALERTS: false,
   /** Email, push, and SMS for those notices. Off. This build still does not send. */
   FEATURE_PAYROLL_ALERTS_LIVE: false,
+  /** Staff job board: staff profile, 3-step job post, explainable match, vetting checklist. Off. Sends nothing. */
+  FEATURE_STAFF_JOB_BOARD: false,
 };
 
 /**
@@ -1435,6 +1447,9 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_CREDENTIAL_REMINDERS", defaultOn: false, docs: "docs/flags.md", summary: "Credential expiry reminders. Off. Nothing is sent." },
   { key: "FEATURE_SCREENING_DOCS", defaultOn: false, docs: "docs/flags.md", summary: "Store a screening document. Off. KidEase does not judge the check." },
   { key: "FEATURE_SCREENING_STATUS", defaultOn: false, docs: "docs/flags.md", summary: "Screening status. Off. Missing stays missing." },
+  { key: "FEATURE_BG_CHECK_GUIDE", defaultOn: false, docs: "docs/flags.md", summary: "Public background-check guide. Off. KidEase does not run or verify checks." },
+  { key: "FEATURE_BG_CHECK_RECORDS", defaultOn: false, docs: "docs/flags.md", summary: "Centre record of a check it saw, plus in-app reminders. Off. No email or SMS. A file upload is optional and is not the personnel file." },
+  { key: "FEATURE_BG_CHECK_ATTESTATION", defaultOn: false, docs: "docs/flags.md", summary: "Optional centre sentence on a listing. Off. Not a background-checked badge. Expiry stays off for parents unless the centre opts in." },
   { key: "FEATURE_CENTRE_SWITCHER", defaultOn: false, docs: "docs/flags.md", summary: "Switch centre. Off. A centre you do not belong to is rejected." },
   { key: "FEATURE_BILLING_ONLY_ROLE", defaultOn: false, docs: "docs/flags.md", summary: "Billing role. Off. Health pages stay closed." },
   { key: "FEATURE_FAMILY_MESSAGING_DENY", defaultOn: false, docs: "docs/flags.md", summary: "Block family messaging for a staff role. Off." },
@@ -1634,6 +1649,11 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Allows pay-date email, push, and SMS when those channels are already on. Default off. This build has no sender.",
+    key: "FEATURE_STAFF_JOB_BOARD",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Staff job board on /jobs and /jobs/post: one staff profile, a 3-step job post, a plain-words match score and a provider checklist. Off. Short profile until the person applies. Sends no email or text.",
   },
 ];
 

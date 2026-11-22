@@ -130,6 +130,7 @@ export const Route = createRootRoute({
         degraded: true,
         subscriptionsEnabled: false,
         govPortalLink: false,
+        bgCheckGuide: false,
       })),
       getVisitorLocale({ data: { pathname: location.pathname, search } }).catch(() => GUEST_LOCALE),
       readFrCaEnabled().catch(() => false),

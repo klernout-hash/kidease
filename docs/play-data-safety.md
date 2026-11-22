@@ -24,7 +24,7 @@ Data safety answers, from the code in this repo. Do not add a category that is n
 - Personal info: name and email on the account. Phone number if the person saves one.
 - Health info: allergies, medications, and medical notes a parent types for a child. Stored in KidEase. Not sent to PostHog or Sentry.
 - App activity: pages and product events, only after the person taps Allow analytics. Linked to the account when signed in.
-- Audio and photos/videos: camera and microphone only while a voice or video call is open (`CAMERA`, `RECORD_AUDIO`). Calls are not recorded.
+- Audio and photos/videos: not in this store build. `CAMERA` and `RECORD_AUDIO` are not declared. Do not mark them on the form until the calling switch in `docs/mobile-builds.md` is turned on.
 - Files: a centre can upload a licence or screening document.
 - Messages: support threads the person sends.
 - Financial info: the Android app does not open Stripe Checkout and does not sell plans. Leave payments off this form.
@@ -60,7 +60,7 @@ The WebView loads `https://www.kidease.ca`. JavaScript SDKs are not Android libr
 | --- | --- | --- |
 | posthog-js | Page views and product events. When the person is signed in, that usage is linked to the account id. The property scrubber drops password, email, phone, child name, birth date, and health text (allergies, medications, medical notes). Session replay stays off unless `VITE_PUBLIC_POSTHOG_REPLAY_NATIVE` is on (default off). | Only after the person taps Allow analytics. Essential or no choice means PostHog does not start and the app does not queue events. First-party `/ingest` proxy. On the Data safety form, mark App activity as collected and linked to the account. |
 | @sentry/react | Crash and performance traces if `VITE_PUBLIC_SENTRY_DSN` is set. Data collection is limited: no user info, cookies, headers, query params, or request bodies. Stack trace and route tag. No email, child name, or health text. | Website and app both wait for the same Allow tap. Unset or Essential does not start Sentry. Leave it off the form when the DSN is unset. |
-| twilio-video and @twilio/voice-sdk | Live audio on a voice call. Live audio and video on a video tour. Not a native AAR. The scripts load only on `/call` and `/video`. KidEase does not record the call. Phone numbers stay hidden. | After the person opens a call and the phone shows the camera and microphone prompt. Declare Audio and Photos and videos. Not used for ads. Not collected in the background. |
+| twilio-video and @twilio/voice-sdk | Live audio on a voice call. Live audio and video on a video tour. Not a native AAR. The scripts load only on `/call` and `/video`. KidEase does not record the call. Phone numbers stay hidden. | Not in this store build. The pages stay off while the flags are off, and the manifest does not declare camera or microphone. Declare Audio and Photos and videos only after the calling switch in `docs/mobile-builds.md` is on. |
 
 ## Health information
 
@@ -75,8 +75,8 @@ Also declare these, each linked to the account:
 
 ## Not in this build
 
-- SMS, call log, contacts, photo library, advertising ID, and background location. The microphone and camera are used only during a voice or video call.
-- Push sending stays off until `FEATURE_PUSH` and a Firebase project exist. `POST_NOTIFICATIONS` and `@capacitor/push-notifications` are in the Play and Samsung binaries. Huawei does not include the Firebase plugin. `google-services.json` is not in the repo, so Firebase Messaging is not in the AAB yet.
+- SMS, call log, contacts, photo library, advertising ID, background location, camera, and microphone. This store build does not declare camera or microphone.
+- Push sending stays off until `FEATURE_PUSH` and a Firebase project exist. This store build does not declare `POST_NOTIFICATIONS` or `USE_FULL_SCREEN_INTENT`. `@capacitor/push-notifications` stays in the Play and Samsung projects. Huawei does not include the Firebase plugin. `google-services.json` is not in the repo, so Firebase Messaging is not in the AAB yet. Do not mark notifications as collected.
 - Play Billing. Digital plans are not sold in the app.
 - `FEATURE_SMS` and in-app chat stay off. SMS checkboxes, the chat lab, and “coming soon” store badges are hidden when `data-runtime` is `ios` or `android`.
-- Parent Plus, Parent Alerts, centre-plan prices, and every Stripe checkout are not shown in the app. A video tour that needs Parent Plus is blocked with no price and no subscribe button. Firebase Analytics is excluded from the release. Firebase Messaging is not in the AAB. Twilio voice and video are JavaScript on the call pages, not native libraries. Google Maps and Places load in the WebView for search. Age rating is 18+. Not the Families program. 16 KB page size: `useLegacyPackaging = false`. Target API 36. Declare Health info for allergies, medications, and medical notes. Declare Audio and Photos and videos for Twilio calls.
+- Parent Plus, Parent Alerts, centre-plan prices, and every Stripe checkout are not shown in the app. A video tour that needs Parent Plus is blocked with no price and no subscribe button. Firebase Analytics is excluded from the release. Firebase Messaging is not in the AAB. Twilio voice and video are JavaScript on the call pages, not native libraries. Google Maps and Places load in the WebView for search. Age rating is 18+. Not the Families program. 16 KB page size: `useLegacyPackaging = false`. Target API 36. Declare Health info for allergies, medications, and medical notes. Do not declare Audio or Photos and videos until the calling switch is on.
