@@ -378,6 +378,7 @@ export function FeelPhoto({
       src={src}
       className={className}
       eager={eager}
+      priority={priority}
       sizes={sizes}
       width={width ?? 768}
       height={height ?? 576}
