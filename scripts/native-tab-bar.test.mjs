@@ -72,6 +72,7 @@ test("sign out and delete account are on Menu, the account screen, and the accou
   assert.match(account, /data-ke="account-sign-out"/);
   assert.match(account, /data-ke=\{`account-section-\$\{item\.id\}`\}/);
   assert.match(account, /id: "delete"/);
+  assert.ok(account.indexOf('id: "delete"') < account.indexOf('id: "alerts"'));
   assert.match(drawer, /data-ke="drawer-sign-out"/);
   assert.match(drawer, /data-ke="drawer-delete-account"/);
   assert.match(drawer, /onSignOut\(\)/);
