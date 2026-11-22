@@ -3721,5 +3721,14 @@
   "adminStatLive": "Online",
   "adminStatDeclined": "Rifiutato",
   "adminOtherCounts": "Altri numeri",
-  "adminSearchQueue": "Cerca nome, città, email…"
+  "adminSearchQueue": "Cerca nome, città, email…",
+  "emailCodeTitle": "Codice email",
+  "emailCodeLead": "Attivalo se vuoi un codice via email quando entri. La password funziona ancora. Le note sulla salute restano nascoste finché non inserisci il codice.",
+  "emailCodeOn": "Attiva il codice email",
+  "emailCodeOff": "Disattiva il codice email",
+  "emailCodeSavedOn": "Il codice email è attivo. Al prossimo accesso ti inviamo un codice prima di mostrare le note sulla salute.",
+  "emailCodeSavedOff": "Il codice email è disattivo.",
+  "healthCodePrompt": "Aggiungi un codice email prima del {date} così le note sulla salute e i documenti restano solo per te.",
+  "healthCodeLocked": "Le note sulla salute e i documenti restano nascosti finché non aggiungi un codice email.",
+  "healthCodeAction": "Aggiungi un codice email"
 }
