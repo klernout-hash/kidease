@@ -19,6 +19,11 @@ export const Route = createFileRoute("/api/gov/export")({
         if (!user) return new Response("Unauthorized", { status: 401, headers: robots });
         const actor = await loadGovActor(user.id);
         if (!actor) return new Response("Not authorized", { status: 403, headers: robots });
+        const { isCurrentUserTwoFactorVerified } = await import("@/lib/server/two-factor.server");
+        const { govCallAllowed } = await import("@/lib/gov/second-factor");
+        if (!govCallAllowed(isCurrentUserTwoFactorVerified(user.id))) {
+          return new Response("Two-factor verification required", { status: 401, headers: robots });
+        }
         const url = new URL(request.url);
         const format = url.searchParams.get("format") === "pdf" ? "pdf" : "csv";
         const locale = url.searchParams.get("locale") === "fr" ? "fr" : "en";
