@@ -48,10 +48,12 @@ test("Ontario weekly example matches the CRA T4032 January 2026 steps", () => {
   assert.equal(pay.employeeEiCents, 2_119);
   assert.equal(pay.federalTaxCents + pay.provincialTaxCents, 17_735);
   assert.equal(pay.provincialVerified, true);
-  assert.match(pay.label, /Estimate/);
+  assert.match(pay.label, /Check it before you approve/);
+  assert.match(pay.edition, /T4127 123rd/);
+  assert.ok(pay.lines.filter((line) => line.edition).every((line) => line.asOf === "2026-11-22"));
 });
 
-test("Quebec weekly example matches QPP, EI, QPIP, and federal tax, not provincial tax", () => {
+test("Quebec weekly example matches QPP, EI, QPIP, federal tax, and adds Revenu Québec tax", () => {
   const pay = estimatePay({
     province: "QC",
     frequency: "weekly",
@@ -64,7 +66,8 @@ test("Quebec weekly example matches QPP, EI, QPIP, and federal tax, not provinci
   assert.equal(pay.employeeEiCents, 1_690);
   assert.equal(pay.employeeQpipCents, 559);
   assert.equal(pay.federalTaxCents, 9_501);
-  assert.equal(pay.provincialTaxCents, null);
+  // Revenu Québec formula, worked by hand in scripts/payroll-engine.test.mjs.
+  assert.equal(pay.provincialTaxCents, 12_089);
   assert.equal(pay.provincialVerified, false);
   assert.ok(pay.unverified.some((line) => /TP-1015/.test(line)));
 });
@@ -547,7 +550,7 @@ test("approved extra tax comes off each cheque and a pending request does not", 
     extraTaxApproved: true,
   });
   assert.equal(quebec.federalTaxCents, quebecBase.federalTaxCents);
-  assert.equal(quebec.provincialTaxCents, 1_500);
+  assert.equal(quebec.provincialTaxCents, quebecBase.provincialTaxCents + 1_500);
   assert.equal(quebec.governmentCents, quebecBase.governmentCents + 1_500);
   assert.equal(extraTaxAuthorityFor("QC"), "revenu_quebec");
   assert.equal(extraTaxAuthorityFor("ON"), "cra");

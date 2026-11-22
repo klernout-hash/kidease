@@ -1,28 +1,22 @@
 /**
- * Pay-day estimate.
+ * Pay-day calculation.
  *
- * Follows the step-by-step method printed in CRA T4032 (January 2026),
- * which uses the same 2026 rates as T4127. CRA tells payroll software to
- * use T4127 itself. This result can differ from PDOC by rounding.
- * It is an estimate. The payroll partner does the final math and the remittance.
+ * Deductions come from `engine.ts`: CRA T4127 Option 1 for federal and
+ * provincial tax in all 13 provinces and territories, the CPP, CPP2, QPP, EI,
+ * and QPIP formulas, and Revenu Québec's formula for Quebec tax. The table
+ * edition is picked by pay date. Each money line names its edition and as-of
+ * date. The owner still checks it before approving.
  */
 
 import { cents, roundDollars } from "./money.ts";
-import {
-  CPP_2026,
-  EI_2026,
-  FEDERAL_BRACKETS_2026,
-  FEDERAL_TAX_2026,
-  ONTARIO_TAX_2026,
-  PERIODS,
-  PROVINCIAL_BRACKETS_2026,
-  PROVINCIAL_TAX_READY,
-  QPIP_2026,
-  QPP_2026,
-  type TaxBracket,
-} from "./rates-2026.ts";
+import { calculateDeductions, type EngineLine } from "./engine.ts";
+import { isProvinceCode, type Frequency } from "./tables.ts";
+import { PERIODS, PROVINCIAL_TAX_READY } from "./rates-2026.ts";
 
-export const ESTIMATE_LABEL = "Estimate. Your payroll partner does the final math and sends the money.";
+export const ESTIMATE_LABEL = "Worked out with CRA and Revenu Québec formulas. Check it before you approve. You send the money from your own bank.";
+
+/** Pay date used when a caller does not give one. */
+export const DEFAULT_PAY_DATE = "2026-11-22";
 
 export type PayFrequency = "weekly" | "biweekly" | "semimonthly" | "monthly";
 
@@ -84,6 +78,10 @@ export type PayInput = {
   extraTaxCents?: number;
   extraTaxAuthority?: "cra" | "revenu_quebec";
   extraTaxApproved?: boolean;
+  /** Pay date (YYYY-MM-DD). Picks the CRA table edition. */
+  payDate?: string;
+  /** Ontario TD1ON dependants for the tax reduction. */
+  ontarioDependants?: number;
 };
 
 export type MoneyLine = {
@@ -91,6 +89,10 @@ export type MoneyLine = {
   cents: number;
   verified: boolean;
   note: string;
+  /** Table edition this line came from, e.g. "CRA T4127 123rd edition (July 1, 2026)". */
+  edition?: string;
+  asOf?: string;
+  source?: string;
 };
 
 export type PayEstimate = {
@@ -126,6 +128,10 @@ export type PayEstimate = {
   governmentCents: number;
   lines: MoneyLine[];
   unverified: string[];
+  /** Edition used for this pay, or null when no table covers the pay date. */
+  edition: string | null;
+  asOf: string | null;
+  payDate: string;
 };
 
 const ZERO_YTD: PayYtd = {
@@ -137,37 +143,6 @@ const ZERO_YTD: PayYtd = {
   qpipInsurableCents: 0,
   qpipCents: 0,
 };
-
-function bracketTax(income: number, table: readonly TaxBracket[]): number {
-  const row = table.find((item) => income <= item.upTo) ?? table[table.length - 1];
-  return roundDollars(roundDollars(income * row.rate) - row.k);
-}
-
-function periodContribution(pensionableDollars: number, periods: number, rate: number, exemptionDollars: number): number {
-  const base = Math.max(0, pensionableDollars - exemptionDollars / periods);
-  return roundDollars(base * rate);
-}
-
-function capPeriod(calculated: number, ytdCents: number, maxCents: number): number {
-  const room = Math.max(0, roundDollars(maxCents / 100 - ytdCents / 100));
-  return roundDollars(Math.min(calculated, room));
-}
-
-function ontarioHealth(income: number): number {
-  if (income <= 20_000) return 0;
-  if (income <= 36_000) return Math.min(300, roundDollars(0.06 * (income - 20_000)));
-  if (income <= 48_000) return Math.min(450, roundDollars(300 + 0.06 * (income - 36_000)));
-  if (income <= 72_000) return Math.min(600, roundDollars(450 + 0.25 * (income - 48_000)));
-  if (income <= 200_000) return Math.min(750, roundDollars(600 + 0.25 * (income - 72_000)));
-  return Math.min(900, roundDollars(750 + 0.25 * (income - 200_000)));
-}
-
-function ontarioSurtax(basic: number): number {
-  if (basic <= ONTARIO_TAX_2026.surtaxFirst) return 0;
-  const first = roundDollars(0.2 * (basic - ONTARIO_TAX_2026.surtaxFirst));
-  if (basic <= ONTARIO_TAX_2026.surtaxSecond) return first;
-  return roundDollars(first + 0.36 * (basic - ONTARIO_TAX_2026.surtaxSecond));
-}
 
 /** How each add-on hits pay. Unverified items follow the centre's flag and say so. */
 export function classifyAddon(addon: PayAddon): {
@@ -336,123 +311,87 @@ export function estimatePay(input: PayInput): PayEstimate {
 
   const pensionable = Math.max(0, pensionableCash);
   const insurable = Math.max(0, insurableCash);
-  const pensionPlan = quebec ? QPP_2026 : CPP_2026;
-  const exemptPension = input.cppExempt === true;
-  const exemptEi = input.eiExempt === true;
-
-  let employeePension = 0;
-  let employeeSecond = 0;
-  if (!exemptPension && pensionable > 0) {
-    const roomPensionable = Math.max(0, pensionPlan.ympeCents - ytd.pensionableCents);
-    const thisBase = Math.min(pensionable, roomPensionable);
-    const calculated = periodContribution(
-      thisBase / 100,
-      periods,
-      pensionPlan.employeeRate,
-      pensionPlan.basicExemptionCents / 100,
-    );
-    employeePension = cents(capPeriod(calculated, ytd.cppOrQppCents, pensionPlan.maxEmployeeCents));
-
-    const before = ytd.pensionableCents;
-    const after = before + pensionable;
-    if (after > pensionPlan.ympeCents && before < pensionPlan.yampeCents) {
-      const bandStart = Math.max(before, pensionPlan.ympeCents);
-      const bandEnd = Math.min(after, pensionPlan.yampeCents);
-      const band = Math.max(0, bandEnd - bandStart);
-      const raw = roundDollars((band / 100) * pensionPlan.secondRate);
-      employeeSecond = cents(capPeriod(raw, ytd.cpp2Cents, pensionPlan.maxSecondCents));
-    }
-  }
-
-  const additionalRate = pensionPlan.firstAdditionalRate / pensionPlan.employeeRate;
-  const additionalPortion = employeePension === 0 ? 0 : cents(roundDollars((employeePension / 100) * additionalRate));
-  const basePortion = employeePension - additionalPortion;
-
-  let employeeEi = 0;
-  if (!exemptEi && insurable > 0) {
-    const eiRate = quebec ? EI_2026.quebecEmployeeRate : EI_2026.employeeRate;
-    const eiMax = quebec ? EI_2026.quebecMaxEmployeeCents : EI_2026.maxEmployeeCents;
-    const room = Math.max(0, EI_2026.maxInsurableCents - ytd.insurableCents);
-    const thisInsurable = Math.min(insurable, room);
-    const raw = roundDollars((thisInsurable / 100) * eiRate);
-    employeeEi = cents(capPeriod(raw, ytd.eiCents, eiMax));
-  }
-
-  let employeeQpip = 0;
-  if (quebec && !exemptEi && insurable > 0) {
-    const room = Math.max(0, QPIP_2026.maxInsurableCents - ytd.qpipInsurableCents);
-    const thisInsurable = Math.min(insurable, room);
-    const raw = roundDollars((thisInsurable / 100) * QPIP_2026.employeeRate);
-    employeeQpip = cents(capPeriod(raw, ytd.qpipCents, QPIP_2026.maxEmployeeCents));
-  }
-
-  const employerEiRate = quebec ? EI_2026.quebecEmployerRate : EI_2026.employerRate;
-  const employerEiMax = quebec ? EI_2026.quebecMaxEmployerCents : EI_2026.maxEmployerCents;
-  const employerEiBase = exemptEi ? 0 : Math.min(insurable, Math.max(0, EI_2026.maxInsurableCents - ytd.insurableCents));
-  const employerEi = cents(
-    capPeriod(roundDollars((employerEiBase / 100) * employerEiRate), Math.round((ytd.eiCents * employerEiRate) / (quebec ? EI_2026.quebecEmployeeRate : EI_2026.employeeRate)), employerEiMax),
-  );
-  const employerQpip = quebec
-    ? cents(
-        capPeriod(
-          roundDollars((Math.min(insurable, Math.max(0, QPIP_2026.maxInsurableCents - ytd.qpipInsurableCents)) / 100) * QPIP_2026.employerRate),
-          Math.round((ytd.qpipCents * QPIP_2026.employerRate) / QPIP_2026.employeeRate),
-          QPIP_2026.maxEmployerCents,
-        ),
-      )
-    : 0;
-
+  const payDate = input.payDate ?? DEFAULT_PAY_DATE;
   const rrsp = Math.max(0, input.rrspCents ?? 0);
-  const deductionForTax = additionalPortion + employeeSecond + rrsp;
-  const periodNetForTax = Math.max(0, cash + benefit - deductionForTax);
-  const annualTaxable = roundDollars((periodNetForTax / 100) * periods);
 
-  const annualBaseCredit = exemptPension
-    ? 0
-    : Math.min(pensionPlan.maxBaseCents / 100, roundDollars((basePortion / 100) * periods));
-  const annualEiCredit = exemptEi
-    ? 0
-    : Math.min((quebec ? EI_2026.quebecMaxEmployeeCents : EI_2026.maxEmployeeCents) / 100, roundDollars((employeeEi / 100) * periods));
-  const annualQpipCredit = quebec ? Math.min(QPIP_2026.maxEmployeeCents / 100, roundDollars((employeeQpip / 100) * periods)) : 0;
-  const employmentForCea = roundDollars(((cash + benefit) / 100) * periods);
-  const cea = Math.min(FEDERAL_TAX_2026.canadaEmploymentAmount, Math.max(0, employmentForCea));
-  const td1 = (input.td1FederalCents ?? cents(FEDERAL_TAX_2026.maxBasicPersonal)) / 100;
-  const federalCreditBase = roundDollars(td1 + annualBaseCredit + annualEiCredit + annualQpipCredit + cea);
-  const federalTaxBeforeCredit = bracketTax(annualTaxable, FEDERAL_BRACKETS_2026);
-  const federalCredit = roundDollars(federalCreditBase * FEDERAL_TAX_2026.lowestRate);
-  const basicFederal = Math.max(0, roundDollars(federalTaxBeforeCredit - federalCredit));
-  const abatement = quebec ? roundDollars(basicFederal * FEDERAL_TAX_2026.quebecAbatement) : 0;
-  const annualFederal = Math.max(0, roundDollars(basicFederal - abatement));
+  const engine = isProvinceCode(province)
+    ? calculateDeductions({
+        province,
+        frequency: (input.frequency in PERIODS ? input.frequency : "biweekly") as Frequency,
+        payDate,
+        taxableCents: Math.max(0, cash + benefit),
+        pensionableCents: pensionable,
+        insurableCents: insurable,
+        rrspCents: rrsp,
+        ytd: {
+          pensionableCents: ytd.pensionableCents,
+          cppCents: ytd.cppOrQppCents,
+          cpp2Cents: ytd.cpp2Cents,
+          eiCents: ytd.eiCents,
+          qpipCents: ytd.qpipCents,
+        },
+        td1FederalCents: input.td1FederalCents ?? null,
+        td1ProvincialCents: input.td1ProvincialCents ?? null,
+        ontarioDependants: input.ontarioDependants,
+        cppExempt: input.cppExempt === true,
+        eiExempt: input.eiExempt === true,
+      })
+    : null;
 
-  let annualProvincial: number | null = null;
-  let provincialVerified = false;
-  if (province === "ON") {
-    provincialVerified = true;
-    const claim = (input.td1ProvincialCents ?? cents(ONTARIO_TAX_2026.basicPersonal)) / 100;
-    const provincialCreditBase = roundDollars(claim + annualBaseCredit + annualEiCredit);
-    const basic = Math.max(
-      0,
-      roundDollars(bracketTax(annualTaxable, PROVINCIAL_BRACKETS_2026.ON) - roundDollars(provincialCreditBase * ONTARIO_TAX_2026.lowestRate)),
-    );
-    const surtax = ontarioSurtax(basic);
-    const beforeHealth = roundDollars(basic + surtax);
-    const health = ontarioHealth(annualTaxable);
-    const reduction = Math.max(0, roundDollars(ONTARIO_TAX_2026.reductionBasic * 2 - beforeHealth));
-    annualProvincial = Math.max(0, roundDollars(beforeHealth + health - reduction));
-  } else if (province === "QC") {
-    unverified.push("Quebec income tax follows Revenu Québec TP-1015.F. It is not estimated here.");
-  } else if (PROVINCIAL_BRACKETS_2026[province]) {
-    unverified.push(`Provincial tax for ${province} is not estimated. The brackets are published, but the personal amount and credits were not verified.`);
-  } else {
-    unverified.push("Provincial tax is not estimated for this place.");
+  if (!engine || !engine.ok) {
+    unverified.push(engine && !engine.ok ? engine.message : "This province code is not known. Nothing was taken off.");
+    return {
+      label: ESTIMATE_LABEL,
+      province,
+      periods,
+      cashGrossCents: cash,
+      vacationCents,
+      taxableBenefitCents: benefit,
+      nontaxCashCents: nontax,
+      pensionableCents: pensionable,
+      insurableCents: insurable,
+      employeeCppCents: 0,
+      employeeCpp2Cents: 0,
+      employerCppCents: 0,
+      employerCpp2Cents: 0,
+      employeeEiCents: 0,
+      employerEiCents: 0,
+      employeeQppCents: 0,
+      employeeQpp2Cents: 0,
+      employerQppCents: 0,
+      employerQpp2Cents: 0,
+      employeeQpipCents: 0,
+      employerQpipCents: 0,
+      federalTaxCents: 0,
+      provincialTaxCents: null,
+      provincialVerified: false,
+      extraTaxCents: 0,
+      extraTaxAuthority: null,
+      netCents: cash + nontax,
+      employerCostCents: cash + nontax,
+      governmentCents: 0,
+      lines,
+      unverified,
+      edition: null,
+      asOf: null,
+      payDate,
+    };
   }
 
-  const federalPart = cents(roundDollars(annualFederal / periods));
-  const provincialPart = annualProvincial == null ? null : cents(roundDollars(annualProvincial / periods));
-  const combined = cents(roundDollars((annualFederal + (annualProvincial ?? 0)) / periods));
-  let federalTax = federalPart;
-  let provincialTax: number | null =
-    provincialPart == null ? null : provincialPart + (combined - (federalPart + provincialPart));
+  for (const note of engine.notes) unverified.push(note);
+  const employeePension = engine.cppCents;
+  const employeeSecond = engine.cpp2Cents;
+  const employeeEi = engine.eiCents;
+  const employeeQpip = engine.qpipCents;
+  const employerEi = engine.employerEiCents;
+  const employerQpip = engine.employerQpipCents;
+  let federalTax = engine.federalTaxCents;
+  let provincialTax: number | null = engine.provincialTaxCents;
+  const provincialLine = engine.lines.find((line) => line.code === "provincial_tax");
+  const provincialVerified = provincialTax != null && provincialLine?.verified === true;
+  if (provincialTax != null && !provincialVerified) {
+    unverified.push("Quebec tax: check this line in WebRAS before you approve.");
+  }
 
   const requestedExtra = Math.max(0, Math.round(input.extraTaxCents ?? 0));
   const extraApproved = input.extraTaxApproved === true && requestedExtra > 0;
@@ -464,16 +403,12 @@ export function estimatePay(input: PayInput): PayEstimate {
     federalTax += extraTaxCents;
   }
 
-  const employeeDeductions =
-    employeePension +
-    employeeSecond +
-    employeeEi +
-    employeeQpip +
-    federalTax +
-    (provincialTax ?? 0);
-  const net = cash + nontax - employeeDeductions;
-  const employerPension = exemptPension ? 0 : employeePension;
-  const employerSecond = exemptPension ? 0 : employeeSecond;
+  for (const line of engine.lines) lines.push(engineLine(line));
+
+  const employeeDeductions = employeePension + employeeSecond + employeeEi + employeeQpip + federalTax + (provincialTax ?? 0);
+  const net = cash + nontax - employeeDeductions - rrsp;
+  const employerPension = engine.employerCppCents;
+  const employerSecond = engine.employerCpp2Cents;
   const government =
     employeePension +
     employerPension +
@@ -518,6 +453,38 @@ export function estimatePay(input: PayInput): PayEstimate {
     governmentCents: government,
     lines,
     unverified,
+    edition: engine.edition.label,
+    asOf: engine.edition.asOf,
+    payDate,
+  };
+}
+
+const LINE_NOTES: Record<EngineLine["code"], string> = {
+  cpp: "CPP taken from pay.",
+  cpp2: "Second CPP (CPP2) taken from pay above the first yearly limit.",
+  qpp: "QPP taken from pay.",
+  qpp2: "Second QPP (QPP2) taken from pay above the first yearly limit.",
+  ei: "EI taken from pay.",
+  qpip: "QPIP (Quebec parental insurance) taken from pay.",
+  federal_tax: "Federal income tax taken from pay.",
+  provincial_tax: "Provincial income tax taken from pay.",
+  employer_cpp: "The centre pays the same CPP.",
+  employer_cpp2: "The centre pays the same CPP2.",
+  employer_qpp: "The centre pays the same QPP.",
+  employer_qpp2: "The centre pays the same QPP2.",
+  employer_ei: "The centre pays 1.4 times the EI.",
+  employer_qpip: "The centre's QPIP share.",
+};
+
+function engineLine(line: EngineLine): MoneyLine {
+  return {
+    code: line.code,
+    cents: line.cents,
+    verified: line.verified,
+    note: LINE_NOTES[line.code],
+    edition: line.edition,
+    asOf: line.asOf,
+    source: line.source,
   };
 }
 

@@ -204,12 +204,13 @@ export const ONTARIO_TAX_2026 = {
 } as const;
 
 /**
- * Bracket tables are published for these provinces.
- * Dollar tax is estimated only for Ontario, where the personal amount, surtax,
- * health premium, and reduction were on the same CRA page.
- * Quebec tax follows TP-1015.F and was not loaded. It is not estimated.
+ * Provinces whose provincial tax the engine computes (engine.ts, tables.ts).
+ * All 12 provinces and territories outside Quebec are checked against CRA's
+ * T4032 tables in scripts/payroll-engine.test.mjs. Quebec uses Revenu Québec's
+ * 2026 amounts. It has no 2027 table yet, so `provincialTaxReady()` in engine.ts
+ * is the per-date answer. The January 2026 brackets above are kept for history only.
  */
-export const PROVINCIAL_TAX_READY = new Set(["ON"]);
+export const PROVINCIAL_TAX_READY = new Set(["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT"]);
 
 export const SALES_TAX_2026 = {
   /** Child care that meets Memorandum 21-1 is exempt. Taxable extras use these rates. */
