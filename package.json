@@ -53,6 +53,9 @@
     "photos:encode-feel": "node scripts/encode-feel-photos.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "format:check": "prettier --check README.md package.json .prettierrc .github/dependabot.yml .github/workflows/codeql.yml",
+    "test:coverage": "mkdir -p coverage && node --experimental-strip-types --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage/lcov.info 'scripts/**/*.test.mjs'",
+    "prepare": "node scripts/install-git-hooks.mjs",
     "icons": "node scripts/make-app-icons.mjs",
     "cap:assets": "node scripts/sync-native-assets.mjs",
     "cap:permissions": "node scripts/patch-native-permissions.mjs",
@@ -61,6 +64,9 @@
     "cap:android": "npx cap open android",
     "cap:prepare": "npm run cap:assets && npm run cap:permissions && npx cap sync",
     "cap:version": "node scripts/bump-native-version.mjs"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,css,json,md,yml}": "prettier --write"
   },
   "dependencies": {
     "@capacitor-community/in-app-review": "^8.0.0",
@@ -157,6 +163,7 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
     "lightningcss": "^1.28.0",
+    "lint-staged": "^17.6.1",
     "nitro": "3.0.260610-beta",
     "playwright": "^1.62.0",
     "prettier": "^3.4.0",
