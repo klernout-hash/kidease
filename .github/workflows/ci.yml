@@ -62,7 +62,7 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Coverage report
         run: npm run test:coverage
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage
@@ -99,7 +99,7 @@ jobs:
         if: steps.vite-build.outputs.cache-hit != 'true'
         run: sh scripts/stage-ci-build.sh
       - name: Upload Vite build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ci-build
           path: artifacts/ci-build
@@ -165,7 +165,7 @@ jobs:
           node scripts/home-search-hit-area.browser.mjs
       - name: Retain synthetic search control evidence
         if: always() && matrix.shard == '1/8'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: synthetic-search-control-ui
           path: |
@@ -189,7 +189,7 @@ jobs:
           else
             npm run e2e:preview -- --shard "$shard"
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: e2e-artifacts-${{ strategy.job-index }}
@@ -326,7 +326,7 @@ jobs:
           if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
             echo "Desktop visual failed. Non-blocking. Refresh baselines from desktop-actual if the change is intended." >> "$GITHUB_STEP_SUMMARY"
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: desktop-visual-report
@@ -371,7 +371,7 @@ jobs:
       - name: Signed-in parent and daycare, English and French
         timeout-minutes: 40
         run: node scripts/e2e-smoke.mjs --start-preview --signed-in
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: signed-in-e2e-artifacts
@@ -413,7 +413,7 @@ jobs:
         run: ./gradlew bundleHuaweiRelease assembleHuaweiRelease
       - name: Scan the Huawei release APK
         run: node scripts/check-store-isolation.mjs android/app/build/outputs/apk
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: app-huawei-release
           path: |
