@@ -28,4 +28,4 @@ Payloads hold only the ring id, the thread id, the media type, and the caller's 
 This needs new native store builds (iOS: PushKit, CallKit, entitlements. Android: new service and permissions).
 Apple and Google submission waits until Kyle has tested it on real devices.
 Apple rejects apps that receive a VoIP push and don't report it to CallKit. The plugin always reports the call, including on cancel.
-Google Play needs the USE_FULL_SCREEN_INTENT declaration (calling app) in the Play Console.
+Google Play needs the USE_FULL_SCREEN_INTENT declaration (calling app) in the Play Console. This store build does not declare it. Add it back with the Android switch in `docs/mobile-builds.md` in the build that ships the ring.
