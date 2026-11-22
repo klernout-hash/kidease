@@ -114,6 +114,10 @@ When push and calling are ready to ship:
 2. Run `npm run cap:permissions`. That writes the five permissions back into both manifests, plus the camera and microphone features with `required="false"`.
 3. Turn `FEATURE_PUSH`, `FEATURE_CALL_PUSH`, `FEATURE_VOICE`, and `FEATURE_VIDEO` on only after the credentials exist and you mean to send. The declarations and the flags are separate.
 
+### Native crash symbols
+
+iOS dSYM upload and Android ProGuard mapping upload stay out of this store build. Do not archive or upload build 5 until Kyle approves that plan. JavaScript source maps for the website are a separate switch, `SENTRY_UPLOAD_SOURCEMAPS`, and it stays unset.
+
 ## Android — `bundleRelease` → Play internal
 
 Play, Samsung Galaxy Store, and Huawei AppGallery are three flavours of the same application id. The Play command is `bundlePlayRelease`. Galaxy Store and AppGallery commands, and what each store allows for Stripe, are in [`other-stores.md`](other-stores.md).
