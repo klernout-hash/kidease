@@ -341,8 +341,8 @@ export async function persistSignedPdf(input: {
       [input.contractId, stored.key, stored.bytes],
     );
     return { key: stored.key, bytes: stored.bytes };
-  } catch (err) {
-    console.error("[docusign] store signed pdf failed", err);
+  } catch {
+    console.error("[docusign] signed PDF was not stored in the private bucket. The public media bucket was not used.");
     return null;
   }
 }
