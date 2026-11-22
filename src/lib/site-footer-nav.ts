@@ -76,6 +76,32 @@ export function footerLinkHrefs(links: readonly FooterLinkDef[] = footerPageLink
   return [...new Set(links.map((link) => link.to))];
 }
 
+const HIRE_STAFF_LINK: FooterLinkDef = {
+  to: "/jobs/post",
+  localePaired: true,
+  labelEn: "Hire staff",
+  labelFr: "Embaucher du personnel",
+};
+
+const FIND_JOB_LINK: FooterLinkDef = copyLink("/jobs", "findDaycareJobs", { localePaired: true });
+
+/**
+ * FEATURE_STAFF_JOB_BOARD footer links. The page footer only: the header menu,
+ * drawer and app menu keep using the FOOTER_* lists above unchanged.
+ * Daycares column: "Hire staff". Help & KidEase column: "Find daycare jobs",
+ * so staff signed in as parents (who do not see the Daycares column) can reach it.
+ */
+export function withStaffJobLinks(
+  columns: { daycares: readonly FooterLinkDef[]; support: readonly FooterLinkDef[] },
+  enabled: boolean,
+): { daycares: FooterLinkDef[]; support: FooterLinkDef[] } {
+  if (!enabled) return { daycares: [...columns.daycares], support: [...columns.support] };
+  const daycares = columns.daycares.map((link) => (link.to === "/jobs" ? HIRE_STAFF_LINK : link));
+  if (!daycares.some((link) => link.to === "/jobs/post")) daycares.push(HIRE_STAFF_LINK);
+  const support = columns.support.some((link) => link.to === "/jobs") ? [...columns.support] : [...columns.support, FIND_JOB_LINK];
+  return { daycares, support };
+}
+
 const BACKGROUND_CHECK_LINK: FooterLinkDef = {
   to: "/background-checks",
   localePaired: true,

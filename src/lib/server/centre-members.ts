@@ -267,12 +267,20 @@ export const listCentreTeam = createServerFn({ method: "GET" })
     };
   });
 
-export const inviteCentreEmployee = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
-  .validator(
-    (input: { daycareId: string; email: string; name?: string; role?: string; preset?: string }) => input,
-  )
-  .handler(async ({ context, data }) => {
+export type CentreEmployeeInviteInput = { daycareId: string; email: string; name?: string; role?: string; preset?: string };
+
+/**
+ * The one staff-invite path. The desk form sends the invite email. The staff job
+ * board passes `send: false`: the hired person sees the invite on their KidEase
+ * page and accepts it there (listMyStaffInvites / acceptMyStaffInvite).
+ */
+export async function createCentreEmployeeInvite(
+  actorUserId: string,
+  data: CentreEmployeeInviteInput,
+  options: { send: boolean } = { send: true },
+) {
+  const context = { userId: actorUserId };
+  {
     const sql = await getSql();
     const daycareId = (data.daycareId || "").trim();
     const email = normalizeInviteEmail(data.email);
@@ -365,6 +373,15 @@ export const inviteCentreEmployee = createServerFn({ method: "POST" })
       daycareId,
       detail: `invited ${email} as ${decision.role}`,
     });
+    if (!options.send) {
+      return {
+        ok: true as const,
+        inviteId: id,
+        mailed: false,
+        hourlyMax: CENTRE_INVITE_HOURLY_MAX,
+        dailyMax: CENTRE_INVITE_DAILY_MAX,
+      };
+    }
     const payload = {
       to: email,
       centreName: centre[0].name,
@@ -383,7 +400,13 @@ export const inviteCentreEmployee = createServerFn({ method: "POST" })
       hourlyMax: CENTRE_INVITE_HOURLY_MAX,
       dailyMax: CENTRE_INVITE_DAILY_MAX,
     };
-  });
+  }
+}
+
+export const inviteCentreEmployee = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: CentreEmployeeInviteInput) => input)
+  .handler(async ({ context, data }) => createCentreEmployeeInvite(context.userId, data, { send: true }));
 
 export const resendCentreInvite = createServerFn({ method: "POST" })
   .middleware([authMiddleware])

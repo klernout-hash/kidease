@@ -18,6 +18,7 @@ import {
   FOOTER_COLUMNS,
   FOOTER_LEGAL,
   footerLinkLabel,
+  withStaffJobLinks,
   withBackgroundCheckLink,
   type FooterColumnId,
   type FooterLinkDef,
@@ -134,10 +135,16 @@ export function SiteFooter() {
   const chrome = useRoleChrome();
   const hideCommerce = useInNativeShell();
   const hidePlans = chrome.subscriptionsEnabled !== true;
-  const daycareLinks = withBackgroundCheckLink(FOOTER_COLUMNS.daycares, chrome.bgCheckGuide === true);
   const fr = locale === "fr";
-  const helpAndKidEase = [...FOOTER_COLUMNS.support, ...FOOTER_COLUMNS.kidease]
-    .filter((link) => link.to !== "/get-app");
+  const staffJobs = withStaffJobLinks(
+    {
+      daycares: withBackgroundCheckLink(FOOTER_COLUMNS.daycares, chrome.bgCheckGuide === true),
+      support: [...FOOTER_COLUMNS.support, ...FOOTER_COLUMNS.kidease].filter((link) => link.to !== "/get-app"),
+    },
+    chrome.staffJobsLink === true,
+  );
+  const daycareLinks = staffJobs.daycares;
+  const helpAndKidEase = staffJobs.support;
 
   return (
     <footer className="ke-site-footer mt-auto">

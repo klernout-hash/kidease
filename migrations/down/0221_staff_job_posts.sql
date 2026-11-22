@@ -1,0 +1,11 @@
+alter table centre_job_posts drop column if exists board;
+alter table centre_job_posts drop column if exists about;
+alter table centre_job_posts drop column if exists pay_max_cents;
+alter table centre_job_posts drop column if exists pay_min_cents;
+alter table centre_job_posts drop column if exists start_date;
+alter table centre_job_posts drop column if exists work_type;
+alter table centre_job_posts drop column if exists shifts;
+alter table centre_job_posts drop column if exists days;
+alter table centre_job_posts drop column if exists care_groups;
+alter table centre_job_posts drop column if exists province;
+alter table centre_job_posts drop column if exists cert_needed;
