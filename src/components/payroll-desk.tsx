@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { formatCad } from "@/lib/payroll/money.ts";
 import { payCopy, statusLabel, varianceWords, type PayCopy } from "@/lib/payroll/copy.ts";
@@ -50,6 +50,39 @@ function toneClass(tone: Deadline["tone"]): string {
   if (tone === "amber") return "border-warn bg-[#f8efe3] text-fg";
   if (tone === "green") return "border-ok bg-ok/10 text-fg";
   return "border-border bg-surface text-fg";
+}
+
+function SearchBox({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <label className="block">
+      <span className="sr-only">{label}</span>
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={label}
+        className="min-h-11 w-full rounded-xl bg-surface px-3 text-base ring-1 ring-border"
+        data-ke="pay-search"
+      />
+    </label>
+  );
+}
+
+function Fold({ title, count, children }: { title: string; count?: number; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="rounded-2xl bg-surface ring-1 ring-border">
+      <button
+        type="button"
+        className="flex min-h-11 w-full items-center justify-between px-4 text-left font-medium touch-manipulation"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span>{title}</span>
+        <span className="text-sm text-muted">{open ? "–" : count ?? "+"}</span>
+      </button>
+      {open ? <div className="space-y-2 px-4 pb-4">{children}</div> : null}
+    </section>
+  );
 }
 
 export function PayrollHome({ locale, onNext }: { locale: "en" | "fr"; onNext?: () => void }) {
@@ -110,7 +143,7 @@ export function PayrollHome({ locale, onNext }: { locale: "en" | "fr"; onNext?: 
           ))}
         </ul>
       </article>
-      <DeadlineList locale={locale} items={home.deadlines} />
+      <PayFolds locale={locale} />
       <button type="button" className="inline-flex min-h-11 items-center text-sm font-medium text-primary" onClick={() => { setStep(0); setTour(true); }}>
         {copy.showAgain}
       </button>
@@ -135,6 +168,106 @@ export function PayrollHome({ locale, onNext }: { locale: "en" | "fr"; onNext?: 
           </div>
         </div>
       ) : null}
+    </section>
+  );
+}
+
+const PEOPLE = ["Amira S.", "Leo Chen", "Noor Ali", "Sam Patel"];
+
+function PayFolds({ locale }: { locale: "en" | "fr" }) {
+  const copy = payCopy(locale);
+  const [query, setQuery] = useState("");
+  const needle = query.trim().toLowerCase();
+  const match = (text: string) => !needle || text.toLowerCase().includes(needle);
+  const people = PEOPLE.filter((name) => match(name));
+  return (
+    <div className="space-y-2" data-ke="pay-folds">
+      <SearchBox label={copy.search} value={query} onChange={setQuery} />
+      {needle && people.length === 0 ? <p className="text-sm text-muted">{copy.nothingFound}</p> : null}
+      <Fold title={copy.setup}>
+        <p className="text-sm">{copy.payQuestion}</p>
+      </Fold>
+      <Fold title={copy.alertsTitle} count={3}>
+        <p className="text-sm">{copy.approveHours}</p>
+      </Fold>
+      <Fold title={copy.people} count={people.length}>
+        {people.slice(0, 3).map((name) => (
+          <p key={name} className="min-h-11 text-base">{name}</p>
+        ))}
+      </Fold>
+      <Fold title={copy.records} count={2}>
+        <p className="text-sm">{copy.government}</p>
+      </Fold>
+      <Fold title={copy.help}>
+        <p className="text-sm">{copy.officialGov}</p>
+        <p className="text-sm">{copy.officialTax}</p>
+      </Fold>
+    </div>
+  );
+}
+
+export function PaySetup({ locale }: { locale: "en" | "fr" }) {
+  const copy = payCopy(locale);
+  const [hourly, setHourly] = useState(true);
+  return (
+    <section className="mx-auto w-full max-w-xl space-y-4" data-ke="pay-setup">
+      <h1 className="font-display text-[clamp(1.75rem,5vw,2.25rem)]">{copy.setup}</h1>
+      <p className="text-base">{copy.payQuestion}</p>
+      <p className="text-sm text-muted">{copy.sample}</p>
+      <label className="block text-sm font-medium">
+        {copy.people}
+        <select className="mt-1 min-h-11 w-full rounded-xl bg-surface px-3 text-base ring-1 ring-border" defaultValue="Amira S.">
+          {PEOPLE.map((name) => (
+            <option key={name}>{name}</option>
+          ))}
+        </select>
+      </label>
+      <div className="grid grid-cols-2 gap-2">
+        <Button type="button" variant={hourly ? "primary" : "secondary"} onClick={() => setHourly(true)}>{copy.hourly}</Button>
+        <Button type="button" variant={hourly ? "secondary" : "primary"} onClick={() => setHourly(false)}>{copy.salary}</Button>
+      </div>
+      <label className="block text-sm font-medium">
+        {hourly ? copy.hourlyRate : copy.salary}
+        <input inputMode="decimal" defaultValue={hourly ? "22.50" : "46800"} className="mt-1 min-h-11 w-full rounded-xl bg-surface px-3 text-base ring-1 ring-border" />
+      </label>
+      <Fold title={copy.moreChoices}>
+        <p className="text-sm">{copy.officialTax}</p>
+        <p className="text-sm text-muted">{locale === "fr" ? "Vacances 4 %. Vous pouvez changer ce nombre." : "Vacation starts at 4%. You can change it."}</p>
+      </Fold>
+      <Button type="button" size="lg" className="w-full" data-ke="save-pay">{copy.savePerson}</Button>
+      <p className="text-sm text-muted">{copy.fixBank}</p>
+    </section>
+  );
+}
+
+export function DeadlineAlerts({ locale }: { locale: "en" | "fr" }) {
+  const copy = payCopy(locale);
+  const home = sampleHome(locale);
+  const [query, setQuery] = useState("");
+  const needle = query.trim().toLowerCase();
+  const reds = home.deadlines.filter((item) => item.tone === "red");
+  const shown = reds.filter((item) => {
+    const title = locale === "fr" ? item.titleFr : item.titleEn;
+    return !needle || title.toLowerCase().includes(needle);
+  }).slice(0, 2);
+  return (
+    <section className="mx-auto w-full max-w-xl space-y-3" data-ke="deadline-alerts">
+      <h1 className="font-display text-[clamp(1.75rem,5vw,2.25rem)]">{copy.alertsTitle}</h1>
+      <p className="text-sm text-muted">{copy.sample}</p>
+      <SearchBox label={copy.search} value={query} onChange={setQuery} />
+      {shown.length === 0 ? <p className="text-sm text-muted">{copy.nothingFound}</p> : null}
+      <ul className="space-y-2">
+        {shown.map((item) => (
+          <li key={item.id} className={`rounded-2xl border p-4 ${toneClass(item.tone)}`}>
+            <p className="font-medium">{locale === "fr" ? item.titleFr : item.titleEn}</p>
+            <p className="text-sm text-muted">{item.due ? `${copy.due} ${item.due}` : item.citation}</p>
+            <Button type="button" variant="danger" className="mt-3 w-full" data-ke="fix-now">{copy.fixNow}</Button>
+          </li>
+        ))}
+      </ul>
+      <Fold title={copy.earlier} count={home.deadlines.length}>
+        <p className="text-sm text-muted">{copy.dates}</p>
+      </Fold>
     </section>
   );
 }
@@ -422,5 +555,7 @@ export function PayrollPreview({ locale, screen }: { locale: "en" | "fr"; screen
   if (screen === "month") return <MonthTable locale={locale} />;
   if (screen === "staff") return <StaffShift locale={locale} />;
   if (screen === "books") return <BooksSimple locale={locale} />;
+  if (screen === "setup") return <PaySetup locale={locale} />;
+  if (screen === "alerts") return <DeadlineAlerts locale={locale} />;
   return <PayrollHome locale={locale} />;
 }

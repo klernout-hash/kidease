@@ -7,7 +7,7 @@ import { nextAction, paySentence, type NextId } from "./next-step.ts";
 import { buildMonth, emptyAmounts } from "./remittance.ts";
 import { payCopy, type PayLocale } from "./copy.ts";
 
-export type PayScreen = "home" | "wizard" | "jar" | "month" | "staff" | "books";
+export type PayScreen = "home" | "wizard" | "jar" | "month" | "staff" | "books" | "setup" | "alerts";
 
 const SAMPLE_PAY = estimatePay({
   province: "ON",

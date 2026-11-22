@@ -106,6 +106,18 @@ const EN = {
   toFix: "to fix",
   dueSoon: "Due soon",
   doneDate: "Done",
+  search: "Search",
+  setup: "Setup",
+  people: "People",
+  records: "Records",
+  help: "Help",
+  earlier: "Earlier dates",
+  alertsTitle: "Dates to watch",
+  payQuestion: "What do you pay this person?",
+  savePerson: "Save pay",
+  moreChoices: "More choices",
+  hourlyRate: "Hourly pay",
+  nothingFound: "Nothing matches that search.",
 };
 
 const FR: typeof EN = {
@@ -208,6 +220,18 @@ const FR: typeof EN = {
   toFix: "à corriger",
   dueSoon: "Bientôt dû",
   doneDate: "Fait",
+  search: "Rechercher",
+  setup: "Réglage",
+  people: "Personnes",
+  records: "Dossiers",
+  help: "Aide",
+  earlier: "Dates plus anciennes",
+  alertsTitle: "Dates à surveiller",
+  payQuestion: "Combien payez-vous cette personne?",
+  savePerson: "Enregistrer la paie",
+  moreChoices: "Plus de choix",
+  hourlyRate: "Paie à l'heure",
+  nothingFound: "Rien ne correspond à cette recherche.",
 };
 
 export type PayCopy = typeof EN;
