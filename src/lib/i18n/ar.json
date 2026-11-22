@@ -3721,5 +3721,14 @@
   "adminStatLive": "منشور",
   "adminStatDeclined": "مرفوض",
   "adminOtherCounts": "أعداد أخرى",
-  "adminSearchQueue": "ابحث عن اسم أو مدينة أو بريد…"
+  "adminSearchQueue": "ابحث عن اسم أو مدينة أو بريد…",
+  "emailCodeTitle": "رمز البريد",
+  "emailCodeLead": "شغّله إذا أردت رمزاً بالبريد عند تسجيل الدخول. كلمة المرور تبقى تعمل. ملاحظات الصحة تبقى مخفية حتى تكتب الرمز.",
+  "emailCodeOn": "تشغيل رمز البريد",
+  "emailCodeOff": "إيقاف رمز البريد",
+  "emailCodeSavedOn": "رمز البريد يعمل. في المرة القادمة نرسل رمزاً قبل أن ترى ملاحظات الصحة.",
+  "emailCodeSavedOff": "رمز البريد متوقف.",
+  "healthCodePrompt": "أضف رمز البريد قبل {date} حتى تبقى ملاحظات صحة الطفل وملفاته لك وحدك.",
+  "healthCodeLocked": "ملاحظات الصحة والملفات تبقى مخفية حتى تضيف رمز البريد.",
+  "healthCodeAction": "إضافة رمز البريد"
 }
