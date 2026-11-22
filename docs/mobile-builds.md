@@ -102,6 +102,10 @@ INFOPLIST_KEY_KIDEASEPushCalling = YES
 
 `npm run cap:permissions` rewrites `App.entitlements` without `aps-environment` and rewrites `App.push.entitlements` with it. It also strips any `UIBackgroundModes` array from the source `Info.plist`. It does not change `Store.xcconfig`.
 
+### Native crash symbols
+
+iOS dSYM upload and Android ProGuard mapping upload stay out of this store build. Do not archive or upload build 5 until Kyle approves that plan. JavaScript source maps for the website are a separate switch, `SENTRY_UPLOAD_SOURCEMAPS`, and it stays unset.
+
 ## Android — `bundleRelease` → Play internal
 
 Play, Samsung Galaxy Store, and Huawei AppGallery are three flavours of the same application id. The Play command is `bundlePlayRelease`. Galaxy Store and AppGallery commands, and what each store allows for Stripe, are in [`other-stores.md`](other-stores.md).
