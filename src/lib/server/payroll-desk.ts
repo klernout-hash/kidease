@@ -10,6 +10,8 @@ import { decideClock, decidePayBooks, staffHoursView } from "@/lib/payroll/acces
 import { sandboxAdapter } from "@/lib/payroll/adapter.ts";
 import { deliverPayrollNotice, planDeadlineNotices, payrollAttentionFacts } from "@/lib/payroll/deadlines.ts";
 import { decideExtraTaxApprove, decideExtraTaxSubmit } from "@/lib/payroll/extra-tax.ts";
+import { decideFormApprove, decideOwnForm, nextFormVersion } from "@/lib/payroll/employee-forms.ts";
+import { planDeposit } from "@/lib/payroll/bank-seal.ts";
 import { providerPayrollEnabled, payrollAlertsEnabled, payrollAlertsLiveEnabled } from "@/lib/features";
 import { defaultUnifiedSettings } from "@/lib/unified-alerts.ts";
 import { nid } from "@/lib/utils";
@@ -183,6 +185,67 @@ export const approveExtraTax = createServerFn({ method: "POST" })
       update payroll_employees
       set extra_tax_cents = ${request.amount_cents}, extra_tax_authority = ${request.authority}
       where id = ${request.employee_id} and daycare_id = ${data.daycareId}
+    `;
+    return { approved: true as const, sent: false as const };
+  });
+
+export const saveEmployeeForm = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; employeeId?: string; kind?: string; answers?: string; institution?: string; transit?: string; account?: string }) => ({
+    daycareId: String(input?.daycareId || "").trim(),
+    employeeId: String(input?.employeeId || "").trim(),
+    kind: String(input?.kind || "").trim(),
+    answers: String(input?.answers || "{}").slice(0, 4000),
+    institution: String(input?.institution || ""),
+    transit: String(input?.transit || ""),
+    account: String(input?.account || ""),
+  }))
+  .handler(async ({ context, data }) => {
+    if (!providerPayrollEnabled()) throw new Error("payroll:off");
+    const { sql, isOwner, role } = await centreRole(context.userId, data.daycareId);
+    const rows = await sql<{ id: string; user_id: string | null }>`
+      select id, user_id from payroll_employees where daycare_id = ${data.daycareId} and id = ${data.employeeId} limit 1
+    `.catch(() => []);
+    const employee = rows[0];
+    if (!employee) throw new Error("payroll:missing");
+    const gate = decideOwnForm({ isOwner, samePerson: employee.user_id === context.userId || (isOwner && role === "owner") });
+    if (!gate.ok) throw new Error("payroll:own_form");
+    if (!isOwner && employee.user_id !== context.userId) throw new Error("payroll:own_form");
+    let cipher: string | null = null;
+    let last4: string | null = null;
+    if (data.kind === "deposit") {
+      const sealed = planDeposit({ institution: data.institution, transit: data.transit, account: data.account });
+      if (!sealed.ok) throw new Error(`payroll:${sealed.error}`);
+      cipher = sealed.cipher;
+      last4 = sealed.last4;
+    }
+    const versions = await sql<{ version: number }>`
+      select version from payroll_employee_forms where employee_id = ${data.employeeId} and kind = ${data.kind}
+    `.catch(() => []);
+    const version = nextFormVersion(versions.map((row) => row.version));
+    const id = nid();
+    const savedOn = new Date().toISOString().slice(0, 10);
+    await sql`
+      insert into payroll_employee_forms (id, daycare_id, employee_id, user_id, kind, version, status, answers_json, bank_cipher, bank_last4, saved_on)
+      values (${id}, ${data.daycareId}, ${data.employeeId}, ${context.userId}, ${data.kind}, ${version}, 'pending', ${data.answers}, ${cipher}, ${last4}, ${savedOn})
+    `;
+    return { id, version, status: "pending" as const, bankLast4: last4, sent: false as const };
+  });
+
+export const approveEmployeeForm = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; formId?: string }) => ({
+    daycareId: String(input?.daycareId || "").trim(),
+    formId: String(input?.formId || "").trim(),
+  }))
+  .handler(async ({ context, data }) => {
+    if (!providerPayrollEnabled()) throw new Error("payroll:off");
+    const { sql, isOwner } = await centreRole(context.userId, data.daycareId);
+    if (!decideFormApprove({ isOwner }).ok) throw new Error("payroll:owner_only");
+    await sql`
+      update payroll_employee_forms
+      set status = 'approved', approved_by = ${context.userId}, approved_at = now()
+      where id = ${data.formId} and daycare_id = ${data.daycareId}
     `;
     return { approved: true as const, sent: false as const };
   });

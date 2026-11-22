@@ -3,9 +3,20 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { decideAdminRollup, decideClock, decideOwnHours, decidePayBooks, staffHoursView } from "../src/lib/payroll/access.ts";
 import { sandboxAdapter, unavailableAdapter } from "../src/lib/payroll/adapter.ts";
-import { approvedExtra, decideExtraTaxApprove, decideExtraTaxSubmit, extraTaxAuthorityFor, parseExtraTaxDollars } from "../src/lib/payroll/extra-tax.ts";
+import { planDeposit, sealBank } from "../src/lib/payroll/bank-seal.ts";
+import {
+  decideFormApprove,
+  decideOwnForm,
+  formPdfLines,
+  formsForProvince,
+  nextFormVersion,
+  OFFICIAL_WINS_EN,
+  publicFormRecord,
+  ROE_STEPS_EN,
+} from "../src/lib/payroll/employee-forms.ts";
 import { invoiceJournal } from "../src/lib/payroll/books.ts";
 import { estimatePay, salesTaxOnExtra } from "../src/lib/payroll/calculate.ts";
+import { approvedExtra, decideExtraTaxApprove, decideExtraTaxSubmit, extraTaxAuthorityFor, parseExtraTaxDollars } from "../src/lib/payroll/extra-tax.ts";
 import {
   buildDeadlines,
   deadlineTone,
@@ -553,6 +564,55 @@ test("approved extra tax comes off each cheque and a pending request does not", 
   const server = readFileSync(new URL("../src/lib/server/payroll-desk.ts", import.meta.url), "utf8");
   assert.match(server, /decideExtraTaxSubmit/);
   assert.match(server, /decideExtraTaxApprove/);
+  assert.match(server, /sent: false/);
+});
+
+test("employee forms stay on the person's own file and bank numbers are sealed", () => {
+  const key = "11".repeat(32);
+  const env = { PAYROLL_BANK_KEY: key };
+  const sealed = planDeposit({ institution: "001", transit: "12345", account: "123456789", env });
+  assert.equal(sealed.ok, true);
+  if (!sealed.ok) return;
+  assert.equal(sealed.last4, "6789");
+  assert.equal(sealed.cipher.includes("123456789"), false);
+  assert.equal(planDeposit({ institution: "001", transit: "12345", account: "123456789", env: {} }).ok, false);
+  const opened = sealBank("001|12345|123456789", env);
+  assert.ok(opened && !opened.includes("123456789"));
+  assert.equal(decideOwnForm({ isOwner: false, samePerson: true }).ok, true);
+  assert.equal(decideOwnForm({ isOwner: false, samePerson: false }).ok, false);
+  assert.equal(decideOwnForm({ isOwner: true, samePerson: false }).scope, "all");
+  assert.equal(decideFormApprove({ isOwner: false }).ok, false);
+  assert.equal(nextFormVersion([1, 2]), 3);
+  const record = publicFormRecord({ kind: "deposit", version: 2, status: "approved", savedOn: "2026-11-22", bankLast4: "6789" });
+  assert.equal(record.bankLast4, "6789");
+  assert.equal("cipher" in record, false);
+  const ontario = formsForProvince("ON").map((card) => card.kind);
+  assert.ok(ontario.includes("td1_federal") && ontario.includes("td1_provincial"));
+  assert.equal(ontario.includes("tp1015"), false);
+  const quebec = formsForProvince("QC");
+  assert.ok(quebec.some((card) => card.kind === "tp1015" && card.officialUrl.includes("tp-1015.3")));
+  assert.equal(quebec.some((card) => card.kind === "td1_provincial"), false);
+  for (const card of formsForProvince("ON")) {
+    assert.equal(card.asOf, "2026-11-22");
+    if (card.kind !== "emergency") assert.match(card.officialUrl, /^https:\/\//);
+  }
+  const lines = formPdfLines({
+    locale: "en",
+    centre: "Little Oaks",
+    person: "Amira",
+    card: formsForProvince("ON")[0],
+    version: 1,
+    savedOn: "2026-11-22",
+    bankLast4: "6789",
+  });
+  assert.match(lines.join("\n"), /KidEase/);
+  assert.match(lines.join("\n"), /6789/);
+  assert.doesNotMatch(lines.join("\n"), /123456789/);
+  assert.ok(lines.some((line) => line === OFFICIAL_WINS_EN));
+  assert.equal(ROE_STEPS_EN.at(-1)?.includes("does not file"), true);
+  const server = readFileSync(new URL("../src/lib/server/payroll-desk.ts", import.meta.url), "utf8");
+  assert.match(server, /decideOwnForm/);
+  assert.match(server, /planDeposit/);
   assert.match(server, /sent: false/);
 });
 

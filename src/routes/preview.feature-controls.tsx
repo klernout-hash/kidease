@@ -9,7 +9,7 @@ import type { PayScreen } from "@/lib/payroll/view";
 
 export const Route = createFileRoute("/preview/feature-controls")({
   validateSearch: (search: Record<string, unknown>) => {
-    const screens: PayScreen[] = ["home", "wizard", "jar", "month", "staff", "books", "setup", "alerts"];
+    const screens: PayScreen[] = ["home", "wizard", "jar", "month", "staff", "books", "setup", "alerts", "forms"];
     return {
       look: search.look === "dark" ? ("dark" as const) : ("light" as const),
       lang: search.lang === "fr" ? ("fr" as const) : ("en" as const),

@@ -6,7 +6,7 @@ import type { Deadline } from "@/lib/payroll/deadlines.ts";
 import type { MonthBreakdown } from "@/lib/payroll/remittance.ts";
 import { invoiceJournal, stripeBalance } from "@/lib/payroll/books.ts";
 import { postEntry, type JournalEntry } from "@/lib/payroll/ledger.ts";
-import { extraTaxTooltip } from "@/lib/payroll/extra-tax.ts";
+import { formsForProvince, OFFICIAL_WINS_EN, OFFICIAL_WINS_FR, ROE_STEPS_EN, ROE_STEPS_FR, type EmployeeFormCard } from "@/lib/payroll/employee-forms.ts";
 
 const TOUR_KEY = "ke-pay-tour";
 
@@ -565,6 +565,75 @@ export function PayrollDesk({ locale, owner }: { locale: "en" | "fr"; owner: boo
   );
 }
 
+export function EmployeeForms({ locale, owner }: { locale: "en" | "fr"; owner: boolean }) {
+  const copy = payCopy(locale);
+  const [query, setQuery] = useState("");
+  const cards = formsForProvince("ON").filter((card) => {
+    const title = locale === "fr" ? card.titleFr : card.titleEn;
+    const needle = query.trim().toLowerCase();
+    return !needle || title.toLowerCase().includes(needle) || card.officialName.toLowerCase().includes(needle);
+  });
+  return (
+    <section className="mx-auto w-full max-w-xl space-y-3" data-ke="employee-forms">
+      <h1 className="font-display text-[clamp(1.75rem,5vw,2.25rem)]">{locale === "fr" ? "Mes formulaires" : "My forms"}</h1>
+      <p className="text-sm text-muted">{owner ? copy.sample : copy.noRates}</p>
+      <SearchBox label={copy.search} value={query} onChange={setQuery} />
+      {cards.length === 0 ? <p className="text-sm text-muted">{copy.nothingFound}</p> : null}
+      {cards.map((card) => (
+        <FormFold key={card.kind} locale={locale} card={card} copy={copy} />
+      ))}
+    </section>
+  );
+}
+
+function FormFold({ locale, card, copy }: { locale: "en" | "fr"; card: EmployeeFormCard; copy: PayCopy }) {
+  const [open, setOpen] = useState(false);
+  const title = locale === "fr" ? card.titleFr : card.titleEn;
+  const wins = locale === "fr" ? OFFICIAL_WINS_FR : OFFICIAL_WINS_EN;
+  return (
+    <section className="rounded-2xl bg-surface ring-1 ring-border">
+      <button
+        type="button"
+        className="flex min-h-11 w-full items-center justify-between px-4 text-left font-medium touch-manipulation"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span>{title}</span>
+        <span className="text-sm text-muted">{open ? "–" : "+"}</span>
+      </button>
+      {open ? (
+        <div className="space-y-3 px-4 pb-4" data-ke={`form-${card.kind}`}>
+          <p className="text-sm text-muted">{wins}</p>
+          {card.officialUrl ? (
+            <a className="inline-flex min-h-11 items-center text-sm font-medium text-primary" href={card.officialUrl}>
+              {locale === "fr" ? "Version officielle" : "Official version"} · {card.officialName} · {card.asOf}
+            </a>
+          ) : null}
+          {card.kind === "td1_federal" || card.kind === "tp1015" ? (
+            <label className="block text-sm font-medium">
+              {copy.extraPitch}
+              <input inputMode="decimal" defaultValue="20.00" className="mt-1 min-h-11 w-full rounded-xl bg-bg px-3 ring-1 ring-border" data-ke="extra-tax" />
+            </label>
+          ) : null}
+          {card.kind === "deposit" ? (
+            <p className="text-sm">{locale === "fr" ? "Les numéros sont chiffrés. Vous verrez seulement les 4 derniers." : "Numbers are encrypted. You only see the last 4."}</p>
+          ) : null}
+          {card.kind === "roe_guide" ? (
+            <ol className="list-decimal space-y-1 pl-5 text-sm">
+              {(locale === "fr" ? ROE_STEPS_FR : ROE_STEPS_EN).map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ol>
+          ) : null}
+          {card.kind !== "roe_guide" ? (
+            <Button type="button" className="w-full">{locale === "fr" ? "Envoyer au propriétaire" : "Send to the owner"}</Button>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 export function PayrollPreview({ locale, screen }: { locale: "en" | "fr"; screen: PayScreen }) {
   if (screen === "wizard") return <PayWizard locale={locale} />;
   if (screen === "jar") return <GovernmentJar locale={locale} />;
@@ -573,5 +642,6 @@ export function PayrollPreview({ locale, screen }: { locale: "en" | "fr"; screen
   if (screen === "books") return <BooksSimple locale={locale} />;
   if (screen === "setup") return <PaySetup locale={locale} />;
   if (screen === "alerts") return <DeadlineAlerts locale={locale} />;
+  if (screen === "forms") return <EmployeeForms locale={locale} owner={false} />;
   return <PayrollHome locale={locale} />;
 }
