@@ -1,25 +1,31 @@
-/** Original KidEase category illustrations. These are not listing photos. */
+/**
+ * Category pictures for the home row.
+ *
+ * Each picture is a KidEase feel photo already in public/photos
+ * (playroom, cottage, kitchen, and the other stills). It illustrates
+ * the category. It is not a photo of a listed centre.
+ * The gif is the subtle motion. The jpg is the reduced-motion still.
+ */
 
 export const CARE_CATEGORY_SOURCES = {
-  all: "KidEase_All.png",
-  child_care_centre: "KidEase_Centres.png",
-  family_home: "KidEase_Home_Daycares.png",
-  group_home: "KidEase_Group_Homes.png",
-  nursery_preschool: "KidEase_Nursery.png",
-  school_age: "KidEase_School_Age.png",
-  before_after: "KidEase_Before_After.png",
-  open: "KidEase_Open_Spots.png",
+  all: "community.jpg",
+  child_care_centre: "brick.jpg",
+  family_home: "cottage.jpg",
+  group_home: "kitchen.jpg",
+  nursery_preschool: "playroom.jpg",
+  school_age: "nature.jpg",
+  before_after: "hero.jpg",
+  open: "welcome.jpg",
 } as const;
 
 export type CareCategoryId = keyof typeof CARE_CATEGORY_SOURCES;
 
-export function careCategoryArt(id: string): { src: string; webp: string } | null {
+export function careCategoryArt(id: string): { gif: string; still: string; source: string } | null {
   if (!Object.hasOwn(CARE_CATEGORY_SOURCES, id)) return null;
   const key = id as CareCategoryId;
-  const file = CARE_CATEGORY_SOURCES[key];
   return {
-    src: `/photos/care-icons/${file}`,
-    // 128px WebP of the same art (about 10 KB instead of about 95 KB); shown up to 56px.
-    webp: `/photos/care-icons/${file.replace(/\.png$/, ".webp")}`,
+    gif: `/photos/care-cats/${key}.gif`,
+    still: `/photos/care-cats/${key}.jpg`,
+    source: `/photos/${CARE_CATEGORY_SOURCES[key]}`,
   };
 }

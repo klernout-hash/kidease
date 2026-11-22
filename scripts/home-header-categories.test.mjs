@@ -84,9 +84,10 @@ for (const locale of ["en", "fr"]) {
     assert.match(html, /overflow-x-auto/);
     assert.match(html, /min-h-11/);
     assert.doesNotMatch(html, /data-fit="1"|<button/);
-    assert.equal((html.match(/class="ke-category-icon"/g) ?? []).length, 6);
+    assert.equal((html.match(/class="ke-category-icon ke-care-gif"/g) ?? []).length, 6);
+    assert.equal((html.match(/class="ke-category-icon ke-care-still"/g) ?? []).length, 6);
     assert.equal((html.match(/aria-hidden="true"/g) ?? []).length, 6);
-    assert.match(html, /<source srcSet="\/photos\/care-icons\/[^"]+\.webp" type="image\/webp"/);
+    assert.doesNotMatch(html, /care-icons|KidEase_|<picture/);
     assert.match(html, /alt="" width="128" height="128"/);
     for (const [index, link] of links.entries()) {
       const type = BROWSE_DAYCARE_TYPES[index];
@@ -95,7 +96,8 @@ for (const locale of ["en", "fr"]) {
       assert.equal(type === "before_after" ? link.search.cat : link.search.fac, type === "before_after" ? "before-after" : type);
       assert.equal(link.props["aria-current"], type === "family_home" ? "page" : undefined);
       assert.ok(!link.props.className.split(/\s+/).includes("hidden"));
-      assert.ok(html.includes(`src="${careCategoryArt(type).src}"`));
+      assert.ok(html.includes(`src="${careCategoryArt(type).gif}"`));
+      assert.ok(html.includes(`src="${careCategoryArt(type).still}"`));
       const label = (locale === "fr" ? fr : en)[module.exports.BROWSE_RAIL_COPY[type]];
       const escapedLabel = renderToStaticMarkup(createElement("span", null, label)).slice(6, -7);
       assert.ok(html.includes(escapedLabel));

@@ -103,12 +103,17 @@ test("recently viewed shares photo cards while moving up only in the clean look"
   assert.match(src("src/styles.css"), /html\[data-look="clean"\] \.ke-classic-only \{\n {2}display: none !important;/);
 });
 
-test("each care type keeps the same original artwork in Classic and Clean", () => {
+test("each care type keeps the same real photo in Classic and Clean", () => {
   const css = src("src/styles.css");
-  assert.doesNotMatch(css, /content:\s*url\("\/photos\/care-icons\//);
+  assert.doesNotMatch(css, /content:\s*url\("\/photos\/care-/);
+  assert.doesNotMatch(css, /html\[data-look="clean"\][^{]*\.ke-category/);
+  assert.doesNotMatch(css, /html\[data-resolved-theme="dark"\][^{]*\.ke-category/);
   for (const [id, file] of Object.entries(CARE_CATEGORY_SOURCES)) {
-    assert.equal(careCategoryArt(id).src, `/photos/care-icons/${file}`);
-    assert.ok(readFileSync(join(root, "public/photos/care-icons", file)).length > 1000, id);
+    const art = careCategoryArt(id);
+    assert.equal(art.source, `/photos/${file}`);
+    assert.equal(art.gif, `/photos/care-cats/${id}.gif`);
+    assert.equal(art.still, `/photos/care-cats/${id}.jpg`);
+    assert.ok(readFileSync(join(root, "public/photos/care-cats", `${id}.gif`)).length > 1000, id);
   }
   assert.match(src("src/components/facility-type-rails.tsx"), /<CareCategoryIcon id=\{type\}/);
   assert.match(src("src/components/airbnb-screens.tsx"), /<CareCategoryIcon id=\{cat\.id\}/);

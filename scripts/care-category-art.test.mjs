@@ -22,16 +22,16 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-// Hashes of the eight recovered, approved 256px transparent PNG originals.
-const originals = {
-  all: ["KidEase_All.png", "7f46f023849e5628dc84032ae76fd2e2e3ebb06a545a95c9213c3b28c1d7d317"],
-  child_care_centre: ["KidEase_Centres.png", "65f93d3bd98dc8b6e257e860b3a360e94c0d24bff891cfe0e76c90ee36823070"],
-  family_home: ["KidEase_Home_Daycares.png", "0d49bf2a800ce10d01e8606046b9de2cf65730e62b2f74347524cf7fda8e9486"],
-  group_home: ["KidEase_Group_Homes.png", "7df32cbf203dcd75d3090e533e616abff280f1ff2c5fce0f280e749d33f96b30"],
-  nursery_preschool: ["KidEase_Nursery.png", "bf4364e1500937effcf4cf48e2d86093924564af4b3ec95737072b33f350647c"],
-  school_age: ["KidEase_School_Age.png", "c46aaf27d21a976f069934a73ca6f8cc7dbd641aad21fec387a6bc36c2c2bdbe"],
-  before_after: ["KidEase_Before_After.png", "f67e827f24d971a2be49b1f80b4ab7f40f51b37fc19efc081f2abc4b58b0caf9"],
-  open: ["KidEase_Open_Spots.png", "2e683826588becea39d95633ebe72a46c2bea5f5108735e7c0b151acd621a874"],
+// Feel-photo sources, plus the shipped 128px gif and the reduced-motion jpg.
+const photos = {
+  all: ["community.jpg", "5de1f0b5c172d90261ab679f572d845f663b2645236cd1a4671664b2136e7bb0", "79aa741b3c8b66088182b91cc38981570f310457840eb7c9ee8485486affcf0d"],
+  child_care_centre: ["brick.jpg", "382cc6f0829205b51f2932e1eb1c89e2a39b8647d348231920031b037b29f9c5", "e3c127702f73ed90216f749dbac86ba86cf90c5fe6af59a29615fae6e694f83d"],
+  family_home: ["cottage.jpg", "e10b2bcc5cfcafdf525692baaadde1bc190efef5315f590e5fae6739f6a0c87d", "65e4bd7ccc1c0835c693fdc286c7745426fb7df476fdf75c7766c990cc27dd4e"],
+  group_home: ["kitchen.jpg", "52d83aa292dc91692fb5288110fc880761baa8b47325ac93f07c0ef93b8e971d", "290570f277a2e06ef389a1e1da839f7d071a09c2d698049cbd1d4a3aa163efd5"],
+  nursery_preschool: ["playroom.jpg", "2fc090869bf86faabbf969ef53c4a4c68318e098952298a87bfdc007d0076042", "5e7b6f3a7457ac9b8d5a133b0e3618b26f78cea92d635ab848c929e7d2946ac8"],
+  school_age: ["nature.jpg", "2ebf52af14cfbb5ffa7ac5dd02511e81556ea222afb00e9453b715a365013288", "cc1d46b3268ba8bac7f3717a2510246f75514e0ac17f3a5f70ac594e64bd8f19"],
+  before_after: ["hero.jpg", "e7fe6d42c6e2940b4b449cdd6f42b85369e8226ed5280faee41faed22b6e8560", "c103a96d14b4ba59dbd143f64afef35329be1179ad20943e138f02e2367b437f"],
+  open: ["welcome.jpg", "d03597d6a196e3b710bea0b28333921f1ec3de73ac69ea0984b76ec0cb6a6d51", "7cad8e8421fb415fcfecbaf042d8ba8b55c49127e1a81f9ac579ec1f6197ca5c"],
 };
 
 function loadTsx(path, dependencies) {
@@ -52,37 +52,38 @@ function iconComponent() {
   }).CareCategoryIcon;
 }
 
-test("all eight category ids map to the exact recovered transparent PNG originals", () => {
-  assert.deepEqual(CARE_CATEGORY_SOURCES, Object.fromEntries(Object.entries(originals).map(([id, [file]]) => [id, file])));
-  for (const [id, [file, hash]] of Object.entries(originals)) {
+test("all eight category ids map to the real photo gif and the reduced-motion still", () => {
+  assert.deepEqual(CARE_CATEGORY_SOURCES, Object.fromEntries(Object.entries(photos).map(([id, [file]]) => [id, file])));
+  for (const [id, [file, gifHash, stillHash]] of Object.entries(photos)) {
     const art = careCategoryArt(id);
     assert.ok(art);
-    assert.equal(art.src, `/photos/care-icons/${file}`);
-    const png = readFileSync(join(root, "public", art.src));
-    assert.deepEqual(png.subarray(0, 8), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
-    assert.equal(png.subarray(12, 16).toString("ascii"), "IHDR");
-    assert.equal(png.readUInt32BE(16), 256);
-    assert.equal(png.readUInt32BE(20), 256);
-    assert.equal(png[24], 8);
-    assert.equal(png[25], 6, "original RGBA transparency channel remains");
-    assert.equal(createHash("sha256").update(png).digest("hex"), hash);
+    assert.equal(art.source, `/photos/${file}`);
+    assert.equal(art.gif, `/photos/care-cats/${id}.gif`);
+    assert.equal(art.still, `/photos/care-cats/${id}.jpg`);
+    const gif = readFileSync(join(root, "public", art.gif));
+    const still = readFileSync(join(root, "public", art.still));
+    assert.equal(gif.subarray(0, 6).toString("ascii"), "GIF89a");
+    assert.equal(still[0], 0xff);
+    assert.equal(still[1], 0xd8);
+    assert.equal(createHash("sha256").update(gif).digest("hex"), gifHash);
+    assert.equal(createHash("sha256").update(still).digest("hex"), stillHash);
+    assert.ok(readFileSync(join(root, "public/photos", file)).length > 1000, file);
   }
   for (const invalid of ["not-a-centre", "__proto__", "constructor", "toString"]) {
     assert.equal(careCategoryArt(invalid), null);
   }
 });
 
-test("shared icon markup is decorative, dimensioned and uses a static original", () => {
+test("shared icon markup is decorative, dimensioned and pairs the gif with its still", () => {
   const CareCategoryIcon = iconComponent();
-  Object.entries(originals).forEach(([id, [file]], index) => {
+  Object.entries(photos).forEach(([id], index) => {
     const html = renderToStaticMarkup(createElement(CareCategoryIcon, { id, index }));
     assert.match(html, /<span class="ke-category-art" aria-hidden="true"/);
-    assert.match(html, /<img class="ke-category-icon"/);
-    assert.ok(html.includes(`src="/photos/care-icons/${file}"`));
-    assert.match(html, /<source srcSet="\/photos\/care-icons\/[^"]+\.webp" type="image\/webp"/);
-    assert.match(html, /alt="" width="128" height="128"/);
-    assert.match(html, /decoding="async" draggable="false"/);
-    assert.doesNotMatch(html, /\.gif|ke-care-gif|ke-care-still/);
+    assert.match(html, new RegExp(`<img class="ke-category-icon ke-care-gif" src="/photos/care-cats/${id}\\.gif"`));
+    assert.match(html, new RegExp(`<img class="ke-category-icon ke-care-still" src="/photos/care-cats/${id}\\.jpg"`));
+    assert.doesNotMatch(html, /care-icons|KidEase_|<picture|<source/);
+    assert.equal((html.match(/alt="" width="128" height="128"/g) ?? []).length, 2);
+    assert.equal((html.match(/loading="lazy" decoding="async" draggable="false"/g) ?? []).length, 2);
   });
   assert.equal(renderToStaticMarkup(createElement(CareCategoryIcon, { id: "invalid" })), "");
 });
@@ -119,7 +120,7 @@ for (const locale of ["en", "fr"]) {
       });
       const html = renderToStaticMarkup(createElement(AirbnbCareCategories));
       assert.equal(links.length, 8);
-      assert.equal((html.match(/<img /g) ?? []).length, 8);
+      assert.equal((html.match(/<img /g) ?? []).length, 16);
       expected.forEach(([id, label, query], index) => {
         const link = links[index];
         assert.equal(link.to, localePath(query ? "/search" : "/", locale));
@@ -132,9 +133,12 @@ for (const locale of ["en", "fr"]) {
   });
 }
 
-test("shared category art keeps contain sizing and an explicit reduced-motion stop", () => {
+test("shared category art keeps cover sizing and an explicit reduced-motion stop", () => {
   const css = src("src/styles.css");
-  assert.ok(/\.ke-category-icon[^{}]*\{[^}]*object-fit:\s*contain/.test(css), "category PNGs retain contain fit");
+  assert.ok(/\.ke-category-icon[^{}]*\{[^}]*object-fit:\s*cover/.test(css), "category photos use cover fit");
+  assert.match(css, /\.ke-category-art > \.ke-care-still \{\s*display:\s*none;/);
+  assert.match(css, /\.ke-category-art > \.ke-care-gif \{ display: none; \}/);
+  assert.match(css, /\.ke-category-art > \.ke-care-still \{ display: block; \}/);
   const reducedBlocks = [];
   for (const match of css.matchAll(/@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{/g)) {
     let depth = 1;

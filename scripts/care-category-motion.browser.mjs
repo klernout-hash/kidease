@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { basename, dirname, join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Exercise the real React component without a server, database or external assets.
@@ -12,7 +12,7 @@ const { rolldown } = await import(require.resolve("rolldown"));
 const ts = require("typescript");
 const { chromium } = require("playwright");
 const stylesheet = readFileSync(join(repo, "src/styles.css"), "utf8");
-const begin = stylesheet.indexOf("/* The original Floating Gallery artwork");
+const begin = stylesheet.indexOf("/* Real category photos.");
 const media = stylesheet.indexOf("@media (prefers-reduced-motion: reduce)", begin);
 let end = stylesheet.indexOf("{", media) + 1;
 let depth = 1;
@@ -68,8 +68,9 @@ async function probePage(width, { noAnimation = false, noObserver = false, reduc
     const url = new URL(route.request().url());
     if (url.origin !== "http://category-motion.invalid") return route.abort();
     if (url.pathname === "/") return route.fulfill({ contentType: "text/html", body: `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}#root{min-height:2400px}main{display:flex;gap:16px;padding:24px}button,a{box-sizing:border-box;display:inline-flex;flex:none;flex-direction:column;align-items:center;justify-content:center;width:140px;min-height:112px;padding:8px;font:14px sans-serif}.label{display:block}${css}</style><div id="root"></div>` });
-    if (/^\/photos\/care-icons\/KidEase_[A-Za-z_]+\.png$/.test(url.pathname)) {
-      return route.fulfill({ contentType: "image/png", body: readFileSync(join(repo, "public/photos/care-icons", basename(url.pathname))) });
+    if (/^\/photos\/care-cats\/[a-z_]+\.(gif|jpg)$/.test(url.pathname)) {
+      const type = url.pathname.endsWith(".gif") ? "image/gif" : "image/jpeg";
+      return route.fulfill({ contentType: type, body: readFileSync(join(repo, "public", url.pathname)) });
     }
     return route.abort();
   });
@@ -154,6 +155,10 @@ try {
   for (const width of [390, 1280]) {
     const page = await probePage(width);
     await waitIdle(page, "running");
+    // Current Chromium fires one pointerenter when React inserts <main> under
+    // the default pointer. Park the pointer and start the idle window clean.
+    await page.mouse.move(0, 0);
+    await page.evaluate(() => { window.probe.input = []; });
     const start = await snapshot(page);
     const samples = [start];
     // Real elapsed time proves idle motion repeats beyond its first cycle.
@@ -241,7 +246,7 @@ try {
   assert.equal(new URL(noAnimation.url()).hash, "#category");
   await cleanup(noAnimation); await noAnimation.close();
   assert.deepEqual(allErrors, []);
-  const report = { source: "actual shared CareCategoryIcon bundled with React and exact category CSS", network: "all requests intercepted; only local HTML and original repository PNGs fulfilled",
+  const report = { source: "actual shared CareCategoryIcon bundled with React and exact category CSS", network: "all requests intercepted; only local HTML and the repository category photos fulfilled",
     results, initialReducedMotion: true, missingIntersectionObserverFallback: "motion follows document visibility; no off-screen guarantee without observer support",
     missingWebAnimationsFallback: "static functional controls", pageErrors: allErrors,
     limitation: "Headless Chromium kept real document.hidden=false across tabs and lifecycle freeze; hidden-tab handling is verified through an explicit DOM-state/event simulation, not a physical browser-tab test." };

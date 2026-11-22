@@ -70,9 +70,13 @@ test("marketing feel photos stay on existing /photos paths", () => {
   const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
   assert.doesNotMatch(web, /HeroYard/);
   assert.doesNotMatch(readFileSync(join(root, "src/components/shell.tsx"), "utf8"), /HomeCareTypeRow/);
-  // Category illustrations are separate from the unchanged marketing photos.
-  assert.equal(careCategoryArt("nursery_preschool").src, "/photos/care-icons/KidEase_Nursery.png");
-  assert.ok(statSync(join(root, "public", careCategoryArt("nursery_preschool").src)).size > 8_000);
+  // Category tiles point at the care-cat copies. The marketing photos stay put.
+  const nursery = careCategoryArt("nursery_preschool");
+  assert.equal(nursery.gif, "/photos/care-cats/nursery_preschool.gif");
+  assert.equal(nursery.still, "/photos/care-cats/nursery_preschool.jpg");
+  assert.equal(nursery.source, "/photos/playroom.jpg");
+  assert.ok(statSync(join(root, "public", nursery.gif.slice(1))).size > 8_000);
+  assert.ok(statSync(join(root, "public/photos/playroom.jpg")).size > 8_000);
   assert.doesNotMatch(home, /HeroBanner/);
   assert.match(home, /\[\[data-channel=app\]/);
   assert.match(source, /\/photos\/hero\.jpg/);

@@ -9,7 +9,7 @@ export function CareCategoryIcon({ id, index = 0 }: { id: string; index?: number
   useEffect(() => {
     const node = artRef.current;
     const control = node?.closest("a, button");
-    const image = node?.querySelector("img");
+    const image = node?.querySelector<HTMLImageElement>(".ke-care-gif");
     if (!node || !control || !image) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -95,18 +95,28 @@ export function CareCategoryIcon({ id, index = 0 }: { id: string; index?: number
       className="ke-category-art"
       aria-hidden="true"
     >
-      <picture>
-        <source srcSet={art.webp} type="image/webp" />
-        <img
-          className="ke-category-icon"
-          src={art.src}
-          alt=""
-          width={128}
-          height={128}
-          decoding="async"
-          draggable={false}
-        />
-      </picture>
+      {/* Lazy so the home header does not preload every gif ahead of the listing photo.
+          Tiles already in view still load. The still is the reduced-motion fallback. */}
+      <img
+        className="ke-category-icon ke-care-gif"
+        src={art.gif}
+        alt=""
+        width={128}
+        height={128}
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+      />
+      <img
+        className="ke-category-icon ke-care-still"
+        src={art.still}
+        alt=""
+        width={128}
+        height={128}
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+      />
     </span>
   );
 }

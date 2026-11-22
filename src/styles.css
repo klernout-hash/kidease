@@ -3662,24 +3662,32 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
-/* The original Floating Gallery artwork is static. Motion belongs to this
-   reserved icon box, so the label, hit target and surrounding layout stay still. */
+/* Real category photos. The gif is the subtle motion and the jpg is the
+   reduced-motion still. Only this box moves, so the label and the tap
+   target stay still. The same tiles are used in light, dark, English and French. */
 .ke-category-art {
-  display: block;
+  display: grid;
   flex: none;
   width: 3.5rem;
   height: 3.5rem;
   margin-block: 0.25rem;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
   pointer-events: none;
   transform-origin: 50% 70%;
 }
-.ke-category-icon {
+.ke-category-art > .ke-category-icon {
+  grid-area: 1 / 1;
   display: block;
   width: 100%;
   height: 100%;
   max-width: 100%;
-  object-fit: contain;
+  object-fit: cover;
   transform-origin: 50% 70%;
+}
+.ke-category-art > .ke-care-still {
+  display: none;
 }
 @media (prefers-reduced-motion: reduce) {
   html[data-ui="airbnb-v1"] .ke-airbnb-sheet { transition: none; }
@@ -3691,8 +3699,10 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
   .ke-airbnb-cat-art path,
   .ke-airbnb-cat-art circle,
   .ke-airbnb-cat-art rect { stroke-dashoffset: 0; }
-  .ke-care-gif { display: none; }
-  .ke-care-still { display: block; }
+  .ke-care-gif,
+  .ke-category-art > .ke-care-gif { display: none; }
+  .ke-care-still,
+  .ke-category-art > .ke-care-still { display: block; }
   .ke-priority-pill { animation: none; }
   .ke-category-art,
   .ke-category-icon {
