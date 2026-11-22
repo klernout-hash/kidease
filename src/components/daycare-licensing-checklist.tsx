@@ -125,6 +125,20 @@ export function DaycareLicensingChecklist({
               <p id={"licensing-detail-" + id} className="pb-3 pl-8 text-sm leading-6 text-muted">
                 {detail[lang]}
               </p>
+              {id === "pathway" && guide.orientationLinks && (
+                <ul className="pb-3 pl-8">
+                  {guide.orientationLinks.map(({ label, url }) => (
+                    <li key={url[0]}>
+                      <a
+                        href={url[lang]}
+                        className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-4"
+                      >
+                        {label[lang]}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           );
         })}

@@ -5,6 +5,7 @@ type LicensingGuide = {
   source?: string;
   sourceFr?: string;
   pathway: Line;
+  orientationLinks?: readonly { label: Line; url: Line }[];
   application: Line;
   costs?: Line;
   timing?: Line;
@@ -54,8 +55,30 @@ export const LICENSING_GUIDES: Readonly<Partial<Record<string, LicensingGuide>>>
   },
   MB: {
     pathway: [
-      "Contact Manitoba Early Learning and Child Care about a centre or a home licence before preparing the site.",
-      "Communiquez avec le Programme d’apprentissage et de garde des jeunes enfants du Manitoba au sujet d’un permis pour un centre ou un service en milieu familial avant d’aménager les lieux.",
+      "Before applying, attend Manitoba’s required information session for the kind of care you plan to offer. Centre and home-based sessions are separate.",
+      "Avant de faire une demande, assistez à la séance d’information obligatoire pour votre type de garde. Les séances pour les centres et les garderies familiales sont distinctes.",
+    ],
+    orientationLinks: [
+      {
+        label: [
+          "Centre or nursery school information session",
+          "Séance d’information : centre ou prématernelle",
+        ],
+        url: [
+          "https://www.manitoba.ca/education/childcare/centres_homeproviders/centrebased_childcare/orientation_session.html",
+          "https://manitoba.ca/education/childcare/centres_homeproviders/centrebased_childcare/orientation_session.fr.html",
+        ],
+      },
+      {
+        label: [
+          "Home-based child care information session",
+          "Séance d’information : garderie familiale",
+        ],
+        url: [
+          "https://www.gov.mb.ca/education/childcare/centres_homeproviders/homebased_childcare/print%2Corientation_session.html",
+          "https://www.manitoba.ca/education/childcare/centres_homeproviders/homebased_childcare/orientation_session.fr.html",
+        ],
+      },
     ],
     application: [
       "Use the package for your setting. For a home, the province lists an application, a household/staff record, references and screening results.",

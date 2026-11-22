@@ -125,14 +125,35 @@ async function daycareLicensingSmoke(browser, base) {
     await open("/start-a-daycare");
     await page.getByRole("link", { name: "Continue: Prince Edward Island" }).waitFor({ timeout: timeoutMs });
 
+    await open("/start-a-daycare?pt=MB#start-daycare-pt");
+    const mbCentre = checklist.getByRole("link", { name: "Centre or nursery school information session" });
+    const mbHome = checklist.getByRole("link", { name: "Home-based child care information session" });
+    await mbCentre.waitFor({ timeout: timeoutMs });
+    await mbHome.waitFor({ timeout: timeoutMs });
+    if (!(await mbCentre.getAttribute("href"))?.includes("/centrebased_childcare/") ||
+        !(await mbHome.getAttribute("href"))?.includes("/homebased_childcare/")) {
+      throw new Error("Manitoba's English centre and home links must point to their own sessions");
+    }
+
     await page.setViewportSize({ width: 1280, height: 900 });
+    await open("/fr/start-a-daycare?pt=MB#start-daycare-pt");
+    const mbFr = page.getByRole("region", { name: "Votre liste de vérification pour le permis" });
+    for (const [name, path] of [["Séance d’information : centre ou prématernelle", "/centrebased_childcare/"], ["Séance d’information : garderie familiale", "/homebased_childcare/"]]) {
+      const session = mbFr.getByRole("link", { name });
+      await session.waitFor({ timeout: timeoutMs });
+      const href = await session.getAttribute("href");
+      if (!href?.includes(path) || !href.endsWith("orientation_session.fr.html")) {
+        throw new Error("Manitoba's French links must point to the French centre or home session");
+      }
+    }
+
     await open("/fr/start-a-daycare?pt=AB#start-daycare-pt");
     const french = page.getByRole("region", { name: "Votre liste de vérification pour le permis" });
     await french.waitFor({ timeout: timeoutMs });
     await page.waitForFunction(() => document.querySelector('input[aria-describedby="licensing-detail-pathway"]')?.checked);
     await assertFits(french);
     await french.screenshot({ path: join(dirname(outDir), "licensing-checklist-1280-fr.png"), timeout: timeoutMs });
-    record("daycare-licensing-guest", true, { note: "390 EN and 1280 FR, keyboard, reload, remembered jurisdiction and isolated progress" });
+    record("daycare-licensing-guest", true, { note: "390 EN and 1280 FR, keyboard, reload, remembered jurisdiction, isolated progress and distinct Manitoba links" });
   } catch (err) {
     record("daycare-licensing-guest", false, { note: err instanceof Error ? err.message : String(err) });
   } finally {

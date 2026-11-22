@@ -84,6 +84,7 @@ function OfficialLink({ href, children }: { href: string; children: string }) {
 function ProvincePanel({ pt, locale }: { pt: StartDaycarePt; locale: string }) {
   const { t } = useCopy();
   const fr = locale === "fr";
+  const licensingUrl = (fr ? pt.licensingUrlFr : undefined) ?? pt.licensingUrl;
   return (
     <article className="mt-5 rounded-2xl bg-surface p-5 ring-1 ring-border md:p-6">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">{pt.code}</p>
@@ -97,7 +98,7 @@ function ProvincePanel({ pt, locale }: { pt: StartDaycarePt; locale: string }) {
           <p className="mt-2 text-sm leading-6 text-fg">{localeLine(locale, fr ? pt.licensingWhoFr : pt.licensingWhoEn)}</p>
           <p className="mt-2 text-sm leading-6 text-muted">{localeLine(locale, fr ? pt.licensingFirstFr : pt.licensingFirstEn)}</p>
           <p className="mt-3 text-sm">
-            <OfficialLink href={pt.licensingUrl}>{t("startDaycareOfficialLink")}</OfficialLink>
+            <OfficialLink href={licensingUrl}>{t("startDaycareOfficialLink")}</OfficialLink>
           </p>
         </section>
         <section>
@@ -109,7 +110,7 @@ function ProvincePanel({ pt, locale }: { pt: StartDaycarePt; locale: string }) {
           </p>
         </section>
       </div>
-      <DaycareLicensingChecklist key={pt.code} code={pt.code} locale={locale} officialUrl={pt.licensingUrl} />
+      <DaycareLicensingChecklist key={pt.code} code={pt.code} locale={locale} officialUrl={licensingUrl} />
     </article>
   );
 }
