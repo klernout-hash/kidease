@@ -406,12 +406,10 @@ export const auth = betterAuth({
   // local loopback variants, or clients get "Invalid origin".
   trustedOrigins,
 
-  // Encrypt broker-issued OAuth tokens at rest, and treat the broker's upstreams
-  // as trusted first-party identities. The broker owns identity and some emails
-  // can be unverified, so WITHOUT this a login can fail with
-  // `account_not_linked` (Better Auth refuses to attach an untrusted, unverified
-  // identity to an existing user). Google and Facebook carry DISTINCT emails, so
-  // this never merges them into one user — they stay separate identities.
+  // Encrypt broker-issued OAuth tokens at rest. Trusted providers may link only
+  // when the existing account email is already verified. An unverified password
+  // signup cannot be merged into a later Google sign-in. Google and Facebook
+  // carry distinct emails, so they stay separate identities.
   account: {
     // OAuth state lives in the verification table. Better Auth 1.7 still also
     // sets a signed state cookie and rejects the callback when that cookie is
@@ -431,7 +429,10 @@ export const auth = betterAuth({
         "huawei",
         "amazon",
       ],
-      requireLocalEmailVerified: false,
+      // A password account must already have a verified email before Google
+      // (or any other provider) can merge into it. Otherwise someone can
+      // register the parent's email first and inherit the Google sign-in.
+      requireLocalEmailVerified: true,
     },
   },
 
