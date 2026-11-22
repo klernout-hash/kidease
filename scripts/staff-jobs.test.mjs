@@ -398,3 +398,28 @@ test("migrations 0220-0224 are additive and each has a down file", () => {
   assert.match(api, /assertSensitiveFileAccess/);
   assert.match(read("src/routeTree.gen.ts"), /id: '\/api\/staff-resume'/);
 });
+
+test("the bilingual sharing notice precedes Apply and Accept and describes each button", () => {
+  const view = read("src/components/staff-job-board.tsx");
+  for (const [start, end, copy, action] of [
+    ["MatchCard", "InviteCard", "applyPrivacy", "applyToStaffJob"],
+    ["InviteCard", "ApplicationsList", "invitePrivacy", "answer(true)"],
+  ]) {
+    const block = view.slice(view.indexOf(`function ${start}`), view.indexOf(`function ${end}`));
+    const notice = `sj(l, "${copy}")`;
+    assert.ok(block.indexOf(notice) >= 0);
+    assert.ok(block.indexOf(notice) < block.indexOf('aria-describedby={privacyNotice}'));
+    assert.ok(block.indexOf('aria-describedby={privacyNotice}') < block.indexOf(action));
+  }
+  for (const [locale, details, share, hired, highlights] of [
+    ["en", /full name.*contact details.*postal code.*resume/, /authorized hiring staff at this daycare/i, /accepted an invite.*were hired.*already work/, /highlights/i],
+    ["fr", /nom complet.*coordonnées.*code postal.*CV/, /recrutement autorisés de cette garderie/i, /accepté une invitation.*été embauché.*travaillez déjà/, /points forts/i],
+  ]) {
+    for (const label of ["applyPrivacy", "invitePrivacy"]) {
+      assert.match(sj(locale, label), details);
+      assert.match(sj(locale, label), share);
+    }
+    for (const label of ["postalHint", "resumeHint"]) assert.match(sj(locale, label), hired);
+    assert.doesNotMatch(sj(locale, "privacyLead"), highlights);
+  }
+});

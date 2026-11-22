@@ -450,8 +450,9 @@ function ProfileWizard({
             <Field id={fid("phone")} label={t("phone")}>
               <input id={fid("phone")} type="tel" className={fieldClass} autoComplete="tel" value={draft.phone} maxLength={30} onChange={(e) => set("phone", e.target.value)} onFocus={scrollIntoViewOnFocus} />
             </Field>
-            <fieldset>
+            <fieldset aria-describedby={fid("visibility-scope")}>
               <legend className="text-sm font-medium">{t("visibility")}</legend>
+              <p id={fid("visibility-scope")} className="mt-1 text-sm text-muted">{t("visibilityScope")}</p>
               <div className="mt-2 space-y-2">
                 {STAFF_VISIBILITY.map((v) => (
                   <label key={v} className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl px-3 py-2 ring-1 ring-border">
@@ -524,6 +525,7 @@ function ProfileWizard({
 }
 
 function MatchCard({ row, l, onApplied }: { row: StaffMatchRow; l: StaffJobsLocale; onApplied: () => void }) {
+  const privacyNotice = useId();
   const [state, setState] = useState<"idle" | "busy" | "done" | "error">(row.applied ? "done" : "idle");
   const [error, setError] = useState("");
   return (
@@ -538,26 +540,30 @@ function MatchCard({ row, l, onApplied }: { row: StaffMatchRow; l: StaffJobsLoca
             {sj(l, "applied")} · <span className="font-normal text-muted">{sj(l, "appliedNote")}</span>
           </p>
         ) : (
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={state === "busy"}
-            onClick={() => {
-              setState("busy");
-              void applyToStaffJob({ data: { jobId: row.job.id } })
-                .then((result) => {
-                  if (!result.ok) throw new Error(sj(l, "off"));
-                  setState("done");
-                  onApplied();
-                })
-                .catch((err: unknown) => {
-                  setState("error");
-                  setError(err instanceof Error && err.message ? err.message : sj(l, "applyFailed"));
-                });
-            }}
-          >
-            {sj(l, "apply")}
-          </Button>
+          <>
+            <p id={privacyNotice} className="mb-2 text-sm text-muted">{sj(l, "applyPrivacy")}</p>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={state === "busy"}
+              aria-describedby={privacyNotice}
+              onClick={() => {
+                setState("busy");
+                void applyToStaffJob({ data: { jobId: row.job.id } })
+                  .then((result) => {
+                    if (!result.ok) throw new Error(sj(l, "off"));
+                    setState("done");
+                    onApplied();
+                  })
+                  .catch((err: unknown) => {
+                    setState("error");
+                    setError(err instanceof Error && err.message ? err.message : sj(l, "applyFailed"));
+                  });
+              }}
+            >
+              {sj(l, "apply")}
+            </Button>
+          </>
         )}
         {state === "error" && error ? (
           <p className="mt-2 text-sm text-danger" role="alert">
@@ -570,6 +576,7 @@ function MatchCard({ row, l, onApplied }: { row: StaffMatchRow; l: StaffJobsLoca
 }
 
 function InviteCard({ invite, l, onDone }: { invite: StaffInviteRow; l: StaffJobsLocale; onDone: (message: string) => void }) {
+  const privacyNotice = useId();
   const [busy, setBusy] = useState(false);
   const answer = (accept: boolean) => {
     setBusy(true);
@@ -583,8 +590,9 @@ function InviteCard({ invite, l, onDone }: { invite: StaffInviteRow; l: StaffJob
       <h3 className="font-medium">{invite.title}</h3>
       <p className="mt-1 text-sm text-muted">{invite.centre}</p>
       {invite.match ? <MatchReasons match={invite.match} l={l} /> : null}
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button type="button" variant="secondary" disabled={busy} onClick={() => answer(true)}>
+      <p id={privacyNotice} className="mt-3 text-sm text-muted">{sj(l, "invitePrivacy")}</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button type="button" variant="secondary" disabled={busy} aria-describedby={privacyNotice} onClick={() => answer(true)}>
           {sj(l, "inviteAccept")}
         </Button>
         <Button type="button" variant="ghost" disabled={busy} onClick={() => answer(false)}>
