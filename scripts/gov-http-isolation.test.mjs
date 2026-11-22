@@ -252,6 +252,9 @@ function familyHarness(overrides = {}) {
     __import: async (specifier) => {
       if (specifier === "@/lib/features") return { familyVaultEnabled: () => true };
       if (specifier === "@/lib/auth/verify.server") return isolation.auth;
+      if (specifier === "@/lib/server/second-factor") {
+        return { assertSensitiveFileAccess: async () => {} };
+      }
       assert.equal(specifier, "@/lib/server/family-vault");
       state.vaultImports++;
       return vault;

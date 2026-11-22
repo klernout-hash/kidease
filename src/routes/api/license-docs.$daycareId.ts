@@ -46,6 +46,8 @@ export const Route = createFileRoute("/api/license-docs/$daycareId")({
         try {
           const { requireUserId } = await import("@/lib/auth/verify.server");
           const userId = await requireUserId();
+          const { assertSensitiveFileAccess } = await import("@/lib/server/second-factor");
+          await assertSensitiveFileAccess(userId, "provider");
           const daycareId = params.daycareId;
           await authorizeLicenseDoc(userId, daycareId, false);
           const sql = await getSql();
