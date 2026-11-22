@@ -13,7 +13,7 @@ import {
   R2_SCREENING_PREFIX,
   safeDocKeyPart,
 } from "@/lib/private-docs";
-import { R2_SETUP_MESSAGE, resolveR2Config } from "@/lib/server/r2";
+import { R2_PRIVATE_SETUP_MESSAGE, R2_SETUP_MESSAGE, resolvePrivateR2Config } from "@/lib/server/r2";
 import { nid } from "@/lib/utils";
 
 export type PrivateDocPrefix =
@@ -74,7 +74,7 @@ export async function persistPrivateDoc(input: {
   const parsed = parsePrivateUpload({ body: input.body, mime: input.mime });
   if (!parsed.ok) throw new Error(parsed.error);
   const key = `${input.prefix}/${input.keyTail}.${privateDocExt(parsed.mime)}`;
-  if (resolveR2Config().ok) {
+  if (resolvePrivateR2Config().ok) {
     const { putPrivateDoc } = await import("@/lib/server/r2.server");
     const stored = await putPrivateDoc({
       key,
@@ -82,6 +82,10 @@ export async function persistPrivateDoc(input: {
       body: parsed.body,
     });
     return { storageRef: stored.key, mime: stored.contentType };
+  }
+  if ((process.env.VERCEL_ENV || "").trim() === "production") {
+    console.error("[private-docs] refusing to store a private document; the private bucket is not configured");
+    throw new Error(R2_PRIVATE_SETUP_MESSAGE);
   }
   if (parsed.body.byteLength > PRIVATE_DOC_FALLBACK_MAX_BYTES) {
     throw new Error(R2_SETUP_MESSAGE);
