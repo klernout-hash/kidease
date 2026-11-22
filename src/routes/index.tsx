@@ -5,7 +5,9 @@ import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { HeroClaimStrip } from "@/components/hero-claim-strip";
-import { HomeHowVideo } from "@/components/home-how-video";
+const HomeHowVideo = lazy(() =>
+  import("@/components/home-how-video").then((m) => ({ default: m.HomeHowVideo })),
+);
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
 import { HomeCareTypeRow, type BrowseDaycareType } from "@/components/facility-type-rails";
@@ -478,6 +480,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         />
       )}
     >
+      <main className="w-full min-w-0">
       <div data-ke="launch-shell" role="status" aria-live="polite" className="w-full text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">KidEase</p>
         <p className="mt-3 text-base font-medium text-fg">
@@ -486,7 +489,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
       </div>
       <JsonLd json={organizationGraphJsonLdScript(locale === "fr" ? "fr" : "en")} />
       <div className="ke-home w-full min-w-0" data-ke="home-discovery-surface">
-      <h1 className="ke-gutter mx-auto hidden w-full pt-4 text-center text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em] md:block">
+      <h1 className="ke-gutter mx-auto w-full pt-4 text-center text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
         {t("tagline")}
       </h1>
       <div className="ke-home-web ke-web-only w-full [[data-channel=app]_&]:hidden">
@@ -538,7 +541,9 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           <h2 id="how-kidease-heading" className="text-center text-xl tracking-[-0.03em] text-fg md:text-2xl">
             {t("howVideoTitle")}
           </h2>
-          <HomeHowVideo />
+          <Suspense fallback={null}>
+            <HomeHowVideo />
+          </Suspense>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <Step
               n="1"
@@ -670,6 +675,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         </section>
       </div>
       </div>
+      </main>
 
       <Suspense fallback={null}>
         <RoleEnrollDialog open={enrollOpen} onClose={() => setEnrollOpen(false)} />

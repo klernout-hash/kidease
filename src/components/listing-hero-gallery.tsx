@@ -121,8 +121,8 @@ export function ListingHeroGallery({
           src={src}
           alt={name}
           sizes={DETAIL_SIZES}
-          width={768}
-          height={576}
+          width={480}
+          height={360}
           className="size-full object-cover"
         />
         )}

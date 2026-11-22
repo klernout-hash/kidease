@@ -150,6 +150,7 @@ test("normal build checks the ledger while the manual write command stays separa
     "node scripts/check-ssr-bundle.mjs",
     "node scripts/check-locale-chunks.mjs",
     "node scripts/check-client-db.mjs",
+    "node scripts/check-client-budget.mjs",
     "npm run db:migrate:check",
   ]);
   for (const lifecycle of ["prebuild", "postbuild", "preinstall", "postinstall", "prepare"])
