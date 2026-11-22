@@ -22,6 +22,8 @@ export const Route = createFileRoute("/api/screening-documents/$id")({
         try {
           const { requireUserId } = await import("@/lib/auth/verify.server");
           const userId = await requireUserId();
+          const { assertSensitiveFileAccess } = await import("@/lib/server/second-factor");
+          await assertSensitiveFileAccess(userId, "provider");
           const row = await authorizeScreeningDocument({
             userId,
             documentId: params.id,

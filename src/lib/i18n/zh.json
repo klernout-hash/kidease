@@ -3721,5 +3721,14 @@
   "adminStatLive": "已上线",
   "adminStatDeclined": "已拒绝",
   "adminOtherCounts": "其他数字",
-  "adminSearchQueue": "搜索名称、城市、邮箱…"
+  "adminSearchQueue": "搜索名称、城市、邮箱…",
+  "emailCodeTitle": "邮箱验证码",
+  "emailCodeLead": "打开后，登录时会收到带验证码的邮件。密码仍然可以用。输入验证码之前，健康备注会保持隐藏。",
+  "emailCodeOn": "打开邮箱验证码",
+  "emailCodeOff": "关闭邮箱验证码",
+  "emailCodeSavedOn": "邮箱验证码已打开。下次登录时，我们会先发送验证码，然后您才能看到健康备注。",
+  "emailCodeSavedOff": "邮箱验证码已关闭。",
+  "healthCodePrompt": "请在 {date} 之前加上邮箱验证码，这样孩子的健康备注和文件只给您看。",
+  "healthCodeLocked": "在您加上邮箱验证码之前，孩子的健康备注和文件会保持隐藏。",
+  "healthCodeAction": "加上邮箱验证码"
 }
