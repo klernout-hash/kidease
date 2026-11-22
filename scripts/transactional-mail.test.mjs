@@ -21,6 +21,10 @@ import {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
+function mailHost(url) {
+  return new URL(String(url)).hostname;
+}
+
 function jsonResponse(status, body) {
   return {
     ok: status >= 200 && status < 300,
@@ -139,7 +143,7 @@ test("a Titan error falls back to Resend and then SendGrid", async () => {
     {
       fetch: async (url) => {
         order.push(String(url));
-        if (String(url).includes("resend.com")) return jsonResponse(403, { message: "domain is not verified" });
+        if (mailHost(url) === "api.resend.com") return jsonResponse(403, { message: "domain is not verified" });
         return jsonResponse(202, "");
       },
       sendTitan: async () => {
@@ -274,7 +278,7 @@ test("non-code mail still tries SendGrid after Resend and before Titan", async (
     {
       fetch: async (url) => {
         hosts.push(String(url));
-        if (String(url).includes("resend.com")) return jsonResponse(403, { message: "domain is not verified" });
+        if (mailHost(url) === "api.resend.com") return jsonResponse(403, { message: "domain is not verified" });
         return jsonResponse(202, "");
       },
       sendTitan: async () => {
@@ -290,8 +294,8 @@ test("non-code mail still tries SendGrid after Resend and before Titan", async (
   );
   assert.equal(result.status, "sent");
   assert.equal(result.via, "sendgrid");
-  assert.ok(hosts.some((url) => url.includes("resend.com")));
-  assert.ok(hosts.some((url) => url.includes("sendgrid.com")));
+  assert.ok(hosts.some((url) => mailHost(url) === "api.resend.com"));
+  assert.ok(hosts.some((url) => mailHost(url) === "api.sendgrid.com"));
 });
 
 test("Titan counts as configured for OTP / reset and logs stay secret-free", () => {
