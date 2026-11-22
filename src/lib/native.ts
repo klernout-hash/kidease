@@ -215,7 +215,7 @@ export async function paintStatusBar(resolved?: "light" | "dark"): Promise<void>
       resolved === "dark" ||
       (resolved !== "light" && document.documentElement.dataset.resolvedTheme === "dark");
     await StatusBar.setStyle({ style: dark ? Style.Light : Style.Dark });
-    await StatusBar.setBackgroundColor({ color: dark ? "#14161c" : "#f6f3ee" });
+    await StatusBar.setBackgroundColor({ color: dark ? "#101218" : "#f7f7f8" });
   } catch {
     /* ios/android variant */
   }

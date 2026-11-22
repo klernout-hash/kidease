@@ -46,8 +46,8 @@ export function HeaderAccount() {
               size="sm"
             />
           ) : (
-            <span className="grid size-9 place-items-center rounded-full bg-surface text-primary ring-2 ring-primary/80">
-              <UserRound className="size-4" strokeWidth={1.7} aria-hidden />
+            <span className="ke-avatar grid size-9 place-items-center rounded-full bg-surface text-primary">
+              <UserRound className="size-4" strokeWidth={2.25} aria-hidden />
             </span>
           )}
         </Link>
@@ -58,8 +58,8 @@ export function HeaderAccount() {
           aria-label={t("logIn")}
           className="grid size-12 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full touch-manipulation"
         >
-          <span className="grid size-9 place-items-center rounded-full bg-surface text-primary ring-2 ring-primary/80">
-            <UserRound className="size-4" strokeWidth={1.7} aria-hidden />
+          <span className="ke-avatar grid size-9 place-items-center rounded-full bg-surface text-primary">
+            <UserRound className="size-4" strokeWidth={2.25} aria-hidden />
           </span>
         </Link>
       )}

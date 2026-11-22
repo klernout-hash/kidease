@@ -31,7 +31,7 @@ test("native guest, parent, and provider tabs are the role bar, not an empty sto
   assert.equal(adminKind, "parent");
 });
 
-test("the tab bar is one solid bar and nothing grey sits on top of it", () => {
+test("the tab bar is one frosted bar and the cookie sheet stays under it", () => {
   const bar = read("src/components/app-tab-bar.tsx");
   const css = read("src/styles.css");
   assert.equal((bar.match(/data-ke="app-tab-bar"/g) ?? []).length, 1);
@@ -48,10 +48,11 @@ test("the tab bar is one solid bar and nothing grey sits on top of it", () => {
   assert.doesNotMatch(bar, /pb-\[env\(safe-area-inset-bottom\)\]/);
   const tabAt = css.indexOf('[data-ke="app-tab-bar"] {');
   const tabRule = css.slice(tabAt, css.indexOf("}", tabAt));
-  assert.match(tabRule, /background:\s*var\(--color-surface\)/);
-  assert.match(tabRule, /backdrop-filter:\s*none/);
+  assert.match(tabRule, /background:\s*color-mix\(in srgb, var\(--color-surface\) 82%, transparent\)/);
+  assert.match(tabRule, /backdrop-filter:\s*blur\(16px\) saturate\(180%\)/);
+  assert.match(tabRule, /border-top:\s*1px solid var\(--ke-hairline\)/);
   assert.match(tabRule, /z-index:\s*50/);
-  assert.doesNotMatch(tabRule, /blur\(/);
+  assert.doesNotMatch(tabRule, /backdrop-filter:\s*none/);
   assert.match(css, /html\[data-native="1"\] \.ke-site-footer/);
   assert.match(css, /html\[data-runtime="native"\] \.ke-site-footer/);
   assert.match(css, /html\[data-native="1"\] \[data-ke="cookie-consent"\]/);

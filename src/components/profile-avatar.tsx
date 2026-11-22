@@ -51,7 +51,7 @@ export function ProfileAvatar({
   return (
     <span
       className={cn(
-        "grid shrink-0 place-items-center overflow-hidden rounded-full bg-surface text-primary ring-2 ring-primary/80",
+        "ke-avatar grid shrink-0 place-items-center overflow-hidden rounded-full bg-surface text-primary",
         dim,
         className,
       )}
@@ -61,7 +61,7 @@ export function ProfileAvatar({
       ) : letter ? (
         <span className={cn("font-semibold", size === "hero" || size === "lg" ? "text-3xl" : "text-sm")}>{letter}</span>
       ) : (
-        <UserRound className={icon} strokeWidth={1.7} />
+        <UserRound className={icon} strokeWidth={2.25} />
       )}
     </span>
   );

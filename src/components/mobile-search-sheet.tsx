@@ -453,7 +453,7 @@ function SearchSheet({
       data-ke="msv2-sheet"
       data-step={draft.step}
       className={cn(
-        "msv2-dialog fixed inset-x-0 bottom-0 z-50 m-0 mt-10 h-[calc(100dvh-2.5rem)] w-full max-w-none rounded-t-3xl border-0 bg-[#f3f1ec] p-0 text-fg shadow-card",
+        "msv2-dialog fixed inset-x-0 bottom-0 z-50 m-0 mt-10 h-[calc(100dvh-2.5rem)] w-full max-w-none rounded-t-3xl border-0 bg-bg p-0 text-fg shadow-card",
         reduce ? "motion-reduce:transition-opacity" : "transition-transform duration-300",
       )}
       onCancel={(event) => {
@@ -651,7 +651,7 @@ function SearchSheet({
             <p className="sr-only">{childTotal(draft.counts)}</p>
           </StepCard>
         </div>
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 border-t border-border bg-[#f3f1ec] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 border-t border-border bg-bg px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <button
             type="button"
             className="min-h-12 px-2 text-base font-semibold underline"
