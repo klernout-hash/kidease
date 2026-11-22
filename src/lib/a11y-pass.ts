@@ -56,7 +56,12 @@ function luminance(hex: string): number {
 export const A11Y_PAIRS = [
   { name: "text on background", fg: "#1c2438", bg: "#f6f3ee" },
   { name: "muted on surface", fg: "#5c6578", bg: "#fffcf8" },
+  { name: "body on page", fg: "#141210", bg: "#f7f7f8" },
+  { name: "secondary on page", fg: "#3c3832", bg: "#f7f7f8" },
+  { name: "secondary on card", fg: "#514c46", bg: "#ffffff" },
   { name: "primary button", fg: "#ffffff", bg: "#1a3790" },
+  { name: "dark body on page", fg: "#f4f1ea", bg: "#101218" },
+  { name: "dark secondary on card", fg: "#c5cad6", bg: "#1c212c" },
   { name: "dark primary button", fg: "#0e1424", bg: "#8eabef" },
-  { name: "dark primary link", fg: "#8eabef", bg: "#14161c" },
+  { name: "dark primary link", fg: "#8eabef", bg: "#101218" },
 ] as const;

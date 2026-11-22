@@ -332,8 +332,8 @@ function DeviceFrame({ device, children }: { device: "iphone" | "android"; child
         <div
           className={
             iphone
-              ? "absolute inset-0 overflow-hidden rounded-[32px] bg-[#f6f3ee]"
-              : "absolute inset-0 overflow-hidden rounded-[22px] bg-[#f6f3ee]"
+              ? "absolute inset-0 overflow-hidden rounded-[32px] bg-[#f7f7f8]"
+              : "absolute inset-0 overflow-hidden rounded-[22px] bg-[#f7f7f8]"
           }
         >
           {children}

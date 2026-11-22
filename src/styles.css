@@ -7,7 +7,7 @@
   font-family: "Plus Jakarta Sans";
   font-style: normal;
   font-display: swap;
-  font-weight: 400 700;
+  font-weight: 400 800;
   src: url("/fonts/plus-jakarta-sans-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -15,43 +15,53 @@
   font-family: "Plus Jakarta Sans";
   font-style: normal;
   font-display: swap;
-  font-weight: 400 700;
+  font-weight: 400 800;
   src: url("/fonts/plus-jakarta-sans-latin-ext.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
 @theme {
-  --color-bg: #f3f1ec;
+  /* Glossy elevated look. One set of tokens, used by every desk and the public site. */
+  --color-bg: #f7f7f8;
   --color-surface: #ffffff;
-  --color-surface-2: #efece6;
-  --color-fg: #1c1915;
-  --color-muted: #5c564e;
-  --color-subtle: #6a645c;
+  --color-surface-2: #efeff2;
+  --color-fg: #141210;
+  --color-muted: #3c3832;
+  --color-subtle: #514c46;
   --color-primary: #1a3790;
   --color-primary-fg: #ffffff;
   --color-accent: #a8481a;
   --color-accent-fg: #ffffff;
-  --color-border: #e6e1d8;
+  --color-border: #e4e4e7;
   --color-ring: #1a3790;
   --color-danger: #b42318;
   --color-warn: #8a5110;
   --color-ok: #1a7a5a;
   --color-soft: #eef2fb;
-  --color-map: #ebe6dc;
+  --color-map: #ececee;
   --font-sans: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
   --font-display: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  /* Master UI/UX spec: 4px buttons/inputs (xs/sm/md), 8px cards and sheets (lg/xl), full pills. */
-  --radius-xs: 4px;
-  --radius-sm: 4px;
-  --radius-md: 4px;
-  --radius-lg: 8px;
-  --radius-xl: 8px;
+  --font-weight-extrabold: 800;
+  /* Cards 22px, inputs 12px, buttons and pills full-round. */
+  --radius-xs: 8px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 22px;
+  --radius-2xl: 24px;
+  --radius-card: 22px;
+  --radius-pill: 999px;
   --radius-device: 36px;
-  --shadow-card: 0 1px 2px rgba(28, 24, 20, 0.04), 0 8px 24px rgba(28, 24, 20, 0.06);
-  --shadow-lift: 0 2px 6px rgba(28, 24, 20, 0.05), 0 16px 36px rgba(28, 24, 20, 0.08);
+  --ke-hairline: rgba(0, 0, 0, 0.06);
+  --ke-gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.6), transparent 40%);
+  --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+  --shadow-2: 0 2px 4px rgba(16, 24, 40, 0.04), 0 6px 16px rgba(16, 24, 40, 0.08);
+  --shadow-3: 0 4px 8px rgba(16, 24, 40, 0.05), 0 12px 32px rgba(16, 24, 40, 0.12);
+  --shadow-card: var(--shadow-2);
+  --shadow-lift: var(--shadow-3);
   /* One picture box for Recently Viewed, category rows, and native listing rails. */
   --ke-card-w: min(10.5rem, 42vw);
   --ke-card-photo-ratio: 20 / 19;
@@ -65,48 +75,54 @@
   html[data-theme="dark"],
   html[data-resolved-theme="dark"] {
     color-scheme: dark;
-    --color-bg: #14161c;
-    --color-surface: #1c2028;
-    --color-surface-2: #262b36;
-    --color-fg: #f3efe8;
-    --color-muted: #b0b6c4;
-    --color-subtle: #8d8a82;
+    --color-bg: #101218;
+    --color-surface: #1c212c;
+    --color-surface-2: #272d3a;
+    --color-fg: #f4f1ea;
+    --color-muted: #c5cad6;
+    --color-subtle: #aeb4c2;
     --color-primary: #8eabef;
     --color-primary-fg: #0e1424;
     --color-accent: #f0a868;
-    --color-accent-fg: #14161c;
-    --color-border: #3d4556;
+    --color-accent-fg: #101218;
+    --color-border: #3a4150;
     --color-ring: #8eabef;
     --color-danger: #f08880;
     --color-warn: #e0b36a;
     --color-ok: #4ea882;
     --color-soft: #1c2438;
-    --color-map: #1a1e26;
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 28px rgba(0, 0, 0, 0.28);
-    --shadow-lift: 0 2px 8px rgba(0, 0, 0, 0.4), 0 16px 36px rgba(0, 0, 0, 0.32);
+    --color-map: #161a22;
+    --ke-hairline: rgba(255, 255, 255, 0.08);
+    --ke-gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 40%);
+    --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.55);
+    --shadow-2: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 4px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.55);
+    --shadow-3: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 8px rgba(0, 0, 0, 0.45), 0 12px 32px rgba(0, 0, 0, 0.62);
   }
   @media (prefers-color-scheme: dark) {
     html:not([data-theme="light"]):not([data-resolved-theme="light"]) {
       color-scheme: dark;
-      --color-bg: #14161c;
-      --color-surface: #1c2028;
-      --color-surface-2: #262b36;
-      --color-fg: #f3efe8;
-      --color-muted: #b0b6c4;
-      --color-subtle: #8d8a82;
+      --color-bg: #101218;
+      --color-surface: #1c212c;
+      --color-surface-2: #272d3a;
+      --color-fg: #f4f1ea;
+      --color-muted: #c5cad6;
+      --color-subtle: #aeb4c2;
       --color-primary: #8eabef;
       --color-primary-fg: #0e1424;
       --color-accent: #f0a868;
-      --color-accent-fg: #14161c;
-      --color-border: #3d4556;
+      --color-accent-fg: #101218;
+      --color-border: #3a4150;
       --color-ring: #8eabef;
       --color-danger: #f08880;
       --color-warn: #e0b36a;
       --color-ok: #4ea882;
       --color-soft: #1c2438;
-      --color-map: #1a1e26;
-      --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 28px rgba(0, 0, 0, 0.28);
-      --shadow-lift: 0 2px 8px rgba(0, 0, 0, 0.4), 0 16px 36px rgba(0, 0, 0, 0.32);
+      --color-map: #161a22;
+      --ke-hairline: rgba(255, 255, 255, 0.08);
+      --ke-gloss: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 40%);
+      --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.55);
+      --shadow-2: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 4px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.55);
+      --shadow-3: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 8px rgba(0, 0, 0, 0.45), 0 12px 32px rgba(0, 0, 0, 0.62);
     }
   }
   html {
@@ -253,9 +269,9 @@
   h3,
   h4 {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: 800;
     text-wrap: balance;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
     line-height: 1.2;
   }
   h1 {
@@ -265,18 +281,20 @@
   }
   h2 {
     font-size: clamp(1.35rem, 1.05rem + 0.7vw, 1.75rem);
-    letter-spacing: -0.018em;
+    letter-spacing: -0.02em;
     line-height: 1.22;
   }
   h3 {
     font-size: 1.125rem;
     letter-spacing: -0.02em;
     line-height: 1.3;
+    font-weight: 700;
   }
   h4 {
     font-size: 1rem;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
     line-height: 1.35;
+    font-weight: 700;
   }
   label {
     font-weight: 600;
@@ -436,9 +454,9 @@ html:not([data-look="clean"]) :is(a, button, [role="button"]).h-11 {
   }
   .ke-explore-filter-bar .ke-chip-on,
   .ke-explore-cat.ke-chip-on {
-    color: var(--color-primary-fg);
-    background: var(--color-primary);
-    box-shadow: inset 0 0 0 1px var(--color-primary);
+    color: var(--color-bg);
+    background: var(--color-fg);
+    box-shadow: inset 0 0 0 1px var(--color-fg);
   }
   @media (hover: hover) and (pointer: fine) {
     .ke-explore-filter-bar .ke-chip:hover:not(.ke-chip-on),
@@ -448,7 +466,7 @@ html:not([data-look="clean"]) :is(a, button, [role="button"]).h-11 {
     }
     .ke-explore-filter-bar .ke-chip-on:hover,
     .ke-explore-cat.ke-chip-on:hover {
-      background: color-mix(in oklab, var(--color-primary) 88%, #fff);
+      background: color-mix(in oklab, var(--color-fg) 88%, #fff);
     }
     .ke-listing-rail-arrow:hover {
       background: var(--color-surface-2);
@@ -1362,11 +1380,12 @@ html:not([data-look="clean"]) :is(a, button, [role="button"]).h-11 {
   }
   /* Shared box recipes. Roles pick these up instead of one-off page padding. */
   .ke-panel {
-    border-radius: 1rem;
-    background: var(--color-surface);
+    border-radius: var(--radius-card);
+    background-color: var(--color-surface);
+    background-image: var(--ke-gloss);
     padding: var(--spacing-box);
-    border: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent);
-    box-shadow: var(--shadow-card);
+    border: 1px solid var(--ke-hairline);
+    box-shadow: var(--shadow-2);
   }
   /* Soft lift for the existing surface cards. Ring and shadow both use
      box-shadow, so this one rule keeps a hairline and the blended shadow. */
@@ -1374,14 +1393,14 @@ html:not([data-look="clean"]) :is(a, button, [role="button"]).h-11 {
   .rounded-2xl.bg-surface.ring-1,
   .rounded-\[16px\].bg-surface.ring-1 {
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--color-border) 80%, transparent),
-      var(--shadow-card);
+      0 0 0 1px var(--ke-hairline),
+      var(--shadow-2);
   }
   .ke-visual-card {
-    filter: drop-shadow(0 6px 16px rgba(28, 24, 20, 0.07));
+    filter: drop-shadow(0 2px 4px rgba(16, 24, 40, 0.04)) drop-shadow(0 6px 16px rgba(16, 24, 40, 0.08));
   }
   html[data-resolved-theme="dark"] .ke-visual-card {
-    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.35));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.5));
   }
   .ke-switch {
     appearance: none;
@@ -2262,7 +2281,7 @@ dialog.msv2-dialog {
   max-width: 100%;
   border: 0;
   padding: 0;
-  background: #f3f1ec;
+  background: var(--color-bg);
   color: var(--color-fg);
   border-radius: 1.5rem 1.5rem 0 0;
   animation: msv2-rise 300ms cubic-bezier(0.22, 1.2, 0.36, 1);
@@ -2987,10 +3006,10 @@ body {
   bottom: 0;
   z-index: 50;
   /* Safe-area pad lives once on the bar (pb --ke-safe-bottom). Do not add another here. */
-  background: var(--color-surface);
-  border-top: 1px solid color-mix(in srgb, #e2e8f0 80%, transparent);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  border-top: 1px solid var(--ke-hairline);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
   pointer-events: auto;
 }
 [data-ke="app-tab-bar"] > * {
@@ -3032,7 +3051,7 @@ html[data-runtime="native"] [data-ke="push-explain"] {
 }
 html[data-theme="dark"] [data-ke="app-tab-bar"],
 html[data-resolved-theme="dark"] [data-ke="app-tab-bar"] {
-  border-top-color: rgb(255 255 255 / 0.14);
+  border-top-color: var(--ke-hairline);
 }
 @media (prefers-color-scheme: dark) {
   html:not([data-theme="light"]):not([data-resolved-theme="light"]) [data-ke="app-tab-bar"] {
@@ -3702,6 +3721,123 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
   }
 }
 
+
+/*
+  Glossy elevated look. Tokens live in @theme above. These rules only paint
+  shadow, gloss, radius, type, and focus. They do not move layout.
+  Blur stays on the fixed bars and the bottom sheets.
+*/
+:is(h1, h2) {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+:is(h3, h4) {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.lucide:not([stroke-width="0"]) {
+  stroke-width: 2.25;
+}
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+.ke-site-header {
+  background: color-mix(in srgb, var(--color-bg) 86%, transparent);
+  border-bottom-color: var(--ke-hairline);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+}
+.ke-button {
+  border-radius: var(--radius-pill);
+  transition:
+    box-shadow 180ms ease-out,
+    transform 180ms ease-out,
+    background-color 180ms ease-out,
+    color 180ms ease-out;
+}
+:is(.ke-button, a, button):is(.bg-primary).shadow-card,
+:is(a, button).rounded-full.bg-primary,
+.ke-button.bg-primary {
+  background-image: var(--ke-gloss);
+  box-shadow: 0 0 0 1px var(--ke-hairline), var(--shadow-2);
+}
+@media (hover: hover) and (pointer: fine) {
+  :is(.ke-button, a, button).bg-primary:hover:not(:disabled):not([aria-disabled="true"]) {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 1px var(--ke-hairline), var(--shadow-3);
+  }
+}
+:is(.ke-button, a, button).bg-primary:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: scale(0.98);
+  box-shadow: 0 0 0 1px var(--ke-hairline), var(--shadow-1);
+}
+:is(.ke-button, a, button).bg-primary:disabled,
+:is(.ke-button, a, button).bg-primary[aria-disabled="true"] {
+  transform: none;
+  box-shadow: none;
+  background-image: none;
+}
+:is(.ke-input, .ke-textarea, input, select, textarea):not(.rounded-full):not(.ke-header-chrome):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]) {
+  border-radius: 12px;
+}
+:is(
+  .ke-panel,
+  .rounded-xl.bg-surface.shadow-card,
+  .rounded-2xl.bg-surface.shadow-card,
+  .rounded-xl.bg-surface.ring-1,
+  .rounded-2xl.bg-surface.ring-1
+) {
+  border-radius: var(--radius-card);
+  background-image: var(--ke-gloss);
+  box-shadow: 0 0 0 1px var(--ke-hairline), var(--shadow-2);
+  transition:
+    box-shadow 180ms ease-out,
+    background-color 180ms ease-out,
+    color 180ms ease-out;
+}
+p:is(.rounded-xl, .rounded-2xl).bg-surface {
+  border-radius: 1.25rem;
+  background-image: none;
+  box-shadow: 0 0 0 1px var(--ke-hairline);
+}
+:is([role="dialog"], [role="alertdialog"]) :is(.bg-surface.rounded-xl, .bg-surface.rounded-2xl, .bg-surface.shadow-card),
+dialog.msv2-dialog,
+.ke-airbnb-sheet {
+  box-shadow: var(--shadow-3);
+}
+dialog.msv2-dialog,
+.ke-airbnb-sheet {
+  background-color: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+}
+.ke-avatar,
+[data-ke="header-avatar"] .rounded-full,
+[data-ke="inbox-row"] > .rounded-full {
+  box-shadow: 0 0 0 2px #fff, var(--shadow-1);
+}
+.ke-avatar-stack {
+  display: flex;
+  align-items: center;
+}
+.ke-avatar-stack > * + * {
+  margin-inline-start: -0.65rem;
+}
+.ke-avatar-stack > * {
+  box-shadow: 0 0 0 2px #fff, var(--shadow-1);
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(a, button, .ke-button, .ke-chip, .ke-panel, input, select, textarea, [role="tab"]) {
+    transition-property: color, background-color, border-color, outline-color, fill, stroke !important;
+    transition-duration: 180ms !important;
+    transition-timing-function: ease-out !important;
+  }
+  :is(.ke-button, a, button).bg-primary:hover,
+  :is(.ke-button, a, button).bg-primary:active {
+    transform: none;
+  }
+}
 
 /* Parts that only belong to the clean look stay hidden in today's look. */
 html:not([data-look="clean"]) .ke-clean-only {

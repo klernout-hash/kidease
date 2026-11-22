@@ -78,7 +78,7 @@ export function InboxMessageRow({
         selected && "bg-bg",
       )}
     >
-      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-surface-2 text-sm font-semibold text-fg" aria-hidden>
+      <span className="ke-avatar grid size-12 shrink-0 place-items-center rounded-full bg-surface-2 text-sm font-semibold text-fg" aria-hidden>
         {participantInitials(avatarName || title)}
       </span>
       <span className="min-w-0 flex-1">

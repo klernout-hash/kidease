@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { contrastRatio } from "../src/lib/a11y-pass.ts";
 import { decideListingLoader } from "../src/lib/listing-not-found.ts";
 import { isSafeSitemapSlug } from "../src/lib/sitemap.ts";
 
@@ -10,7 +11,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 test("subtle text clears 4.5 to 1 on the light page", () => {
   const css = readFileSync(join(root, "src/styles.css"), "utf8");
-  assert.match(css, /--color-subtle: #6a645c;/);
+  assert.match(css, /--color-subtle: #514c46;/);
+  assert.ok(contrastRatio("#514c46", "#f7f7f8") >= 4.5);
   assert.doesNotMatch(css.split("data-theme")[0], /--color-subtle: #8a847a/);
 });
 
