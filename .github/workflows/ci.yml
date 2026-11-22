@@ -80,7 +80,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Restore Vite build output
         id: vite-build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: artifacts/ci-build
           key: vite-build-${{ runner.os }}-${{ hashFiles('package.json', 'package-lock.json', 'vite.config.ts', 'src/**', 'server/**', 'public/**', 'migrations/**', 'scripts/startup-chunks.mjs', 'scripts/migrate.mjs', 'scripts/check-migrations.mjs', 'scripts/check-ssr-bundle.mjs', 'scripts/check-locale-chunks.mjs', 'scripts/check-client-db.mjs') }}
@@ -229,13 +229,13 @@ jobs:
         id: playwright-version
         uses: ./.github/actions/playwright-version
       - name: Cache apt archives for Playwright Chromium
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /tmp/playwright-apt
           key: playwright-apt-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}-chromium
       - name: Restore Playwright browsers
         id: playwright-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}-chromium
@@ -286,7 +286,7 @@ jobs:
           exit 1
       - name: Save Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}-chromium
