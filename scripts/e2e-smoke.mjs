@@ -1979,10 +1979,41 @@ async function runWebkitSearchGuard(base) {
         note: `${page.url()} safe=${safe} fallback=${fallback} ${crashes[0] || ""}`.trim(),
       };
     }
+    async function openOk(path) {
+      crashes.length = 0;
+      const response = await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      await page.waitForTimeout(400);
+      const text = (await page.locator("body").innerText().catch(() => "")) || "";
+      const threw = crashes.some((message) => /trim is not a function|something went wrong/i.test(message));
+      const status = response?.status() ?? 0;
+      return {
+        ok: status > 0 && status < 500 && !/Something went wrong|Une erreur est survenue/i.test(text) && !threw,
+        note: `${status} ${page.url()} ${crashes[0] || ""}`.trim(),
+      };
+    }
+    for (const [name, path] of [
+      ["webkit-home", "/"],
+      ["webkit-login", "/login"],
+      ["webkit-signup", "/signup"],
+    ]) {
+      const opened = await openOk(path);
+      record(name, opened.ok, { note: opened.note });
+    }
     const edmonton = await quiet("/search?q=Edmonton%2C+AB");
     record("webkit-search-edmonton", edmonton.ok, { note: edmonton.note });
     const winnipeg = await quiet("/search?q=Winnipeg%2C+MB");
     record("webkit-search-winnipeg", winnipeg.ok, { note: winnipeg.note });
+    const listingHref = await page
+      .locator('a[href*="/daycare/"]:not([href*="/daycare/city"])')
+      .first()
+      .getAttribute("href")
+      .catch(() => "");
+    if (listingHref) {
+      const listing = await openOk(listingHref);
+      record("webkit-listing", listing.ok, { note: listing.note });
+    } else {
+      record("webkit-listing", false, { note: "no listing link" });
+    }
     try {
       const seeded = await setFixture(context, base, { role: "parent" });
       await pinWebkitE2eSession(context, base, seeded);
