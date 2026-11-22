@@ -6,7 +6,7 @@ The public toll-free number can also receive a call: a short greeting names KidE
 
 `FEATURE_SMS` does not gate voice. Voice turns on when the API key and TwiML App are set.
 
-The iPhone and Android app load `@twilio/voice-sdk` on `/call` only. Android asks for `RECORD_AUDIO` and `MODIFY_AUDIO_SETTINGS` when the WebView calls `getUserMedia`. iOS uses `NSMicrophoneUsageDescription`. The call stays in the foreground. There is no background audio mode and no VoIP mode. The page has no price and no subscribe button.
+The iPhone and Android app load `@twilio/voice-sdk` on `/call` only. A later build asks for `RECORD_AUDIO` and `MODIFY_AUDIO_SETTINGS` when the WebView calls `getUserMedia`. This store build does not declare those permissions. Add them back with the switch in `docs/mobile-builds.md` before turning voice on. iOS uses `NSMicrophoneUsageDescription`. The call stays in the foreground. There is no background audio mode and no VoIP mode. The page has no price and no subscribe button.
 
 ## Vercel env checklist
 

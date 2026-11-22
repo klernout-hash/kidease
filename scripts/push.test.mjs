@@ -271,7 +271,8 @@ test("docs, migration, API, hook, and plugin are wired but off by default", () =
   assert.match(src("android/app/build.gradle"), /playImplementation project\(":capacitor-push-notifications"\)/);
   assert.doesNotMatch(src("android/app/build.gradle"), /huaweiImplementation project\(":capacitor-push-notifications"\)/);
   assert.match(src("ios/App/CapApp-SPM/Package.swift"), /CapacitorPushNotifications/);
-  assert.match(src("android/app/src/main/AndroidManifest.xml"), /POST_NOTIFICATIONS/);
+  assert.doesNotMatch(src("android/app/src/main/AndroidManifest.xml"), /POST_NOTIFICATIONS/);
+  assert.match(src("scripts/patch-native-permissions.mjs"), /HOLD_CALL_AND_PUSH_PERMISSIONS = true/);
   assert.equal(existsSync(join(root, "android/app/google-services.json")), false);
 
   assert.match(tree, /\/api\/push\/register/);

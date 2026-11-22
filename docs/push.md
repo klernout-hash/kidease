@@ -17,7 +17,7 @@ The same outbox sends website Web Push when the flag is armed and both VAPID key
 Leave `FEATURE_PUSH` unset (or `0`) on Production until Chat lab shows a real secret for the channel you want:
 
 1. Website: both VAPID keys (and `VITE_FCM_VAPID_PUBLIC_KEY` in the web build).
-2. Phones: `@capacitor/push-notifications` and `POST_NOTIFICATIONS` are in the Play and Samsung binaries. Huawei AppGallery does not include the Firebase plugin. `google-services.json` is not in the repo. Create a Firebase project for `ca.kidease.app`, add that file only in the release build (do not commit it), and set the FCM env names. For iOS, turn on the Push Notifications capability and add `aps-environment` after the App ID allows it. Until those exist, registration fails closed and nothing is sent.
+2. Phones: `@capacitor/push-notifications` stays in the Play and Samsung projects. This store build does not declare `POST_NOTIFICATIONS`. Huawei AppGallery does not include the Firebase plugin. `google-services.json` is not in the repo. Create a Firebase project for `ca.kidease.app`, add that file only in the release build (do not commit it), and set the FCM env names. Then set `HOLD_CALL_AND_PUSH_PERMISSIONS` to `false` and run `npm run cap:permissions` (see `docs/mobile-builds.md`). For iOS, uncomment the push lines in `Store.xcconfig`. Until those exist, registration fails closed and nothing is sent.
 3. You have confirmed Chat lab: secret present, never the value. Native dry-run counts tokens and still does not send.
 
 Do not set the flag “to see if it works” on the public site with no secrets. Production ignores `FEATURE_PUSH=1` until FCM, APNs, or the VAPID pair exists. Email and the in-app bell still notify without push. Do not set `FEATURE_SMS=1` as part of this work.
