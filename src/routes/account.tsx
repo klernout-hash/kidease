@@ -576,6 +576,7 @@ function ProfilePane() {
   });
   const sections = [
     { id: "profile" as const, label: t("profile") },
+    { id: "delete" as const, label: t("deleteAccount") },
     { id: "alerts" as const, label: t("accountAlerts") },
     { id: "security" as const, label: t("loginSecurity") },
     { id: "export" as const, label: t("accountExport") },
@@ -585,7 +586,6 @@ function ProfilePane() {
     { id: "appearance" as const, label: t("appearance") },
     { id: "refer" as const, label: t("referFriend") },
     { id: "subscription" as const, label: t("navUpgrade") },
-    { id: "delete" as const, label: t("deleteAccount") },
   ].filter((item) => {
     if (item.id === "wallet" && (!connect.enabled || !user)) return false;
     if (nativeShell && item.id === "subscription") return false;
