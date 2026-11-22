@@ -102,6 +102,18 @@ INFOPLIST_KEY_KIDEASEPushCalling = YES
 
 `npm run cap:permissions` rewrites `App.entitlements` without `aps-environment` and rewrites `App.push.entitlements` with it. It also strips any `UIBackgroundModes` array from the source `Info.plist`. It does not change `Store.xcconfig`.
 
+### Android call and push permissions
+
+The same hold applies to the Android store builds. Play, Samsung, Huawei, and Amazon do not declare `POST_NOTIFICATIONS`, `USE_FULL_SCREEN_INTENT`, `CAMERA`, `RECORD_AUDIO`, or `MODIFY_AUDIO_SETTINGS`. Location while you search, and vibration for haptics, stay. The push, call, and video source stays in the app. The feature flags stay off.
+
+`scripts/patch-native-permissions.mjs` has `HOLD_CALL_AND_PUSH_PERMISSIONS = true`. `npm run cap:permissions` strips those five permissions from `android/app/src/main/AndroidManifest.xml` and from the Huawei overlay, so a later sync cannot put them back by accident.
+
+When push and calling are ready to ship:
+
+1. Set `HOLD_CALL_AND_PUSH_PERMISSIONS` to `false` in `scripts/patch-native-permissions.mjs`.
+2. Run `npm run cap:permissions`. That writes the five permissions back into both manifests, plus the camera and microphone features with `required="false"`.
+3. Turn `FEATURE_PUSH`, `FEATURE_CALL_PUSH`, `FEATURE_VOICE`, and `FEATURE_VIDEO` on only after the credentials exist and you mean to send. The declarations and the flags are separate.
+
 ## Android — `bundleRelease` → Play internal
 
 Play, Samsung Galaxy Store, and Huawei AppGallery are three flavours of the same application id. The Play command is `bundlePlayRelease`. Galaxy Store and AppGallery commands, and what each store allows for Stripe, are in [`other-stores.md`](other-stores.md).
