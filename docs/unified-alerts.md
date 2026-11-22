@@ -78,6 +78,9 @@ Pass means the scan reads a real column and can record an in-app row when the fl
 | `admin_safety_report` | pass | Open safety reports. A government user sees a report only for their province. Web only. |
 | `admin_safety_block` | partial | Blocks have no review status. This logs that a block was added. Web only. |
 
+| `daycare_payroll_due` | partial | Centre owner only. Planned in-app alert; no email, push, or SMS is sent by the current payroll implementation. |
+| `admin_payroll_due` | partial | Internal KidEase operations only. No live delivery in the current payroll implementation. |
+
 ## Store flags
 
 `SUBSCRIPTIONS_ENABLED`, `SHOW_PAY_CTAS`, in-app purchases, Sponsored, `FEATURE_PROVIDER_SUBSCRIPTIONS`, and `FEATURE_CALL_PUSH` are unchanged.
