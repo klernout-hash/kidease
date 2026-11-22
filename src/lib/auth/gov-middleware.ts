@@ -17,5 +17,8 @@ export const govAuthMiddleware = createMiddleware({ type: "function" })
     assertSameSiteRequest();
     const userId = await requireUserId(context.bearerToken as string | undefined);
     const gov = await requireGovActor(userId);
+    const { isCurrentUserTwoFactorVerified } = await import("@/lib/server/two-factor.server");
+    const { assertGovSecondFactorVerified } = await import("@/lib/gov/second-factor");
+    assertGovSecondFactorVerified(isCurrentUserTwoFactorVerified(userId));
     return next({ context: { userId, gov } });
   });
