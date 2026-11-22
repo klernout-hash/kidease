@@ -18,6 +18,7 @@ import {
   FOOTER_COLUMNS,
   FOOTER_LEGAL,
   footerLinkLabel,
+  withBackgroundCheckLink,
   type FooterColumnId,
   type FooterLinkDef,
 } from "@/lib/site-footer-nav";
@@ -133,6 +134,7 @@ export function SiteFooter() {
   const chrome = useRoleChrome();
   const hideCommerce = useInNativeShell();
   const hidePlans = chrome.subscriptionsEnabled !== true;
+  const daycareLinks = withBackgroundCheckLink(FOOTER_COLUMNS.daycares, chrome.bgCheckGuide === true);
   const fr = locale === "fr";
   const helpAndKidEase = [...FOOTER_COLUMNS.support, ...FOOTER_COLUMNS.kidease]
     .filter((link) => link.to !== "/get-app");
@@ -152,7 +154,7 @@ export function SiteFooter() {
             <Column
               id="daycares"
               title={fr ? "Garderies" : "Daycares"}
-              links={footerLinks(linksForRole(FOOTER_COLUMNS.daycares, chrome.role, "daycares", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)}
+              links={footerLinks(linksForRole(daycareLinks, chrome.role, "daycares", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)}
               locale={locale}
               t={t}
             />

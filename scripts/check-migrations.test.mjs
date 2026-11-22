@@ -253,6 +253,7 @@ test("normal build checks the ledger while the manual write command stays separa
   assert.doesNotMatch(pkg.scripts.build, /npm run db:migrate(?:\s|$)/);
   assert.deepEqual(pkg.scripts.build.split(/\s*&&\s*/), [
     "vite build",
+    "node scripts/upload-sentry-sourcemaps.mjs",
     "node scripts/upload-posthog-sourcemaps.mjs",
     "node scripts/check-ssr-bundle.mjs",
     "node scripts/check-locale-chunks.mjs",

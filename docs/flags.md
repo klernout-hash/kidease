@@ -285,6 +285,8 @@ A paused screen says what is off and offers a way to search.
 
 `FEATURE_COMPARE_PARENT_FEE` is on. Compare shows the fee parents pay and the distance from a saved commute address. A centre with no confirmed fee says “Ask the centre”. Nothing is sent.
 
+`FEATURE_BG_CHECK_GUIDE`, `FEATURE_BG_CHECK_RECORDS`, and `FEATURE_BG_CHECK_ATTESTATION` are off. The public guide explains where a centre gets required checks. The centre can record that it saw a result and see in-app reminders. An optional file is a private copy and does not replace the licence holder’s personnel file. A listing may show a sentence the centre wrote. It is not a “background checked” or “verified” badge. Nothing is emailed or texted. Do not turn on `FEATURE_SCREENING_STATUS` or `screening_on_file` for this.
+
 ## Later (not this PR)
 
 - Per-user or % rollouts (today the server uses one distinct id).

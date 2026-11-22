@@ -54,6 +54,7 @@ import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
 import { knownListingMonthlyFee, publicMonthlyFee } from "@/lib/listing-fee";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
+import { BackgroundCheckAttestation } from "@/components/background-check-attestation";
 import { VerifiedCheck } from "@/components/verified-check";
 import { showVerifiedCheck } from "@/lib/listing-verified";
 import { ListingReport } from "@/components/listing-report";
@@ -1213,6 +1214,7 @@ export function Listing() {
                   {d.licenseNumber ? (
                     <p className="mt-2 text-base leading-7">{locale === "fr" ? "Numéro de permis" : "Licence number"} · {d.licenseNumber}</p>
                   ) : null}
+                  <BackgroundCheckAttestation daycareId={d.id} locale={locale === "fr" ? "fr" : "en"} />
                 </div>
               </section>
             ) : null}
