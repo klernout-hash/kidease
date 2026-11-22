@@ -9,6 +9,7 @@ import { getSql } from "@/lib/db";
 import { decideClock, decidePayBooks, staffHoursView } from "@/lib/payroll/access.ts";
 import { sandboxAdapter } from "@/lib/payroll/adapter.ts";
 import { deliverPayrollNotice, planDeadlineNotices, payrollAttentionFacts } from "@/lib/payroll/deadlines.ts";
+import { decideExtraTaxApprove, decideExtraTaxSubmit } from "@/lib/payroll/extra-tax.ts";
 import { providerPayrollEnabled, payrollAlertsEnabled, payrollAlertsLiveEnabled } from "@/lib/features";
 import { defaultUnifiedSettings } from "@/lib/unified-alerts.ts";
 import { nid } from "@/lib/utils";
@@ -124,4 +125,64 @@ export const payrollPlanNotices = createServerFn({ method: "POST" })
       `.catch(() => undefined);
     }
     return { planned: plans.length, delivered: 0, stored };
+  });
+
+export const submitExtraTax = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; employeeId?: string; amountCents?: number; authority?: string }) => ({
+    daycareId: String(input?.daycareId || "").trim(),
+    employeeId: String(input?.employeeId || "").trim(),
+    amountCents: Math.max(0, Math.round(Number(input?.amountCents) || 0)),
+    authority: input?.authority === "revenu_quebec" ? "revenu_quebec" as const : "cra" as const,
+  }))
+  .handler(async ({ context, data }) => {
+    if (!providerPayrollEnabled()) throw new Error("payroll:off");
+    const { sql, role } = await centreRole(context.userId, data.daycareId);
+    const rows = await sql<{ id: string; user_id: string | null }>`
+      select id, user_id from payroll_employees
+      where daycare_id = ${data.daycareId} and id = ${data.employeeId}
+      limit 1
+    `.catch(() => []);
+    const employee = rows[0];
+    if (!employee) throw new Error("payroll:missing");
+    const gate = decideExtraTaxSubmit({ samePerson: employee.user_id === context.userId, role });
+    if (!gate.ok) throw new Error(`payroll:${gate.reason}`);
+    const id = nid();
+    await sql`
+      insert into payroll_extra_tax_requests (id, daycare_id, employee_id, user_id, amount_cents, authority, status)
+      values (${id}, ${data.daycareId}, ${data.employeeId}, ${context.userId}, ${data.amountCents}, ${data.authority}, 'pending')
+    `;
+    return { id, status: "pending" as const, sent: false as const };
+  });
+
+export const approveExtraTax = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; requestId?: string }) => ({
+    daycareId: String(input?.daycareId || "").trim(),
+    requestId: String(input?.requestId || "").trim(),
+  }))
+  .handler(async ({ context, data }) => {
+    if (!providerPayrollEnabled()) throw new Error("payroll:off");
+    const { sql, isOwner } = await centreRole(context.userId, data.daycareId);
+    const gate = decideExtraTaxApprove({ isOwner });
+    if (!gate.ok) throw new Error("payroll:owner_only");
+    const rows = await sql<{ id: string; employee_id: string; amount_cents: number; authority: string }>`
+      select id, employee_id, amount_cents, authority
+      from payroll_extra_tax_requests
+      where id = ${data.requestId} and daycare_id = ${data.daycareId} and status = 'pending'
+      limit 1
+    `.catch(() => []);
+    const request = rows[0];
+    if (!request) throw new Error("payroll:missing");
+    await sql`
+      update payroll_extra_tax_requests
+      set status = 'approved', decided_by = ${context.userId}, decided_at = now()
+      where id = ${request.id}
+    `;
+    await sql`
+      update payroll_employees
+      set extra_tax_cents = ${request.amount_cents}, extra_tax_authority = ${request.authority}
+      where id = ${request.employee_id} and daycare_id = ${data.daycareId}
+    `;
+    return { approved: true as const, sent: false as const };
   });

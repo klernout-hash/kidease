@@ -76,6 +76,14 @@ export type PayInput = {
   addons?: PayAddon[];
   /** RRSP deducted at source. Reduces taxable income. Not used by the simple pay day. */
   rrspCents?: number;
+  /**
+   * Extra tax the employee asked to have taken off each cheque.
+   * Applied only when extraTaxApproved is true.
+   * cra = TD1 additional tax. revenu_quebec = TP-1015.3-V additional source deduction.
+   */
+  extraTaxCents?: number;
+  extraTaxAuthority?: "cra" | "revenu_quebec";
+  extraTaxApproved?: boolean;
 };
 
 export type MoneyLine = {
@@ -110,6 +118,9 @@ export type PayEstimate = {
   federalTaxCents: number;
   provincialTaxCents: number | null;
   provincialVerified: boolean;
+  /** Approved extra taken off this cheque. Not part of the formula tax. */
+  extraTaxCents: number;
+  extraTaxAuthority: "cra" | "revenu_quebec" | null;
   netCents: number;
   employerCostCents: number;
   governmentCents: number;
@@ -439,9 +450,19 @@ export function estimatePay(input: PayInput): PayEstimate {
   const federalPart = cents(roundDollars(annualFederal / periods));
   const provincialPart = annualProvincial == null ? null : cents(roundDollars(annualProvincial / periods));
   const combined = cents(roundDollars((annualFederal + (annualProvincial ?? 0)) / periods));
-  const federalTax = federalPart;
-  const provincialTax =
+  let federalTax = federalPart;
+  let provincialTax: number | null =
     provincialPart == null ? null : provincialPart + (combined - (federalPart + provincialPart));
+
+  const requestedExtra = Math.max(0, Math.round(input.extraTaxCents ?? 0));
+  const extraApproved = input.extraTaxApproved === true && requestedExtra > 0;
+  const extraAuthority = extraApproved ? (input.extraTaxAuthority === "revenu_quebec" ? "revenu_quebec" : "cra") : null;
+  const extraTaxCents = extraApproved ? requestedExtra : 0;
+  if (extraTaxCents > 0 && extraAuthority === "revenu_quebec") {
+    provincialTax = (provincialTax ?? 0) + extraTaxCents;
+  } else if (extraTaxCents > 0) {
+    federalTax += extraTaxCents;
+  }
 
   const employeeDeductions =
     employeePension +
@@ -490,6 +511,8 @@ export function estimatePay(input: PayInput): PayEstimate {
     federalTaxCents: federalTax,
     provincialTaxCents: provincialTax,
     provincialVerified,
+    extraTaxCents,
+    extraTaxAuthority: extraAuthority,
     netCents: net,
     employerCostCents: cash + nontax + employerPension + employerSecond + employerEi + employerQpip,
     governmentCents: government,

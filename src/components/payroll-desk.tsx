@@ -6,7 +6,7 @@ import type { Deadline } from "@/lib/payroll/deadlines.ts";
 import type { MonthBreakdown } from "@/lib/payroll/remittance.ts";
 import { invoiceJournal, stripeBalance } from "@/lib/payroll/books.ts";
 import { postEntry, type JournalEntry } from "@/lib/payroll/ledger.ts";
-import { sampleHome, sampleMonth, sampleSentence, type PayScreen } from "@/lib/payroll/view.ts";
+import { extraTaxTooltip } from "@/lib/payroll/extra-tax.ts";
 
 const TOUR_KEY = "ke-pay-tour";
 
@@ -231,8 +231,12 @@ export function PaySetup({ locale }: { locale: "en" | "fr" }) {
         <input inputMode="decimal" defaultValue={hourly ? "22.50" : "46800"} className="mt-1 min-h-11 w-full rounded-xl bg-surface px-3 text-base ring-1 ring-border" />
       </label>
       <Fold title={copy.moreChoices}>
-        <p className="text-sm">{copy.officialTax}</p>
-        <p className="text-sm text-muted">{locale === "fr" ? "Vacances 4 %. Vous pouvez changer ce nombre." : "Vacation starts at 4%. You can change it."}</p>
+        <p className="text-sm">{copy.extraPitch}</p>
+        <label className="block text-sm font-medium">
+          {copy.extraLabel}
+          <input inputMode="decimal" defaultValue="20.00" className="mt-1 min-h-11 w-full rounded-xl bg-surface px-3 text-base ring-1 ring-border" data-ke="extra-tax" />
+        </label>
+        <WhatsThis copy={copy} text="CRA form TD1, additional tax to be deducted. Checked 2026-11-22. https://www.canada.ca/en/revenue-agency/services/forms-publications/forms/td1.html" />
       </Fold>
       <Button type="button" size="lg" className="w-full" data-ke="save-pay">{copy.savePerson}</Button>
       <p className="text-sm text-muted">{copy.fixBank}</p>
@@ -299,6 +303,7 @@ export function PayWizard({ locale }: { locale: "en" | "fr" }) {
       <p className="text-sm text-muted">{step + 1} / 4</p>
       <h1 className="font-display text-[clamp(1.75rem,5vw,2.25rem)]">{questions[step]}</h1>
       <p className="text-base" data-ke="pay-sentence">{step === 0 ? copy.missed : sampleSentence(locale)}</p>
+      {step === 1 ? <p className="text-sm" data-ke="extra-tax-stub">{copy.extraOnStub}: {money(2000, locale)}. {copy.extraPitch}</p> : null}
       <p className="text-sm text-muted">{copy.estimate}</p>
       <WhatsThis copy={copy} text={copy.officialTax} />
       {step === 2 ? <p className="text-sm">{copy.noMoney}</p> : null}
@@ -340,6 +345,7 @@ export function GovernmentJar({ locale }: { locale: "en" | "fr" }) {
           {varianceWords({ locale, varianceCents: month.varianceCents, shortCents: short, money: (cents) => money(cents, locale), status: month.status })}
         </p>
       ) : null}
+      <p className="text-sm" data-ke="jar-extra">{copy.extraOnStub}: {money(2000, locale)}. {extraTaxTooltip(locale, "cra")}</p>
       <Button type="button" variant="secondary" className="w-full" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
         {open ? copy.hideParts : copy.seeParts}
       </Button>
@@ -436,6 +442,16 @@ export function StaffShift({ locale }: { locale: "en" | "fr" }) {
       </Button>
       <h2 className="font-display text-xl">{copy.myHours}</h2>
       <p className="text-base">{inShift ? "8:02" : copy.nobody}</p>
+      <form className="space-y-3 rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="extra-tax-request" onSubmit={(event) => event.preventDefault()}>
+        <p className="text-base">{copy.extraPitch}</p>
+        <label className="block text-sm font-medium">
+          {copy.extraLabel}
+          <input inputMode="decimal" defaultValue="20.00" className="mt-1 min-h-11 w-full rounded-xl bg-bg px-3 text-base ring-1 ring-border" />
+        </label>
+        <WhatsThis copy={copy} text={extraTaxTooltip(locale, "cra")} />
+        <Button type="submit" size="lg" className="w-full">{copy.extraAsk}</Button>
+        <p className="text-sm text-muted">{copy.extraWaiting}</p>
+      </form>
     </section>
   );
 }

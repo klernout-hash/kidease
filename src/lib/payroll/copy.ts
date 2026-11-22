@@ -118,6 +118,11 @@ const EN = {
   moreChoices: "More choices",
   hourlyRate: "Hourly pay",
   nothingFound: "Nothing matches that search.",
+  extraPitch: "Want a bigger refund? Take extra tax off each cheque.",
+  extraLabel: "Extra tax off each cheque ($ per pay)",
+  extraAsk: "Ask the owner to approve",
+  extraWaiting: "Waiting for the owner to approve.",
+  extraOnStub: "Extra tax on this cheque",
 };
 
 const FR: typeof EN = {
@@ -232,6 +237,11 @@ const FR: typeof EN = {
   moreChoices: "Plus de choix",
   hourlyRate: "Paie à l'heure",
   nothingFound: "Rien ne correspond à cette recherche.",
+  extraPitch: "Vous voulez un plus gros remboursement? Retenez plus d'impôt sur chaque paie.",
+  extraLabel: "Impôt en plus sur chaque paie ($ par paie)",
+  extraAsk: "Demander l'accord du propriétaire",
+  extraWaiting: "En attente de l'accord du propriétaire.",
+  extraOnStub: "Impôt en plus sur cette paie",
 };
 
 export type PayCopy = typeof EN;

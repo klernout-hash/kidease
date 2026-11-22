@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { decideAdminRollup, decideClock, decideOwnHours, decidePayBooks, staffHoursView } from "../src/lib/payroll/access.ts";
 import { sandboxAdapter, unavailableAdapter } from "../src/lib/payroll/adapter.ts";
+import { approvedExtra, decideExtraTaxApprove, decideExtraTaxSubmit, extraTaxAuthorityFor, parseExtraTaxDollars } from "../src/lib/payroll/extra-tax.ts";
 import { invoiceJournal } from "../src/lib/payroll/books.ts";
 import { estimatePay, salesTaxOnExtra } from "../src/lib/payroll/calculate.ts";
 import {
@@ -475,6 +476,84 @@ test("the server gate is owner-only and does not send or call Stripe", () => {
   const migration = readFileSync(new URL("../migrations/0211_provider_payroll.sql", import.meta.url), "utf8");
   assert.match(migration, /bank_token/);
   assert.doesNotMatch(migration, /account_number|sin\b/i);
+});
+
+test("approved extra tax comes off each cheque and a pending request does not", () => {
+  const base = estimatePay({
+    province: "ON",
+    frequency: "weekly",
+    regularGrossCents: 130_000,
+    vacationBps: 0,
+    vacationMode: "payout",
+    rrspCents: 8_000,
+  });
+  const pending = estimatePay({
+    province: "ON",
+    frequency: "weekly",
+    regularGrossCents: 130_000,
+    vacationBps: 0,
+    vacationMode: "payout",
+    rrspCents: 8_000,
+    extraTaxCents: 2_000,
+    extraTaxAuthority: "cra",
+    extraTaxApproved: false,
+  });
+  assert.equal(pending.federalTaxCents, base.federalTaxCents);
+  assert.equal(pending.netCents, base.netCents);
+  const approved = estimatePay({
+    province: "ON",
+    frequency: "weekly",
+    regularGrossCents: 130_000,
+    vacationBps: 0,
+    vacationMode: "payout",
+    rrspCents: 8_000,
+    extraTaxCents: 2_000,
+    extraTaxAuthority: "cra",
+    extraTaxApproved: true,
+  });
+  assert.equal(approved.extraTaxCents, 2_000);
+  assert.equal(approved.federalTaxCents, base.federalTaxCents + 2_000);
+  assert.equal(approved.employeeCppCents, base.employeeCppCents);
+  assert.equal(approved.netCents, base.netCents - 2_000);
+  assert.equal(approved.governmentCents, base.governmentCents + 2_000);
+  const quebecBase = estimatePay({
+    province: "QC",
+    frequency: "weekly",
+    regularGrossCents: 130_000,
+    vacationBps: 0,
+    vacationMode: "payout",
+    rrspCents: 8_000,
+  });
+  const quebec = estimatePay({
+    province: "QC",
+    frequency: "weekly",
+    regularGrossCents: 130_000,
+    vacationBps: 0,
+    vacationMode: "payout",
+    rrspCents: 8_000,
+    extraTaxCents: 1_500,
+    extraTaxAuthority: "revenu_quebec",
+    extraTaxApproved: true,
+  });
+  assert.equal(quebec.federalTaxCents, quebecBase.federalTaxCents);
+  assert.equal(quebec.provincialTaxCents, 1_500);
+  assert.equal(quebec.governmentCents, quebecBase.governmentCents + 1_500);
+  assert.equal(extraTaxAuthorityFor("QC"), "revenu_quebec");
+  assert.equal(extraTaxAuthorityFor("ON"), "cra");
+  const parsed = parseExtraTaxDollars("20.00");
+  assert.equal(parsed.ok && parsed.cents, 2_000);
+  assert.equal(parseExtraTaxDollars("nope").ok, false);
+  assert.equal(approvedExtra({ requestedCents: 2_000, status: "pending" }), 0);
+  assert.equal(approvedExtra({ requestedCents: 2_000, status: "approved" }), 2_000);
+  assert.equal(decideExtraTaxSubmit({ samePerson: true, role: "staff" }).ok, true);
+  assert.equal(decideExtraTaxSubmit({ samePerson: false, role: "staff" }).ok, false);
+  assert.equal(decideExtraTaxSubmit({ samePerson: false, role: "manager" }).ok, false);
+  assert.equal(decideExtraTaxApprove({ isOwner: false }).ok, false);
+  assert.equal(decideExtraTaxApprove({ isOwner: true }).ok, true);
+  const server = readFileSync(new URL("../src/lib/server/payroll-desk.ts", import.meta.url), "utf8");
+  assert.match(server, /decideExtraTaxSubmit/);
+  assert.match(server, /decideExtraTaxApprove/);
+  assert.match(server, /sent: false/);
 });
 
 test("sandbox adapter never moves money and other partners stay closed", () => {
