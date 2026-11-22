@@ -16,7 +16,9 @@ import {
   renewalFor,
 } from "../src/lib/background-check-guide.ts";
 import { FLAG_DEFAULTS } from "../src/lib/flags.ts";
+import { foldSearchText, searchTextMatches } from "../src/lib/search-text.ts";
 import { FOOTER_DAYCARES } from "../src/lib/site-footer-nav.ts";
+import { readdirSync } from "node:fs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const src = (path) => readFileSync(join(root, path), "utf8");
@@ -186,6 +188,21 @@ test("flags stay off and the footer link is gated", () => {
   assert.match(src(".env.example"), /^FEATURE_BG_CHECK_RECORDS=0$/m);
   assert.match(src(".env.example"), /^FEATURE_BG_CHECK_ATTESTATION=0$/m);
   assert.doesNotMatch(src(".env.example"), /^FEATURE_BG_CHECK_GUIDE=1$/m);
+});
+
+test("guide search ignores accents and the migration is 0212", () => {
+  assert.equal(foldSearchText("Québec"), "quebec");
+  assert.equal(searchTextMatches("verification", "vérification d’absence"), true);
+  assert.equal(searchTextMatches("manitoba", "Manitoba"), true);
+  assert.equal(searchTextMatches("zzz", "Ontario"), false);
+  const names = readdirSync(join(root, "migrations")).filter((name) => name.endsWith(".sql"));
+  assert.equal(names.includes("0211_background_check_guidance.sql"), false);
+  assert.equal(names.includes("0211_second_factor.sql"), true);
+  assert.equal(names.includes("0212_background_check_guidance.sql"), true);
+  assert.equal(names.filter((name) => name.startsWith("0212_")).length, 1);
+  assert.match(src("migrations/0212_background_check_guidance.sql"), /down\/0212_background_check_guidance.sql/);
+  assert.match(src("src/components/background-check-guide-page.tsx"), /SearchableAccordion/);
+  assert.match(src("src/components/searchable-accordion.tsx"), /collapsed|type="multiple"/);
 });
 
 test("each role is represented or explicitly noted", () => {

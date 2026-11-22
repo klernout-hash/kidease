@@ -1,13 +1,15 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
+import { SearchableAccordion, type SearchableAccordionItem } from "@/components/searchable-accordion";
+import { searchTextMatches } from "@/lib/search-text";
 import {
   BG_ROLES,
   checksForRole,
   guideChrome,
   type BgJurisdiction,
-  type BgRole,
   type GuideCheck,
 } from "@/lib/background-check-guide";
 import { localePath } from "@/lib/locale-path";
@@ -41,31 +43,79 @@ export function BackgroundCheckOff({ locale }: { locale: "en" | "fr" }) {
   );
 }
 
+function ProvincePicker({ locale, current }: { locale: "en" | "fr"; current?: string }) {
+  const copy = guideChrome(locale);
+  const navigate = useNavigate();
+  return (
+    <label className="block text-sm font-medium">
+      {copy.pickerLabel}
+      <select
+        className="ke-input mt-1 min-h-11 w-full"
+        value={current ?? ""}
+        onChange={(event) => {
+          const code = event.target.value;
+          if (!code) return;
+          void navigate({ href: localePath(`/background-checks/${code.toLowerCase()}`, locale) });
+        }}
+      >
+        {current ? null : <option value="">{copy.hubNext}</option>}
+        {START_DAYCARE_PTS.map((pt) => (
+          <option key={pt.code} value={pt.code}>
+            {locale === "fr" ? pt.nameFr : pt.nameEn}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 export function BackgroundCheckHub({ enabled }: { enabled: boolean }) {
   const { locale } = useCopy();
   const lang = locale === "fr" ? "fr" : "en";
   const copy = guideChrome(lang);
+  const [query, setQuery] = useState("");
   if (!enabled) return <BackgroundCheckOff locale={lang} />;
+  const provinces = START_DAYCARE_PTS.filter((pt) =>
+    searchTextMatches(query, `${pt.nameEn} ${pt.nameFr} ${pt.code} ${pt.aliases.join(" ")}`),
+  );
   return (
     <Shell>
-      <main className="ke-gutter mx-auto w-full max-w-3xl py-8">
+      <main className="ke-gutter mx-auto w-full max-w-3xl py-8 pb-28">
         <p className="text-sm font-semibold text-primary">{copy.kicker}</p>
         <h1 className="mt-2 font-display text-3xl md:text-5xl">{copy.hubTitle}</h1>
         <p className="mt-4 text-lg text-muted">{copy.hubWhat}</p>
         <p className="mt-2 text-muted">{copy.hubWhy}</p>
-        <p className="mt-2 font-medium">{copy.hubNext}</p>
-        <ul className="mt-6 divide-y divide-border">
-          {START_DAYCARE_PTS.map((pt) => (
-            <li key={pt.code}>
-              <Link
-                to={localePath(`/background-checks/${pt.code.toLowerCase()}`, lang)}
-                className="inline-flex min-h-11 items-center font-medium underline-offset-4 hover:underline"
-              >
-                {lang === "fr" ? pt.nameFr : pt.nameEn}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <label className="mt-6 block text-sm font-medium">
+          {copy.searchLabel}
+          <input
+            className="ke-input mt-1 min-h-11 w-full"
+            type="search"
+            value={query}
+            placeholder={copy.searchPlaceholder}
+            onChange={(event) => setQuery(event.target.value)}
+            onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
+            autoComplete="off"
+          />
+        </label>
+        <div className="mt-4">
+          <ProvincePicker locale={lang} />
+        </div>
+        {provinces.length === 0 ? (
+          <p className="mt-4 text-sm leading-6 text-muted" role="status">{copy.noMatches}</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-border">
+            {provinces.map((pt) => (
+              <li key={pt.code}>
+                <Link
+                  to={localePath(`/background-checks/${pt.code.toLowerCase()}`, lang)}
+                  className="inline-flex min-h-11 items-center font-medium underline-offset-4 hover:underline"
+                >
+                  {lang === "fr" ? pt.nameFr : pt.nameEn}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
         <p className="mt-8 text-sm leading-6 text-muted">{copy.disclaimer}</p>
       </main>
     </Shell>
@@ -100,8 +150,7 @@ function CheckCard({ check, locale }: { check: GuideCheck; locale: "en" | "fr" }
   const copy = guideChrome(locale);
   const fr = locale === "fr";
   return (
-    <article className="rounded-xl bg-surface p-5 ring-1 ring-border">
-      <h3 className="text-lg font-semibold">{fr ? check.titleFr : check.titleEn}</h3>
+    <div>
       {check.unconfirmed ? (
         <p className="mt-2 rounded-lg bg-warn/15 px-3 py-2 text-sm leading-6" role="note">
           <span className="font-semibold">{copy.unconfirmed}. </span>
@@ -150,36 +199,61 @@ function CheckCard({ check, locale }: { check: GuideCheck; locale: "en" | "fr" }
         </ul>
       ) : null}
       <SourceList check={check} locale={locale} />
-    </article>
+    </div>
   );
 }
 
-function RoleSection({
-  role,
-  jurisdiction,
-  locale,
-}: {
-  role: BgRole;
-  jurisdiction: BgJurisdiction;
-  locale: "en" | "fr";
-}) {
+function checkSearchText(check: GuideCheck): string {
+  return [
+    check.titleEn,
+    check.titleFr,
+    check.whatEn,
+    check.whatFr,
+    check.whenEn,
+    check.whenFr,
+    check.whereEn,
+    check.whereFr,
+    check.documentsEn,
+    check.documentsFr,
+    check.costEn,
+    check.costFr,
+    check.renewalEn,
+    check.renewalFr,
+    check.keeperEn,
+    check.keeperFr,
+    check.unconfirmedEn || "",
+    check.unconfirmedFr || "",
+  ].join("\n");
+}
+
+function guideItems(jurisdiction: BgJurisdiction, locale: "en" | "fr"): SearchableAccordionItem[] {
   const copy = guideChrome(locale);
-  const checks = checksForRole(jurisdiction, role);
-  const note = jurisdiction.roleNotes[role];
-  if (checks.length === 0 && !note) return null;
-  return (
-    <section className="mt-8" aria-labelledby={`bg-role-${role}`}>
-      <h2 id={`bg-role-${role}`} className="font-display text-2xl">
-        {copy.roleLabels[role]}
-      </h2>
-      {note ? <p className="mt-2 text-sm leading-6 text-muted">{locale === "fr" ? note.fr : note.en}</p> : null}
-      <div className="mt-4 space-y-4">
-        {checks.map((check) => (
-          <CheckCard key={`${role}-${check.id}`} check={check} locale={locale} />
-        ))}
-      </div>
-    </section>
-  );
+  const fr = locale === "fr";
+  const items: SearchableAccordionItem[] = [];
+  for (const role of BG_ROLES) {
+    const checks = checksForRole(jurisdiction, role);
+    const note = jurisdiction.roleNotes[role];
+    const roleLabel = copy.roleLabels[role];
+    if (note) {
+      const body = fr ? note.fr : note.en;
+      items.push({
+        id: `${jurisdiction.code}-${role}-note`,
+        title: roleLabel,
+        searchText: `${roleLabel}\n${note.en}\n${note.fr}`,
+        content: <p className="text-muted">{body}</p>,
+      });
+    }
+    for (const check of checks) {
+      const title = fr ? check.titleFr : check.titleEn;
+      items.push({
+        id: `${role}-${check.id}`,
+        title: `${roleLabel} · ${title}`,
+        searchText: `${roleLabel}\n${checkSearchText(check)}`,
+        content: <CheckCard check={check} locale={locale} />,
+      });
+    }
+  }
+  return items;
 }
 
 export function BackgroundCheckProvince({
@@ -210,15 +284,21 @@ export function BackgroundCheckProvince({
   const name = provinceName(jurisdiction.code, lang);
   return (
     <Shell>
-      <main className="ke-gutter mx-auto w-full max-w-3xl py-8">
+      <main className="ke-gutter mx-auto w-full max-w-3xl py-8 pb-28">
         <p className="text-sm font-semibold text-primary">{copy.kicker}</p>
         <h1 className="mt-2 font-display text-3xl md:text-5xl">{name}</h1>
         <p className="mt-4 text-lg text-muted">{lang === "fr" ? jurisdiction.summaryFr : jurisdiction.summaryEn}</p>
         <p className="mt-2 text-muted">{copy.hubWhy}</p>
-        <h2 className="mt-8 font-display text-2xl">{copy.rolesTitle}</h2>
-        {BG_ROLES.map((role) => (
-          <RoleSection key={role} role={role} jurisdiction={jurisdiction} locale={lang} />
-        ))}
+        <div className="mt-6">
+          <SearchableAccordion
+            items={guideItems(jurisdiction, lang)}
+            label={copy.searchLabel}
+            placeholder={copy.searchPlaceholder}
+            empty={copy.noMatches}
+          >
+            <ProvincePicker locale={lang} current={jurisdiction.code} />
+          </SearchableAccordion>
+        </div>
         <p className="mt-8 text-sm leading-6 text-muted">{copy.disclaimer}</p>
         <p className="mt-6">
           <Link
