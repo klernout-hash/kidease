@@ -86,7 +86,7 @@ export function AppMenuScreen({
               marker="blocked"
             />
           ) : null}
-          {menuGroupLinks(section, { native, plansOn })
+          {menuGroupLinks(section, { native, plansOn, bgGuide: chrome.bgCheckGuide === true })
             .filter((link) => link.to !== "/get-app" || showStores)
             .map((link) => (
             <MenuRow

@@ -76,6 +76,24 @@ export function footerLinkHrefs(links: readonly FooterLinkDef[] = footerPageLink
   return [...new Set(links.map((link) => link.to))];
 }
 
+const BACKGROUND_CHECK_LINK: FooterLinkDef = {
+  to: "/background-checks",
+  localePaired: true,
+  labelEn: "Background checks",
+  labelFr: "Vérifications d’antécédents",
+};
+
+/** Shown in the daycares column only when the guide flag is on. */
+export function withBackgroundCheckLink(links: readonly FooterLinkDef[], enabled: boolean): FooterLinkDef[] {
+  if (!enabled) return [...links];
+  if (links.some((link) => link.to === "/background-checks")) return [...links];
+  if (!links.some((link) => link.to === "/daycare-requirements")) return [...links];
+  const next = [...links];
+  const index = next.findIndex((link) => link.to === "/daycare-requirements");
+  next.splice(index + 1, 0, BACKGROUND_CHECK_LINK);
+  return next;
+}
+
 function isPlansPath(to: string): boolean {
   const bare = String(to || "").split("?")[0].replace(/\/$/, "") || "/";
   return bare === "/plans" || bare === "/fr/plans" || bare.endsWith("/plans");
@@ -86,14 +104,15 @@ function isPlansPath(to: string): boolean {
  * A native shell hides donate and plans, matching the footer.
  */
 export function footerLinksForShell(
-  input: { native: boolean; plansOn: boolean },
+  input: { native: boolean; plansOn: boolean; bgGuide?: boolean },
   links: readonly FooterLinkDef[] = footerPageLinks(),
 ): FooterLinkDef[] {
-  return links.filter((link) => {
+  const filtered = links.filter((link) => {
     if (!input.plansOn && isPlansPath(link.to)) return false;
     if (input.native && (isPlansPath(link.to) || link.to === "/donate" || link.to === "/fr/donate")) return false;
     return true;
   });
+  return withBackgroundCheckLink(filtered, input.bgGuide === true);
 }
 
 type FooterMenuGroup = { id: string; titleKey: CopyKey; links: FooterLinkDef[] };
@@ -102,6 +121,7 @@ type FooterMenuGroup = { id: string; titleKey: CopyKey; links: FooterLinkDef[] }
 export function footerMenuGroupsForShell(input: {
   native: boolean;
   plansOn: boolean;
+  bgGuide?: boolean;
   omit?: readonly string[];
 }): FooterMenuGroup[] {
   const hidden = new Set(input.omit ?? []);
@@ -123,7 +143,11 @@ export function footerMenuGroupsForShell(input: {
 /** Guest drawer owns these complete groups; the lower More section omits them. */
 export const GUEST_DRAWER_FOOTER_OMIT = [...FOOTER_PARENTS, ...FOOTER_DAYCARES].map((link) => link.to);
 
-export function guestDrawerMenuGroupsForShell(input: { native: boolean; plansOn: boolean }): FooterMenuGroup[] {
+export function guestDrawerMenuGroupsForShell(input: {
+  native: boolean;
+  plansOn: boolean;
+  bgGuide?: boolean;
+}): FooterMenuGroup[] {
   return footerMenuGroupsForShell(input)
     .filter((group) => group.id === "find" || group.id === "daycares")
     .map((group) => group.id === "find"

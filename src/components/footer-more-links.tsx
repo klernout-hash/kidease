@@ -88,7 +88,12 @@ export function FooterMoreLinks({
   const chrome = useRoleChrome();
   const plansOn = !native && chrome.subscriptionsEnabled === true;
   const fr = locale === "fr";
-  const groups = footerMenuGroupsForShell({ native, plansOn, omit });
+  const groups = footerMenuGroupsForShell({
+    native,
+    plansOn,
+    omit,
+    bgGuide: chrome.bgCheckGuide === true,
+  });
 
   if (appearance === "drawer") {
     return (

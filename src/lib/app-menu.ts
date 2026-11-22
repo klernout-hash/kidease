@@ -10,6 +10,7 @@ const GROUP: Record<string, MenuGroupId> = {
   "/plans": "resources",
   "/verify": "resources",
   "/daycare-requirements": "resources",
+  "/background-checks": "resources",
   "/start-a-daycare": "resources",
   "/jobs": "resources",
   "/about": "resources",
@@ -38,7 +39,7 @@ export function menuGroupForHref(href: string): MenuGroupId | null {
 
 export function menuGroupLinks(
   group: MenuGroupId,
-  input: { native: boolean; plansOn: boolean },
+  input: { native: boolean; plansOn: boolean; bgGuide?: boolean },
 ): FooterLinkDef[] {
   return footerLinksForShell(input).filter((link) => menuGroupForHref(link.to) === group);
 }
