@@ -11,7 +11,7 @@ import { standardAgeLabelsForListing } from "./standard-age-groups.ts";
 import { classifyFacilityType, facilityTypeSeoKind } from "./facility-type.ts";
 import { cityHubCityName, cityHubDefForPlace, cityHubUrl } from "./city-hubs.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
-import { breadcrumbJsonLd, breadcrumbJsonLdScript } from "./page-seo.ts";
+import { breadcrumbJsonLd, breadcrumbJsonLdScript, escapeJsonForScript } from "./page-seo.ts";
 import { isMissingCatalogueBuilding } from "./catalogue-buildings.ts";
 import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
 import { SITEMAP_ORIGIN, sitemapListingPath } from "./public-url.ts";
@@ -290,7 +290,7 @@ export function listingJsonLd(src: ListingSeoSource, locale: ListingSeoLocale = 
 export function listingJsonLdScript(src: ListingSeoSource, locale: ListingSeoLocale = "en") {
   const node = listingJsonLd(src, locale);
   if (!node) return "";
-  return JSON.stringify(node);
+  return escapeJsonForScript(JSON.stringify(node));
 }
 
 export function listingBreadcrumbItems(src: ListingSeoSource, locale: ListingSeoLocale = "en") {

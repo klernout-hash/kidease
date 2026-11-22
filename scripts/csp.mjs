@@ -136,12 +136,42 @@ function hasNonceAttribute(attrs) {
   return /(?:^|\s)nonce\s*=/i.test(String(attrs ?? ""));
 }
 
-/** Stamp nonce onto every <script> that does not already have one. */
+function scriptType(attrs) {
+  return (String(attrs).match(/(?:^|\s)type\s*=\s*["']([^"']+)["']/i)?.[1] || "").trim().toLowerCase();
+}
+
+function scriptSrc(attrs) {
+  return String(attrs).match(/(?:^|\s)src\s*=\s*["']([^"']+)["']/i)?.[1] || "";
+}
+
+/** App scripts only. JSON-LD and a foreign src stay without a nonce so CSP blocks them. */
+export function shouldNonceAppScript(attrs) {
+  if (hasNonceAttribute(attrs)) return false;
+  const type = scriptType(attrs);
+  if (type === "application/ld+json" || type === "application/json") return false;
+  if (type && type !== "module" && type !== "importmap") return false;
+  const src = scriptSrc(attrs);
+  if (!src) return true;
+  if (src.startsWith("/") && !src.startsWith("//")) return true;
+  try {
+    const url = new URL(src);
+    if (url.protocol !== "https:") return false;
+    return CSP_SCRIPT_HOSTS.some((allowed) => {
+      const host = allowed.replace(/^https:\/\//, "");
+      if (host.startsWith("*.")) return url.hostname.endsWith(host.slice(1));
+      return url.hostname === host;
+    });
+  } catch {
+    return false;
+  }
+}
+
+/** Stamp a nonce onto scripts this app emits. Leave JSON-LD and unknown hosts alone. */
 export function applyScriptNonces(html, nonce) {
   const token = String(nonce ?? "").trim();
   if (!token) return String(html ?? "");
   return String(html ?? "").replace(/<script\b([^>]*)>/gi, (full, attrs) => {
-    if (hasNonceAttribute(attrs)) return full;
+    if (!shouldNonceAppScript(attrs)) return full;
     return `<script nonce="${token}"${attrs}>`;
   });
 }
