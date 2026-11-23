@@ -80,10 +80,10 @@ test("T4 XML: T619, one slip per person with a SIN, a summary, CRA element order
   assert.deepEqual(result.flagged, [{ personId: "e3", name: "No Sin", problem: "sin" }]);
   const xml = result.file.xml;
   assert.ok(balanced(xml));
-  assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>\n<Submission xmlns:xsi="http:\/\/www\.w3\.org\/2001\/XMLSchema-instance">\n  <T619>/);
+  assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>\n<Submission xmlns:xsi="http:\/\/www\.w3\.org\/2001\/XMLSchema-instance">\n {2}<T619>/);
   assert.match(xml, /<bn15>123456789RP0001<\/bn15>/);
   assert.match(xml, /<cntc_area_cd>613<\/cntc_area_cd>\s*<cntc_phn_nbr>555-0100<\/cntc_phn_nbr>/);
-  assert.match(xml, /<\/T619>\n  <Return>\n    <T4>\n      <T4Slip>/);
+  assert.match(xml, /<\/T619>\n {2}<Return>\n {4}<T4>\n {6}<T4Slip>/);
   assert.equal((xml.match(/<T4Slip>/g) ?? []).length, 2);
   assert.equal(result.file.slips, 2);
   assert.doesNotMatch(xml, /No Sin|Ben|Ortiz/);
@@ -124,7 +124,7 @@ test("T4A XML: box 048 fees for the contractor, T4A summary total", () => {
   assert.equal((xml.match(/<T4ASlip>/g) ?? []).length, 1);
   assert.match(xml, /<fee_or_oth_srvc_amt>1500\.00<\/fee_or_oth_srvc_amt>/);
   assert.match(xml, /<rpt_tot_fee_srvc_amt>1500\.00<\/rpt_tot_fee_srvc_amt>/);
-  assert.match(xml, /<Return>\n    <T4A>/);
+  assert.match(xml, /<Return>\n {4}<T4A>/);
   const noSin = buildT4aXml({ year: 2026, employer, people: people.map((p) => (p.personId === "c1" ? { ...p, sin: null } : p)), stubs: stubs(), lang: "E" });
   assert.equal(noSin.file, null);
   assert.deepEqual(noSin.flagged.map((row) => row.problem), ["sin"]);

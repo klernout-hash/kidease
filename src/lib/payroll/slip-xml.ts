@@ -126,7 +126,11 @@ function escapeXml(value: string): string {
 
 /** Trim, drop control characters, cut to the spec length, then escape. */
 function text(value: string, max: number): string {
-  const clean = value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+  const printable = Array.from(value, (char) => {
+    const code = char.charCodeAt(0);
+    return code < 32 || code === 127 ? " " : char;
+  }).join("");
+  const clean = printable.replace(/\s+/g, " ").trim().slice(0, max);
   return escapeXml(clean);
 }
 
