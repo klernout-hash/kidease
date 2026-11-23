@@ -55,3 +55,14 @@ test("listing card photo uses the live and fee pills instead of registry-checked
   assert.match(copy, /cardQcPerDay: "\$9.65\/day subsidized"/);
   assert.match(copy, /cardTenPerDay: "10 \$\/jour"/);
 });
+
+test("the $10/day pill is the slim white tag (design A) with a 44px tap area", () => {
+  const pill = readFileSync(new URL("../src/components/subsidy-pill.tsx", import.meta.url), "utf8");
+  const tag = pill.match(/data-ke="subsidy-tag" className="([^"]+)"/)?.[1] ?? "";
+  assert.match(tag, /h-\[1\.375rem\]/);
+  assert.match(tag, /bg-white\/92/);
+  assert.match(tag, /text-\[#222\]/);
+  assert.doesNotMatch(tag, /bg-primary|ke-priority-pill|animate/);
+  assert.match(pill, /min-h-11 min-w-11/);
+  assert.match(pill, /"10 \$\/jour" : "\$10\/day"/);
+});

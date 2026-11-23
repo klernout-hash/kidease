@@ -149,14 +149,15 @@ test("shared category art keeps contain sizing and an explicit reduced-motion st
   assert.doesNotMatch(src("src/components/app-tab-bar.tsx"), /CareCategoryIcon|care-icons|care-cats/);
 });
 
-test("compact blue fee tags keep eligibility, details and accessible tap targets", () => {
+test("compact white fee tags (design A) keep eligibility, details and accessible tap targets", () => {
   assert.equal(listingSubsidy({ province: "ON", city: "Mississauga", name: "Brightpath Dixie" }), null);
   const pill = src("src/components/subsidy-pill.tsx");
   assert.match(pill, /if \(!subsidy\) return null/);
   assert.match(pill, /min-h-11 min-w-11/);
   assert.match(pill, /h-\[1\.375rem\]/);
-  assert.match(pill, /bg-primary/);
-  assert.match(pill, /text-primary-fg/);
+  assert.match(pill, /bg-white\/92/);
+  assert.match(pill, /text-\[#222\]/);
+  assert.doesNotMatch(pill, /bg-primary/);
   assert.match(pill, /\$10\/day/);
   assert.match(pill, /10 \$\/jour/);
   assert.doesNotMatch(pill, /ke-priority-pill|feePillPulses/);
