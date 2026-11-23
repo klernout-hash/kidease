@@ -8,6 +8,7 @@ import { checkText, defaultPeriod, payErrorWords, paydayCopy, type PaydayCopy } 
 import { MINIMUM_WAGE_AS_OF } from "@/lib/payroll/pay-rules.ts";
 import type { CentreSettings, PayDesk } from "@/lib/payroll/pay-store.ts";
 import { FormsReview } from "@/components/payroll-staff-forms";
+import { SlipsPanel } from "@/components/payroll-slips";
 import type { PayYtd } from "@/lib/payroll/calculate.ts";
 import {
   payrollAccountantPack,
@@ -156,6 +157,7 @@ export function PayDay({ locale, daycareId }: { locale: Locale; daycareId: strin
       {editor ? <AccountantPack locale={locale} copy={copy} daycareId={daycareId} /> : null}
       {editor ? <FormsReview locale={locale} daycareId={daycareId} owner={owner} /> : null}
       {editor ? <SettingsPanel locale={locale} copy={copy} daycareId={daycareId} /> : null}
+      {editor ? <SlipsPanel locale={locale} daycareId={daycareId} /> : null}
       {owner ? <EditorsPanel locale={locale} copy={copy} daycareId={daycareId} /> : null}
     </section>
   );

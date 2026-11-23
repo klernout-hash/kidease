@@ -228,6 +228,7 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_XERO_SYNC: "daycare",
   FEATURE_PAYROLL_ALERTS: "daycare",
   FEATURE_PAYROLL_ALERTS_LIVE: "admin",
+  FEATURE_PAYROLL_SLIP_XML: "daycare",
   FEATURE_STAFF_JOB_BOARD: "daycare",
 };
 

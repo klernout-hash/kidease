@@ -31,6 +31,8 @@ export type FormRow = {
   bankLast4: string | null;
   tax: TaxAnswers | null;
   contact: { contactName: string; contactPhone: string; relation: string } | null;
+  /** Slip details: legal name and the last 3 digits of the SIN. Never the full SIN. */
+  slip: { name: string; sinLast3: string | null } | null;
 };
 
 type RawForm = {
@@ -57,7 +59,20 @@ function toForm(row: RawForm): FormRow {
       contact = null;
     }
   }
+  let slip: FormRow["slip"] = null;
+  if (row.kind === "slip_info") {
+    try {
+      const value = JSON.parse(row.answers_json) as Record<string, unknown>;
+      slip = {
+        name: `${String(value.firstName ?? "")} ${String(value.lastName ?? "")}`.trim(),
+        sinLast3: row.bank_last4 && /^\d{3}$/.test(row.bank_last4) ? row.bank_last4 : null,
+      };
+    } catch {
+      slip = { name: "", sinLast3: null };
+    }
+  }
   return {
+    slip,
     id: row.id,
     employeeId: row.employee_id,
     name: row.display_name,

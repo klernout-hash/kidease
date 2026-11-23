@@ -8,7 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
-import { providerPayrollEnabled } from "@/lib/features";
+import { payrollSlipXmlEnabled, providerPayrollEnabled } from "@/lib/features";
 import { nid } from "@/lib/utils";
 import { formsForProvince } from "@/lib/payroll/employee-forms.ts";
 import { approveForm, myForms, readForm, revealBank, reviewForms, submitForm } from "@/lib/payroll/forms-store.ts";
@@ -37,9 +37,12 @@ export const payrollMyForms = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     noStore();
     requireOn();
-    const mine = await myForms(await getSql(), context.userId, data.daycareId);
-    if (!mine) return { onPay: false as const, province: "", name: "", forms: [] };
-    return { onPay: true as const, province: mine.province, name: mine.name, forms: mine.forms };
+    const sql = await getSql();
+    const mine = await myForms(sql, context.userId, data.daycareId);
+    if (!mine) return { onPay: false as const, province: "", name: "", forms: [], slipsEnabled: false };
+    const { slipsReady } = await import("@/lib/payroll/slips-store.ts");
+    const slipsEnabled = payrollSlipXmlEnabled() && (await slipsReady(sql));
+    return { onPay: true as const, province: mine.province, name: mine.name, forms: mine.forms, slipsEnabled };
   });
 
 /** Send a TD1, provincial TD1, or TP-1015.3-V to the owner. */

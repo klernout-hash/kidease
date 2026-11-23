@@ -313,6 +313,8 @@ A paused screen says what is off and offers a way to search.
 
 `FEATURE_XERO_SYNC` is off. A CSV only. KidEase does not call Xero.
 
+`FEATURE_PAYROLL_SLIP_XML` is off. When on (and payroll is on), the owner can download year-end T4 and T4A XML (T619 transmittal, slips, summary) and an RL-1 XML draft built from approved pay stubs, after a fresh sign-in. Each download is logged. KidEase does not file anything. Staff enter their legal name, address, and SIN on their own "Slip details" form; a person without approved slip details is left out of the file and listed by name. The files are marked "check before filing": the CRA XSD schema zip and Revenu Québec's RL XML schema could not be downloaded to validate against, and the RL-1 file needs a Revenu Québec software certification number and slip numbers that KidEase does not have. Migration `0230` is additive.
+
 `FEATURE_PAYROLL_ALERTS` is off. Pay-date reminders are not created. `FEATURE_PAYROLL_ALERTS_LIVE` is off. Even when alerts are on, this build does not email, push, or text, and it does not replay old dates.
 
 `FEATURE_STAFF_JOB_BOARD` is off. When on, `/jobs` lets a staff member build one profile (name, province certificate level and end date, first aid end date, years, rooms, days, times, kind of job, start date, city and travel distance, languages, one-line highlights, optional private resume, who can find them). `/jobs/post` lets a daycare post a job in 3 steps (role and level, days and pay range, about the centre), see applicants and people open to work, invite, move each step and keep a checklist (certificate, first aid, background check from `background_check_records` when that table exists, references).

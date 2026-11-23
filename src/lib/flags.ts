@@ -239,6 +239,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_XERO_SYNC",
   "FEATURE_PAYROLL_ALERTS",
   "FEATURE_PAYROLL_ALERTS_LIVE",
+  "FEATURE_PAYROLL_SLIP_XML",
   "FEATURE_STAFF_JOB_BOARD",
 ] as const;
 
@@ -688,6 +689,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_PAYROLL_ALERTS: false,
   /** Email, push, and SMS for those notices. Off. This build still does not send. */
   FEATURE_PAYROLL_ALERTS_LIVE: false,
+  /** Year-end T4, T4A, and RL-1 XML files to download. Off. Nothing is filed. */
+  FEATURE_PAYROLL_SLIP_XML: false,
   /** Staff job board: staff profile, 3-step job post, explainable match, vetting checklist. Off. Sends nothing. */
   FEATURE_STAFF_JOB_BOARD: false,
 };
@@ -1649,6 +1652,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Allows pay-date email, push, and SMS when those channels are already on. Default off. This build has no sender.",
+  },
+  {
+    key: "FEATURE_PAYROLL_SLIP_XML",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Year-end T4, T4A, and RL-1 XML files the centre downloads and checks before filing. Default off. KidEase does not file them. Staff enter their SIN on their own slip form.",
   },
   {
     key: "FEATURE_STAFF_JOB_BOARD",
