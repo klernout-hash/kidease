@@ -19,6 +19,17 @@ Do **not** set `FEATURE_SMS=1`, `FEATURE_PUSH=1`, or `FEATURE_VIDEO=1` on Vercel
 
 Parent inbox **Video** stays hidden until `VIDEO_SDK_WIRED` is true (Twilio Video JS SDK). Token mint is not a live call.
 
+## Turned on in production
+
+Set on Vercel **kidease-git** Production as `1` on 22 Nov 2026, on Kyle's instruction. To turn one off, set it to `0` (or delete it) and redeploy.
+
+| Flag | What it shows |
+| --- | --- |
+| `FEATURE_BG_CHECK_GUIDE` | Public background-check guide at `/background-checks`, linked from the footer and Daycare requirements. |
+| `FEATURE_BG_CHECK_RECORDS` | Centre record of checks it saw, with in-app reminders. No email or SMS. |
+| `FEATURE_BG_CHECK_ATTESTATION` | Optional centre sentence on its listing. Not a "background checked" badge. |
+| `FEATURE_STAFF_JOB_BOARD` | Staff job board on `/jobs` and `/jobs/post`. Match review requests go to Admin > Escalations; answer from privacy@kidease.ca within 30 days. |
+
 ## Inventory (gates)
 
 | Flag | Default | Server send / mint | Client / UI | Honest off-state |
