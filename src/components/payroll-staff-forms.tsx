@@ -16,6 +16,7 @@ import {
   payrollSubmitDeposit,
   payrollSubmitTaxForm,
 } from "@/lib/server/payroll-forms";
+import { payrollSubmitSlipDetails } from "@/lib/server/payroll-slips";
 
 type Locale = "en" | "fr";
 
@@ -90,6 +91,7 @@ export function MyTaxForms({ locale, daycareId }: { locale: Locale; daycareId: s
         ))}
       <DepositFold locale={locale} copy={copy} daycareId={daycareId} form={latest("deposit")} name={data.name} onSaved={reload} />
       <ContactFold locale={locale} copy={copy} daycareId={daycareId} form={latest("emergency")} onSaved={reload} />
+      {data.slipsEnabled ? <SlipDetailsFold locale={locale} copy={copy} daycareId={daycareId} form={latest("slip_info")} province={data.province} onSaved={reload} /> : null}
     </section>
   );
 }
@@ -281,6 +283,68 @@ function ContactFold({ locale, copy, daycareId, form, onSaved }: { locale: Local
   );
 }
 
+/** Legal name, address, and SIN for year-end slips. The SIN is sealed; only the last 3 digits show. */
+function SlipDetailsFold({ locale, copy, daycareId, form, province, onSaved }: { locale: Locale; copy: PaydayCopy; daycareId: string; form: FormRow | undefined; province: string; onSaved: () => void }) {
+  const [fields, setFields] = useState({ firstName: "", lastName: "", initial: "", sin: "", addrLine: "", city: "", provCd: province, postalCd: "" });
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const set = (key: keyof typeof fields) => (event: { target: { value: string } }) => setFields({ ...fields, [key]: event.target.value });
+
+  async function send() {
+    setBusy(true);
+    setMessage("");
+    try {
+      await payrollSubmitSlipDetails({ data: { daycareId, ...fields } });
+      setFields({ ...fields, sin: "" });
+      setMessage(copy.sentWaiting);
+      onSaved();
+    } catch (err) {
+      setMessage(errorText(err, locale));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const rows: [keyof typeof fields, string, string][] = [
+    ["firstName", copy.firstName, "given-name"],
+    ["lastName", copy.lastName, "family-name"],
+    ["initial", copy.initialLabel, "additional-name"],
+    ["sin", copy.sin, "off"],
+    ["addrLine", copy.slipsAddress, "street-address"],
+    ["city", copy.slipsCity, "address-level2"],
+    ["provCd", copy.slipsProv, "address-level1"],
+    ["postalCd", copy.slipsPostal, "postal-code"],
+  ];
+  return (
+    <Fold title={copy.slipDetails} tag={<StatusTag form={form} copy={copy} />}>
+      <p className="text-sm text-muted">{copy.slipDetailsLead}</p>
+      {form?.slip?.sinLast3 ? (
+        <p className="text-sm">
+          {copy.sinEnding} {form.slip.sinLast3}
+        </p>
+      ) : null}
+      {rows.map(([key, label, auto]) => (
+        <label key={key} className="block text-sm font-medium">
+          {label}
+          <input
+            className={INPUT}
+            value={fields[key]}
+            autoComplete={auto}
+            inputMode={key === "sin" ? "numeric" : undefined}
+            maxLength={key === "initial" ? 1 : key === "provCd" ? 2 : key === "sin" ? 11 : 60}
+            onFocus={focusIn}
+            onChange={set(key)}
+          />
+        </label>
+      ))}
+      <Button type="button" className="w-full" disabled={busy || !fields.sin || !fields.lastName} onClick={() => void send()}>
+        {copy.send}
+      </Button>
+      {message ? <p className="text-sm" role="status">{message}</p> : null}
+    </Fold>
+  );
+}
+
 /** Owner and payroll editors: approve forms, print approved tax forms, and (owner only) open a bank number. */
 export function FormsReview({ locale, daycareId, owner }: { locale: Locale; daycareId: string; owner: boolean }) {
   const copy = paydayCopy(locale);
@@ -338,6 +402,7 @@ export function FormsReview({ locale, daycareId, owner }: { locale: Locale; dayc
     if (form.tax) return claimSummary(form.tax as TaxAnswers, locale);
     if (form.bankLast4) return `${copy.last4} ${form.bankLast4}`;
     if (form.contact) return `${form.contact.contactName} · ${form.contact.contactPhone}`;
+    if (form.slip) return `${form.slip.name}${form.slip.sinLast3 ? ` · ${copy.sinEnding} ${form.slip.sinLast3}` : ""}`;
     return "";
   };
 

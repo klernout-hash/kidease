@@ -465,6 +465,11 @@ export function payrollAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PAYROLL_ALERTS", env);
 }
 
+/** Year-end T4, T4A, and RL-1 XML downloads. Default off. Nothing is filed. */
+export function payrollSlipXmlEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PAYROLL_SLIP_XML", env);
+}
+
 /** Outbound pay-date notices. Default off. No sender is wired. */
 export function payrollAlertsLiveEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PAYROLL_ALERTS_LIVE", env);
