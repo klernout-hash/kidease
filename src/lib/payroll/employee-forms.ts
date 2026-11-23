@@ -149,24 +149,6 @@ export type FormAnswers = {
   relation?: string;
 };
 
-export function nextFormVersion(existingVersions: readonly number[]): number {
-  const top = existingVersions.reduce((max, value) => Math.max(max, value), 0);
-  return top + 1;
-}
-
-export function decideOwnForm(input: { isOwner: boolean; samePerson: boolean }):
-  | { ok: true; scope: "all" | "own" }
-  | { ok: false; status: 403; reason: "own_form" } {
-  if (input.isOwner) return { ok: true, scope: "all" };
-  if (input.samePerson) return { ok: true, scope: "own" };
-  return { ok: false, status: 403, reason: "own_form" };
-}
-
-export function decideFormApprove(input: { isOwner: boolean }): { ok: true } | { ok: false; status: 403; reason: "owner_only" } {
-  if (input.isOwner) return { ok: true };
-  return { ok: false, status: 403, reason: "owner_only" };
-}
-
 /** What we keep after a save. Bank and SIN numbers are never in this object. */
 export function publicFormRecord(input: {
   kind: FormKind;

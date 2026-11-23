@@ -5,11 +5,8 @@ import { decideAdminRollup, decideClock, decideOwnHours, decidePayBooks, staffHo
 import { sandboxAdapter, unavailableAdapter } from "../src/lib/payroll/adapter.ts";
 import { planDeposit, sealBank } from "../src/lib/payroll/bank-seal.ts";
 import {
-  decideFormApprove,
-  decideOwnForm,
   formPdfLines,
   formsForProvince,
-  nextFormVersion,
   OFFICIAL_WINS_EN,
   publicFormRecord,
   ROE_STEPS_EN,
@@ -581,11 +578,6 @@ test("employee forms stay on the person's own file and bank numbers are sealed",
   assert.equal(planDeposit({ institution: "001", transit: "12345", account: "123456789", env: {} }).ok, false);
   const opened = sealBank("001|12345|123456789", env);
   assert.ok(opened && !opened.includes("123456789"));
-  assert.equal(decideOwnForm({ isOwner: false, samePerson: true }).ok, true);
-  assert.equal(decideOwnForm({ isOwner: false, samePerson: false }).ok, false);
-  assert.equal(decideOwnForm({ isOwner: true, samePerson: false }).scope, "all");
-  assert.equal(decideFormApprove({ isOwner: false }).ok, false);
-  assert.equal(nextFormVersion([1, 2]), 3);
   const record = publicFormRecord({ kind: "deposit", version: 2, status: "approved", savedOn: "2026-11-22", bankLast4: "6789" });
   assert.equal(record.bankLast4, "6789");
   assert.equal("cipher" in record, false);
@@ -613,10 +605,11 @@ test("employee forms stay on the person's own file and bank numbers are sealed",
   assert.doesNotMatch(lines.join("\n"), /123456789/);
   assert.ok(lines.some((line) => line === OFFICIAL_WINS_EN));
   assert.equal(ROE_STEPS_EN.at(-1)?.includes("does not file"), true);
+  // Forms are saved and approved only through server/payroll-forms.ts.
   const server = readFileSync(new URL("../src/lib/server/payroll-desk.ts", import.meta.url), "utf8");
-  assert.match(server, /decideOwnForm/);
-  assert.match(server, /planDeposit/);
-  assert.match(server, /sent: false/);
+  assert.doesNotMatch(server, /saveEmployeeForm|approveEmployeeForm/);
+  const forms = readFileSync(new URL("../src/lib/server/payroll-forms.ts", import.meta.url), "utf8");
+  assert.match(forms, /planDeposit/);
 });
 
 test("sandbox adapter never moves money and other partners stay closed", () => {
