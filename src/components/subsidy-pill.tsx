@@ -4,7 +4,10 @@ import { listingSubsidy, subsidyLabel, subsidyNote } from "@/lib/fee-program";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
-/** Photo and header program label. Open it for eligibility details and provenance. */
+/**
+ * Photo and header program label: a slim white tag (22px tall, no pulse), matching the
+ * photo badges. The button keeps a 44px tap area. Open it for eligibility and source.
+ */
 export function SubsidyPill({
   item,
   className,
@@ -47,7 +50,7 @@ export function SubsidyPill({
             event.stopPropagation();
           }}
         >
-          <span data-ke="subsidy-tag" className="inline-flex h-[1.375rem] items-center justify-center whitespace-nowrap rounded-full bg-primary px-2 text-xs font-bold leading-none text-primary-fg shadow-card">
+          <span data-ke="subsidy-tag" className="inline-flex h-[1.375rem] items-center justify-center whitespace-nowrap rounded-full bg-white/92 px-2 text-xs font-semibold leading-none text-[#222] shadow-[0_1px_2px_rgba(0,0,0,0.08)] ring-1 ring-black/5 backdrop-blur-[8px]">
             {label}
           </span>
         </button>
