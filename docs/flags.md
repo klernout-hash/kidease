@@ -303,7 +303,11 @@ A paused screen says what is off and offers a way to search.
 - The owner can give pay access (`payroll_editors`, audited in `payroll_editor_audits`). The owner or a payroll editor can do everything on Pay day, including approve. They can change a day's hours, the rate, or the pay type with a reason. Each change is one statement with a stale-edit guard and an append-only row (who, when, old, new, reason). Approved periods lock; later changes are corrections.
 - Contractors: agreed flat or base amount, no deductions, optional GST/HST, invoice draft only, T4A box 048 at year end.
 - Accountant pack (CSV + printable PDF) and a read-only JSON server function for the owner. The Xero journal CSV is included only when `FEATURE_XERO_SYNC` is on.
-- Migrations `0225`–`0228` are additive and are not applied by this PR.
+- Migrations `0225`–`0228` are additive.
+- Staff send TD1 (federal and provincial) or Quebec TP-1015.3 and pay deposit details from their phone. The owner or a payroll editor approves; approved claims feed the deduction engine. Until then pay uses the basic personal amounts and the card says "TD1 not on file". Full bank numbers are shown only to the owner after a fresh sign-in, and each reveal is logged (`payroll_bank_reveals`).
+- A change to a day in an approved period is paid in the next pay as a separate "Correction for <period>" line, with tax worked out again (`payroll_paid_days`, `payroll_correction_lines`). Periods approved before migration `0229` have no paid-day record, so their changes are not priced automatically.
+- Pay settings (remitter type, WCB/CNESST rate, yearly payroll, health tax exemption) feed employer costs on the card and stubs. Anything not entered shows "not set".
+- Migration `0229` is additive and must be applied before these parts turn on; without it, pay and approval keep working as before.
 
 `FEATURE_PROVIDER_BOOKS` is off. Money in and money out from saved fees. No Stripe call. Child care fees stay exempt.
 

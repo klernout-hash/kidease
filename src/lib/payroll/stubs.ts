@@ -43,11 +43,16 @@ export type ApprovedStub = {
   employerQpp2Cents: number;
   employerEiCents: number;
   employerQpipCents: number;
-  /** Payroll health tax share, Quebec CNT, WCB. Estimates. */
+  /** Payroll health tax share, Quebec CNT, WCB. Estimates. Sum of the three below. */
   employerOtherCents: number;
+  healthTaxCents: number;
+  cntCents: number;
+  wcbCents: number;
   contractorFeeCents: number;
   salesTaxCents: number;
   correctionCents: number;
+  /** Periods the correction is for, e.g. "2026-11-08 to 2026-11-21". Empty when none. */
+  correctionFor: string;
   edition: string | null;
   asOf: string | null;
 };
@@ -77,7 +82,11 @@ export function stubFromCard(input: {
     regularMinutes: card.regularMinutes,
     overtimeMinutes: card.overtimeMinutes,
     correctionCents: card.correctionCents,
-    employerOtherCents: Math.max(0, Math.round(input.employerOtherCents ?? 0)),
+    correctionFor: [...new Set(card.correctionLines.filter((line) => line.forPeriodStart).map((line) => `${line.forPeriodStart} to ${line.forPeriodEnd}`))].join("; "),
+    employerOtherCents: Math.max(0, Math.round(input.employerOtherCents ?? card.employerExtras.totalCents)),
+    healthTaxCents: typeof card.employerExtras.healthTax === "object" && card.employerExtras.healthTax ? card.employerExtras.healthTax.cents : 0,
+    cntCents: typeof card.employerExtras.cnt === "number" ? card.employerExtras.cnt : 0,
+    wcbCents: card.employerExtras.wcb?.cents ?? 0,
   };
   if (!pay) {
     return {
@@ -190,6 +199,10 @@ export function parseStub(value: unknown): ApprovedStub | null {
     contractorFeeCents: int("contractorFeeCents"),
     salesTaxCents: int("salesTaxCents"),
     correctionCents: int("correctionCents"),
+    correctionFor: text("correctionFor"),
+    healthTaxCents: int("healthTaxCents"),
+    cntCents: int("cntCents"),
+    wcbCents: int("wcbCents"),
     edition: text("edition") || null,
     asOf: text("asOf") || null,
   };

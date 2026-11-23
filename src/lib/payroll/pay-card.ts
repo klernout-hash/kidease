@@ -5,6 +5,7 @@
 
 import { estimatePay, type PayAddon, type PayEstimate, type PayFrequency, type PayYtd } from "./calculate.ts";
 import { contractorPay, type ContractorPay } from "./contractor.ts";
+import { employerCosts, HEALTH_TAX_RULES } from "./employer-costs.ts";
 import type { DayRow } from "./hours-adjust.ts";
 import { MINIMUM_WAGES, minimumVacationBps, minimumWageOn, PAY_RULES, splitOvertime, type WageClass } from "./pay-rules.ts";
 import { PAY_PERIODS, type Province } from "./tables.ts";
@@ -49,6 +50,16 @@ export type CardOverrides = {
   bonusCents?: number;
 };
 
+export type CardCorrection = { cents: number; forPeriodStart?: string; forPeriodEnd?: string; forPeriodId?: string; date?: string; deltaMinutes?: number; rateCents?: number };
+
+/** Employer costs beyond CPP/EI/QPIP. null = not set (owner has not entered the number). "none" = does not apply. */
+export type EmployerExtras = {
+  healthTax: { cents: number; code: string } | null | "none";
+  cnt: number | "none";
+  wcb: { cents: number; code: "wcb" | "cnesst" } | null;
+  totalCents: number;
+};
+
 export type PayCard = {
   personId: string;
   name: string;
@@ -61,6 +72,8 @@ export type PayCard = {
   regularCents: number;
   overtimeCents: number;
   correctionCents: number;
+  correctionLines: CardCorrection[];
+  employerExtras: EmployerExtras;
   grossCents: number;
   vacationCents: number;
   bonusCents: number;
@@ -116,7 +129,11 @@ export function buildPayCard(input: {
   ytd?: Partial<PayYtd>;
   ytdBonusCents?: number;
   addons?: PayAddon[];
-  corrections?: readonly { cents: number }[];
+  corrections?: readonly CardCorrection[];
+  /** Centre pay settings. null or missing values are shown as "not set", never guessed. */
+  settings?: { wcbRateBps: number | null; yearlyPayrollCents: number | null; healthTaxExemption: boolean } | null;
+  /** This person's gross pay earlier this year (Quebec CNT cap). */
+  ytdGrossCents?: number;
   overrides?: CardOverrides;
 }): PayCard {
   const person = input.person;
@@ -185,8 +202,9 @@ export function buildPayCard(input: {
       vacationBps: person.vacationBps,
       vacationMode: person.vacationMode,
       ytd: input.ytd,
-      td1FederalCents: person.td1 === "approved" ? person.td1FederalCents ?? undefined : undefined,
-      td1ProvincialCents: person.td1 === "approved" ? person.td1ProvincialCents ?? undefined : undefined,
+      // null means no approved claim: the engine uses the basic personal amount.
+      td1FederalCents: person.td1FederalCents ?? undefined,
+      td1ProvincialCents: person.td1ProvincialCents ?? undefined,
       cppExempt: person.cppExempt,
       eiExempt: person.eiExempt,
       addons: input.addons,
@@ -259,6 +277,32 @@ export function buildPayCard(input: {
     checks.push({ code: "mid_period_end", level: "check", detail: person.endDate });
   }
 
+  let employerExtras: EmployerExtras = { healthTax: HEALTH_TAX_RULES[person.province] ? null : "none", cnt: "none", wcb: null, totalCents: 0 };
+  if (employee && !employee.blocked) {
+    const settings = input.settings ?? null;
+    const costs = employerCosts({
+      province: person.province,
+      grossCents,
+      ytdGrossCents: input.ytdGrossCents ?? 0,
+      employerCppCents: 0,
+      employerCpp2Cents: 0,
+      employerEiCents: 0,
+      employerQpipCents: 0,
+      wcbRateBps: settings?.wcbRateBps ?? null,
+      yearlyPayrollCents: settings?.yearlyPayrollCents ?? null,
+      exemptionEligible: settings?.healthTaxExemption !== false,
+    });
+    const health = costs.lines.find((line) => ["on_eht", "bc_eht", "mb_hel", "nl_hapset", "qc_hsf"].includes(line.code));
+    const cnt = costs.lines.find((line) => line.code === "qc_cnt");
+    const wcb = costs.lines.find((line) => line.code === "wcb" || line.code === "cnesst");
+    employerExtras = {
+      healthTax: HEALTH_TAX_RULES[person.province] ? (health ? { cents: health.cents, code: health.code } : null) : "none",
+      cnt: cnt ? cnt.cents : "none",
+      wcb: wcb ? { cents: wcb.cents, code: wcb.code === "cnesst" ? "cnesst" : "wcb" } : null,
+      totalCents: (health?.cents ?? 0) + (cnt?.cents ?? 0) + (wcb?.cents ?? 0),
+    };
+  }
+
   return {
     personId: person.id,
     name: person.name,
@@ -271,6 +315,8 @@ export function buildPayCard(input: {
     regularCents,
     overtimeCents,
     correctionCents,
+    correctionLines: [...(input.corrections ?? [])],
+    employerExtras,
     grossCents,
     vacationCents,
     bonusCents,

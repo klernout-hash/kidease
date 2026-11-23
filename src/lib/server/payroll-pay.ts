@@ -18,6 +18,9 @@ import {
   approvePeriod,
   listEditors,
   loadDesk,
+  loadSettings,
+  saveSettings,
+  type CentreSettings,
   loadPeople,
   loadStubs,
   myEmployeeId,
@@ -64,13 +67,16 @@ export function ytdFromStubs(stubs: readonly ApprovedStub[]): Partial<PayYtd> {
 }
 
 /** Build the card the same way the screen does, from what the server loaded. */
-export function cardFromDesk(desk: PayDesk, period: { start: string; end: string; payDate: string }): PayCard {
+export function cardFromDesk(desk: PayDesk, period: { start: string; end: string; payDate: string }, settings: CentreSettings | null = null): PayCard {
   return buildPayCard({
     person: desk.person,
     period,
     days: desk.days,
     ytd: ytdFromStubs(desk.ytdStubs),
     ytdBonusCents: desk.ytdBonusCents,
+    ytdGrossCents: desk.ytdStubs.reduce((sum, stub) => sum + stub.grossCents, 0),
+    corrections: desk.corrections,
+    settings: settings?.set ? settings : null,
     overrides: {
       payType: desk.payTypeOverride ?? undefined,
       rateCents: desk.rateOverride ?? undefined,
@@ -119,7 +125,8 @@ export const payrollDesk = createServerFn({ method: "GET" })
     const sql = await getSql();
     const desk = await loadDesk(sql, { userId: context.userId, daycareId: data.daycareId, employeeId: data.employeeId, from: data.start, to: data.end, now: new Date() });
     if (!desk) throw new Error("payroll:missing");
-    return { desk, ytd: ytdFromStubs(desk.ytdStubs) };
+    const settings = await loadSettings(sql, context.userId, data.daycareId);
+    return { desk, ytd: ytdFromStubs(desk.ytdStubs), settings };
   });
 
 /**
@@ -268,10 +275,23 @@ export const payrollApprove = createServerFn({ method: "POST" })
     if (!access.editor) throw new Error("payroll:permission");
     const people = await loadPeople(sql, context.userId, data.daycareId);
     const period = { start: data.start, end: data.end, payDate: data.payDate };
+    const settings = await loadSettings(sql, context.userId, data.daycareId);
     const cards: PayCard[] = [];
+    const paidDays: { employeeId: string; date: string; minutes: number; rateCents: number }[] = [];
+    const corrections: { id: string; employeeId: string; forPeriodId: string; date: string; deltaMinutes: number; rateCents: number; cents: number }[] = [];
     for (const person of people) {
       const desk = await loadDesk(sql, { userId: context.userId, daycareId: data.daycareId, employeeId: person.id, from: data.start, to: data.end, now: new Date() });
-      if (desk) cards.push(cardFromDesk(desk, period));
+      if (!desk) continue;
+      const card = cardFromDesk(desk, period, settings);
+      cards.push(card);
+      if (card.payType === "hourly") {
+        for (const day of desk.days) {
+          if (day.minutes > 0) paidDays.push({ employeeId: person.id, date: day.date, minutes: day.minutes, rateCents: card.rateCents });
+        }
+      }
+      for (const line of desk.corrections) {
+        corrections.push({ id: nid(), employeeId: person.id, forPeriodId: line.forPeriodId, date: line.date, deltaMinutes: line.deltaMinutes, rateCents: line.rateCents, cents: line.cents });
+      }
     }
     if (!canApprove(cards)) throw new Error("payroll:preflight");
     const periodId = nid();
@@ -282,7 +302,7 @@ export const payrollApprove = createServerFn({ method: "POST" })
     const drafts = cards
       .filter((card) => card.contractor)
       .map((card) => ({ id: nid(), employeeId: card.personId, feeCents: card.contractor?.feeCents ?? 0, salesTaxCents: card.contractor?.salesTaxCents ?? 0 }));
-    const result = await approvePeriod(sql, { periodId, userId: context.userId, daycareId: data.daycareId, start: data.start, end: data.end, payDate: data.payDate, stubs, drafts });
+    const result = await approvePeriod(sql, { periodId, userId: context.userId, daycareId: data.daycareId, start: data.start, end: data.end, payDate: data.payDate, stubs, drafts, paidDays, corrections });
     if (!result.ok) throw new Error(`payroll:${result.error}`);
     return { ok: true as const, stubs: result.stubs, contractorDrafts: drafts.length, moneyMoved: false as const };
   });
@@ -293,7 +313,8 @@ function packArgs(input: PackInput) {
   const from = day(input?.from);
   const to = day(input?.to);
   if (!from || !to || to < from) throw new Error("payroll:period");
-  const remitter: RemitterType = input?.remitter === "quarterly" || input?.remitter === "accelerated1" || input?.remitter === "accelerated2" ? input.remitter : "regular";
+  const remitter: RemitterType | null =
+    input?.remitter === "regular" || input?.remitter === "quarterly" || input?.remitter === "accelerated1" || input?.remitter === "accelerated2" ? input.remitter : null;
   return {
     daycareId: id(input?.daycareId),
     from,
@@ -314,11 +335,12 @@ export const payrollAccountantPack = createServerFn({ method: "POST" })
     const sql = await getSql();
     if (!(await payAccess(sql, context.userId, data.daycareId)).editor) throw new Error("payroll:permission");
     const stubs = await loadStubs(sql, { userId: context.userId, daycareId: data.daycareId, from: data.from, to: data.to });
-    const files = packFiles({ stubs, remitter: data.remitter, year: Number(data.to.slice(0, 4)) });
+    const remitter = data.remitter ?? (await loadSettings(sql, context.userId, data.daycareId)).remitterType;
+    const files = packFiles({ stubs, remitter, year: Number(data.to.slice(0, 4)) });
     if (!xeroSyncEnabled()) delete files["xero-manual-journal.csv"];
     return {
       files,
-      pdfLines: packPdfLines({ centreName: data.centreName, from: data.from, to: data.to, stubs, remitter: data.remitter, locale: data.locale }),
+      pdfLines: packPdfLines({ centreName: data.centreName, from: data.from, to: data.to, stubs, remitter, locale: data.locale }),
       count: stubs.length,
     };
   });
@@ -333,7 +355,8 @@ export const payrollPackJson = createServerFn({ method: "GET" })
     const sql = await getSql();
     if (!(await payAccess(sql, context.userId, data.daycareId)).editor) throw new Error("payroll:permission");
     const stubs = await loadStubs(sql, { userId: context.userId, daycareId: data.daycareId, from: data.from, to: data.to });
-    return packJson({ daycareId: data.daycareId, from: data.from, to: data.to, stubs, remitter: data.remitter, year: Number(data.to.slice(0, 4)) });
+    const remitter = data.remitter ?? (await loadSettings(sql, context.userId, data.daycareId)).remitterType;
+    return packJson({ daycareId: data.daycareId, from: data.from, to: data.to, stubs, remitter, year: Number(data.to.slice(0, 4)) });
   });
 
 /** Mark a person as a student (Ontario, Alberta) or back to general minimum wage. Recorded with who and why. */
@@ -380,4 +403,48 @@ export const payrollSetEditor = createServerFn({ method: "POST" })
     const saved = await setEditor(await getSql(), { id: nid(), userId: context.userId, ...data });
     if (!saved) throw new Error("payroll:permission");
     return { ok: true as const, sent: false as const };
+  });
+
+/** Centre pay settings. Owner or payroll editor. */
+export const payrollSettings = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string }) => ({ daycareId: id(input?.daycareId) }))
+  .handler(async ({ context, data }) => {
+    noStore();
+    requireOn();
+    const sql = await getSql();
+    if (!(await payAccess(sql, context.userId, data.daycareId)).editor) throw new Error("payroll:permission");
+    return loadSettings(sql, context.userId, data.daycareId);
+  });
+
+/** Save centre pay settings. Empty fields stay empty ("not set"). */
+export const payrollSaveSettings = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; remitterType?: string; wcbRate?: string; yearlyPayroll?: string; healthTaxExemption?: boolean }) => {
+    const remitter = ["regular", "quarterly", "accelerated1", "accelerated2"].includes(String(input?.remitterType)) ? String(input?.remitterType) : "regular";
+    const money = (text: unknown) => {
+      const clean = String(text ?? "").replace(/[\s$,]/g, "");
+      if (!clean) return null;
+      const value = Number(clean);
+      return Number.isFinite(value) && value >= 0 ? value : Number.NaN;
+    };
+    // A rate like "1,25" (French) uses a comma for decimals.
+    const wcb = money(String(input?.wcbRate ?? "").replace(",", "."));
+    const payroll = money(input?.yearlyPayroll);
+    if (Number.isNaN(wcb) || Number.isNaN(payroll) || (wcb != null && wcb > 20) || (payroll != null && payroll > 1_000_000_000)) throw new Error("payroll:settings");
+    return {
+      daycareId: id(input?.daycareId),
+      remitterType: remitter as CentreSettings["remitterType"],
+      // WCB/CNESST is entered as dollars per $100 of pay, e.g. 1.25.
+      wcbRateBps: wcb == null ? null : Math.round(wcb * 100),
+      yearlyPayrollCents: payroll == null ? null : Math.round(payroll * 100),
+      healthTaxExemption: input?.healthTaxExemption !== false,
+    };
+  })
+  .handler(async ({ context, data }) => {
+    requireOn();
+    const { daycareId, ...value } = data;
+    const ok = await saveSettings(await getSql(), context.userId, daycareId, value);
+    if (!ok) throw new Error("payroll:permission");
+    return { ok: true as const };
   });

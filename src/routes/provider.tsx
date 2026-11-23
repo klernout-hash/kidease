@@ -179,6 +179,9 @@ const PayrollAttendanceReview = lazy(() =>
 const PayDay = lazy(() =>
   import("@/components/payroll-payday").then((m) => ({ default: m.PayDay })),
 );
+const MyTaxForms = lazy(() =>
+  import("@/components/payroll-staff-forms").then((m) => ({ default: m.MyTaxForms })),
+);
 const MyPayHours = lazy(() =>
   import("@/components/payroll-payday").then((m) => ({ default: m.MyPayHours })),
 );
@@ -1160,6 +1163,9 @@ export function ProviderPage() {
       {desk === "shift" && session?.providerPayroll ? <PayrollPreview locale={locale === "fr" ? "fr" : "en"} screen="staff" /> : null}
       {desk === "shift" && session?.providerPayroll && listings[0]?.id ? (
         <MyPayHours key={listings[0].id} locale={locale === "fr" ? "fr" : "en"} daycareId={listings[0].id} />
+      ) : null}
+      {desk === "shift" && session?.providerPayroll && listings[0]?.id ? (
+        <MyTaxForms key={`forms-${listings[0].id}`} locale={locale === "fr" ? "fr" : "en"} daycareId={listings[0].id} />
       ) : null}
       {desk === "tools" ? <CentreToolsDesk /> : null}
       {desk === "care" ? <ProviderCareDesk daycareId={listings[0]?.id} owner={centreOwner} /> : null}
