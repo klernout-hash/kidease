@@ -6,7 +6,8 @@ import { formatMinutes, type DayRow } from "@/lib/payroll/hours-adjust.ts";
 import { buildPayCard, canApprove, searchPeople, SEARCHABLE_AFTER, type PayCard, type PayType } from "@/lib/payroll/pay-card.ts";
 import { checkText, defaultPeriod, payErrorWords, paydayCopy, type PaydayCopy } from "@/lib/payroll/payday-copy.ts";
 import { MINIMUM_WAGE_AS_OF } from "@/lib/payroll/pay-rules.ts";
-import type { PayDesk } from "@/lib/payroll/pay-store.ts";
+import type { CentreSettings, PayDesk } from "@/lib/payroll/pay-store.ts";
+import { FormsReview } from "@/components/payroll-staff-forms";
 import type { PayYtd } from "@/lib/payroll/calculate.ts";
 import {
   payrollAccountantPack,
@@ -17,14 +18,16 @@ import {
   payrollFlagDay,
   payrollMyHours,
   payrollPeople,
+  payrollSaveSettings,
   payrollSetEditor,
+  payrollSettings,
   payrollWageClass,
 } from "@/lib/server/payroll-pay";
 
 type Locale = "en" | "fr";
 type Period = { start: string; end: string; payDate: string };
 type Person = { id: string; name: string; payType: PayType; province: string };
-type Loaded = { desk: PayDesk; ytd: Partial<PayYtd> };
+type Loaded = { desk: PayDesk; ytd: Partial<PayYtd>; settings?: CentreSettings };
 
 const INPUT = "mt-1 min-h-11 w-full rounded-xl bg-surface px-3 text-base ring-1 ring-border";
 const LINK = "inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline touch-manipulation";
@@ -58,6 +61,9 @@ function cardFrom(loaded: Loaded, period: Period, draft: { payType?: PayType; ra
     days: loaded.desk.days,
     ytd: loaded.ytd,
     ytdBonusCents: loaded.desk.ytdBonusCents,
+    ytdGrossCents: loaded.desk.ytdStubs.reduce((sum, stub) => sum + stub.grossCents, 0),
+    corrections: loaded.desk.corrections,
+    settings: loaded.settings?.set ? loaded.settings : null,
     overrides: {
       payType: draft.payType ?? loaded.desk.payTypeOverride ?? undefined,
       rateCents: draft.rateCents ?? loaded.desk.rateOverride ?? undefined,
@@ -148,6 +154,8 @@ export function PayDay({ locale, daycareId }: { locale: Locale; daycareId: strin
       {personId ? <PayCardPanel key={`${personId}-${period.start}-${period.end}-${period.payDate}`} locale={locale} copy={copy} daycareId={daycareId} employeeId={personId} period={period} /> : null}
       {people && people.length > 0 && editor ? <ApproveSection locale={locale} copy={copy} daycareId={daycareId} people={people} period={period} /> : null}
       {editor ? <AccountantPack locale={locale} copy={copy} daycareId={daycareId} /> : null}
+      {editor ? <FormsReview locale={locale} daycareId={daycareId} owner={owner} /> : null}
+      {editor ? <SettingsPanel locale={locale} copy={copy} daycareId={daycareId} /> : null}
       {owner ? <EditorsPanel locale={locale} copy={copy} daycareId={daycareId} /> : null}
     </section>
   );
@@ -346,6 +354,9 @@ function PayNumbers({ card, copy, money }: { card: PayCard; copy: PaydayCopy; mo
     if (card.vacationCents) rows.push([copy.vacation, money(card.vacationCents)]);
     if (card.bonusCents) rows.push([copy.bonus, money(card.bonusCents)]);
     if (card.bonusTaxCents) rows.push([copy.bonusTax, money(card.bonusTaxCents)]);
+    for (const line of card.correctionLines) {
+      rows.push([`${copy.correctionFor} ${line.forPeriodStart ?? ""} – ${line.forPeriodEnd ?? ""} (${line.date ?? ""})`, money(line.cents)]);
+    }
     if (card.contractor?.salesTaxCents) rows.push([copy.salesTax, money(card.contractor.salesTaxCents)]);
     if (card.payType !== "contractor") rows.push([copy.deductions, money(card.deductionsCents)]);
   }
@@ -368,12 +379,36 @@ function PayNumbers({ card, copy, money }: { card: PayCard; copy: PaydayCopy; mo
         </p>
       )}
       {card.contractor ? <p className="text-sm text-muted">{copy.contractorNote}</p> : null}
+      {card.employee && !blocked ? <EmployerExtrasView card={card} copy={copy} money={money} /> : null}
       {card.employee?.edition ? (
         <p className="text-xs text-muted">
           {card.employee.edition} · {copy.asOf} {card.employee.asOf}
         </p>
       ) : null}
     </div>
+  );
+}
+
+function EmployerExtrasView({ card, copy, money }: { card: PayCard; copy: PaydayCopy; money: (cents: number) => string }) {
+  const extras = card.employerExtras;
+  const rows: [string, string][] = [];
+  if (extras.healthTax !== "none") rows.push([copy.healthTax, extras.healthTax ? money(extras.healthTax.cents) : copy.notSet]);
+  if (extras.cnt !== "none") rows.push([copy.cnt, money(extras.cnt)]);
+  rows.push([card.employee?.province === "QC" ? copy.cnesst : copy.wcb, extras.wcb ? money(extras.wcb.cents) : copy.notSet]);
+  const missing = extras.healthTax === null || extras.wcb === null;
+  return (
+    <section className="space-y-1" data-ke="employer-extras">
+      <h4 className="text-sm font-medium">{copy.employerCosts}</h4>
+      <dl className="divide-y divide-border">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex min-h-11 flex-wrap items-center justify-between gap-2">
+            <dt className="text-sm">{label}</dt>
+            <dd className={`tabular-nums ${value === copy.notSet ? "text-muted" : ""}`}>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {missing ? <p className="text-xs text-muted">{copy.setInSettings}</p> : null}
+    </section>
   );
 }
 
@@ -776,6 +811,82 @@ function EditorsPanel({ locale, copy, daycareId }: { locale: Locale; copy: Payda
             </Button>
           </div>
         ) : null}
+        {message ? <p className="text-sm" role="status">{message}</p> : null}
+      </div>
+    </details>
+  );
+}
+
+/** Centre pay settings: remitter type, WCB/CNESST rate, yearly payroll, health tax exemption. */
+function SettingsPanel({ locale, copy, daycareId }: { locale: Locale; copy: PaydayCopy; daycareId: string }) {
+  const [remitter, setRemitter] = useState("regular");
+  const [wcb, setWcb] = useState("");
+  const [payroll, setPayroll] = useState("");
+  const [exemption, setExemption] = useState(true);
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    void payrollSettings({ data: { daycareId } })
+      .then((row) => {
+        if (!live) return;
+        setRemitter(row.remitterType);
+        setWcb(row.wcbRateBps == null ? "" : (row.wcbRateBps / 100).toFixed(2));
+        setPayroll(row.yearlyPayrollCents == null ? "" : String(Math.round(row.yearlyPayrollCents / 100)));
+        setExemption(row.healthTaxExemption);
+      })
+      .catch((err: unknown) => live && setMessage(errorText(err, locale)));
+    return () => {
+      live = false;
+    };
+  }, [daycareId, locale]);
+
+  async function save() {
+    setBusy(true);
+    setMessage("");
+    try {
+      await payrollSaveSettings({ data: { daycareId, remitterType: remitter, wcbRate: wcb, yearlyPayroll: payroll, healthTaxExemption: exemption } });
+      setMessage(copy.saved);
+    } catch (err) {
+      setMessage(errorText(err, locale));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <details className="rounded-2xl bg-surface ring-1 ring-border" data-ke="pay-settings">
+      <summary className="flex min-h-11 cursor-pointer items-center px-4 font-medium">{copy.settings}</summary>
+      <div className="space-y-3 px-4 pb-4">
+        <p className="text-sm text-muted">{copy.settingsLead}</p>
+        <label className="block text-sm font-medium">
+          {copy.remitter}
+          <select className={INPUT} value={remitter} onChange={(event) => setRemitter(event.target.value)}>
+            <option value="regular">{copy.remitterRegular}</option>
+            <option value="quarterly">{copy.remitterQuarterly}</option>
+            <option value="accelerated1">{copy.remitterAcc1}</option>
+            <option value="accelerated2">{copy.remitterAcc2}</option>
+          </select>
+        </label>
+        <label className="block text-sm font-medium">
+          {copy.wcbRate}
+          <input inputMode="decimal" className={INPUT} value={wcb} placeholder={copy.wcbHint} onFocus={focusIn} onChange={(event) => setWcb(event.target.value)} />
+        </label>
+        <label className="block text-sm font-medium">
+          {copy.yearlyPayroll}
+          <input inputMode="numeric" className={INPUT} value={payroll} onFocus={focusIn} onChange={(event) => setPayroll(event.target.value)} />
+        </label>
+        <label className="flex min-h-11 items-start gap-3 text-sm">
+          <input type="checkbox" className="mt-1 size-5" checked={exemption} onChange={(event) => setExemption(event.target.checked)} />
+          <span>
+            {copy.exemption}
+            <span className="block text-xs text-muted">{copy.exemptionHint}</span>
+          </span>
+        </label>
+        <Button type="button" variant="secondary" disabled={busy} onClick={() => void save()}>
+          {copy.saveSettings}
+        </Button>
         {message ? <p className="text-sm" role="status">{message}</p> : null}
       </div>
     </details>

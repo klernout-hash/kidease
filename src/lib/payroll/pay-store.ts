@@ -11,6 +11,7 @@
 import { dayRows, type Adjustment, type DayFlag, type DayRow, type Punch } from "./hours-adjust.ts";
 import type { PayPerson, PayType } from "./pay-card.ts";
 import { parseStub, type ApprovedStub } from "./stubs.ts";
+import { engineClaim, td1Status } from "./tax-forms.ts";
 import { isProvinceCode } from "./tables.ts";
 
 export type Rows = {
@@ -27,6 +28,31 @@ function ymd(value: unknown): string {
 
 function iso(value: unknown): string {
   return new Date(value as string).toISOString();
+}
+
+const schemaCache = new WeakMap<object, Set<string>>();
+
+/**
+ * True when a table or column from a newer migration exists. New features
+ * stay off (and old ones keep working) until the migration is applied.
+ */
+export async function schemaHas(sql: Rows, table: string, column?: string): Promise<boolean> {
+  const key = `${table}.${column ?? ""}`;
+  const known = schemaCache.get(sql) ?? new Set<string>();
+  if (known.has(key)) return true;
+  const rows = column
+    ? await sql.query<{ ok: boolean }>(
+        `select exists (select 1 from information_schema.columns where table_name = $1 and column_name = $2) as ok`,
+        [table, column],
+      )
+    : await sql.query<{ ok: boolean }>(`select to_regclass($1) is not null as ok`, [table]);
+  const ok = rows[0]?.ok === true;
+  // Only "yes" is cached, so a migration applied later is picked up without a restart.
+  if (ok) {
+    known.add(key);
+    schemaCache.set(sql, known);
+  }
+  return ok;
 }
 
 export async function payAccess(sql: Rows, userId: string, daycareId: string): Promise<{ owner: boolean; editor: boolean }> {
@@ -57,6 +83,8 @@ type EmployeeRow = {
   gst_registered: boolean | null;
   gst_number: string | null;
   wage_class: string | null;
+  td1_federal_state: string | null;
+  td1_provincial_state: string | null;
 };
 
 function toPerson(row: EmployeeRow): PayPerson | null {
@@ -65,7 +93,10 @@ function toPerson(row: EmployeeRow): PayPerson | null {
   const frequency = ["weekly", "biweekly", "semimonthly", "monthly"].includes(row.pay_frequency)
     ? (row.pay_frequency as PayPerson["frequency"])
     : "biweekly";
-  const td1 = row.td1_status === "approved" || row.td1_status === "pending" ? row.td1_status : "missing";
+  // Approved forms set td1_*_state (migration 0229). Before that, only a legacy "approved" status counts.
+  const fromForms = row.td1_federal_state != null || row.td1_provincial_state != null;
+  const legacy = !fromForms && row.td1_status === "approved";
+  const td1 = legacy ? "approved" : td1Status(row.td1_federal_state, row.td1_provincial_state);
   return {
     id: row.id,
     name: row.display_name,
@@ -78,8 +109,8 @@ function toPerson(row: EmployeeRow): PayPerson | null {
     hireDate: row.hire_date ? ymd(row.hire_date) : null,
     endDate: row.end_date ? ymd(row.end_date) : null,
     td1,
-    td1FederalCents: td1 === "approved" ? Number(row.td1_federal_cents) : null,
-    td1ProvincialCents: td1 === "approved" ? Number(row.td1_provincial_cents) : null,
+    td1FederalCents: legacy ? Number(row.td1_federal_cents) : engineClaim(row.td1_federal_state, Number(row.td1_federal_cents)),
+    td1ProvincialCents: legacy ? Number(row.td1_provincial_cents) : engineClaim(row.td1_provincial_state, Number(row.td1_provincial_cents)),
     cppExempt: row.cpp_exempt === true,
     eiExempt: row.ei_exempt === true,
     extraTaxCents: Number(row.extra_tax_cents) || 0,
@@ -94,7 +125,8 @@ function toPerson(row: EmployeeRow): PayPerson | null {
 
 const EMPLOYEE_COLUMNS = `e.id, e.display_name, e.province, e.pay_type, e.worker_type, e.rate_cents, e.pay_frequency,
   e.vacation_bps, e.vacation_mode, e.td1_federal_cents, e.td1_provincial_cents, e.td1_status, e.cpp_exempt, e.ei_exempt,
-  e.extra_tax_cents, e.hire_date, e.end_date, e.contractor_basis, e.gst_registered, e.gst_number, e.wage_class`;
+  e.extra_tax_cents, e.hire_date, e.end_date, e.contractor_basis, e.gst_registered, e.gst_number, e.wage_class,
+  to_jsonb(e) ->> 'td1_federal_state' as td1_federal_state, to_jsonb(e) ->> 'td1_provincial_state' as td1_provincial_state`;
 
 /** Everyone on the centre's pay list, for the staff picker. Owner or payroll editor only. */
 export async function loadPeople(sql: Rows, userId: string, daycareId: string): Promise<PayPerson[]> {
@@ -137,6 +169,18 @@ export type PayDesk = {
   history: { field: string; date: string; oldValue: string; newValue: string; reason: string; actorId: string; at: string }[];
   lockedThrough: string | null;
   ytdStubs: ApprovedStub[];
+  /** Changes to days in approved periods that have not been paid yet. */
+  corrections: CorrectionLine[];
+};
+
+export type CorrectionLine = {
+  forPeriodId: string;
+  forPeriodStart: string;
+  forPeriodEnd: string;
+  date: string;
+  deltaMinutes: number;
+  rateCents: number;
+  cents: number;
 };
 
 /**
@@ -238,6 +282,7 @@ export async function loadDesk(
         })),
     lockedThrough,
     ytdStubs,
+    corrections: input.selfOnly ? [] : await loadCorrections(sql, { daycareId: input.daycareId, employeeId: input.employeeId, now: input.now }),
   };
 }
 
@@ -351,6 +396,133 @@ export async function checkIn(sql: Rows, input: { id: string; daycareId: string;
 }
 
 /**
+ * Corrections owed for days in approved periods: the minutes on file now
+ * minus what was paid (the paid day plus corrections already paid), priced
+ * at the rate that was paid. Only periods approved after migration 0229 have
+ * paid days on record; older periods have no baseline and are skipped.
+ */
+export async function loadCorrections(sql: Rows, input: { daycareId: string; employeeId: string; now: Date }): Promise<CorrectionLine[]> {
+  if (!(await schemaHas(sql, "payroll_paid_days")) || !(await schemaHas(sql, "payroll_correction_lines"))) return [];
+  const dates = await sql.query<{ work_date: unknown }>(
+    `select distinct o.work_date from payroll_overrides o
+     where o.daycare_id = $1 and o.employee_id = $2 and o.correction and o.field = 'day_minutes' and o.work_date is not null`,
+    [input.daycareId, input.employeeId],
+  );
+  if (!dates.length) return [];
+  const wanted = dates.map((row) => ymd(row.work_date)).sort();
+  const paid = await sql.query<{ work_date: unknown; minutes: number; rate_cents: number; period_id: string; period_start: unknown; period_end: unknown }>(
+    `select d.work_date, d.minutes, d.rate_cents, d.period_id, p.period_start, p.period_end
+     from payroll_paid_days d join payroll_periods p on p.id = d.period_id
+     where d.daycare_id = $1 and d.employee_id = $2 and d.work_date = any(string_to_array($3, ',')::date[])`,
+    [input.daycareId, input.employeeId, wanted.join(",")],
+  );
+  if (!paid.length) return [];
+  const already = await sql.query<{ work_date: unknown; delta: number }>(
+    `select work_date, sum(delta_minutes)::int as delta from payroll_correction_lines
+     where daycare_id = $1 and employee_id = $2 and work_date = any(string_to_array($3, ',')::date[])
+     group by work_date`,
+    [input.daycareId, input.employeeId, wanted.join(",")],
+  );
+  const from = wanted[0];
+  const to = wanted[wanted.length - 1];
+  const punches = await sql.query<PunchRow>(
+    `select p.id, p.employee_id, p.clock_in_at, p.clock_out_at, p.unpaid_break_minutes
+     from payroll_punches p
+     where p.daycare_id = $1 and p.employee_id = $2
+       and p.clock_in_at >= ($3::date - interval '1 day') and p.clock_in_at < ($4::date + interval '2 day')`,
+    [input.daycareId, input.employeeId, from, to],
+  );
+  const changes = await sql.query<OverrideRow>(
+    `select id, field, work_date, period_start, old_value, new_value, reason, actor_id, created_at
+     from payroll_overrides
+     where daycare_id = $1 and employee_id = $2 and field = 'day_minutes' and work_date between $3::date and $4::date
+     order by created_at, id`,
+    [input.daycareId, input.employeeId, from, to],
+  );
+  const days = dayRows({
+    employeeId: input.employeeId,
+    from,
+    to,
+    punches: punches.map((row) => ({
+      id: row.id,
+      employeeId: row.employee_id,
+      clockIn: iso(row.clock_in_at),
+      clockOut: row.clock_out_at ? iso(row.clock_out_at) : null,
+      unpaidBreakMinutes: Number(row.unpaid_break_minutes) || 0,
+    })),
+    adjustments: changes.map((row) => ({
+      id: row.id,
+      employeeId: input.employeeId,
+      workDate: ymd(row.work_date),
+      minutes: row.new_value === "" ? null : Number(row.new_value),
+      reason: row.reason,
+      actorId: row.actor_id,
+      at: iso(row.created_at),
+    })),
+    now: input.now,
+  });
+  const out: CorrectionLine[] = [];
+  for (const row of paid) {
+    const date = ymd(row.work_date);
+    const now = days.find((day) => day.date === date);
+    if (!now) continue;
+    const before = Number(row.minutes) + Number(already.find((a) => ymd(a.work_date) === date)?.delta ?? 0);
+    const delta = now.minutes - before;
+    const rate = Number(row.rate_cents) || 0;
+    const cents = Math.round((delta * rate) / 60);
+    if (delta === 0 || cents === 0) continue;
+    out.push({ forPeriodId: row.period_id, forPeriodStart: ymd(row.period_start), forPeriodEnd: ymd(row.period_end), date, deltaMinutes: delta, rateCents: rate, cents });
+  }
+  return out.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export type CentreSettings = {
+  remitterType: "regular" | "quarterly" | "accelerated1" | "accelerated2";
+  wcbRateBps: number | null;
+  yearlyPayrollCents: number | null;
+  healthTaxExemption: boolean;
+  set: boolean;
+};
+
+export const EMPTY_SETTINGS: CentreSettings = { remitterType: "regular", wcbRateBps: null, yearlyPayrollCents: null, healthTaxExemption: true, set: false };
+
+/** Centre pay settings. Owner or payroll editor. Unset values stay null and are never guessed. */
+export async function loadSettings(sql: Rows, userId: string, daycareId: string): Promise<CentreSettings> {
+  const rows = await sql.query<{ remitter_type: string; wcb_rate_bps: number | null; yearly_payroll_cents: string | number | null; health_tax_exemption: boolean }>(
+    `select s.remitter_type, s.wcb_rate_bps, s.yearly_payroll_cents, s.health_tax_exemption
+     from payroll_centre_settings s where s.daycare_id = $2 and ${EDITOR}`,
+    [userId, daycareId],
+  );
+  const row = rows[0];
+  if (!row) return EMPTY_SETTINGS;
+  const remitter = ["regular", "quarterly", "accelerated1", "accelerated2"].includes(row.remitter_type) ? (row.remitter_type as CentreSettings["remitterType"]) : "regular";
+  return {
+    remitterType: remitter,
+    wcbRateBps: row.wcb_rate_bps == null ? null : Number(row.wcb_rate_bps),
+    yearlyPayrollCents: row.yearly_payroll_cents == null ? null : Number(row.yearly_payroll_cents),
+    healthTaxExemption: row.health_tax_exemption !== false,
+    set: true,
+  };
+}
+
+export async function saveSettings(sql: Rows, userId: string, daycareId: string, value: Omit<CentreSettings, "set">): Promise<boolean> {
+  const rows = await sql.query<{ daycare_id: string }>(
+    `insert into payroll_centre_settings (daycare_id, remitter_type, wcb_rate_bps, yearly_payroll_cents, health_tax_exemption, updated_by, updated_at)
+     select $2, $3, $4, $5, $6, $1, now() where ${EDITOR}
+     on conflict (daycare_id) do update set
+       remitter_type = excluded.remitter_type,
+       wcb_rate_bps = excluded.wcb_rate_bps,
+       yearly_payroll_cents = excluded.yearly_payroll_cents,
+       health_tax_exemption = excluded.health_tax_exemption,
+       updated_by = excluded.updated_by,
+       updated_at = now()
+     returning daycare_id`,
+    [userId, daycareId, value.remitterType, value.wcbRateBps, value.yearlyPayrollCents, value.healthTaxExemption],
+  );
+  return rows.length === 1;
+}
+
+/**
  * Approve a pay period: the period row, every stub, and contractor invoice
  * drafts in one statement. Owner or payroll editor; approved_by records who. A period that was already approved
  * is not approved twice.
@@ -366,8 +538,31 @@ export async function approvePeriod(
     payDate: string;
     stubs: readonly ApprovedStub[];
     drafts: readonly { id: string; employeeId: string; feeCents: number; salesTaxCents: number }[];
+    /** What each day paid (hourly staff), so later changes can be priced. Needs migration 0229. */
+    paidDays?: readonly { employeeId: string; date: string; minutes: number; rateCents: number }[];
+    /** Corrections paid in this period. Needs migration 0229. */
+    corrections?: readonly { id: string; employeeId: string; forPeriodId: string; date: string; deltaMinutes: number; rateCents: number; cents: number }[];
   },
 ): Promise<{ ok: true; stubs: number } | { ok: false; error: "permission" | "already_approved" }> {
+  const tracked = (await schemaHas(sql, "payroll_paid_days")) && (await schemaHas(sql, "payroll_correction_lines"));
+  const extra = tracked
+    ? `,
+     pd as (
+       insert into payroll_paid_days (period_id, daycare_id, employee_id, work_date, minutes, rate_cents)
+       select (select id from p), $2, x->>'employeeId', (x->>'date')::date, (x->>'minutes')::int, (x->>'rateCents')::int
+       from json_array_elements($9::json) x
+       where exists (select 1 from p)
+       returning employee_id
+     ),
+     cl as (
+       insert into payroll_correction_lines (id, period_id, for_period_id, daycare_id, employee_id, work_date, delta_minutes, rate_cents, cents)
+       select x->>'id', (select id from p), x->>'forPeriodId', $2, x->>'employeeId', (x->>'date')::date,
+         (x->>'deltaMinutes')::int, (x->>'rateCents')::int, (x->>'cents')::int
+       from json_array_elements($10::json) x
+       where exists (select 1 from p)
+       returning id
+     )`
+    : "";
   const rows = await sql.query<{ periods: number; stubs: number }>(
     `with allowed as (select 1 as ok where ${EDITOR}),
      p as (
@@ -389,7 +584,7 @@ export async function approvePeriod(
        from json_array_elements($8::json) x
        where exists (select 1 from p)
        returning id
-     )
+     )${extra}
      select (select count(*) from p)::int as periods, (select count(*) from s)::int as stubs`,
     [
       input.userId,
@@ -400,6 +595,7 @@ export async function approvePeriod(
       input.payDate,
       JSON.stringify(input.stubs),
       JSON.stringify(input.drafts),
+      ...(tracked ? [JSON.stringify(input.paidDays ?? []), JSON.stringify(input.corrections ?? [])] : []),
     ],
   );
   if (rows[0]?.periods === 1) return { ok: true, stubs: rows[0].stubs };

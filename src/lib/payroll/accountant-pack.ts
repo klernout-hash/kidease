@@ -39,7 +39,7 @@ export function payRegisterCsv(stubs: readonly ApprovedStub[]): string {
   const header = [
     "pay_date", "period_start", "period_end", "person", "province", "pay_type", "regular_hours", "overtime_hours",
     "gross", "vacation", "bonus", "bonus_tax", "taxable_benefits", "non_taxable", "cpp", "cpp2", "qpp", "qpp2", "ei", "qpip",
-    "federal_tax", "provincial_tax", "net", "contractor_fee", "contractor_gst_hst", "correction", "table_edition", "as_of",
+    "federal_tax", "provincial_tax", "net", "contractor_fee", "contractor_gst_hst", "correction", "correction_for", "employer_health_tax", "employer_cnt", "employer_wcb", "table_edition", "as_of",
   ];
   const rows = [...stubs]
     .sort((a, b) => a.payDate.localeCompare(b.payDate) || a.name.localeCompare(b.name))
@@ -49,7 +49,8 @@ export function payRegisterCsv(stubs: readonly ApprovedStub[]): string {
       money(s.grossCents), money(s.vacationCents), money(s.bonusCents), money(s.bonusTaxCents), money(s.taxableBenefitCents), money(s.nontaxCents),
       money(s.cppCents), money(s.cpp2Cents), money(s.qppCents), money(s.qpp2Cents), money(s.eiCents), money(s.qpipCents),
       money(s.federalTaxCents), money(s.provincialTaxCents), money(s.netCents),
-      money(s.contractorFeeCents), money(s.salesTaxCents), money(s.correctionCents), s.edition ?? "", s.asOf ?? "",
+      money(s.contractorFeeCents), money(s.salesTaxCents), money(s.correctionCents), s.correctionFor,
+      money(s.healthTaxCents), money(s.cntCents), money(s.wcbCents), s.edition ?? "", s.asOf ?? "",
     ]);
   return toCsv([header, ...rows]);
 }
@@ -86,7 +87,10 @@ export function employerCostTotals(stubs: readonly ApprovedStub[]) {
     employer_qpp2: sum(stubs, (s) => s.employerQpp2Cents),
     employer_ei: sum(stubs, (s) => s.employerEiCents),
     employer_qpip: sum(stubs, (s) => s.employerQpipCents),
-    other_estimate: sum(stubs, (s) => s.employerOtherCents),
+    health_tax_estimate: sum(stubs, (s) => s.healthTaxCents),
+    quebec_cnt: sum(stubs, (s) => s.cntCents),
+    wcb_or_cnesst: sum(stubs, (s) => s.wcbCents),
+    other_estimate: sum(stubs, (s) => s.employerOtherCents - s.healthTaxCents - s.cntCents - s.wcbCents),
   };
 }
 
