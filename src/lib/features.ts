@@ -445,6 +445,31 @@ export function staffTimesheetsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_STAFF_TIMESHEETS", env);
 }
 
+/** Centre pay day and the government-money jar. Default off. No money moves. */
+export function providerPayrollEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PROVIDER_PAYROLL", env);
+}
+
+/** Centre books. Default off. */
+export function providerBooksEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PROVIDER_BOOKS", env);
+}
+
+/** Xero CSV export. Default off. No Xero call. */
+export function xeroSyncEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_XERO_SYNC", env);
+}
+
+/** Pay-date notices. Default off. Nothing is sent. */
+export function payrollAlertsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PAYROLL_ALERTS", env);
+}
+
+/** Outbound pay-date notices. Default off. No sender is wired. */
+export function payrollAlertsLiveEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PAYROLL_ALERTS_LIVE", env);
+}
+
 /** Centre reply under a public parent review. Default off. No email. */
 export function reviewRepliesEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_REVIEW_REPLIES", env);

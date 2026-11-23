@@ -802,6 +802,10 @@ export type SessionDesks = {
   coparentEmail?: boolean;
   /** Staff hours. Off unless FEATURE_STAFF_TIMESHEETS is on. */
   staffTimesheets?: boolean;
+  /** Pay day. Off unless FEATURE_PROVIDER_PAYROLL is on. */
+  providerPayroll?: boolean;
+  /** Books. Off unless FEATURE_PROVIDER_BOOKS is on. */
+  providerBooks?: boolean;
   /** Centre tool ids that are on. Each tool flag defaults off. */
   centreTools?: string[];
   /** Document vault nav. Off unless FEATURE_FAMILY_VAULT is on. */

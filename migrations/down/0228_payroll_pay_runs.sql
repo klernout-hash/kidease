@@ -1,0 +1,17 @@
+drop table if exists payroll_centre_settings;
+drop table if exists payroll_contractor_drafts;
+drop table if exists payroll_stubs;
+drop table if exists payroll_periods;
+drop table if exists payroll_day_flags;
+drop table if exists payroll_overrides;
+drop table if exists payroll_editor_audits;
+drop table if exists payroll_editors;
+alter table payroll_employees drop column if exists wage_class;
+alter table payroll_employees drop column if exists td1_status;
+alter table payroll_employees drop column if exists end_date;
+alter table payroll_employees drop column if exists hire_date;
+alter table payroll_employees drop column if exists gst_number;
+alter table payroll_employees drop column if exists gst_registered;
+alter table payroll_employees drop column if exists contractor_basis;
+alter table payroll_employees drop column if exists worker_type;
+drop index if exists payroll_punches_one_open_idx;

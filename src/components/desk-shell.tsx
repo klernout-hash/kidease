@@ -195,6 +195,8 @@ export function DeskShell({
     coparentLink: session?.coparentLink,
     coparentEmail: session?.coparentEmail,
     staffTimesheets: session?.staffTimesheets,
+    providerPayroll: session?.providerPayroll,
+    providerBooks: session?.providerBooks,
     centreTools: session?.centreTools,
     familyVault: session?.familyVault,
     careDesk: session?.careDesk,

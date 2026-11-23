@@ -100,6 +100,9 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "screening", label: "Screening", hint: "Required documents", labelKey: "listingCoachOpenScreening", hintKey: "deskNavScreeningHint", href: "/provider", search: { desk: "screening" } },
     { id: "learning", label: "Learning", hint: "Goals, stories, and plans", labelKey: "learningNav", hintKey: "learningNavHint", href: "/provider", search: { desk: "learning" } },
     { id: "hours", label: "Hours", hint: "Clock in and clock out", labelKey: "staffHoursNav", hintKey: "staffHoursNavHint", href: "/provider", search: { desk: "hours" } },
+    { id: "shift", label: "My shift", hint: "Check in and check out", labelKey: "navMyShift", href: "/provider", search: { desk: "shift" } },
+    { id: "pay", label: "Pay day", hint: "Pay your staff", labelKey: "navPayDay", href: "/provider", search: { desk: "pay" } },
+    { id: "books", label: "Books", hint: "Money in and money out", labelKey: "navBooks", href: "/provider", search: { desk: "books" } },
     { id: "tools", label: "Centre tools", hint: "Menus, checklists, billing helpers", labelKey: "centreToolsNav", hintKey: "centreToolsNavHint", href: "/provider", search: { desk: "tools" } },
     { id: "centre-care", label: "Care", hint: "Check-in, logs, and family files", labelKey: "dailyCare", hintKey: "dailyCareHint", href: "/provider", search: { desk: "care" } },
     { id: "money", label: "Earnings", hint: "Payouts, invoices, and payment history", labelKey: "deskNavMoney", hintKey: "deskNavMoneyHint", href: "/provider", search: { desk: "money" } },
@@ -168,6 +171,9 @@ export type DaycareDesk =
   | "hours"
   | "tools"
   | "care"
+  | "pay"
+  | "books"
+  | "shift"
   | "documents"
   | "contracts";
 
@@ -194,6 +200,9 @@ const PROVIDER_DESK_IDS: readonly DaycareDesk[] = [
   "hours",
   "tools",
   "care",
+  "pay",
+  "books",
+  "shift",
 ];
 
 /** Direct /provider?desk=requests stays on Requests even if the router search is empty on first paint. */
@@ -245,7 +254,10 @@ export function providerNavSearch(id: string): { desk: DaycareDesk } {
     id === "learning" ||
     id === "hours" ||
     id === "tools" ||
-    id === "care"
+    id === "care" ||
+    id === "pay" ||
+    id === "books" ||
+    id === "shift"
   ) {
     return { desk: id };
   }
@@ -334,6 +346,10 @@ type DeskNavOpts = {
   coparentEmail?: boolean;
   /** Staff hours. Hidden until FEATURE_STAFF_TIMESHEETS is on. */
   staffTimesheets?: boolean;
+  /** Pay day. Hidden until FEATURE_PROVIDER_PAYROLL is on. Owner only. */
+  providerPayroll?: boolean;
+  /** Books. Hidden until FEATURE_PROVIDER_BOOKS is on. Owner only. */
+  providerBooks?: boolean;
   /** Centre tool ids that are on. Empty hides the Centre tools desk. */
   centreTools?: string[];
   /** Parent document vault. Hidden until FEATURE_FAMILY_VAULT is on. */
@@ -375,6 +391,8 @@ const OWNER_ONLY_NAV = new Set([
   "claim",
   "employees",
   "post-job",
+  "pay",
+  "books",
 ]);
 
 const PARENT_TOOL_IDS = new Set<string>(CENTRE_TOOLS.filter((tool) => tool.parent && tool.id !== "offline").map((tool) => tool.id));
@@ -399,6 +417,9 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.id === "learning") return opts?.curriculumPack === true;
     if (item.id === "family") return opts?.coparentLink === true || opts?.coparentEmail === true;
     if (item.id === "hours") return opts?.staffTimesheets === true;
+    if (item.id === "shift") return opts?.providerPayroll === true;
+    if (item.id === "pay") return opts?.providerPayroll === true;
+    if (item.id === "books") return opts?.providerBooks === true;
     if (item.id === "tools") {
       const canEditBills = opts?.centreOwner === true || opts?.centreGrants?.bills === "edit";
       return toolsForBillAccess(opts?.centreTools ?? [], canEditBills).length > 0;

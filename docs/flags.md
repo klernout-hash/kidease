@@ -297,6 +297,20 @@ A paused screen says what is off and offers a way to search.
 
 `FEATURE_COMPARE_PARENT_FEE` is on. Compare shows the fee parents pay and the distance from a saved commute address. A centre with no confirmed fee says “Ask the centre”. Nothing is sent.
 
+`FEATURE_PROVIDER_PAYROLL` is off. The centre owner can open Pay day: check-in, hours, a practice pay day, and the government-money jar. Staff see only their own check-in and hours. No money moves. The sandbox partner does not send pay.
+- When on, Pay day works out CPP, CPP2, QPP, EI, QPIP, and federal and provincial tax for all 13 provinces and territories from CRA T4127 (July 2026 and January 2027 editions) and Revenu Québec 2026 amounts. Pay it cannot work out in full (pay dates before July 1, 2026, Quebec pay dated in 2027) is blocked, not shown as a partial number. Bonuses use CRA's bonus method (Revenu Québec's gratuity method in Quebec).
+- Minimum wage for every province and territory, with history, is checked against the rate in force on each day worked. Under the minimum blocks Approve. Student rates (Ontario, Alberta) apply only when the owner marks the person.
+- The owner can give pay access (`payroll_editors`, audited in `payroll_editor_audits`). The owner or a payroll editor can do everything on Pay day, including approve. They can change a day's hours, the rate, or the pay type with a reason. Each change is one statement with a stale-edit guard and an append-only row (who, when, old, new, reason). Approved periods lock; later changes are corrections.
+- Contractors: agreed flat or base amount, no deductions, optional GST/HST, invoice draft only, T4A box 048 at year end.
+- Accountant pack (CSV + printable PDF) and a read-only JSON server function for the owner. The Xero journal CSV is included only when `FEATURE_XERO_SYNC` is on.
+- Migrations `0225`–`0228` are additive and are not applied by this PR.
+
+`FEATURE_PROVIDER_BOOKS` is off. Money in and money out from saved fees. No Stripe call. Child care fees stay exempt.
+
+`FEATURE_XERO_SYNC` is off. A CSV only. KidEase does not call Xero.
+
+`FEATURE_PAYROLL_ALERTS` is off. Pay-date reminders are not created. `FEATURE_PAYROLL_ALERTS_LIVE` is off. Even when alerts are on, this build does not email, push, or text, and it does not replay old dates.
+
 `FEATURE_STAFF_JOB_BOARD` is off. When on, `/jobs` lets a staff member build one profile (name, province certificate level and end date, first aid end date, years, rooms, days, times, kind of job, start date, city and travel distance, languages, one-line highlights, optional private resume, who can find them). `/jobs/post` lets a daycare post a job in 3 steps (role and level, days and pay range, about the centre), see applicants and people open to work, invite, move each step and keep a checklist (certificate, first aid, background check from `background_check_records` when that table exists, references).
 - **Privacy:** a daycare sees only first name, published certificate level, coarse area and general availability until the person applies there, accepts that daycare's invite, or works there. Full name, email, phone, postal code and resume come after. Closed jobs retain applicants but stop new discovery and invites. A staff member can hide from the daycare they work at now.
 - **Matching:** a fixed score in `src/lib/staff-jobs.ts` with reasons in plain words (“ECE II · 4 km away · available weekdays · works with toddlers”). It reads only certificate, distance from the chosen city, days, times, rooms, kind of job, years (capped at 5) and start date. It never reads name, age, gender, family status, religion, ethnicity, disability or language. Private score details and expiry flags are not shown to providers before connection. No one is hidden or turned down by the score. Quebec Law 25 notice and a “Ask a person to review” request (`staff_match_review_requests`) are on both sides.

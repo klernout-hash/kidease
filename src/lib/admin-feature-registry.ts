@@ -223,6 +223,11 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_SAVED_CENTRE_AGE_ALERTS: "parent",
   FEATURE_SEARCH_MEMORY: "parent",
   FEATURE_COMPARE_PARENT_FEE: "parent",
+  FEATURE_PROVIDER_PAYROLL: "daycare",
+  FEATURE_PROVIDER_BOOKS: "daycare",
+  FEATURE_XERO_SYNC: "daycare",
+  FEATURE_PAYROLL_ALERTS: "daycare",
+  FEATURE_PAYROLL_ALERTS_LIVE: "admin",
   FEATURE_STAFF_JOB_BOARD: "daycare",
 };
 
