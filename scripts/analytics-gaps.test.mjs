@@ -33,7 +33,7 @@ test("C7: the listing page sends exactly one listing_viewed, always with listing
   assert.match(effect, /viewedListingId\.current === id\) return;/);
   assert.match(effect, /viewedListingId\.current = id;/);
   const events = src("src/lib/ranking/events.ts");
-  assert.match(events, /"province",\n  "surface",/);
+  assert.match(events, /"province",\n {2}"surface",/);
 });
 
 test("C7: login_funnel has redirected_2fa and bounced outcomes", () => {
