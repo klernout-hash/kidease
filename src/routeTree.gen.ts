@@ -84,6 +84,7 @@ import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as KioskRouteImport } from './routes/kiosk'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as MilieuxFamiliauxRouteImport } from './routes/milieux-familiaux'
@@ -187,6 +188,7 @@ import { Route as FrInvoicesRouteImport } from './routes/fr.invoices'
 import { Route as FrJobsRouteImport } from './routes/fr.jobs'
 import { Route as FrKioskRouteImport } from './routes/fr.kiosk'
 import { Route as FrLoginRouteImport } from './routes/fr.login'
+import { Route as FrLogoutRouteImport } from './routes/fr.logout'
 import { Route as FrMeetTheTeamRouteImport } from './routes/fr.meet-the-team'
 import { Route as FrMenuRouteImport } from './routes/fr.menu'
 import { Route as FrMilieuxFamiliauxRouteImport } from './routes/fr.milieux-familiaux'
@@ -742,6 +744,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LogoutRoute = LogoutRouteImport.update({
+  id: '/logout',
+  path: '/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MeetTheTeamRoute = MeetTheTeamRouteImport.update({
   id: '/meet-the-team',
   path: '/meet-the-team',
@@ -1256,6 +1263,11 @@ const FrKioskRoute = FrKioskRouteImport.update({
 const FrLoginRoute = FrLoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrLogoutRoute = FrLogoutRouteImport.update({
+  id: '/logout',
+  path: '/logout',
   getParentRoute: () => FrRoute,
 } as any)
 const FrMeetTheTeamRoute = FrMeetTheTeamRouteImport.update({
@@ -2228,6 +2240,7 @@ export interface FileRoutesByFullPath {
   '/jobs': typeof JobsRoute
   '/kiosk': typeof KioskRoute
   '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
   '/milieux-familiaux': typeof MilieuxFamiliauxRoute
@@ -2330,6 +2343,7 @@ export interface FileRoutesByFullPath {
   '/fr/jobs': typeof FrJobsRoute
   '/fr/kiosk': typeof FrKioskRoute
   '/fr/login': typeof FrLoginRoute
+  '/fr/logout': typeof FrLogoutRoute
   '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/menu': typeof FrMenuRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
@@ -2585,6 +2599,7 @@ export interface FileRoutesByTo {
   '/jobs': typeof JobsRoute
   '/kiosk': typeof KioskRoute
   '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
   '/milieux-familiaux': typeof MilieuxFamiliauxRoute
@@ -2686,6 +2701,7 @@ export interface FileRoutesByTo {
   '/fr/jobs': typeof FrJobsRoute
   '/fr/kiosk': typeof FrKioskRoute
   '/fr/login': typeof FrLoginRoute
+  '/fr/logout': typeof FrLogoutRoute
   '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/menu': typeof FrMenuRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
@@ -2943,6 +2959,7 @@ export interface FileRoutesById {
   '/jobs': typeof JobsRoute
   '/kiosk': typeof KioskRoute
   '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
   '/milieux-familiaux': typeof MilieuxFamiliauxRoute
@@ -3045,6 +3062,7 @@ export interface FileRoutesById {
   '/fr/jobs': typeof FrJobsRoute
   '/fr/kiosk': typeof FrKioskRoute
   '/fr/login': typeof FrLoginRoute
+  '/fr/logout': typeof FrLogoutRoute
   '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/menu': typeof FrMenuRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
@@ -3303,6 +3321,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/kiosk'
     | '/login'
+    | '/logout'
     | '/meet-the-team'
     | '/menu'
     | '/milieux-familiaux'
@@ -3405,6 +3424,7 @@ export interface FileRouteTypes {
     | '/fr/jobs'
     | '/fr/kiosk'
     | '/fr/login'
+    | '/fr/logout'
     | '/fr/meet-the-team'
     | '/fr/menu'
     | '/fr/milieux-familiaux'
@@ -3660,6 +3680,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/kiosk'
     | '/login'
+    | '/logout'
     | '/meet-the-team'
     | '/menu'
     | '/milieux-familiaux'
@@ -3761,6 +3782,7 @@ export interface FileRouteTypes {
     | '/fr/jobs'
     | '/fr/kiosk'
     | '/fr/login'
+    | '/fr/logout'
     | '/fr/meet-the-team'
     | '/fr/menu'
     | '/fr/milieux-familiaux'
@@ -4017,6 +4039,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/kiosk'
     | '/login'
+    | '/logout'
     | '/meet-the-team'
     | '/menu'
     | '/milieux-familiaux'
@@ -4119,6 +4142,7 @@ export interface FileRouteTypes {
     | '/fr/jobs'
     | '/fr/kiosk'
     | '/fr/login'
+    | '/fr/logout'
     | '/fr/meet-the-team'
     | '/fr/menu'
     | '/fr/milieux-familiaux'
@@ -4376,6 +4400,7 @@ export interface RootRouteChildren {
   JobsRoute: typeof JobsRoute
   KioskRoute: typeof KioskRoute
   LoginRoute: typeof LoginRoute
+  LogoutRoute: typeof LogoutRoute
   MeetTheTeamRoute: typeof MeetTheTeamRoute
   MenuRoute: typeof MenuRoute
   MilieuxFamiliauxRoute: typeof MilieuxFamiliauxRoute
@@ -5063,6 +5088,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logout': {
+      id: '/logout'
+      path: '/logout'
+      fullPath: '/logout'
+      preLoaderRoute: typeof LogoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/meet-the-team': {
@@ -5784,6 +5816,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/fr/login'
       preLoaderRoute: typeof FrLoginRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/logout': {
+      id: '/fr/logout'
+      path: '/logout'
+      fullPath: '/fr/logout'
+      preLoaderRoute: typeof FrLogoutRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/meet-the-team': {
@@ -7164,6 +7203,7 @@ interface FrRouteChildren {
   FrJobsRoute: typeof FrJobsRoute
   FrKioskRoute: typeof FrKioskRoute
   FrLoginRoute: typeof FrLoginRoute
+  FrLogoutRoute: typeof FrLogoutRoute
   FrMeetTheTeamRoute: typeof FrMeetTheTeamRoute
   FrMenuRoute: typeof FrMenuRoute
   FrMilieuxFamiliauxRoute: typeof FrMilieuxFamiliauxRoute
@@ -7260,6 +7300,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrJobsRoute: FrJobsRoute,
   FrKioskRoute: FrKioskRoute,
   FrLoginRoute: FrLoginRoute,
+  FrLogoutRoute: FrLogoutRoute,
   FrMeetTheTeamRoute: FrMeetTheTeamRoute,
   FrMenuRoute: FrMenuRoute,
   FrMilieuxFamiliauxRoute: FrMilieuxFamiliauxRoute,
@@ -7547,6 +7588,7 @@ const rootRouteChildren: RootRouteChildren = {
   JobsRoute: JobsRoute,
   KioskRoute: KioskRoute,
   LoginRoute: LoginRoute,
+  LogoutRoute: LogoutRoute,
   MeetTheTeamRoute: MeetTheTeamRoute,
   MenuRoute: MenuRoute,
   MilieuxFamiliauxRoute: MilieuxFamiliauxRoute,

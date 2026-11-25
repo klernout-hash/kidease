@@ -21,14 +21,45 @@ export function verify2faSearchNext(raw: unknown): string {
   return sanitizePostLoginNext(value) ?? "/parent";
 }
 
+/**
+ * `serverSignedIn`: what the cookie session on the server says.
+ *   - left out → the browser alone decides (older callers).
+ *   - null → the server answer is still on its way; keep waiting.
+ *   - true → signed in on the server. Show the code form even when the
+ *     browser has no user yet (A2: government sign-in bounce).
+ *   - false → only then, with the browser also signed out, leave for sign-in.
+ */
 export function decideVerify2faSessionGate(input: {
   hasUser: boolean;
   isPending: boolean;
   graceElapsed: boolean;
+  serverSignedIn?: boolean | null;
 }): Verify2faSessionPhase {
   if (input.hasUser) return "ready";
+  if (input.serverSignedIn === true) return "ready";
   if (input.isPending || !input.graceElapsed) return "wait";
+  if (input.serverSignedIn === null) return "wait";
   return "signed_out";
+}
+
+/** `/gov` or `/fr/gov` desk paths, not `/gov-terms`. */
+export function isGovDeskPath(path: string | null | undefined): boolean {
+  const clean = (String(path || "").split("?")[0] || "").trim();
+  return /^\/(fr\/)?gov(\/|$)/.test(clean);
+}
+
+/**
+ * `/login?next=/gov…` → the government sign-in page, so government sign-in
+ * has one path (it checks the email-code step itself). Null for other next.
+ */
+export function govLoginRedirectForNext(
+  next: string | null | undefined,
+  routeLocale: "en" | "fr",
+): string | null {
+  const clean = (String(next || "").split("?")[0] || "").trim();
+  if (!isGovDeskPath(clean)) return null;
+  const fr = clean.startsWith("/fr/") || routeLocale === "fr";
+  return fr ? "/fr/gov/login" : "/gov/login";
 }
 
 /** Better Auth `getSession().data.user` → the app user shape, or null. */

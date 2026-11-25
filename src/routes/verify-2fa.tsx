@@ -3,18 +3,23 @@ import { memo, useEffect, useRef, useState } from "react";
 import { ShellLite } from "@/components/shell-lite";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
-import { DeskSkeleton } from "@/components/page-skeleton";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { authClient } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
   decideVerify2faSessionGate,
+  isGovDeskPath,
   mapAuthSessionUser,
   VERIFY_2FA_SESSION_GRACE_MS,
   verify2faSearchNext,
 } from "@/lib/auth/verify-2fa-session";
 import { waitForSignedInSession } from "@/lib/auth/session-settle";
-import { getTwoFactorStatus, startTwoFactor, verifyTwoFactor } from "@/lib/server/two-factor";
+import {
+  getTwoFactorStatus,
+  getVerify2faServerSession,
+  startTwoFactor,
+  verifyTwoFactor,
+} from "@/lib/server/two-factor";
 import { hourlyOtpWaitCopy, twoFactorResendWaitCopy } from "@/lib/two-factor-start";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import {
@@ -56,6 +61,22 @@ function useVerify2faSession() {
   const { user, isPending } = useCurrentUserState();
   const [graceElapsed, setGraceElapsed] = useState(false);
   const [polledUser, setPolledUser] = useState<typeof user>(null);
+  // What the cookie session on the server says. null while the answer is on its way.
+  const [server, setServer] = useState<{ signedIn: boolean; userId: string | null } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getVerify2faServerSession()
+      .then((res) => {
+        if (!cancelled) setServer(res);
+      })
+      .catch(() => {
+        if (!cancelled) setServer({ signedIn: false, userId: null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const id = window.setTimeout(() => setGraceElapsed(true), VERIFY_2FA_SESSION_GRACE_MS);
@@ -76,14 +97,46 @@ function useVerify2faSession() {
   }, [user?.id]);
 
   const resolved = user ?? polledUser;
+  const serverUserId = server?.signedIn && server.userId ? server.userId : null;
+  // The server sees a session the browser has not picked up yet: use its id.
+  const serverUser = serverUserId ? mapAuthSessionUser({ id: serverUserId }) : null;
   return {
-    user: resolved,
+    user: resolved ?? serverUser,
     phase: decideVerify2faSessionGate({
       hasUser: Boolean(resolved),
       isPending,
       graceElapsed,
+      serverSignedIn: server === null ? null : Boolean(serverUserId),
     }),
   };
+}
+
+/** Visible while the browser and the server confirm the session. Never a blank page. */
+function Verify2faChecking() {
+  const { t } = useCopy();
+  return (
+    <main className="ke-auth-viewport mx-auto grid place-items-center px-4 py-10" data-ke="verify-2fa-session-wait">
+      <div className="w-full max-w-md rounded-xl bg-surface p-5 shadow-card ring-1 ring-border sm:p-8" aria-busy="true">
+        <div className="flex justify-center">
+          <BrandMark size="md" />
+        </div>
+        <h1 className="mt-6 text-2xl font-semibold tracking-[-0.02em]" role="status">
+          {t("verify2faChecking")}
+        </h1>
+        <p className="mt-2 text-sm text-muted">{t("verify2faCheckingHint")}</p>
+      </div>
+    </main>
+  );
+}
+
+/** Both the browser and the server say signed out. Log it, then go to sign-in. */
+function Verify2faSignedOut({ dest }: { dest: string }) {
+  useEffect(() => {
+    if (isGovDeskPath(dest)) {
+      captureLoginFunnel({ step: "failed", reason: "gov_session_missing", native: isNative() });
+    }
+  }, [dest]);
+  return <RedirectToSignIn />;
 }
 
 function VerifyTwoFactorPage() {
@@ -98,13 +151,11 @@ export function VerifyTwoFactorScreen({ next }: { next?: string }) {
   if (phase === "wait") {
     return (
       <ShellLite>
-        <div data-ke="verify-2fa-session-wait">
-          <DeskSkeleton />
-        </div>
+        <Verify2faChecking />
       </ShellLite>
     );
   }
-  if (phase === "signed_out" || !user) return <RedirectToSignIn />;
+  if (phase === "signed_out" || !user) return <Verify2faSignedOut dest={dest} />;
 
   return (
     <ShellLite>
