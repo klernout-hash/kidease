@@ -11,6 +11,7 @@ import {
   connectChargeGate,
   connectFeeBps,
   connectInvoicePaymentSettings,
+  connectLiveEnabled,
   connectedAccountBody,
   CONNECT_FEE_BPS_DEFAULT,
   destinationChargeFields,
@@ -36,6 +37,13 @@ import {
   withoutHostedInvoice,
 } from "../src/lib/connect-payments.ts";
 import { isStripePublishableKey } from "../src/lib/stripe-browser.ts";
+import { routeStripeCall } from "../src/lib/stripe-route.ts";
+import {
+  connectOnboardingMessageKey,
+  firstSecretOnce,
+  runConnectOnboarding,
+  stripeErrorCode,
+} from "../src/lib/connect-onboarding.ts";
 import { DEFAULT_PLATFORM_FEE_BPS, platformFeeBps } from "../src/lib/stripe-methods.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -437,4 +445,149 @@ test("Connect source does not hardcode live keys or merchant ids", () => {
   assert.match(account, /connect\.enabled/);
   assert.match(account, /ParentWallet/);
   assert.match(account, /data-ke="account-delete"/);
+});
+
+/* ---------------- A1: payouts onboarding uses one Stripe mode end to end ---------------- */
+
+const FAKE_KEYS = {
+  STRIPE_SECRET_KEY: "sk_live_xxx",
+  STRIPE_PUBLISHABLE_KEY: "pk_live_xxx",
+  STRIPE_SECRET_KEY_TEST: "sk_test_xxx",
+  STRIPE_PUBLISHABLE_KEY_TEST: "pk_test_xxx",
+};
+
+const QA_CENTRE = { id: "dc_qa", slug: "sunny-centre", visibility: "public", isTest: 1, isDemo: 0 };
+const LIVE_CENTRE = { id: "dc_live", slug: "real-centre", visibility: "public", isTest: 0, isDemo: 0 };
+const OWNER = { email: "owner@example.ca", isTest: 0 };
+
+function onboardingDeps(overrides = {}) {
+  const calls = { stripe: [], records: [], saved: [] };
+  const deps = {
+    userId: "user_owner",
+    daycareId: "dc_qa",
+    ownsCentre: async () => true,
+    route: async () =>
+      routeStripeCall({ paymentsEnabled: true, liveEnabled: true, payer: OWNER, centre: QA_CENTRE, env: FAKE_KEYS }),
+    existingAccountId: async () => null,
+    saveAccount: async (id) => {
+      calls.saved.push(id);
+    },
+    stripePost: async (path, body, opts) => {
+      calls.stripe.push({ path, opts });
+      if (path === "/accounts") return { id: "acct_fake1" };
+      return { client_secret: "accs_secret_fake" };
+    },
+    accountBody: () => ({}),
+    sessionBody: (id) => ({ account: id }),
+    record: async (row) => {
+      calls.records.push(row);
+    },
+    nonce: () => "n1",
+    ...overrides,
+  };
+  return { deps, calls };
+}
+
+test("A1: a QA centre with a non-QA owner gets test mode and the pk_test_ key", async () => {
+  const { deps, calls } = onboardingDeps();
+  const res = await runConnectOnboarding(deps);
+  assert.equal(res.ok, true);
+  assert.equal(res.mode, "test");
+  assert.ok(res.publishableKey?.startsWith("pk_test_"));
+  assert.equal(res.clientSecret, "accs_secret_fake");
+  assert.deepEqual(calls.saved, ["acct_fake1"]);
+  // The secret used for the session is the test secret, never live.
+  for (const call of calls.stripe) assert.ok(call.opts.secret.startsWith("sk_test_"));
+  assert.equal(calls.records.length, 0);
+});
+
+test("A1: a live centre with KIDEASE_CONNECT_LIVE=1 is live with the pk_live_ key", async () => {
+  const { deps } = onboardingDeps({
+    daycareId: "dc_live",
+    route: async () =>
+      routeStripeCall({ paymentsEnabled: true, liveEnabled: connectLiveEnabled({ KIDEASE_CONNECT_LIVE: "1" }), payer: OWNER, centre: LIVE_CENTRE, env: FAKE_KEYS }),
+  });
+  const res = await runConnectOnboarding(deps);
+  assert.equal(res.ok, true);
+  assert.equal(res.mode, "live");
+  assert.ok(res.publishableKey?.startsWith("pk_live_"));
+});
+
+test("A1: off, live and missing keys stay separate reasons and are logged", async () => {
+  const off = onboardingDeps({ route: async () => routeStripeCall({ paymentsEnabled: false, liveEnabled: true, payer: OWNER, centre: LIVE_CENTRE, env: FAKE_KEYS }) });
+  assert.equal((await runConnectOnboarding(off.deps)).reason, "off");
+  assert.equal(off.calls.records[0].surface, "connect_onboarding");
+
+  const live = onboardingDeps({ route: async () => routeStripeCall({ paymentsEnabled: true, liveEnabled: false, payer: OWNER, centre: LIVE_CENTRE, env: FAKE_KEYS }) });
+  const liveRes = await runConnectOnboarding(live.deps);
+  assert.equal(liveRes.reason, "live");
+  assert.equal(liveRes.mode, "live");
+  assert.equal(live.calls.stripe.length, 0);
+
+  const missing = onboardingDeps({
+    route: async () => routeStripeCall({ paymentsEnabled: true, liveEnabled: true, payer: OWNER, centre: QA_CENTRE, env: { STRIPE_SECRET_KEY: "sk_live_xxx", STRIPE_PUBLISHABLE_KEY: "pk_live_xxx" } }),
+  });
+  const missingRes = await runConnectOnboarding(missing.deps);
+  assert.equal(missingRes.reason, "missing");
+  assert.equal(missingRes.mode, "test");
+  assert.equal(missing.calls.records[0].surface, "connect_onboarding");
+  assert.equal(missing.calls.stripe.length, 0);
+});
+
+test("A1: a non-owner gets not_owner, not missing", async () => {
+  const { deps, calls } = onboardingDeps({ ownsCentre: async () => false });
+  const res = await runConnectOnboarding(deps);
+  assert.equal(res.ok, false);
+  assert.equal(res.reason, "not_owner");
+  assert.equal(calls.stripe.length, 0);
+  assert.equal(calls.records[0].surface, "connect_onboarding");
+});
+
+test("A1: a Stripe error returns stripe_error with its code and records connect_onboarding", async () => {
+  const { deps, calls } = onboardingDeps({
+    stripePost: async () => {
+      const err = new Error("Your platform needs to accept the platform-controls profile. sk_test_abcdefgh123");
+      err.code = "platform_account_required";
+      throw err;
+    },
+  });
+  const res = await runConnectOnboarding(deps);
+  assert.equal(res.ok, false);
+  assert.equal(res.reason, "stripe_error");
+  assert.equal(res.code, "platform_account_required");
+  assert.equal(calls.records.length, 1);
+  assert.equal(calls.records[0].surface, "connect_onboarding");
+  assert.equal(stripeErrorCode(new Error("no code")), "unknown");
+  assert.equal(stripeErrorCode({ code: "Bad Code!" }), "unknown");
+});
+
+test("A1: Connect.js gets the first secret once, then a fresh one", async () => {
+  let fetched = 0;
+  const next = firstSecretOnce("first_secret", async () => `fresh_${++fetched}`);
+  assert.equal(await next(), "first_secret");
+  assert.equal(await next(), "fresh_1");
+  assert.equal(await next(), "fresh_2");
+});
+
+test("A1: each reason has an EN and FR message", () => {
+  const en = read("src/lib/copy-en.ts");
+  const fr = read("src/lib/copy-fr.ts");
+  for (const reason of ["off", "live", "missing", "not_owner", "stripe_error"]) {
+    const key = connectOnboardingMessageKey(reason);
+    assert.match(en, new RegExp(`\\b${key}: "`), key);
+    assert.match(fr, new RegExp(`\\b${key}: "`), key);
+  }
+  assert.match(en, /connectErrStripe: "Stripe couldn't start setup \(code \{code\}\)/);
+});
+
+test("A1: earnings-payouts starts Connect.js with the session's key, not connect.publishableKey", () => {
+  const src = read("src/components/earnings-payouts.tsx");
+  assert.doesNotMatch(src, /loadConnectInstance\(\s*publishableKey/);
+  assert.doesNotMatch(src, /connect\?*\.publishableKey/);
+  assert.match(src, /loadConnectInstance\(first\.publishableKey, firstSecretOnce\(first\.clientSecret/);
+  assert.match(src, /withReauth\(/);
+  const server = read("src/lib/server/connect-payments.ts");
+  assert.match(server, /runConnectOnboarding\(\{/);
+  assert.match(server, /assertPersistentStepUp\(context\.userId, "payout_bank"\)/);
+  assert.match(server, /record: recordStripeCheckoutError/);
 });

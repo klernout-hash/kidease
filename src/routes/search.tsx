@@ -37,8 +37,9 @@ import { originFromDeviceFix, productHomeOrigin, readClientTimeZone, searchOrigi
 import { BootPending } from "@/components/boot-pending";
 import { CARD_SIZES, CARD_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
 import { ORIGIN_BUDGET_MS, PAINT_BUDGET_MS, SQL_SETTLE_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
+import { captureLoaderFailure, LOADER_WATCHDOG_MS } from "@/lib/loader-settle";
 import { bootSearchOrigin } from "@/lib/search-origin";
-import { isGenericCareQuery } from "@/lib/generic-care-query";
+import { isGenericCareQuery, nearYouHeadline, searchPlaceFromQuery } from "@/lib/generic-care-query";
 import {
   anchorsForSearchMap,
   cityParamFromUnknown,
@@ -130,6 +131,7 @@ import {
 import { standardAgeLabel } from "@/lib/standard-age-groups";
 import {
   EXPLORE_CATEGORY_COPY,
+  canonicalExploreCategory,
   countExploreCategories,
   exploreOpeningsSelected,
   formatExploreRailAges,
@@ -147,6 +149,7 @@ import { noteHappyMoment } from "@/lib/store-review";
 import { saveSearch } from "@/lib/server/saved-searches";
 import {
   defaultSearchName,
+  searchSheetFilterCount,
   takeSavedSearchToApply,
   type AgeBand,
   type SavedSearchFilters,
@@ -244,7 +247,7 @@ export async function searchLoader({ location, abortController }: { location: { 
             location.search && typeof location.search === "object" && "name" in location.search
               ? String((location.search as { name?: unknown }).name || "")
               : ""
-          ).trim() || (genericCare ? rawQ : "")
+          ).trim()
         ),
         live: readLiveSearchFlag(
           location.search && typeof location.search === "object" && "live" in location.search
@@ -410,8 +413,12 @@ export function SearchScreen({
   boot: Awaited<ReturnType<typeof searchLoader>>;
   incoming: ReturnType<typeof searchValidateSearch>;
 }) {
+  // A care word in `q` ("daycare", "garderie") is not a place: drop it so the
+  // search runs near the visitor's saved or IP place (C6).
+  const genericCare = searchPlaceFromQuery(coerceSearchText(incomingRaw.q)).genericCare;
   const incoming = useMemo(() => {
-    const q = coerceSearchText(incomingRaw.q).slice(0, 160) || undefined;
+    const typed = coerceSearchText(incomingRaw.q).slice(0, 160);
+    const q = searchPlaceFromQuery(typed).place || undefined;
     const city = coerceSearchText(incomingRaw.city).slice(0, 80) || undefined;
     if (q === incomingRaw.q && (city || undefined) === (incomingRaw.city || undefined)) return incomingRaw;
     return { ...incomingRaw, q, city };
@@ -545,9 +552,7 @@ export function SearchScreen({
   const [claimVerifiedOnly, setClaimVerifiedOnly] = useState(readLiveSearchFlag(incoming.live));
   const [needBy, setNeedBy] = useState(incoming.from ?? "");
   const [needUntil, setNeedUntil] = useState(incoming.to ?? "");
-  const [nameQuery, setNameQuery] = useState(
-    (incoming.name || (isGenericCareQuery(incoming.q) ? incoming.q : "") || "").trim(),
-  );
+  const [nameQuery, setNameQuery] = useState((incoming.name || "").trim());
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [careType, setCareType] = useState<CareType | "any">("any");
   const [schoolAgeOnly, setSchoolAgeOnly] = useState(() => schoolAgeOnlyFromSearch(incoming));
@@ -598,16 +603,8 @@ export function SearchScreen({
       if (cancelled) return;
       bootHoldUrl.current = false;
       const label = useAppStore.getState().origin.label.trim();
-      if (place && isGenericCareQuery(place)) {
-        // Keep the care word as a name keyword; do not treat it as the place pin.
-        writeExploreSearch({
-          q: label || undefined,
-          name: place,
-          from: needBy,
-          to: needUntil,
-        });
-        return;
-      }
+      // A care word stays in the URL so the heading keeps saying "near you".
+      if (genericCare) return;
       if (!place && label && !(incoming.q || "").trim()) {
         writeExploreSearch({ q: label, name: nameQuery, from: needBy, to: needUntil });
       }
@@ -617,7 +614,7 @@ export function SearchScreen({
     };
     // The URL write waits until GPS or the Winnipeg fallback settles.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- rerun only when the place in the URL changes
-  }, [incoming.q, incoming.city, boot.origin]);
+  }, [incoming.q, incoming.city, boot.origin, genericCare]);
 
   useEffect(() => {
     if (incoming.sort) setSort(incoming.sort);
@@ -687,7 +684,7 @@ export function SearchScreen({
   }, [incoming.live]);
 
   useEffect(() => {
-    setNameQuery((incoming.name || (isGenericCareQuery(incoming.q) ? incoming.q : "") || "").trim());
+    setNameQuery((incoming.name || "").trim());
   }, [incoming.name, incoming.q]);
 
   useEffect(() => {
@@ -933,8 +930,9 @@ export function SearchScreen({
       setPageLimitReached(false);
       setResultEvidence(searchEvidence());
     }
-    const fail = () => {
+    const fail = (error?: unknown) => {
       if (!current()) return;
+      captureLoaderFailure("search", error ?? new Error("search-timeout"), error === undefined ? "timeout" : "error");
       gate.invalidate();
       controller.abort();
       setItems((rows) => rows ?? []);
@@ -944,7 +942,8 @@ export function SearchScreen({
       setPageLimitReached(false);
       setRefreshing(false);
     };
-    const watchdog = window.setTimeout(fail, 12_000);
+    // Never leave "Loading centres…" up: settle to the error state with Try again.
+    const watchdog = window.setTimeout(() => fail(), LOADER_WATCHDOG_MS);
     const tmr = window.setTimeout(() => {
       if (!current()) return;
       // Search reads use server memoization. Direct calls keep a fresh Retry out
@@ -990,14 +989,16 @@ export function SearchScreen({
     const current = () => live && gate.accepts(ticket);
     setMapFailedKey(null);
     setMapPendingKey(searchMapKey);
-    const fail = () => {
+    const fail = (error?: unknown) => {
       if (!current()) return;
+      captureLoaderFailure("search", error ?? new Error("search-timeout"), error === undefined ? "timeout" : "error");
       gate.invalidate();
       controller.abort();
       setMapFailedKey(searchMapKey);
       setMapPendingKey(null);
     };
-    const watchdog = window.setTimeout(fail, 12_000);
+    // Never leave "Loading centres…" up: settle to the error state with Try again.
+    const watchdog = window.setTimeout(() => fail(), LOADER_WATCHDOG_MS);
     void searchDaycareMap({ data: { ...requestData.current, countDemand: false, refresh: retryRequest?.mapKey === searchMapKey }, signal: controller.signal })
       .then((result) => {
         if (!current()) return;
@@ -1636,27 +1637,29 @@ export function SearchScreen({
     (selectedAges.length ? 1 : 0) +
     (openingsOn ? 1 : 0) +
     (resolvedCat && !isRailAge(resolvedCat) ? 1 : 0);
-  const sheetFilterCount =
-    (avail !== "any" ? 1 : 0) +
-    (ten ? 1 : 0) +
-    (meals ? 1 : 0) +
-    (outdoor ? 1 : 0) +
-    (inclusive ? 1 : 0) +
-    (extended ? 1 : 0) +
-    (infantOnly ? 1 : 0) +
-    (catchmentOnly ? 1 : 0) +
-    (confirmedOnly ? 1 : 0) +
-    (readyOnly ? 1 : 0) +
-    (claimVerifiedOnly ? 1 : 0) +
-    (favoritesOnly ? 1 : 0) +
-    (careType !== "any" ? 1 : 0) +
-    (isFacilityExploreCategory(resolvedExploreCategory(incoming)) ? 1 : 0) +
-    (parsePioneerSearch(incoming as Record<string, unknown>).cwelcc ? 1 : 0) +
-    (parsePioneerSearch(incoming as Record<string, unknown>).inclusive ? 1 : 0) +
-    (parsePioneerSearch(incoming as Record<string, unknown>).meals ? 1 : 0) +
-    (parsePioneerSearch(incoming as Record<string, unknown>).subsidy ? 1 : 0) +
-    (parsePioneerSearch(incoming as Record<string, unknown>).spoken ? 1 : 0) +
-    (workOrigin && anchorMode !== "home" ? 1 : 0);
+  const pioneerFilters = parsePioneerSearch(incoming as Record<string, unknown>);
+  const sheetFilterCount = searchSheetFilterCount({
+    filters: {
+      avail,
+      ten,
+      meals,
+      outdoor,
+      inclusive,
+      extended,
+      infantOnly,
+      catchmentOnly,
+      confirmedOnly,
+      readyOnly,
+      claimVerifiedOnly,
+    },
+    favoritesOnly,
+    careType,
+    // Only `?cat=`. A category worked out from the age rail is not a filter.
+    urlFacilityCategory: isFacilityExploreCategory(canonicalExploreCategory(incoming.cat)),
+    pioneer: pioneerFilters,
+  });
+  // The saved work address is a commute anchor, not a filter: it gets its own chip.
+  const commuteAnchorOn = Boolean(workOrigin && anchorMode !== "home");
   const anchors = viewAnchors;
   const catalog = items ?? [];
   const fabric = areaPresence(catalog);
@@ -1779,7 +1782,8 @@ export function SearchScreen({
     originSource === "manual" ||
     originSource === "saved" ||
     originSource === "ip";
-  const headingCity = locationKnown ? city : t("searchPlacePending");
+  const nearYou = genericCare && !(incoming.q || incoming.city || "").trim();
+  const headingCity = nearYou ? nearYouHeadline(locale) : locationKnown ? city : t("searchPlacePending");
   const whereSet = Boolean(whereLabel);
   const mapOrigin = anchors.primary;
   const nameSearch = Boolean(nameQuery.trim());
@@ -1982,6 +1986,7 @@ export function SearchScreen({
           <div className="contents md:hidden">
             <MobileSearchResults
               draft={mobileDraft}
+              nearYou={nearYou}
               countLabel={items === null || refreshing ? t("searchCountLoading") : mobileRows.length !== visualItems.length
                 ? locale === "fr" ? `${mobileRows.length} centres affichés sur cette page` : `${mobileRows.length} centres shown on this page`
                 : searchCountLine}
@@ -2256,6 +2261,13 @@ export function SearchScreen({
           }}
         />
         </div>
+        {!filters && commuteAnchorOn && workOrigin?.label ? (
+          <p className="mt-2 text-sm" data-ke="search-commute-chip">
+            <span className="inline-flex min-h-11 max-w-full items-center truncate rounded-full bg-surface-2 px-3 font-medium ring-1 ring-inset ring-border">
+              {t("searchCommuteChip").replace("{place}", workOrigin.label)}
+            </span>
+          </p>
+        ) : null}
         {!filters && sheetFilterCount > 0 ? (
           <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" data-ke="filters-applied">
             <span>{locale === "fr" ? `Filtres appliqués · ${sheetFilterCount}` : `Filters applied · ${sheetFilterCount}`}</span>

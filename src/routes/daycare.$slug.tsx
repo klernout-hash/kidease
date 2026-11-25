@@ -4,7 +4,7 @@ import { parentLoginSearch, parentSignupSearch } from "@/lib/auth/parent-login";
 import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { ShareListingButton } from "@/components/share-button";
 import { FreeListingShareActions } from "@/components/free-listing-share";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { ListingHeroGallery } from "@/components/listing-hero-gallery";
@@ -300,18 +300,22 @@ export function Listing() {
     return () => window.removeEventListener("kidease-compare", sync);
   }, [data]);
 
+  // Exactly one listing_viewed per listing per page view, always with
+  // listing_id. A refetch of `data` must not send it again (C7).
+  const viewedListingId = useRef<string | null>(null);
   useEffect(() => {
     if (!data) return;
-    const ctx = rankingContextFor(data.daycare.id);
-    trackProductEvent("listing_viewed", {
-      province: provinceCode(data.daycare.province),
-      surface: "listing",
-    });
+    const id = data.daycare.id;
+    if (!id || viewedListingId.current === id) return;
+    viewedListingId.current = id;
+    const ctx = rankingContextFor(id);
     captureRankingEvent("listing_viewed", {
-      listing_id: data.daycare.id,
+      listing_id: id,
       position: ctx.position,
       sort: ctx.sort,
       variant: ctx.variant,
+      province: provinceCode(data.daycare.province),
+      surface: "listing",
     });
   }, [data]);
 

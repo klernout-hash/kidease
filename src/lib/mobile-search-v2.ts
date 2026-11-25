@@ -7,6 +7,7 @@
 import { localIsoDate } from "./explore-search.ts";
 import { geocode } from "./geo.ts";
 import { suggestLocalPlaces } from "./place-suggest.ts";
+import { nearYouHeadline } from "./generic-care-query.ts";
 
 export const MOBILE_SEARCH_FLAG = "FEATURE_MOBILE_SEARCH_V2";
 
@@ -224,8 +225,9 @@ export function whoAnswer(draft: MobileSearchDraft, locale = "en"): string {
   return tag === "fr" ? `${total} enfants` : `${total} children`;
 }
 
-export function resultsHeadline(where: string, locale = "en"): string {
+export function resultsHeadline(where: string, locale = "en", nearYou = false): string {
   const place = where.trim();
+  if (!place && nearYou) return nearYouHeadline(locale);
   if (!place) return locale === "fr" ? "Garderies" : "Child care";
   return locale === "fr" ? `Garderies à ${place}` : `Child care in ${place}`;
 }

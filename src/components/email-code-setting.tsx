@@ -3,6 +3,29 @@ import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { getEmailCodePreference, setParentEmailCode } from "@/lib/server/second-factor";
 import { useCopy } from "@/lib/use-copy";
+import {
+  HEALTH_BANNER_SNOOZE_KEY,
+  healthBannerCanSnooze,
+  healthBannerVisible,
+} from "@/lib/second-factor-policy";
+
+function readBannerSnooze(): number | null {
+  try {
+    const raw = window.localStorage.getItem(HEALTH_BANNER_SNOOZE_KEY);
+    const at = raw ? Number(raw) : NaN;
+    return Number.isFinite(at) ? at : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeBannerSnooze(at: number): void {
+  try {
+    window.localStorage.setItem(HEALTH_BANNER_SNOOZE_KEY, String(at));
+  } catch {
+    /* private mode: the banner hides for this visit only */
+  }
+}
 
 export function EmailCodeSetting() {
   const { t } = useCopy();
@@ -64,14 +87,26 @@ export function EmailCodeSetting() {
 
 export function HealthSecondFactorBanner() {
   const { t, locale } = useCopy();
-  const [state, setState] = useState<{ prompt: boolean; locked: boolean; graceEndsAt: number | null } | null>(null);
+  const [state, setState] = useState<{
+    prompt: boolean;
+    locked: boolean;
+    graceEndsAt: number | null;
+    snoozedAt: number | null;
+    checkedAt: number;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     void getEmailCodePreference()
       .then((row) => {
         if (!cancelled) {
-          setState({ prompt: row.providerPrompt, locked: row.providerLocked, graceEndsAt: row.graceEndsAt });
+          setState({
+            prompt: row.providerPrompt,
+            locked: row.providerLocked,
+            graceEndsAt: row.graceEndsAt,
+            snoozedAt: readBannerSnooze(),
+            checkedAt: Date.now(),
+          });
         }
       })
       .catch(() => {
@@ -83,6 +118,10 @@ export function HealthSecondFactorBanner() {
   }, []);
 
   if (!state?.prompt) return null;
+  if (!healthBannerVisible({ prompt: state.prompt, locked: state.locked, snoozedAt: state.snoozedAt, now: state.checkedAt })) {
+    return null;
+  }
+  const canSnooze = healthBannerCanSnooze({ prompt: state.prompt, locked: state.locked });
   const date = state.graceEndsAt
     ? new Date(state.graceEndsAt).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", { month: "long", day: "numeric" })
     : "";
@@ -90,11 +129,28 @@ export function HealthSecondFactorBanner() {
   return (
     <section className="mb-4 rounded-xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="health-second-factor">
       <p className="text-sm">{message}</p>
-      <Button type="button" className="mt-3 min-h-11" asChild>
-        <Link to="/verify-2fa" search={{ next: "/provider" }}>
-          {t("healthCodeAction")}
-        </Link>
-      </Button>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Button type="button" className="min-h-11" asChild>
+          <Link to="/verify-2fa" search={{ next: "/provider" }}>
+            {t("healthCodeAction")}
+          </Link>
+        </Button>
+        {canSnooze ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11"
+            data-ke="health-second-factor-snooze"
+            onClick={() => {
+              const at = Date.now();
+              writeBannerSnooze(at);
+              setState((prev) => (prev ? { ...prev, snoozedAt: at, checkedAt: at } : prev));
+            }}
+          >
+            {t("healthCodeSnooze")}
+          </Button>
+        ) : null}
+      </div>
     </section>
   );
 }

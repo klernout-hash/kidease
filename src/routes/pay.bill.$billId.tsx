@@ -7,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { LedgerHonesty } from "@/components/listing-status-badge";
-import { BillStatusBadge } from "@/components/bill-status";
+import { BillStatusBadge, PaymentStateBadge, PaymentStateNote, RefundNote } from "@/components/bill-status";
 import { createBillCheckout, getBill } from "@/lib/server/billing";
+import { getBillNextAction } from "@/lib/server/connect-payments";
+import { loadStripeClient } from "@/lib/stripe-browser";
+import { failureReasonText } from "@/lib/payment-state";
 import { useCopy } from "@/lib/use-copy";
 import { money } from "@/lib/utils";
 import { periodLabel } from "@/lib/stripe-methods";
@@ -117,7 +120,48 @@ function PayBillPage() {
   }
 
   const alreadyPaid = bill?.status === "paid";
-  const canPay = Boolean(stripeLive && bill?.status === "sent" && !confirming && !alreadyPaid);
+  const paymentState = bill?.status === "sent" ? (bill.paymentState ?? null) : null;
+  // Processing: a bank debit (PAD) is on its way, so paying again could charge twice.
+  // Requires action: the parent confirms the existing payment instead.
+  const waitingOnStripe = paymentState === "processing" || paymentState === "requires_action";
+  const canPay = Boolean(stripeLive && bill?.status === "sent" && !confirming && !alreadyPaid && !waitingOnStripe);
+
+  async function confirmWithBank() {
+    if (!bill || paymentState !== "requires_action") return;
+    setBusy(true);
+    try {
+      const res = await getBillNextAction({ data: bill.id });
+      if (!res.ok || !res.clientSecret || !res.publishableKey) {
+        toast.error(t("actionFailed"));
+        return;
+      }
+      // The mode's own publishable key, so the browser and server use the same Stripe mode.
+      const stripe = await loadStripeClient(res.publishableKey);
+      if (!stripe) {
+        toast.error(t("walletNotSetUp"));
+        return;
+      }
+      const result = await stripe.handleNextAction({ clientSecret: res.clientSecret });
+      if (result.error) {
+        toast.error(publicPayMessage(result.error.message ? new Error(result.error.message) : null, t("actionFailed")));
+        return;
+      }
+      toast.success(t("billConfirmDone"));
+      setConfirming(true);
+      window.setTimeout(() => {
+        void getBill({ data: bill.id })
+          .then((latest) => {
+            setBill(latest.bill);
+            setConfirming(false);
+          })
+          .catch(() => setConfirming(false));
+      }, 2500);
+    } catch (err) {
+      toast.error(publicPayMessage(err, t("actionFailed")));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function pay() {
     if (!canPay || !bill) return;
@@ -170,6 +214,7 @@ function PayBillPage() {
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-xs font-medium uppercase tracking-wide text-subtle">{t("bill")}</p>
               <BillStatusBadge status={bill.status} />
+              <PaymentStateBadge state={paymentState} />
             </div>
             <p className="mt-1 font-display text-2xl">{bill.daycareName}</p>
             <p className="mt-1 text-sm text-muted">
@@ -199,11 +244,34 @@ function PayBillPage() {
             <p className="mt-1 text-xs text-subtle">
               {t("payCadNote")} · {bill.number}
             </p>
+            <RefundNote bill={bill} className="mt-2" />
             <p className="mt-3 text-sm text-muted">{t("connectFeeParentPay")}</p>
           </div>
         ) : null}
 
-        {bill && !canPay && !alreadyPaid ? (
+        {paymentState ? (
+          <div className="mt-6 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="bill-payment-state">
+            <PaymentStateNote
+              state={paymentState}
+              reason={failureReasonText(bill?.lastErrorCode, locale === "fr" ? "fr" : "en")}
+            />
+            {paymentState === "requires_action" ? (
+              <Button className="w-full" disabled={busy || confirming} onClick={() => void confirmWithBank()}>
+                <Lock className="size-4" />
+                {t("billConfirmPayment")}
+              </Button>
+            ) : null}
+            {paymentState === "failed" ? (
+              <Button variant="secondary" className="w-full" asChild>
+                <Link to="/account" search={{ section: "wallet", fix: bill?.id }}>
+                  {t("billUpdateCard")}
+                </Link>
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {bill && !canPay && !alreadyPaid && !paymentState ? (
           <div className="mt-6 space-y-3 rounded-xl bg-surface-2 p-4">
             <p className="text-sm text-muted">
               {bill.status === "void"

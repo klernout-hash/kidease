@@ -243,7 +243,7 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
   );
 }
 
-export function CentreFamilyDocs() {
+export function CentreFamilyDocs({ hideWhenEmpty = false }: { hideWhenEmpty?: boolean } = {}) {
   const { t } = useCopy();
   const [open, setOpen] = useState(false);
   const [documents, setDocuments] = useState<
@@ -287,6 +287,8 @@ export function CentreFamilyDocs() {
   }, [open]);
 
   if (!open) return null;
+  // On the Requests desk, 0 documents shows nothing: the page leads with requests.
+  if (hideWhenEmpty && documents.length === 0) return null;
 
   return (
     <section className="min-w-0 max-w-full overflow-hidden rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="centre-family-docs">

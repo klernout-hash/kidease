@@ -40,12 +40,28 @@ import {
 } from "@/lib/connect-payments";
 import { ensureCanadaStripeCustomer, stripeRequest } from "@/lib/server/stripe-checkout";
 import {
-  centreUsesTestStripe,
   payerUsesTestStripe,
   paymentStripeMode,
+  routeStripeCall,
   stripeCredentialsForMode,
   type PaymentStripeMode,
 } from "@/lib/stripe-route";
+import {
+  mandateEndedMessage,
+  parsePaymentState,
+  planMandateEvent,
+  shapeMandateRow,
+  type BillPaymentState,
+} from "@/lib/payment-state";
+import { runConnectOnboarding } from "@/lib/connect-onboarding";
+import {
+  listAllStripePages,
+  planBillRetry,
+  planRemoveMethod,
+  shapeMandateView,
+  type MandateView,
+  type StripeListPage,
+} from "@/lib/wallet-ease";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
 
@@ -81,39 +97,25 @@ async function centreRow(sql: Sql, daycareId: string) {
 }
 
 /** QA payer or hidden centre → test keys. Live keys only when KIDEASE_CONNECT_LIVE is exactly 1. */
-async function stripeCallFor(sql: Sql, userId: string, daycareId?: string | null): Promise<StripeCall | { ok: false; reason: "missing" | "off" | "live" }> {
-  if (!connectPaymentsEnabled()) return { ok: false, reason: "off" };
+async function stripeCallFor(
+  sql: Sql,
+  userId: string,
+  daycareId?: string | null,
+): Promise<StripeCall | { ok: false; reason: "missing" | "off" | "live"; mode: PaymentStripeMode | null }> {
+  if (!connectPaymentsEnabled()) return { ok: false, reason: "off", mode: null };
   const payer = await payerRow(sql, userId);
   const centre = daycareId ? await centreRow(sql, daycareId) : null;
-  const mode = paymentStripeMode({
-    payerQa: payerUsesTestStripe({ email: payer?.email, isTest: payer?.is_test }),
-    centreQa: centre
-      ? centreUsesTestStripe({
-          id: centre.id,
-          slug: centre.slug,
-          visibility: centre.visibility,
-          isTest: centre.is_test,
-          isDemo: centre.is_demo,
-        })
-      : false,
+  const routed = routeStripeCall({
+    paymentsEnabled: true,
     liveEnabled: connectLiveEnabled(),
+    payer: payer ? { email: payer.email, isTest: payer.is_test } : null,
+    centre: centre
+      ? { id: centre.id, slug: centre.slug, visibility: centre.visibility, isTest: centre.is_test, isDemo: centre.is_demo }
+      : null,
+    env: process.env,
   });
-  const qa = Boolean(
-    payerUsesTestStripe({ email: payer?.email, isTest: payer?.is_test }) ||
-      (centre &&
-        centreUsesTestStripe({
-          id: centre.id,
-          slug: centre.slug,
-          visibility: centre.visibility,
-          isTest: centre.is_test,
-          isDemo: centre.is_demo,
-        })),
-  );
-  if (!qa && mode === "live" && !connectLiveEnabled()) return { ok: false, reason: "live" };
-  const creds = stripeCredentialsForMode(qa ? "test" : mode, process.env);
-  if (!creds.ok) return { ok: false, reason: "missing" };
-  if (qa && creds.secret.startsWith("sk_live_")) return { ok: false, reason: "missing" };
-  return creds;
+  if (!routed.ok) return routed;
+  return { mode: routed.mode, secret: routed.secret, publishable: routed.publishable };
 }
 
 export const connectPaymentsPublic = createServerFn({ method: "GET" }).handler(async () => {
@@ -153,16 +155,19 @@ async function defaultPaymentMethod(customerId: string, secret?: string): Promis
   return typeof value === "string" ? value : value.id || null;
 }
 
+/** Every saved card and bank debit (PAD), paged with starting_after (cap 100 per type). */
 async function listStripeMethods(customerId: string, defaultId: string | null, secret?: string): Promise<WalletMethodView[]> {
   const out: WalletMethodView[] = [];
   for (const type of ["card", "acss_debit"] as const) {
-    const page = await stripeRequest<{ data?: Array<Parameters<typeof shapeWalletMethod>[0]> }>(
-      "/payment_methods",
-      { customer: customerId, type, limit: 20 },
-      "GET",
-      { secret },
+    const rows = await listAllStripePages<NonNullable<Parameters<typeof shapeWalletMethod>[0]>>((startingAfter, limit) =>
+      stripeRequest<StripeListPage<NonNullable<Parameters<typeof shapeWalletMethod>[0]>>>(
+        "/payment_methods",
+        startingAfter ? { customer: customerId, type, limit, starting_after: startingAfter } : { customer: customerId, type, limit },
+        "GET",
+        { secret },
+      ),
     );
-    for (const row of page.data || []) {
+    for (const row of rows) {
       const shaped = shapeWalletMethod(row, defaultId);
       if (shaped) out.push(shaped);
     }
@@ -272,8 +277,162 @@ export const removeWalletMethod = createServerFn({ method: "POST" })
       { secret: routed.secret },
     );
     if (owned.customer !== profile.customerId) return { ok: false as const, reason: "missing" as const };
+    const defaultId = await defaultPaymentMethod(profile.customerId, routed.secret).catch(() => null);
     await stripeRequest(`/payment_methods/${encodeURIComponent(paymentMethodId)}/detach`, {}, "POST", { secret: routed.secret });
-    return { ok: true as const };
+    const remaining =
+      defaultId === paymentMethodId ? await listStripeMethods(profile.customerId, null, routed.secret).catch(() => [] as WalletMethodView[]) : [];
+    const plan = planRemoveMethod({
+      removedId: paymentMethodId,
+      defaultId,
+      remaining: remaining.map((method) => ({ id: method.id, kind: method.kind, created: method.created })),
+    });
+    if (plan.newDefaultId) {
+      await stripeRequest(`/customers/${encodeURIComponent(profile.customerId)}`, {
+        invoice_settings: { default_payment_method: plan.newDefaultId },
+      }, "POST", { secret: routed.secret });
+    }
+    if (plan.clearAutopay) {
+      await sql`
+        update parent_pay_prefs set mode = ${"manual"}, updated_at = now()
+        where parent_user_id = ${context.userId} and mode = ${"automatic"}
+      `.catch(() => undefined);
+    }
+    const picked = remaining.find((method) => method.id === plan.newDefaultId);
+    return {
+      ok: true as const,
+      wasDefault: plan.wasDefault,
+      newDefaultLabel: picked ? `${picked.brand} ···· ${picked.last4}` : null,
+      clearedAutopay: plan.clearAutopay,
+    };
+  });
+
+/**
+ * PE-4: the bank debit (PAD) agreement for a saved acss_debit method. Reads the
+ * mandate id from payment_mandates, or from the SetupIntent that saved it,
+ * then the mandate from Stripe. Read-only.
+ */
+export const getWalletMandate = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator((paymentMethodId: string) => {
+    const id = String(paymentMethodId || "").trim();
+    if (!id.startsWith("pm_")) throw new Error("Payment method required");
+    return id;
+  })
+  .handler(async ({ context, data: paymentMethodId }) => {
+    const sql = await getSql();
+    const routed = await stripeCallFor(sql, context.userId);
+    if (!("secret" in routed)) return { ok: false as const, reason: routed.reason, mandate: null as MandateView | null };
+    const profile = await profileCustomer(sql, context.userId);
+    if (!profile.customerId) return { ok: false as const, reason: "missing" as const, mandate: null };
+    const owned = await stripeRequest<{ customer?: string | null; type?: string | null }>(
+      `/payment_methods/${encodeURIComponent(paymentMethodId)}`,
+      {},
+      "GET",
+      { secret: routed.secret },
+    );
+    if (owned.customer !== profile.customerId || owned.type !== "acss_debit") {
+      return { ok: false as const, reason: "missing" as const, mandate: null };
+    }
+    const stored = await sql<{ mandate_id: string }>`
+      select mandate_id from payment_mandates
+      where payment_method_id = ${paymentMethodId}
+      order by updated_at desc
+      limit 1
+    `.catch(() => [] as { mandate_id: string }[]);
+    let mandateId = stored[0]?.mandate_id || "";
+    if (!mandateId.startsWith("mandate_")) {
+      const intents = await stripeRequest<{ data?: Array<{ mandate?: string | { id?: string } | null }> }>(
+        "/setup_intents",
+        { payment_method: paymentMethodId, limit: 1 },
+        "GET",
+        { secret: routed.secret },
+      ).catch(() => ({ data: [] }));
+      const raw = intents.data?.[0]?.mandate;
+      mandateId = typeof raw === "string" ? raw : raw?.id || "";
+    }
+    if (!mandateId.startsWith("mandate_")) return { ok: true as const, mandate: null };
+    const mandate = shapeMandateView(
+      await stripeRequest<Parameters<typeof shapeMandateView>[0]>(`/mandates/${encodeURIComponent(mandateId)}`, {}, "GET", {
+        secret: routed.secret,
+      }),
+    );
+    if (mandate) {
+      await sql`
+        insert into payment_mandates (mandate_id, payment_method_id, user_id, status, type, livemode, updated_at)
+        values (${mandate.id}, ${paymentMethodId}, ${context.userId}, ${mandate.status}, ${"acss_debit"}, ${routed.mode === "live"}, now())
+        on conflict (mandate_id) do update set status = excluded.status, user_id = coalesce(payment_mandates.user_id, excluded.user_id), updated_at = now()
+      `.catch(() => undefined);
+    }
+    return { ok: true as const, mandate };
+  });
+
+/**
+ * PE-5: after a new card is saved from the update-card link, pay that failed
+ * bill once with it (POST /invoices/{id}/pay, idempotency key per failure).
+ * Test mode only unless KIDEASE_BILL_RETRY_LIVE is exactly 1.
+ */
+export const retryFailedBill = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { billId?: string; paymentMethodId?: string }) => ({
+    billId: String(input?.billId || "").trim().slice(0, 80),
+    paymentMethodId: String(input?.paymentMethodId || "").trim(),
+  }))
+  .handler(async ({ context, data }) => {
+    if (!data.billId) return { ok: false as const, reason: "not_failed" as const };
+    const sql = await getSql();
+    const rows = await sql<{
+      id: string;
+      parent_user_id: string;
+      daycare_id: string;
+      status: string;
+      payment_state: string | null;
+      failed_at: string | null;
+      stripe_invoice_id: string | null;
+    }>`
+      select id, parent_user_id, daycare_id, status, payment_state, failed_at::text as failed_at, stripe_invoice_id
+      from invoices where id = ${data.billId} limit 1
+    `.catch(() => []);
+    const bill = rows[0];
+    if (!bill) return { ok: false as const, reason: "not_failed" as const };
+    const routed = await stripeCallFor(sql, context.userId, bill.daycare_id);
+    if (!("secret" in routed)) return { ok: false as const, reason: routed.reason };
+    const plan = planBillRetry({
+      billId: bill.id,
+      actorUserId: context.userId,
+      parentUserId: bill.parent_user_id,
+      status: bill.status,
+      paymentState: bill.payment_state,
+      failedAt: bill.failed_at,
+      stripeInvoiceId: bill.stripe_invoice_id,
+      paymentMethodId: data.paymentMethodId,
+      mode: routed.mode,
+      liveRetryOn: String(process.env.KIDEASE_BILL_RETRY_LIVE ?? "").trim() === "1",
+    });
+    if (!plan.ok) return { ok: false as const, reason: plan.reason };
+    const profile = await profileCustomer(sql, context.userId);
+    const owned = await stripeRequest<{ customer?: string | null }>(
+      `/payment_methods/${encodeURIComponent(data.paymentMethodId)}`,
+      {},
+      "GET",
+      { secret: routed.secret },
+    ).catch(() => null);
+    if (!owned?.customer || (profile.customerId && owned.customer !== profile.customerId)) {
+      return { ok: false as const, reason: "bad_method" as const };
+    }
+    try {
+      await stripeRequest(plan.path, plan.body, "POST", { idempotencyKey: plan.idempotencyKey, secret: routed.secret });
+      return { ok: true as const };
+    } catch (err) {
+      // The decline arrives as payment_intent.payment_failed; the bill stays payable.
+      const { recordStripeCheckoutError } = await import("./stripe-checkout-log");
+      await recordStripeCheckoutError({
+        userId: context.userId,
+        surface: "bill_retry",
+        publicMessage: "Retry after card update failed.",
+        detail: err instanceof Error ? err.message : "failed",
+      });
+      return { ok: false as const, reason: "declined" as const };
+    }
   });
 
 async function ownsCentre(sql: Sql, userId: string, daycareId: string) {
@@ -285,6 +444,11 @@ async function ownsCentre(sql: Sql, userId: string, daycareId: string) {
   return Boolean(rows[0]);
 }
 
+/**
+ * Embedded payouts onboarding. Returns the publishable key and mode that match
+ * the secret used for the account session, so Connect.js starts in the same
+ * Stripe mode. Every failure is logged under surface "connect_onboarding".
+ */
 export const createConnectAccountSession = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((daycareId: string) => {
@@ -296,55 +460,78 @@ export const createConnectAccountSession = createServerFn({ method: "POST" })
     const { assertPersistentStepUp } = await import("./persistent-session.server");
     await assertPersistentStepUp(context.userId, "payout_bank");
     const sql = await getSql();
-    const routed = await stripeCallFor(sql, context.userId, daycareId);
-    if (!("secret" in routed)) return { ok: false as const, reason: routed.reason, clientSecret: null as string | null };
-    if (!(await ownsCentre(sql, context.userId, daycareId))) {
-      return { ok: false as const, reason: "missing" as const, clientSecret: null };
-    }
-    const existing = await sql<{ stripe_account_id: string | null }>`
-      select stripe_account_id from stripe_accounts where daycare_id = ${daycareId} limit 1
-    `.catch(() => []);
-    let accountId = String(existing[0]?.stripe_account_id || "");
-    if (!accountId.startsWith("acct_")) {
-      const created = await stripeRequest<{ id?: string }>("/accounts", connectedAccountBody(), "POST", {
-        idempotencyKey: `connect-acct-${routed.mode}-${daycareId}`,
-        secret: routed.secret,
-      });
-      accountId = String(created.id || "");
-      if (!accountId.startsWith("acct_")) return { ok: false as const, reason: "missing" as const, clientSecret: null };
-      await sql`
-        insert into stripe_accounts (daycare_id, stripe_account_id, charges_enabled, payouts_enabled, details_submitted)
-        values (${daycareId}, ${accountId}, 0, 0, 0)
-        on conflict (daycare_id) do update set stripe_account_id = ${accountId}, updated_at = now()
-      `.catch(() => undefined);
-    }
-    const session = await stripeRequest<{ client_secret?: string }>("/account_sessions", accountSessionBody(accountId), "POST", {
-      idempotencyKey: `connect-session-${routed.mode}-${accountId}-${nid("as")}`,
-      secret: routed.secret,
+    const { recordStripeCheckoutError } = await import("./stripe-checkout-log");
+    return runConnectOnboarding({
+      userId: context.userId,
+      daycareId,
+      ownsCentre: () => ownsCentre(sql, context.userId, daycareId),
+      route: async () => {
+        const routed = await stripeCallFor(sql, context.userId, daycareId);
+        return "secret" in routed ? { ok: true as const, ...routed } : routed;
+      },
+      existingAccountId: async () => {
+        const existing = await sql<{ stripe_account_id: string | null }>`
+          select stripe_account_id from stripe_accounts where daycare_id = ${daycareId} limit 1
+        `.catch(() => []);
+        return existing[0]?.stripe_account_id ?? null;
+      },
+      saveAccount: async (accountId) => {
+        await sql`
+          insert into stripe_accounts (daycare_id, stripe_account_id, charges_enabled, payouts_enabled, details_submitted)
+          values (${daycareId}, ${accountId}, 0, 0, 0)
+          on conflict (daycare_id) do update set stripe_account_id = ${accountId}, updated_at = now()
+        `.catch((err) => {
+          console.error("[kidease-connect] stripe_accounts insert failed", err instanceof Error ? err.message : "failed");
+        });
+      },
+      stripePost: <T>(path: string, body: Record<string, unknown>, opts: { idempotencyKey: string; secret: string }) =>
+        stripeRequest<T>(path, body, "POST", opts),
+      accountBody: () => connectedAccountBody(),
+      sessionBody: (accountId) => accountSessionBody(accountId),
+      record: recordStripeCheckoutError,
+      nonce: () => nid("as"),
     });
-    const clientSecret = String(session.client_secret || "");
-    if (!clientSecret) return { ok: false as const, reason: "missing" as const, clientSecret: null };
-    return { ok: true as const, clientSecret };
   });
 
 export const listCentreIdsForPayouts = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const state = publicConnectState();
-    if (!state.enabled) return { enabled: false as const, ready: false, blockedLive: false, centres: [] as { id: string; name: string }[] };
+    if (!state.enabled) return { enabled: false as const, ready: false, blockedLive: false, centres: [] as { id: string; name: string; ready: boolean }[] };
     const sql = await getSql();
-    const rows = await sql<{ id: string; name: string }>`
-      select d.id, d.name
+    const rows = await sql<{
+      id: string;
+      name: string;
+      slug: string | null;
+      visibility: string | null;
+      is_test: number | boolean | null;
+      is_demo: number | boolean | null;
+    }>`
+      select d.id, d.name, d.slug, d.visibility, d.is_test, d.is_demo
       from provider_daycares p
       join daycares d on d.id = p.daycare_id
       where p.user_id = ${context.userId}
       order by d.name
       limit 12
     `.catch(() => []);
-    return { ...state, centres: rows };
+    const payer = await payerRow(sql, context.userId);
+    // Same routing as the account session, so a QA centre shows its button.
+    const centres = rows.map((row) => {
+      const routed = routeStripeCall({
+        paymentsEnabled: true,
+        liveEnabled: connectLiveEnabled(),
+        payer: payer ? { email: payer.email, isTest: payer.is_test } : null,
+        centre: { id: row.id, slug: row.slug, visibility: row.visibility, isTest: row.is_test, isDemo: row.is_demo },
+        env: process.env,
+      });
+      return { id: row.id, name: row.name, ready: routed.ok };
+    });
+    return { ...state, centres };
   });
 
 type OpenBill = {
+  paymentState: BillPaymentState | null;
+  lastErrorCode: string | null;
   id: string;
   daycareId: string;
   daycareName: string;
@@ -388,6 +575,15 @@ export const listParentPayChoices = createServerFn({ method: "GET" })
       order by i.created_at desc
       limit 40
     `.catch(() => []);
+    const states = openRows.length
+      ? await sql
+          .query<{ id: string; payment_state: string | null; last_error_code: string | null }>(
+            `select id, payment_state, last_error_code from invoices where id = any($1::text[])`,
+            [openRows.map((row) => row.id)],
+          )
+          .catch(() => [] as { id: string; payment_state: string | null; last_error_code: string | null }[])
+      : [];
+    const stateById = new Map(states.map((row) => [row.id, row]));
     return {
       ...state,
       modes: centres.map((row) => ({
@@ -407,6 +603,8 @@ export const listParentPayChoices = createServerFn({ method: "GET" })
           parentPaysCents: quote.parentPaysCents,
           feeLabel: quote.label,
           number: row.number,
+          paymentState: parsePaymentState(stateById.get(row.id)?.payment_state),
+          lastErrorCode: stateById.get(row.id)?.last_error_code ?? null,
         };
       }),
     };
@@ -810,3 +1008,121 @@ export async function applyConnectSideEffect(type: string, object: Record<string
   }
   return action;
 }
+
+/**
+ * mandate.updated (bank debit (PAD) mandates). Upserts payment_mandates and,
+ * when the mandate on the parent's default method goes inactive, turns
+ * automatic pay off and tells the parent. The secret follows the event's
+ * livemode; live reads still need KIDEASE_CONNECT_LIVE=1.
+ */
+export async function applyMandateEvent(object: unknown): Promise<{ ok: true; mandateId: string | null; status: string | null; clearedAutopay: boolean }> {
+  const row = shapeMandateRow(object);
+  if (!row) return { ok: true, mandateId: null, status: null, clearedAutopay: false };
+  const sql = await getSql();
+  const mode: PaymentStripeMode = row.livemode ? "live" : "test";
+  const creds = mode === "live" && !connectLiveEnabled() ? null : stripeCredentialsForMode(mode, process.env);
+  const secret = creds && creds.ok ? creds.secret : null;
+  let customerId: string | null = null;
+  let defaultPaymentMethodId: string | null = null;
+  if (secret) {
+    const pm = await stripeRequest<{ customer?: string | null }>(
+      `/payment_methods/${encodeURIComponent(row.paymentMethodId)}`,
+      {},
+      "GET",
+      { secret },
+    ).catch(() => null);
+    customerId = typeof pm?.customer === "string" && pm.customer.startsWith("cus_") ? pm.customer : null;
+    if (customerId) defaultPaymentMethodId = await defaultPaymentMethod(customerId, secret).catch(() => null);
+  }
+  const owner = customerId
+    ? await sql<{ user_id: string; locale: string | null; email: string | null }>`
+        select p.user_id, p.locale, u.email
+        from profiles p
+        left join "user" u on u.id = p.user_id
+        where p.stripe_customer_id = ${customerId}
+        limit 1
+      `.catch(() => [] as { user_id: string; locale: string | null; email: string | null }[])
+    : [];
+  const userId = owner[0]?.user_id ?? null;
+  await sql`
+    insert into payment_mandates (mandate_id, payment_method_id, user_id, status, type, livemode, updated_at)
+    values (${row.mandateId}, ${row.paymentMethodId}, ${userId}, ${row.status}, ${row.type}, ${row.livemode}, now())
+    on conflict (mandate_id) do update set
+      payment_method_id = excluded.payment_method_id,
+      user_id = coalesce(excluded.user_id, payment_mandates.user_id),
+      status = excluded.status,
+      type = excluded.type,
+      livemode = excluded.livemode,
+      updated_at = now()
+  `;
+  const plan = planMandateEvent(object, { defaultPaymentMethodId });
+  if (!plan?.clearAutopay || !userId) return { ok: true, mandateId: row.mandateId, status: row.status, clearedAutopay: false };
+  await sql`
+    update parent_pay_prefs set mode = ${"manual"}, updated_at = now()
+    where parent_user_id = ${userId} and mode = ${"automatic"}
+  `;
+  const text = mandateEndedMessage(owner[0]?.locale === "fr" ? "fr" : "en");
+  try {
+    const { sendPushNotification } = await import("./push.server");
+    await sendPushNotification({ userId, title: text.title, body: text.body, url: "/account?section=wallet" });
+  } catch (err) {
+    console.error("[kidease-connect] mandate notice skipped", err instanceof Error ? err.message : "failed");
+  }
+  try {
+    const { notifyParentBillState } = await import("./notify");
+    const origin = (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca").replace(/\/$/, "");
+    await notifyParentBillState({
+      to: owner[0]?.email,
+      title: text.title,
+      body: text.body,
+      ctaLabel: owner[0]?.locale === "fr" ? "Ouvrir mon portefeuille" : "Open my wallet",
+      ctaUrl: `${origin}/account?section=wallet`,
+      daycareName: "",
+    });
+  } catch (err) {
+    console.error("[kidease-connect] mandate mail skipped", err instanceof Error ? err.message : "failed");
+  }
+  return { ok: true, mandateId: row.mandateId, status: row.status, clearedAutopay: true };
+}
+
+/**
+ * 3D Secure / SCA: the client secret for a bill whose payment needs the
+ * parent's bank to confirm, with the publishable key for the same Stripe mode
+ * (same routing as startManualPay). The browser calls stripe.handleNextAction.
+ */
+export const getBillNextAction = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((billId: string) => {
+    const id = String(billId || "").trim();
+    if (!id || id.length > 80) throw new Error("Bill required");
+    return id;
+  })
+  .handler(async ({ context, data: billId }) => {
+    const none = { ok: false as const, clientSecret: null, publishableKey: null as string | null };
+    const sql = await getSql();
+    const rows = await sql<{
+      id: string;
+      parent_user_id: string;
+      daycare_id: string;
+      status: string;
+      stripe_payment_intent_id: string | null;
+    }>`
+      select id, parent_user_id, daycare_id, status, stripe_payment_intent_id
+      from invoices where id = ${billId} limit 1
+    `.catch(() => []);
+    const bill = rows[0];
+    if (!bill || bill.parent_user_id !== context.userId || bill.status !== "sent") return { ...none, reason: "missing" as const };
+    const paymentIntentId = String(bill.stripe_payment_intent_id || "");
+    if (!paymentIntentId.startsWith("pi_")) return { ...none, reason: "missing" as const };
+    const routed = await stripeCallFor(sql, context.userId, bill.daycare_id);
+    if (!("secret" in routed)) return { ...none, reason: routed.reason };
+    const intent = withoutHostedInvoice(
+      await stripeRequest<Record<string, unknown>>(`/payment_intents/${encodeURIComponent(paymentIntentId)}`, {}, "GET", {
+        secret: routed.secret,
+      }),
+    );
+    if (intent.status !== "requires_action") return { ...none, reason: "not_needed" as const };
+    const clientSecret = typeof intent.client_secret === "string" ? intent.client_secret : "";
+    if (!clientSecret) return { ...none, reason: "missing" as const };
+    return { ok: true as const, clientSecret, publishableKey: routed.publishable, mode: routed.mode, reason: null };
+  });

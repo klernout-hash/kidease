@@ -21,6 +21,7 @@
 
 import { DEFAULT_PLATFORM_FEE_BPS, MAX_PLATFORM_FEE_BPS, platformFeeBps } from "./stripe-methods.ts";
 import { stripeCredentialsForMode, type PaymentStripeMode } from "./stripe-route.ts";
+import { expiryStatus } from "./wallet-ease.ts";
 
 export type ConnectEnv = Record<string, string | undefined>;
 
@@ -670,11 +671,17 @@ export type WalletMethodView = {
   expYear: number | null;
   isDefault: boolean;
   kind: WalletMethodKind;
+  /** Card expires in 60 days or less (PE-1). */
+  expiresSoon: boolean;
+  expired: boolean;
+  /** Stripe created time (seconds), used to pick the newest method. */
+  created: number | null;
 };
 
 type StripeMethod = {
   id?: string;
   type?: string;
+  created?: number;
   metadata?: Record<string, string | undefined> | null;
   card?: {
     brand?: string;
@@ -686,7 +693,11 @@ type StripeMethod = {
   acss_debit?: { bank_name?: string; last4?: string } | null;
 };
 
-export function shapeWalletMethod(raw: StripeMethod | null | undefined, defaultId: string | null): WalletMethodView | null {
+export function shapeWalletMethod(
+  raw: StripeMethod | null | undefined,
+  defaultId: string | null,
+  now: Date = new Date(),
+): WalletMethodView | null {
   if (!raw?.id) return null;
   const wallet = raw.card?.wallet?.type;
   const kind: WalletMethodKind =
@@ -713,6 +724,9 @@ export function shapeWalletMethod(raw: StripeMethod | null | undefined, defaultI
     expYear,
     isDefault: Boolean(defaultId && raw.id === defaultId),
     kind,
+    expiresSoon: expiryStatus(expMonth, expYear, now) === "soon",
+    expired: expiryStatus(expMonth, expYear, now) === "expired",
+    created: Number(raw.created) || null,
   };
 }
 

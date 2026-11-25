@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { amount, buildRl1Xml, buildT4aXml, buildT4Xml, employerProblems, parseSlipDetails, SLIP_VERIFICATION, submissionRef, toSlipPerson, validSin } from "../src/lib/payroll/slip-xml.ts";
+import { amount, buildRl1Xml, buildT4aXml, rcpntBn, buildT4Xml, employerProblems, parseSlipDetails, SLIP_VERIFICATION, submissionRef, toSlipPerson, validSin } from "../src/lib/payroll/slip-xml.ts";
 import { buildPayCard } from "../src/lib/payroll/pay-card.ts";
 import { stubFromCard } from "../src/lib/payroll/stubs.ts";
 
@@ -106,7 +106,8 @@ test("T4 XML: T619, one slip per person with a SIN, a summary, CRA element order
   assert.match(xml, new RegExp(`<tot_empt_incamt>${amount(rows[0].grossCents + rows[1].grossCents).replace(".", "\\.")}</tot_empt_incamt>`));
   assert.match(xml, new RegExp(`<tot_empr_eip_amt>${amount(rows[0].employerEiCents + rows[1].employerEiCents).replace(".", "\\.")}</tot_empr_eip_amt>`));
   assert.match(result.file.filename, /check-before-filing/);
-  assert.equal(SLIP_VERIFICATION.craXsdValidated, false);
+  assert.equal(SLIP_VERIFICATION.craXsdValidated, true);
+  assert.equal(SLIP_VERIFICATION.rl1ElementNamesVerified, false);
 });
 
 test("missing employer details stop the file, and nobody's SIN is in it", () => {
@@ -175,4 +176,18 @@ test("flag, migration, and server rules", () => {
   const up = readFileSync(new URL("../migrations/0230_payroll_slip_xml.sql", import.meta.url), "utf8");
   assert.doesNotMatch(up, /\bdrop\b|\bdelete\b|\btruncate\b/i);
   assert.match(readFileSync(new URL("../migrations/down/0230_payroll_slip_xml.sql", import.meta.url), "utf8"), /drop table if exists payroll_slip_settings/);
+});
+
+test("T4A puts rcpnt_bn right after sin, with CRA's placeholder when there is no business number", () => {
+  const result = buildT4aXml({ year: 2026, employer, people, stubs: stubs(), lang: "E" });
+  const xml = result.file.xml;
+  assert.match(xml, /<\/sin>\n\s*<rcpnt_bn>000000000RC0000<\/rcpnt_bn>\n\s*<RCPNT_ADDR>/);
+  const slip = xml.slice(xml.indexOf("<T4ASlip>"), xml.indexOf("</T4ASlip>"));
+  const order = ["<RCPNT_NM>", "<sin>", "<rcpnt_bn>", "<RCPNT_ADDR>", "<bn>"].map((tag) => slip.indexOf(tag));
+  assert.ok(order.every((at) => at >= 0), "all elements present");
+  assert.deepEqual([...order].sort((a, b) => a - b), order, "CRA t4a.xsd order");
+  const withBn = buildT4aXml({ year: 2026, employer, people: people.map((p) => ({ ...p, businessNumber: "123456789 rt0001" })), stubs: stubs(), lang: "E" });
+  assert.match(withBn.file.xml, /<rcpnt_bn>123456789RT0001<\/rcpnt_bn>/);
+  assert.equal(rcpntBn(null), "000000000RC0000");
+  assert.equal(rcpntBn("  "), "000000000RC0000");
 });

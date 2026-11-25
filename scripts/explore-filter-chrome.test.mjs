@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { register } from "node:module";
 import ts from "typescript";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -157,4 +158,35 @@ test("each listing card has one accessible details action and its role-gated sav
   assert.match(card, /label=\{`\$\{t\("viewDetails"\)\} · \$\{name\}`\}/);
   assert.doesNotMatch(card, /search=|hash=/);
   assert.doesNotMatch(card, /className="ke-tile group relative w-full"/);
+});
+
+test("Filters badge counts only picked filters, not the commute anchor or age rail", async () => {
+  await register(new URL("./alias-loader.mjs", import.meta.url), import.meta.url);
+  const { activeFilterCount, pickedFilterCount, searchSheetFilterCount, EMPTY_SEARCH_FILTERS } = await import(
+    "../src/lib/saved-search.ts"
+  );
+  const none = { avail: "any", ten: false, meals: false };
+  // No URL filters and a saved work anchor: the count is 0.
+  assert.equal(searchSheetFilterCount({ filters: none, careType: "any", urlFacilityCategory: false, pioneer: {} }), 0);
+  // Picking Meals shows 1.
+  assert.equal(searchSheetFilterCount({ filters: { ...none, meals: true }, careType: "any", pioneer: {} }), 1);
+  // `?cat=home` and `?care=home` are each one explicit choice.
+  assert.equal(searchSheetFilterCount({ filters: none, urlFacilityCategory: true }), 1);
+  assert.equal(searchSheetFilterCount({ filters: none, careType: "home" }), 1);
+  assert.equal(searchSheetFilterCount({ filters: none, pioneer: { cwelcc: "1", spoken: "fr" } }), 2);
+  // Saved-search badge shares the same filter list.
+  assert.equal(pickedFilterCount({ avail: "open", ten: true }), 2);
+  assert.equal(activeFilterCount({ ...EMPTY_SEARCH_FILTERS, avail: "open", ten: true, liveOnly: true }, "infant"), 4);
+  assert.equal(activeFilterCount(EMPTY_SEARCH_FILTERS, "any"), 0);
+
+  const search = src("src/routes/search.tsx");
+  const start = search.indexOf("const sheetFilterCount = searchSheetFilterCount(");
+  assert.ok(start > 0);
+  const block = search.slice(start, search.indexOf("});", start));
+  assert.doesNotMatch(block, /workOrigin|anchorMode/);
+  assert.doesNotMatch(block, /resolvedExploreCategory/);
+  assert.match(block, /urlFacilityCategory: isFacilityExploreCategory\(canonicalExploreCategory\(incoming\.cat\)\)/);
+  // The commute anchor is its own chip.
+  assert.match(search, /const commuteAnchorOn = Boolean\(workOrigin && anchorMode !== "home"\)/);
+  assert.match(search, /data-ke="search-commute-chip"/);
 });

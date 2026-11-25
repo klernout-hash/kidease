@@ -16,7 +16,7 @@ import {
   promptInstall,
 } from "@/lib/native";
 import { STORE } from "@/lib/store-listing";
-import { AMAZON_APPSTORE_URL } from "@/lib/amazon-appstore";
+import { AMAZON_APPSTORE_URL, isAmazonDevice } from "@/lib/amazon-appstore";
 import { amazonListingHref } from "@/lib/amazon/store-link";
 import { huaweiGalleryUrl } from "@/lib/huawei/platform";
 import { featPayBodyKey } from "@/lib/copy-keys";
@@ -76,8 +76,12 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
   const [installed, setInstalled] = useState(false);
   const [ios, setIos] = useState(false);
   const [mac, setMac] = useState(false);
+  // Android defaults to Google Play. Amazon leads only on Fire / Silk / KF
+  // devices or with the ke_store=amazon cookie. Read after mount (no SSR UA).
+  const [amazonDevice, setAmazonDevice] = useState(false);
 
   useEffect(() => {
+    setAmazonDevice(isAmazonDevice(navigator.userAgent, document.cookie));
     setCanPrompt(hasInstallPrompt());
     setInstalled(isStandalone());
     setIos(isIosBrowser());
@@ -91,7 +95,8 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
   }
 
   const desc = locale === "fr" ? STORE.descriptionFr : STORE.description;
-  const installVariant = amazonUrl && showStores ? "secondary" : "primary";
+  const amazonFirst = Boolean(amazonUrl) && amazonDevice;
+  const installVariant = amazonFirst && showStores ? "secondary" : "primary";
 
   return (
     <Shell>
@@ -106,9 +111,9 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
             <MicrosoftStoreLink />
             <SamsungStoreLink />
             <AppStoreStatus />
-            {showStores && amazonUrl ? (
+            {showStores && amazonFirst ? (
               <div data-ke="store-coming-soon">
-                <StoreBadges huaweiHref={huaweiHref} amazonHref={amazonUrl} />
+                <StoreBadges huaweiHref={huaweiHref} amazonHref={amazonUrl} lead="amazon" />
               </div>
             ) : null}
             <div className="mt-6 flex flex-wrap items-center gap-3 max-[430px]:pr-[4.75rem]">
@@ -138,9 +143,9 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
                 </Link>
               </Button>
             </div>
-            {showStores && !amazonUrl ? (
+            {showStores && !amazonFirst ? (
               <div data-ke="store-coming-soon">
-                <StoreBadges huaweiHref={huaweiHref} amazonHref={amazonUrl} />
+                <StoreBadges huaweiHref={huaweiHref} amazonHref={amazonUrl} lead="play" />
               </div>
             ) : null}
             {!showStores ? (

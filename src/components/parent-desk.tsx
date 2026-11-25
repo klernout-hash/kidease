@@ -23,7 +23,7 @@ import { getFamily } from "@/lib/server/family";
 import { acceptShortlistShare } from "@/lib/server/parent-tracker";
 import { dismissUpgradeCard } from "@/lib/server/upgrade-card";
 import type { LeadRequest } from "@/lib/lead-requests";
-import { parentRequestRows } from "@/lib/parent-request-rows";
+import { parentRequestRows, parentTourCounts, selectParentTours } from "@/lib/parent-request-rows";
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import { listParentBills } from "@/lib/server/billing";
@@ -37,7 +37,8 @@ import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import type { Booking, Child, DaycareCard as Card, Payment, TourRequest } from "@/lib/types";
 import type { Bill } from "@/lib/bill";
 import { billDollars, billIsOpen } from "@/lib/bill";
-import { BillStatusBadge } from "@/components/bill-status";
+import { BillStatusBadge, PaymentStateBadge, PaymentStateNote, RefundNote } from "@/components/bill-status";
+import { failureReasonText } from "@/lib/payment-state";
 import { periodLabel } from "@/lib/stripe-methods";
 import { parentMatchScore } from "@/lib/parent-match";
 import { parentUrgencyScore, soonestStartDate } from "@/lib/parent-urgency";
@@ -46,6 +47,8 @@ import { useAppStore } from "@/lib/store";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { LOADER_SETTLE_MS, withTimeout } from "@/lib/timeout";
+import { captureLoaderFailure } from "@/lib/loader-settle";
+import { useLoaderWatchdog } from "@/lib/use-loader-watchdog";
 import { parentDeskPath, parentNavSearch } from "@/lib/desk-nav";
 import { MAX_CHILDREN_PER_PARENT } from "@/lib/children-limit";
 import { useStoreShell } from "@/lib/use-native-shell";
@@ -206,6 +209,9 @@ export function ParentDesk({
   const [childFocus, setChildFocus] = useState<string | null>(null);
   const [childOpen, setChildOpen] = useState(false);
   const [childrenReady, setChildrenReady] = useState(false);
+  const familyInFlight = useRef(false);
+  const refreshQueued = useRef(false);
+  const refreshFamily = useRef<() => void>(() => undefined);
   const [familyCanWrite, setFamilyCanWrite] = useState(true);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [shareConsent, setShareConsent] = useState(false);
@@ -416,9 +422,25 @@ export function ParentDesk({
   async function load() {
     const request = issueRequest("home");
     if (!request.isCurrent()) return;
-    const f = await loadFamily(true);
+    familyInFlight.current = true;
+    let f: Awaited<ReturnType<typeof loadFamily>> = null;
+    try {
+      f = await loadFamily(true);
+    } finally {
+      familyInFlight.current = false;
+      flushQueuedRefresh();
+    }
     if (!f || !request.isCurrent()) return;
     await Promise.all([loadExplore(f.bookings, true), loadDeskExtras(true)]);
+  }
+
+  // A shortlist refresh while the home load is in flight used to supersede that
+  // load. loadFamily then returned null, so explore and the bills/tours extras
+  // never started and their placeholders stayed up. Queue the refresh instead.
+  function flushQueuedRefresh() {
+    if (!refreshQueued.current) return;
+    refreshQueued.current = false;
+    refreshFamily.current();
   }
 
   useEffect(() => {
@@ -449,25 +471,50 @@ export function ParentDesk({
     void yieldToMain()
       .then(() => {
         if (cancelled) return null;
+        familyInFlight.current = true;
         return loadFamily(true);
       })
       .then((f) => {
+        familyInFlight.current = false;
+        if (!cancelled) flushQueuedRefresh();
         if (cancelled || !f) return;
         void loadExplore(f.bookings).catch(() => undefined);
         void loadDeskExtras().catch(() => undefined);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        familyInFlight.current = false;
         if (cancelled) return;
+        flushQueuedRefresh();
+        captureLoaderFailure("parent-children", error);
         startTransition(() => {
           setExploreReady(true);
           setChildrenReady(true);
           setHomeError(true);
+          setExtrasState("error");
         });
       });
     return () => {
       cancelled = true;
     };
   }, [user?.id, loadFamily, loadExplore, loadDeskExtras]);
+
+  // No placeholder stays up past LOADER_WATCHDOG_MS (10 s): it becomes an
+  // error with Try again, and the stuck surface is captured as $exception.
+  // A late success still replaces the error state.
+  const signedIn = Boolean(user?.id);
+  useLoaderWatchdog(signedIn && !exploreReady, "parent-explore", () =>
+    startTransition(() => {
+      setExploreError(true);
+      setExploreReady(true);
+    }),
+  );
+  useLoaderWatchdog(signedIn && !childrenReady, "parent-children", () =>
+    startTransition(() => {
+      setHomeError(true);
+      setChildrenReady(true);
+    }),
+  );
+  useLoaderWatchdog(signedIn && extrasState === "pending", "parent-extras", () => setExtrasState("error"));
 
   useEffect(() => {
     if (!initialChild) {
@@ -513,11 +560,16 @@ export function ParentDesk({
 
   useEffect(() => {
     function refresh() {
+      if (familyInFlight.current) {
+        refreshQueued.current = true;
+        return;
+      }
       const request = issueRequest("refresh");
       void loadFamily(true).catch(() => {
         if (request.isCurrent()) setHomeError(true);
       });
     }
+    refreshFamily.current = refresh;
     window.addEventListener("kidease-shortlist", refresh);
     return () => window.removeEventListener("kidease-shortlist", refresh);
   }, [loadFamily, issueRequest]);
@@ -687,9 +739,29 @@ export function ParentDesk({
             <h2 className="font-display text-2xl">{t("myRequests")}</h2>
             <p className="mt-1 text-sm text-muted">{t("myRequestsLead")}</p>
             <div className="mt-4">
-              <Suspense fallback={<div className="ke-skel h-24 rounded-xl" aria-hidden="true" />}>
-                <ParentRequestsList items={parentRequestRows({ leads, tours, bookings })} />
-              </Suspense>
+              {extrasState !== "ready" ? (
+                <p className="text-sm text-muted" role="status" data-ke="parent-requests-loading">
+                  {extrasState === "error"
+                    ? locale === "fr"
+                      ? "Les demandes n’ont pas toutes été chargées."
+                      : "Some requests could not load."
+                    : locale === "fr"
+                      ? "Recherche de vos demandes…"
+                      : "Checking your requests…"}
+                  {extrasState === "error" ? (
+                    <Button variant="secondary" className="ml-2" onClick={() => void loadDeskExtras(true).catch(() => undefined)}>
+                      {locale === "fr" ? "Réessayer" : "Try again"}
+                    </Button>
+                  ) : null}
+                </p>
+              ) : (
+                <Suspense fallback={<div className="ke-skel h-24 rounded-xl" aria-hidden="true" />}>
+                  <ParentRequestsList
+                    items={parentRequestRows({ leads, tours, bookings })}
+                    tourCounts={parentTourCounts(selectParentTours(tours, new Date()))}
+                  />
+                </Suspense>
+              )}
             </div>
             {bookings
               .filter((b) => b.status === "accepted" && b.monthlyAmount > 0 && b.paymentStatus !== "paid" && desks?.stripeLive)
@@ -769,20 +841,32 @@ export function ParentDesk({
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-medium">{b.daycareName}</p>
                           <BillStatusBadge status={b.status} />
+                          <PaymentStateBadge state={b.paymentState} />
                         </div>
                         <p className="text-sm text-muted">
                           {b.childName ? `${b.childName} · ` : ""}
                           {periodLabel(b.period, locale)}
                           {b.dueAt ? ` · ${t("billDue")} ${b.dueAt}` : ""}
                         </p>
+                        <PaymentStateNote
+                          state={b.paymentState}
+                          reason={failureReasonText(b.lastErrorCode, locale === "fr" ? "fr" : "en")}
+                          className="mt-1"
+                        />
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-display text-xl tabular-nums">{money(billDollars(b), locale)}</span>
-                        <Button size="sm" asChild>
-                          <Link to="/pay/bill/$billId" params={{ billId: b.id }} search={{}} data-ke="native-checkout">
-                            {t("pay")}
-                          </Link>
-                        </Button>
+                        {b.paymentState === "processing" ? null : (
+                          <Button size="sm" asChild>
+                            <Link to="/pay/bill/$billId" params={{ billId: b.id }} search={{}} data-ke="native-checkout">
+                              {b.paymentState === "requires_action"
+                                ? t("billConfirmPayment")
+                                : b.paymentState === "failed"
+                                  ? t("billPayAgain")
+                                  : t("pay")}
+                            </Link>
+                          </Button>
+                        )}
                       </div>
                     </li>
                   ))}
@@ -816,6 +900,7 @@ export function ParentDesk({
                           <p className="text-muted">
                             {periodLabel(b.period, locale)} · {b.number}
                           </p>
+                          <RefundNote bill={b} className="mt-1" />
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="tabular-nums">{money(billDollars(b), locale)}</span>
@@ -875,6 +960,15 @@ export function ParentDesk({
           )}
           {!childrenReady ? (
             <p className="text-sm text-muted" role="status">{t("loading")}</p>
+          ) : homeError && children.length === 0 && !editing ? (
+            <div role="alert" data-ke="parent-children-error">
+              <p className="text-sm text-muted">
+                {locale === "fr" ? "Les enfants n’ont pas pu être chargés." : "Your children could not load."}
+              </p>
+              <Button variant="secondary" className="mt-3" onClick={retryHome}>
+                {locale === "fr" ? "Réessayer" : "Try again"}
+              </Button>
+            </div>
           ) : children.length === 0 && !editing ? (
             <EmptyState
               title={t("noChildren")}

@@ -846,6 +846,47 @@ export async function notifyParentBill(p: {
   }
 }
 
+/** Bill payment state notice (failed / confirm with your bank). Same mail path as notifyParentBill. */
+export async function notifyParentBillState(p: {
+  to?: string | null;
+  title: string;
+  body: string;
+  ctaLabel: string;
+  ctaUrl: string;
+  daycareName: string;
+}) {
+  const to = (p.to || "").trim();
+  if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return { status: "skipped" as const };
+  const text = [p.body, "", "KidEase"].join("\n");
+  const html = `<!doctype html>
+<html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
+    <tr><td style="padding:28px;">
+      <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
+      <h1 style="margin:12px 0 0;font-size:24px;line-height:1.2;">${esc(p.title)}</h1>
+      <p style="margin:16px 0 0;">${esc(p.body)}</p>
+      <p style="margin:24px 0 0;">
+        <a href="${esc(p.ctaUrl)}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;">${esc(p.ctaLabel)}</a>
+      </p>
+    </td></tr>
+  </table>
+</body></html>`;
+  try {
+    const status = await deliverEmail(p.title, text, html, to, ADMIN_EMAIL, {
+      aboutTestListing: isAdminOnlyListing({ name: p.daycareName }),
+      branded: brandedNotice({
+        heading: p.title,
+        text,
+        cta: /^https:\/\//i.test(p.ctaUrl) ? { label: p.ctaLabel, href: p.ctaUrl } : undefined,
+      }),
+    });
+    return { status };
+  } catch (err) {
+    console.error("[kidease-bill] payment state mail failed", err);
+    return { status: "failed" as const };
+  }
+}
+
 export const submitPublicMessage = createServerFn({ method: "POST" })
   .validator((input: {
     kind: "contact" | "support" | "enroll";

@@ -94,3 +94,31 @@ test("search route honours city and refuses an unknown city fallback", () => {
   assert.match(server, /listingsForCityHub/);
   assert.match(server, /directorySlug: undefined/);
 });
+
+test("C6: a care word is not a place, and the heading says near you", async () => {
+  const { searchPlaceFromQuery, nearYouHeadline, isGenericCareQuery } = await import("../src/lib/generic-care-query.ts");
+  const { resultsHeadline } = await import("../src/lib/mobile-search-v2.ts");
+  for (const q of ["daycare", "Day care", "childcare", "child care", "garderie", "CPE", "service de garde", "Services de garde"]) {
+    assert.equal(isGenericCareQuery(q), true, q);
+    assert.deepEqual(searchPlaceFromQuery(q), { place: "", genericCare: true }, q);
+  }
+  assert.deepEqual(searchPlaceFromQuery("Winnipeg, MB"), { place: "Winnipeg, MB", genericCare: false });
+  assert.deepEqual(searchPlaceFromQuery("Winnipeg daycare"), { place: "Winnipeg daycare", genericCare: false });
+  assert.deepEqual(searchPlaceFromQuery("  "), { place: "", genericCare: false });
+  assert.equal(nearYouHeadline("en"), "Child care near you");
+  assert.equal(nearYouHeadline("fr"), "Garderies près de chez vous");
+  assert.equal(resultsHeadline("", "en", true), "Child care near you");
+  assert.equal(resultsHeadline("", "fr", true), "Garderies près de chez vous");
+  assert.equal(resultsHeadline("Winnipeg", "en", true), "Child care in Winnipeg");
+  assert.equal(resultsHeadline("", "en"), "Child care");
+});
+
+test("C6: the search loader drops the care word instead of running a name search", () => {
+  const search = readFileSync(join(root, "src/routes/search.tsx"), "utf8");
+  const loader = search.slice(search.indexOf("export async function searchLoader"), search.indexOf("export function searchValidateSearch"));
+  assert.match(loader, /const q = genericCare \? "" : rawQ;/);
+  assert.doesNotMatch(loader, /genericCare \? rawQ/);
+  assert.doesNotMatch(search, /isGenericCareQuery\(incoming\.q\) \? incoming\.q/);
+  assert.match(search, /nearYouHeadline\(locale\)/);
+  assert.match(search, /nearYou=\{nearYou\}/);
+});

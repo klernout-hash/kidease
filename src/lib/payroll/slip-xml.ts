@@ -7,8 +7,8 @@
  * (read 2026-11-23). The 2027 version is the one CRA accepts from
  * January 11, 2027, which is when 2026 slips are filed.
  *
- * Not checked against the XSD: CRA's schema zip (xmlschm1-27-1.zip) could not
- * be downloaded from this build. Every file is marked "check before filing".
+ * T4 and T4A checked against CRA xmlschm1-27-1 on 2026-11-24. RL-1 still
+ * unverified. Every file is still marked "check before filing".
  *
  * Revenu Québec RL-1: a DRAFT only. Revenu Québec's XML schema could not be
  * read, the element names below come from memory of the published layout, and
@@ -21,7 +21,7 @@
 import type { ApprovedStub } from "./stubs.ts";
 import { rl1Slips, t4aSlips, t4Slips } from "./year-end.ts";
 
-export const SLIP_XML_AS_OF = "2026-11-23";
+export const SLIP_XML_AS_OF = "2026-11-24";
 
 export const SLIP_SOURCES = {
   t619: "https://www.canada.ca/en/revenue-agency/services/e-services/filing-information-returns-electronically-t4-t5-other-types-returns-overview/t619-2027.html",
@@ -34,7 +34,8 @@ export const SLIP_SOURCES = {
 /** What was and was not checked. Shown with every download. */
 export const SLIP_VERIFICATION = {
   craElementsFromSpecPages: true,
-  craXsdValidated: false,
+  /** T4 and T4A only. RL-1 has its own flags below. */
+  craXsdValidated: true,
   rl1ElementNamesVerified: false,
   rl1NeedsCertificationNumber: true,
   t4aDentalCodeRuleVerified: false,
@@ -63,6 +64,8 @@ export type SlipPerson = {
   initial: string;
   /** As entered by the person on their slip details form, digits only. null when not entered. */
   sin: string | null;
+  /** Contractor's own CRA business number, when they have one. T4A rcpnt_bn falls back to CRA's 000000000RC0000. */
+  businessNumber?: string | null;
   addrLine: string;
   city: string;
   provCd: string;
@@ -322,6 +325,12 @@ export function buildT4Xml(input: { year: number; employer: SlipEmployer; people
 }
 
 /** CRA T4A file for contractors: box 048 fees for services. */
+/** CRA T4A rcpnt_bn: the contractor's business number, or 000000000RC0000 when they have none. */
+export function rcpntBn(businessNumber: string | null | undefined): string {
+  const clean = (businessNumber || "").replace(/\s/g, "").toUpperCase();
+  return text(clean || "000000000RC0000", 15);
+}
+
 export function buildT4aXml(input: { year: number; employer: SlipEmployer; people: readonly SlipPerson[]; stubs: readonly ApprovedStub[]; lang: "E" | "F" }): SlipResult {
   const slips = t4aSlips(input.stubs, input.year).filter((slip) => slip.box048 > 0);
   const problems = employerProblems(input.employer, "t4a");
@@ -341,6 +350,7 @@ export function buildT4aXml(input: { year: number; employer: SlipEmployer; peopl
       el("init", text(person.initial, 1).toUpperCase(), `${i}  `) +
       `${i}</RCPNT_NM>\n` +
       `${i}<sin>${String(person.sin).replace(/\D/g, "")}</sin>\n` +
+      `${i}<rcpnt_bn>${rcpntBn(person.businessNumber)}</rcpnt_bn>\n` +
       addressBlock("RCPNT_ADDR", person, i) +
       `${i}<bn>${bn}</bn>\n` +
       `${i}<payr_dntl_ben_rpt_cd>1</payr_dntl_ben_rpt_cd>\n` +

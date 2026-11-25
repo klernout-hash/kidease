@@ -16,6 +16,8 @@ import { isSafeSitemapSlug } from "../../src/lib/sitemap.ts";
 import { isLeadStatus, leadStatusCopyKey } from "../../src/lib/lead-requests.ts";
 import { spotOfferCopy } from "../../src/lib/spot-offer-copy.ts";
 import { billDollars, billIsOpen } from "../../src/lib/bill.ts";
+import { failureReasonText } from "../../src/lib/payment-state.ts";
+import { selectParentTours } from "../../src/lib/parent-request-rows.ts";
 import { attendanceCopy } from "../../src/lib/attendance-handoff.ts";
 import { centreClockLabel } from "../../src/lib/parent-arrival.ts";
 import { parentHomeCareRows } from "../../src/lib/parent-home-care.ts";
@@ -74,11 +76,18 @@ export function renderParentHomeFixture({
     "@/lib/desk-nav": { parentDeskPath },
     "@/lib/use-parent-request-scope": { useParentRequestScope },
   };
+  const billStatus = component("src/components/bill-status.tsx", {
+    "@/lib/use-copy": common["@/lib/use-copy"],
+    "@/lib/utils": { cn },
+  });
   const { ParentHome } = component("src/components/parent-home.tsx", {
     ...common,
+    "@/components/bill-status": billStatus,
+    "@/lib/payment-state": { failureReasonText },
     "@/lib/locale-path": { localePath },
     "@/lib/parent-home-stage": { parentHomeSectionOrder, parentHomeStage },
     "@/lib/bill": { billDollars, billIsOpen },
+    "@/lib/parent-request-rows": { selectParentTours },
     "@/lib/utils": { money },
     "@/lib/sitemap": { isSafeSitemapSlug },
     "@/lib/role-access": { showsParentBrowseActions },

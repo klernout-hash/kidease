@@ -116,9 +116,12 @@ export async function runInvoiceRemindersJob(options: { dryRun?: boolean; now?: 
       locale: string | null;
       time_zone: string | null;
       province: string | null;
+      payment_state: string | null;
+      failed_at: string | null;
     }>`
       select i.id, i.number, i.status, i.due_at::text as due_at, i.paid_at::text as paid_at,
-             i.updated_at::text as updated_at, d.name as centre, u.email,
+             i.updated_at::text as updated_at, i.payment_state, i.failed_at::text as failed_at,
+             d.name as centre, u.email,
              p.locale, p.time_zone, d.province
       from invoices i
       join daycares d on d.id = i.daycare_id
@@ -136,7 +139,9 @@ export async function runInvoiceRemindersJob(options: { dryRun?: boolean; now?: 
         status: row.status,
         dueAt: row.due_at,
         paidAt: row.paid_at,
-        failedAt: row.updated_at,
+        // PE-5: the real failure date from the webhook (A3), not the last edit.
+        failedAt: row.failed_at || (row.payment_state === "failed" ? null : row.updated_at),
+        paymentState: row.payment_state,
         today,
         remindersOn: flag.invoice !== "off",
         dunningOn: flag.dunning !== "off",
@@ -151,6 +156,7 @@ export async function runInvoiceRemindersJob(options: { dryRun?: boolean; now?: 
         number: row.number,
         stage: plan.stage,
         kind: plan.kind === "dunning" ? "dunning" : "remind",
+        billId: plan.kind === "dunning" ? row.id : null,
       });
       await sendOne({
         automation: plan.kind === "dunning" ? "payment_dunning" : "invoice_reminder",

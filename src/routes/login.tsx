@@ -1,11 +1,12 @@
 import { checkEmailStatus } from "@/lib/auth/email-status-client";
-import { createFileRoute, Link, useRouteContext, useRouter, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useRouteContext, useRouter, useRouterState } from "@tanstack/react-router";
 import { authBackFallback, currentAuthBackFallback } from "@/lib/auth/auth-back";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { loginSubmittedText } from "@/lib/login-fields";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
+import { govLoginRedirectForNext } from "@/lib/auth/verify-2fa-session";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { reviewerSignInSkipsTurnstile } from "@/lib/reviewer-accounts";
 import { nativeSocialPlatform, sanitizeNativeOAuthError, signInProvidersForDevice } from "@/lib/auth/native-oauth";
@@ -56,6 +57,7 @@ import {
   twoFactorPageUrl,
   waitForSignedInSession,
 } from "@/lib/auth/login-funnel";
+import { clearLoginSubmitted, markLoginSubmitted, takeLoginBounce } from "@/lib/auth/login-bounce";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { canContinueAdminSession } from "@/lib/server/reauth";
 import { isNative, isStandalone } from "@/lib/native";
@@ -254,12 +256,22 @@ export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
   return out;
 }
 
+/**
+ * Government sign-in has one path: `/gov/login` checks the email-code step
+ * itself. `/login?next=/gov` used to sign in here and then bounce (A2).
+ */
+export function loginGovBeforeLoad(search: LoginSearch, routeLocale: "en" | "fr") {
+  const href = govLoginRedirectForNext(search.next, routeLocale);
+  if (href) throw redirect({ href });
+}
+
 export async function loginLoader() {
   return loadSignInProviders();
 }
 
 export const Route = createFileRoute("/login")({
   validateSearch: loginValidateSearch,
+  beforeLoad: ({ search }) => loginGovBeforeLoad(search, "en"),
   loader: loginLoader,
   head: ({ matches }) =>
     withNoindex(
@@ -395,6 +407,8 @@ export function LoginScreen({
 
   useEffect(() => {
     captureLoginFunnel({ step: "viewed", native: isNative() });
+    // Back on /login right after a submit, with no desk in between: a bounce.
+    if (takeLoginBounce()) captureLoginFunnel({ step: "bounced", native: isNative() });
   }, []);
 
   useEffect(() => {
@@ -717,6 +731,7 @@ export function LoginScreen({
         throw new Error("Please complete the security check, then try again.");
       }
       captureLoginFunnel({ step: "submitted", method: "email", native: isNative() });
+      markLoginSubmitted();
       if (search.why && mode === "up") {
         capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("email_continue", { source: "login" }));
       }
@@ -779,6 +794,7 @@ export function LoginScreen({
     } catch (err) {
       if (attempt.current !== id) return;
       const message = friendlyAuthError(authClientErrorMessage(err)) || "Sign-in failed";
+      clearLoginSubmitted();
       captureLoginFunnel({ step: "failed", method: "email", reason: funnelFailReason(message), native: isNative() });
       setError(message);
       resetTurnstile();

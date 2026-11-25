@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { authMiddleware } from "@/lib/auth/middleware";
+import { secondFactorMiddleware, sessionBearerMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { nid } from "@/lib/utils";
 import { ADMIN_EMAIL, lookupUser } from "@/lib/server/notify";
@@ -79,8 +79,25 @@ async function sendCodeEmail(to: string, code: string) {
   return result.status;
 }
 
+/**
+ * Does the server see a signed-in session? `/verify-2fa` asks this before it
+ * sends anyone back to sign-in, so a slow or missing browser session does not
+ * bounce a signed-in officer to /login.
+ */
+export const getVerify2faServerSession = createServerFn({ method: "GET" })
+  .middleware([sessionBearerMiddleware])
+  .handler(async ({ context }): Promise<{ signedIn: boolean; userId: string | null }> => {
+    try {
+      const { getSessionUser } = await import("@/lib/auth/verify.server");
+      const user = await getSessionUser(context.bearerToken);
+      return user?.id ? { signedIn: true, userId: user.id } : { signedIn: false, userId: null };
+    } catch {
+      return { signedIn: false, userId: null };
+    }
+  });
+
 export const getTwoFactorStatus = createServerFn({ method: "GET" })
-  .middleware([authMiddleware])
+  .middleware([secondFactorMiddleware])
   .handler(async ({ context }) => {
     const { isCurrentUserTwoFactorVerified } = await import("./two-factor.server");
     const verified = isCurrentUserTwoFactorVerified(context.userId);
@@ -95,7 +112,7 @@ export const getTwoFactorStatus = createServerFn({ method: "GET" })
   });
 
 export const startTwoFactor = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
+  .middleware([secondFactorMiddleware])
   .validator((input: { force?: boolean } = {}) => ({
     force: Boolean(input?.force),
   }))
@@ -221,7 +238,7 @@ export async function consumeTwoFactorCode(userId: string, code: string) {
 export const verifyTwoFactorCode = consumeTwoFactorCode;
 
 export const verifyTwoFactor = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
+  .middleware([secondFactorMiddleware])
   .validator((input: { code: string; remember?: boolean; turnstileToken?: string }) => ({
     code: String(input.code || "").replace(/\D/g, "").slice(0, 6),
     remember: Boolean(input.remember),

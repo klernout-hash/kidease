@@ -21,6 +21,8 @@ import type { CopyKey } from "@/lib/copy";
 import type { PayMode } from "@/lib/connect-payments";
 import { listParentPayChoices, listWalletMethods, setParentPayMode, startManualPay } from "@/lib/server/connect-payments";
 import { loadStripeClient } from "@/lib/stripe-browser";
+import { PaymentStateBadge, PaymentStateNote } from "@/components/bill-status";
+import { failureReasonText } from "@/lib/payment-state";
 
 type Payments = { ok: true; bills: EarnBill[]; maskedEmail: string | null } | { ok: false };
 
@@ -169,6 +171,8 @@ function ParentPayChoices() {
       parentPaysCents: number;
       feeLabel: string;
       number: string;
+      paymentState: "processing" | "requires_action" | "failed" | null;
+      lastErrorCode: string | null;
     }[]
   >([]);
   const [methods, setMethods] = useState<{ id: string; label: string }[]>([]);
@@ -266,7 +270,29 @@ function ParentPayChoices() {
             <p className="mt-1 text-sm font-medium tabular-nums">
               {t("youPay")} · {cad(bill.parentPaysCents || bill.amountCents)}
             </p>
-            {methods.length > 0 ? (
+            {bill.paymentState ? (
+              <div className="mt-3 space-y-2">
+                <PaymentStateBadge state={bill.paymentState} />
+                <PaymentStateNote state={bill.paymentState} reason={failureReasonText(bill.lastErrorCode, french ? "fr" : "en")} />
+                {bill.paymentState === "requires_action" ? (
+                  <Button asChild className="w-full">
+                    <Link to="/pay/bill/$billId" params={{ billId: bill.id }} search={{}}>
+                      {t("billConfirmPayment")}
+                    </Link>
+                  </Button>
+                ) : null}
+                {bill.paymentState === "failed" ? (
+                  <Link
+                    to="/account"
+                    search={{ section: "wallet", fix: bill.id }}
+                    className="inline-flex min-h-11 items-center text-sm font-medium text-primary"
+                  >
+                    {t("billUpdateCard")}
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
+            {bill.paymentState === "processing" || bill.paymentState === "requires_action" ? null : methods.length > 0 ? (
               <label className="mt-3 block text-sm font-medium">
                 {t("walletTitle")}
                 <select
@@ -284,6 +310,7 @@ function ParentPayChoices() {
             ) : (
               <p className="mt-3 text-sm text-muted">{t("walletEmpty")}</p>
             )}
+            {bill.paymentState === "processing" || bill.paymentState === "requires_action" ? null : (
             <Button
               type="button"
               className="mt-4 w-full"
@@ -320,8 +347,9 @@ function ParentPayChoices() {
                   .finally(() => setBusy(false));
               }}
             >
-              {t("payBillNow")}
+              {bill.paymentState === "failed" ? t("billPayAgain") : t("payBillNow")}
             </Button>
+            )}
           </div>
         );
       })}

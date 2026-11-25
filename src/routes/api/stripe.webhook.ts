@@ -1,11 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { claimStripeEventOnce, gateStripeWebhook, releaseStripeEventClaim } from "@/lib/server/stripe-signature";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
-import { applyStripeBillEvent } from "@/lib/server/billing";
-import { applyConnectSideEffect, queueMonthlyFeeTax } from "@/lib/server/connect-payments";
+import { applyStripeBillEvent, applyStripePaymentStateEvent } from "@/lib/server/billing";
+import { applyConnectSideEffect, applyMandateEvent, queueMonthlyFeeTax } from "@/lib/server/connect-payments";
 import { applyStripeDisputeEvent, applyStripeSubscriptionEvent } from "@/lib/server/stripe-lifecycle";
 import { selectStripeWebhookSecrets } from "@/lib/connect-payments";
-import { applyParentStripeInvoice } from "@/lib/server/stripe-parent-invoices";
+import {
+  applyParentStripeInvoice,
+  claimStripeWebhookEvent,
+  releaseStripeWebhookEvent,
+} from "@/lib/server/stripe-parent-invoices";
+import { runClaimedEvent } from "@/lib/payment-state";
+import { webhookProductEvent } from "@/lib/webhook-product-events";
 
 const BILL_TYPES = new Set([
   "payment_intent.succeeded",
@@ -25,6 +31,19 @@ const SUB_TYPES = new Set([
 ]);
 
 const PARENT_INVOICE_TYPES = new Set(["invoice.finalized", "invoice.paid", "invoice.payment_failed"]);
+
+/** Bank debit (PAD) processing, failed payments, 3D Secure, and past-due bills. */
+const PAYMENT_STATE_TYPES = new Set([
+  "payment_intent.processing",
+  "payment_intent.payment_failed",
+  "payment_intent.requires_action",
+  "invoice.overdue",
+]);
+
+const MANDATE_TYPES = new Set(["mandate.updated"]);
+
+/** Acknowledged with no change. The wallet reads saved methods from Stripe. */
+const NO_OP_TYPES = new Set(["payment_method.attached"]);
 
 /**
  * Stripe webhook sink. Missing secret → 401. Missing or bad stripe-signature → 400.
@@ -133,6 +152,38 @@ async function run(request: Request) {
     }
   }
 
+  let paymentState: string | null = null;
+  let mandateStatus: string | null = null;
+  if (PAYMENT_STATE_TYPES.has(type) || MANDATE_TYPES.has(type)) {
+    // Database claim: a Stripe retry can land on another server instance.
+    const livemode = (event as { livemode?: boolean }).livemode === true;
+    const eventId = String(event.id || "");
+    try {
+      const claimed = await runClaimedEvent({
+        claim: () => (eventId ? claimStripeWebhookEvent(eventId, type, livemode) : Promise.resolve(true)),
+        release: () => (eventId ? releaseStripeWebhookEvent(eventId) : Promise.resolve()),
+        run: async () => {
+          if (MANDATE_TYPES.has(type)) {
+            const mandate = await applyMandateEvent(object);
+            return { billId: null as string | null, paymentState: null as string | null, mandateStatus: mandate.status };
+          }
+          const applied = await applyStripePaymentStateEvent({ type, object });
+          return { billId: applied.billId, paymentState: applied.paymentState as string | null, mandateStatus: null as string | null };
+        },
+      });
+      if (claimed.duplicate) {
+        return Response.json({ ok: true, duplicate: true, id: event.id ?? null });
+      }
+      bill = { billId: claimed.result.billId };
+      paymentState = claimed.result.paymentState;
+      mandateStatus = claimed.result.mandateStatus;
+    } catch (err) {
+      console.error("[kidease-bill] payment state apply failed", err instanceof Error ? err.message : "failed");
+      releaseStripeEventClaim(event.id);
+      return Response.json({ ok: false, error: "payment state apply failed" }, { status: 500 });
+    }
+  }
+
   let invoiceId: string | null = null;
   let parentUserId: string | null = null;
   let unlinked: string | null = null;
@@ -156,10 +207,19 @@ async function run(request: Request) {
     }
   }
 
+  const planned = webhookProductEvent(type, { billStatus: bill?.status ?? null, invoiceId });
+  if (planned) {
+    const { captureServerProductEvent } = await import("@/lib/server/product-events");
+    void captureServerProductEvent(planned.event, planned.properties);
+  }
+
   if (
     BILL_TYPES.has(type) ||
     SUB_TYPES.has(type) ||
     PARENT_INVOICE_TYPES.has(type) ||
+    PAYMENT_STATE_TYPES.has(type) ||
+    MANDATE_TYPES.has(type) ||
+    NO_OP_TYPES.has(type) ||
     type === "charge.dispute.created"
   ) {
     return Response.json({
@@ -168,6 +228,8 @@ async function run(request: Request) {
       id: event.data?.object?.id ?? event.id ?? null,
       billId: bill?.billId ?? null,
       billStatus: bill?.status ?? null,
+      paymentState,
+      mandateStatus,
       invoiceId,
       parentUserId,
       unlinked,

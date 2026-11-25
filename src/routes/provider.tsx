@@ -703,7 +703,7 @@ export function ProviderPage() {
       ) : null}
       {desk === "requests" ? (
         <div className="min-w-0 max-w-full space-y-6" data-tour="provider-requests">
-        {canWrite ? <CentreFamilyDocs /> : null}
+        <h1 className="font-display text-2xl" data-ke="provider-requests-title">{t("navRequests")}</h1>
         {canWrite ? <FormSharePreview /> : null}
         {leads.length === 0 && tours.length === 0 && pipeline.length === 0 && waiting.length === 0 ? (
           <EmptyState title={t("enquiriesEmptyTitle")} body={t("enquiriesEmptyLead")} extra={<FirstRunExample id="provider-requests" />} />
@@ -772,6 +772,8 @@ export function ProviderPage() {
           ) : null}
         </section>
         )}
+        {/* Family documents come after the enquiries. The block hides itself when there are none. */}
+        {canWrite ? <CentreFamilyDocs hideWhenEmpty /> : null}
         </div>
       ) : null}
 
