@@ -2764,6 +2764,13 @@ html[data-channel="app"]:not([data-channel="website"]) [data-ke="search-split"]:
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+/* The list and map halves: a real gap so a foldable's crease falls between them.
+   Unlayered so .ke-dense .gap-6 (0.6rem) does not shrink it. */
+@media (min-width: 900px) {
+  html[data-channel="app"] [data-ke="search-split"] {
+    column-gap: 2rem;
+  }
+}
 /* List plus detail from a tablet width up. The website at 1280 and wider
    keeps the desk it already had. Slide Over stays one column. */
 .ke-split {

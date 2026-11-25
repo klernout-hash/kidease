@@ -473,6 +473,8 @@ async function duoFoldSequence(browser, base, seen = []) {
         return card ? { slug: card.getAttribute("data-slug"), top: card.getBoundingClientRect().top } : null;
       });
     let anchor = await pickAnchor();
+    const cardCount = await page.evaluate(() => document.querySelectorAll(".ke-search-results article[data-slug]").length);
+    seen.push(`fold cards ${cardCount} anchor ${anchor ? anchor.slug : "none"}`);
     armed = true;
     for (const name of ["duo-inner-landscape", "duo-cover-portrait", "duo-inner-portrait", "duo-cover-portrait"]) {
       const pose = poses[name];

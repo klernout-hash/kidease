@@ -186,6 +186,7 @@ test("iPhone Duo: the inner display gets the full width, the rail and two panes"
   assert.match(split, /MutationObserver/);
   const search = src("src/routes/search.tsx");
   assert.match(search, /app-wide:grid-cols-2/);
+  assert.match(css, /html\[data-channel="app"\] \[data-ke="search-split"\] \{\s*column-gap: 2rem;/);
   assert.match(search, /data-ke-filters=\{resultFiltersKey\}/);
   // Chips are state, not layout: folding never changes the query.
   assert.doesNotMatch(search, /mobileViewport && (licensedChip|topRatedChip)/);
