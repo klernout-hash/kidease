@@ -439,7 +439,8 @@ async function duoFoldSequence(browser, base, seen = []) {
     if (armed && msg.type() === "error" && DUO_CONSOLE.test(msg.text())) errors.push(msg.text().slice(0, 120));
   });
   page.on("pageerror", (err) => {
-    if (armed) errors.push(String(err?.message || err).slice(0, 120));
+    const text = String(err?.message || err);
+    if (armed && DUO_CONSOLE.test(text)) errors.push(text.slice(0, 120));
   });
   try {
     await page.goto(new URL("/search?q=Winnipeg", base).href, { waitUntil: "domcontentloaded", timeout: 25000 });
@@ -452,8 +453,16 @@ async function duoFoldSequence(browser, base, seen = []) {
     });
     const filtersKey = () => page.evaluate(() => document.querySelector("[data-ke='search-split']")?.getAttribute("data-ke-filters") ?? null);
     const startKey = await filtersKey();
-    // Put a card under the reader's eye, then remember where it sits.
-    await page.evaluate(() => window.scrollTo({ top: 700, behavior: "instant" }));
+    // Put a card under the reader's eye (the second result, if the catalogue has one), then remember where it sits.
+    await page
+      .waitForFunction(() => document.querySelectorAll(".ke-search-results article[data-slug]").length >= 2, undefined, { timeout: 12000 })
+      .catch(() => undefined);
+    await page.evaluate(() => {
+      const card = document.querySelectorAll(".ke-search-results article[data-slug]")[1];
+      const header = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
+      const top = card ? card.getBoundingClientRect().top + window.scrollY - header - 8 : 700;
+      window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
+    });
     await page.waitForTimeout(400);
     const pickAnchor = () =>
       page.evaluate(() => {

@@ -81,9 +81,13 @@ export function KeyboardInset() {
             onViewport();
             delete root.dataset.keyboard;
           });
+          // Without the native plugin (a KidEase user agent in a plain browser, a test
+          // run) addListener rejects. Handle it here so it is not an unhandled rejection.
+          shown.catch(() => undefined);
+          hidden.catch(() => undefined);
           cancelNative = () => {
-            void shown.then((handle) => handle.remove());
-            void hidden.then((handle) => handle.remove());
+            void shown.then((handle) => handle.remove()).catch(() => undefined);
+            void hidden.then((handle) => handle.remove()).catch(() => undefined);
           };
         })
         .catch(() => undefined);
