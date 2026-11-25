@@ -370,7 +370,7 @@ test("wallet save and invoices do not use a hosted page", () => {
   assert.equal(setup.payment_method_options.acss_debit.currency, "cad");
   assert.equal(setup.payment_method_options.acss_debit.mandate_options.transaction_type, "personal");
   const settings = connectInvoicePaymentSettings();
-  assert.deepEqual(settings.payment_method_types, ["card", "acss_debit"]);
+  assert.deepEqual(settings.payment_method_types, ["card", "acss_debit", "link"]);
   const invoice = parentInvoiceBody({
     mode: "manual",
     customerId: "cus_parent",
@@ -393,7 +393,7 @@ test("wallet save and invoices do not use a hosted page", () => {
   });
   assert.equal(automatic.collection_method, "charge_automatically");
   assert.equal(automatic.default_payment_method, "pm_card");
-  assert.deepEqual(automatic.payment_settings.payment_method_types, ["card", "acss_debit"]);
+  assert.deepEqual(automatic.payment_settings.payment_method_types, ["card", "acss_debit", "link"]);
   const stripped = withoutHostedInvoice({ id: "in_1", hosted_invoice_url: "https://invoice.stripe.com/i/secret", invoice_pdf: "https://files.stripe.com/secret" });
   assert.equal("hosted_invoice_url" in stripped, false);
   assert.equal("invoice_pdf" in stripped, false);

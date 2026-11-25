@@ -11,10 +11,13 @@
  * only so Kyle can paste Stripe’s file later if wallets are ever shown on
  * this origin (Payment Element / Express Checkout). Do not invent that file.
  *
+ * Link (Stripe's saved checkout) is a real payment_method_type and is
+ * listed so returning parents can pay in one tap.
+ *
  * Do not add a second Payment Element charge path here.
  */
 
-export const CHECKOUT_WALLET_PAYMENT_METHOD_TYPES = ["card"] as const;
+export const CHECKOUT_WALLET_PAYMENT_METHOD_TYPES = ["card", "link"] as const;
 
 /** Future Payment Element / Express Checkout only — not used by hosted Checkout. */
 export const PAYMENT_ELEMENT_WALLET_OPTIONS = {
