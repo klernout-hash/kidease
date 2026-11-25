@@ -51,7 +51,7 @@ function utilityCss() {
 }
 
 function CSS_escape(cls) {
-  return cls.replace(/([.:[\]/])/g, "\\$1");
+  return cls.replace(/([\\.:[\]/])/g, "\\$1");
 }
 
 function fixture() {
