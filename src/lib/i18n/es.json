@@ -3734,5 +3734,21 @@
   "emailCodeSavedOff": "El código por correo está desactivado.",
   "healthCodePrompt": "Añada un código por correo antes del {date} para que las notas de salud y los documentos queden solo para usted.",
   "healthCodeLocked": "Las notas de salud y los documentos quedan ocultos hasta que añada un código por correo.",
-  "healthCodeAction": "Añadir un código por correo"
+  "healthCodeAction": "Añadir un código por correo",
+  "connectErrOff": "Los pagos a tu centro aún no están activados.",
+  "connectErrLive": "Los pagos reales aún no están activados. Ya nos avisaron.",
+  "connectErrMissing": "La configuración de pagos no está terminada de nuestro lado. Ya nos avisaron.",
+  "connectErrNotOwner": "Solo la persona dueña del centro puede configurar los pagos.",
+  "connectErrStripe": "Stripe no pudo iniciar la configuración (código {code}). Inténtalo de nuevo o escribe a support@kidease.ca.",
+  "billStateProcessing": "En proceso",
+  "billStateFailed": "No se completó",
+  "billStateAction": "Acción necesaria",
+  "billProcessingBody": "En proceso. Los débitos bancarios (PAD) tardan de 3 a 5 días hábiles.",
+  "billFailedBody": "Tu pago no se completó. Paga de nuevo o actualiza tu tarjeta.",
+  "billFailedReason": "Motivo: {reason}",
+  "billActionBody": "Confirma tu pago con tu banco.",
+  "billConfirmPayment": "Confirmar pago",
+  "billConfirmDone": "Gracias. Actualizaremos esta factura cuando tu banco confirme.",
+  "billUpdateCard": "Actualizar tarjeta",
+  "billPayAgain": "Pagar de nuevo"
 }

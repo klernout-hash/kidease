@@ -3734,5 +3734,21 @@
   "emailCodeSavedOff": "Der E-Mail-Code ist aus.",
   "healthCodePrompt": "Fügen Sie vor dem {date} einen E-Mail-Code hinzu, damit Gesundheitsnotizen und Dokumente nur für Sie sichtbar sind.",
   "healthCodeLocked": "Gesundheitsnotizen und Dokumente bleiben verborgen, bis Sie einen E-Mail-Code hinzufügen.",
-  "healthCodeAction": "E-Mail-Code hinzufügen"
+  "healthCodeAction": "E-Mail-Code hinzufügen",
+  "connectErrOff": "Auszahlungen sind noch nicht aktiviert.",
+  "connectErrLive": "Echte Auszahlungen sind noch nicht aktiviert. Wir wurden informiert.",
+  "connectErrMissing": "Die Einrichtung der Auszahlungen ist bei uns noch nicht fertig. Wir wurden informiert.",
+  "connectErrNotOwner": "Nur der Inhaber der Einrichtung kann Auszahlungen einrichten.",
+  "connectErrStripe": "Stripe konnte die Einrichtung nicht starten (Code {code}). Versuche es erneut oder schreibe an support@kidease.ca.",
+  "billStateProcessing": "In Bearbeitung",
+  "billStateFailed": "Nicht durchgegangen",
+  "billStateAction": "Aktion nötig",
+  "billProcessingBody": "In Bearbeitung. Bankeinzüge (PAD) dauern 3 bis 5 Werktage.",
+  "billFailedBody": "Deine Zahlung ist nicht durchgegangen. Zahle erneut oder aktualisiere deine Karte.",
+  "billFailedReason": "Grund: {reason}",
+  "billActionBody": "Bestätige deine Zahlung bei deiner Bank.",
+  "billConfirmPayment": "Zahlung bestätigen",
+  "billConfirmDone": "Danke. Wir aktualisieren diese Rechnung, sobald deine Bank bestätigt.",
+  "billUpdateCard": "Karte aktualisieren",
+  "billPayAgain": "Erneut zahlen"
 }
