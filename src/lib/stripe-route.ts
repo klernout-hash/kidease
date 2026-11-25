@@ -111,3 +111,38 @@ export function stripeCredentialsForMode(mode: PaymentStripeMode, env: StripeRou
 export function qaLiveChargeBlocked(secret: string, qa: boolean): boolean {
   return qa && secret.trim().startsWith("sk_live_");
 }
+
+export type RoutedStripeCall =
+  | { ok: true; mode: PaymentStripeMode; secret: string; publishable: string }
+  | { ok: false; mode: PaymentStripeMode | null; reason: "off" | "live" | "missing" };
+
+/**
+ * One routing rule for every server call. A QA payer or a QA centre gets test
+ * keys, and never a live secret. Everyone else is live, and live needs
+ * KIDEASE_CONNECT_LIVE=1. The publishable key always matches the secret's mode,
+ * so the browser and the server talk to the same Stripe mode.
+ */
+export function routeStripeCall(input: {
+  paymentsEnabled: boolean;
+  liveEnabled: boolean;
+  payer?: { email?: string | null; isTest?: boolean | number | string | null } | null;
+  centre?: {
+    id?: string | null;
+    slug?: string | null;
+    visibility?: string | null;
+    isTest?: boolean | number | string | null;
+    isDemo?: boolean | number | string | null;
+  } | null;
+  env?: StripeRouteEnv;
+}): RoutedStripeCall {
+  if (!input.paymentsEnabled) return { ok: false, mode: null, reason: "off" };
+  const payerQa = payerUsesTestStripe({ email: input.payer?.email, isTest: input.payer?.isTest });
+  const centreQa = input.centre ? centreUsesTestStripe(input.centre) : false;
+  const qa = payerQa || centreQa;
+  const mode: PaymentStripeMode = qa ? "test" : paymentStripeMode({ payerQa, centreQa, liveEnabled: input.liveEnabled });
+  if (!qa && mode === "live" && !input.liveEnabled) return { ok: false, mode, reason: "live" };
+  const creds = stripeCredentialsForMode(mode, input.env ?? process.env);
+  if (!creds.ok) return { ok: false, mode, reason: "missing" };
+  if (qaLiveChargeBlocked(creds.secret, qa)) return { ok: false, mode, reason: "missing" };
+  return { ok: true, mode: creds.mode, secret: creds.secret, publishable: creds.publishable };
+}

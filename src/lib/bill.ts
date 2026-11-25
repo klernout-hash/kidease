@@ -31,6 +31,10 @@ export type Bill = {
   sentAt: string | null;
   paidAt: string | null;
   createdAt: string;
+  /** Stripe payment state beside status (processing / requires_action / failed). */
+  paymentState?: "processing" | "requires_action" | "failed" | null;
+  lastErrorCode?: string | null;
+  failedAt?: string | null;
 };
 
 export function isBillStatus(raw: string): raw is BillStatus {

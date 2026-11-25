@@ -17,6 +17,11 @@ type StripeClient = {
     redirect: "if_required";
     confirmParams: { return_url: string; payment_method: string };
   }) => Promise<{ error?: { message?: string } }>;
+  /** 3D Secure / SCA for a PaymentIntent in requires_action. */
+  handleNextAction: (options: { clientSecret: string }) => Promise<{
+    error?: { message?: string };
+    paymentIntent?: { status?: string };
+  }>;
 };
 
 type StripeFactory = (key: string) => StripeClient;

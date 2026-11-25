@@ -18,7 +18,13 @@ import { canCreateBillForCentre, canReadBill, decideBillCheckout, resolveConnect
 import { extractStripeBillRef, type StripeBillObject } from "@/lib/stripe-bill-event";
 import { createStripeCheckoutSession, retrieveStripeCheckoutSession } from "@/lib/server/stripe-checkout";
 import { rememberStripeCustomer } from "@/lib/server/stripe-lifecycle";
-import { notifyParentBill, notifyPlatform } from "@/lib/server/notify";
+import { notifyParentBill, notifyParentBillState, notifyPlatform } from "@/lib/server/notify";
+import {
+  parsePaymentState,
+  paymentStateMessage,
+  planPaymentStateEvent,
+  type BillPaymentState,
+} from "@/lib/payment-state";
 import { formatPlanCad } from "@/lib/upgrade-plans";
 import { normalizeCheckoutLocale } from "@/lib/stripe-wallets";
 
@@ -132,7 +138,8 @@ function nextBillNumber(id: string, at = new Date()) {
 async function postBillMessage(
   sql: Sql,
   bill: Pick<Bill, "parentUserId" | "daycareId" | "daycareName" | "amountCents" | "period" | "dueAt" | "status" | "id">,
-  kind: "sent" | "paid",
+  kind: "sent" | "paid" | BillPaymentState,
+  text?: string,
 ) {
   const existing = await sql<{ id: string }>`
     select id from conversations
@@ -157,8 +164,9 @@ async function postBillMessage(
   const dollars = Math.round(bill.amountCents / 100);
   const due = bill.dueAt ? ` Due ${bill.dueAt}.` : "";
   const payUrl = `${appOrigin()}/pay/bill/${bill.id}`;
-  const body =
-    kind === "sent"
+  const body = text
+    ? text
+    : kind === "sent"
       ? `New bill from ${bill.daycareName}: ${formatPlanCad(dollars, "en")} for ${bill.period}.${due} Pay in KidEase: ${payUrl}`
       : `Bill paid: ${formatPlanCad(dollars, "en")} for ${bill.period} at ${bill.daycareName}.`;
   await sql`
@@ -255,6 +263,12 @@ export async function applyStripeBillEvent(input: {
       updated_at = now()
     where id = ${bill.id}
   `;
+  // Paid clears any processing / failed / requires_action state. Separate
+  // statement so a database without migration 0231 still records the payment.
+  await sql`
+    update invoices set payment_state = null, last_error_code = null
+    where id = ${bill.id} and payment_state is not null
+  `.catch(() => undefined);
   const fresh = mapBill({ ...(await loadInvoice(sql, bill.id))! });
   await recordPaymentRow(sql, fresh, ref);
   await postBillMessage(sql, fresh, "paid");
@@ -271,6 +285,131 @@ export async function applyStripeBillEvent(input: {
     console.error("[kidease-bill] paid notify failed", err);
   }
   return { ok: true, billId: fresh.id, status: "paid", handled: type };
+}
+
+type PaymentStateRow = {
+  id: string;
+  payment_state: string | null;
+  last_error_code: string | null;
+  failed_at: string | Date | null;
+};
+
+/** Adds payment_state to bills. Read separately so a missing column never hides bills. */
+async function withPaymentState(sql: Sql, bills: Bill[]): Promise<Bill[]> {
+  if (!bills.length) return bills;
+  const rows = await sql
+    .query<PaymentStateRow>(
+      `select id, payment_state, last_error_code, failed_at from invoices where id = any($1::text[])`,
+      [bills.map((bill) => bill.id)],
+    )
+    .catch(() => [] as PaymentStateRow[]);
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  return bills.map((bill) => {
+    const row = byId.get(bill.id);
+    if (!row) return bill;
+    return {
+      ...bill,
+      // Only an open bill shows a payment state.
+      paymentState: bill.status === "sent" ? parsePaymentState(row.payment_state) : null,
+      lastErrorCode: row.last_error_code,
+      failedAt: row.failed_at ? new Date(row.failed_at).toISOString() : null,
+    };
+  });
+}
+
+/**
+ * payment_intent.processing / payment_failed / requires_action and
+ * invoice.overdue. Never touches a paid, refunded, void or disputed bill.
+ */
+export async function applyStripePaymentStateEvent(input: {
+  type: string;
+  object?: StripeBillObject | null;
+}): Promise<{ ok: true; billId: string | null; paymentState: BillPaymentState | null; handled: string; skipped?: string }> {
+  const type = input.type || "";
+  const ref = extractStripeBillRef(input.object, type);
+  const sql = await getSql();
+  let found = await findBillForStripe(sql, ref);
+  if (!found) {
+    // Invoice-created PaymentIntents may carry no bill metadata: match by the
+    // Stripe invoice id (on the PI in older API versions, or the invoice itself).
+    const raw = (input.object || {}) as { object?: string; id?: string; invoice?: string | { id?: string } | null };
+    const stripeInvoiceId =
+      raw.object === "invoice" ? String(raw.id || "") : typeof raw.invoice === "string" ? raw.invoice : String(raw.invoice?.id || "");
+    if (stripeInvoiceId.startsWith("in_")) {
+      const rows = await sql
+        .query<{ id: string }>(`select id from invoices where stripe_invoice_id = $1 limit 1`, [stripeInvoiceId])
+        .catch(() => [] as { id: string }[]);
+      const row = rows[0] ? await loadInvoice(sql, rows[0].id) : null;
+      if (row) found = mapBill(row);
+    }
+  }
+  const current = found ? (await withPaymentState(sql, [found]))[0]! : null;
+  const plan = planPaymentStateEvent(
+    type,
+    input.object,
+    current ? { status: current.status, paymentState: current.paymentState ?? null } : null,
+  );
+  if (plan.kind === "skip") {
+    return { ok: true, billId: current?.id ?? null, paymentState: current?.paymentState ?? null, handled: type, skipped: plan.reason };
+  }
+  const bill = current!;
+  // status = 'sent' in the where clause: a bill paid in the meantime is never downgraded.
+  await sql`
+    update invoices set
+      payment_state = ${plan.paymentState},
+      processing_at = case when ${plan.stamp} = 'processing_at' then now() else processing_at end,
+      failed_at = case when ${plan.stamp} = 'failed_at' then now() else failed_at end,
+      overdue_at = case when ${plan.stamp} = 'overdue_at' then coalesce(overdue_at, now()) else overdue_at end,
+      last_error_code = case when ${plan.paymentState} = 'failed' then ${plan.lastErrorCode} else last_error_code end,
+      stripe_payment_intent_id = coalesce(stripe_payment_intent_id, ${ref.paymentIntentId}),
+      updated_at = now()
+    where id = ${bill.id} and status = ${"sent"}
+  `;
+  if (plan.notify) {
+    await notifyPaymentState(sql, bill, plan.notify, plan.lastErrorCode).catch((err) => {
+      console.error("[kidease-bill] payment state notice skipped", err instanceof Error ? err.message : "failed");
+    });
+  }
+  return { ok: true, billId: bill.id, paymentState: plan.paymentState, handled: type };
+}
+
+async function notifyPaymentState(sql: Sql, bill: Bill, state: BillPaymentState, errorCode: string | null) {
+  const profile = await sql<{ locale: string | null }>`
+    select locale from profiles where user_id = ${bill.parentUserId} limit 1
+  `.catch(() => [] as { locale: string | null }[]);
+  const locale = profile[0]?.locale === "fr" ? "fr" : "en";
+  const payUrl = `${appOrigin()}/pay/bill/${bill.id}`;
+  const walletUrl = `${appOrigin()}/account?section=wallet&fix=${encodeURIComponent(bill.id)}`;
+  const text = paymentStateMessage(state, {
+    daycareName: bill.daycareName,
+    amountLabel: formatPlanCad(bill.amountCents / 100, locale),
+    payUrl,
+    walletUrl,
+    errorCode,
+    locale,
+  });
+  await postBillMessage(sql, bill, state, text.body);
+  if (state === "processing") return;
+  const { sendPushNotification } = await import("@/lib/server/push.server");
+  await sendPushNotification({ userId: bill.parentUserId, title: text.title, body: text.body, url: `/pay/bill/${bill.id}` }).catch(
+    () => undefined,
+  );
+  await notifyParentBillState({
+    to: bill.parentEmail,
+    title: text.title,
+    body: text.body,
+    ctaLabel: state === "failed" ? (locale === "fr" ? "Payer de nouveau" : "Pay again") : locale === "fr" ? "Confirmer le paiement" : "Confirm payment",
+    ctaUrl: payUrl,
+    daycareName: bill.daycareName,
+  });
+  if (state === "requires_action") {
+    const { captureServerProductEvent } = await import("@/lib/server/product-events");
+    void captureServerProductEvent("payment_state_changed", { state, source: "centre_bill" });
+  }
+  if (state === "failed") {
+    const { captureServerProductEvent } = await import("@/lib/server/product-events");
+    void captureServerProductEvent("payment_state_changed", { state, source: "centre_bill", reason: errorCode || "unknown" });
+  }
 }
 
 async function findBillForStripe(
@@ -339,9 +478,12 @@ export const listProviderBills = createServerFn({ method: "GET" })
     return {
       stripeLive: moneyDesk ? parentBillCardLive() : false,
       platformFeeBps: moneyDesk ? platformFeeBps() : null,
-      bills: rows
-        .map((row) => ({ ...mapBill(row), parentEmail: null }))
-        .filter((bill) => editable.has(bill.daycareId) || bill.status !== "draft"),
+      bills: await withPaymentState(
+        sql,
+        rows
+          .map((row) => ({ ...mapBill(row), parentEmail: null }))
+          .filter((bill) => editable.has(bill.daycareId) || bill.status !== "draft"),
+      ),
     };
   });
 
@@ -366,7 +508,7 @@ export const listParentBills = createServerFn({ method: "GET" })
     return {
       stripeLive: parentBillCardLive(),
       platformFeeBps: platformFeeBps(),
-      bills: rows.map(mapBill).filter((b) => parentCanSeeBill(b.status)),
+      bills: await withPaymentState(sql, rows.map(mapBill).filter((b) => parentCanSeeBill(b.status))),
     };
   });
 
@@ -620,7 +762,7 @@ export const getBill = createServerFn({ method: "GET" })
           isDemo: centre?.is_demo,
         }),
     });
-    const current = settled ?? bill;
+    const current = (await withPaymentState(sql, [settled ?? bill]))[0]!;
     const connect = await sql<{ stripe_account_id: string | null; charges_enabled: number }>`
       select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${current.daycareId} limit 1
     `.catch(() => []);

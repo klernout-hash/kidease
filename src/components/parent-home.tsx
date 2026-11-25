@@ -20,6 +20,8 @@ import {
   type ParentHomeSection,
 } from "@/lib/parent-home-stage";
 import { billDollars, billIsOpen, type Bill } from "@/lib/bill";
+import { PaymentStateBadge, PaymentStateNote } from "@/components/bill-status";
+import { failureReasonText } from "@/lib/payment-state";
 import { money } from "@/lib/utils";
 import type { Booking, DaycareCard, TourRequest } from "@/lib/types";
 
@@ -167,9 +169,31 @@ export function ParentHome({
                     {bill.daycareName}
                     {bill.childName ? ` · ${bill.childName}` : ""}
                   </span>
-                  <span className="text-sm font-medium tabular-nums">
-                    {money(billDollars(bill), locale)}
+                  <span className="flex items-center gap-2">
+                    <PaymentStateBadge state={bill.paymentState} />
+                    <span className="text-sm font-medium tabular-nums">
+                      {money(billDollars(bill), locale)}
+                    </span>
                   </span>
+                  {bill.paymentState && bill.paymentState !== "processing" ? (
+                    <span className="flex w-full flex-wrap items-center gap-2">
+                      <PaymentStateNote
+                        state={bill.paymentState}
+                        reason={failureReasonText(bill.lastErrorCode, fr ? "fr" : "en")}
+                        className="min-w-0 flex-1"
+                      />
+                      <Link
+                        to="/pay/bill/$billId"
+                        params={{ billId: bill.id }}
+                        search={{}}
+                        className="inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium text-primary"
+                      >
+                        {bill.paymentState === "requires_action" ? t("billConfirmPayment") : t("billPayAgain")}
+                      </Link>
+                    </span>
+                  ) : bill.paymentState === "processing" ? (
+                    <PaymentStateNote state="processing" className="w-full" />
+                  ) : null}
                 </li>
               ))}
           </ul>
