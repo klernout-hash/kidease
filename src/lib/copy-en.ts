@@ -3662,6 +3662,7 @@ export const en = {
     verify2faStillSending: "Still sending your code. Try again in a moment.",
     verify2faNeedCode: "Enter the 6-digit code from your email.",
     verify2faNeedTurnstile: "Complete the security check, then tap Verify.",
+    verify2faTurnstileLoading: "Loading security check…",
     verify2faCouldNot: "Could not verify",
     verify2faStall: "Still opening your desk. You can send a new code, or continue below.",
     verify2faContinue: "Continue to your desk",

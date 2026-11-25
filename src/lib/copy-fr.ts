@@ -3677,6 +3677,7 @@ export const fr = {
     verify2faStillSending: "Envoi du code en cours. Réessayez dans un instant.",
     verify2faNeedCode: "Entrez le code à 6 chiffres reçu par courriel.",
     verify2faNeedTurnstile: "Terminez la vérification de sécurité, puis touchez Vérifier.",
+    verify2faTurnstileLoading: "Chargement de la vérification de sécurité…",
     verify2faCouldNot: "Impossible de vérifier",
     verify2faStall: "Ouverture du bureau en cours. Vous pouvez envoyer un nouveau code, ou continuer ci-dessous.",
     verify2faContinue: "Continuer vers votre bureau",

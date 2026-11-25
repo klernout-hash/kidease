@@ -204,7 +204,7 @@ async function leave(rawDest: string) {
 }
 
 function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string }) {
-  const { locale } = useCopy();
+  const { locale, t } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const signInTo = locale === "fr" || isFrPath(pathname) ? "/fr/login" : "/login";
   const show = (message: string) => presentAuthCopy(locale, message);
@@ -219,14 +219,20 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   const [canSkip, setCanSkip] = useState(false);
   const [stalled, setStalled] = useState(false);
   const [pageStalled, setPageStalled] = useState(false);
-  const [needTurnstile, setNeedTurnstile] = useState(false);
+  // The security check renders on first paint (#1014 item 2). Until Cloudflare
+  // hands back a token, Verify stays off with a visible "Loading security check…".
+  const [turnstileKey, setTurnstileKey] = useState<"loading" | "on" | "off">("loading");
+  const [turnstileError, setTurnstileError] = useState<string | null>(null);
   const [remember, setRemember] = useState(false);
   const [resendWait, setResendWait] = useState(0);
   const submitLock = useRef(false);
   const attempt = useRef(0);
   const formRef = useRef<HTMLFormElement>(null);
+  const autoSubmitted = useRef("");
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
     useTurnstileToken();
+  const turnstileReady = turnstileKey === "off" || (turnstileKey === "on" && (!turnstileRequired || Boolean(token.trim())));
+  const turnstileLoading = !turnstileReady && !turnstileError;
 
   useEffect(() => {
     captureLoginFunnel({ step: "two_factor_viewed", native: isNative() });
@@ -333,17 +339,26 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
 
   function onCodeChange(nextCode: string) {
     setCode(nextCode);
-    if (nextCode.length > 0 && !needTurnstile) setNeedTurnstile(true);
-    const turnstileReady = !turnstileRequired || Boolean(token.trim());
-    if (nextCode.length === 6 && ready && !busy && !submitLock.current && turnstileReady) {
-      void yieldToMain().then(() => {
-        if (!submitLock.current) formRef.current?.requestSubmit();
-      });
-    }
   }
 
+  // Auto-submit once per typed code, as soon as the code, the sent email and
+  // the security check are all ready. A failed code is not re-sent when a
+  // fresh Turnstile token arrives; the user edits the code or taps Verify.
+  useEffect(() => {
+    if (code.length !== 6) {
+      autoSubmitted.current = "";
+      return;
+    }
+    if (!ready || busy || submitLock.current || !turnstileReady) return;
+    if (autoSubmitted.current === code) return;
+    autoSubmitted.current = code;
+    void yieldToMain().then(() => {
+      if (!submitLock.current) formRef.current?.requestSubmit();
+    });
+  }, [code, ready, busy, turnstileReady]);
+
   return (
-    <main className="ke-auth-viewport mx-auto grid place-items-center px-4 py-10">
+    <main className="ke-auth-viewport ke-auth-top mx-auto grid place-items-center px-4 py-10" data-ke="verify-2fa">
       <div className="w-full max-w-md rounded-xl bg-surface p-5 shadow-card ring-1 ring-border sm:p-8">
         <div className="flex justify-center">
           <BrandMark size="md" />
@@ -383,11 +398,18 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               </span>
             </span>
           </label>
-          {needTurnstile ? (
-            <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
-          ) : (
-            <div className="min-h-[65px]" aria-hidden="true" />
-          )}
+          <TurnstileField
+            onToken={onToken}
+            resetSignal={resetSignal}
+            onRequired={onRequired}
+            onKeyState={setTurnstileKey}
+            onLoadError={setTurnstileError}
+          />
+          {turnstileLoading ? (
+            <p className="text-sm text-muted" role="status" data-ke="verify-turnstile-loading">
+              {t("verify2faTurnstileLoading")}
+            </p>
+          ) : null}
           {error ? <p className="text-sm text-danger" data-ke="auth-error">{show(error)}</p> : null}
           {notice && !error ? <p className="text-sm text-muted">{show(notice)}</p> : null}
           {stalled ? (
@@ -395,7 +417,13 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               {show("Still opening your desk. You can send a new code, or continue below.")}
             </p>
           ) : null}
-          <Button type="submit" className="w-full min-h-12" disabled={busy} aria-busy={busy}>
+          <Button
+            type="submit"
+            className="w-full min-h-12"
+            disabled={busy || !turnstileReady}
+            aria-busy={busy}
+            data-ke="verify-submit"
+          >
             {busy ? show("Opening your desk…") : show("Verify and continue")}
           </Button>
         </form>

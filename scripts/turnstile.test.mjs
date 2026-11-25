@@ -227,7 +227,7 @@ describe("Turnstile login surfaces and production gate", () => {
     assert.match(reauthUi, /<TurnstileField /);
     assert.match(reauthUi, /confirmReauthPassword/);
     assert.match(reauthApi, /await assertTurnstileToken\(data\.turnstileToken\)/);
-    assert.match(twoFa, /<TurnstileField /);
+    assert.match(twoFa, /<TurnstileField\s/);
     assert.match(authApi, /authPathNeedsTurnstile/);
     assert.match(authApi, /\/sign-in\/email/);
     assert.match(authApi, /\/sign-up\/email/);

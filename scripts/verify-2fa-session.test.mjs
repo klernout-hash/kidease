@@ -94,7 +94,7 @@ test("verify-2fa page waits for the session gate before RedirectToSignIn", () =>
   assert.match(route, /data-ke="verify-2fa-session-wait"/);
   assert.doesNotMatch(route, /if \(!user\) return <RedirectToSignIn \/>/);
   assert.match(route, /staffTwoFactorRequired/);
-  assert.match(route, /needTurnstile/);
+  assert.match(route, /<TurnstileField\s/);
 });
 
 test("A2: a server-signed-in result with no browser user is ready, not signed_out", () => {
