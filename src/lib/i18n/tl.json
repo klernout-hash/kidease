@@ -3734,5 +3734,21 @@
   "emailCodeSavedOff": "Naka-off ang email code.",
   "healthCodePrompt": "Magdagdag ng email code bago ang {date} para sa inyo lang ang health notes at documents ng bata.",
   "healthCodeLocked": "Nakatago ang health notes at documents hanggang magdagdag kayo ng email code.",
-  "healthCodeAction": "Magdagdag ng email code"
+  "healthCodeAction": "Magdagdag ng email code",
+  "connectErrOff": "Hindi pa naka-on ang mga payout.",
+  "connectErrLive": "Hindi pa naka-on ang live na payout. Naabisuhan na kami.",
+  "connectErrMissing": "Hindi pa tapos ang setup ng payout sa aming panig. Naabisuhan na kami.",
+  "connectErrNotOwner": "Ang may-ari lang ng centre ang puwedeng mag-set up ng payout.",
+  "connectErrStripe": "Hindi masimulan ng Stripe ang setup (code {code}). Subukan ulit, o mag-email sa support@kidease.ca.",
+  "billStateProcessing": "Pinoproseso",
+  "billStateFailed": "Hindi natuloy",
+  "billStateAction": "Kailangan ng aksyon",
+  "billProcessingBody": "Pinoproseso. Ang bank debit (PAD) ay tumatagal ng 3 hanggang 5 araw ng negosyo.",
+  "billFailedBody": "Hindi natuloy ang bayad mo. Magbayad ulit o i-update ang card mo.",
+  "billFailedReason": "Dahilan: {reason}",
+  "billActionBody": "Kumpirmahin ang bayad mo sa iyong bangko.",
+  "billConfirmPayment": "Kumpirmahin ang bayad",
+  "billConfirmDone": "Salamat. Ia-update namin ang bill na ito kapag kinumpirma ng bangko mo.",
+  "billUpdateCard": "I-update ang card",
+  "billPayAgain": "Magbayad ulit"
 }

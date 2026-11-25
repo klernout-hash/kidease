@@ -3734,5 +3734,21 @@
   "emailCodeSavedOff": "邮箱验证码已关闭。",
   "healthCodePrompt": "请在 {date} 之前加上邮箱验证码，这样孩子的健康备注和文件只给您看。",
   "healthCodeLocked": "在您加上邮箱验证码之前，孩子的健康备注和文件会保持隐藏。",
-  "healthCodeAction": "加上邮箱验证码"
+  "healthCodeAction": "加上邮箱验证码",
+  "connectErrOff": "收款功能尚未开启。",
+  "connectErrLive": "正式收款尚未开启。我们已收到通知。",
+  "connectErrMissing": "我们这边的收款设置还没完成。我们已收到通知。",
+  "connectErrNotOwner": "只有中心所有者可以设置收款。",
+  "connectErrStripe": "Stripe 无法开始设置（代码 {code}）。请重试，或联系 support@kidease.ca。",
+  "billStateProcessing": "处理中",
+  "billStateFailed": "未成功",
+  "billStateAction": "需要操作",
+  "billProcessingBody": "处理中。银行扣款 (PAD) 需要 3 到 5 个工作日。",
+  "billFailedBody": "你的付款未成功。请重新付款或更新你的银行卡。",
+  "billFailedReason": "原因：{reason}",
+  "billActionBody": "请向你的银行确认这笔付款。",
+  "billConfirmPayment": "确认付款",
+  "billConfirmDone": "谢谢。银行确认后我们会更新这张账单。",
+  "billUpdateCard": "更新银行卡",
+  "billPayAgain": "重新付款"
 }
