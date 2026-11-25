@@ -334,6 +334,17 @@ async function releaseEvent(sql: Sql, id: string): Promise<void> {
   await sql`delete from stripe_webhook_events where id = ${id}`.catch(() => undefined);
 }
 
+/** Database claim shared across server instances. True when this call owns the event. */
+export async function claimStripeWebhookEvent(id: string, type: string, livemode: boolean): Promise<boolean> {
+  const sql = await getSql();
+  return claimEvent(sql, id, type, livemode);
+}
+
+export async function releaseStripeWebhookEvent(id: string): Promise<void> {
+  const sql = await getSql();
+  await releaseEvent(sql, id);
+}
+
 async function previousStatus(sql: Sql, id: string): Promise<ParentInvoiceStatus | null> {
   const rows = await sql<{ status: string }>`
     select status from stripe_parent_invoices where stripe_invoice_id = ${id} limit 1

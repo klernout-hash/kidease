@@ -3739,5 +3739,21 @@
   "healthCodePrompt": "Aggiungi un codice email prima del {date} così le note sulla salute e i documenti restano solo per te.",
   "healthCodeLocked": "Le note sulla salute e i documenti restano nascosti finché non aggiungi un codice email.",
   "healthCodeAction": "Aggiungi un codice email",
-  "healthCodeSnooze": "Non ora (nascondi per 7 giorni)"
+  "healthCodeSnooze": "Non ora (nascondi per 7 giorni)",
+  "connectErrOff": "I versamenti non sono ancora attivi.",
+  "connectErrLive": "I versamenti reali non sono ancora attivi. Siamo stati avvisati.",
+  "connectErrMissing": "La configurazione dei versamenti non è completa da parte nostra. Siamo stati avvisati.",
+  "connectErrNotOwner": "Solo il titolare del centro può configurare i versamenti.",
+  "connectErrStripe": "Stripe non è riuscito ad avviare la configurazione (codice {code}). Riprova o scrivi a support@kidease.ca.",
+  "billStateProcessing": "In elaborazione",
+  "billStateFailed": "Non riuscito",
+  "billStateAction": "Azione richiesta",
+  "billProcessingBody": "In elaborazione. Gli addebiti bancari (PAD) richiedono da 3 a 5 giorni lavorativi.",
+  "billFailedBody": "Il pagamento non è riuscito. Paga di nuovo o aggiorna la carta.",
+  "billFailedReason": "Motivo: {reason}",
+  "billActionBody": "Conferma il pagamento con la tua banca.",
+  "billConfirmPayment": "Conferma pagamento",
+  "billConfirmDone": "Grazie. Aggiorneremo questa fattura quando la banca conferma.",
+  "billUpdateCard": "Aggiorna carta",
+  "billPayAgain": "Paga di nuovo"
 }

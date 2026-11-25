@@ -78,7 +78,8 @@ test("QA routing refuses the live secret when the test keys are missing", () => 
 
 test("centre charges pass the process environment into the helper", () => {
   const source = readFileSync(new URL("../src/lib/server/connect-payments.ts", import.meta.url), "utf8");
-  assert.match(source, /stripeCredentialsForMode\(qa \? "test" : mode, process\.env\)/);
+  // Routing moved into routeStripeCall (src/lib/stripe-route.ts); the server still passes process.env.
+  assert.match(source, /routeStripeCall\(\{[\s\S]*?env: process\.env,[\s\S]*?\}\)/);
 });
 
 test("with no env argument the helper reads the process environment", () => {

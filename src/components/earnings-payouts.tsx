@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 import { createConnectAccountSession, listCentreIdsForPayouts } from "@/lib/server/connect-payments";
 import { loadConnectInstance } from "@/lib/stripe-browser";
+import { connectOnboardingMessageKey, firstSecretOnce } from "@/lib/connect-onboarding";
 
 export function EarningsPayoutsScreen({
   desk,
@@ -16,7 +17,7 @@ export function EarningsPayoutsScreen({
 }: {
   desk: EarningsResult | null;
   connect?: { enabled: boolean; ready: boolean; blockedLive: boolean; publishableKey: string | null } | null;
-  centres?: { id: string; name: string }[];
+  centres?: { id: string; name: string; ready?: boolean }[];
 }) {
   const { t } = useCopy();
   const body =
@@ -46,25 +47,30 @@ export function EarningsPayoutsScreen({
   );
 }
 
+type PayoutCentre = { id: string; name: string; ready?: boolean };
+
 function ConnectPayouts({
   connect,
   centres: initialCentres,
 }: {
   connect: { enabled: boolean; ready: boolean; blockedLive: boolean; publishableKey: string | null } | null;
-  centres: { id: string; name: string }[];
+  centres: PayoutCentre[];
 }) {
   const { t } = useCopy();
   const reauth = useReauthPrompt();
   const promptRef = useRef(reauth.prompt);
   promptRef.current = reauth.prompt;
-  const [centres, setCentres] = useState(initialCentres);
+  const [centres, setCentres] = useState<PayoutCentre[]>(initialCentres);
   const [daycareId, setDaycareId] = useState(initialCentres[0]?.id ?? "");
   const [started, setStarted] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const enabled = connect?.enabled === true;
-  const ready = connect?.ready === true;
-  const blockedLive = connect?.blockedLive === true;
-  const publishableKey = connect?.publishableKey ?? null;
+  const selected = centres.find((centre) => centre.id === daycareId);
+  // The centre's own routing wins: a test centre is ready even when the
+  // account-wide state is live and blocked.
+  const ready = selected?.ready ?? connect?.ready === true;
+  const blockedLive = !ready && connect?.blockedLive === true;
 
   useEffect(() => {
     if (!enabled) return;
@@ -81,29 +87,43 @@ function ConnectPayouts({
     };
   }, [enabled]);
 
-  useEffect(() => {
-    if (!started || !publishableKey || !daycareId) return;
+  async function startPayouts() {
+    if (!daycareId || busy) return;
     const node = document.getElementById("connect-payouts-mount");
     if (!node) return;
-    let dead = false;
-    void loadConnectInstance(publishableKey, async () =>
-      withReauth(async () => {
-        const session = await createConnectAccountSession({ data: daycareId });
-        if (!session.ok || !session.clientSecret) throw new Error("missing");
-        return session.clientSecret;
-      }, () => promptRef.current()),
-    )
-      .then((instance) => {
-        if (!instance || dead) return;
-        node.replaceChildren(instance.create("account-onboarding"), instance.create("payouts"));
-      })
-      .catch(() => {
-        if (!dead) setError(t("actionFailed"));
-      });
-    return () => {
-      dead = true;
+    setBusy(true);
+    setError(null);
+    const fresh = async () => {
+      const session = await withReauth(
+        () => createConnectAccountSession({ data: daycareId }),
+        () => promptRef.current(),
+      );
+      if (!session.ok) throw new Error(session.reason);
+      return session.clientSecret;
     };
-  }, [daycareId, publishableKey, started, t]);
+    try {
+      // Ask the server first. Its key matches the mode of the session secret.
+      const first = await withReauth(
+        () => createConnectAccountSession({ data: daycareId }),
+        () => promptRef.current(),
+      );
+      if (!first.ok) {
+        setError(t(connectOnboardingMessageKey(first.reason)).replace("{code}", first.code || "unknown"));
+        return;
+      }
+      const instance = await loadConnectInstance(first.publishableKey, firstSecretOnce(first.clientSecret, fresh));
+      if (!instance) {
+        setError(t("connectErrMissing"));
+        return;
+      }
+      node.replaceChildren(instance.create("account-onboarding"), instance.create("payouts"));
+      setStarted(true);
+    } catch {
+      setError(t("actionFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   if (!enabled) return null;
   return (
@@ -113,13 +133,16 @@ function ConnectPayouts({
       <p className="mt-2 text-sm leading-6 text-muted">{t("connectEmbedded")}</p>
       {blockedLive ? <p className="mt-3 text-sm">{t("walletTestOnly")}</p> : null}
       {!ready && !blockedLive ? <p className="mt-3 text-sm">{t("connectNotSetUp")}</p> : null}
-      {ready && centres.length > 1 ? (
+      {centres.length > 1 && !started ? (
         <label className="mt-4 block text-sm font-medium">
           {t("payCentre")}
           <select
             className="ke-input mt-1 min-h-11 w-full"
             value={daycareId}
-            onChange={(event) => setDaycareId(event.target.value)}
+            onChange={(event) => {
+              setDaycareId(event.target.value);
+              setError(null);
+            }}
           >
             {centres.map((centre) => (
               <option key={centre.id} value={centre.id}>
@@ -129,9 +152,15 @@ function ConnectPayouts({
           </select>
         </label>
       ) : null}
-      {ready && centres.length === 1 ? <p className="mt-3 text-sm">{centres[0]?.name}</p> : null}
+      {centres.length === 1 ? <p className="mt-3 text-sm">{centres[0]?.name}</p> : null}
       {ready && centres.length > 0 && !started ? (
-        <Button type="button" className="mt-4 w-full" data-ke="connect-start" onClick={() => setStarted(true)}>
+        <Button
+          type="button"
+          className="mt-4 w-full"
+          data-ke="connect-start"
+          disabled={busy}
+          onClick={() => void startPayouts()}
+        >
           {t("connectOnboarding")}
         </Button>
       ) : null}

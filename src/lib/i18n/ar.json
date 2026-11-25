@@ -3739,5 +3739,21 @@
   "healthCodePrompt": "أضف رمز البريد قبل {date} حتى تبقى ملاحظات صحة الطفل وملفاته لك وحدك.",
   "healthCodeLocked": "ملاحظات الصحة والملفات تبقى مخفية حتى تضيف رمز البريد.",
   "healthCodeAction": "إضافة رمز البريد",
-  "healthCodeSnooze": "ليس الآن (إخفاء لمدة 7 أيام)"
+  "healthCodeSnooze": "ليس الآن (إخفاء لمدة 7 أيام)",
+  "connectErrOff": "لم يتم تفعيل التحويلات بعد.",
+  "connectErrLive": "لم يتم تفعيل التحويلات الفعلية بعد. تم إبلاغنا.",
+  "connectErrMissing": "إعداد التحويلات لم يكتمل من جهتنا. تم إبلاغنا.",
+  "connectErrNotOwner": "فقط مالك المركز يمكنه إعداد التحويلات.",
+  "connectErrStripe": "تعذّر على Stripe بدء الإعداد (الرمز {code}). حاول مرة أخرى أو تواصل مع support@kidease.ca.",
+  "billStateProcessing": "قيد المعالجة",
+  "billStateFailed": "لم يتم",
+  "billStateAction": "إجراء مطلوب",
+  "billProcessingBody": "قيد المعالجة. يستغرق الخصم البنكي (PAD) من 3 إلى 5 أيام عمل.",
+  "billFailedBody": "لم يتم دفعك. ادفع مرة أخرى أو حدّث بطاقتك.",
+  "billFailedReason": "السبب: {reason}",
+  "billActionBody": "أكّد دفعتك مع بنكك.",
+  "billConfirmPayment": "تأكيد الدفع",
+  "billConfirmDone": "شكرًا. سنحدّث هذه الفاتورة عندما يؤكد بنكك.",
+  "billUpdateCard": "تحديث البطاقة",
+  "billPayAgain": "ادفع مرة أخرى"
 }

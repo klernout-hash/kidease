@@ -37,7 +37,8 @@ import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import type { Booking, Child, DaycareCard as Card, Payment, TourRequest } from "@/lib/types";
 import type { Bill } from "@/lib/bill";
 import { billDollars, billIsOpen } from "@/lib/bill";
-import { BillStatusBadge } from "@/components/bill-status";
+import { BillStatusBadge, PaymentStateBadge, PaymentStateNote } from "@/components/bill-status";
+import { failureReasonText } from "@/lib/payment-state";
 import { periodLabel } from "@/lib/stripe-methods";
 import { parentMatchScore } from "@/lib/parent-match";
 import { parentUrgencyScore, soonestStartDate } from "@/lib/parent-urgency";
@@ -769,20 +770,32 @@ export function ParentDesk({
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-medium">{b.daycareName}</p>
                           <BillStatusBadge status={b.status} />
+                          <PaymentStateBadge state={b.paymentState} />
                         </div>
                         <p className="text-sm text-muted">
                           {b.childName ? `${b.childName} · ` : ""}
                           {periodLabel(b.period, locale)}
                           {b.dueAt ? ` · ${t("billDue")} ${b.dueAt}` : ""}
                         </p>
+                        <PaymentStateNote
+                          state={b.paymentState}
+                          reason={failureReasonText(b.lastErrorCode, locale === "fr" ? "fr" : "en")}
+                          className="mt-1"
+                        />
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-display text-xl tabular-nums">{money(billDollars(b), locale)}</span>
-                        <Button size="sm" asChild>
-                          <Link to="/pay/bill/$billId" params={{ billId: b.id }} search={{}} data-ke="native-checkout">
-                            {t("pay")}
-                          </Link>
-                        </Button>
+                        {b.paymentState === "processing" ? null : (
+                          <Button size="sm" asChild>
+                            <Link to="/pay/bill/$billId" params={{ billId: b.id }} search={{}} data-ke="native-checkout">
+                              {b.paymentState === "requires_action"
+                                ? t("billConfirmPayment")
+                                : b.paymentState === "failed"
+                                  ? t("billPayAgain")
+                                  : t("pay")}
+                            </Link>
+                          </Button>
+                        )}
                       </div>
                     </li>
                   ))}

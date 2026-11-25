@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { LedgerHonesty } from "@/components/listing-status-badge";
-import { BillStatusBadge } from "@/components/bill-status";
+import { BillStatusBadge, PaymentStateBadge } from "@/components/bill-status";
 import { EmptyState } from "@/components/empty-state";
 import { FirstRunExample } from "@/components/first-run";
 import { useCopy } from "@/lib/use-copy";
@@ -328,6 +328,7 @@ function BillList({
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium">{b.parentName || "Parent"}</p>
                   <BillStatusBadge status={b.status} />
+                  <PaymentStateBadge state={b.paymentState} />
                 </div>
                 <p className="mt-1 text-sm text-muted">
                   {b.daycareName}

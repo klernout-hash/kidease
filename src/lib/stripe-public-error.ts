@@ -22,12 +22,15 @@ export class CheckoutUserError extends Error {
 export class StripeApiError extends Error {
   readonly stripeMessage: string;
   readonly status: number;
+  /** Stripe's error code (e.g. "account_invalid"), when Stripe sent one. */
+  readonly code: string | null;
 
-  constructor(stripeMessage: string, status: number) {
+  constructor(stripeMessage: string, status: number, code?: string | null) {
     super(stripeMessage);
     this.name = "StripeApiError";
     this.stripeMessage = stripeMessage;
     this.status = status;
+    this.code = code ? String(code) : null;
   }
 }
 
