@@ -188,7 +188,7 @@ export function buildGhlOpportunityBody(input: {
   };
 }
 
-type FetchImpl = typeof fetch;
+export type FetchImpl = typeof fetch;
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : "ghl-api-failed";
@@ -204,7 +204,7 @@ async function readJson(res: Response): Promise<unknown> {
   }
 }
 
-function opportunityIdFrom(json: unknown): string {
+export function opportunityIdFrom(json: unknown): string {
   if (!json || typeof json !== "object") return "";
   const row = json as { id?: unknown; opportunity?: { id?: unknown } };
   const nested = row.opportunity && typeof row.opportunity.id === "string" ? row.opportunity.id.trim() : "";
@@ -212,7 +212,7 @@ function opportunityIdFrom(json: unknown): string {
   return typeof row.id === "string" ? row.id.trim() : "";
 }
 
-function contactIdFrom(json: unknown): string {
+export function contactIdFrom(json: unknown): string {
   if (!json || typeof json !== "object") return "";
   const row = json as { id?: unknown; contact?: { id?: unknown } };
   const nested = row.contact && typeof row.contact.id === "string" ? row.contact.id.trim() : "";
@@ -220,11 +220,11 @@ function contactIdFrom(json: unknown): string {
   return typeof row.id === "string" ? row.id.trim() : "";
 }
 
-function opportunitiesFrom(json: unknown): Array<{ pipelineId?: string }> {
+export function opportunitiesFrom(json: unknown): Array<{ id?: string; pipelineId?: string }> {
   if (!json || typeof json !== "object") return [];
   const list = (json as { opportunities?: unknown }).opportunities;
   if (!Array.isArray(list)) return [];
-  return list.filter((item) => item && typeof item === "object") as Array<{ pipelineId?: string }>;
+  return list.filter((item) => item && typeof item === "object") as Array<{ id?: string; pipelineId?: string }>;
 }
 
 function duplicateOpportunity(status: number, json: unknown): boolean {
@@ -233,7 +233,7 @@ function duplicateOpportunity(status: number, json: unknown): boolean {
   return /already|duplicate|exist/.test(text);
 }
 
-async function ghlRequest(input: {
+export async function ghlRequest(input: {
   token: string;
   url: string;
   method: "GET" | "POST" | "PUT" | "DELETE";
@@ -381,11 +381,14 @@ export async function postGhlCrmSignup(input: {
       `&contact_id=${encodeURIComponent(contactId)}`;
     const search = await ghlRequest({ token, url: searchUrl, method: "GET", fetchImpl });
     if (search.ok) {
-      const existing = opportunitiesFrom(search.json).some((row) => {
+      const existing = opportunitiesFrom(search.json).find((row) => {
         const pipelineId = typeof row.pipelineId === "string" ? row.pipelineId : "";
         return !pipelineId || pipelineId === target.pipelineId;
       });
-      if (existing) return { ok: true, skipped: false, contactId, opportunity: "exists" };
+      if (existing) {
+        const opportunityId = typeof existing.id === "string" ? existing.id.trim() : "";
+        return { ok: true, skipped: false, contactId, opportunity: "exists", ...(opportunityId ? { opportunityId } : {}) };
+      }
     }
 
     const created = await ghlRequest({

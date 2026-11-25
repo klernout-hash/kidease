@@ -154,7 +154,7 @@ export function RequestSpotSheet({ daycare, open, onClose, intent = "spot" }: Pr
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center md:items-center"
+      className="ke-safe-x fixed inset-0 z-50 flex items-end justify-center md:items-center"
       role="presentation"
     >
       <button

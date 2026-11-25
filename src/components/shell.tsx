@@ -19,6 +19,7 @@ import { isMenuLeafPath } from "@/lib/menu-leaf";
 import { NavDrawer } from "@/components/nav-drawer";
 import { applyDocumentLocale } from "@/lib/languages";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
+import { governmentHomePath, signOutTarget } from "@/lib/sign-out-target";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { clearGuestViewCookie } from "@/lib/guest-view";
@@ -30,13 +31,14 @@ import { rememberResumePath } from "@/lib/retention";
 import { ApplyPendingShortlist } from "@/components/apply-pending-shortlist";
 import { ApplyReferral } from "@/components/apply-referral";
 import { KeyboardInset } from "@/components/keyboard-inset";
+import { useFoldScrollAnchor } from "@/lib/use-fold-scroll-anchor";
 import { FacebookEmailPrompt } from "@/components/facebook-email-prompt";
 import { FacebookRoleBoot } from "@/components/facebook-role-boot";
 import { cn } from "@/lib/utils";
 
 const SHELL_FRAME =
   "flex min-h-dvh min-h-[100dvh] w-full min-w-0 flex-col bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg";
-const APP_TAB_PAD = "[[data-channel=app]_&]:pb-[calc(4.75rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]";
+const APP_TAB_PAD = "ke-tab-pad [[data-channel=app]_&]:pb-[calc(4.75rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]";
 const HEADER_BAR =
   "ke-site-header sticky top-[var(--ke-view-as-h,0px)] z-40 border-b border-border bg-bg/95 pt-[var(--ke-safe-top,env(safe-area-inset-top))] backdrop-blur-md";
 export function Shell({ children, headerCategories, fitViewport = false, pageClassName }: { children: ReactNode; headerCategories?: ReactNode; fitViewport?: boolean; pageClassName?: string }) {
@@ -111,11 +113,11 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
     pathname.startsWith("/menu");
   const menuLeaf = isMenuLeafPath(pathname);
 
-  const homeTo = chrome.role === "government" ? localePath("/gov", locale) : localePath("/", locale);
+  const homeTo = chrome.role === "government" ? governmentHomePath(pathname, locale) : localePath("/", locale);
 
   if (verifyLite) {
     return (
-      <div className={SHELL_FRAME}>
+      <div className={SHELL_FRAME} data-ke="shell-frame">
         <KeyboardInset />
         <header className={HEADER_BAR}>
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
@@ -133,7 +135,7 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
 
   if (menuLite) {
     return (
-      <div className={SHELL_FRAME}>
+      <div className={SHELL_FRAME} data-ke="shell-frame">
         <KeyboardInset />
         <header className={HEADER_BAR}>
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
@@ -157,8 +159,9 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
   }
 
   return (
-    <div ref={frameRef} className={SHELL_FRAME} data-ke-viewport={fitViewport ? "inbox" : undefined}>
+    <div ref={frameRef} className={SHELL_FRAME} data-ke="shell-frame" data-ke-viewport={fitViewport ? "inbox" : undefined}>
       <KeyboardInset />
+      <FoldScrollAnchor />
       <header className={HEADER_BAR}>
         <div className="ke-gutter relative mx-auto min-w-0 max-w-6xl">
           <div className={`flex w-full min-w-0 items-center gap-3 max-md:gap-2 ${headerCategories ? "min-h-14 flex-wrap md:min-h-16 md:flex-nowrap" : "h-14 max-md:h-auto max-md:min-h-14 md:h-16"}`}>
@@ -269,7 +272,7 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
         role={chrome.role}
         paid={chrome.paid}
         isAdmin={!viewingGuest && canSeeAdminDesk(session?.role, session?.email ?? user?.primaryEmail)}
-        onSignOut={() => void signOut(chrome.role === "government" ? localePath("/gov/login", locale) : "/")}
+        onSignOut={() => void signOut(signOutTarget({ role: chrome.role, pathname, locale }))}
         headerExtra={null}
         navExtra={null}
       />
@@ -287,3 +290,8 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
   );
 }
 
+/** Keeps the item the reader was looking at in place across a fold, unfold or Split View resize. */
+function FoldScrollAnchor() {
+  useFoldScrollAnchor();
+  return null;
+}

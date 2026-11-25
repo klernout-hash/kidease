@@ -175,7 +175,7 @@ export function SuccessConfirm({
 
   return (
     <div
-      className="fixed inset-x-0 top-0 z-[70] flex items-end justify-center md:items-center"
+      className="ke-safe-x fixed inset-x-0 top-0 z-[70] flex items-end justify-center md:items-center"
       style={{ bottom: tabClear }}
       data-success-tab-clear={tabClear === "0px" ? "off" : "on"}
       role="presentation"
@@ -309,7 +309,7 @@ export function SuccessToast({
 
   return (
     <div
-      className="pointer-events-none fixed inset-0 z-[60] grid place-items-center px-4"
+      className="ke-safe-x pointer-events-none fixed inset-0 z-[60] grid place-items-center [--ke-pad-x:1rem]"
       style={{
         paddingTop: "max(0.75rem, env(safe-area-inset-top))",
         paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",

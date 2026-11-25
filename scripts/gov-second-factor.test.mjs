@@ -81,3 +81,40 @@ test("A2: /login with next=/gov goes to the government sign-in", async () => {
   assert.match(login, /govLoginRedirectForNext\(search\.next, routeLocale\)/);
   assert.match(src("src/routes/fr.login.tsx"), /loginGovBeforeLoad\(search, "fr"\)/);
 });
+
+test("#1014 item 5: /fr/gov/login shows auth errors in French and waits for the security check", async () => {
+  const login = src("src/components/gov/gov-login.tsx");
+  assert.match(login, /import \{ presentAuthCopy \} from "@\/lib\/auth\/present-auth-copy";/);
+  assert.match(login, /\{presentAuthCopy\(locale, error\)\}/);
+  // The raw error is never rendered on its own.
+  assert.doesNotMatch(login, /role="alert"[^>]*>\s*\{error\}/);
+  assert.match(login, /required: turnstileRequired/);
+  assert.match(login, /const waitingForCheck = turnstileRequired && !token\.trim\(\);/);
+  assert.match(login, /disabled=\{busy \|\| waitingForCheck\}/);
+  await import("../src/lib/copy.ts");
+  const { presentAuthCopy } = await import("../src/lib/auth/present-auth-copy.ts");
+  const { TURNSTILE_REQUIRED_MESSAGE, WRONG_EMAIL_OR_PASSWORD_MESSAGE, CLOUDFLARE_AUTH_BLOCK_MESSAGE } = await import(
+    "../src/lib/auth/login-errors.ts"
+  );
+  const { LOGIN_TAKING_TOO_LONG_MESSAGE } = await import("../src/lib/auth/login-stall.ts");
+  assert.equal(presentAuthCopy("fr", TURNSTILE_REQUIRED_MESSAGE), "Terminez la vérification de sécurité, puis réessayez.");
+  for (const message of [WRONG_EMAIL_OR_PASSWORD_MESSAGE, CLOUDFLARE_AUTH_BLOCK_MESSAGE, LOGIN_TAKING_TOO_LONG_MESSAGE]) {
+    assert.notEqual(presentAuthCopy("fr", message), message, message);
+  }
+  assert.equal(presentAuthCopy("en", TURNSTILE_REQUIRED_MESSAGE), TURNSTILE_REQUIRED_MESSAGE);
+});
+
+test("#1014 item 7: government sign-in pages show the timed-out notice for expired=1", () => {
+  for (const [file, locale] of [
+    ["src/routes/gov_.login.tsx", "en"],
+    ["src/routes/fr.gov_.login.tsx", "fr"],
+  ]) {
+    const route = src(file);
+    assert.match(route, /const expired = search\.expired === "1" \|\| search\.expired === 1 \? "1" : "";/, file);
+    assert.match(route, new RegExp(`<GovLogin locale="${locale}" invite=\\{invite\\} expired=\\{expired === "1"\\} />`), file);
+  }
+  const login = src("src/components/gov/gov-login.tsx");
+  assert.match(login, /expired && !error \?/);
+  assert.match(login, /tx\(locale, "authSignInTimedOut"\)/);
+  assert.match(login, /data-ke="gov-login-expired"/);
+});

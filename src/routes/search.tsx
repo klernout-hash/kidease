@@ -1,4 +1,5 @@
 import { useSplitMap } from "@/lib/use-split-map";
+import { useAppChannel } from "@/lib/use-app-channel";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -558,14 +559,9 @@ export function SearchScreen({
   const [schoolAgeOnly, setSchoolAgeOnly] = useState(() => schoolAgeOnlyFromSearch(incoming));
   const [licensedChip, setLicensedChip] = useState(true);
   const [topRatedChip, setTopRatedChip] = useState(false);
-  const [mobileViewport, setMobileViewport] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia("(max-width: 767px)");
-    const update = () => setMobileViewport(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
+  // The licensed and top-rated chips are state, not layout. They follow the app
+  // channel, not a width, so folding or unfolding a phone never changes the query.
+  const appChannel = useAppChannel();
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [saveBusy, setSaveBusy] = useState(false);
@@ -820,8 +816,8 @@ export function SearchScreen({
     careType, schoolAgeOnly, category: incoming.cat,
     ages: parseExploreRailAges(incoming), openings: exploreOpeningsSelected(incoming),
     start: incoming.start, needBy, name: nameQuery,
-    licensedOnly: boot.mobileSearchV2 && mobileViewport && licensedChip,
-    topRatedOnly: boot.mobileSearchV2 && mobileViewport && topRatedChip,
+    licensedOnly: boot.mobileSearchV2 && appChannel && licensedChip,
+    topRatedOnly: boot.mobileSearchV2 && appChannel && topRatedChip,
   });
   const resultFiltersKey = JSON.stringify(resultFilters);
   const searchData = {
@@ -2510,9 +2506,23 @@ export function SearchScreen({
           </div>
         ) : null}
 
+        {boot.mobileSearchV2 && appChannel ? (
+          // The same two chips as the phone sheet, so a filter that is on can always be seen and turned off.
+          <div className="mt-2 flex flex-wrap gap-2 max-md:hidden" data-ke="msv2-wide-chips">
+            <ChipButton on={licensedChip} aria-pressed={licensedChip} data-ke="msv2-wide-licensed" onClick={() => setLicensedChip((on) => !on)}>
+              {t("msv2Licensed")}
+            </ChipButton>
+            <ChipButton on={topRatedChip} aria-pressed={topRatedChip} data-ke="msv2-wide-top" onClick={() => setTopRatedChip((on) => !on)}>
+              {t("msv2TopRated")}
+            </ChipButton>
+          </div>
+        ) : null}
         <div
           data-ke="search-split"
-          className={cn(showSplitMap && "grid grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] items-start gap-6")}
+          // Read by scripts/fold-resize.mjs: folding must not change the result query.
+          data-ke-filters={resultFiltersKey}
+          // App look: equal halves so a foldable's crease lands in the gap (Apple HIG: even columns).
+          className={cn(showSplitMap && "grid grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] items-start gap-6 app-wide:grid-cols-2 app-wide:gap-8")}
         >
         <div
           className={cn(
@@ -2650,7 +2660,7 @@ export function SearchScreen({
           <aside
             data-ke="search-split-map"
             aria-label={t("map")}
-            className="sticky top-[calc(var(--ke-header-h,4.5rem)+1rem)] mt-2 h-[calc(100dvh-var(--ke-header-h,4.5rem)-2rem)] min-h-[24rem] overflow-hidden rounded-2xl ring-1 ring-border"
+            className="sticky top-[calc(var(--ke-header-h,4.5rem)+1rem)] mt-2 h-[calc(100dvh-var(--ke-header-h,4.5rem)-2rem)] min-h-[24rem] overflow-hidden rounded-2xl ring-1 ring-border app-wide:h-[calc(var(--ke-viewport-height,100dvh)-var(--ke-header-h,4.5rem)-2rem-var(--ke-safe-bottom,0px))] app-wide:min-h-[18rem]"
           >
             <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
               <MapView

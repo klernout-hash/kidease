@@ -47,4 +47,4 @@ The same `APPLE_TEAM_ID` fills the Apple App Site Association (`docs/STORE-LAUNC
 
 ## Xcode
 
-Archive with **Xcode 26** and the **iOS 26 SDK** when you submit. This Linux checkout cannot archive. Deployment target stays iOS 15.0. `LastUpgradeCheck` in the project file is left as Xcode last wrote it. Do not invent an upgrade check number.
+Archive with **Xcode 27.1** (or later) and the **iOS 27.1 SDK** when you submit, so the app fills both iPhone Duo displays. This Linux checkout cannot archive. Deployment target stays iOS 15.0. `LastUpgradeCheck` in the project file is left as Xcode last wrote it. Do not invent an upgrade check number.

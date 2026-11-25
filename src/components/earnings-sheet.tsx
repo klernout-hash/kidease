@@ -14,7 +14,7 @@ export function EarningsSheet({
   const { t } = useCopy();
   const startY = useRef(0);
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-fg/40" data-ke="earnings-sheet">
+    <div className="ke-safe-x fixed inset-0 z-[70] flex items-end justify-center bg-fg/40" data-ke="earnings-sheet">
       <button type="button" className="absolute inset-0" aria-label={t("close")} onClick={onClose} />
       <div
         role="dialog"

@@ -23,7 +23,7 @@ function BlockDialog({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-[80] grid place-items-end bg-black/40 p-4 sm:place-items-center" role="presentation" onClick={onClose}>
+    <div className="ke-safe-x fixed inset-0 z-[80] grid place-items-end bg-black/40 py-4 [--ke-pad-x:1rem] sm:place-items-center" role="presentation" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"

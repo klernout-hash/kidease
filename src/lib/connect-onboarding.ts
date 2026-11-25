@@ -63,16 +63,31 @@ export function connectOnboardingMessageKey(reason: ConnectOnboardingReason | st
   }
 }
 
-/** Stripe error code (e.g. "account_invalid") or "unknown". Never the message text. */
+/**
+ * A short machine code for the UI and logs. Tries Stripe's code, then the
+ * param it rejected, then the error type, then the HTTP status. Returns
+ * "unknown" only when none of those exist. Never the message text.
+ */
 export function stripeErrorCode(err: unknown): string {
   if (err && typeof err === "object") {
-    const bag = err as { code?: unknown; stripeCode?: unknown };
-    for (const raw of [bag.stripeCode, bag.code]) {
+    const bag = err as { code?: unknown; stripeCode?: unknown; param?: unknown; type?: unknown; status?: unknown };
+    for (const raw of [bag.stripeCode, bag.code, bag.param, bag.type]) {
       const code = typeof raw === "string" ? raw.trim().toLowerCase() : "";
-      if (/^[a-z0-9_]{1,60}$/.test(code)) return code;
+      const token = /^[a-z0-9_.[\]]{1,60}$/.test(code) ? normaliseStripeToken(code) : "";
+      if (token) return token;
     }
+    const status = typeof bag.status === "number" ? bag.status : Number.NaN;
+    if (Number.isInteger(status) && status >= 100 && status <= 599) return `http_${status}`;
   }
   return "unknown";
+}
+
+/** controller[losses][payments] -> controller_losses_payments */
+function normaliseStripeToken(code: string): string {
+  return code
+    .replace(/[.[\]]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "");
 }
 
 function errorDetail(err: unknown): string {

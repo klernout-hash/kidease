@@ -167,7 +167,7 @@ export function GetAlertsPrompt() {
       data-ke="push-explainer"
       role="dialog"
       aria-label={copy.title}
-      className="ke-bottom-prompt fixed inset-x-0 bottom-0 z-[55] px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(4.25rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]"
+      className="ke-bottom-prompt ke-above-tabs ke-safe-x fixed inset-x-0 bottom-0 z-[55] [--ke-pad-x:0.75rem] pb-[max(0.5rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(4.25rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]"
     >
       <div className="mx-auto flex max-w-[560px] flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-surface/95 px-3 py-2 shadow-lift ring-1 ring-border backdrop-blur-md">
         <div className="min-w-0 flex-1 basis-48">

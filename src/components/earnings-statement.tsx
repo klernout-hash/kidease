@@ -130,7 +130,7 @@ export function EarningsStatementScreen({ desk, period }: { desk: EarningsResult
           >
             {t("earningsMonthTx")}
           </Link>
-          <div className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-lg border-t border-border bg-bg px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(5.5rem+env(safe-area-inset-bottom))]">
+          <div className="ke-above-tabs ke-safe-x fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-lg border-t border-border bg-bg [--ke-pad-x:1.25rem] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(5.5rem+env(safe-area-inset-bottom))]">
             <button
               type="button"
               data-ke="earnings-get-pdf"

@@ -14,7 +14,7 @@ export function GovExportsPage({ data }: { data: GovDashboard }) {
   const csv = `/api/gov/export?${query.toString()}&format=csv`;
   const home = data.locale === "fr" ? "/fr/gov" : "/gov";
   return (
-    <div className="w-full min-h-dvh overflow-x-hidden bg-bg text-fg pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="w-full min-h-dvh overflow-x-hidden bg-bg text-fg pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))]">
       <main className="mx-auto w-full max-w-3xl px-4 py-8" data-ke="gov-exports">
         <p className="text-sm font-medium text-muted">{copy.what}</p>
         <h1 className="mt-1 font-display text-3xl">{copy.exportsTitle}</h1>

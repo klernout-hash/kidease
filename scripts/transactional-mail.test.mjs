@@ -9,7 +9,9 @@ import {
   emergencyResendMailFrom,
   formatTransactionalMailLog,
   friendlyTransactionalMailError,
+  isNoReplyAddress,
   otpResendFromCandidates,
+  prepareMailBody,
   readOtpMailHealth,
   resetOtpMailHealth,
   sendTransactionalMail,
@@ -17,7 +19,10 @@ import {
   titanFallbackAllowed,
   titanSmtpFrom,
   transactionalMailConfigured,
+  transactionalReplyTo,
 } from "../src/lib/transactional-mail.ts";
+import { brandedNotice } from "../src/lib/email-layout.ts";
+import { transactionalMailFrom, withKidEaseDisplayName } from "../src/lib/mail-from.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -331,4 +336,74 @@ test("2FA and reset paths use the shared fallback sender", () => {
   const onboard = readFileSync(join(root, "src/lib/server/provider-onboard-mail.ts"), "utf8");
   assert.match(verify, /purpose:\s*"verify_email"/);
   assert.match(onboard, /purpose:\s*"provider_onboard"/);
+});
+
+test("#1014 item 3: sign-in code mail hygiene (From name, Reply-To, text part, no List-Unsubscribe)", async () => {
+  // Human From name, even when MAIL_FROM is a bare send-host address.
+  assert.equal(transactionalMailFrom("noreply@send.kidease.ca"), "KidEase <noreply@send.kidease.ca>");
+  assert.equal(transactionalMailFrom("KidEase <noreply@send.kidease.ca>"), "KidEase <noreply@send.kidease.ca>");
+  assert.equal(withKidEaseDisplayName("Team <a@send.kidease.ca>"), "Team <a@send.kidease.ca>");
+  assert.deepEqual(otpResendFromCandidates({ MAIL_FROM: "noreply@send.kidease.ca" }), ["KidEase <noreply@send.kidease.ca>"]);
+  // Reply-To is a real mailbox, never noreply or the send-only host.
+  assert.equal(isNoReplyAddress("noreply@send.kidease.ca"), true);
+  assert.equal(isNoReplyAddress("KidEase <no-reply@kidease.ca>"), true);
+  assert.equal(isNoReplyAddress("alerts@send.kidease.ca"), true);
+  assert.equal(isNoReplyAddress("kyle@kidease.ca"), false);
+  assert.equal(transactionalReplyTo("kyle@kidease.ca", {}), "kyle@kidease.ca");
+  assert.equal(transactionalReplyTo("noreply@send.kidease.ca", { ADMIN_EMAIL: "kyle@kidease.ca" }), "kyle@kidease.ca");
+  assert.equal(transactionalReplyTo("", { ADMIN_EMAIL: "noreply@kidease.ca" }), "kyle@kidease.ca");
+
+  // BRANDED_EMAILS=1: the 2FA mail keeps a plain-text part with the code, and no List-Unsubscribe.
+  const subject = "Your KidEase sign-in code";
+  const input = {
+    purpose: "2fa",
+    to: "parent@example.com",
+    subject,
+    text: "Your KidEase sign-in code is 482913.",
+    html: "<p>482913</p>",
+    unsubscribeUrl: "https://www.kidease.ca/api/unsubscribe?token=t",
+    branded: brandedNotice({ heading: subject, text: "It expires in 10 minutes.", code: "482913", reason: "You get this because someone asked to sign in to KidEase.", locale: "en" }),
+  };
+  const body = await prepareMailBody(input, { BRANDED_EMAILS: "1" });
+  assert.match(body.html, /482913/);
+  assert.match(body.text, /482913/);
+  assert.match(body.text, /Your KidEase sign-in code/);
+  assert.match(body.text, /expires in 10 minutes/);
+  assert.deepEqual(body.headers, {});
+  assert.doesNotMatch(body.text, /Unsubscribe/);
+  // Non-essential mail still gets one-click unsubscribe.
+  const marketing = await prepareMailBody({ ...input, purpose: "host_action" }, { BRANDED_EMAILS: "1" });
+  assert.equal(marketing.headers["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click");
+
+  // Resend payload: From has the KidEase name, Reply-To is a mailbox, text and html both present.
+  let sent = null;
+  const result = await sendTransactionalMail(
+    { ...input, replyTo: "noreply@send.kidease.ca" },
+    {
+      gate: null,
+      fetch: async (_url, init) => {
+        sent = JSON.parse(init.body);
+        return jsonResponse(200, { id: "email_1" });
+      },
+      env: { RESEND_API_KEY: "re_test", MAIL_FROM: "noreply@send.kidease.ca", ADMIN_EMAIL: "kyle@kidease.ca", BRANDED_EMAILS: "1" },
+      log: () => undefined,
+    },
+  );
+  assert.equal(result.via, "resend");
+  assert.equal(sent.from, "KidEase <noreply@send.kidease.ca>");
+  assert.equal(sent.reply_to, "kyle@kidease.ca");
+  assert.equal(sent.subject, subject);
+  assert.match(sent.text, /482913/);
+  assert.match(sent.html, /482913/);
+  assert.equal("headers" in sent, false);
+});
+
+test("#1014 item 3: the 2FA email text matches its subject and stays short", () => {
+  const twoFa = readFileSync(join(root, "src/lib/server/two-factor.ts"), "utf8");
+  const send = twoFa.slice(twoFa.indexOf("async function sendCodeEmail"), twoFa.indexOf("export const getVerify2faServerSession"));
+  assert.match(send, /Your KidEase sign-in code is \$\{code\}/);
+  assert.match(send, /Votre code de connexion KidEase est \$\{code\}/);
+  assert.match(send, /text,\s*html,/);
+  assert.doesNotMatch(send, /unsubscribeUrl|bit\.ly|tinyurl|<img/i);
+  assert.doesNotMatch(send, /console\.[a-z]+\([^)]*\bto\b/);
 });

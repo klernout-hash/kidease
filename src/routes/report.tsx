@@ -60,6 +60,7 @@ export function ReportPage() {
       await submitPublicMessage({
         data: {
           kind: "support",
+          form: "report",
           name,
           email,
           subject: place ? `Listing concern: ${place}` : "Listing concern",

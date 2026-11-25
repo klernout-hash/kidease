@@ -69,7 +69,7 @@ export function ListingContact({
       </button>
       {open ? (
         <div
-          className="fixed inset-0 z-50 grid place-items-end bg-fg/40 p-0 sm:place-items-center sm:p-4"
+          className="ke-safe-x fixed inset-0 z-50 grid place-items-end bg-fg/40 py-0 [--ke-pad-x:0px] sm:place-items-center sm:py-4 sm:[--ke-pad-x:1rem]"
           onClick={() => setOpen(false)}
         >
           <form

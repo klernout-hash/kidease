@@ -79,7 +79,9 @@ test("verify-2fa keeps OTP state under Shell and never silently ignores a Verify
   assert.match(route, /yieldToMain/);
   assert.match(route, /OtpCodeField/);
   assert.match(route, /\[font-family:system-ui,Segoe_UI,sans-serif\]/);
-  assert.match(route, /needTurnstile \? \(/);
+  // #1014 item 2: the security check renders on first paint, never behind a typed digit.
+  assert.doesNotMatch(route, /needTurnstile/);
+  assert.match(route, /<TurnstileField\s/);
   assert.match(route, /pageStalled/);
   assert.match(src("src/components/shell.tsx"), /verifyLite/);
   assert.match(src("src/components/shell.tsx"), /menuLite/);

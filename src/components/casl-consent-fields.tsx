@@ -24,63 +24,78 @@ export function CaslConsentFields({
       <legend className="text-sm font-medium">{t("caslLegend")}</legend>
       <p className="text-[13px] text-muted">{t("caslNotRequired")}</p>
       {showSms ? (
-        <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm" data-ke="sms-entry">
-          <input
-            type="checkbox"
-            className="mt-1 size-4 accent-primary"
-            autoComplete="off"
-            autoCorrect="off"
-            data-lpignore="true"
-            data-1p-ignore="true"
-            data-form-type="other"
-            checked={value.smsService}
-            onChange={(e) => onChange({ ...value, smsService: e.target.checked })}
-          />
-          <span>
-            <span className="font-medium">{t("caslSmsLabel")}</span>
-            <span className="mt-1 block text-[12px] text-muted">{caslStatement(loc, "smsService")}</span>
-          </span>
-        </label>
+        <ConsentRow
+          entry="sms-entry"
+          checked={value.smsService}
+          onChange={(checked) => onChange({ ...value, smsService: checked })}
+          label={t("caslSmsLabel")}
+          statement={caslStatement(loc, "smsService")}
+        />
       ) : null}
       {showEmailService ? (
-        <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
-          <input
-            type="checkbox"
-            className="mt-1 size-4 accent-primary"
-            autoComplete="off"
-            autoCorrect="off"
-            data-lpignore="true"
-            data-1p-ignore="true"
-            data-form-type="other"
-            checked={value.emailService}
-            onChange={(e) => onChange({ ...value, emailService: e.target.checked })}
-          />
-          <span>
-            <span className="font-medium">{t("caslEmailServiceLabel")}</span>
-            <span className="mt-1 block text-[12px] text-muted">{caslStatement(loc, "emailService")}</span>
-          </span>
-        </label>
+        <ConsentRow
+          checked={value.emailService}
+          onChange={(checked) => onChange({ ...value, emailService: checked })}
+          label={t("caslEmailServiceLabel")}
+          statement={caslStatement(loc, "emailService")}
+        />
       ) : null}
       {showEmailCommercial ? (
-        <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
-          <input
-            type="checkbox"
-            className="mt-1 size-4 accent-primary"
-            autoComplete="off"
-            autoCorrect="off"
-            data-lpignore="true"
-            data-1p-ignore="true"
-            data-form-type="other"
-            checked={value.emailCommercial}
-            onChange={(e) => onChange({ ...value, emailCommercial: e.target.checked })}
-          />
-          <span>
-            <span className="font-medium">{t("caslEmailCommercialLabel")}</span>
-            <span className="mt-1 block text-[12px] text-muted">{caslStatement(loc, "emailCommercial")}</span>
-          </span>
-        </label>
+        <ConsentRow
+          checked={value.emailCommercial}
+          onChange={(checked) => onChange({ ...value, emailCommercial: checked })}
+          label={t("caslEmailCommercialLabel")}
+          statement={caslStatement(loc, "emailCommercial")}
+        />
       ) : null}
       <p className="text-[12px] text-subtle">{t("caslWithdrawHint")}</p>
     </fieldset>
+  );
+}
+
+/**
+ * One consent checkbox (#1014 item 9c). QA could only toggle these from the
+ * label text, not the 16px box. No overlay or CSS rule was found that blocks
+ * the input, so the box itself is bigger (20px) and sits in a 44px hit zone
+ * (CONSENT_BOX_ZONE) inside the label: a tap on or around the box toggles it.
+ * Sizes are in px because the root font is 14px (size-5 would be 17.5px).
+ */
+export const CONSENT_ROW = "flex min-h-11 cursor-pointer touch-manipulation items-start gap-2 text-sm";
+export const CONSENT_BOX_ZONE = "-my-1.5 -ml-3 flex size-[44px] shrink-0 items-center justify-center";
+export const CONSENT_BOX = "size-[20px] shrink-0 cursor-pointer touch-manipulation accent-primary";
+
+function ConsentRow({
+  entry,
+  checked,
+  onChange,
+  label,
+  statement,
+}: {
+  entry?: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+  statement: string;
+}) {
+  return (
+    <label className={CONSENT_ROW} data-ke={entry}>
+      <span className={CONSENT_BOX_ZONE} data-ke="casl-box-zone">
+        <input
+          type="checkbox"
+          className={CONSENT_BOX}
+          autoComplete="off"
+          autoCorrect="off"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-form-type="other"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+      </span>
+      <span className="pt-2">
+        <span className="font-medium">{label}</span>
+        <span className="mt-1 block text-[12px] text-muted">{statement}</span>
+      </span>
+    </label>
   );
 }
