@@ -84,3 +84,31 @@ export function appShareUrl(origin: string): string {
   const base = origin.replace(/\/+$/, "");
   return `${base}${APP_SHARE_PATH}`;
 }
+
+/**
+ * Get-app kicker and title suffix from APP_STORES, so the page never claims a
+ * platform whose store still says "Download unavailable".
+ */
+export function appPlatformsLabel(locale: "en" | "fr" = "en", stores: readonly AppStoreTile[] = APP_STORES): string {
+  const live = (id: AppStoreId) => Boolean(appStoreById(id, stores)?.live && appStoreById(id, stores)?.url);
+  const android = live("play") || live("amazon") || live("huawei") || live("samsung");
+  const parts: string[] = [];
+  if (locale === "fr") {
+    if (live("apple")) parts.push("iPhone et iPad");
+    if (android) parts.push(parts.length ? "téléphones et tablettes Android" : "Téléphones et tablettes Android");
+    if (live("microsoft")) parts.push("Windows");
+    parts.push(parts.length ? "navigateur Web" : "Navigateur Web");
+    return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} et ${parts[parts.length - 1]}` : parts[0]!;
+  }
+  if (live("apple")) parts.push("iPhone and iPad");
+  if (android) parts.push("Android phones and tablets");
+  if (live("microsoft")) parts.push("Windows");
+  parts.push(parts.length ? "the web" : "The web");
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")}${parts.length > 2 ? "," : ""} and ${parts[parts.length - 1]}` : parts[0]!;
+}
+
+/** Store links outside the tiles (Galaxy, Microsoft) render only for a live listing. */
+export function storeLinkAllowed(id: AppStoreId, stores: readonly AppStoreTile[] = APP_STORES): boolean {
+  const store = appStoreById(id, stores);
+  return Boolean(store?.live);
+}

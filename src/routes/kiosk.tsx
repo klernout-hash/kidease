@@ -11,15 +11,25 @@ export const Route = createFileRoute("/kiosk")({
   validateSearch: (s: Record<string, unknown>): Search => ({ preview: s.preview ? String(s.preview) : undefined }),
   loader: () => getFireKioskAccess().catch(() => ({ allowed: true, nativeFire: false })),
   head: () => ({ meta: [{ title: "Check-in kiosk · KidEase" }, { name: "robots", content: "noindex, nofollow" }] }),
-  component: KioskPage,
+  component: KioskRoute,
 });
+
+/** Reads this route's data, then renders the shared page. /fr/kiosk has its own wrapper. */
+function KioskRoute() {
+  const access = Route.useLoaderData();
+  const { preview } = Route.useSearch();
+  return <KioskPage access={access} preview={preview} />;
+}
+
+export type KioskAccess = { allowed: boolean; nativeFire: boolean };
 
 const PIN_KEY = "ke.kiosk.pin";
 type Child = (typeof KIOSK_SAMPLE)[number];
 
-export function KioskPage() {
-  const { allowed, nativeFire } = Route.useLoaderData();
-  const { preview } = Route.useSearch();
+// Shared by /kiosk and /fr/kiosk. It must not call Route.use* hooks: under the
+// /fr/kiosk match the English route's hooks fail with "Invariant failed" (SSR).
+export function KioskPage({ access, preview }: { access: KioskAccess; preview?: string }) {
+  const { allowed, nativeFire } = access;
   // Sample data preview is dev-only, for screenshots. Never in production builds.
   const previewMode = import.meta.env.DEV && preview === "1";
   const { locale } = useCopy();

@@ -12,6 +12,7 @@ import {
   parseSmtpReplyBlock,
   resolveTitanConfig,
   smtpTransaction,
+  withTitanErrorFields,
   type BuiltMail,
   type ImapIo,
   type SmtpIo,
@@ -213,7 +214,7 @@ export async function listTitanInbox(limit = 40): Promise<TitanListItem[]> {
     const exists = await imapSelectInbox(io);
     return await imapFetchList(io, exists, limit);
   } catch (err) {
-    throw new Error(humanTitanError(err, cfg.password));
+    throw withTitanErrorFields(humanTitanError(err, cfg.password), err);
   } finally {
     try {
       await imapLogout(io);
@@ -235,7 +236,7 @@ export async function getTitanMessage(uid: number): Promise<TitanMessage> {
     await imapSelectInbox(io);
     return await imapFetchUid(io, uid);
   } catch (err) {
-    throw new Error(humanTitanError(err, cfg.password));
+    throw withTitanErrorFields(humanTitanError(err, cfg.password), err);
   } finally {
     try {
       await imapLogout(io);
@@ -311,7 +312,7 @@ async function smtpSend(cfg: TitanMailConfig, mail: BuiltMail) {
       },
     });
   } catch (err) {
-    throw new Error(humanTitanError(err, cfg.password));
+    throw withTitanErrorFields(humanTitanError(err, cfg.password), err);
   } finally {
     sock?.destroy();
   }

@@ -8,5 +8,11 @@ export const Route = createFileRoute("/fr/welcome/$code")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
-  component: WelcomePage,
+  component: FrWelcomeRoute,
 });
+
+function FrWelcomeRoute() {
+  const { code } = Route.useParams();
+  return <WelcomePage code={code} />;
+}
+

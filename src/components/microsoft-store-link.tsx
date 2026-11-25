@@ -1,4 +1,5 @@
 import { useRouterState } from "@tanstack/react-router";
+import { storeLinkAllowed } from "@/lib/app-stores";
 import { useCopy } from "@/lib/use-copy";
 
 /**
@@ -16,7 +17,8 @@ export function MicrosoftStoreLink() {
     },
   });
   const { t } = useCopy();
-  if (!url) return null;
+  // Only once the Microsoft Store listing is live in APP_STORES.
+  if (!url || !storeLinkAllowed("microsoft")) return null;
   return (
     <p className="mt-3">
       <a

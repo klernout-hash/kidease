@@ -11,6 +11,7 @@ import {
   adminMailStatusFromEnv,
   humanTitanError,
   mailboxAddress,
+  titanFailureDetail,
   titanAppPassword,
   type AdminMailStatus,
   type TitanListItem,
@@ -39,6 +40,7 @@ export const getAdminMailStatus = createServerFn({ method: "GET" })
         lastPurpose: otp.lastPurpose,
         lastReason: otp.lastReason,
         lastVia: otp.lastVia,
+        lastDetail: otp.lastDetail ?? null,
       },
     };
   });
@@ -61,8 +63,11 @@ export const listAdminMailbox = createServerFn({ method: "GET" })
           setTimeout(() => reject(new Error("Titan connection timed out")), 15_000);
         }),
       ]);
+      console.info(`[kidease-mail] event=imap_list_ok via=titan count=${messages.length}`);
       return { ok: true, messages, error: null };
     } catch (err) {
+      // Codes only (titanFailureDetail): never the password or mailbox text.
+      console.error(`[kidease-mail] event=imap_list_fail via=titan ${titanFailureDetail(err)}`);
       reportError(err, { route: "listAdminMailbox" });
       return { ok: false, messages: [], error: humanTitanError(err, titanAppPassword()) };
     }

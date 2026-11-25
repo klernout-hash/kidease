@@ -28,6 +28,7 @@ import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
 import { HomeScreenGuide } from "@/components/home-screen-guide";
 import { AppStoreStatus } from "@/components/app-store-status";
 import { MicrosoftStoreLink } from "@/components/microsoft-store-link";
+import { appPlatformsLabel, storeLinkAllowed } from "@/lib/app-stores";
 import { SamsungStoreLink } from "@/components/samsung-store-link";
 import { StoreBadges } from "@/components/store-badges";
 import { JsonLd } from "@/components/json-ld";
@@ -95,6 +96,14 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
   }
 
   const desc = locale === "fr" ? STORE.descriptionFr : STORE.description;
+  // Only name platforms with a live store (APP_STORES). Other languages keep
+  // their translated kicker only once the App Store is live too.
+  const kicker =
+    locale === "en" || locale === "fr"
+      ? appPlatformsLabel(locale)
+      : storeLinkAllowed("apple")
+        ? t("getAppKicker")
+        : null;
   const amazonFirst = Boolean(amazonUrl) && amazonDevice;
   const installVariant = amazonFirst && showStores ? "secondary" : "primary";
 
@@ -105,7 +114,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
         <section className="grid items-center gap-10 md:grid-cols-[1fr_minmax(16rem,20rem)]">
           <div>
             <BrandMark size="md" align="start" />
-            <p className="mt-6 text-xs font-medium uppercase tracking-[0.16em] text-muted">{t("getAppKicker")}</p>
+            {kicker ? <p className="mt-6 text-xs font-medium uppercase tracking-[0.16em] text-muted">{kicker}</p> : null}
             <h1 className="mt-3 font-display text-4xl md:text-5xl">{t("getApp")}</h1>
             <p className="mt-4 max-w-md text-muted">{t("getAppLead")}</p>
             <MicrosoftStoreLink />
