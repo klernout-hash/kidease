@@ -15,6 +15,7 @@ import {
 } from "@/lib/desk-features";
 import { buildTourIcs } from "@/lib/tour-ics";
 import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
+import { parentTourCounts, selectParentTours } from "@/lib/parent-request-rows";
 import { listTourRequests } from "@/lib/server/tours";
 import { saveTourVisitReminder } from "@/lib/server/tour-calendar";
 import { summarizeTourCounts, tourCountLine } from "@/lib/tour-counts";
@@ -71,7 +72,13 @@ export function TourCalendarPage({ audience }: { audience: "parent" | "provider"
     void listTourRequests({ data: { desk: audience === "provider" ? "centre" : "parent" } })
       .then((rows) => {
         setTours(rows);
-        setEvents(eventsFromTours(rows));
+        if (audience === "parent") {
+          // Same selector as parent home and Requests: past visits drop off.
+          const selection = selectParentTours(rows, new Date());
+          setEvents(eventsFromTours([...selection.upcoming, ...selection.needsReply]));
+        } else {
+          setEvents(eventsFromTours(rows));
+        }
         setToursReady(true);
       })
       .catch(() => {
@@ -157,7 +164,11 @@ export function TourCalendarPage({ audience }: { audience: "parent" | "provider"
         {toursReady ? (
           <div className="mt-4">
             <TourCountSummary
-              counts={summarizeTourCounts({ requests: tours.map((tour) => ({ status: tour.status, kind: "tour" })) })}
+              counts={
+                audience === "parent"
+                  ? parentTourCounts(selectParentTours(tours, now))
+                  : summarizeTourCounts({ requests: tours.map((tour) => ({ status: tour.status, kind: "tour" })) })
+              }
               locale={locale}
             />
           </div>

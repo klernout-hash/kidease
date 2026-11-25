@@ -6,7 +6,7 @@ import { TourCountSummary } from "@/components/tour-count-summary";
 import { Button } from "@/components/ui/button";
 import { inboxThreadTo } from "@/lib/desk-nav";
 import { parentRequestKindKey, parentRequestStatusKey, type ParentRequestRow } from "@/lib/parent-request-rows";
-import { summarizeTourCounts } from "@/lib/tour-counts";
+import { summarizeTourCounts, type TourCountSummary as TourCountSummaryValue } from "@/lib/tour-counts";
 import { useCopy } from "@/lib/use-copy";
 
 function requestDate(value: string, locale: string): string {
@@ -15,7 +15,14 @@ function requestDate(value: string, locale: string): string {
   return date.toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium" });
 }
 
-export function ParentRequestsList({ items }: { items: ParentRequestRow[] }) {
+export function ParentRequestsList({
+  items,
+  tourCounts,
+}: {
+  items: ParentRequestRow[];
+  /** Tour numbers from selectParentTours, so this tab agrees with home and the calendar. */
+  tourCounts?: TourCountSummaryValue;
+}) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const listingTo = locale === "fr" ? "/fr/daycare/$slug" : "/daycare/$slug";
@@ -24,9 +31,11 @@ export function ParentRequestsList({ items }: { items: ParentRequestRow[] }) {
       <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" art={<KidNotebook />} />
     );
   }
-  const counts = summarizeTourCounts({
-    requests: items.map((row) => ({ status: row.status, kind: row.kind })),
-  });
+  const counts =
+    tourCounts ??
+    summarizeTourCounts({
+      requests: items.map((row) => ({ status: row.status, kind: row.kind })),
+    });
   return (
     <div className="space-y-3">
     <TourCountSummary counts={counts} locale={locale} />

@@ -1711,6 +1711,8 @@ export const en = {
     storeAmazonGet: "Get it on Amazon Appstore",
     storeAmazonPending: "No download link is available here. You can add KidEase to your home screen.",
     storeAmazonReadyLead: "KidEase is on the Amazon Appstore.",
+    storePlayGet: "Get it on Google Play",
+    storePlayReadyLead: "KidEase is on Google Play. On a Fire tablet, use the Amazon Appstore.",
     storeAlreadyInApp: "You are in the KidEase app. Search licensed daycares in Canada.",
     homeScreenTitle: "Add KidEase to your home screen",
     homeScreenLead:
@@ -3736,6 +3738,9 @@ export const en = {
     accountUnconfirmedTitle: "Couldn’t confirm this account",
     accountUnconfirmedBody: "Refresh and try again. Nothing was charged.",
     accountSaveFailed: "Could not save details",
+    accountSavedStatus: "Saved",
+    accountConsentSaveFailed: "Your details are saved. Your email and text choices did not save. Try again.",
+    accountAnchorSaveFailed: "Your details are saved. Your work address did not save. Try again.",
     plansAfterClaim: "Centre plans open after you claim a licensed listing. Nothing was charged.",
     plansForDirectors: "Centre plans are for directors. KidEase subscriptions are unavailable; free listing tools remain available.",
     contractsLoading: "Loading contracts…",

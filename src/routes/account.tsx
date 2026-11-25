@@ -285,6 +285,8 @@ function ProfilePane() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Polite "Saved" line for screen readers and tests; the toast can be missed.
+  const [saveOk, setSaveOk] = useState(false);
   const [name, setName] = useState(user?.displayName ?? "");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(user?.primaryEmail ?? "");
@@ -455,6 +457,7 @@ function ProfilePane() {
     const nextPhone = phoneRef.current;
     const nextBio = bioRef.current.trim().slice(0, 400);
     setSaving(true);
+    setSaveOk(false);
     try {
       const saved = await saveMyContact({ data: { name: nextName, phone: nextPhone, bio: nextBio } });
       if (saved.bio !== nextBio) {
@@ -470,25 +473,41 @@ function ProfilePane() {
       setEmail(saved.email || email);
       setBio(saved.bio);
       setJoinedAt(saved.joinedAt);
-      const nextConsent = await saveMyCaslConsents({
-        data: {
-          ...consents,
-          phone: saved.phone,
-          email: saved.email || email,
-          locale,
-          method: "profile_checkbox",
-        },
-      });
-      setConsents({
-        smsService: nextConsent.smsService,
-        emailService: nextConsent.emailService,
-        emailCommercial: nextConsent.emailCommercial,
-      });
-      if (nextConsent.smsUnreachable) {
-        setSmsNote(t("smsUnreachable"));
-        toast.message(t("smsUnreachable"));
-      } else {
-        setSmsNote("");
+      savedContact.current = { name: saved.name, phone: saved.phone, bio: saved.bio };
+      // The contact row is saved. Say so now, before the slower consent and
+      // address writes, so a later failure cannot swallow the success toast.
+      // confirmAction first: the toast bridge's bare "Good Job" is then deduped.
+      confirmAction(t, "profileSaved");
+      toast.success(t("successProfileSaved"));
+      setSaveOk(true);
+      try {
+        const nextConsent = await saveMyCaslConsents({
+          data: {
+            ...consents,
+            phone: saved.phone,
+            email: saved.email || email,
+            locale,
+            method: "profile_checkbox",
+          },
+        });
+        setConsents({
+          smsService: nextConsent.smsService,
+          emailService: nextConsent.emailService,
+          emailCommercial: nextConsent.emailCommercial,
+        });
+        if (nextConsent.smsUnreachable) {
+          setSmsNote(t("smsUnreachable"));
+          toast.message(t("smsUnreachable"));
+        } else {
+          setSmsNote("");
+        }
+        savedConsents.current = {
+          smsService: nextConsent.smsService,
+          emailService: nextConsent.emailService,
+          emailCommercial: nextConsent.emailCommercial,
+        };
+      } catch {
+        toast.warning(t("accountConsentSaveFailed"));
       }
       // saveMyContact already writes "user".name. updateUser always rewrites
       // the session cookie, then the browser refetches get-session. On
@@ -506,18 +525,15 @@ function ProfilePane() {
       }
       if (savedHome !== undefined && (resolvedWork || workOrigin)) {
         const mode = resolvedWork && anchorMode === "home" ? "both" : anchorMode;
-        await saveMySearchAnchors({
-          data: { home: savedHome, work: resolvedWork, mode },
-        });
-        savedWorkLabel.current = resolvedWork?.label ?? "";
+        try {
+          await saveMySearchAnchors({
+            data: { home: savedHome, work: resolvedWork, mode },
+          });
+          savedWorkLabel.current = resolvedWork?.label ?? "";
+        } catch {
+          toast.warning(t("accountAnchorSaveFailed"));
+        }
       }
-      confirmAction(t, "profileSaved");
-      savedContact.current = { name: saved.name, phone: saved.phone, bio: saved.bio };
-      savedConsents.current = {
-        smsService: nextConsent.smsService,
-        emailService: nextConsent.emailService,
-        emailCommercial: nextConsent.emailCommercial,
-      };
       if (leaveEdit) {
         setNameInvalid(false);
         void navigate({
@@ -925,6 +941,9 @@ function ProfilePane() {
             <Button type="submit" className="w-full" disabled={saving}>
               {saving ? t("loading") : t("accountSaveDetails")}
             </Button>
+            <p className="min-h-5 text-sm text-muted" role="status" aria-live="polite" data-ke="account-save-ok">
+              {saveOk && !saving ? t("accountSavedStatus") : ""}
+            </p>
             <p className="text-[12px] text-subtle">
               <Link
                 to="/unsubscribe"
@@ -1101,6 +1120,9 @@ function ProfilePane() {
               >
                 {saving ? t("loading") : t("profileDone")}
               </button>
+              <p className="min-h-5 text-sm text-muted" role="status" aria-live="polite" data-ke="account-save-ok">
+                {saveOk && !saving ? t("accountSavedStatus") : ""}
+              </p>
             </div>
           </form>
         ) : (

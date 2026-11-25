@@ -98,10 +98,23 @@ function onAmazonClick(event: MouseEvent<HTMLAnchorElement>) {
 export function StoreBadges({
   huaweiHref = null,
   amazonHref,
-}: { huaweiHref?: string | null; amazonHref?: string | null } = {}) {
+  lead = "play",
+}: {
+  huaweiHref?: string | null;
+  amazonHref?: string | null;
+  /**
+   * Which store leads. Google Play by default (Android). Amazon only on Fire /
+   * Silk / KF devices or with the ke_store=amazon cookie; the page decides.
+   */
+  lead?: "play" | "amazon";
+} = {}) {
   const { t, locale } = useCopy();
   const lang = locale as ShippedLocale;
   const amazonUrl = amazonHref === undefined ? AMAZON_APPSTORE_URL() : amazonHref;
+  const playStore = APP_STORES.find((row) => row.id === "play");
+  const playUrl = playStore?.live ? playStore.url : null;
+  const leadStore: "play" | "amazon" | null =
+    lead === "amazon" && amazonUrl ? "amazon" : playUrl ? "play" : amazonUrl ? "amazon" : null;
   const names = {
     amazon: t("storeAmazonName"),
     apple: t("appStore"),
@@ -110,49 +123,62 @@ export function StoreBadges({
     microsoft: t("storeMicrosoftName"),
     huawei: t("storeHuaweiName"),
   };
+  const order: readonly (typeof TILES)[number][] =
+    leadStore === "amazon" ? TILES : ["play", "amazon", "huawei", "apple", "samsung", "microsoft"];
+
+  const amazonTile = (
+    <li key="amazon" className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border">
+      {amazonUrl ? (
+        <a
+          href={amazonUrl}
+          onClick={onAmazonClick}
+          rel="noopener noreferrer"
+          className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          aria-label={t("storeAmazonGet")}
+        >
+          <BadgeImage store="amazon" locale={lang} />
+        </a>
+      ) : (
+        <span className="inline-flex" aria-disabled="true">
+          <BadgeImage store="amazon" locale={lang} muted />
+        </span>
+      )}
+      <p className="mt-2 text-sm font-medium">{names.amazon}</p>
+      <p className="text-sm text-muted">{amazonUrl ? t("storeAvailableNow") : t("storeAmazonPending")}</p>
+    </li>
+  );
 
   return (
     <section
       id="stores"
       data-ke="store-coming-soon"
+      data-lead-store={leadStore ?? "none"}
       className="mt-6 max-[430px]:pr-[4.75rem]"
       aria-labelledby="store-badges-title"
     >
       <h2 id="store-badges-title" className="font-display text-2xl">
-        {amazonUrl ? names.amazon : t("storeComingSoonTitle")}
+        {leadStore ? names[leadStore] : t("storeComingSoonTitle")}
       </h2>
-      {amazonUrl ? (
+      {leadStore === "amazon" && amazonUrl ? (
         <Button asChild size="lg" className="mt-4 h-auto min-h-11 w-full max-w-md whitespace-normal px-4 py-2 text-center sm:w-auto">
           <a href={amazonUrl} onClick={onAmazonClick} rel="noopener noreferrer" data-ke="amazon-appstore">
             {t("storeAmazonGet")}
           </a>
         </Button>
+      ) : leadStore === "play" && playUrl ? (
+        <Button asChild size="lg" className="mt-4 h-auto min-h-11 w-full max-w-md whitespace-normal px-4 py-2 text-center sm:w-auto">
+          <a href={playUrl} target="_blank" rel="noopener noreferrer" data-ke="play-store-lead">
+            {t("storePlayGet")}
+          </a>
+        </Button>
       ) : null}
       <p className="mt-3 max-w-2xl text-sm text-muted">
-        {amazonUrl ? t("storeAmazonReadyLead") : t("storeAmazonPending")}
+        {leadStore === "amazon" ? t("storeAmazonReadyLead") : leadStore === "play" ? t("storePlayReadyLead") : t("storeAmazonPending")}
       </p>
       <p className="mt-2 max-w-2xl text-sm text-muted">{t("storeComingSoonLead")}</p>
       <ul className="mt-5 grid grid-cols-1 gap-3 min-[431px]:grid-cols-2 lg:grid-cols-3">
-        <li className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border">
-          {amazonUrl ? (
-            <a
-              href={amazonUrl}
-              onClick={onAmazonClick}
-              rel="noopener noreferrer"
-              className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-              aria-label={t("storeAmazonGet")}
-            >
-              <BadgeImage store="amazon" locale={lang} />
-            </a>
-          ) : (
-            <span className="inline-flex" aria-disabled="true">
-              <BadgeImage store="amazon" locale={lang} muted />
-            </span>
-          )}
-          <p className="mt-2 text-sm font-medium">{names.amazon}</p>
-          <p className="text-sm text-muted">{amazonUrl ? t("storeAvailableNow") : t("storeAmazonPending")}</p>
-        </li>
-        {TILES.filter((store) => store !== "amazon").map((store) => {
+        {order.map((store) => {
+          if (store === "amazon") return amazonTile;
           const configured = APP_STORES.find((row) => row.id === store);
           const href = configured?.live ? configured.url : null;
           const tileHref = store === "huawei" && huaweiHref ? huaweiHref : href;

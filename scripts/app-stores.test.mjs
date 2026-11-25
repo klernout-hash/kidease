@@ -43,6 +43,24 @@ test("the share link sends a phone to its store and everyone else to the list", 
   assert.equal(appShareUrl("https://kidease.ca/"), "https://kidease.ca/app");
 });
 
+test("Android Chrome gets Google Play first; a Fire device or ke_store=amazon gets Amazon", () => {
+  const chrome = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
+  const samsung = "Mozilla/5.0 (Linux; Android 14; SM-S918W) AppleWebKit/537.36 SamsungBrowser/24.0 Chrome/117 Mobile Safari/537.36";
+  const fire = "Mozilla/5.0 (Linux; Android 11; KFTRWI) AppleWebKit/537.36 (KHTML, like Gecko) Silk/120.1 like Chrome/120 Safari/537.36";
+  assert.equal(storeForDevice(chrome)?.id, "play");
+  assert.equal(storeForDevice(chrome)?.url, PLAY_STORE_URL);
+  assert.equal(storeForDevice(samsung)?.id, "play");
+  assert.equal(storeForDevice(fire)?.id, "amazon");
+  assert.equal(storeForDevice(fire)?.url, AMAZON_STORE_URL);
+  assert.equal(storeForDevice(chrome, APP_STORES, "ke_store=amazon")?.id, "amazon");
+  assert.equal(storeForDevice(chrome, APP_STORES, "ke_store=microsoft")?.id, "play");
+  // If Amazon were not live, a Fire device still gets a working store.
+  const noAmazon = APP_STORES.map((store) => (store.id === "amazon" ? { ...store, live: false } : store));
+  assert.equal(storeForDevice(fire, noAmazon)?.id, "play");
+  const href = readFileSync(join(root, "src/lib/server/app-store-href.ts"), "utf8");
+  assert.match(href, /headers\?\.get\("cookie"\)/);
+});
+
 test("the store section does not mention subscriptions or prices", () => {
   const files = [
     "src/components/app-store-status.tsx",

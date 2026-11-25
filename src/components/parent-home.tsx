@@ -20,6 +20,7 @@ import {
   type ParentHomeSection,
 } from "@/lib/parent-home-stage";
 import { billDollars, billIsOpen, type Bill } from "@/lib/bill";
+import { selectParentTours } from "@/lib/parent-request-rows";
 import { money } from "@/lib/utils";
 import type { Booking, DaycareCard, TourRequest } from "@/lib/types";
 
@@ -44,14 +45,6 @@ function parentLeadLabel(
   if (raw === "any") return locale === "fr" ? "Tout âge" : "Any age";
   if (isLeadStatus(raw)) return t(leadStatusCopyKey(raw));
   return status;
-}
-
-function tourWhen(tour: TourRequest): string {
-  const times = [...(tour.preferredTimes || [])].filter((slot) => slot.date);
-  times.sort((a, b) => `${a.date} ${a.time || ""}`.localeCompare(`${b.date} ${b.time || ""}`));
-  const first = times[0];
-  if (first?.date) return `${first.date} ${first.time || "00:00"}`;
-  return tour.createdAt;
 }
 
 /** Prioritize the family’s current stage while keeping search available for siblings. */
@@ -99,14 +92,9 @@ export function ParentHome({
   const parentActions = showsParentBrowseActions(useRoleChrome().role);
   const joinLabel = spotOfferCopy(locale).join;
   const parentPath = parentDeskPath(useRouterState({ select: (s) => s.location.pathname }));
-  const nextTour = [...tours]
-    .filter(
-      (tour) =>
-        tour.status === "pending" ||
-        tour.status === "accepted" ||
-        String(tour.status) === "confirmed",
-    )
-    .sort((a, b) => tourWhen(a).localeCompare(tourWhen(b)))[0];
+  const tourSelection = selectParentTours(tours, new Date());
+  const nextTour = tourSelection.upcoming[0] ?? tourSelection.needsReply[0];
+  const nextTourConfirmed = Boolean(nextTour && tourSelection.upcoming[0] === nextTour);
   const empty =
     saved.length === 0 && bookings.length === 0 && tours.length === 0 && leads.length === 0;
   const card = showHomeUpgradeCard({
@@ -159,17 +147,26 @@ export function ParentHome({
               .filter((bill) => billIsOpen(bill.status))
               .slice(0, 3)
               .map((bill) => (
-                <li
-                  key={bill.id}
-                  className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
-                >
-                  <span className="min-w-0 text-sm">
-                    {bill.daycareName}
-                    {bill.childName ? ` · ${bill.childName}` : ""}
-                  </span>
-                  <span className="text-sm font-medium tabular-nums">
-                    {money(billDollars(bill), locale)}
-                  </span>
+                <li key={bill.id}>
+                  <Link
+                    to={parentPath}
+                    search={{ tab: "payments" }}
+                    data-ke="parent-home-bill-row"
+                    aria-label={
+                      fr
+                        ? `Ouvrir la facture de ${bill.daycareName || "la garderie"}, ${money(billDollars(bill), locale)}`
+                        : `Open bill from ${bill.daycareName || "your centre"}, ${money(billDollars(bill), locale)}`
+                    }
+                    className="flex w-full min-h-11 items-center justify-between gap-2 px-3 py-2 hover:bg-surface-2"
+                  >
+                    <span className="min-w-0 text-sm">
+                      {bill.daycareName}
+                      {bill.childName ? ` · ${bill.childName}` : ""}
+                    </span>
+                    <span className="text-sm font-medium tabular-nums">
+                      {money(billDollars(bill), locale)}
+                    </span>
+                  </Link>
                 </li>
               ))}
           </ul>
@@ -281,9 +278,9 @@ export function ParentHome({
           ) : nextTour ? (
             <p className="mt-1 text-sm text-muted">
               {nextTour.daycareName}
-              {nextTour.status === "pending"
-                ? ` · ${t("parentTourWaiting")}`
-                : ` · ${t("parentTourConfirmed")}`}
+              {nextTourConfirmed
+                ? ` · ${t("parentTourConfirmed")}`
+                : ` · ${t("parentTourWaiting")}`}
             </p>
           ) : (
             <p className="mt-1 text-sm text-muted">{t("parentNoTour")}</p>

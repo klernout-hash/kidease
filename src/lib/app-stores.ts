@@ -2,6 +2,7 @@
  * Which phone stores are open. Availability and a verified download URL are separate.
  * A store without a URL has no link. scripts/app-stores.test.mjs loads this file.
  */
+import { isAmazonDevice } from "./amazon-appstore.ts";
 import { STORE } from "./store-listing.ts";
 
 export type AppStoreId = "play" | "amazon" | "huawei" | "apple" | "samsung" | "microsoft";
@@ -58,15 +59,23 @@ export function appStoreById(id: AppStoreId, stores: readonly AppStoreTile[] = A
   return stores.find((store) => store.id === id);
 }
 
-/** One store for this phone, or null when the visitor should see the list. */
-export function storeForDevice(userAgent: string | null | undefined, stores: readonly AppStoreTile[] = APP_STORES): AppStoreTile | null {
+/**
+ * One store for this phone, or null when the visitor should see the list.
+ * Android defaults to Google Play. Amazon only on Fire / Silk / KF devices or
+ * with the ke_store=amazon cookie.
+ */
+export function storeForDevice(
+  userAgent: string | null | undefined,
+  stores: readonly AppStoreTile[] = APP_STORES,
+  cookie: string | null = null,
+): AppStoreTile | null {
   const ua = String(userAgent || "");
   const live = (id: AppStoreId) => {
     const store = appStoreById(id, stores);
     return store?.live && store.url ? store : null;
   };
   if (/Huawei|HUAWEI|HarmonyOS|HMSCore/i.test(ua)) return live("huawei");
-  if (/Silk|Kindle|KF[A-Z]{2}|AmazonWebView/i.test(ua)) return live("amazon");
+  if (isAmazonDevice(ua, cookie)) return live("amazon") ?? live("play");
   if (/Android/i.test(ua)) return live("play");
   return null;
 }

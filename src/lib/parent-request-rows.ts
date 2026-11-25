@@ -40,7 +40,7 @@ type TourInput = {
   status: string;
   createdAt: string;
   conversationId: string | null;
-  preferredTimes?: readonly { date?: string | null }[] | null;
+  preferredTimes?: readonly { date?: string | null; time?: string | null }[] | null;
 };
 
 type BookingInput = {
@@ -78,6 +78,105 @@ export function parentRequestStatusFromLead(status: string | null | undefined): 
   return "waiting";
 }
 
+type TourSlotInput = { date?: string | null; time?: string | null };
+
+type SelectableTour = {
+  status: string;
+  preferredTimes?: readonly TourSlotInput[] | null;
+};
+
+export type ParentTourBucket = "upcoming" | "needsReply" | "past";
+
+export type ParentTourSelection<T extends SelectableTour> = {
+  /** Confirmed, or accepted with a visit date still ahead. Soonest first. */
+  upcoming: T[];
+  /** Still open: waiting on the centre, or accepted without a visit date yet. Soonest first. */
+  needsReply: T[];
+  /** Visit dates that have gone by, and closed requests (declined, cancelled, enrolled, completed). */
+  past: T[];
+};
+
+const TOUR_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const TOUR_TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+function pad2(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+/** Local wall-clock stamp, `YYYY-MM-DD HH:MM`, the same shape as a slot. */
+function localStamp(now: Date): string {
+  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+}
+
+/**
+ * Slot stamps for one tour, soonest first. A slot with a date and no time
+ * counts until the end of that day.
+ */
+function tourSlotStamps(tour: SelectableTour): string[] {
+  const out: string[] = [];
+  for (const slot of tour.preferredTimes ?? []) {
+    const date = String(slot?.date || "").trim();
+    if (!TOUR_DATE.test(date)) continue;
+    const time = String(slot?.time || "").trim();
+    out.push(`${date} ${TOUR_TIME.test(time) ? time : "23:59"}`);
+  }
+  return out.sort();
+}
+
+/** The next visit slot still ahead of `now`, or null. */
+export function nextTourSlot(tour: SelectableTour, now: Date): string | null {
+  const stamp = localStamp(now);
+  return tourSlotStamps(tour).find((slot) => slot >= stamp) ?? null;
+}
+
+/** One status mapping for every parent tour view (home, Requests, Enrolled, tour calendar). */
+export function parentTourBucket(tour: SelectableTour, now: Date): ParentTourBucket {
+  const raw = String(tour.status || "").trim().toLowerCase();
+  const status = parentRequestStatusFromTour(raw);
+  if (raw === "completed" || status === "declined" || status === "cancelled" || status === "enrolled") return "past";
+  const slots = tourSlotStamps(tour);
+  const ahead = nextTourSlot(tour, now);
+  if (slots.length > 0 && !ahead) return "past";
+  if (raw === "confirmed") return "upcoming";
+  if (raw === "accepted" && ahead) return "upcoming";
+  return "needsReply";
+}
+
+/**
+ * Splits a parent's tours into upcoming, still-open, and past.
+ * Home "Next tour", the Requests and Enrolled tabs, and the tour calendar all
+ * read this, so their counts agree for the same list.
+ */
+export function selectParentTours<T extends SelectableTour>(
+  tours: readonly T[] | null | undefined,
+  now: Date,
+): ParentTourSelection<T> {
+  const out: ParentTourSelection<T> = { upcoming: [], needsReply: [], past: [] };
+  for (const tour of tours ?? []) out[parentTourBucket(tour, now)].push(tour);
+  const soonest = (a: T, b: T) =>
+    String(nextTourSlot(a, now) ?? "9999").localeCompare(String(nextTourSlot(b, now) ?? "9999"));
+  out.upcoming.sort(soonest);
+  out.needsReply.sort(soonest);
+  return out;
+}
+
+/** Tour counts for TourCountSummary, from the shared selector. */
+export function parentTourCounts(selection: ParentTourSelection<SelectableTour>): {
+  openRequests: number;
+  bookedSeats: number;
+  postedTimes: number;
+} {
+  return { openRequests: selection.needsReply.length, bookedSeats: selection.upcoming.length, postedTimes: 0 };
+}
+
+/** Status a parent sees on a tour row. "Confirmed" only when the visit is still ahead. */
+export function parentTourRowStatus(tour: SelectableTour, now: Date): ParentRequestStatus {
+  const bucket = parentTourBucket(tour, now);
+  if (bucket === "upcoming") return "confirmed";
+  if (bucket === "needsReply") return "waiting";
+  return parentRequestStatusFromTour(tour.status);
+}
+
 function kindFromLead(kind: string): ParentRequestKind {
   if (kind === "waitlist") return "waitlist";
   if (kind === "spot_inquiry" || kind === "info") return "spot";
@@ -101,7 +200,10 @@ export function parentRequestRows(input: {
   leads?: readonly LeadInput[] | null;
   tours?: readonly TourInput[] | null;
   bookings?: readonly BookingInput[] | null;
+  /** Used to label tours. Defaults to the current time. */
+  now?: Date;
 }): ParentRequestRow[] {
+  const now = input.now ?? new Date();
   const leads = input.leads ?? [];
   const tours = input.tours ?? [];
   const bookings = input.bookings ?? [];
@@ -117,7 +219,7 @@ export function parentRequestRows(input: {
       daycareName: tour.daycareName,
       daycareSlug: tour.daycareSlug,
       kind: "tour" as const,
-      status: parentRequestStatusFromTour(tour.status),
+      status: parentTourRowStatus(tour, now),
       sentAt: tour.createdAt,
       tourDate: tourDateOf(tour),
       conversationId: tour.conversationId,
