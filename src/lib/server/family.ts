@@ -753,6 +753,11 @@ export const createBooking = createServerFn({ method: "POST" })
       { province: provinceCode(d.province), result: status === "accepted" ? "accepted" : "waitlist", source: "booking" },
       context.userId,
     );
+    void captureServerProductEvent(
+      "booking_created",
+      { province: provinceCode(d.province), result: status, source: "booking" },
+      context.userId,
+    );
     return { id, status, amount, conversationId: cid };
   });
 
@@ -936,6 +941,17 @@ export const createSpotRequest = createServerFn({ method: "POST" })
 
     void import("@/lib/server/sms-notify")
       .then((mod) => mod.notifyCentreSms({ daycareId: data.daycareId, body: parentRequestSms(d.name, locale) }))
+      .catch(() => undefined);
+
+    void import("@/lib/server/product-events")
+      .then(async (mod) => {
+        const { provinceCode } = await import("@/lib/product-events");
+        await mod.captureServerProductEvent(
+          "booking_created",
+          { province: provinceCode(d.province), result: "requested", source: "spot_request" },
+          context.userId,
+        );
+      })
       .catch(() => undefined);
 
     return {

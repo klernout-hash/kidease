@@ -57,6 +57,7 @@ import {
   twoFactorPageUrl,
   waitForSignedInSession,
 } from "@/lib/auth/login-funnel";
+import { clearLoginSubmitted, markLoginSubmitted, takeLoginBounce } from "@/lib/auth/login-bounce";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { canContinueAdminSession } from "@/lib/server/reauth";
 import { isNative, isStandalone } from "@/lib/native";
@@ -406,6 +407,8 @@ export function LoginScreen({
 
   useEffect(() => {
     captureLoginFunnel({ step: "viewed", native: isNative() });
+    // Back on /login right after a submit, with no desk in between: a bounce.
+    if (takeLoginBounce()) captureLoginFunnel({ step: "bounced", native: isNative() });
   }, []);
 
   useEffect(() => {
@@ -728,6 +731,7 @@ export function LoginScreen({
         throw new Error("Please complete the security check, then try again.");
       }
       captureLoginFunnel({ step: "submitted", method: "email", native: isNative() });
+      markLoginSubmitted();
       if (search.why && mode === "up") {
         capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("email_continue", { source: "login" }));
       }
@@ -790,6 +794,7 @@ export function LoginScreen({
     } catch (err) {
       if (attempt.current !== id) return;
       const message = friendlyAuthError(authClientErrorMessage(err)) || "Sign-in failed";
+      clearLoginSubmitted();
       captureLoginFunnel({ step: "failed", method: "email", reason: funnelFailReason(message), native: isNative() });
       setError(message);
       resetTurnstile();

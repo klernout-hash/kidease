@@ -44,3 +44,32 @@ export function exceptionTypeName(raw: unknown): string {
   if (raw instanceof Error && raw.name) return raw.name.slice(0, 80);
   return "Error";
 }
+
+function blankText(value: unknown): boolean {
+  return String(value ?? "").trim() === "";
+}
+
+/**
+ * True for a `$exception` with no type and no message anywhere (C7: four
+ * empty exceptions in PostHog). Those carry nothing to fix and hide real ones.
+ */
+export function isEmptyExceptionEvent(event: { event?: string; properties?: Record<string, unknown> } | null): boolean {
+  if (!event || event.event !== "$exception") return false;
+  const props = event.properties || {};
+  const list = Array.isArray(props.$exception_list) ? (props.$exception_list as Array<Record<string, unknown>>) : [];
+  const listEmpty = list.every((row) => !row || (blankText(row.type) && blankText(row.value)));
+  return (
+    listEmpty &&
+    blankText(props.$exception_type) &&
+    blankText(props.$exception_message) &&
+    (blankText(props.$exception_types) || (Array.isArray(props.$exception_types) && props.$exception_types.every(blankText))) &&
+    (blankText(props.$exception_values) || (Array.isArray(props.$exception_values) && props.$exception_values.every(blankText)))
+  );
+}
+
+/** PostHog `before_send`: drop an empty `$exception`, pass everything else. */
+export function dropEmptyExceptionEvent<T extends { event?: string; properties?: Record<string, unknown> }>(
+  event: T | null,
+): T | null {
+  return isEmptyExceptionEvent(event) ? null : event;
+}

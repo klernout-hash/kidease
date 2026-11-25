@@ -236,6 +236,7 @@ export function MobileSearchResults({
   mapOn = false,
   onMap,
   chips,
+  nearYou = false,
 }: {
   draft: MobileSearchDraft;
   countLabel: string;
@@ -246,12 +247,14 @@ export function MobileSearchResults({
   mapOn?: boolean;
   onMap?: () => void;
   chips: { id: string; label: string; on: boolean; onToggle: () => void }[];
+  /** A care word ("daycare") with no place: say "near you", not "in daycare". */
+  nearYou?: boolean;
 }) {
   const { t, locale } = useCopy();
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState(draft);
   useEffect(() => setCurrent(draft), [draft]);
-  const headline = resultsHeadline(whereAnswer(draft), locale);
+  const headline = resultsHeadline(whereAnswer(draft), locale, nearYou);
   const sub = resultsSubline(draft, locale);
   return (
     <div data-ke="msv2-results" className="sticky top-[var(--ke-header-h,3.5rem)] z-30 bg-bg/95 pb-2 backdrop-blur-md">

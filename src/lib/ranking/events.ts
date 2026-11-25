@@ -31,6 +31,8 @@ const ALLOWED = new Set([
   "position",
   "variant",
   "listing_count",
+  "province",
+  "surface",
 ]);
 
 export type RankingEventProps = {
@@ -43,6 +45,9 @@ export type RankingEventProps = {
   position?: number;
   variant?: RankingVariant;
   listing_count?: number;
+  /** Two-letter province code only. */
+  province?: string;
+  surface?: string;
 };
 
 export function rankingEventProperties(input: RankingEventProps): Record<string, string | number> {
