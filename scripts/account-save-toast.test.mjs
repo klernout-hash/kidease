@@ -65,7 +65,7 @@ test("#1014 item 9a: saving the profile shows one toast titled Saved / Enregistr
   assert.match(src("src/lib/copy-en.ts"), /\bsuccessSaved: "Saved",/);
   assert.match(src("src/lib/copy-fr.ts"), /\bsuccessSaved: "Enregistré",/);
   // Not the "saved" key: in French that one means Favourites.
-  assert.match(src("src/lib/copy-fr.ts"), /\n    saved: "Favoris",/);
+  assert.match(src("src/lib/copy-fr.ts"), /\n {4}saved: "Favoris",/);
   const { SUCCESS_ACTIONS } = await import("../src/lib/success-confirm.ts");
   assert.equal(SUCCESS_ACTIONS.profileSaved.titleKey, "successSaved");
   assert.equal(SUCCESS_ACTIONS.profileSaved.variant, "toast");
