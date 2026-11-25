@@ -3734,5 +3734,11 @@
   "emailCodeSavedOff": "ਈਮੇਲ ਕੋਡ ਬੰਦ ਹੈ।",
   "healthCodePrompt": "{date} ਤੋਂ ਪਹਿਲਾਂ ਈਮੇਲ ਕੋਡ ਜੋੜੋ ਤਾਂ ਬੱਚੇ ਦੇ ਸਿਹਤ ਨੋਟ ਅਤੇ ਕਾਗਜ਼ ਸਿਰਫ਼ ਤੁਹਾਡੇ ਲਈ ਰਹਿਣ।",
   "healthCodeLocked": "ਈਮੇਲ ਕੋਡ ਜੋੜਨ ਤੱਕ ਬੱਚੇ ਦੇ ਸਿਹਤ ਨੋਟ ਅਤੇ ਕਾਗਜ਼ ਲੁਕੇ ਰਹਿਣਗੇ।",
-  "healthCodeAction": "ਈਮੇਲ ਕੋਡ ਜੋੜੋ"
+  "healthCodeAction": "ਈਮੇਲ ਕੋਡ ਜੋੜੋ",
+  "accountSavedStatus": "ਸੇਵ ਹੋ ਗਿਆ",
+  "accountConsentSaveFailed": "ਤੁਹਾਡੇ ਵੇਰਵੇ ਸੰਭਾਲੇ ਗਏ ਹਨ। ਤੁਹਾਡੀਆਂ ਈਮੇਲ ਅਤੇ ਟੈਕਸਟ ਚੋਣਾਂ ਸੰਭਾਲ ਨਹੀਂ ਸਕੇ। ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+  "accountAnchorSaveFailed": "ਤੁਹਾਡੇ ਵੇਰਵੇ ਸੰਭਾਲੇ ਗਏ ਹਨ। ਤੁਹਾਡਾ ਕੰਮ ਦਾ ਪਤਾ ਸੰਭਾਲ ਨਹੀਂ ਸਕੇ। ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+  "storePlayGet": "Google Play ਤੋਂ ਲਓ",
+  "storePlayReadyLead": "KidEase Google Play ਉੱਤੇ ਹੈ। Fire ਟੈਬਲੇਟ ਉੱਤੇ Amazon Appstore ਵਰਤੋ।",
+  "searchCommuteChip": "ਆਉਣ-ਜਾਣ: {place}"
 }

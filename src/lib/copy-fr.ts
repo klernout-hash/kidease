@@ -564,6 +564,7 @@ export const fr = {
     feesAndSubsidies: "Frais et subventions",
     otherCities: "Autres villes",
     nearWork: "Près du travail",
+    searchCommuteChip: "Trajet : {place}",
     nearMe: "Près de moi",
     chipCarouselPrev: "Filtres précédents",
     chipCarouselNext: "Filtres suivants",

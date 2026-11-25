@@ -3734,5 +3734,11 @@
   "emailCodeSavedOff": "El código por correo está desactivado.",
   "healthCodePrompt": "Añada un código por correo antes del {date} para que las notas de salud y los documentos queden solo para usted.",
   "healthCodeLocked": "Las notas de salud y los documentos quedan ocultos hasta que añada un código por correo.",
-  "healthCodeAction": "Añadir un código por correo"
+  "healthCodeAction": "Añadir un código por correo",
+  "accountSavedStatus": "Guardado",
+  "accountConsentSaveFailed": "Tus datos se guardaron. Tus preferencias de correo y mensajes de texto no se guardaron. Inténtalo de nuevo.",
+  "accountAnchorSaveFailed": "Tus datos se guardaron. Tu dirección del trabajo no se guardó. Inténtalo de nuevo.",
+  "storePlayGet": "Consíguelo en Google Play",
+  "storePlayReadyLead": "KidEase está en Google Play. En una tableta Fire, usa Amazon Appstore.",
+  "searchCommuteChip": "Trayecto: {place}"
 }

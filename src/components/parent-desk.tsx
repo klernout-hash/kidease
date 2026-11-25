@@ -471,17 +471,17 @@ export function ParentDesk({
       .then(() => {
         if (cancelled) return null;
         familyInFlight.current = true;
-        return loadFamily(true).finally(() => {
-          familyInFlight.current = false;
-        });
+        return loadFamily(true);
       })
       .then((f) => {
+        familyInFlight.current = false;
         if (!cancelled) flushQueuedRefresh();
         if (cancelled || !f) return;
         void loadExplore(f.bookings).catch(() => undefined);
         void loadDeskExtras().catch(() => undefined);
       })
       .catch((error: unknown) => {
+        familyInFlight.current = false;
         if (cancelled) return;
         flushQueuedRefresh();
         captureLoaderFailure("parent-children", error);

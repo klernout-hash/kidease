@@ -49,7 +49,8 @@ test("parent explore, children and extras settle within the watchdog", () => {
 test("a shortlist refresh cannot supersede the home load and strand explore", () => {
   const desk = src("src/components/parent-desk.tsx");
   assert.match(desk, /function refresh\(\) \{\s*if \(familyInFlight\.current\) \{\s*refreshQueued\.current = true;\s*return;/);
-  assert.match(desk, /familyInFlight\.current = true;\s*return loadFamily\(true\)\.finally/);
+  assert.match(desk, /familyInFlight\.current = true;\s*return loadFamily\(true\);\s*\}\)\s*\.then\(\(f\) => \{\s*familyInFlight\.current = false;/);
+  assert.match(desk, /\.catch\(\(error: unknown\) => \{\s*familyInFlight\.current = false;/);
   assert.match(desk, /flushQueuedRefresh\(\)/);
 });
 

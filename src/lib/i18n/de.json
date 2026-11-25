@@ -3734,5 +3734,11 @@
   "emailCodeSavedOff": "Der E-Mail-Code ist aus.",
   "healthCodePrompt": "Fügen Sie vor dem {date} einen E-Mail-Code hinzu, damit Gesundheitsnotizen und Dokumente nur für Sie sichtbar sind.",
   "healthCodeLocked": "Gesundheitsnotizen und Dokumente bleiben verborgen, bis Sie einen E-Mail-Code hinzufügen.",
-  "healthCodeAction": "E-Mail-Code hinzufügen"
+  "healthCodeAction": "E-Mail-Code hinzufügen",
+  "accountSavedStatus": "Gespeichert",
+  "accountConsentSaveFailed": "Ihre Angaben sind gespeichert. Ihre Auswahl für E-Mail und SMS wurde nicht gespeichert. Bitte erneut versuchen.",
+  "accountAnchorSaveFailed": "Ihre Angaben sind gespeichert. Die Arbeitsadresse wurde nicht gespeichert. Bitte erneut versuchen.",
+  "storePlayGet": "Bei Google Play laden",
+  "storePlayReadyLead": "KidEase ist bei Google Play. Auf einem Fire-Tablet nutzen Sie den Amazon Appstore.",
+  "searchCommuteChip": "Arbeitsweg: {place}"
 }

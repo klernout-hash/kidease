@@ -3734,5 +3734,11 @@
   "emailCodeSavedOff": "رمز البريد متوقف.",
   "healthCodePrompt": "أضف رمز البريد قبل {date} حتى تبقى ملاحظات صحة الطفل وملفاته لك وحدك.",
   "healthCodeLocked": "ملاحظات الصحة والملفات تبقى مخفية حتى تضيف رمز البريد.",
-  "healthCodeAction": "إضافة رمز البريد"
+  "healthCodeAction": "إضافة رمز البريد",
+  "accountSavedStatus": "تم الحفظ",
+  "accountConsentSaveFailed": "تم حفظ بياناتك. تعذر حفظ اختياراتك للبريد الإلكتروني والرسائل النصية. حاول مرة أخرى.",
+  "accountAnchorSaveFailed": "تم حفظ بياناتك. تعذر حفظ عنوان عملك. حاول مرة أخرى.",
+  "storePlayGet": "احصل عليه من Google Play",
+  "storePlayReadyLead": "KidEase متوفر على Google Play. على جهاز Fire اللوحي، استخدم Amazon Appstore.",
+  "searchCommuteChip": "التنقل: {place}"
 }

@@ -2265,11 +2265,10 @@ export function SearchScreen({
           }}
         />
         </div>
-        {!filters && commuteAnchorOn && workOrigin ? (
+        {!filters && commuteAnchorOn && workOrigin?.label ? (
           <p className="mt-2 text-sm" data-ke="search-commute-chip">
             <span className="inline-flex min-h-11 max-w-full items-center truncate rounded-full bg-surface-2 px-3 font-medium ring-1 ring-inset ring-border">
-              {t("nearWork")}
-              {workOrigin.label ? ` · ${workOrigin.label}` : ""}
+              {t("searchCommuteChip").replace("{place}", workOrigin.label)}
             </span>
           </p>
         ) : null}

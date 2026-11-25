@@ -562,6 +562,7 @@ export const en = {
     feesAndSubsidies: "Fees & subsidies",
     otherCities: "Other cities",
     nearWork: "Near work",
+    searchCommuteChip: "Commute: {place}",
     nearMe: "Near me",
     chipCarouselPrev: "Previous filters",
     chipCarouselNext: "Next filters",

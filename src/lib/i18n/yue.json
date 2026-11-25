@@ -3734,5 +3734,11 @@
   "emailCodeSavedOff": "電郵驗證碼已關閉。",
   "healthCodePrompt": "請喺 {date} 之前加上電郵驗證碼，咁孩子嘅健康備註同文件就只俾你睇。",
   "healthCodeLocked": "未加上電郵驗證碼之前，孩子嘅健康備註同文件會保持隱藏。",
-  "healthCodeAction": "加上電郵驗證碼"
+  "healthCodeAction": "加上電郵驗證碼",
+  "accountSavedStatus": "已儲存",
+  "accountConsentSaveFailed": "你嘅資料已經儲存。你嘅電郵同短訊選擇儲存唔到。請再試一次。",
+  "accountAnchorSaveFailed": "你嘅資料已經儲存。你嘅工作地址儲存唔到。請再試一次。",
+  "storePlayGet": "喺 Google Play 下載",
+  "storePlayReadyLead": "KidEase 已經喺 Google Play。Fire 平板請用 Amazon Appstore。",
+  "searchCommuteChip": "通勤：{place}"
 }
