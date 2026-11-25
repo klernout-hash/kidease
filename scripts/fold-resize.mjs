@@ -454,16 +454,18 @@ async function duoFoldSequence(browser, base, seen = []) {
     const filtersKey = () => page.evaluate(() => document.querySelector("[data-ke='search-split']")?.getAttribute("data-ke-filters") ?? null);
     const startKey = await filtersKey();
     // Put a card under the reader's eye (the second result, if the catalogue has one), then remember where it sits.
+    // Results can arrive late in CI, and the page can reset its scroll when they do, so scroll with the
+    // wheel like a reader and check that it stuck.
     await page
-      .waitForFunction(() => document.querySelectorAll(".ke-search-results article[data-slug]").length >= 2, undefined, { timeout: 12000 })
+      .waitForFunction(() => document.querySelectorAll(".ke-search-results article[data-slug]").length >= 2, undefined, { timeout: 25000 })
       .catch(() => undefined);
-    await page.evaluate(() => {
-      const card = document.querySelectorAll(".ke-search-results article[data-slug]")[1];
-      const header = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
-      const top = card ? card.getBoundingClientRect().top + window.scrollY - header - 8 : 700;
-      window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
-    });
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(800);
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await page.mouse.move(Math.round(cover.width / 2), Math.round(cover.height / 2));
+      await page.mouse.wheel(0, 600);
+      await page.waitForTimeout(500);
+      if ((await page.evaluate(() => window.scrollY)) > 100) break;
+    }
     const pickAnchor = () =>
       page.evaluate(() => {
         const header = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
