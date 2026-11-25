@@ -174,6 +174,38 @@ export type PushContactResult =
   | { ok: true; skipped: false; contactId: string; opportunityId?: string }
   | { ok: false; error: string };
 
+/** Contact fields read from the account when a caller did not pass them. */
+export type LeadContact = { email?: string | null; name?: string | null; phone?: string | null };
+
+export type LeadPushOutcome =
+  | { tookOver: false; reason: "flag-off" | "no-email" | "skipped"; detail?: string }
+  | { tookOver: true; result: "ok" | "retry"; contactId: string | null; opportunityId: string | null; lineType: LineType | null; attempts: number };
+
+function clean(raw?: string | null): string {
+  return String(raw || "").trim();
+}
+
+/**
+ * Fill email, name, and phone from the account when the caller left them out.
+ * Sign-up callers (setRole, role boot) pass only the user id.
+ */
+export async function resolveLeadContact(
+  input: LeadPushInput,
+  lookup?: (userId: string) => Promise<LeadContact | null>,
+): Promise<LeadPushInput> {
+  const email = clean(input.email);
+  const name = clean(input.name);
+  const phone = clean(input.phone);
+  if ((email && name && phone) || !lookup || !input.userId.trim()) return input;
+  const found = await lookup(input.userId.trim()).catch(() => null);
+  return {
+    ...input,
+    email: email || clean(found?.email) || null,
+    name: name || clean(found?.name) || null,
+    phone: phone || clean(found?.phone) || null,
+  };
+}
+
 export async function runLeadPush(
   input: LeadPushInput,
   deps: {
@@ -183,17 +215,26 @@ export async function runLeadPush(
     loadRow: (userId: string) => Promise<StoredLeadPush | null>;
     saveRow: (row: StoredLeadPush & { email: string; audience: GhlLeadAudience; trigger: GhlLeadTrigger; lineType: LineType | null; lastError: string | null }) => Promise<void>;
     lookupLine?: (phone: string) => Promise<{ valid?: boolean | null; type?: string | null; errorCode?: number | null } | null>;
-    pushContact: (payload: { extraTags: string[]; allowReviewer: boolean }) => Promise<PushContactResult>;
+    /** Reads the account's email, name, and phone when the caller did not pass them. */
+    lookupContact?: (userId: string) => Promise<LeadContact | null>;
+    /** Every skip is reported with a reason. Never pass the email address along. */
+    onSkip?: (reason: string) => void;
+    pushContact: (payload: {
+      extraTags: string[];
+      allowReviewer: boolean;
+      email: string;
+      name: string | null;
+      phone: string | null;
+    }) => Promise<PushContactResult>;
   },
-): Promise<
-  | { tookOver: false; reason: "flag-off" }
-  | { tookOver: true; result: "ok" | "retry" | "skipped"; contactId: string | null; opportunityId: string | null; lineType: LineType | null; attempts: number }
-> {
+): Promise<LeadPushOutcome> {
   if (!ghlLeadPushEnabled(deps.env)) return { tookOver: false, reason: "flag-off" };
-  const email = String(input.email || "").trim().toLowerCase();
   const userId = input.userId.trim();
+  const lead = await resolveLeadContact(input, deps.lookupContact);
+  const email = clean(lead.email).toLowerCase();
   if (!userId || !email) {
-    return { tookOver: true, result: "skipped", contactId: null, opportunityId: null, lineType: null, attempts: 0 };
+    deps.onSkip?.(userId ? "no-email" : "no-user-id");
+    return { tookOver: false, reason: "no-email" };
   }
   const existing = await deps.loadRow(userId);
   if (!retryIsDue(existing, deps.now, deps.force === true)) {
@@ -207,12 +248,18 @@ export async function runLeadPush(
     };
   }
   let line = existing?.lineType ?? null;
-  const phone = String(input.phone || "").trim();
+  const phone = clean(lead.phone);
   if (!line && phone && ghlLineTypeEnabled(deps.env) && deps.lookupLine) {
     const looked = await deps.lookupLine(phone);
     line = looked ? classifyLineType(looked) : "invalid";
   }
-  const pushed = await deps.pushContact({ extraTags: leadTags(input, line), allowReviewer: true });
+  const pushed = await deps.pushContact({
+    extraTags: leadTags(lead, line),
+    allowReviewer: true,
+    email,
+    name: clean(lead.name) || null,
+    phone: phone || null,
+  });
   const attempts = (existing?.attempts ?? 0) + 1;
   const audience = audienceForLead(input);
   if (pushed.ok && !pushed.skipped) {
@@ -231,9 +278,27 @@ export async function runLeadPush(
     });
     return { tookOver: true, result: "ok", contactId: pushed.contactId, opportunityId: pushed.opportunityId || existing?.opportunityId || null, lineType: line, attempts };
   }
+  if (pushed.ok && pushed.skipped) {
+    // GoHighLevel was not called (no token, intake off). Record it, then let
+    // the caller run the older webhook path instead of dropping the lead.
+    await deps.saveRow({
+      userId,
+      email,
+      audience,
+      trigger: input.trigger,
+      attempts,
+      result: "skipped",
+      contactId: existing?.contactId ?? null,
+      opportunityId: existing?.opportunityId ?? null,
+      nextAttemptAt: null,
+      lineType: line,
+      lastError: `skipped: ${pushed.reason}`,
+    });
+    deps.onSkip?.(pushed.reason);
+    return { tookOver: false, reason: "skipped", detail: pushed.reason };
+  }
   const delay = nextPushDelayMs(attempts);
   const nextAttemptAt = delay == null ? null : new Date(Date.parse(deps.now) + delay).toISOString();
-  const error = pushed.ok ? pushed.reason : pushed.error;
   await deps.saveRow({
     userId,
     email,
@@ -245,7 +310,29 @@ export async function runLeadPush(
     opportunityId: existing?.opportunityId ?? null,
     nextAttemptAt,
     lineType: line,
-    lastError: error,
+    lastError: pushed.error,
   });
   return { tookOver: true, result: "retry", contactId: existing?.contactId ?? null, opportunityId: existing?.opportunityId ?? null, lineType: line, attempts };
+}
+
+export type RecentSignup = { userId: string; role: "parent" | "provider" };
+export type PushRowSummary = { userId: string; result: string; contactId: string | null; opportunityId: string | null };
+export type SignupMiss = RecentSignup & { kind: "missing_contact" | "missing_opportunity" };
+
+/**
+ * Daily check: every recent sign-up should have an ok ghl_lead_pushes row with
+ * a contact. A row without an opportunity is counted on its own. Pure.
+ */
+export function findSignupMisses(signups: readonly RecentSignup[], rows: readonly PushRowSummary[]): SignupMiss[] {
+  const byUser = new Map(rows.map((row) => [row.userId, row]));
+  const misses: SignupMiss[] = [];
+  for (const signup of signups) {
+    const row = byUser.get(signup.userId);
+    if (!row || row.result !== "ok" || !row.contactId) {
+      misses.push({ ...signup, kind: "missing_contact" });
+    } else if (!row.opportunityId) {
+      misses.push({ ...signup, kind: "missing_opportunity" });
+    }
+  }
+  return misses;
 }

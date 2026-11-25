@@ -308,14 +308,18 @@ test("signup and claim verify fire GHL after notify, even when mail fails", () =
   assert.match(family, /export async function ensureCrmIntake/);
   assert.match(family, /crm_signup_at is null/);
   assert.match(family, /crm_provider_at is null/);
-  assert.match(family, /returning 1 as claimed/);
+  // crm_*_at is stamped only after GoHighLevel confirms (stampCrmFiled).
+  assert.match(family, /stampCrmFiled/);
+  assert.match(family, /ghl-not-confirmed/);
   assert.doesNotMatch(family, /if \(isNew\)/);
   const setRole = family.slice(family.indexOf("export const setRole"));
   const setRoleFn = setRole.slice(0, setRole.indexOf("\nexport const "));
   assert.match(setRoleFn, /ensureCrmIntake/);
   assert.doesNotMatch(setRoleFn, /pingNewAccount/);
-  assert.match(family, /interval '30 minutes'/);
-  assert.match(setRoleFn, /written\.previous !== "parent"/);
+  // The old 30-minute window kept default-role parents out of Parent Onboard.
+  assert.doesNotMatch(family, /interval '30 minutes'/);
+  assert.match(setRoleFn, /written\.role === "parent"\)/);
+  assert.match(setRoleFn, /parentAction: true/);
   const createListing = family.slice(family.indexOf("export const createListing"));
   assert.match(createListing, /ensureCrmIntake\(context\.userId, "provider"/);
   assert.match(createListing, /company: data\.name/);
@@ -333,8 +337,8 @@ test("signup and claim verify fire GHL after notify, even when mail fails", () =
   assert.match(family, /role is distinct from 'provider'/);
   assert.match(family, /explicitParent/);
   assert.match(family, /provider_daycares p/);
-  assert.match(family, /if \(role === "parent" && extra\?\.explicitParent !== true\) return false/);
-  assert.match(setRoleFn, /explicitParent: true/);
+  assert.match(family, /if \(role === "parent" && extra\?\.explicitParent !== true && extra\?\.parentAction !== true\)/);
+  assert.match(setRoleFn, /explicitParent: written\.previous !== "parent"/);
   assert.match(roles, /ensureCrmIntake/);
   const getFamilyFn = family.slice(family.indexOf("export const getFamily"));
   const getFamilyBody = getFamilyFn.slice(0, getFamilyFn.indexOf("\nexport const "));

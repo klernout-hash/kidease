@@ -1,5 +1,5 @@
 import { postGhlCrmSignup } from "@/lib/ghl-api";
-import { postGhlSignupIntake, type GhlIntakeResult, type GhlIntakeTrigger } from "@/lib/ghl-intake";
+import { ghlIntakeConfirmed, postGhlSignupIntake, type GhlIntakeResult, type GhlIntakeTrigger } from "@/lib/ghl-intake";
 import { lookupUser } from "@/lib/server/notify";
 import { getSql } from "@/lib/db";
 
@@ -55,6 +55,7 @@ async function deliverSignup(input: {
   } catch (err) {
     logError(err);
   }
+  let apiDelivered = false;
   try {
     const api = await postGhlCrmSignup({
       ...input,
@@ -62,6 +63,7 @@ async function deliverSignup(input: {
       onError: logError,
     });
     if (api.ok && !api.skipped) {
+      apiDelivered = true;
       console.info(
         `[kidease-ghl] ok trigger=${input.trigger} contact=${api.contactId} opportunity=${api.opportunity}`,
       );
@@ -69,8 +71,12 @@ async function deliverSignup(input: {
   } catch (err) {
     logError(err);
   }
+  // Either path counts as GoHighLevel confirming the contact.
+  if (apiDelivered && !(webhook.ok && !webhook.skipped)) return { ok: true, skipped: false, status: 200 };
   return webhook;
 }
+
+export { ghlIntakeConfirmed };
 
 /**
  * Best-effort CRM intake after parent/provider signup or claim verify.
@@ -87,25 +93,33 @@ export async function captureSignupIntakeFromUser(input: {
   name?: string | null;
   email?: string | null;
   testListing?: boolean;
+  /** false: respect the retry backoff in ghl_lead_pushes. */
+  force?: boolean;
 }) {
   if (input.trigger === "parent_signup" || input.trigger === "provider_signup" || input.trigger === "claim_verify") {
     try {
       const { pushLeadToGhl } = await import("@/lib/server/ghl-lead-push");
-      const pushed = await pushLeadToGhl({
-        userId: input.userId,
-        role: input.role,
-        trigger: input.trigger,
-        email: input.email,
-        name: input.name,
-        phone: input.phone,
-        company: input.company,
-        testListing: input.testListing,
-      });
+      // pushLeadToGhl reads email, name, and phone from the account when they are missing.
+      const pushed = await pushLeadToGhl(
+        {
+          userId: input.userId,
+          role: input.role,
+          trigger: input.trigger,
+          email: input.email,
+          name: input.name,
+          phone: input.phone,
+          company: input.company,
+          testListing: input.testListing,
+        },
+        { force: input.force !== false },
+      );
       if (pushed.tookOver) {
         return pushed.result === "ok"
           ? { ok: true as const, skipped: false as const, status: 200 }
           : { ok: false as const, error: "ghl-lead-push" };
       }
+      // Skipped (flag off, no email, no token): log why, then run the older path below.
+      logSkip(`lead push skipped reason=${pushed.reason}${pushed.detail ? `:${pushed.detail}` : ""} trigger=${input.trigger}`);
     } catch (err) {
       logError(err);
     }
@@ -128,9 +142,9 @@ export async function captureSignupIntakeFromUser(input: {
     }
     return await deliverSignup({
       trigger: input.trigger,
-      email: input.email ?? actor.email,
-      name: input.name ?? actor.name,
-      phone: input.phone ?? actor.phone,
+      email: (input.email || "").trim() || actor.email,
+      name: (input.name || "").trim() || actor.name,
+      phone: (input.phone || "").trim() || actor.phone,
       company,
       testListing,
       eventId: (input.eventId || "").trim() || `${input.trigger}:${input.userId}`,

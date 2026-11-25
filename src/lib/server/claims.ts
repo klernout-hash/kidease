@@ -273,6 +273,12 @@ export const startClaim = createServerFn({ method: "POST" })
     // A parent can open this step by mistake. Daycare Sign Up waits for the
     // licence submit below, or for an explicit daycare role choice.
     // Catalogue contact_email is not a confirmed contact, so it is not used here.
+    // KidEase's own CRM gets a contact tagged form:claim-start (no Daycare Sign
+    // Up card, no role change). The person's own account email is used.
+    {
+      const { captureFormLead } = await import("@/lib/server/ghl-form-lead");
+      await captureFormLead({ form: "claim-start", userId: context.userId, company: listed.name });
+    }
     const sentAt = pending[0]?.code_sent_at ? Date.parse(pending[0].code_sent_at) : null;
     const plan = planClaimDelivery({
       verifiedEmail: null,

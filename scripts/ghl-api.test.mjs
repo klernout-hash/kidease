@@ -175,7 +175,7 @@ test("existing pipeline opportunity is not created again and Approved is refused
       return route(url, init, calls);
     },
   });
-  assert.deepEqual(exists, { ok: true, skipped: false, contactId: "contact_1", opportunity: "exists" });
+  assert.deepEqual(exists, { ok: true, skipped: false, contactId: "contact_1", opportunity: "exists", opportunityId: "opp_existing" });
   assert.equal(
     calls.some((call) => call.method === "POST" && String(call.url).includes("/opportunities")),
     false,

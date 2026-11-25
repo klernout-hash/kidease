@@ -508,6 +508,11 @@ export const applyToStaffJob = createServerFn({ method: "POST" })
     if (!staffJobBoardEnabled()) return OFF;
     const sql = await getSql();
     await insertApplication(sql, context.userId, data.jobId, "apply");
+    {
+      // KidEase's own CRM (form:job-apply). Not the centre's applicant list.
+      const { captureFormLead } = await import("@/lib/server/ghl-form-lead");
+      await captureFormLead({ form: "job-apply", userId: context.userId });
+    }
     return { ok: true as const };
   });
 
