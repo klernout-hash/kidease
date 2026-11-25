@@ -101,6 +101,8 @@ export function accountValidateSearch(s: Record<string, unknown>) {
       section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer" | "wallet" | "export";
       edit?: "1";
       field?: "name" | "phone" | "email" | "work" | "about";
+      /** PE-5: bill to retry after the parent saves a new card. */
+      fix?: string;
     } = {};
     const tab = s.tab;
     if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") out.tab = tab;
@@ -127,6 +129,7 @@ export function accountValidateSearch(s: Record<string, unknown>) {
     if (s.field === "name" || s.field === "phone" || s.field === "email" || s.field === "work" || s.field === "about") {
       out.field = s.field;
     }
+    if (typeof s.fix === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(s.fix)) out.fix = s.fix;
     return out;
 }
 
@@ -911,7 +914,7 @@ function ProfilePane() {
             <SignedInDevices />
           </div>
         ) : null}
-        {section === "wallet" && user && connect.enabled ? <ParentWallet state={connect} /> : null}
+        {section === "wallet" && user && connect.enabled ? <ParentWallet state={connect} fixBillId={search.fix ?? null} /> : null}
         {section === "email-sms" && user ? (
           <form onSubmit={onSave} className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-email-sms">
             <h2 className="font-display text-lg tracking-[-0.02em]">{t("emailAndSms")}</h2>

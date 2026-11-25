@@ -284,7 +284,7 @@ function ParentPayChoices() {
                 {bill.paymentState === "failed" ? (
                   <Link
                     to="/account"
-                    search={{ section: "wallet" }}
+                    search={{ section: "wallet", fix: bill.id }}
                     className="inline-flex min-h-11 items-center text-sm font-medium text-primary"
                   >
                     {t("billUpdateCard")}

@@ -11,7 +11,7 @@ type StripeClient = {
     elements: StripeElements;
     redirect: "if_required";
     confirmParams?: { return_url?: string };
-  }) => Promise<{ error?: { message?: string } }>;
+  }) => Promise<{ error?: { message?: string }; setupIntent?: SetupIntentResult }>;
   confirmPayment: (options: {
     clientSecret: string;
     redirect: "if_required";
@@ -22,6 +22,16 @@ type StripeClient = {
     error?: { message?: string };
     paymentIntent?: { status?: string };
   }>;
+};
+
+/** The parts of a confirmed SetupIntent the wallet reads (PE-4 micro-deposits). */
+export type SetupIntentResult = {
+  status?: string | null;
+  payment_method?: string | { id?: string } | null;
+  next_action?: {
+    type?: string | null;
+    verify_with_microdeposits?: { hosted_verification_url?: string | null; arrival_date?: number | null } | null;
+  } | null;
 };
 
 type StripeFactory = (key: string) => StripeClient;

@@ -37,7 +37,7 @@ import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import type { Booking, Child, DaycareCard as Card, Payment, TourRequest } from "@/lib/types";
 import type { Bill } from "@/lib/bill";
 import { billDollars, billIsOpen } from "@/lib/bill";
-import { BillStatusBadge, PaymentStateBadge, PaymentStateNote } from "@/components/bill-status";
+import { BillStatusBadge, PaymentStateBadge, PaymentStateNote, RefundNote } from "@/components/bill-status";
 import { failureReasonText } from "@/lib/payment-state";
 import { periodLabel } from "@/lib/stripe-methods";
 import { parentMatchScore } from "@/lib/parent-match";
@@ -829,6 +829,7 @@ export function ParentDesk({
                           <p className="text-muted">
                             {periodLabel(b.period, locale)} · {b.number}
                           </p>
+                          <RefundNote bill={b} className="mt-1" />
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="tabular-nums">{money(billDollars(b), locale)}</span>

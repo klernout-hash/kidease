@@ -91,3 +91,33 @@ export function PaymentStateNote({
     </p>
   );
 }
+
+/** PE-8: "Refunded $X on {date} to Visa ···· 4242". Nothing when there is no refund. */
+export function RefundNote({
+  bill,
+  className,
+}: {
+  bill: { refundState?: "partly_refunded" | "refunded" | null; refundedCents?: number | null; refundedAt?: string | null; refundMethodLabel?: string | null };
+  className?: string;
+}) {
+  const { t, locale } = useCopy();
+  if (!bill.refundState || !bill.refundedCents) return null;
+  const fr = locale === "fr";
+  const amount = new Intl.NumberFormat(fr ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" }).format(bill.refundedCents / 100);
+  const date = bill.refundedAt
+    ? new Date(bill.refundedAt).toLocaleDateString(fr ? "fr-CA" : "en-CA", { dateStyle: "medium" })
+    : "";
+  const line = t("billRefundedOn").replace("{amount}", amount).replace("{date}", date).trim();
+  const to = bill.refundMethodLabel ? ` ${t("billRefundedTo").replace("{method}", bill.refundMethodLabel)}` : "";
+  return (
+    <p className={cn("text-sm text-muted", className)} data-ke="bill-refund">
+      {bill.refundState === "partly_refunded" ? (
+        <span className="mr-2 inline-flex items-center rounded-full bg-surface-2 px-2.5 py-0.5 text-[11px] font-medium text-muted ring-1 ring-inset ring-border">
+          {t("billPartlyRefunded")}
+        </span>
+      ) : null}
+      {line}
+      {to}
+    </p>
+  );
+}

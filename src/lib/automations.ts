@@ -334,6 +334,8 @@ export function planInvoiceMail(input: {
   dueAt: string | null | undefined;
   paidAt: string | null | undefined;
   failedAt: string | null | undefined;
+  /** invoices.payment_state (migration 0231). 'failed' starts dunning on a sent bill. */
+  paymentState?: string | null;
   today: string;
   remindersOn: boolean;
   dunningOn: boolean;
@@ -341,7 +343,8 @@ export function planInvoiceMail(input: {
   if (invoiceClosed(input.status, input.paidAt)) return { kind: "stop", reason: "paid" };
   const status = String(input.status || "").trim().toLowerCase();
   if (!OPENABLE.has(status)) return { kind: "stop", reason: "draft" };
-  if (input.dunningOn && FAILED.has(status)) {
+  const failed = FAILED.has(status) || input.paymentState === "failed";
+  if (input.dunningOn && failed) {
     const stage = dunningStage(input.failedAt || input.dueAt, input.today);
     if (!stage) return { kind: "stop", reason: "not_due" };
     return { kind: "dunning", stage, dedupeKey: `dun:${input.invoiceId}:${stage}` };
@@ -852,14 +855,39 @@ export function staleSpotLetter(input: {
   );
 }
 
+/** PE-5: the update-card deep link opens the wallet with this bill in context. */
+export function updateCardHref(locale: AutomationLocale, billId: string): string {
+  return `${AUTOMATION_ORIGIN}${localePrefix(locale)}/account?section=wallet&fix=${encodeURIComponent(billId)}`;
+}
+
 export function invoiceLetter(input: {
   locale: AutomationLocale;
   centreName: string;
   number: string;
   stage: InvoiceReminderStage | DunningStage;
   kind: "remind" | "dunning";
+  /** Dunning with a bill id: the button opens "Update your card" for that bill. */
+  billId?: string | null;
 }): AutomationLetter {
   const fr = input.locale === "fr";
+  if (input.kind === "dunning" && input.billId) {
+    const subject = fr ? `Paiement refusé pour la facture ${input.number}` : `Payment didn't go through for bill ${input.number}`;
+    const update = updateCardHref(input.locale, input.billId);
+    return automationLetter(
+      subject,
+      brandedNotice({
+        locale: input.locale,
+        heading: subject,
+        text: fr
+          ? `Votre paiement pour la facture ${input.number} (${input.centreName}) n’a pas été accepté. Mettez à jour votre carte et nous réessaierons une fois : ${update} . Vous pouvez aussi payer de nouveau : ${payHref(input.locale)}`
+          : `Your payment for bill ${input.number} (${input.centreName}) didn't go through. Update your card and we'll try once more: ${update} . You can also pay again: ${payHref(input.locale)}`,
+        cta: { label: fr ? "Mettre à jour la carte" : "Update your card", href: update },
+        reason: fr
+          ? "Vous recevez ce courriel parce que vous avez une facture ouverte sur KidEase."
+          : "You get this because you have an open bill on KidEase.",
+      }),
+    );
+  }
   const subject = fr
     ? input.kind === "dunning"
       ? `Paiement échoué pour la facture ${input.number}`
