@@ -33,6 +33,10 @@ const EMPTY: SessionDesksState = {
   setSticky: () => undefined,
 };
 
+/** Retries after a failed or timed-out getMyDesks, on the same page. */
+const SESSION_DESK_RETRIES = 2;
+const SESSION_DESK_RETRY_MS = 1500;
+
 const SessionDesksContext = createContext<SessionDesksState>(EMPTY);
 
 /** Desk routes need the full session. Public pages use the lighter role chrome. */
@@ -74,6 +78,10 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState(false);
   const [sticky, setStickyState] = useState<DeskKey | null>(null);
   const loadedFor = useRef<string | null>(null);
+  // A timed-out or failed getMyDesks used to stick until the next pathname
+  // change: /provider then had no session (no owner flag, no hostListing), so
+  // Today could stay empty and the Calendar tab pointed at ?desk=tours.
+  const [retry, setRetry] = useState(0);
 
   function setSticky(desk: DeskKey) {
     writeStickyDesk(desk);
@@ -98,6 +106,7 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
       loadedFor.current = user.id;
       setSession(null);
       setReady(false);
+      setRetry(0);
     }
     if (!needsSessionDesks(pathname)) {
       setError(false);
@@ -105,6 +114,7 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
       return;
     }
     let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
     setError(false);
     void dedupedQuery(`get-my-desks:${user.id}`, QUERY_STALE_MS, () =>
       withTimeout(getMyDesks(), SESSION_SETTLE_MS, "get-desks-timeout"),
@@ -126,11 +136,17 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         setError(true);
         setReady(true);
+        if (retry < SESSION_DESK_RETRIES) {
+          retryTimer = setTimeout(() => {
+            if (!cancelled) setRetry((n) => n + 1);
+          }, SESSION_DESK_RETRY_MS);
+        }
       });
     return () => {
       cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [user?.id, isPending, pathname]);
+  }, [user?.id, isPending, pathname, retry]);
 
   useEffect(() => {
     const fromPath = deskFromPathname(pathname);

@@ -348,7 +348,8 @@ function DaycareTabs({
           label={t("navCalendar")}
           icon={Calendar}
           marker="calendar"
-          active={bare.startsWith("/provider") && desk === calendarDesk}
+          // Tours and the host calendar are the same tab: keep it lit on either.
+          active={bare.startsWith("/provider") && (desk === "calendar" || desk === "tours")}
         />
       ) : null}
       {plan.includes("listings") ? (
