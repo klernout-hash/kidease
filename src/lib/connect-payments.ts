@@ -8,8 +8,16 @@
  * KIDEASE_PLATFORM_FEE_BPS (300 = 3% when unset). application_fee_amount
  * equals that fee line, so the daycare receives the full invoice.
  * GST/HST/PST/QST is never added to that fee. Tax on the fee stays a
- * separate monthly invoice. Daycares pay Stripe processing fees
- * (on_behalf_of + fees.payer = account).
+ * separate monthly invoice.
+ *
+ * Connected account controller (Kyle, Nov 25 2026, option A):
+ * - Daycares pay Stripe processing fees (on_behalf_of + fees.payer = account).
+ * - Stripe carries payment losses (losses.payments = stripe).
+ * - Stripe collects onboarding requirements (no requirement_collection
+ *   key; Stripe refuses application collection unless the platform also
+ *   carries losses and fees).
+ * - No Stripe dashboard (stripe_dashboard.type = none): daycares use the
+ *   embedded components only.
  * The parent fee is on unless KIDEASE_PARENT_SERVICE_FEE is 0, or the
  * centre or province is listed in an exclude env. Live keys still need
  * KIDEASE_CONNECT_LIVE=1.
@@ -596,8 +604,7 @@ export function connectedAccountBody(): Record<string, unknown> {
     controller: {
       stripe_dashboard: { type: "none" },
       fees: { payer: "account" },
-      losses: { payments: "application" },
-      requirement_collection: "application",
+      losses: { payments: "stripe" },
     },
     capabilities: {
       card_payments: { requested: true },

@@ -1,10 +1,17 @@
 /**
- * Transactional OTP / reset mail: Resend → SendGrid → Titan SMTP.
+ * Transactional OTP / reset mail.
  *
- * Sign-in codes go out as noreply@send.kidease.ca through Resend.
- * Apex @kidease.ca is never a Resend From (its SPF is Titan-only).
- * A rejected send host falls through to Titan SMTP, which stays on kyle@.
- * Reply-To stays kyle@.
+ * Provider order:
+ * - Sign-in codes, password reset and verify-email (ESSENTIAL_MAIL_PURPOSES):
+ *   Titan SMTP first when TITAN_APP_PASSWORD is set (From the Titan mailbox,
+ *   SPF include:spf.titan.email), then Resend, then SendGrid.
+ * - Everything else: Resend, then SendGrid, then Titan SMTP when allowed.
+ *
+ * Resend / SendGrid From is noreply@send.kidease.ca with the display name
+ * "KidEase". Apex @kidease.ca is never a Resend From (its SPF is Titan-only).
+ * Reply-To is a real mailbox (ADMIN_EMAIL, kyle@ by default), never noreply.
+ * Sign-in codes never carry List-Unsubscribe and always have a plain-text part.
+ * The `[kidease-2fa] via=` log line says which provider sent a code.
  *
  * No Start / DB. Tests inject fetch + Titan.
  */
@@ -137,6 +144,26 @@ export function testListingRecipientsAllowed(to: string, allowlistRaw: string | 
   return recipients.every((email) => allow.has(email));
 }
 
+/** Local parts that never reach a person. A Reply-To must not use one. */
+const NO_REPLY_LOCAL = /^(no-?reply|do-?not-?reply|donotreply|bounce|mailer-daemon)(\+.*)?$/i;
+
+export function isNoReplyAddress(raw: string | null | undefined): boolean {
+  const email = normalizeEmail(String(raw || "").replace(/^.*<([^>]+)>.*$/, "$1"));
+  if (!email.includes("@")) return false;
+  const [local, host] = email.split("@");
+  // send.kidease.ca is Resend's sending host only: it has no inbox.
+  return NO_REPLY_LOCAL.test(local || "") || host === "send.kidease.ca";
+}
+
+/** Reply-To for transactional mail: the first real mailbox of input, ADMIN_EMAIL, then the operator inbox. */
+export function transactionalReplyTo(input: string | null | undefined, env: EnvMap = process.env): string {
+  for (const raw of [input, env.ADMIN_EMAIL, KIDEASE_OPERATOR_EMAIL]) {
+    const value = String(raw || "").trim();
+    if (value && value.includes("@") && !isNoReplyAddress(value)) return value;
+  }
+  return KIDEASE_OPERATOR_EMAIL;
+}
+
 export function brandedEmailsEnabled(env: EnvMap = process.env): boolean {
   return env.BRANDED_EMAILS === "1" || env.BRANDED_EMAILS === "true";
 }
@@ -149,15 +176,23 @@ export async function prepareMailBody(
   const headers: Record<string, string> = {};
   let { text, html } = input;
   if (brandedEmailsEnabled(env)) {
-    if (input.unsubscribeUrl) {
+    // Sign-in codes, resets and verify-email are transactional: no List-Unsubscribe.
+    const essential = ESSENTIAL_MAIL_PURPOSES.has(input.purpose);
+    if (input.unsubscribeUrl && !essential) {
       headers["List-Unsubscribe"] = `<${input.unsubscribeUrl}>, <mailto:unsubscribe@kidease.ca?subject=unsubscribe>`;
       headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
     }
     if (input.branded) {
       const { renderBrandedEmail, renderBrandedText } = await import("./email-layout.ts");
-      const b = { ...input.branded, unsubscribeUrl: input.branded.unsubscribeUrl ?? input.unsubscribeUrl };
+      const b = essential
+        ? { ...input.branded, unsubscribeUrl: undefined }
+        : { ...input.branded, unsubscribeUrl: input.branded.unsubscribeUrl ?? input.unsubscribeUrl };
       html = renderBrandedEmail(b);
-      text = renderBrandedText(b);
+      // Every branded mail keeps a plain-text part. If the branded text came
+      // out empty, or lost the sign-in code the HTML shows, keep the sender's text.
+      const brandedText = renderBrandedText(b);
+      const codeText = b.blocks.flatMap((block) => (block.kind === "code" ? [block.text] : []))[0] ?? "";
+      text = brandedText.trim() && (!codeText || brandedText.includes(codeText)) ? brandedText : text;
     }
   }
   return { text, html, headers };
@@ -410,7 +445,7 @@ export async function sendTransactionalMail(
   const env = deps.env ?? process.env;
   const fetchFn = deps.fetch ?? fetch;
   let to = normalizeEmail(input.to);
-  const replyTo = (input.replyTo || env.ADMIN_EMAIL || KIDEASE_OPERATOR_EMAIL).trim() || KIDEASE_OPERATOR_EMAIL;
+  const replyTo = transactionalReplyTo(input.replyTo, env);
   const providers = otpProvidersFromEnv(env);
   recordOtpMailHealth({ ...providers, lastEvent: lastHealth.lastEvent ?? "logged" });
   const blob = `${input.subject}\n${input.text || ""}`;

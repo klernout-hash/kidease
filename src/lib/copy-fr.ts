@@ -1908,6 +1908,7 @@ export const fr = {
     messageSheetLead: "Écrivez à {name}. Les réponses restent dans Messages.",
     successKicker: "Bravo !",
     successDone: "Terminé",
+    successSaved: "Enregistré",
     successSavedBody: "Vos changements sont enregistrés.",
     successProfileSaved: "Profil enregistré",
     successChildAdded: "Enfant ajouté",
@@ -3526,6 +3527,7 @@ export const fr = {
     authTakingTooLong:
       "La connexion prend trop de temps. Réessayez, ou ouvrez votre bureau. Si cela continue, Cloudflare vérifie encore la demande de connexion.",
     authOpenFailed: "Impossible d’ouvrir votre bureau. Utilisez Réessayer, ou ouvrez https://www.kidease.ca/fr/login.",
+    authSignInTimedOut: "Votre connexion a expiré. Connectez-vous de nouveau pour recevoir un nouveau code.",
     authAdminTimeout: "La session administrateur a expiré. Entrez votre mot de passe pour continuer.",
     authEnterPassword: "Entrez votre mot de passe pour continuer.",
     plansLoadFailed: "Impossible de charger les forfaits du centre. Connectez-vous comme direction et réessayez.",
@@ -3677,6 +3679,7 @@ export const fr = {
     verify2faStillSending: "Envoi du code en cours. Réessayez dans un instant.",
     verify2faNeedCode: "Entrez le code à 6 chiffres reçu par courriel.",
     verify2faNeedTurnstile: "Terminez la vérification de sécurité, puis touchez Vérifier.",
+    verify2faTurnstileLoading: "Chargement de la vérification de sécurité…",
     verify2faCouldNot: "Impossible de vérifier",
     verify2faStall: "Ouverture du bureau en cours. Vous pouvez envoyer un nouveau code, ou continuer ci-dessous.",
     verify2faContinue: "Continuer vers votre bureau",

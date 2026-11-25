@@ -2063,6 +2063,16 @@ html[data-channel="website"] .ke-listings-narrow {
   min-height: calc(100vh - 4.5rem);
   min-height: calc(100dvh - 4.5rem);
 }
+/* /verify-2fa on short windows (QA saw ~768x429): centring the code card in a
+   full-height box pushed the security check and Verify below the fold. Pin the
+   card to the top instead so all three stay on the first screen. */
+@media (max-height: 700px) {
+  .ke-auth-viewport.ke-auth-top {
+    align-items: start;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
 html[data-channel="website"] .ke-card,
 html[data-channel="website"] .ke-web-grid .ke-card,
 html[data-channel="website"] .ke-web-grid > article {

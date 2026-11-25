@@ -354,9 +354,12 @@ export async function stripeRequest<T>(
     const joined = params.toString();
     const getUrl = joined ? `${url}${url.includes("?") ? "&" : "?"}${joined}` : url;
     const res = await stripeFetchImpl(getUrl, { method: "GET", headers });
-    const json = (await res.json()) as T & { error?: { message?: string; code?: string } };
+    const json = (await res.json()) as T & { error?: { message?: string; code?: string; type?: string; param?: string } };
     if (!res.ok) {
-      throw new StripeApiError(json.error?.message || `Stripe ${path} failed (${res.status})`, res.status, json.error?.code);
+      throw new StripeApiError(json.error?.message || `Stripe ${path} failed (${res.status})`, res.status, json.error?.code, {
+        type: json.error?.type,
+        param: json.error?.param,
+      });
     }
     return json;
   }
@@ -365,9 +368,12 @@ export async function stripeRequest<T>(
   for (const [k, v] of flattenStripeBody(body)) params.append(k, v);
   const payload = params.toString();
   const res = await stripeFetchImpl(url, { method: "POST", headers, body: payload });
-  const json = (await res.json()) as T & { error?: { message?: string; code?: string } };
+  const json = (await res.json()) as T & { error?: { message?: string; code?: string; type?: string; param?: string } };
   if (!res.ok) {
-    throw new StripeApiError(json.error?.message || `Stripe ${path} failed (${res.status})`, res.status, json.error?.code);
+    throw new StripeApiError(json.error?.message || `Stripe ${path} failed (${res.status})`, res.status, json.error?.code, {
+      type: json.error?.type,
+      param: json.error?.param,
+    });
   }
   return json;
 }

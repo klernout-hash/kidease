@@ -123,7 +123,10 @@ export function GovFrame({
       <main id="gov-main" className="mx-auto w-full max-w-5xl px-4 pb-16" data-ke="gov-dashboard">
         <h1 className="font-display text-3xl" data-ke="gov-heading">{title}</h1>
         <p className="mt-2 text-sm text-muted">{copy.org}: {orgName}</p>
-        <p className="mt-1 text-base" data-ke="gov-as-of">{copy.asOf} {asOf}</p>
+        {/* Server and browser ICU can spell a.m./zone names slightly differently. */}
+        <p className="mt-1 text-base" data-ke="gov-as-of" suppressHydrationWarning>
+          {copy.asOf} {asOf}
+        </p>
         <div className="sticky top-14 z-20 -mx-4 mt-4 border-b border-border bg-bg px-4 py-3" data-ke="gov-filters">
           <label className="block text-sm font-medium" htmlFor="gov-search">
             {fr ? "Chercher un centre, un permis ou une ville" : "Search a centre, licence, or town"}

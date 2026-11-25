@@ -18,6 +18,7 @@ import {
   LOGIN_OPEN_FAILED_MESSAGE,
   LOGIN_TAKING_TOO_LONG_MESSAGE,
   PASSWORD_CONTINUE_MESSAGE,
+  SIGN_IN_TIMED_OUT_MESSAGE,
 } from "./login-stall.ts";
 
 const EXACT: Array<[string, CopyKey]> = [
@@ -30,6 +31,10 @@ const EXACT: Array<[string, CopyKey]> = [
   [LOGIN_TAKING_TOO_LONG_MESSAGE, "authTakingTooLong"],
   [LOGIN_OPEN_FAILED_MESSAGE, "authOpenFailed"],
   [ADMIN_SESSION_TIMEOUT_MESSAGE, "authAdminTimeout"],
+  [SIGN_IN_TIMED_OUT_MESSAGE, "authSignInTimedOut"],
+  // verifyTwoFactor: the code challenge expired or is missing (#1014 item 7).
+  ["That code expired. Request a new one.", "authSignInTimedOut"],
+  ["Request a new code first.", "authSignInTimedOut"],
   [PASSWORD_CONTINUE_MESSAGE, "authEnterPassword"],
   [PASSWORD_TOO_SHORT, "passwordTooShort"],
   [PASSWORD_COMMON_MESSAGE, "passwordCommon"],

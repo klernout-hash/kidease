@@ -3,10 +3,12 @@ import { GovClosedNote, GovLogin, GovNativeNote } from "@/components/gov/gov-log
 import { guardGovLogin, govRobotsHead, govRobotsHeaders } from "@/lib/gov/desk-guard";
 
 export const Route = createFileRoute("/gov_/login")({
-  validateSearch: (search: Record<string, unknown>): { invite?: string; closed?: string } => {
+  validateSearch: (search: Record<string, unknown>): { invite?: string; closed?: string; expired?: string } => {
     const invite = typeof search.invite === "string" ? search.invite.slice(0, 200) : "";
     const closed = search.closed === "1" || search.closed === 1 ? "1" : "";
-    return { ...(invite ? { invite } : {}), ...(closed ? { closed } : {}) };
+    // expired=1: /verify-2fa sent the officer back because the sign-in timed out.
+    const expired = search.expired === "1" || search.expired === 1 ? "1" : "";
+    return { ...(invite ? { invite } : {}), ...(closed ? { closed } : {}), ...(expired ? { expired } : {}) };
   },
   beforeLoad: ({ context }) => guardGovLogin("en", Boolean((context as { nativeShell?: boolean }).nativeShell)),
   head: () => govRobotsHead("Government sign-in · KidEase"),
@@ -16,9 +18,9 @@ export const Route = createFileRoute("/gov_/login")({
 
 function LoginPage() {
   const native = Boolean((Route.useRouteContext() as { nativeShell?: boolean }).nativeShell);
-  const { invite = "", closed = "" } = Route.useSearch();
+  const { invite = "", closed = "", expired = "" } = Route.useSearch();
   const gate = Route.useRouteContext() as { closed?: boolean };
   if (native) return <GovNativeNote locale="en" />;
   if (closed === "1" || gate.closed === true) return <GovClosedNote locale="en" />;
-  return <GovLogin locale="en" invite={invite} />;
+  return <GovLogin locale="en" invite={invite} expired={expired === "1"} />;
 }
