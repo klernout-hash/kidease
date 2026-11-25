@@ -315,6 +315,8 @@ export function LoginScreen({
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const loginPath = isFrPath(pathname) ? "/fr/login" : "/login";
+  // French sign-in (/fr/login or ?lang=fr) lands on the French desk (/fr/parent, /fr/provider).
+  const authLocale: "en" | "fr" = loginPath === "/fr/login" || locale === "fr" ? "fr" : "en";
   const frAuthQc = useRouteContext({ from: "__root__" }).frAuthQc === true;
   const forgotTo =
     isFrPath(pathname) || (frAuthQc && locale === "fr") ? "/fr/forgot-password" : "/forgot-password";
@@ -500,7 +502,7 @@ export function LoginScreen({
         await withTimeoutFallback(setRole({ data: role }), LOGIN_CONTINUE_MS, undefined);
       }
       if (attempt.current !== id) return;
-      const signInLocale = loginPath === "/fr/login" ? "fr" : "en";
+      const signInLocale = authLocale;
       await waitForSignedInSession(() => authClient.getSession());
       if (attempt.current !== id) return;
       await withTimeout(
@@ -519,7 +521,7 @@ export function LoginScreen({
       if (attempt.current !== id) return;
       const message = err instanceof Error ? err.message : "";
       if (message.includes("continue-timeout")) {
-        const signInLocale = loginPath === "/fr/login" ? "fr" : "en";
+        const signInLocale = authLocale;
         const fallback = resolvePostLoginPath({
           next: search.next,
           desk: deskHint,
@@ -575,6 +577,7 @@ export function LoginScreen({
       desk: deskHint,
       role: role ?? null,
       sticky: readStickyDesk(),
+      locale: authLocale,
       method,
     });
   }
@@ -648,6 +651,7 @@ export function LoginScreen({
           desk: deskHint,
           role: role ?? null,
           sticky: readStickyDesk(),
+          locale: authLocale,
           method: "session",
         }),
         LOGIN_CONTINUE_MS,
@@ -896,6 +900,7 @@ export function LoginScreen({
         desk: deskHint,
         role: picked,
         sticky: readStickyDesk(),
+        locale: authLocale,
         method: "social",
       });
     } catch {

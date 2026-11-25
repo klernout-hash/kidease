@@ -502,7 +502,7 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
     { id: "listings-data", label: "Listings data", labelKey: "navListingsData", itemIds: ["daycares", "incomplete", "winnipeg", "vacancies", "ranking", "qc-home"] },
     { id: "support", label: "Support", labelKey: "support", itemIds: ["support", "support-inbox", "triage"] },
     { id: "people", label: "People and money", labelKey: "navPeopleMoney", itemIds: ["money", "quickbooks", "payroll", "subsidy-tool", "contracts", "government"] },
-    { id: "system", label: "System", labelKey: "navSystem", itemIds: ["activity", "ai", "features", "email-health", "chat"] },
+    { id: "system", label: "System", labelKey: "navSystem", itemIds: ["activity", "ai", "features", "outbound", "email-health", "chat"] },
     { id: "account", label: "Account", labelKey: "account", itemIds: ["profile", "appearance", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", itemIds: ["notify-prefs", "security", "email-sms"] },
   ],

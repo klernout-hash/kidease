@@ -86,9 +86,13 @@ export function TwoFactorGate({
   const staff = staffTwoFactorRequired(next);
   const [state, setState] = useState<"load" | "ok" | "need">(staff ? "load" : "ok");
 
+  // Re-check only when the user or the staff requirement changes. Switching admin tabs
+  // (/admin?tab=…) changes `next` but not the answer; re-checking on every tab unmounted the
+  // whole desk behind "Checking admin access…" and refetched it (KB-17: 4–15 s per tab).
+  const gateNext = staff ? "/admin" : next;
   useEffect(() => {
     if (!user) return;
-    if (!staffTwoFactorRequired(next)) {
+    if (!staffTwoFactorRequired(gateNext)) {
       setState("ok");
       return;
     }
@@ -97,17 +101,17 @@ export function TwoFactorGate({
     void yieldToMain()
       .then(() => getTwoFactorStatus())
       .then((s) => {
-        if (!cancelled) setState(twoFactorGateState(s.verified, next));
+        if (!cancelled) setState(twoFactorGateState(s.verified, gateNext));
       })
       .catch(() => {
         // Admin / support fail closed. Parent / provider never reach here
         // (optional 2FA) so a flaky status check cannot loop /verify-2fa.
-        if (!cancelled) setState(twoFactorGateState(false, next));
+        if (!cancelled) setState(twoFactorGateState(false, gateNext));
       });
     return () => {
       cancelled = true;
     };
-  }, [user?.id, next]);
+  }, [user?.id, gateNext]);
 
   if (isPending || (user && state === "load")) {
     return (

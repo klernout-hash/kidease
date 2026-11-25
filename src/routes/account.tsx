@@ -24,6 +24,7 @@ import { useCopy } from "@/lib/use-copy";
 import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
 import { polishProfilePhoto } from "@/lib/server/profile-photo";
 import { authClient, signOut } from "@/lib/auth/client";
+import { signOutTarget } from "@/lib/sign-out-target";
 import { getMyContact, saveMyContact } from "@/lib/server/profile-contact";
 import { AboutYouForm, type AboutYouSave } from "@/components/about-you-form";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
@@ -863,7 +864,7 @@ function ProfilePane() {
               <button
                 type="button"
                 data-ke="account-sign-out"
-                onClick={() => void signOut("/")}
+                onClick={() => void signOut(signOutTarget({ role: chrome.role, pathname, locale }))}
                 className="flex min-h-11 w-full items-center justify-center rounded-full bg-fg px-4 text-sm font-semibold text-bg touch-manipulation"
               >
                 {t("signOut")}

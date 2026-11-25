@@ -208,7 +208,7 @@ export function AdminMailPanel() {
           <p className="border-t border-border px-5 py-8 text-sm text-muted">Loading Titan inbox…</p>
         ) : messages.length === 0 ? (
           <p className="border-t border-border px-5 py-8 text-sm text-muted">
-            {status?.titanLinked ? "This Titan inbox is empty." : "Open Titan webmail to read this mailbox."}
+            {status?.titanLinked && !inboxError ? "This Titan inbox is empty." : "Open Titan webmail to read this mailbox."}
           </p>
         ) : (
           <ul className="divide-y divide-border border-t border-border">
