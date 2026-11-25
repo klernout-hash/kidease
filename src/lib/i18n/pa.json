@@ -2912,6 +2912,10 @@
   "verify2faStall": "Still opening your desk. You can send a new code, or continue below.",
   "verify2faContinue": "Continue to your desk",
   "verify2faSupport": "Email support@kidease.ca",
+  "verify2faChecking": "ਤੁਹਾਡਾ ਸਾਈਨ-ਇਨ ਜਾਂਚਿਆ ਜਾ ਰਿਹਾ ਹੈ…",
+  "verify2faCheckingHint": "ਇਸ ਵਿੱਚ ਇੱਕ ਪਲ ਲੱਗਦਾ ਹੈ। ਇਹ ਪੰਨਾ ਖੁੱਲ੍ਹਾ ਰੱਖੋ।",
+  "logoutSigningOut": "ਤੁਹਾਨੂੰ ਸਾਈਨ ਆਉਟ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…",
+  "logoutSigningOutHint": "ਤੁਸੀਂ ਜਲਦੀ ਹੀ ਹੋਮ ਪੰਨੇ 'ਤੇ ਹੋਵੋਗੇ।",
   "keepSignedIn": "ਮੈਨੂੰ 30 ਦਿਨਾਂ ਲਈ ਸਾਈਨ ਇਨ ਰੱਖੋ",
   "keepSignedInHint": "ਸਾਂਝੇ ਕੰਪਿਊਟਰ ਉੱਤੇ ਇਸ ਨੂੰ ਬੰਦ ਛੱਡੋ।",
   "reauthPhoneLock": "ਇਸ ਫ਼ੋਨ ਦਾ ਲਾਕ ਵਰਤੋ",
@@ -3734,5 +3738,6 @@
   "emailCodeSavedOff": "ਈਮੇਲ ਕੋਡ ਬੰਦ ਹੈ।",
   "healthCodePrompt": "{date} ਤੋਂ ਪਹਿਲਾਂ ਈਮੇਲ ਕੋਡ ਜੋੜੋ ਤਾਂ ਬੱਚੇ ਦੇ ਸਿਹਤ ਨੋਟ ਅਤੇ ਕਾਗਜ਼ ਸਿਰਫ਼ ਤੁਹਾਡੇ ਲਈ ਰਹਿਣ।",
   "healthCodeLocked": "ਈਮੇਲ ਕੋਡ ਜੋੜਨ ਤੱਕ ਬੱਚੇ ਦੇ ਸਿਹਤ ਨੋਟ ਅਤੇ ਕਾਗਜ਼ ਲੁਕੇ ਰਹਿਣਗੇ।",
-  "healthCodeAction": "ਈਮੇਲ ਕੋਡ ਜੋੜੋ"
+  "healthCodeAction": "ਈਮੇਲ ਕੋਡ ਜੋੜੋ",
+  "healthCodeSnooze": "ਹੁਣ ਨਹੀਂ (7 ਦਿਨਾਂ ਲਈ ਲੁਕਾਓ)"
 }

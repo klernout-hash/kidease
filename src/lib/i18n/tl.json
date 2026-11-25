@@ -2912,6 +2912,10 @@
   "verify2faStall": "Still opening your desk. You can send a new code, or continue below.",
   "verify2faContinue": "Continue to your desk",
   "verify2faSupport": "Email support@kidease.ca",
+  "verify2faChecking": "Sinusuri ang iyong pag-sign in…",
+  "verify2faCheckingHint": "Sandali lang ito. Panatilihing bukas ang page na ito.",
+  "logoutSigningOut": "Sina-sign out ka…",
+  "logoutSigningOutHint": "Babalik ka sa home page sa ilang sandali.",
   "keepSignedIn": "Panatilihin akong naka-sign in nang 30 araw",
   "keepSignedInHint": "Iwanan itong naka-off sa shared na computer.",
   "reauthPhoneLock": "Gamitin ang lock ng teleponong ito",
@@ -3734,5 +3738,6 @@
   "emailCodeSavedOff": "Naka-off ang email code.",
   "healthCodePrompt": "Magdagdag ng email code bago ang {date} para sa inyo lang ang health notes at documents ng bata.",
   "healthCodeLocked": "Nakatago ang health notes at documents hanggang magdagdag kayo ng email code.",
-  "healthCodeAction": "Magdagdag ng email code"
+  "healthCodeAction": "Magdagdag ng email code",
+  "healthCodeSnooze": "Hindi muna (itago nang 7 araw)"
 }
