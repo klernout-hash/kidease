@@ -34,8 +34,8 @@ const UTILITIES = {
   "text-sm": "font-size:0.875rem;line-height:1.25rem",
   "-my-1.5": "margin-top:-0.375rem;margin-bottom:-0.375rem",
   "-ml-3": "margin-left:-0.75rem",
-  "size-11": "width:2.75rem;height:2.75rem",
-  "size-5": "width:1.25rem;height:1.25rem",
+  "size-[44px]": "width:44px;height:44px",
+  "size-[20px]": "width:20px;height:20px",
   "shrink-0": "flex-shrink:0",
   "accent-primary": "accent-color:#2f6f5e",
 };
@@ -51,7 +51,7 @@ function utilityCss() {
 }
 
 function CSS_escape(cls) {
-  return cls.replace(/([.:[\]/])/g, "\\$1");
+  return cls.replace(/([\\.:[\]/])/g, "\\$1");
 }
 
 function fixture() {
@@ -115,11 +115,11 @@ test("#1014 item 9c: each consent box toggles when its centre or the area around
 test("#1014 item 9c: consent rows keep the bigger box and the 44px zone in source", () => {
   assert.match(component, /<span className=\{CONSENT_BOX_ZONE\} data-ke="casl-box-zone">/);
   assert.match(component, /className=\{CONSENT_BOX\}/);
-  assert.match(BOX, /\bsize-5\b/);
+  assert.match(BOX, /(^|\s)size-\[20px\](\s|$)/);
   assert.doesNotMatch(component, /size-4/);
   assert.match(ROW, /\bmin-h-11\b/);
   assert.match(ROW, /\btouch-manipulation\b/);
-  assert.match(ZONE, /\bsize-11\b/);
+  assert.match(ZONE, /(^|\s)size-\[44px\](\s|$)/);
   assert.match(component, /data-ke=\{entry\}/);
   assert.match(component, /entry="sms-entry"/);
 });

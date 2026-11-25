@@ -58,10 +58,11 @@ export function CaslConsentFields({
  * label text, not the 16px box. No overlay or CSS rule was found that blocks
  * the input, so the box itself is bigger (20px) and sits in a 44px hit zone
  * (CONSENT_BOX_ZONE) inside the label: a tap on or around the box toggles it.
+ * Sizes are in px because the root font is 14px (size-5 would be 17.5px).
  */
 export const CONSENT_ROW = "flex min-h-11 cursor-pointer touch-manipulation items-start gap-2 text-sm";
-export const CONSENT_BOX_ZONE = "-my-1.5 -ml-3 flex size-11 shrink-0 items-center justify-center";
-export const CONSENT_BOX = "size-5 shrink-0 cursor-pointer touch-manipulation accent-primary";
+export const CONSENT_BOX_ZONE = "-my-1.5 -ml-3 flex size-[44px] shrink-0 items-center justify-center";
+export const CONSENT_BOX = "size-[20px] shrink-0 cursor-pointer touch-manipulation accent-primary";
 
 function ConsentRow({
   entry,
