@@ -16,7 +16,7 @@ App name: **KidEase**
 - `native-www/` — tiny fallback shell (production builds use the remote URL).
 - `resources/` — icon + splash generated from the existing pin pipeline (`public/logo-transparent.png`).
 - `ios/` and `android/` — Capacitor 8 native projects, permission strings, and icons. Regenerable (see below).
-- `ios/App/App/App.entitlements` — Associated Domains and Sign in with Apple. This is the file the store archive signs. `aps-environment` is not in it. Archive with Xcode 26 and the iOS 26 SDK. This repo cannot archive on Linux. Deployment target stays iOS 15.0.
+- `ios/App/App/App.entitlements` — Associated Domains and Sign in with Apple. This is the file the store archive signs. `aps-environment` is not in it. Archive with Xcode 27.1 or later and the iOS 27.1 SDK (iPhone Duo). This repo cannot archive on Linux. Deployment target stays iOS 15.0.
 - `ios/App/App/Store.xcconfig` — the switch for push and calling declarations. The store lines are active. The push lines are comments. See below.
 - `ios/App/App/Info.plist` — no `UIBackgroundModes` key. Do not add `voip`, `audio`, or `remote-notification` here. The build setting in `Store.xcconfig` adds them when you uncomment it.
 - `AndroidManifest.xml` — App Links `autoVerify` for those hosts plus `KidEase://` / `ca.kidease.app://`.
@@ -62,9 +62,21 @@ Needs Kyle’s Apple ID / paid Apple Developer Program. This PR does not create 
 1. Mac: `npm ci && npm run cap:sync && npm run cap:ios` (opens `ios/App/App.xcodeproj`; SPM resolves plugin packages on first build).
 2. Xcode → App target → **Signing & Capabilities**: select Kyle’s team. Bundle ID must stay `ca.kidease.app`.
 3. Confirm **Info** → Privacy — Location When In Use Usage Description is the parent daycare-finder string (when-in-use only). Do not add Always / Background Modes → Location.
-4. Select **Any iOS Device (arm64)**.
+4. Select **Any iOS Device (arm64)**. Use Xcode 27.1 or later (iOS 27.1 SDK). An iOS 26 SDK build is letterboxed on iPhone Duo, and Apple requires the iOS 27 SDK for every upload from April 2027.
 5. **Product → Archive**. When the Organizer opens, **Distribute App → App Store Connect → Upload**.
 6. App Store Connect → TestFlight → wait for processing → add internal testers. External TestFlight needs Beta App Review later — not this PR.
+
+### iPhone Duo simulator pass (T1, before every archive)
+
+Free: Xcode 27.1 on any Mac, no Apple Developer account. The app is a remote WebView, so this checks the live site inside the real shell.
+
+1. `npm ci && npm run cap:sync && npm run cap:ios`, then run on the **iPhone Duo** simulator.
+2. In Device Hub, switch between closed, partly open and open, and rotate each pose.
+3. In Safari → Develop → Simulator → KidEase, paste this on each pose and record the numbers in the PR:
+   `({w:innerWidth,h:innerHeight,dpr:devicePixelRatio,ch:document.documentElement.dataset.channel,shape:document.documentElement.dataset.keShape,safe:['top','right','bottom','left'].map(s=>getComputedStyle(document.documentElement).getPropertyValue('--ke-safe-'+s))})`
+4. Expected from simulator reports: closed portrait about 466×678 with right ≈ 84 and bottom ≈ 34; open landscape 951×669. If the numbers differ, update `DUO_POSES` in `scripts/store-viewports.mjs`.
+5. Closed: one column, bottom tab bar. Open (landscape): a left rail with the same tabs, list and map side by side on Search. Open and rotated: one column, bottom bar. Nothing sits under the side status strip.
+6. If one rotation of the inner display is refused or letterboxed, add `UIInterfaceOrientationPortraitUpsideDown` to the iPhone list in `Info.plist` and update `scripts/ipad-layout.test.mjs`. Never add `UIRequiresFullScreen`.
 
 Xcode will ask you to register the bundle ID in the developer portal the first time. That is account work, not repo work.
 
@@ -97,7 +109,7 @@ INFOPLIST_KEY_UIBackgroundModes = voip audio remote-notification
 INFOPLIST_KEY_KIDEASEPushCalling = YES
 ```
 
-4. Archive again with Xcode 26 and the iOS 26 SDK. Do not edit `Info.plist` to add the modes. Xcode merges `INFOPLIST_KEY_UIBackgroundModes` into the signed Info.plist. `App.push.entitlements` is the same as the store file plus `aps-environment` = `production`.
+4. Archive again with Xcode 27.1 or later and the iOS 27.1 SDK. Do not edit `Info.plist` to add the modes. Xcode merges `INFOPLIST_KEY_UIBackgroundModes` into the signed Info.plist. `App.push.entitlements` is the same as the store file plus `aps-environment` = `production`.
 5. Turn `FEATURE_PUSH` and `FEATURE_CALL_PUSH` on only after the credentials exist and you mean to send. The declarations and the flags are separate. Flags stay off for this submission.
 
 `npm run cap:permissions` rewrites `App.entitlements` without `aps-environment` and rewrites `App.push.entitlements` with it. It also strips any `UIBackgroundModes` array from the source `Info.plist`. It does not change `Store.xcconfig`.

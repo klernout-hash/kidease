@@ -125,7 +125,7 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end justify-center md:items-center"
+      className="ke-safe-x fixed inset-0 z-[60] flex items-end justify-center md:items-center"
       role="presentation"
     >
       <button

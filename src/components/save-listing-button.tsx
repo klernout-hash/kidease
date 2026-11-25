@@ -165,7 +165,7 @@ export function SaveListingButton({
       </a>
       {sheet && typeof document !== "undefined"
         ? createPortal(
-            <div className="fixed inset-0 z-[80] grid place-items-end bg-fg/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" role="presentation" data-ke="save-signin-sheet">
+            <div className="ke-safe-x fixed inset-0 z-[80] grid place-items-end bg-fg/40 pt-4 [--ke-pad-x:1rem] pb-[max(1rem,env(safe-area-inset-bottom))]" role="presentation" data-ke="save-signin-sheet">
               <div role="dialog" aria-modal="true" aria-labelledby="save-signin-title" className="w-full max-w-md rounded-xl border border-border bg-surface p-4">
                 <h2 id="save-signin-title" className="font-display text-xl">{t("signIn")}</h2>
                 <p className="mt-2 text-sm text-muted">{t("signupWhySave")}</p>

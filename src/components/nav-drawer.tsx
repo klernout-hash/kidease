@@ -212,7 +212,7 @@ export function NavDrawer({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="fixed inset-y-0 right-0 z-[90] flex w-[min(86vw,24rem)] min-w-0 flex-col overflow-y-auto overscroll-contain bg-bg shadow-lift ring-1 ring-border"
+        className="ke-safe-x fixed inset-y-0 right-0 z-[90] flex w-[min(86vw,24rem)] min-w-0 flex-col overflow-y-auto overscroll-contain bg-bg shadow-lift ring-1 ring-border"
       >
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
           <BrandMark size="sm" align="start" />

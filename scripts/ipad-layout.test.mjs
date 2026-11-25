@@ -29,7 +29,6 @@ test("iPad keeps all four orientations", () => {
 test("iPad layout caps the page and splits list plus detail", () => {
   const css = src("src/styles.css");
   assert.match(css, /html\[data-channel="app"\] \.ke-page[\s\S]*max-width: 720px/);
-  assert.match(css, /html\[data-channel="app"\] \.ke-page[\s\S]*max-width: 880px/);
   assert.match(css, /html\[data-channel="app"\] \.ke-page[\s\S]*max-width: 1040px/);
   assert.doesNotMatch(css, /(?<!html\[data-channel="app"\] )\.ke-page \{\s*max-width/);
   assert.match(css, /html\[data-channel="app"\] \.ke-split[\s\S]*minmax\(min\(15rem, 42%\), min\(22rem, 48%\)\)/);
@@ -158,4 +157,86 @@ test("Play, Samsung, Huawei, and Windows sizes stay resizable", () => {
   }
   assert.match(src("src/styles.css"), /@media \(hover: hover\) and \(pointer: fine\)/);
   assert.match(src("src/components/shell.tsx"), /focus-visible:ring-2/);
+});
+
+test("iPhone Duo: the inner display gets the full width, the rail and two panes", () => {
+  const css = src("src/styles.css");
+  // One width-only variant for the wide app look. No device or orientation checks.
+  assert.match(css, /@custom-variant app-wide \{\s*@media \(min-width: 900px\) \{\s*html\[data-channel="app"\] & \{\s*@slot;/);
+  assert.match(css, /@media \(min-width: 900px\) \{\s*html\[data-channel="app"\] \.ke-page \{\s*max-width: min\(100%, 1040px\);/);
+  // The old 1024px -> 880px step is gone: 900+ covers it.
+  assert.doesNotMatch(css, /\.ke-page \{\s*max-width: 880px/);
+  assert.doesNotMatch(css, /max-width: 880px/);
+  // Same tabs in every pose: a rail when wider than tall, the bottom bar otherwise.
+  assert.match(css, /@media \(min-width: 768px\) and \(min-aspect-ratio: 6\/5\) \{[\s\S]*\[data-ke="app-tab-bar"\][\s\S]*flex-direction: column/);
+  assert.match(css, /\[data-ke="shell-frame"\]:has\(> \[data-ke="app-tab-bar"\]\)/);
+  assert.doesNotMatch(css, /@media \(min-width: 768px\) \{\s*html\[data-channel="app"\] \[data-ke="app-tab-bar"\],/);
+  assert.doesNotMatch(css, /orientation:\s*(landscape|portrait)/);
+  const bar = src("src/components/app-tab-bar.tsx");
+  assert.match(bar, /--ke-tab-cols/);
+  assert.doesNotMatch(bar, /gridTemplateColumns/);
+  const shell = src("src/components/shell.tsx");
+  assert.match(shell, /data-ke="shell-frame"/);
+  assert.match(shell, /useFoldScrollAnchor/);
+  assert.match(src("src/components/shell-lite.tsx"), /data-ke="shell-frame"/);
+  // List plus map in the app look from 900 wide; the website keeps 1120 and the clean look.
+  const split = src("src/lib/use-split-map.ts");
+  assert.match(split, /export const APP_SPLIT_MAP_QUERY = "\(min-width: 900px\) and \(min-height: 480px\)"/);
+  assert.match(split, /export const SPLIT_MAP_QUERY = "\(min-width: 1120px\)"/);
+  assert.match(split, /MutationObserver/);
+  const search = src("src/routes/search.tsx");
+  assert.match(search, /app-wide:grid-cols-2/);
+  assert.match(css, /html\[data-channel="app"\] \[data-ke="search-split"\] \{\s*column-gap: 2rem;/);
+  assert.match(search, /data-ke-filters=\{resultFiltersKey\}/);
+  // Chips are state, not layout: folding never changes the query.
+  assert.doesNotMatch(search, /mobileViewport && (licensedChip|topRatedChip)/);
+  assert.match(search, /storeChannel !== "huawei"/);
+  assert.match(src("src/routes/inbox.$id.tsx"), /min-\[900px\]:grid-cols-\[minmax\(0,1fr\)_minmax\(16rem,20rem\)\]/);
+  assert.match(src("src/components/desk-shell.tsx"), /app-wide:w-52/);
+  assert.match(src("src/lib/photo.ts"), /\(max-width: 1199px\) min\(100vw, 1040px\)/);
+});
+
+test("iPhone Duo: folding keeps the search sheet, the reader's place and the keyboard height honest", () => {
+  const sheet = src("src/components/mobile-search-sheet.tsx");
+  assert.match(sheet, /createPortal\(/);
+  assert.match(sheet, /document\.body/);
+  assert.match(sheet, /matchMedia\("\(min-width: 768px\)"\)/);
+  const anchor = src("src/lib/use-fold-scroll-anchor.ts");
+  assert.match(anchor, /FOLD_WIDTH_STEP = 120/);
+  assert.match(anchor, /dialog\[open\]/);
+  const keyboard = src("src/components/keyboard-inset.tsx");
+  assert.match(keyboard, /document\.body\.style\.height = ""/);
+  // Keyboard resize stays "body" on every iPhone.
+  assert.match(src("capacitor.config.ts"), /resize: "body"/);
+  assert.match(src("src/components/first-run.tsx"), /--ke-safe-right/);
+});
+
+test("iPhone Duo native files: arm64, no full-screen lock, centred launch logo", () => {
+  const plist = src("ios/App/App/Info.plist");
+  const caps = plist.split("<key>UIRequiredDeviceCapabilities</key>")[1]?.split("</array>")[0] ?? "";
+  assert.match(caps, /<string>arm64<\/string>/);
+  assert.doesNotMatch(plist, /armv7/);
+  assert.doesNotMatch(plist, /UIRequiresFullScreen/);
+  const launch = src("ios/App/App/Base.lproj/LaunchScreen.storyboard");
+  assert.match(launch, /image="Splash"/);
+  assert.match(launch, /contentMode="scaleAspectFit"/);
+  assert.doesNotMatch(launch, /scaleAspectFill/);
+  assert.match(launch, /firstAttribute="centerX"/);
+  assert.match(launch, /firstAttribute="centerY"/);
+  assert.match(launch, /red="0.96470588235294119" green="0.95294117647058818" blue="0.93333333333333335"/);
+  assert.match(src("docs/store-review-notes.md"), /Xcode 27\.1 or later and the iOS 27\.1 SDK/);
+});
+
+test("iPhone Duo poses are in the fold pass", () => {
+  const store = src("scripts/store-viewports.mjs");
+  assert.match(store, /export const DUO_POSES/);
+  for (const size of ["466", "678", "951", "669", "382"]) assert.match(store, new RegExp(`\\b${size}\\b`));
+  const fold = src("scripts/fold-resize.mjs");
+  assert.match(fold, /DUO_POSES/);
+  assert.match(fold, /runDuoPass/);
+  assert.match(fold, /R3T 2N2/);
+  for (const file of ["scripts/fold-resize.mjs", "scripts/ipad-viewports.mjs", "scripts/store-viewports.mjs", "scripts/phone-viewports.mjs"]) {
+    assert.match(src(file), /if \(width >= 900\) return Math\.min\(width, 1040\);/);
+    assert.doesNotMatch(src(file), /return 880/);
+  }
 });

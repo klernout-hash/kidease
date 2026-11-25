@@ -80,7 +80,7 @@ export function PushExplain() {
   return (
     <div
       data-ke="push-explain"
-      className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 px-4"
+      className="ke-above-tabs ke-safe-x fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 [--ke-pad-x:1rem]"
     >
       <div className="mx-auto max-w-lg rounded-2xl bg-surface p-3 shadow-card ring-1 ring-border">
         <p className="text-base font-semibold text-fg">{t("pushExplainTitle")}</p>
