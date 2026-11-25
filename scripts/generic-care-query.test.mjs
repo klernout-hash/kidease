@@ -75,7 +75,8 @@ test("resolveLocationQuery and geocodePlace skip Photon for care words", () => {
   assert.match(boot, /!isGenericCareQuery\(incomingQ\)/);
   const search = src("src/routes/search.tsx");
   assert.match(search, /genericCare \? "" : rawQ/);
-  assert.match(search, /isGenericCareQuery\(place\)/);
+  assert.match(search, /searchPlaceFromQuery\(/);
+  assert.match(search, /if \(genericCare\) return;/);
 });
 
 test("phone home keeps one Airbnb care row when the flag is on", () => {

@@ -73,6 +73,10 @@ const GENERIC_CARE_QUERIES = new Set([
   "milieu familial",
   "garderie en milieu familial",
   "halte garderie",
+  "service de garde",
+  "services de garde",
+  "service de garde educatif",
+  "services de garde educatifs",
   "school age",
   "school age care",
   "before school",
@@ -117,6 +121,22 @@ export function isGenericCareQuery(query: string | null | undefined): boolean {
     compact === "homedaycare" ||
     compact === "familydaycare"
   );
+}
+
+/**
+ * `/search?q=…`: a care word is not a place. Drop it so the search uses the
+ * visitor's saved or IP place, and the heading reads "Child care near you"
+ * instead of "Child care in daycare".
+ */
+export function searchPlaceFromQuery(query: string | null | undefined): { place: string; genericCare: boolean } {
+  const raw = typeof query === "string" ? query.trim() : "";
+  if (isGenericCareQuery(raw)) return { place: "", genericCare: true };
+  return { place: raw, genericCare: false };
+}
+
+/** Heading for a care-word search with no place typed. */
+export function nearYouHeadline(locale = "en"): string {
+  return locale === "fr" ? "Garderies près de chez vous" : "Child care near you";
 }
 
 /** Discard a saved pin that came from geocoding a generic care word. */

@@ -36,6 +36,10 @@ export const PRODUCT_EVENTS = [
   "vacancy_reminder_sent",
   "fee_display_state",
   "centre_lead_stage",
+  "booking_created",
+  "bill_payment_failed",
+  "refund_issued",
+  "payout_paid",
 ] as const;
 
 export type ProductEventName = (typeof PRODUCT_EVENTS)[number];

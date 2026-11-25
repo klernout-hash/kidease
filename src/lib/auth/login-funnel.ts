@@ -31,6 +31,7 @@ import { getMyDesks } from "@/lib/server/roles";
 import { getTwoFactorStatus } from "@/lib/server/two-factor";
 import { withTimeout, withTimeoutFallback } from "@/lib/timeout";
 import { SESSION_SETTLE_RETRIES, waitForSignedInSession } from "./session-settle.ts";
+import { clearLoginSubmitted } from "./login-bounce.ts";
 
 export { loginErrorCallbackUrl, twoFactorPageUrl } from "@/lib/desks";
 export { SESSION_SETTLE_RETRIES, waitForSignedInSession };
@@ -53,6 +54,8 @@ export type LoginFunnelStep =
   | "two_factor_skipped"
   | "two_factor_verified"
   | "two_factor_failed"
+  | "redirected_2fa"
+  | "bounced"
   | "desk_landed";
 
 export type LoginFunnelProps = {
@@ -243,6 +246,7 @@ export async function continueAfterSignIn(input: {
     const needTwoFactor = await shouldOpenTwoFactorPage(dest, statusPromise);
     markContinued(dest, { method: input.method });
     if (needTwoFactor) {
+      captureLoginFunnel({ step: "redirected_2fa", method: input.method, ...funnelDestMeta(dest) });
       window.location.assign(twoFactorPageUrl(dest));
       return dest;
     }
@@ -263,6 +267,7 @@ export function useLoginFunnelDeskLand(desk: DeskKey, ready: boolean): void {
   useEffect(() => {
     if (!ready || sent.current) return;
     sent.current = true;
+    clearLoginSubmitted();
     captureLoginFunnel({ step: "desk_landed", desk, dest_kind: "desk", dest_path: DESK_PATH[desk] });
   }, [desk, ready]);
 }

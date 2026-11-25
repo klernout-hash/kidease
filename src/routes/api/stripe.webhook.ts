@@ -6,6 +6,7 @@ import { applyConnectSideEffect, queueMonthlyFeeTax } from "@/lib/server/connect
 import { applyStripeDisputeEvent, applyStripeSubscriptionEvent } from "@/lib/server/stripe-lifecycle";
 import { selectStripeWebhookSecrets } from "@/lib/connect-payments";
 import { applyParentStripeInvoice } from "@/lib/server/stripe-parent-invoices";
+import { webhookProductEvent } from "@/lib/webhook-product-events";
 
 const BILL_TYPES = new Set([
   "payment_intent.succeeded",
@@ -154,6 +155,12 @@ async function run(request: Request) {
       releaseStripeEventClaim(event.id);
       return Response.json({ ok: false, error: "invoice apply failed" }, { status: 500 });
     }
+  }
+
+  const planned = webhookProductEvent(type, { billStatus: bill?.status ?? null, invoiceId });
+  if (planned) {
+    const { captureServerProductEvent } = await import("@/lib/server/product-events");
+    void captureServerProductEvent(planned.event, planned.properties);
   }
 
   if (

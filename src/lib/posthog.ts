@@ -7,7 +7,7 @@ import {
 } from "./analytics-consent.ts";
 import { isStaleAssetError, reloadStaleAssetOnce } from "./safe-error.ts";
 import { envFlagOn, envFlagSet } from "./flags.ts";
-import { shouldCaptureException } from "./posthog-errors.ts";
+import { dropEmptyExceptionEvent, shouldCaptureException } from "./posthog-errors.ts";
 import { isNative } from "./native.ts";
 import { POSTHOG_PROXY_PATH, POSTHOG_UI_HOST } from "./posthog-proxy.ts";
 
@@ -244,6 +244,8 @@ export function posthogInitOptions(input: SessionReplayGateInput = {}): Partial<
       maskCapturedNetworkRequestFn: maskCapturedNetworkRequest,
     },
     sanitize_properties: sanitizePostHogProperties,
+    // An exception with no type and no message has nothing to fix. Drop it here.
+    ...({ before_send: dropEmptyExceptionEvent } as Partial<PostHogConfig>),
     ...({
       capture_exceptions: input.captureExceptions
         ? {

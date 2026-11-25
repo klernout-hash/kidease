@@ -247,5 +247,14 @@ export const createMultiSpotRequest = createServerFn({ method: "POST" })
       sent.push({ daycareId, bookingId, conversationId: cid });
     }
 
+    if (sent.length > 0) {
+      const { captureServerProductEvent } = await import("@/lib/server/product-events");
+      const { countBucket } = await import("@/lib/product-events");
+      void captureServerProductEvent(
+        "booking_created",
+        { result: "requested", source: "multi_apply", count_bucket: countBucket(sent.length) },
+        context.userId,
+      );
+    }
     return { ok: sent.length > 0, sent, skipped: skipped.filter((row) => !sent.some((item) => item.daycareId === row.daycareId)) };
   });
