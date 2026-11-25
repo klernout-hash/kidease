@@ -67,7 +67,7 @@ test("sign out and delete account are on Menu, the account screen, and the accou
   const drawer = read("src/components/nav-drawer.tsx");
   assert.match(menu, /data-ke="menu-sign-out"/);
   assert.match(menu, /data-ke="menu-delete-account"/);
-  assert.match(menu, /signOut\("\/"\)/);
+  assert.match(menu, /signOut\(signOutTarget\(\{ role: chrome\.role, pathname, locale \}\)\)/);
   assert.match(menu, /localePath\("\/delete-account"/);
   assert.match(account, /data-ke="account-sign-out"/);
   assert.match(account, /data-ke=\{`account-section-\$\{item\.id\}`\}/);

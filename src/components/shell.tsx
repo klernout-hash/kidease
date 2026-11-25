@@ -19,6 +19,7 @@ import { isMenuLeafPath } from "@/lib/menu-leaf";
 import { NavDrawer } from "@/components/nav-drawer";
 import { applyDocumentLocale } from "@/lib/languages";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
+import { governmentHomePath, signOutTarget } from "@/lib/sign-out-target";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { clearGuestViewCookie } from "@/lib/guest-view";
@@ -111,7 +112,7 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
     pathname.startsWith("/menu");
   const menuLeaf = isMenuLeafPath(pathname);
 
-  const homeTo = chrome.role === "government" ? localePath("/gov", locale) : localePath("/", locale);
+  const homeTo = chrome.role === "government" ? governmentHomePath(pathname, locale) : localePath("/", locale);
 
   if (verifyLite) {
     return (
@@ -269,7 +270,7 @@ export function Shell({ children, headerCategories, fitViewport = false, pageCla
         role={chrome.role}
         paid={chrome.paid}
         isAdmin={!viewingGuest && canSeeAdminDesk(session?.role, session?.email ?? user?.primaryEmail)}
-        onSignOut={() => void signOut(chrome.role === "government" ? localePath("/gov/login", locale) : "/")}
+        onSignOut={() => void signOut(signOutTarget({ role: chrome.role, pathname, locale }))}
         headerExtra={null}
         navExtra={null}
       />

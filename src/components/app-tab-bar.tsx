@@ -14,6 +14,7 @@ import { nativeStoreTabs, type NativeStoreTabId } from "@/lib/native-store-tabs"
 import { deskHrefForLocale, inboxListPath, menuDeskPath, parentDeskPath, providerDeskPath, supportDeskPath } from "@/lib/desk-nav";
 import { allows, type StaffGrants } from "@/lib/staff-permissions";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
+import { governmentHomePath } from "@/lib/sign-out-target";
 import { useCopy } from "@/lib/use-copy";
 import { useAirbnbUi } from "@/lib/use-airbnb-ui";
 import { cn } from "@/lib/utils";
@@ -231,7 +232,7 @@ export function AppTabBar() {
           ) : null}
           {kind === "government" && !storeTabs ? (
             <>
-              <Tab to={localePath("/gov", locale)} label={locale === "fr" ? "Bureau" : "Desk"} icon={Building2} marker="gov" active={bare.startsWith("/gov")} />
+              <Tab to={governmentHomePath(pathname, locale)} label={locale === "fr" ? "Bureau" : "Desk"} icon={Building2} marker="gov" active={bare.startsWith("/gov")} />
               <Tab to={localePath("/search", locale)} label={locale === "fr" ? "Fiches" : "Listings"} icon={Search} marker="listings" active={bare === "/search" || bare.startsWith("/search/") || bare.startsWith("/daycare")} />
               <Tab to="/account" search={{ tab: "profile" }} label={t("account")} icon={Menu} marker="account" active={bare.startsWith("/account")} />
             </>

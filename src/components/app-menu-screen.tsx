@@ -21,6 +21,7 @@ import { accountSearch, deskQueryForViewer, highlightDesk } from "@/lib/desks";
 import { accountDeskPath, menuDeskPath, parentDeskPath, providerDeskPath } from "@/lib/desk-nav";
 import { footerLinkLabel } from "@/lib/site-footer-nav";
 import { isFrPath, localePath } from "@/lib/locale-path";
+import { signOutTarget } from "@/lib/sign-out-target";
 import { chartHasEarnings, insightsCardRating, monthTick, type HostEarnings, type HostInsights } from "@/lib/host-desk";
 import { loadHostEarnings, loadHostInsights } from "@/lib/server/host-desk";
 import type { CopyKey } from "@/lib/copy";
@@ -254,7 +255,7 @@ export function AppMenuScreen({
           <button
             type="button"
             data-ke="menu-sign-out"
-            onClick={() => void signOut("/")}
+            onClick={() => void signOut(signOutTarget({ role: chrome.role, pathname, locale }))}
             className="flex min-h-11 w-full items-center justify-center gap-3 rounded-full bg-fg px-4 py-3.5 text-sm font-semibold text-bg touch-manipulation active:scale-[0.99]"
           >
             <MenuGlyph id="logout" className="text-bg" />
