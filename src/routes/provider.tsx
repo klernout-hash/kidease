@@ -374,6 +374,7 @@ export function ProviderPage() {
   const [pipeline, setPipeline] = useState<PipelineCard[]>([]);
   const [upgradeDismissed, setUpgradeDismissed] = useState(false);
   const [deskSettled, setDeskSettled] = useState(false);
+  const [deskLoadFailed, setDeskLoadFailed] = useState(false);
   const [orgOn, setOrgOn] = useState(false);
   const [subscription, setSubscription] = useState<{
     selectedPlan: ProviderEntitlements["selectedPlan"];
@@ -410,24 +411,49 @@ export function ProviderPage() {
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const provinceLocked = useRef(false);
 
+  // One desk bundle. The fetch is shared (deduped) across mounts; every mounted
+  // copy of this page applies the result to its own state. Before, the deduped
+  // call ran load(), which set state on whichever copy started it: a remount
+  // inside the 30 s window (role chrome settling, a back-and-forth tap) got
+  // the cached `true`, never saw listings, and Today stayed empty.
+  async function fetchProviderDesk() {
+    const [res, incoming, tourRows, pipelineRows, leadRows] = await Promise.all([
+      getProvider(),
+      listDaycareIncoming().catch(() => [] as SpotRequest[]),
+      listTourRequests({ data: { desk: "centre" } }).catch(() => [] as TourRequest[]),
+      listCentrePipeline().catch(() => [] as PipelineCard[]),
+      listLeadRequests({ data: { desk: "centre" } }).catch(() => [] as LeadRequest[]),
+    ]);
+    return { res, incoming, tourRows, pipelineRows, leadRows };
+  }
+
+  function applyProviderDesk(bundle: Awaited<ReturnType<typeof fetchProviderDesk>>) {
+    const { res, incoming, tourRows, pipelineRows, leadRows } = bundle;
+    const nextListings = Array.isArray(res?.listings) ? res.listings : [];
+    setListings(nextListings);
+    setStats(Array.isArray(res?.stats) ? res.stats : []);
+    setSubscription(res?.subscription ?? null);
+    setUpgradeDismissed(Boolean(res?.upgradeCardDismissed));
+    setRequests(Array.isArray(incoming) ? incoming : []);
+    setTours(Array.isArray(tourRows) ? tourRows : []);
+    setPipeline(Array.isArray(pipelineRows) ? pipelineRows : []);
+    setLeads(Array.isArray(leadRows) ? leadRows : []);
+    setDeskLoadFailed(false);
+  }
+
+  function noteDeskLoadFailed(err: unknown) {
+    setDeskLoadFailed(true);
+    capturePostHogEvent("provider_desk_load_failed", {
+      desk,
+      reason: err instanceof Error ? err.message.slice(0, 120) : "unknown",
+    });
+  }
+
   async function load() {
     try {
-      const [res, incoming, tourRows, pipelineRows, leadRows] = await Promise.all([
-        getProvider(),
-        listDaycareIncoming(),
-        listTourRequests({ data: { desk: "centre" } }).catch(() => [] as TourRequest[]),
-        listCentrePipeline().catch(() => [] as PipelineCard[]),
-        listLeadRequests({ data: { desk: "centre" } }).catch(() => [] as LeadRequest[]),
-      ]);
-      const nextListings = Array.isArray(res?.listings) ? res.listings : [];
-      setListings(nextListings);
-      setStats(res.stats);
-      setSubscription(res.subscription);
-      setUpgradeDismissed(Boolean(res.upgradeCardDismissed));
-      setRequests(Array.isArray(incoming) ? incoming : []);
-      setTours(Array.isArray(tourRows) ? tourRows : []);
-      setPipeline(Array.isArray(pipelineRows) ? pipelineRows : []);
-      setLeads(Array.isArray(leadRows) ? leadRows : []);
+      applyProviderDesk(await fetchProviderDesk());
+    } catch (err) {
+      noteDeskLoadFailed(err);
     } finally {
       setDeskSettled(true);
     }
@@ -440,7 +466,20 @@ export function ProviderPage() {
 
   useEffect(() => {
     if (!user?.id || childRoute) return;
-    void dedupedQuery(`provider-desk:${user.id}`, QUERY_STALE_MS, () => load().then(() => true)).catch(() => undefined);
+    let live = true;
+    void dedupedQuery(`provider-desk:${user.id}`, QUERY_STALE_MS, fetchProviderDesk)
+      .then((bundle) => {
+        if (live) applyProviderDesk(bundle);
+      })
+      .catch((err: unknown) => {
+        if (live) noteDeskLoadFailed(err);
+      })
+      .finally(() => {
+        if (live) setDeskSettled(true);
+      });
+    return () => {
+      live = false;
+    };
   }, [user?.id, childRoute]);
 
   useEffect(() => {
@@ -596,7 +635,26 @@ export function ProviderPage() {
       ) : null}
       {desk === "insights" ? <ProviderInsightsDesk /> : null}
       {desk === "top-rated" ? <TopRatedDesk on={topRated} /> : null}
-      {deskSettled && deskListings.length === 0 && centreOwner && desk !== "insights" ? (
+      {desk === "today" && !deskSettled ? (
+        <div role="status" aria-live="polite" aria-label={t("loading")} data-ke="provider-today-loading">
+          <DeskSkeleton />
+        </div>
+      ) : null}
+      {deskSettled && deskLoadFailed && deskListings.length === 0 ? (
+        <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border" role="alert" data-ke="provider-desk-load-failed">
+          <h2 className="font-display text-xl">
+            {locale === "fr" ? "Votre bureau n’a pas pu se charger." : "Your desk did not load."}
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            {locale === "fr" ? "Vérifiez votre connexion, puis réessayez." : "Check your connection, then try again."}
+          </p>
+          <Button className="mt-4" onClick={() => void load()} data-ke="provider-desk-retry">
+            {locale === "fr" ? "Réessayer" : "Try again"}
+          </Button>
+        </section>
+      ) : null}
+      {/* Session desks can still be loading or have failed (session null): do not leave Today empty. */}
+      {deskSettled && !deskLoadFailed && desk !== "insights" && ((deskListings.length === 0 && centreOwner) || (deskListings.length === 0 && session == null)) ? (
         <ProviderOnboarding />
       ) : null}
       {desk !== "today" && search.claimed && listings[0] ? (
