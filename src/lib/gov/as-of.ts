@@ -28,7 +28,25 @@ export function govAsOfZone(province?: string | null, browserZone?: string | nul
   return provinceTimezone(province) ?? usableBrowserZone(browserZone) ?? GOV_AS_OF_FALLBACK_ZONE;
 }
 
-/** "Nov 25, 2026, 10:01 a.m. CST" / "25 nov. 2026, 10 h 01 HNC". Empty for a bad date. */
+/**
+ * Zones that stopped changing clocks in 2026. tzdata 2026e has the right UTC offsets, but
+ * CLDR/ICU 78 still label them as daylight time (Winnipeg "CDT"/"HAC", Vancouver "PDT",
+ * Edmonton "MDT"). After the change, show the official name where there is one
+ * (Manitoba Standard Time: MBT / HNM, gov.mb.ca/timechange), otherwise the UTC offset.
+ */
+const PERMANENT_ZONE_LABELS: Record<string, { from: number; en: string; fr: string }> = {
+  "America/Winnipeg": { from: Date.UTC(2026, 10, 1, 7), en: "MBT", fr: "HNM" },
+  "America/Vancouver": { from: Date.UTC(2026, 10, 1, 9), en: "UTC−7", fr: "UTC−7" },
+  "America/Edmonton": { from: Date.UTC(2026, 10, 1, 8), en: "UTC−6", fr: "UTC−6" },
+};
+
+export function govZoneLabel(zone: string, date: Date, locale: "en" | "fr"): string | null {
+  const rule = PERMANENT_ZONE_LABELS[zone];
+  if (!rule || date.getTime() < rule.from) return null;
+  return locale === "fr" ? rule.fr : rule.en;
+}
+
+/** "Nov 25, 2026, 4:01 p.m. MBT" / "25 nov. 2026, 16 h 01 HNM". Empty for a bad date. */
 export function formatGovAsOf(
   iso: string | null | undefined,
   province: string | null | undefined,
@@ -37,14 +55,21 @@ export function formatGovAsOf(
 ): string {
   const date = new Date(String(iso || ""));
   if (Number.isNaN(date.getTime())) return "";
+  const timeZone = govAsOfZone(province, browserZone);
   // dateStyle/timeStyle cannot be combined with timeZoneName, so spell the parts out.
-  return new Intl.DateTimeFormat(locale === "fr" ? "fr-CA" : "en-CA", {
+  const parts = new Intl.DateTimeFormat(locale === "fr" ? "fr-CA" : "en-CA", {
     year: "numeric",
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZone: govAsOfZone(province, browserZone),
+    timeZone,
     timeZoneName: "short",
-  }).format(date);
+  }).formatToParts(date);
+  const label = govZoneLabel(timeZone, date, locale);
+  // formatToParts keeps ICU's narrow no-break spaces; format() output uses plain spaces, so match it.
+  return parts
+    .map((part) => (part.type === "timeZoneName" && label ? label : part.value))
+    .join("")
+    .replace(/[\u202f\u00a0]/g, " ");
 }

@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { GOV_AS_OF_FALLBACK_ZONE, formatGovAsOf, govAsOfZone } from "../src/lib/gov/as-of.ts";
+import { GOV_AS_OF_FALLBACK_ZONE, formatGovAsOf, govAsOfZone, govZoneLabel } from "../src/lib/gov/as-of.ts";
 import { PROVINCE_TIMEZONES, provinceTimezone } from "../src/lib/province-timezone.ts";
 import { tourTimezoneForProvince } from "../src/lib/tour-calendar.ts";
 
@@ -20,15 +20,28 @@ function label(zone, iso, locale) {
     .find((part) => part.type === "timeZoneName").value;
 }
 
-test("#1014 item 6: Manitoba counts show Winnipeg time with a Central zone label, EN and FR", () => {
+test("#1014 item 6: Manitoba counts show Winnipeg time with a Manitoba zone label, EN and FR", () => {
   assert.equal(govAsOfZone("MB"), "America/Winnipeg");
   const en = formatGovAsOf(NOV, "MB", "en");
   const fr = formatGovAsOf(NOV, "MB", "fr");
-  assert.match(en, /^Nov 25, 2026, 1[01]:01 a\.m\. C[SD]T$/);
-  assert.match(fr, /^25 nov\. 2026, 1[01] h 01 H[NA]C$/);
-  assert.ok(en.endsWith(label("America/Winnipeg", NOV, "en-CA")));
-  assert.ok(fr.endsWith(label("America/Winnipeg", NOV, "fr-CA")));
-  for (const text of [en, fr]) assert.doesNotMatch(text, /UTC|GMT|Z$/);
+  // Manitoba has been on permanent UTC-5 (Manitoba Standard Time) since Nov 1, 2026 (tzdata 2026e).
+  assert.equal(en, "Nov 25, 2026, 11:01 a.m. MBT");
+  assert.equal(fr, "25 nov. 2026, 11 h 01 HNM");
+  for (const text of [en, fr]) assert.doesNotMatch(text, /UTC|GMT|Z$|CDT|HAC|CST|HNC/);
+});
+
+test("Manitoba before the switch keeps its old Central labels", () => {
+  assert.equal(formatGovAsOf(JUL, "MB", "en"), "Jul 1, 2026, 11:01 a.m. CDT");
+  assert.equal(formatGovAsOf(JUL, "MB", "fr"), "1 juill. 2026, 11 h 01 HAC");
+  assert.equal(formatGovAsOf("2026-01-15T16:01:00.000Z", "MB", "en"), "Jan 15, 2026, 10:01 a.m. CST");
+});
+
+test("BC and Alberta after their 2026 switch show an offset, not a stale daylight label", () => {
+  assert.equal(govZoneLabel("America/Vancouver", new Date(NOV), "en"), "UTC−7");
+  assert.equal(govZoneLabel("America/Toronto", new Date(NOV), "en"), null);
+  assert.doesNotMatch(formatGovAsOf(NOV, "BC", "en"), /PDT/);
+  assert.doesNotMatch(formatGovAsOf(NOV, "AB", "en"), /MDT/);
+  assert.equal(formatGovAsOf(NOV, "ON", "en"), "Nov 25, 2026, 11:01 a.m. EST");
 });
 
 test("#1014 item 6: Saskatchewan has no DST shift; Newfoundland keeps its half hour", () => {

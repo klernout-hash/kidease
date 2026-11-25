@@ -212,7 +212,11 @@ export function destinationAfterSignIn(input: {
   });
   // An English desk path (/parent, the default when no next was given) gets the
   // French prefix after a French sign-in. Paths already in French stay as they are.
-  if (decision.kind === "allow") return locale === "fr" && !isFrPath(next) ? localePath(next, "fr") : next;
+  if (decision.kind === "allow") {
+    // No French admin desk: admin paths stay English after a French sign-in.
+    const adminPath = /^\/admin(?:[-/_?#]|$)/.test(next);
+    return locale === "fr" && !adminPath && !isFrPath(next) ? localePath(next, "fr") : next;
+  }
   if (decision.kind === "home") return place(decision.to);
   return place(home);
 }
