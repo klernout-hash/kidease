@@ -207,6 +207,8 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   const { locale, t } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const signInTo = locale === "fr" || isFrPath(pathname) ? "/fr/login" : "/login";
+  // The code email follows the screen's language, not only the QC flag (#1014 item 4).
+  const mailLocale: "fr" | "en" = locale === "fr" || isFrPath(pathname) ? "fr" : "en";
   const show = (message: string) => presentAuthCopy(locale, message);
   const staff = staffTwoFactorRequired(dest);
   const [code, setCode] = useState("");
@@ -273,7 +275,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
             captureLoginFunnel({ step: "two_factor_skipped", reason: "already_verified" });
             return leave(dest);
           }
-          return startTwoFactor({ data: { force: false } }).then((res) => {
+          return startTwoFactor({ data: { force: false, locale: mailLocale } }).then((res) => {
             if (cancelled) return;
             setHint(res.emailed);
             setDelivered(res.sent || Boolean(res.wait) || Boolean("reused" in res && res.reused));
@@ -296,7 +298,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
     return () => {
       cancelled = true;
     };
-  }, [userId, dest, staff]);
+  }, [userId, dest, staff, mailLocale]);
 
   function explainBlocker(): string | null {
     if (!ready) return "Still sending your code. Try again in a moment.";
@@ -438,7 +440,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
             setBusy(true);
             setError(null);
             setNotice(null);
-            void startTwoFactor({ data: { force: true } })
+            void startTwoFactor({ data: { force: true, locale: mailLocale } })
               .then((res) => {
                 setHint(res.emailed);
                 if (!res.sent) {

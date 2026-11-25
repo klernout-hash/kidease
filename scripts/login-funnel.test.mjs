@@ -77,7 +77,7 @@ test("login and 2FA use the shared continue helper", () => {
   assert.match(twoFa, /waitForSignedInSession/);
   assert.match(twoFa, /Continue to your desk/);
   assert.match(twoFa, /autoComplete="one-time-code"/);
-  assert.match(twoFa, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*false\s*\}\s*\}\)/);
+  assert.match(twoFa, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*false(?:,\s*locale:\s*mailLocale)?\s*\}\s*\}\)/);
   assert.match(gates, /DeskSkeleton/);
   assert.match(gates, /sanitizePostLoginNext/);
   assert.match(gates, /to="\/verify-2fa"/);
