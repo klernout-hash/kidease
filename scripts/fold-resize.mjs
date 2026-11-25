@@ -474,7 +474,8 @@ async function duoFoldSequence(browser, base, seen = []) {
       });
     let anchor = await pickAnchor();
     const cardCount = await page.evaluate(() => document.querySelectorAll(".ke-search-results article[data-slug]").length);
-    seen.push(`fold cards ${cardCount} anchor ${anchor ? anchor.slug : "none"}`);
+    const startY = await page.evaluate(() => Math.round(window.scrollY));
+    seen.push(`fold cards ${cardCount} anchor ${anchor ? anchor.slug : "none"} y ${startY}`);
     armed = true;
     for (const name of ["duo-inner-landscape", "duo-cover-portrait", "duo-inner-portrait", "duo-cover-portrait"]) {
       const pose = poses[name];
@@ -489,12 +490,14 @@ async function duoFoldSequence(browser, base, seen = []) {
           origin: performance.timeOrigin,
           top: el && el.getClientRects().length ? el.getBoundingClientRect().top : null,
           clamped: window.scrollY <= 2 || window.scrollY >= max - 2,
+          y: Math.round(window.scrollY),
+          max: Math.round(max),
         };
       }, anchor?.slug ?? null);
       if (!state.mark || state.origin !== origin) problems.push(`duo-fold ${name} reloaded`);
       const key = await filtersKey();
       if (startKey != null && key !== startKey) problems.push(`duo-fold ${name} filters changed`);
-      seen.push(`fold ${name} anchor ${anchor && state.top != null ? (state.clamped ? "clamped" : Math.round(state.top - anchor.top)) : "none"}`);
+      seen.push(`fold ${name} anchor ${anchor && state.top != null ? (state.clamped ? "clamped" : Math.round(state.top - anchor.top)) : "none"} y ${state.y}/${state.max}`);
       if (anchor && state.top != null && !state.clamped && Math.abs(state.top - anchor.top) > 80) {
         problems.push(`duo-fold ${name} anchor moved ${Math.round(state.top - anchor.top)}px`);
       }
