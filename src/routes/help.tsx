@@ -48,7 +48,7 @@ export function Help() {
     setSent(false);
     try {
       await submitPublicMessage({
-        data: { kind: "support", name, email, body, turnstileToken: challenge },
+        data: { kind: "support", form: "help", name, email, body, turnstileToken: challenge },
       });
       setSent(true);
       confirmAction(t, "contactSent");

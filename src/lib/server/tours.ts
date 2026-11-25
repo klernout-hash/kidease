@@ -226,6 +226,11 @@ export const createTourRequest = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("[kidease-lead] tour lead skipped", err);
     }
+    {
+      // KidEase's own CRM (form:tour). Also files a default-role parent.
+      const { captureFormLead } = await import("@/lib/server/ghl-form-lead");
+      await captureFormLead({ form: "tour", userId: context.userId, parentAction: true });
+    }
 
     const systemBody = tourSystemBody({
       parentName,

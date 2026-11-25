@@ -350,6 +350,11 @@ export const joinDaycareWaitlist = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("[kidease-lead] waitlist lead skipped", err);
     }
+    {
+      // KidEase's own CRM (form:waitlist). Also files a default-role parent.
+      const { captureFormLead } = await import("@/lib/server/ghl-form-lead");
+      await captureFormLead({ form: "waitlist", userId: context.userId, parentAction: true });
+    }
     return { ok: true as const, id, already: false };
   });
 

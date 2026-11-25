@@ -101,55 +101,98 @@ type CrmIntakeExtra = {
    * search) leave this unset so a daycare is not filed as a parent.
    */
   explicitParent?: boolean;
+  /**
+   * A parent on the default role did something only a parent does (waitlist,
+   * tour, spot or info request). Files Parent Onboard unless the account
+   * owns a centre.
+   */
+  parentAction?: boolean;
 };
 
-async function pingNewAccount(userId: string, role: "parent" | "provider", extra?: CrmIntakeExtra) {
+function logCrmSkip(role: "parent" | "provider", reason: string) {
+  console.info(JSON.stringify({ event: "crm_intake_skipped", role, reason }));
+}
+
+/**
+ * Admin notice, GoHighLevel filing, then user mail. The admin notice and user
+ * mail go out once per account and role (actor_mail_sends), and only while the
+ * account is fresh. GoHighLevel filing runs every time the slot is still open.
+ * Returns true only when GoHighLevel confirmed the contact.
+ */
+async function pingNewAccount(
+  userId: string,
+  role: "parent" | "provider",
+  extra: CrmIntakeExtra | undefined,
+  options: { notices: boolean; email: string },
+): Promise<boolean> {
   let eventId: string | null = null;
-  try {
-    const result = await notifyNewAccountFromUser(userId, role);
-    eventId = result?.id ?? null;
-  } catch (err) {
-    console.error("[kidease-mail] account notify failed", err);
+  let noticeClaimed = false;
+  if (options.notices && options.email) {
+    try {
+      const { claimActorMailOnce } = await import("@/lib/server/actor-mail-dedupe");
+      noticeClaimed = await claimActorMailOnce({
+        purpose: role === "provider" ? "crm_notice_provider" : "crm_notice_parent",
+        email: options.email,
+        userId,
+      });
+    } catch (err) {
+      console.error("[kidease-mail] account notify claim failed", err);
+    }
   }
+  if (noticeClaimed) {
+    try {
+      const result = await notifyNewAccountFromUser(userId, role);
+      eventId = result?.id ?? null;
+    } catch (err) {
+      console.error("[kidease-mail] account notify failed", err);
+    }
+  }
+  let confirmed = false;
   try {
-    const { captureSignupIntakeFromUser } = await import("@/lib/server/ghl-intake");
-    await captureSignupIntakeFromUser({
+    const { captureSignupIntakeFromUser, ghlIntakeConfirmed } = await import("@/lib/server/ghl-intake");
+    const result = await captureSignupIntakeFromUser({
       userId,
       role,
       trigger: extra?.trigger ?? (role === "provider" ? "provider_signup" : "parent_signup"),
       eventId,
       company: extra?.company,
       name: extra?.name,
-      email: extra?.email,
+      email: extra?.email || options.email,
       phone: extra?.phone,
       testListing: extra?.testListing,
+      // Repeat calls (role boot, later sign-ins) follow the retry backoff.
+      force: false,
     });
+    confirmed = ghlIntakeConfirmed(result);
   } catch (err) {
     console.error("[kidease-ghl] signup intake failed", err);
   }
-  try {
-    const mailFile = "@/lib/server/" + "signup-user-mail.server";
-    const { afterNewAccountUserMail } = await import(/* @vite-ignore */ mailFile);
-    await afterNewAccountUserMail(userId, role);
-  } catch (err) {
-    console.error("[kidease-mail] signup user mail failed", err);
+  if (noticeClaimed) {
+    try {
+      const mailFile = "@/lib/server/" + "signup-user-mail.server";
+      const { afterNewAccountUserMail } = await import(/* @vite-ignore */ mailFile);
+      await afterNewAccountUserMail(userId, role);
+    } catch (err) {
+      console.error("[kidease-mail] signup user mail failed", err);
+    }
+    void import("@/lib/server/admin-tools")
+      .then((mod) => mod.maybeQueueSignup(userId, extra))
+      .catch(() => undefined);
   }
-  void import("@/lib/server/admin-tools")
-    .then((mod) => mod.maybeQueueSignup(userId, extra))
-    .catch(() => undefined);
+  return confirmed;
 }
 
 /**
- * Claim the CRM slot once, then ping. A second caller sees the timestamp and
- * does not send another admin notice or signup. Never throws into the user flow.
- * Returns true only when this call won the claim and ran the ping.
+ * File a sign-up in GoHighLevel once. crm_signup_at / crm_provider_at are set
+ * only after GoHighLevel confirms the contact, so a failed or skipped push is
+ * tried again on the next sign-in or action (and by the daily reconcile).
+ * Never throws into the user flow. Returns true when this call ran the push,
+ * so callers do not push the same sign-up twice.
  *
- * Parent Onboard runs only for an explicit parent choice (setRole parent).
- * A new profile defaults to parent, and family, contact, and saved-search
- * reads used to claim that slot before the person picked daycare. That filed
- * owner claims on Parent Onboard with type:parent. Those reads no longer call
- * this, and a parent call without explicitParent is a no-op. Daycare signup,
- * claim, and enroll stay on Daycare Sign Up.
+ * Parents: an explicit parent choice (setRole parent) or a parent action
+ * (waitlist, tour, spot or info request). A bare read of the default profile
+ * role does not file anyone. Daycare signup, claim, and enroll stay on
+ * Daycare Sign Up.
  */
 export async function ensureCrmIntake(
   userId: string,
@@ -157,57 +200,58 @@ export async function ensureCrmIntake(
   extra?: CrmIntakeExtra,
 ): Promise<boolean> {
   // Default profile role is parent before anyone chooses. Do not file that.
-  if (role === "parent" && extra?.explicitParent !== true) return false;
+  if (role === "parent" && extra?.explicitParent !== true && extra?.parentAction !== true) {
+    logCrmSkip(role, "parent-not-chosen");
+    return false;
+  }
+  let due: { email: string | null; fresh: boolean } | null = null;
   try {
     const sql = await getSql();
-    // Users created before the migration cutoff stay unsent even if their
-    // profile row appears later. The migration already stamped existing rows.
     const explicitParent = extra?.explicitParent === true;
-    const claimed =
+    const rows =
       role === "provider"
-        ? await sql<{ claimed: number }>`
-            update profiles
-            set crm_provider_at = now()
-            where user_id = ${userId}
-              and crm_provider_at is null
-              and not exists (
-                select 1 from "user" u
-                where u.id = ${userId}
-                  and u."createdAt" < timestamptz '2026-09-24 17:34:00+00'
-              )
-            returning 1 as claimed
+        ? await sql<{ email: string | null; fresh: boolean }>`
+            select u.email, true as fresh
+            from profiles p
+            join "user" u on u.id = p.user_id
+            where p.user_id = ${userId}
+              and p.crm_provider_at is null
+              and u."createdAt" >= timestamptz '2026-09-24 17:34:00+00'
+            limit 1
           `
-        : await sql<{ claimed: number }>`
-            update profiles
-            set crm_signup_at = now()
-            where user_id = ${userId}
-              and crm_signup_at is null
-              and role is distinct from 'provider'
+        : await sql<{ email: string | null; fresh: boolean }>`
+            select u.email, (u."createdAt" >= now() - interval '24 hours') as fresh
+            from profiles p
+            join "user" u on u.id = p.user_id
+            where p.user_id = ${userId}
+              and p.crm_signup_at is null
+              and p.role is distinct from 'provider'
               and (
                 ${explicitParent}::boolean = true
                 or not exists (
-                  select 1 from provider_daycares p where p.user_id = ${userId}
+                  select 1 from provider_daycares pd where pd.user_id = ${userId}
                 )
               )
-              and not exists (
-                select 1 from "user" u
-                where u.id = ${userId}
-                  and u."createdAt" < timestamptz '2026-09-24 17:34:00+00'
-              )
-              and exists (
-                select 1 from "user" u
-                where u.id = ${userId}
-                  and u."createdAt" >= now() - interval '30 minutes'
-              )
-            returning 1 as claimed
+              and u."createdAt" >= timestamptz '2026-09-24 17:34:00+00'
+            limit 1
           `;
-    if (!claimed.length) return false;
+    if (rows[0]) due = { email: rows[0].email, fresh: rows[0].fresh === true };
   } catch (err) {
     console.error("[kidease-ghl] ensure intake failed", err);
     return false;
   }
+  // Users created before 2026-09-24 17:34 UTC were stamped by migration 0059.
+  if (!due) return false;
   try {
-    await pingNewAccount(userId, role, extra);
+    const email = (extra?.email || due.email || "").trim();
+    const confirmed = await pingNewAccount(userId, role, extra, { notices: due.fresh, email });
+    if (confirmed) {
+      const sql = await getSql();
+      const { stampCrmFiled } = await import("@/lib/server/ghl-lead-push");
+      await stampCrmFiled(sql, userId, role);
+    } else {
+      logCrmSkip(role, "ghl-not-confirmed");
+    }
   } catch (err) {
     console.error("[kidease-ghl] ensure intake failed", err);
   }
@@ -897,6 +941,11 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("[kidease-lead] spot lead skipped", err);
     }
+    {
+      // KidEase's own CRM (form:spot). Also files a default-role parent.
+      const { captureFormLead } = await import("@/lib/server/ghl-form-lead");
+      await captureFormLead({ form: "spot", userId: context.userId, parentAction: true });
+    }
 
     const notify = pushNewRequest(copy, locale);
     const systemBody = systemRequestMessage(copy, locale);
@@ -1442,9 +1491,15 @@ export const setRole = createServerFn({ method: "POST" })
     if (isViewAsReadOnly()) return { role: written.role };
     if (written.role === "provider") {
       await ensureCrmIntake(context.userId, "provider");
-    } else if (written.role === "parent" && written.previous !== "parent") {
-      // A later sign-in must not send the new-parent SMS, admin mail, or CRM welcome again.
-      await ensureCrmIntake(context.userId, "parent", { explicitParent: true });
+    } else if (written.role === "parent") {
+      // A new profile already defaults to parent, so previous is often "parent"
+      // here. File it anyway: crm_signup_at stops a second filing, and the admin
+      // notice and user mail are once-only, so a later sign-in sends nothing again.
+      // Only a real switch to parent skips the "owns a centre" check.
+      await ensureCrmIntake(context.userId, "parent", {
+        explicitParent: written.previous !== "parent",
+        parentAction: true,
+      });
     }
     return { role: written.role };
   });

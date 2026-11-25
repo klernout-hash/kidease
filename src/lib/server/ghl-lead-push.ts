@@ -11,11 +11,15 @@ import {
   TWILIO_LINE_TYPE_USD_PER_LOOKUP,
   ghlLeadPushEnabled,
   ghlLineTypeEnabled,
+  findSignupMisses,
   reconcileGhlSignups,
   runLeadPush,
   type GhlSnapshot,
+  type LeadContact,
   type LeadPushInput,
+  type LeadPushOutcome,
   type LineType,
+  type RecentSignup,
   type SignupCheck,
   type StoredLeadPush,
 } from "@/lib/ghl-lead-push";
@@ -76,7 +80,31 @@ async function loadRow(sql: Sql, userId: string): Promise<StoredLeadPush | null>
   };
 }
 
-export async function pushLeadToGhl(input: LeadPushInput, options?: { force?: boolean }) {
+/** Account email, name, and phone. Sign-up callers often pass only the user id. */
+export async function lookupLeadContact(userId: string): Promise<LeadContact | null> {
+  const sql = await getSql();
+  const rows = await sql<{ email: string | null; name: string | null; display_name: string | null; phone: string | null }>`
+    select u.email, u.name, p.display_name, p.phone
+    from "user" u
+    left join profiles p on p.user_id = u.id
+    where u.id = ${userId}
+    limit 1
+  `;
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    email: row.email,
+    name: (row.display_name || "").trim() || (row.name || "").trim() || null,
+    phone: (row.phone || "").trim() || null,
+  };
+}
+
+/** Never logs the email address, only the reason and the trigger. */
+function logPushSkip(input: LeadPushInput, reason: string) {
+  logLine("ghl_lead_push_skipped", { reason, trigger: input.trigger, role: input.role });
+}
+
+export async function pushLeadToGhl(input: LeadPushInput, options?: { force?: boolean }): Promise<LeadPushOutcome> {
   if (!ghlLeadPushEnabled(process.env)) return { tookOver: false as const, reason: "flag-off" as const };
   try {
     const sql = await getSql();
@@ -86,6 +114,8 @@ export async function pushLeadToGhl(input: LeadPushInput, options?: { force?: bo
       force: options?.force !== false,
       loadRow: (userId) => loadRow(sql, userId),
       lookupLine,
+      lookupContact: lookupLeadContact,
+      onSkip: (reason) => logPushSkip(input, reason),
       saveRow: async (row) => {
         await sql`
           insert into ghl_lead_pushes (
@@ -109,12 +139,12 @@ export async function pushLeadToGhl(input: LeadPushInput, options?: { force?: bo
             updated_at = now()
         `;
       },
-      pushContact: async ({ extraTags, allowReviewer }) => {
+      pushContact: async ({ extraTags, allowReviewer, email, name, phone }) => {
         const result = await postGhlCrmSignup({
           trigger: input.trigger,
-          email: input.email,
-          name: input.name,
-          phone: input.phone,
+          email,
+          name,
+          phone,
           company: input.company,
           testListing: input.testListing,
           extraTags,
@@ -134,7 +164,8 @@ export async function pushLeadToGhl(input: LeadPushInput, options?: { force?: bo
   } catch (err) {
     logLine("ghl_lead_push_error", { ok: 0 });
     console.error("[kidease-ghl] lead push failed", err instanceof Error ? err.message : "failed");
-    return { tookOver: false as const, reason: "flag-off" as const };
+    // Falls through to the older path in captureSignupIntakeFromUser.
+    return { tookOver: false as const, reason: "skipped" as const, detail: "error" };
   }
 }
 
@@ -203,66 +234,183 @@ export async function readGhlSignup(email: string, fetchImpl: FetchImpl = fetch)
   return { email, contactId, opportunityId, welcomeEmailAt };
 }
 
-export async function runGhlLeadReconcile(options?: { retry?: boolean; fetchImpl?: FetchImpl }) {
-  if (!ghlLeadPushEnabled(process.env)) {
-    logLine("ghl_lead_reconcile", { skipped: 1, checked: 0, missing_contact: 0, missing_opportunity: 0, missing_welcome: 0, retried: 0 });
-    return { ok: true as const, skipped: true as const, reason: "flag-off" as const };
-  }
+/** Matches the interval in the sign-up query below. */
+const RECONCILE_WINDOW_HOURS = 48;
+/** Stop starting new GoHighLevel calls after this, so the row is always finished. */
+const RECONCILE_BUDGET_MS = 8_000;
+const RECONCILE_MAX_REPUSH = 25;
+
+type ReconcileCounts = {
+  checked: number;
+  missing_contact: number;
+  missing_opportunity: number;
+  missing_welcome: number;
+  retried: number;
+};
+
+/**
+ * Daily check. Compares recent sign-ups with ghl_lead_pushes, re-pushes the
+ * misses, and writes exactly one ghl_lead_reconcile row per run, even when the
+ * push flag is off or a step fails. The row is inserted first and finished at
+ * the end, so a run that is cut short still leaves a row behind.
+ * The row stores user ids, never email addresses.
+ */
+export async function runGhlLeadReconcile(options?: { retry?: boolean; fetchImpl?: FetchImpl; budgetMs?: number }) {
+  const started = Date.now();
+  const budgetMs = options?.budgetMs ?? RECONCILE_BUDGET_MS;
+  const inBudget = () => Date.now() - started < budgetMs;
+  const enabled = ghlLeadPushEnabled(process.env);
+  const counts: ReconcileCounts = { checked: 0, missing_contact: 0, missing_opportunity: 0, missing_welcome: 0, retried: 0 };
+  const detail: {
+    status: "running" | "ok" | "flag-off" | "error";
+    error?: string;
+    misses: Array<{ userId: string; kind: string; result?: string }>;
+    welcomeChecked: number;
+    stoppedEarly: boolean;
+  } = { status: "running", misses: [], welcomeChecked: 0, stoppedEarly: false };
+  const id = `glr-${started}-${Math.random().toString(36).slice(2, 8)}`;
   const sql = await getSql();
-  const signups = await sql<{ id: string; email: string; signed_up_at: string | Date }>`
-    select u.id, u.email, coalesce(p.crm_signup_at, p.crm_provider_at, u."createdAt") as signed_up_at
-    from "user" u
-    left join profiles p on p.user_id = u.id
-    where coalesce(p.crm_signup_at, p.crm_provider_at, u."createdAt") > now() - interval '48 hours'
-      and u.email is not null
+  await sql`
+    insert into ghl_lead_reconcile (id, ran_at, window_hours, checked, missing_contact, missing_opportunity, missing_welcome, retried, detail)
+    values (${id}, now(), ${RECONCILE_WINDOW_HOURS}, 0, 0, 0, 0, 0, ${JSON.stringify(detail)}::jsonb)
   `;
-  const checks: SignupCheck[] = signups.map((row) => ({
-    userId: row.id,
-    email: row.email,
-    signedUpAt: row.signed_up_at instanceof Date ? row.signed_up_at.toISOString() : String(row.signed_up_at),
-  }));
-  const snapshots = new Map<string, GhlSnapshot>();
-  for (const signup of checks) {
-    const key = signup.email.trim().toLowerCase();
-    if (!snapshots.has(key)) snapshots.set(key, await readGhlSignup(key, options?.fetchImpl));
-  }
-  const report = reconcileGhlSignups(checks, snapshots, new Date().toISOString());
-  let retried = 0;
-  if (options?.retry) {
-    const due = await sql<{ user_id: string; email: string; audience: string; trigger: string }>`
-      select user_id, email, audience, trigger from ghl_lead_pushes
-      where result <> 'ok' and attempts < 5 and (next_attempt_at is null or next_attempt_at <= now())
+  try {
+    if (!enabled) {
+      detail.status = "flag-off";
+      logLine("ghl_lead_reconcile", { skipped: 1, ...counts });
+      return { ok: true as const, skipped: true as const, reason: "flag-off" as const };
+    }
+    const signups = await sql<{ id: string; role: string; signed_up_at: string | Date }>`
+      select u.id, p.role, u."createdAt" as signed_up_at
+      from "user" u
+      join profiles p on p.user_id = u.id
+      where u."createdAt" > now() - interval '48 hours'
+        and u.email is not null
+        and (
+          p.role = 'provider'
+          or (
+            p.role = 'parent'
+            -- Give a daycare owner time to pick the daycare role first.
+            and u."createdAt" < now() - interval '1 hour'
+            and not exists (select 1 from provider_daycares pd where pd.user_id = u.id)
+            and not exists (select 1 from listing_claims lc where lc.user_id = u.id)
+          )
+        )
+      order by u."createdAt" asc
     `;
-    for (const row of due) {
-      const trigger = row.trigger === "claim_verify" || row.trigger === "provider_signup" ? row.trigger : "parent_signup";
+    const recent: RecentSignup[] = signups.map((row) => ({
+      userId: row.id,
+      role: row.role === "provider" ? "provider" : "parent",
+    }));
+    counts.checked = recent.length;
+    const ids = recent.map((row) => row.userId);
+    const pushRows = ids.length
+      ? await sql.query<{ user_id: string; result: string; contact_id: string | null; opportunity_id: string | null }>(
+          `select user_id, result, contact_id, opportunity_id from ghl_lead_pushes where user_id = any($1::text[])`,
+          [ids],
+        )
+      : [];
+    const misses = findSignupMisses(
+      recent,
+      pushRows.map((row) => ({ userId: row.user_id, result: row.result, contactId: row.contact_id, opportunityId: row.opportunity_id })),
+    );
+    counts.missing_contact = misses.filter((miss) => miss.kind === "missing_contact").length;
+    counts.missing_opportunity = misses.filter((miss) => miss.kind === "missing_opportunity").length;
+    for (const miss of misses) {
+      const entry: { userId: string; kind: string; result?: string } = { userId: miss.userId, kind: miss.kind };
+      detail.misses.push(entry);
+      if (!options?.retry) continue;
+      if (counts.retried >= RECONCILE_MAX_REPUSH || !inBudget()) {
+        detail.stoppedEarly = true;
+        continue;
+      }
       const pushed = await pushLeadToGhl(
         {
-          userId: row.user_id,
-          role: row.audience === "daycare" ? "provider" : "parent",
-          trigger,
-          email: row.email,
+          userId: miss.userId,
+          role: miss.role,
+          trigger: miss.role === "provider" ? "provider_signup" : "parent_signup",
         },
         { force: false },
       );
-      if (pushed.tookOver) retried += 1;
+      counts.retried += 1;
+      entry.result = pushed.tookOver ? pushed.result : pushed.reason;
+      if (pushed.tookOver && pushed.result === "ok") await stampCrmFiled(sql, miss.userId, miss.role);
     }
+    if (options?.retry) {
+      // Older failed rows outside the sign-up window still get their backoff retries.
+      const due = await sql<{ user_id: string; audience: string; trigger: string }>`
+        select user_id, audience, trigger from ghl_lead_pushes
+        where result = 'retry' and attempts < 5 and (next_attempt_at is null or next_attempt_at <= now())
+        limit ${RECONCILE_MAX_REPUSH}
+      `;
+      for (const row of due) {
+        if (ids.includes(row.user_id)) continue;
+        if (counts.retried >= RECONCILE_MAX_REPUSH || !inBudget()) {
+          detail.stoppedEarly = true;
+          break;
+        }
+        const trigger = row.trigger === "claim_verify" || row.trigger === "provider_signup" ? row.trigger : "parent_signup";
+        await pushLeadToGhl(
+          { userId: row.user_id, role: row.audience === "daycare" ? "provider" : "parent", trigger },
+          { force: false },
+        );
+        counts.retried += 1;
+      }
+    }
+    // Read-only welcome check for sign-ups that already have a contact.
+    const filed = signups.filter((row) => !misses.some((miss) => miss.userId === row.id));
+    const checks: SignupCheck[] = [];
+    const snapshots = new Map<string, GhlSnapshot>();
+    for (const row of filed) {
+      if (!inBudget()) {
+        detail.stoppedEarly = true;
+        break;
+      }
+      const contact = await lookupLeadContact(row.id).catch(() => null);
+      const email = String(contact?.email || "").trim().toLowerCase();
+      if (!email) continue;
+      checks.push({
+        userId: row.id,
+        email,
+        signedUpAt: row.signed_up_at instanceof Date ? row.signed_up_at.toISOString() : String(row.signed_up_at),
+      });
+      if (!snapshots.has(email)) snapshots.set(email, await readGhlSignup(email, options?.fetchImpl));
+    }
+    const report = reconcileGhlSignups(checks, snapshots, new Date().toISOString());
+    detail.welcomeChecked = report.checked - report.readFailed;
+    counts.missing_welcome = report.gaps.filter((gap) => gap.kind === "missing_welcome").length;
+    for (const gap of report.gaps) {
+      if (gap.kind === "missing_welcome") detail.misses.push({ userId: gap.userId, kind: gap.kind });
+    }
+    detail.status = "ok";
+    logLine("ghl_lead_reconcile", { ...counts });
+    return { ok: true as const, skipped: false as const, ...counts, readFailed: report.readFailed };
+  } catch (err) {
+    detail.status = "error";
+    detail.error = err instanceof Error ? err.message.slice(0, 200) : "failed";
+    console.error("[kidease-ghl] reconcile failed", detail.error);
+    return { ok: false as const, skipped: false as const, error: "reconcile-failed" as const, ...counts };
+  } finally {
+    await sql`
+      update ghl_lead_reconcile set
+        checked = ${counts.checked},
+        missing_contact = ${counts.missing_contact},
+        missing_opportunity = ${counts.missing_opportunity},
+        missing_welcome = ${counts.missing_welcome},
+        retried = ${counts.retried},
+        detail = ${JSON.stringify(detail)}::jsonb
+      where id = ${id}
+    `.catch((err) => console.error("[kidease-ghl] reconcile row update failed", err instanceof Error ? err.message : "failed"));
   }
-  const counts = {
-    checked: report.checked,
-    missing_contact: report.gaps.filter((gap) => gap.kind === "missing_contact").length,
-    missing_opportunity: report.gaps.filter((gap) => gap.kind === "missing_opportunity").length,
-    missing_welcome: report.gaps.filter((gap) => gap.kind === "missing_welcome").length,
-    retried,
-  };
-  await sql`
-    insert into ghl_lead_reconcile (id, ran_at, window_hours, checked, missing_contact, missing_opportunity, missing_welcome, retried, detail)
-    values (
-      ${`glr-${Date.now()}`}, now(), ${48}, ${counts.checked}, ${counts.missing_contact},
-      ${counts.missing_opportunity}, ${counts.missing_welcome}, ${counts.retried}, ${JSON.stringify(report.gaps)}::jsonb
-    )
-  `;
-  logLine("ghl_lead_reconcile", counts);
-  return { ok: true as const, skipped: false as const, ...counts, readFailed: report.readFailed };
+}
+
+/** Stamp crm_*_at only after GoHighLevel confirmed the contact. */
+export async function stampCrmFiled(sql: Sql, userId: string, role: "parent" | "provider") {
+  if (role === "provider") {
+    await sql`update profiles set crm_provider_at = now() where user_id = ${userId} and crm_provider_at is null`.catch(() => undefined);
+  } else {
+    await sql`update profiles set crm_signup_at = now() where user_id = ${userId} and crm_signup_at is null`.catch(() => undefined);
+  }
 }
 
 export const ghlLeadDesk = createServerFn({ method: "GET" })

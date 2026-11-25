@@ -899,6 +899,8 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
     city?: string;
     turnstileToken?: string;
     intent?: string;
+    /** Which page sent it, for the GoHighLevel form tag. */
+    form?: "contact" | "help" | "report";
   }) => {
     const name = input.name.trim();
     const email = input.email.trim();
@@ -916,6 +918,7 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
       city: (input.city || "").trim().slice(0, 80),
       turnstileToken: String(input.turnstileToken || ""),
       intent: input.intent === "job-interest" ? ("job-interest" as const) : undefined,
+      form: input.form === "report" || input.form === "help" || input.form === "contact" ? input.form : undefined,
     };
   })
   .handler(async ({ data }) => {
@@ -942,6 +945,20 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
         .filter(Boolean)
         .join("\n"),
     });
+    // KidEase's own CRM. The admin notice above still goes out. Never a centre CRM.
+    const { publicMessageForm } = await import("@/lib/ghl-form-lead");
+    const ghlForm = publicMessageForm({ kind: data.kind, form: data.form });
+    if (ghlForm) {
+      const { captureFormLead } = await import("@/lib/server/ghl-form-lead");
+      await captureFormLead({
+        form: ghlForm,
+        email: data.email,
+        name: data.name,
+        phone: data.phone,
+        company: data.centre,
+        subject: title,
+      });
+    }
     return afterPublicAdminNotify({
       adminStatus: result.status,
       adminError: result.error,
