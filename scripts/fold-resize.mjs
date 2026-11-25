@@ -345,6 +345,7 @@ async function readSplit(page) {
  */
 export async function runDuoPass(browser, base) {
   const problems = [];
+  const seen = [];
   for (const pose of DUO_POSES) {
     const context = await browser.newContext({
       viewport: { width: pose.width, height: pose.height },
@@ -396,6 +397,7 @@ export async function runDuoPass(browser, base) {
             else {
               const lo = DUO_CREASE_X - 20;
               const hi = DUO_CREASE_X + 20;
+              seen.push(`${pose.name}${path} gap ${Math.round(split.listRight)}-${Math.round(split.mapLeft)} page ${m.pageWidth} rail ${m.bar ? Math.round(m.bar.width) : 0}`);
               if (split.listRight > hi || split.mapLeft < lo || split.mapLeft <= split.listRight) {
                 problems.push(`${label} crease gap ${Math.round(split.listRight)}-${Math.round(split.mapLeft)} misses ${DUO_CREASE_X}`);
               }
@@ -413,12 +415,14 @@ export async function runDuoPass(browser, base) {
     }
     await context.close();
   }
-  problems.push(...(await duoFoldSequence(browser, base)));
+  problems.push(...(await duoFoldSequence(browser, base, seen)));
+  // Evidence for the PR: what the inner display measured and whether the anchor check ran.
+  console.log(`[fold-resize] duo ${DUO_POSES.length} poses x ${DUO_ROUTES.length} routes; ${seen.join("; ")}`);
   return problems;
 }
 
 /** Cover portrait, inner landscape, cover, inner portrait, cover: one page load. */
-async function duoFoldSequence(browser, base) {
+async function duoFoldSequence(browser, base, seen = []) {
   const problems = [];
   const poses = Object.fromEntries(DUO_POSES.map((pose) => [pose.name, pose]));
   const cover = poses["duo-cover-portrait"];
@@ -479,6 +483,7 @@ async function duoFoldSequence(browser, base) {
       if (!state.mark || state.origin !== origin) problems.push(`duo-fold ${name} reloaded`);
       const key = await filtersKey();
       if (startKey != null && key !== startKey) problems.push(`duo-fold ${name} filters changed`);
+      seen.push(`fold ${name} anchor ${anchor && state.top != null ? (state.clamped ? "clamped" : Math.round(state.top - anchor.top)) : "none"}`);
       if (anchor && state.top != null && !state.clamped && Math.abs(state.top - anchor.top) > 80) {
         problems.push(`duo-fold ${name} anchor moved ${Math.round(state.top - anchor.top)}px`);
       }
