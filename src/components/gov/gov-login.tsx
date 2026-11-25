@@ -9,6 +9,7 @@ import { govCopy, govPath } from "@/lib/gov/copy";
 import type { GovLocale } from "@/lib/gov/aggregate";
 import { GovHelp } from "@/components/gov/gov-help";
 import { getGovSession } from "@/lib/server/gov-portal";
+import { govVerifyPath } from "@/lib/gov/second-factor";
 import { acceptGovInviteFn } from "@/lib/server/gov-admin";
 
 export function GovNativeNote({ locale }: { locale: GovLocale }) {
@@ -90,6 +91,12 @@ export function GovLogin({ locale, invite }: { locale: GovLocale; invite: string
         if (signed.error) throw new Error(friendlyAuthError(authClientErrorMessage(signed.error)));
       }
       const session = await getGovSession();
+      if (!session.ok && "needSecondFactor" in session && session.needSecondFactor) {
+        // A government account needs the email code next. Keep the session and
+        // send the officer to the code page instead of signing them out.
+        window.location.assign(govVerifyPath(locale, home));
+        return;
+      }
       if (!session.ok) {
         await dropExistingSession();
         setError(copy.denied);

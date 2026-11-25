@@ -61,3 +61,22 @@ export const authMiddleware = createMiddleware({ type: "function" })
     await rejectGovernmentOnPrivateApi(userId);
     return next({ context: { userId } });
   });
+
+/**
+ * The caller's own email-code step (`/verify-2fa`). Same checks as
+ * `authMiddleware`, but a government account may use it: the government desk
+ * needs this code before any government read, and these calls only touch the
+ * caller's own sign-in challenge and 2FA cookie. Use it for nothing else.
+ */
+export const secondFactorMiddleware = createMiddleware({ type: "function" })
+  .client(async ({ next }) => {
+    const { getBearerToken } = await import("./client");
+    return next({ sendContext: { bearerToken: getBearerToken() ?? undefined } });
+  })
+  .server(async ({ next, context }) => {
+    const { assertSameSiteRequest } = await import("./isolation.server");
+    const { requireUserId } = await import("./verify.server");
+    assertSameSiteRequest();
+    const userId = await requireUserId(context.bearerToken);
+    return next({ context: { userId } });
+  });

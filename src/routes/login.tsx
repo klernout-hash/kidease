@@ -1,11 +1,12 @@
 import { checkEmailStatus } from "@/lib/auth/email-status-client";
-import { createFileRoute, Link, useRouteContext, useRouter, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useRouteContext, useRouter, useRouterState } from "@tanstack/react-router";
 import { authBackFallback, currentAuthBackFallback } from "@/lib/auth/auth-back";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { loginSubmittedText } from "@/lib/login-fields";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
+import { govLoginRedirectForNext } from "@/lib/auth/verify-2fa-session";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { reviewerSignInSkipsTurnstile } from "@/lib/reviewer-accounts";
 import { nativeSocialPlatform, sanitizeNativeOAuthError, signInProvidersForDevice } from "@/lib/auth/native-oauth";
@@ -254,12 +255,22 @@ export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
   return out;
 }
 
+/**
+ * Government sign-in has one path: `/gov/login` checks the email-code step
+ * itself. `/login?next=/gov` used to sign in here and then bounce (A2).
+ */
+export function loginGovBeforeLoad(search: LoginSearch, routeLocale: "en" | "fr") {
+  const href = govLoginRedirectForNext(search.next, routeLocale);
+  if (href) throw redirect({ href });
+}
+
 export async function loginLoader() {
   return loadSignInProviders();
 }
 
 export const Route = createFileRoute("/login")({
   validateSearch: loginValidateSearch,
+  beforeLoad: ({ search }) => loginGovBeforeLoad(search, "en"),
   loader: loginLoader,
   head: ({ matches }) =>
     withNoindex(

@@ -495,3 +495,40 @@ export async function touchPersistentPush(userId: string, token: string) {
   await sql`update device_sessions set push_token = ${next} where id = ${row.id} and user_id = ${userId}`;
   return { ok: true as const, skipped: false as const };
 }
+
+/**
+ * `/logout`: delete this browser's session row, revoke its device row (reason
+ * `logout`) and expire the session cookies. Works with persistent sessions on
+ * or off. The trusted-device 2FA cookie is left alone, like the sign-out button.
+ */
+export async function endCurrentWebSession(bearerToken?: string): Promise<{ ended: boolean }> {
+  const meta = requestMeta();
+  const token =
+    unsignedSessionToken(pickCookieValue(meta.cookie, [SESSION_TOKEN_COOKIE, SHARED_SESSION_TOKEN_COOKIE])) ||
+    unsignedSessionToken(bearerToken);
+  let ended = false;
+  if (token) {
+    const { getSessionUser } = await import("@/lib/auth/verify.server");
+    const user = await getSessionUser(bearerToken).catch(() => null);
+    if (user?.id) {
+      const sql = await getSql();
+      const devices = await sql<{ push_token: string | null }>`
+        select push_token from device_sessions
+        where user_id = ${user.id} and session_token = ${token} and revoked_at is null
+      `.catch(() => []);
+      await sql`delete from "session" where token = ${token} and "userId" = ${user.id}`.catch(() => undefined);
+      await sql`
+        update device_sessions
+        set revoked_at = now(), revoke_reason = ${"logout"}
+        where user_id = ${user.id} and session_token = ${token} and revoked_at is null
+      `.catch(() => undefined);
+      for (const device of devices) await deletePushToken(sql, user.id, device.push_token);
+      ended = true;
+    }
+  }
+  expirePair(SESSION_TOKEN_COOKIE, SHARED_SESSION_TOKEN_COOKIE);
+  expirePair("__Host-grok-auth.session_data", "__Secure-kidease.session_data");
+  expirePair("__Host-grok-auth.account_data", "__Secure-kidease.account_data");
+  expirePair(REFRESH_TOKEN_COOKIE, SHARED_REFRESH_TOKEN_COOKIE);
+  return { ended };
+}

@@ -34,3 +34,50 @@ test("gov server functions and the export API check the second step", () => {
   assert.match(src("src/lib/gov/desk-guard.ts"), /govVerifyPath/);
   assert.match(src("src/lib/server/gov-actor.server.ts"), /assertGovSecondFactorVerified/);
 });
+
+test("A2: GovLogin sends needSecondFactor to the code page, not dropExistingSession", () => {
+  const login = src("src/components/gov/gov-login.tsx");
+  const start = login.indexOf("const session = await getGovSession();");
+  assert.ok(start > 0);
+  const block = login.slice(start, login.indexOf("celebrateAfterNavigation();", start));
+  const verifyAt = block.indexOf("govVerifyPath(locale, home)");
+  const dropAt = block.indexOf("dropExistingSession()");
+  assert.ok(verifyAt > 0, "needSecondFactor goes to govVerifyPath");
+  assert.ok(dropAt > verifyAt, "dropExistingSession only runs after the second-factor branch");
+  assert.match(block, /"needSecondFactor" in session && session\.needSecondFactor/);
+  const branch = block.slice(0, dropAt);
+  assert.match(branch, /window\.location\.assign\(govVerifyPath\(locale, home\)\);\s*return;/);
+});
+
+test("A2: a government account can run its own email-code step", () => {
+  const middleware = src("src/lib/auth/middleware.ts");
+  const at = middleware.indexOf("export const secondFactorMiddleware");
+  assert.ok(at > 0);
+  const block = middleware.slice(at);
+  assert.match(block, /requireUserId/);
+  assert.match(block, /assertSameSiteRequest/);
+  assert.doesNotMatch(block, /rejectGovernmentOnPrivateApi/);
+  // Every other private server function still rejects government sessions.
+  assert.match(middleware.slice(0, at), /rejectGovernmentOnPrivateApi/);
+  const twoFa = src("src/lib/server/two-factor.ts");
+  for (const name of ["getTwoFactorStatus", "startTwoFactor", "verifyTwoFactor"]) {
+    const fn = twoFa.slice(twoFa.indexOf(`export const ${name}`));
+    assert.match(fn.slice(0, 200), /\.middleware\(\[secondFactorMiddleware\]\)/, name);
+  }
+});
+
+test("A2: /login with next=/gov goes to the government sign-in", async () => {
+  const { govLoginRedirectForNext, isGovDeskPath } = await import("../src/lib/auth/verify-2fa-session.ts");
+  assert.equal(govLoginRedirectForNext("/gov", "en"), "/gov/login");
+  assert.equal(govLoginRedirectForNext("/gov/centres", "en"), "/gov/login");
+  assert.equal(govLoginRedirectForNext("/fr/gov", "en"), "/fr/gov/login");
+  assert.equal(govLoginRedirectForNext("/gov", "fr"), "/fr/gov/login");
+  assert.equal(govLoginRedirectForNext("/gov-terms", "en"), null);
+  assert.equal(govLoginRedirectForNext("/parent", "en"), null);
+  assert.equal(govLoginRedirectForNext(undefined, "en"), null);
+  assert.equal(isGovDeskPath("/governance"), false);
+  const login = src("src/routes/login.tsx");
+  assert.match(login, /beforeLoad: \(\{ search \}\) => loginGovBeforeLoad\(search, "en"\)/);
+  assert.match(login, /govLoginRedirectForNext\(search\.next, routeLocale\)/);
+  assert.match(src("src/routes/fr.login.tsx"), /loginGovBeforeLoad\(search, "fr"\)/);
+});

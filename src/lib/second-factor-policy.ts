@@ -32,6 +32,33 @@ export function healthFactorDecision(input: {
   return { redact: true, prompt: true, graceEndsAt };
 }
 
+/** "Not now" on the email-code banner hides it for 7 days on this browser. */
+export const HEALTH_BANNER_SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
+export const HEALTH_BANNER_SNOOZE_KEY = "ke.healthCodeBanner.snoozedAt";
+
+/**
+ * Show the "Add an email code" banner? Never once the code is set (no prompt).
+ * While the grace period runs, "Not now" hides it for 7 days. Once health notes
+ * are locked, it always shows: the person needs the code to see them.
+ */
+export function healthBannerVisible(input: {
+  prompt: boolean;
+  locked: boolean;
+  snoozedAt: number | null;
+  now: number;
+}): boolean {
+  if (!input.prompt) return false;
+  if (input.locked) return true;
+  if (input.snoozedAt == null || !Number.isFinite(input.snoozedAt)) return true;
+  if (input.snoozedAt > input.now) return true;
+  return input.now - input.snoozedAt >= HEALTH_BANNER_SNOOZE_MS;
+}
+
+/** Whether the banner offers "Not now". Locked notes need the code, so no. */
+export function healthBannerCanSnooze(input: { prompt: boolean; locked: boolean }): boolean {
+  return input.prompt && !input.locked;
+}
+
 const HEALTH_TEXT = [
   "allergies",
   "medicalNotes",

@@ -2912,6 +2912,10 @@
   "verify2faStall": "Still opening your desk. You can send a new code, or continue below.",
   "verify2faContinue": "Continue to your desk",
   "verify2faSupport": "Email support@kidease.ca",
+  "verify2faChecking": "جارٍ التحقق من تسجيل دخولك…",
+  "verify2faCheckingHint": "يستغرق ذلك لحظة. أبقِ هذه الصفحة مفتوحة.",
+  "logoutSigningOut": "جارٍ تسجيل خروجك…",
+  "logoutSigningOutHint": "ستعود إلى الصفحة الرئيسية بعد لحظة.",
   "keepSignedIn": "أبقني مسجلاً لمدة 30 يوماً",
   "keepSignedInHint": "اترك هذا بدون تحديد على جهاز مشترك.",
   "reauthPhoneLock": "استخدم قفل هذا الهاتف",
@@ -3734,5 +3738,6 @@
   "emailCodeSavedOff": "رمز البريد متوقف.",
   "healthCodePrompt": "أضف رمز البريد قبل {date} حتى تبقى ملاحظات صحة الطفل وملفاته لك وحدك.",
   "healthCodeLocked": "ملاحظات الصحة والملفات تبقى مخفية حتى تضيف رمز البريد.",
-  "healthCodeAction": "إضافة رمز البريد"
+  "healthCodeAction": "إضافة رمز البريد",
+  "healthCodeSnooze": "ليس الآن (إخفاء لمدة 7 أيام)"
 }

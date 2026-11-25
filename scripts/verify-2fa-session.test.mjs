@@ -96,3 +96,42 @@ test("verify-2fa page waits for the session gate before RedirectToSignIn", () =>
   assert.match(route, /staffTwoFactorRequired/);
   assert.match(route, /needTurnstile/);
 });
+
+test("A2: a server-signed-in result with no browser user is ready, not signed_out", () => {
+  assert.equal(
+    decideVerify2faSessionGate({ hasUser: false, isPending: false, graceElapsed: true, serverSignedIn: true }),
+    "ready",
+  );
+  assert.equal(
+    decideVerify2faSessionGate({ hasUser: false, isPending: true, graceElapsed: false, serverSignedIn: true }),
+    "ready",
+  );
+  // Server answer still on its way: keep waiting, even after the grace period.
+  assert.equal(
+    decideVerify2faSessionGate({ hasUser: false, isPending: false, graceElapsed: true, serverSignedIn: null }),
+    "wait",
+  );
+  // Only when both the browser and the server say signed out.
+  assert.equal(
+    decideVerify2faSessionGate({ hasUser: false, isPending: false, graceElapsed: true, serverSignedIn: false }),
+    "signed_out",
+  );
+  assert.equal(
+    decideVerify2faSessionGate({ hasUser: false, isPending: false, graceElapsed: false, serverSignedIn: false }),
+    "wait",
+  );
+});
+
+test("A2: verify-2fa asks the server, shows a visible heading and logs the gov bounce", () => {
+  const route = src("src/routes/verify-2fa.tsx");
+  assert.match(route, /getVerify2faServerSession\(\)/);
+  assert.match(route, /serverSignedIn:/);
+  assert.match(route, /t\("verify2faChecking"\)/);
+  assert.doesNotMatch(route, /<DeskSkeleton \/>/);
+  assert.match(route, /reason: "gov_session_missing"/);
+  assert.match(route, /isGovDeskPath\(dest\)/);
+  const twoFa = src("src/lib/server/two-factor.ts");
+  assert.match(twoFa, /export const getVerify2faServerSession/);
+  assert.match(src("src/lib/copy-en.ts"), /verify2faChecking: "Checking your sign-in…"/);
+  assert.match(src("src/lib/copy-fr.ts"), /verify2faChecking: "Vérification de votre connexion…"/);
+});

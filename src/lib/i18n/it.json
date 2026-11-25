@@ -2912,6 +2912,10 @@
   "verify2faStall": "Still opening your desk. You can send a new code, or continue below.",
   "verify2faContinue": "Continue to your desk",
   "verify2faSupport": "Email support@kidease.ca",
+  "verify2faChecking": "Verifica dell’accesso in corso…",
+  "verify2faCheckingHint": "Ci vuole un momento. Tieni aperta questa pagina.",
+  "logoutSigningOut": "Disconnessione in corso…",
+  "logoutSigningOutHint": "Tra un momento tornerai alla pagina iniziale.",
   "keepSignedIn": "Resta connesso per 30 giorni",
   "keepSignedInHint": "Lascia deselezionato su un computer condiviso.",
   "reauthPhoneLock": "Usa il blocco di questo telefono",
@@ -3734,5 +3738,6 @@
   "emailCodeSavedOff": "Il codice email è disattivo.",
   "healthCodePrompt": "Aggiungi un codice email prima del {date} così le note sulla salute e i documenti restano solo per te.",
   "healthCodeLocked": "Le note sulla salute e i documenti restano nascosti finché non aggiungi un codice email.",
-  "healthCodeAction": "Aggiungi un codice email"
+  "healthCodeAction": "Aggiungi un codice email",
+  "healthCodeSnooze": "Non ora (nascondi per 7 giorni)"
 }

@@ -2912,6 +2912,10 @@
   "verify2faStall": "Still opening your desk. You can send a new code, or continue below.",
   "verify2faContinue": "Continue to your desk",
   "verify2faSupport": "Email support@kidease.ca",
+  "verify2faChecking": "正在检查你的登录…",
+  "verify2faCheckingHint": "请稍候，保持此页面打开。",
+  "logoutSigningOut": "正在为你退出登录…",
+  "logoutSigningOutHint": "你很快会回到首页。",
   "keepSignedIn": "保持登录 30 天",
   "keepSignedInHint": "共用电脑上请不要勾选。",
   "reauthPhoneLock": "使用这部手机的锁屏",
@@ -3734,5 +3738,6 @@
   "emailCodeSavedOff": "邮箱验证码已关闭。",
   "healthCodePrompt": "请在 {date} 之前加上邮箱验证码，这样孩子的健康备注和文件只给您看。",
   "healthCodeLocked": "在您加上邮箱验证码之前，孩子的健康备注和文件会保持隐藏。",
-  "healthCodeAction": "加上邮箱验证码"
+  "healthCodeAction": "加上邮箱验证码",
+  "healthCodeSnooze": "暂不（隐藏 7 天）"
 }
