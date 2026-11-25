@@ -36,10 +36,10 @@ test("regenerating the tree did not drop /get-app", () => {
 });
 
 test("verify-2fa auto-start keys off user.id and does not remint while waiting", () => {
-  assert.match(routeFile, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*false(?:,\s*locale:\s*mailLocale)?\s*\}\s*\}\)/);
-  assert.match(routeFile, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*true(?:,\s*locale:\s*mailLocale)?\s*\}\s*\}\)/);
+  assert.match(routeFile, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*false\s*\}\s*\}\)/);
+  assert.match(routeFile, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*true\s*\}\s*\}\)/);
   assert.match(routeFile, /let cancelled = false/);
-  assert.match(routeFile, /\[\s*userId,\s*dest,\s*staff,\s*mailLocale\s*\]/);
+  assert.match(routeFile, /\[\s*userId,\s*dest,\s*staff\s*\]/);
   assert.match(routeFile, /userId=\{user\.id\}/);
   assert.match(routeFile, /decideVerify2faSessionGate/);
   assert.match(routeFile, /waitForSignedInSession/);

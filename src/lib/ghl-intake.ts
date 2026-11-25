@@ -43,11 +43,6 @@ export type GhlIntakeResult =
   | { ok: true; skipped: false; status: number }
   | { ok: false; error: string };
 
-/** True only when GoHighLevel confirmed the contact. Callers stamp crm_*_at on this. */
-export function ghlIntakeConfirmed(result: GhlIntakeResult | { ok: false; error: string } | null | undefined): boolean {
-  return Boolean(result && result.ok === true && result.skipped === false);
-}
-
 function readEnv(env?: EnvMap): EnvMap {
   return env ?? runtimeProcessEnv();
 }

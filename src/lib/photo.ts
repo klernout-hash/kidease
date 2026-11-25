@@ -9,8 +9,7 @@ export const HERO_WIDTHS = [480, 768, 1200] as const;
 export const LISTING_LCP_WIDTHS = [480, 768] as const;
 export const CARD_SIZES = "(max-width: 767px) 172px, (max-width: 1023px) 30vw, 200px";
 export const HERO_SIZES = "(max-width: 767px) 100vw, 560px";
-/** Listing hero. From 768 to 1199px the app column fills up to 1040px (inner foldable display, iPad landscape). */
-export const DETAIL_SIZES = "(max-width: 767px) 100vw, (max-width: 1199px) min(100vw, 1040px), 720px";
+export const DETAIL_SIZES = "(max-width: 767px) 100vw, 720px";
 /** Home How-it-works stills: 1-col phone, 2-col tablet, ~1/3 desktop. */
 export const STEP_SIZES = "(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 380px";
 

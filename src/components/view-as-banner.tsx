@@ -82,7 +82,7 @@ function ViewAsBanner({ view }: { view: ViewAsPublic }) {
         ref={barRef}
         data-ke="view-as-banner"
         role="status"
-        className="ke-safe-x fixed inset-x-0 top-0 z-[80] border-b border-amber-900/20 bg-amber-100 [--ke-pad-x:1rem] pb-3 text-amber-950 pt-[max(0.75rem,env(safe-area-inset-top))]"
+        className="fixed inset-x-0 top-0 z-[80] border-b border-amber-900/20 bg-amber-100 px-4 pb-3 text-amber-950 pt-[max(0.75rem,env(safe-area-inset-top))]"
       >
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">

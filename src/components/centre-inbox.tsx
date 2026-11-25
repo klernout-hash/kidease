@@ -670,7 +670,7 @@ export function CentreInboxDesk({
         <div className="hidden min-h-0 overflow-y-auto border-l border-border xl:block">{detailPane()}</div>
       </div>
       {detailOpen && selected ? (
-        <div className="ke-safe-x fixed inset-0 z-50 flex items-end justify-center md:items-center xl:hidden" role="presentation">
+        <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center xl:hidden" role="presentation">
           <button type="button" className="absolute inset-0 bg-fg/40" aria-label={t("inboxDetailClose")} onClick={() => setDetailOpen(false)} />
           <div
             role="dialog"

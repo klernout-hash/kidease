@@ -14,8 +14,6 @@ test("the parent home has one search step and jobs stay off the dashboard", () =
   assert.doesNotMatch(desk, /findDaycareJobs|EceJobDesk/);
   assert.match(src("src/routes/jobs.tsx"), /EceJobBoard/);
   assert.match(src("src/components/app-tab-bar.tsx"), /search=\{\{ tab: "requests" \}\}/);
-  // "Tour requested" now comes from the shared label used by home and Requests (#1014 item 10).
-  assert.match(src("src/components/parent-requests.tsx"), /parentRequestStatusLabelKey\(row\)/);
-  assert.match(src("src/lib/parent-request-rows.ts"), /parentRequestTourAsked/);
+  assert.match(src("src/components/parent-requests.tsx"), /parentRequestTourAsked/);
   assert.doesNotMatch(src("src/components/parent-requests.tsx"), /SOFT-HOLD/);
 });

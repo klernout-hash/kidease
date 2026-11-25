@@ -459,14 +459,6 @@ export const listLeadRequests = createServerFn({ method: "GET" })
       });
   });
 
-/** KidEase CRM form tag (form:*) for a parent request on a listing. */
-function leadKindGhlForm(kind: LeadKind): "tour" | "waitlist" | "spot" | "info" {
-  if (kind === "tour") return "tour";
-  if (kind === "waitlist") return "waitlist";
-  if (kind === "spot_inquiry") return "spot";
-  return "info";
-}
-
 export const createLeadRequest = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { daycareId: string; kind: LeadKind; message?: string }) => input)
@@ -491,10 +483,6 @@ export const createLeadRequest = createServerFn({ method: "POST" })
       message: data.message,
     });
     if (!recorded) throw new Error("Could not save request");
-    {
-      const { captureFormLead } = await import("@/lib/server/ghl-form-lead");
-      await captureFormLead({ form: leadKindGhlForm(data.kind), userId: context.userId, parentAction: true });
-    }
     void import("@/lib/server/engagement")
       .then(async (mod) => {
         const qa = await mod.centreIsQa(daycareId);
@@ -534,8 +522,7 @@ export const createInfoRequest = createServerFn({ method: "POST" })
     if (listed) await upsertDaycare(sql, listed);
     const exists = await sql<{ id: string }>`select id from daycares where id = ${daycareId} limit 1`;
     if (!exists[0]) throw new Error("Centre not found");
-    const actorId = await resolveActorUserId(data.userId);
-    const userId = actorId || guestInfoUserId(contact.email);
+    const userId = (await resolveActorUserId(data.userId)) || guestInfoUserId(contact.email);
     const note = [
       `${contact.firstName} ${contact.lastName}`,
       contact.phone,
@@ -556,17 +543,6 @@ export const createInfoRequest = createServerFn({ method: "POST" })
       entry: "contact_form",
     });
     if (!recorded) throw new Error("Could not save request");
-    {
-      const { captureFormLead } = await import("@/lib/server/ghl-form-lead");
-      await captureFormLead({
-        form: "info",
-        userId: actorId,
-        email: contact.email,
-        name: `${contact.firstName} ${contact.lastName}`.trim(),
-        phone: contact.phone,
-        parentAction: Boolean(actorId),
-      });
-    }
     return {
       id: recorded.id,
       status: "requested" as const,
@@ -628,18 +604,6 @@ export const createTourInterest = createServerFn({ method: "POST" })
       email: contact.ok ? contact.email : null,
     });
     if (!recorded) throw new Error("Could not save request");
-    {
-      // Tour interest is an info request until the centre posts tour times.
-      const { captureFormLead } = await import("@/lib/server/ghl-form-lead");
-      await captureFormLead({
-        form: "info",
-        userId: actorId,
-        email: contact.ok ? contact.email : null,
-        name: contact.ok ? `${contact.firstName} ${contact.lastName}`.trim() : null,
-        phone: contact.ok ? contact.phone : null,
-        parentAction: Boolean(actorId),
-      });
-    }
     return {
       id: recorded.id,
       status: "requested" as const,

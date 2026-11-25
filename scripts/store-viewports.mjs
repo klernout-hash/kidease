@@ -2,8 +2,7 @@
  * Viewport pass for Play, Samsung, Huawei, and the Windows PWA.
  * Portrait and landscape. Fold, unfold, and a desktop window resize
  * stay on the same page: no reload and no dropped call.
- * iPhone Duo poses are in DUO_POSES below. They use the iPhone shell, not an
- * Android store, so fold-resize.mjs (the fold shard) runs them.
+ * Apple has not published iPhone Duo point sizes; those stay in fold-resize.mjs.
  */
 
 const ROUTES = ["/", "/search", "/login", "/fr", "/fr/login", "/help", "/for-daycares", "/inbox", "/parent", "/call/demo", "/video/demo"];
@@ -65,30 +64,9 @@ export const WINDOWS_SIZES = [
   ...both("win", 2560, 1440, "microsoft"),
 ];
 
-/**
- * iPhone Duo (Apple's foldable). Points from the Xcode 27.1 simulator as
- * reported by third parties (individuation.dev, doesitfit.lol); Apple has not
- * published them. Insets are injected through --ke-safe-*, the way sweepSizes
- * does. Confirm every value in the T1 simulator pass (docs/mobile-builds.md).
- */
-export const DUO_POSES = [
-  { name: "duo-cover-portrait", width: 466, height: 678, safe: { top: 0, right: 84, bottom: 34, left: 0 } },
-  // right/bottom: confirm in T1
-  { name: "duo-cover-landscape", width: 678, height: 466, safe: { top: 0, right: 84, bottom: 21, left: 0 } },
-  // right: confirm in T1 (an iOS 27.1 SDK build may not keep the side strip on the inner display)
-  { name: "duo-inner-landscape", width: 951, height: 669, safe: { top: 0, right: 84, bottom: 34, left: 0 } },
-  // confirm in T1
-  { name: "duo-inner-portrait", width: 669, height: 951, safe: { top: 24, right: 0, bottom: 20, left: 0 } },
-  // Safari on the cover display (not the app): 466 minus the 84pt strip.
-  { name: "duo-safari-cover", width: 382, height: 600, safe: { top: 0, right: 0, bottom: 0, left: 0 }, web: true },
-];
-
-/** The crease on the inner display, in CSS px from the left edge (about 475.5). */
-export const DUO_CREASE_X = 475;
-
 export function pageCap(width) {
-  // App look: 720 on a tablet, then the full width up to 1040 from 900 (inner foldable display, iPad landscape).
-  if (width >= 900) return Math.min(width, 1040);
+  if (width >= 1200) return 1040;
+  if (width >= 1024) return 880;
   if (width >= 768) return 720;
   return width;
 }

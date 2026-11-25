@@ -208,17 +208,14 @@ export function boxesOverlap(a: Box, b: Box, gap = 0): boolean {
 export function placeCoachBubble(
   target: Box,
   bubble: { width: number; height: number },
-  viewport: { width: number; height: number; left?: number },
+  viewport: { width: number; height: number },
 ): CoachPlacement {
   const margin = 12;
   const gap = 16;
-  // `left` is the start of the safe area (iPhone Duo side strip, landscape notch).
-  // `width` is the safe width, so the bubble never runs under the strip.
-  const start = viewport.left ?? 0;
   const width = Math.min(bubble.width, Math.max(160, viewport.width - margin * 2));
   const height = bubble.height;
   const center = target.left + target.width / 2;
-  const left = Math.max(start + margin, Math.min(center - width / 2, start + viewport.width - width - margin));
+  const left = Math.max(margin, Math.min(center - width / 2, viewport.width - width - margin));
   const below = target.top + target.height + gap;
   const above = target.top - gap - height;
   const roomBelow = viewport.height - margin - below;

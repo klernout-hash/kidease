@@ -32,8 +32,8 @@ const NATIVE_UA = "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605
 const CAPPED = new Set(["/", "/search", "/login", "/fr", "/fr/login", "/help", "/for-daycares"]);
 
 function pageCap(width) {
-  // App look: 720 on a tablet, then the full width up to 1040 from 900 (inner foldable display, iPad landscape).
-  if (width >= 900) return Math.min(width, 1040);
+  if (width >= 1200) return 1040;
+  if (width >= 1024) return 880;
   if (width >= 768) return 720;
   return width;
 }
@@ -72,8 +72,7 @@ export async function runIpadViewportPass(browser, base) {
         if (vp.width >= 768 && CAPPED.has(path) && metrics.pageWidth != null) {
           const cap = pageCap(vp.width);
           if (metrics.pageWidth > cap + 1) problems.push(`${label} page ${metrics.pageWidth}>${cap}`);
-          // From 900 the column fills the width on purpose; the page gutters pad the content.
-          if (vp.width < 900 && metrics.pageWidth > vp.width - 48) problems.push(`${label} page edge ${metrics.pageWidth}`);
+          if (metrics.pageWidth > vp.width - 48) problems.push(`${label} page edge ${metrics.pageWidth}`);
         }
         if (vp.width >= 1024 && (path === "/login" || path === "/fr/login") && metrics.appleWidth != null && metrics.appleWidth > 376) {
           problems.push(`${label} apple ${metrics.appleWidth}`);

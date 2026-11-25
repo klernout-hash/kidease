@@ -117,11 +117,6 @@ export const applyToEceJob = createServerFn({ method: "POST" })
       )
       on conflict (job_id, user_id) do update set note = excluded.note
     `;
-    {
-      // KidEase's own CRM (form:job-apply). Not the centre's applicant list.
-      const { captureFormLead } = await import("@/lib/server/ghl-form-lead");
-      await captureFormLead({ form: "job-apply", userId: context.userId, email, name: who[0]?.name });
-    }
     return { ok: true as const };
   });
 

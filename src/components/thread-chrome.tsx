@@ -188,7 +188,6 @@ export function ThreadHeader({
   onDetails,
   showDetails = true,
   bare = false,
-  detailsDocked = "lg",
 }: {
   backTo: "/inbox";
   backSearch?: Record<string, string>;
@@ -199,8 +198,6 @@ export function ThreadHeader({
   onDetails?: () => void;
   showDetails?: boolean;
   bare?: boolean;
-  /** Width from which the details panel sits beside the thread, so the button is not needed. */
-  detailsDocked?: "lg" | "900";
 }) {
   const { t } = useCopy();
   const face = avatars.find((item) => item.image) || avatars[0];
@@ -225,10 +222,7 @@ export function ThreadHeader({
           type="button"
           onClick={onDetails}
           data-ke="inbox-detail-open"
-          className={cn(
-            "min-h-11 shrink-0 rounded-full px-3 text-sm font-semibold touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
-            detailsDocked === "900" ? "min-[900px]:hidden" : "lg:hidden",
-          )}
+          className="min-h-11 shrink-0 rounded-full px-3 text-sm font-semibold touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 lg:hidden"
         >
           {t("inboxDetail")}
         </button>

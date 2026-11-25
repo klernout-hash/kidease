@@ -150,7 +150,7 @@ export function PayrollHome({ locale, onNext }: { locale: "en" | "fr"; onNext?: 
         {copy.showAgain}
       </button>
       {tour ? (
-        <div className="ke-safe-x fixed inset-0 z-40 grid place-items-end bg-fg/40 py-4 [--ke-pad-x:1rem] sm:place-items-center" role="dialog" aria-modal="true" data-ke="pay-tour">
+        <div className="fixed inset-0 z-40 grid place-items-end bg-fg/40 p-4 sm:place-items-center" role="dialog" aria-modal="true" data-ke="pay-tour">
           <div className="w-full max-w-md rounded-2xl bg-surface p-5">
             <p className="text-sm text-muted">{step + 1} / 4</p>
             <h2 className="mt-1 font-display text-2xl">{tourSteps[step][0]}</h2>

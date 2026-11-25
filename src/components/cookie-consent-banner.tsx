@@ -69,7 +69,7 @@ export function CookieConsentBanner() {
       aria-labelledby="ke-cookie-consent-title"
       aria-describedby="ke-cookie-consent-body"
       data-compact={native ? "native" : undefined}
-      className="ke-cookie-consent ke-bottom-prompt ke-safe-x pointer-events-none fixed inset-x-0 z-[55] [--ke-pad-x:0.75rem] pb-2 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] md:bottom-3 md:pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+      className="ke-cookie-consent ke-bottom-prompt pointer-events-none fixed inset-x-0 z-[55] px-3 pb-2 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] md:bottom-3 md:pb-[max(0.5rem,env(safe-area-inset-bottom))]"
     >
       <div className="ke-cookie-consent-panel pointer-events-auto mx-auto flex max-h-[max(64px,4.5rem,calc(100dvh-14rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] max-w-[560px] flex-wrap items-center gap-[8px] overflow-y-auto overscroll-contain rounded-xl bg-surface/95 px-3 py-2 shadow-lift ring-1 ring-border backdrop-blur-md">
         <span className="hidden size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-primary sm:grid">

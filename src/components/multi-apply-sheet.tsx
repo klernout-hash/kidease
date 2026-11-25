@@ -206,7 +206,7 @@ function MultiApplySheet({
   }
 
   return (
-    <div className="ke-safe-x fixed inset-0 z-50 flex items-end justify-center md:items-center" role="presentation">
+    <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="presentation">
       <button type="button" className="absolute inset-0 bg-fg/40" aria-label={t("cancel")} onClick={onClose} />
       <div
         role="dialog"

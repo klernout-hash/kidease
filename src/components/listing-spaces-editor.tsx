@@ -756,7 +756,7 @@ function ConfirmDialog({
     return () => document.removeEventListener("keydown", onKey);
   }, [onCancel]);
   return (
-    <div className="ke-safe-x fixed inset-0 z-[70] flex items-end justify-center sm:items-center" role="presentation">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center" role="presentation">
       <button type="button" className="absolute inset-0 bg-fg/40" aria-label={cancelLabel} onClick={onCancel} />
       <div
         ref={ref}

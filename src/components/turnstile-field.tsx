@@ -90,14 +90,11 @@ export const TurnstileField = memo(function TurnstileField({
   resetSignal = 0,
   onRequired,
   onLoadError,
-  onKeyState,
 }: {
   onToken: (token: string) => void;
   resetSignal?: number;
   onRequired?: (required: boolean) => void;
   onLoadError?: (message: string | null) => void;
-  /** "loading" until the site key answer arrives, then "on" (widget shown) or "off" (no Turnstile on this host). */
-  onKeyState?: (state: "loading" | "on" | "off") => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
@@ -131,10 +128,6 @@ export const TurnstileField = memo(function TurnstileField({
   useEffect(() => {
     onRequired?.(Boolean(siteKey));
   }, [siteKey, onRequired]);
-
-  useEffect(() => {
-    onKeyState?.(siteKey === undefined ? "loading" : siteKey ? "on" : "off");
-  }, [siteKey, onKeyState]);
 
   useEffect(() => {
     onLoadError?.(loadError);

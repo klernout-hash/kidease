@@ -3,6 +3,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { ShellLite } from "@/components/shell-lite";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
+import { RedirectToSignIn } from "@/lib/auth/gates";
 import { authClient } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
@@ -11,7 +12,6 @@ import {
   mapAuthSessionUser,
   VERIFY_2FA_SESSION_GRACE_MS,
   verify2faSearchNext,
-  verify2faSignedOutTarget,
 } from "@/lib/auth/verify-2fa-session";
 import { waitForSignedInSession } from "@/lib/auth/session-settle";
 import {
@@ -29,11 +29,7 @@ import {
   markContinued,
 } from "@/lib/auth/login-funnel";
 import { sanitizePostLoginNext, staffTwoFactorRequired } from "@/lib/desks";
-import {
-  LOGIN_TAKING_TOO_LONG_MESSAGE,
-  twoFactorSessionGone,
-  twoFactorVerifyErrorMessage,
-} from "@/lib/auth/login-stall";
+import { LOGIN_TAKING_TOO_LONG_MESSAGE } from "@/lib/auth/login-stall";
 import { isNative } from "@/lib/native";
 import { yieldToMain } from "@/lib/yield-main";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
@@ -133,32 +129,14 @@ function Verify2faChecking() {
   );
 }
 
-/** The sign-in page's language for this screen: /fr/verify-2fa or a French UI. */
-function useVerify2faLocale(): "fr" | "en" {
-  const { locale } = useCopy();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  return locale === "fr" || isFrPath(pathname) ? "fr" : "en";
-}
-
-/**
- * Both the browser and the server say signed out: the half-finished sign-in
- * expired (#1014 item 7). Go to the matching sign-in page with expired=1 and
- * the real destination, never `/` and never back to /verify-2fa.
- */
+/** Both the browser and the server say signed out. Log it, then go to sign-in. */
 function Verify2faSignedOut({ dest }: { dest: string }) {
-  const routeLocale = useVerify2faLocale();
-  const target = verify2faSignedOutTarget(dest, routeLocale);
   useEffect(() => {
     if (isGovDeskPath(dest)) {
       captureLoginFunnel({ step: "failed", reason: "gov_session_missing", native: isNative() });
     }
-    window.location.replace(target);
-  }, [dest, target]);
-  return (
-    <ShellLite>
-      <Verify2faChecking />
-    </ShellLite>
-  );
+  }, [dest]);
+  return <RedirectToSignIn />;
 }
 
 function VerifyTwoFactorPage() {
@@ -226,11 +204,9 @@ async function leave(rawDest: string) {
 }
 
 function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string }) {
-  const { locale, t } = useCopy();
+  const { locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const signInTo = locale === "fr" || isFrPath(pathname) ? "/fr/login" : "/login";
-  // The code email follows the screen's language, not only the QC flag (#1014 item 4).
-  const mailLocale: "fr" | "en" = locale === "fr" || isFrPath(pathname) ? "fr" : "en";
   const show = (message: string) => presentAuthCopy(locale, message);
   const staff = staffTwoFactorRequired(dest);
   const [code, setCode] = useState("");
@@ -243,20 +219,14 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
   const [canSkip, setCanSkip] = useState(false);
   const [stalled, setStalled] = useState(false);
   const [pageStalled, setPageStalled] = useState(false);
-  // The security check renders on first paint (#1014 item 2). Until Cloudflare
-  // hands back a token, Verify stays off with a visible "Loading security check…".
-  const [turnstileKey, setTurnstileKey] = useState<"loading" | "on" | "off">("loading");
-  const [turnstileError, setTurnstileError] = useState<string | null>(null);
+  const [needTurnstile, setNeedTurnstile] = useState(false);
   const [remember, setRemember] = useState(false);
   const [resendWait, setResendWait] = useState(0);
   const submitLock = useRef(false);
   const attempt = useRef(0);
   const formRef = useRef<HTMLFormElement>(null);
-  const autoSubmitted = useRef("");
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
     useTurnstileToken();
-  const turnstileReady = turnstileKey === "off" || (turnstileKey === "on" && (!turnstileRequired || Boolean(token.trim())));
-  const turnstileLoading = !turnstileReady && !turnstileError;
 
   useEffect(() => {
     captureLoginFunnel({ step: "two_factor_viewed", native: isNative() });
@@ -297,7 +267,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
             captureLoginFunnel({ step: "two_factor_skipped", reason: "already_verified" });
             return leave(dest);
           }
-          return startTwoFactor({ data: { force: false, locale: mailLocale } }).then((res) => {
+          return startTwoFactor({ data: { force: false } }).then((res) => {
             if (cancelled) return;
             setHint(res.emailed);
             setDelivered(res.sent || Boolean(res.wait) || Boolean("reused" in res && res.reused));
@@ -305,10 +275,6 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
         })
         .catch((err) => {
           if (cancelled) return;
-          if (twoFactorSessionGone(err instanceof Error ? err.message : "")) {
-            window.location.replace(verify2faSignedOutTarget(dest, mailLocale));
-            return;
-          }
           if (!staff) {
             captureLoginFunnel({ step: "two_factor_skipped", reason: "status_unavailable" });
             return leave(dest);
@@ -324,7 +290,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
     return () => {
       cancelled = true;
     };
-  }, [userId, dest, staff, mailLocale]);
+  }, [userId, dest, staff]);
 
   function explainBlocker(): string | null {
     if (!ready) return "Still sending your code. Try again in a moment.";
@@ -354,15 +320,8 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
       })
       .catch((err) => {
         if (attempt.current !== id) return;
-        const raw = err instanceof Error ? err.message : "Could not verify";
-        if (twoFactorSessionGone(raw)) {
-          // The half-finished sign-in is gone: send them to sign in again, with the notice.
-          captureLoginFunnel({ step: "two_factor_failed", reason: "session_expired", native: isNative() });
-          window.location.replace(verify2faSignedOutTarget(dest, mailLocale));
-          return;
-        }
         captureLoginFunnel({ step: "two_factor_failed", reason: "code", native: isNative() });
-        setError(twoFactorVerifyErrorMessage(raw));
+        setError(err instanceof Error ? err.message : "Could not verify");
         resetTurnstile();
       })
       .finally(() => {
@@ -374,26 +333,17 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
 
   function onCodeChange(nextCode: string) {
     setCode(nextCode);
+    if (nextCode.length > 0 && !needTurnstile) setNeedTurnstile(true);
+    const turnstileReady = !turnstileRequired || Boolean(token.trim());
+    if (nextCode.length === 6 && ready && !busy && !submitLock.current && turnstileReady) {
+      void yieldToMain().then(() => {
+        if (!submitLock.current) formRef.current?.requestSubmit();
+      });
+    }
   }
 
-  // Auto-submit once per typed code, as soon as the code, the sent email and
-  // the security check are all ready. A failed code is not re-sent when a
-  // fresh Turnstile token arrives; the user edits the code or taps Verify.
-  useEffect(() => {
-    if (code.length !== 6) {
-      autoSubmitted.current = "";
-      return;
-    }
-    if (!ready || busy || submitLock.current || !turnstileReady) return;
-    if (autoSubmitted.current === code) return;
-    autoSubmitted.current = code;
-    void yieldToMain().then(() => {
-      if (!submitLock.current) formRef.current?.requestSubmit();
-    });
-  }, [code, ready, busy, turnstileReady]);
-
   return (
-    <main className="ke-auth-viewport ke-auth-top mx-auto grid place-items-center px-4 py-10" data-ke="verify-2fa">
+    <main className="ke-auth-viewport mx-auto grid place-items-center px-4 py-10">
       <div className="w-full max-w-md rounded-xl bg-surface p-5 shadow-card ring-1 ring-border sm:p-8">
         <div className="flex justify-center">
           <BrandMark size="md" />
@@ -433,18 +383,11 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               </span>
             </span>
           </label>
-          <TurnstileField
-            onToken={onToken}
-            resetSignal={resetSignal}
-            onRequired={onRequired}
-            onKeyState={setTurnstileKey}
-            onLoadError={setTurnstileError}
-          />
-          {turnstileLoading ? (
-            <p className="text-sm text-muted" role="status" data-ke="verify-turnstile-loading">
-              {t("verify2faTurnstileLoading")}
-            </p>
-          ) : null}
+          {needTurnstile ? (
+            <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
+          ) : (
+            <div className="min-h-[65px]" aria-hidden="true" />
+          )}
           {error ? <p className="text-sm text-danger" data-ke="auth-error">{show(error)}</p> : null}
           {notice && !error ? <p className="text-sm text-muted">{show(notice)}</p> : null}
           {stalled ? (
@@ -452,13 +395,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               {show("Still opening your desk. You can send a new code, or continue below.")}
             </p>
           ) : null}
-          <Button
-            type="submit"
-            className="w-full min-h-12"
-            disabled={busy || !turnstileReady}
-            aria-busy={busy}
-            data-ke="verify-submit"
-          >
+          <Button type="submit" className="w-full min-h-12" disabled={busy} aria-busy={busy}>
             {busy ? show("Opening your desk…") : show("Verify and continue")}
           </Button>
         </form>
@@ -473,7 +410,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
             setBusy(true);
             setError(null);
             setNotice(null);
-            void startTwoFactor({ data: { force: true, locale: mailLocale } })
+            void startTwoFactor({ data: { force: true } })
               .then((res) => {
                 setHint(res.emailed);
                 if (!res.sent) {

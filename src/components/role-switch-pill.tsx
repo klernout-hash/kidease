@@ -59,7 +59,7 @@ export function RoleSwitchPill() {
       ) : null}
       {next && switching ? (
         <div
-          className="ke-screen-enter ke-safe-x fixed inset-0 z-[80] flex flex-col items-center justify-center gap-4 bg-bg [--ke-pad-x:1.5rem] text-center"
+          className="ke-screen-enter fixed inset-0 z-[80] flex flex-col items-center justify-center gap-4 bg-bg px-6 text-center"
           data-ke="mode-switch"
           data-desk={switching}
           role="status"

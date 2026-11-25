@@ -275,18 +275,6 @@ export function parentRequestStatusKey(
   return "parentRequestWaiting";
 }
 
-export type ParentRequestStatusLabelKey = ReturnType<typeof parentRequestStatusKey> | "parentRequestTourAsked";
-
-/**
- * The one label a parent sees for a request, on the home card and on
- * Requests alike (#1014 item 10). Declined = the centre said no. Cancelled =
- * the parent withdrew, or the request expired or closed. FR: Refusée / Annulée.
- */
-export function parentRequestStatusLabelKey(row: Pick<ParentRequestRow, "kind" | "status">): ParentRequestStatusLabelKey {
-  if (row.kind === "tour" && row.status === "waiting") return "parentRequestTourAsked";
-  return parentRequestStatusKey(row.status);
-}
-
 type _LeadMatches = LeadRequest extends LeadInput ? true : false;
 const _leadShape: _LeadMatches = true;
 void _leadShape;

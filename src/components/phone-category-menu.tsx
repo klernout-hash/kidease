@@ -7,8 +7,6 @@ import { staffPhoneMarkerAllowed } from "@/lib/staff-permissions";
 import { signOut } from "@/lib/auth/client";
 import { menuDeskPath, providerDeskPath } from "@/lib/desk-nav";
 import { localePath } from "@/lib/locale-path";
-import { signOutTarget } from "@/lib/sign-out-target";
-import { useRoleChrome } from "@/components/role-chrome";
 import type { MenuIconId } from "@/lib/menu-icons";
 import { useCopy } from "@/lib/use-copy";
 
@@ -145,7 +143,6 @@ export function PhoneCategoryMenu({ host }: { host: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useCurrentUserState();
   const { session } = useSessionDesks();
-  const chrome = useRoleChrome();
   const fr = locale === "fr";
   const signedIn = Boolean(user);
   const staffView = host && session?.centreOwner === false;
@@ -215,11 +212,7 @@ export function PhoneCategoryMenu({ host }: { host: boolean }) {
           <Link to={localePath("/delete-account", locale)} data-ke="menu-delete-account">
             {t("deleteAccount")}
           </Link>
-          <button
-            type="button"
-            data-ke="menu-sign-out"
-            onClick={() => void signOut(signOutTarget({ role: chrome.role, pathname, locale }))}
-          >
+          <button type="button" data-ke="menu-sign-out" onClick={() => void signOut("/")}>
             <MenuGlyph id="logout" />
             {t("signOut")}
           </button>

@@ -3,8 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { flattenStripeBody, setStripeFetchForTests, stripeRequest } from "../src/lib/server/stripe-checkout.ts";
-import { StripeApiError } from "../src/lib/stripe-public-error.ts";
+import { flattenStripeBody } from "../src/lib/server/stripe-checkout.ts";
 import {
   applicationFeeCents,
   accountSessionBody,
@@ -400,12 +399,6 @@ test("wallet save and invoices do not use a hosted page", () => {
   const account = connectedAccountBody();
   assert.equal(account.country, "CA");
   assert.equal(account.controller.fees.payer, "account");
-  assert.deepEqual(account.controller, {
-    stripe_dashboard: { type: "none" },
-    fees: { payer: "account" },
-    losses: { payments: "stripe" },
-  });
-  assert.equal("requirement_collection" in account.controller, false);
   assert.equal(account.capabilities.acss_debit_payments.requested, true);
   assert.equal(account.capabilities.card_payments.requested, true);
   assert.equal(accountSessionBody("acct_day").components.payouts.enabled, true);
@@ -566,65 +559,6 @@ test("A1: a Stripe error returns stripe_error with its code and records connect_
   assert.equal(calls.records[0].surface, "connect_onboarding");
   assert.equal(stripeErrorCode(new Error("no code")), "unknown");
   assert.equal(stripeErrorCode({ code: "Bad Code!" }), "unknown");
-  assert.equal(stripeErrorCode({ type: "invalid_request_error" }), "invalid_request_error");
-  assert.equal(stripeErrorCode({ param: "controller" }), "controller");
-  assert.equal(stripeErrorCode({ param: "controller[losses][payments]" }), "controller_losses_payments");
-  assert.equal(stripeErrorCode({ status: 400 }), "http_400");
-  assert.equal(stripeErrorCode({ code: "account_invalid", param: "controller", status: 400 }), "account_invalid");
-  assert.equal(stripeErrorCode({ code: "Bad Code!", status: 400 }), "http_400");
-});
-
-test("A1: StripeApiError keeps a sanitised type and param, and onboarding never shows unknown for them", async () => {
-  // The Nov 25 failure: Stripe sent type + message but no code.
-  const stripeMessage =
-    "When controlling requirement collection, the Connect application must also control losses, fees, and specify a dashboard type of none.";
-  const err = new StripeApiError(stripeMessage, 400, undefined, { type: "invalid_request_error", param: "controller" });
-  assert.equal(err.code, null);
-  assert.equal(err.type, "invalid_request_error");
-  assert.equal(err.param, "controller");
-  assert.equal(stripeErrorCode(err), "controller");
-  const typeOnly = new StripeApiError(stripeMessage, 400, null, { type: "invalid_request_error" });
-  assert.equal(stripeErrorCode(typeOnly), "invalid_request_error");
-  const statusOnly = new StripeApiError(stripeMessage, 502, null);
-  assert.equal(stripeErrorCode(statusOnly), "http_502");
-  const dirty = new StripeApiError(stripeMessage, 400, null, { type: "Has spaces and acct_123 text!", param: "x".repeat(80) });
-  assert.equal(dirty.type, null);
-  assert.equal(dirty.param, null);
-  const { deps } = onboardingDeps({
-    stripePost: async () => {
-      throw new StripeApiError(stripeMessage, 400, undefined, { type: "invalid_request_error" });
-    },
-  });
-  const res = await runConnectOnboarding(deps);
-  assert.equal(res.reason, "stripe_error");
-  assert.equal(res.code, "invalid_request_error");
-  assert.notEqual(res.code, "unknown");
-  assert.equal(String(res.code).includes("controlling"), false);
-});
-
-test("A1: stripeRequest passes Stripe's error type and param to StripeApiError", async () => {
-  setStripeFetchForTests(async () =>
-    new Response(
-      JSON.stringify({ error: { type: "invalid_request_error", param: "controller[losses][payments]", message: "Nope." } }),
-      { status: 400, headers: { "Content-Type": "application/json" } },
-    ),
-  );
-  try {
-    await assert.rejects(
-      () => stripeRequest("/accounts", { country: "CA" }, "POST", { secret: "sk_test_unit" }),
-      (err) => {
-        assert.ok(err instanceof StripeApiError);
-        assert.equal(err.status, 400);
-        assert.equal(err.code, null);
-        assert.equal(err.type, "invalid_request_error");
-        assert.equal(err.param, "controller[losses][payments]");
-        assert.equal(stripeErrorCode(err), "controller_losses_payments");
-        return true;
-      },
-    );
-  } finally {
-    setStripeFetchForTests(null);
-  }
 });
 
 test("A1: Connect.js gets the first secret once, then a fresh one", async () => {

@@ -12,27 +12,6 @@ export const LOGIN_POST_MS = 15_000;
 export const LOGIN_CONTINUE_MS = 12_000;
 export const ADMIN_IDLE_CHECK_MS = 6_000;
 
-/** The half-finished sign-in (password done, email code pending) expired (#1014 item 7). */
-export const SIGN_IN_TIMED_OUT_MESSAGE = "Your sign-in timed out. Sign in again to get a new code.";
-
-/** Server answers from /verify-2fa that mean "this sign-in is gone": session or code challenge. */
-const SIGN_IN_GONE_ERRORS = new Set([
-  "Unauthorized",
-  "That code expired. Request a new one.",
-  "Request a new code first.",
-]);
-
-/** Map a /verify-2fa server error to the timed-out message when the sign-in or its code expired. */
-export function twoFactorVerifyErrorMessage(raw: string | null | undefined): string {
-  const text = String(raw || "").trim();
-  return SIGN_IN_GONE_ERRORS.has(text) ? SIGN_IN_TIMED_OUT_MESSAGE : text;
-}
-
-/** True when the server said the session itself is gone (not just the code). */
-export function twoFactorSessionGone(raw: string | null | undefined): boolean {
-  return String(raw || "").trim() === "Unauthorized";
-}
-
 export const ADMIN_SESSION_TIMEOUT_MESSAGE =
   "Admin session timed out. Enter your password to continue.";
 

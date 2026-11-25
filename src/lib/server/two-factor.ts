@@ -14,7 +14,7 @@ import { TWO_FACTOR_HOURLY_MS } from "@/lib/auth-rate-limit";
 import { TWO_FACTOR_DEVICE_TTL_MS } from "@/lib/two-factor-cookie";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 import { brandedNotice } from "@/lib/email-layout";
-import { OTP_SUBJECT_EN, OTP_SUBJECT_FR, explicitAuthUiLocale } from "@/lib/fr-auth-qc";
+import { OTP_SUBJECT_EN, OTP_SUBJECT_FR } from "@/lib/fr-auth-qc";
 
 const TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = TWO_FACTOR_MAX_ATTEMPTS;
@@ -34,17 +34,9 @@ async function ensureTable() {
   await ensureLoginChallenges();
 }
 
-/**
- * `uiLocale` is the language of the sign-in screen the person is on. An
- * explicit "fr" (/fr/verify-2fa, /fr/gov/login) sends French even when
- * FEATURE_FR_AUTH_QC is off; "en" sends English. With no UI language the
- * flag-gated Quebec guess decides (frenchAuthMailForEmail), as before.
- */
-async function sendCodeEmail(to: string, code: string, uiLocale?: "fr" | "en" | null) {
-  const ui = explicitAuthUiLocale(uiLocale);
-  const french = ui
-    ? ui === "fr"
-    : await (await import("@/lib/server/fr-auth-mail.server")).frenchAuthMailForEmail(to);
+async function sendCodeEmail(to: string, code: string) {
+  const { frenchAuthMailForEmail } = await import("@/lib/server/fr-auth-mail.server");
+  const french = await frenchAuthMailForEmail(to);
   const subject = french ? OTP_SUBJECT_FR : OTP_SUBJECT_EN;
   const lead = french
     ? "Ce code expire dans 10 minutes. Utilisez-le pour terminer la connexion."
@@ -56,8 +48,8 @@ async function sendCodeEmail(to: string, code: string, uiLocale?: "fr" | "en" | 
     ? "Vous recevez ce message parce qu’une connexion à KidEase a été demandée."
     : "You get this because someone asked to sign in to KidEase.";
   const text = french
-    ? `Votre code de connexion KidEase est ${code}.\n\nIl expire dans 10 minutes. Si vous n’avez pas essayé de vous connecter, ignorez ce courriel.\n\n${reason}\n\nKidEase · kidease.ca`
-    : `Your KidEase sign-in code is ${code}.\n\nIt expires in 10 minutes. If you did not try to sign in, you can ignore this email.\n\n${reason}\n\nKidEase · kidease.ca`;
+    ? `Votre code de vérification KidEase est ${code}.\n\nIl expire dans 10 minutes. Si vous n’avez pas essayé de vous connecter, ignorez ce courriel.`
+    : `Your KidEase verification code is ${code}.\n\nIt expires in 10 minutes. If you did not try to sign in, you can ignore this email.`;
   const html = `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
@@ -65,7 +57,6 @@ async function sendCodeEmail(to: string, code: string, uiLocale?: "fr" | "en" | 
       <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
       <h1 style="margin:12px 0 0;font-size:28px;letter-spacing:.12em;">${code}</h1>
       <p style="margin:16px 0 0;color:#5c6578;">${lead}</p>
-      <p style="margin:16px 0 0;color:#5c6578;font-size:13px;">${reason}</p>
     </td></tr>
   </table>
 </body></html>`;
@@ -122,10 +113,8 @@ export const getTwoFactorStatus = createServerFn({ method: "GET" })
 
 export const startTwoFactor = createServerFn({ method: "POST" })
   .middleware([secondFactorMiddleware])
-  .validator((input: { force?: boolean; locale?: string } = {}) => ({
+  .validator((input: { force?: boolean } = {}) => ({
     force: Boolean(input?.force),
-    // The sign-in screen's language (#1014 item 4). Only "fr" / "en" survive.
-    locale: explicitAuthUiLocale(input?.locale),
   }))
   .handler(async ({ context, data }) => {
     const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
@@ -195,7 +184,7 @@ export const startTwoFactor = createServerFn({ method: "POST" })
     const id = nid("2fa");
     let status: "sent" | "logged";
     try {
-      status = await sendCodeEmail(email, code, data.locale);
+      status = await sendCodeEmail(email, code);
     } catch (err) {
       throw new Error(friendlyTwoFactorMailError(err));
     }

@@ -4,7 +4,6 @@ import { govMenuHref, type GovSection } from "@/lib/gov/menu";
 import type { GovDashboard } from "@/lib/gov/aggregate";
 import { feeBucketLabel, govCopy } from "@/lib/gov/copy";
 import { provinceName, regionForCity } from "@/lib/gov/places";
-import { formatGovAsOf } from "@/lib/gov/as-of";
 import { GovFrame } from "@/components/gov/gov-frame";
 import { OVERSIGHT_ITEMS, facilityRisk, govOversightEnabled } from "@/lib/gov/oversight";
 import { GovJobShortage } from "@/components/ece-job-desk";
@@ -259,17 +258,6 @@ export function GovDashboardView({
 
   const kpis = data.kpis;
   const [searchText, setSearchText] = useState("");
-  // Local Canada time with a zone label (#1014 item 6). The browser
-  // zone is only read after mount, so SSR and hydration print the same text.
-  const [browserZone, setBrowserZone] = useState<string | null>(null);
-  useEffect(() => {
-    try {
-      setBrowserZone(Intl.DateTimeFormat().resolvedOptions().timeZone || null);
-    } catch {
-      setBrowserZone(null);
-    }
-  }, []);
-  const asOf = formatGovAsOf(data.generatedAt, data.province, data.locale === "fr" ? "fr" : "en", browserZone);
   const needle = searchText.trim().toLowerCase();
   const flagged = (data.licenceFlags ?? []).filter((flag) => {
     if (!needle) return true;
@@ -292,7 +280,7 @@ export function GovDashboardView({
       city={cityValue}
       regions={regionOptions}
       cities={cityOptions}
-      asOf={asOf}
+      asOf={`${data.generatedAt.slice(0, 16).replace("T", " ")} UTC`}
       orgName={data.orgName}
       search={searchText}
       onSearch={setSearchText}

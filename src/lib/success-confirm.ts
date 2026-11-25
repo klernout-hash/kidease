@@ -66,8 +66,7 @@ export const SUCCESS_ACTIONS: Record<SuccessActionId, SuccessAction> = {
   accountCreated: { variant: "modal", titleKey: "successAccountCreated", bodyKey: "successAccountCreatedBody" },
   childAdded: { variant: "toast", titleKey: "successChildAdded", bodyKey: "successSavedBody" },
   childSaved: { variant: "toast", titleKey: "profileSaved", bodyKey: "successSavedBody" },
-  // /account save: one toast titled "Saved" / "Enregistré" (#1014 item 9a).
-  profileSaved: { variant: "toast", titleKey: "successSaved", bodyKey: "successSavedBody" },
+  profileSaved: { variant: "toast", titleKey: "successProfileSaved", bodyKey: "successSavedBody" },
   alertsSaved: { variant: "toast", titleKey: "alertPrefsSaved", bodyKey: "successSavedBody" },
   searchSaved: { variant: "modal", titleKey: "saveSearchSaved", bodyKey: "successSearchSavedBody" },
   listingSaved: { variant: "toast", titleKey: "savedToShortlist" },

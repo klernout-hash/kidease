@@ -45,16 +45,5 @@ export function transactionalMailFrom(mailFrom = process.env.MAIL_FROM): string 
   if (!trimmed || isApexKidEaseFrom(trimmed) || isLegacyLoginSendFrom(trimmed)) {
     return DEFAULT_TRANSACTIONAL_MAIL_FROM;
   }
-  return withKidEaseDisplayName(trimmed);
-}
-
-/**
- * A bare address (MAIL_FROM=noreply@send.kidease.ca) shows up in the inbox as
- * the raw address, which spam filters and people both trust less. Give it the
- * human name "KidEase". A header that already has a name is kept as is.
- */
-export function withKidEaseDisplayName(header: string): string {
-  const trimmed = header.trim();
-  if (!trimmed || trimmed.includes("<")) return trimmed;
-  return `KidEase <${trimmed}>`;
+  return trimmed;
 }

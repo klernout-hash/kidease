@@ -4,9 +4,6 @@
  */
 
 import { tourInventoryState, type TourInventoryState } from "./tour-hold.ts";
-import { PROVINCE_TIMEZONES } from "./province-timezone.ts";
-
-export { PROVINCE_TIMEZONES, provinceTimezone } from "./province-timezone.ts";
 
 export const DEFAULT_TOUR_TIMEZONE = "America/Winnipeg";
 
@@ -61,10 +58,25 @@ export function resolveTourTimezone(value?: string | null): string {
 }
 
 /**
- * Province → IANA zone for public tour clocks. The map lives in
- * province-timezone.ts so other clocks (the government desk) share it.
+ * Province → IANA zone for public tour clocks.
+ * Nunavut uses Eastern (Iqaluit). `America/Iqaluit` is not in the director list.
+ * Saskatchewan is Central with no daylight-saving shift.
  */
-const PROVINCE_TOUR_TIMEZONES: Record<string, TourTimezone> = PROVINCE_TIMEZONES;
+const PROVINCE_TOUR_TIMEZONES: Record<string, TourTimezone> = {
+  BC: "America/Vancouver",
+  YT: "America/Whitehorse",
+  AB: "America/Edmonton",
+  NT: "America/Edmonton",
+  SK: "America/Regina",
+  MB: "America/Winnipeg",
+  ON: "America/Toronto",
+  QC: "America/Toronto",
+  NU: "America/Toronto",
+  NB: "America/Halifax",
+  NS: "America/Halifax",
+  PE: "America/Halifax",
+  NL: "America/St_Johns",
+};
 
 export function tourTimezoneForProvince(province?: string | null): string | null {
   const code = String(province ?? "").trim().toUpperCase();

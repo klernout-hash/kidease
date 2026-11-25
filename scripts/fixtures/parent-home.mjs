@@ -17,11 +17,7 @@ import { isLeadStatus, leadStatusCopyKey } from "../../src/lib/lead-requests.ts"
 import { spotOfferCopy } from "../../src/lib/spot-offer-copy.ts";
 import { billDollars, billIsOpen } from "../../src/lib/bill.ts";
 import { failureReasonText } from "../../src/lib/payment-state.ts";
-import {
-  parentRequestRows,
-  parentRequestStatusLabelKey,
-  selectParentTours,
-} from "../../src/lib/parent-request-rows.ts";
+import { selectParentTours } from "../../src/lib/parent-request-rows.ts";
 import { attendanceCopy } from "../../src/lib/attendance-handoff.ts";
 import { centreClockLabel } from "../../src/lib/parent-arrival.ts";
 import { parentHomeCareRows } from "../../src/lib/parent-home-care.ts";
@@ -91,11 +87,7 @@ export function renderParentHomeFixture({
     "@/lib/locale-path": { localePath },
     "@/lib/parent-home-stage": { parentHomeSectionOrder, parentHomeStage },
     "@/lib/bill": { billDollars, billIsOpen },
-    "@/lib/parent-request-rows": {
-      parentRequestRows,
-      parentRequestStatusLabelKey,
-      selectParentTours,
-    },
+    "@/lib/parent-request-rows": { selectParentTours },
     "@/lib/utils": { money },
     "@/lib/sitemap": { isSafeSitemapSlug },
     "@/lib/role-access": { showsParentBrowseActions },

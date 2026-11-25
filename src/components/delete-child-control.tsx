@@ -48,7 +48,7 @@ export function DeleteChildControl({
         {t("deleteChild")}
       </Button>
       {open ? (
-        <div className="ke-safe-x fixed inset-0 z-[60] flex items-end justify-center py-4 [--ke-pad-x:1rem] md:items-center" role="presentation">
+        <div className="fixed inset-0 z-[60] flex items-end justify-center p-4 md:items-center" role="presentation">
           <button type="button" className="absolute inset-0 bg-fg/40" aria-label={t("cancel")} onClick={() => !busy && setOpen(false)} />
           <div
             role="dialog"

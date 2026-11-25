@@ -25,7 +25,7 @@ import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
 import { polishProfilePhoto } from "@/lib/server/profile-photo";
 import { authClient, signOut } from "@/lib/auth/client";
 import { getMyContact, saveMyContact } from "@/lib/server/profile-contact";
-import { AboutYouForm, type AboutYouSave } from "@/components/about-you-form";
+import { AboutYouForm } from "@/components/about-you-form";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
 import { FamilyVaultPanel } from "@/components/family-vault";
 import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
@@ -310,8 +310,6 @@ function ProfilePane() {
   });
   const [nameInvalid, setNameInvalid] = useState(false);
   const [editField, setEditField] = useState<"name" | "phone" | "email" | "work" | "about" | null>(null);
-  // Done also saves the embedded About you fields (#1014 item 9b): one save button.
-  const aboutSaveRef = useRef<AboutYouSave | null>(null);
   const [gapTick, setGapTick] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
   const contactEpoch = useRef(0);
@@ -481,9 +479,9 @@ function ProfilePane() {
       savedContact.current = { name: saved.name, phone: saved.phone, bio: saved.bio };
       // The contact row is saved. Say so now, before the slower consent and
       // address writes, so a later failure cannot swallow the success toast.
-      // One toast only (#1014 item 9a): the catalog card says "Saved". A second
-      // sonner toast.success here used to stack a "Profile saved" toast on top.
+      // confirmAction first: the toast bridge's bare "Good Job" is then deduped.
       confirmAction(t, "profileSaved");
+      toast.success(t("successProfileSaved"));
       setSaveOk(true);
       try {
         const nextConsent = await saveMyCaslConsents({
@@ -539,10 +537,7 @@ function ProfilePane() {
           toast.warning(t("accountAnchorSaveFailed"));
         }
       }
-      // The About you fields sit next to the bio with no Save of their own.
-      let aboutOk = true;
-      if (aboutSaveRef.current) aboutOk = await aboutSaveRef.current();
-      if (leaveEdit && aboutOk) {
+      if (leaveEdit) {
         setNameInvalid(false);
         void navigate({
           to: accountTo,
@@ -1113,7 +1108,7 @@ function ProfilePane() {
                 <span className="mt-1 block text-right text-[12px] text-subtle">{bio.length}/400</span>
               </label>
             ) : null}
-            {editField === "about" ? <AboutYouForm embedded saveRef={aboutSaveRef} /> : null}
+            {editField === "about" ? <AboutYouForm /> : null}
             {smsNote ? (
               <p className="mt-3 text-sm text-danger" role="alert">
                 {smsNote}

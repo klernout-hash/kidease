@@ -1,5 +1,4 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import { List, Map, Search, SlidersHorizontal, X } from "lucide-react";
 import { popularHomeCities } from "@/lib/home-popular-cities";
 import { reverseGeocode } from "@/lib/geo";
@@ -383,25 +382,8 @@ function SearchSheet({
       closeRef.current();
     }
     window.addEventListener("popstate", onPop);
-    // Belt and braces for fold and unfold: a modal <dialog> whose box is hidden
-    // makes the whole page inert. If that ever happens, close it. The draft
-    // lives in the parent, so the typed text is kept for the next open.
-    const media = typeof window.matchMedia === "function" ? window.matchMedia("(min-width: 768px)") : null;
-    function onWidth() {
-      requestAnimationFrame(() => {
-        if (!node || !node.open || !node.isConnected) return;
-        const box = node.getBoundingClientRect();
-        if (box.width >= 1 && box.height >= 1) return;
-        if (pushed.current) {
-          pushed.current = false;
-          history.back();
-        } else closeRef.current();
-      });
-    }
-    media?.addEventListener("change", onWidth);
     return () => {
       window.removeEventListener("popstate", onPop);
-      media?.removeEventListener("change", onWidth);
       if (node.open) node.close();
     };
   }, []);
@@ -465,12 +447,8 @@ function SearchSheet({
   }
 
   const last = draft.step === "who";
-  if (typeof document === "undefined") return null;
 
-  // Portalled to <body>: the results header that opens this sheet sits in an
-  // md:hidden wrapper, and a modal <dialog> inside it shrinks to 0x0 when a
-  // phone unfolds past 768px, leaving the page stuck behind it.
-  return createPortal(
+  return (
     <dialog
       ref={dialogRef}
       aria-modal="true"
@@ -478,7 +456,7 @@ function SearchSheet({
       data-ke="msv2-sheet"
       data-step={draft.step}
       className={cn(
-        "msv2-dialog fixed inset-x-0 bottom-0 z-50 m-0 mt-10 h-[calc(100dvh-2.5rem)] w-full max-w-none rounded-t-3xl border-0 bg-bg py-0 pl-[var(--ke-safe-left,0px)] pr-[var(--ke-safe-right,0px)] text-fg shadow-card md:px-0",
+        "msv2-dialog fixed inset-x-0 bottom-0 z-50 m-0 mt-10 h-[calc(100dvh-2.5rem)] w-full max-w-none rounded-t-3xl border-0 bg-bg p-0 text-fg shadow-card",
         reduce ? "motion-reduce:transition-opacity" : "transition-transform duration-300",
       )}
       onCancel={(event) => {
@@ -717,8 +695,7 @@ function SearchSheet({
           )}
         </div>
       </div>
-    </dialog>,
-    document.body,
+    </dialog>
   );
 }
 

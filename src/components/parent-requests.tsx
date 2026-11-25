@@ -5,7 +5,7 @@ import { KidNotebook } from "@/components/kid-art";
 import { TourCountSummary } from "@/components/tour-count-summary";
 import { Button } from "@/components/ui/button";
 import { inboxThreadTo } from "@/lib/desk-nav";
-import { parentRequestKindKey, parentRequestStatusLabelKey, type ParentRequestRow } from "@/lib/parent-request-rows";
+import { parentRequestKindKey, parentRequestStatusKey, type ParentRequestRow } from "@/lib/parent-request-rows";
 import { summarizeTourCounts, type TourCountSummary as TourCountSummaryValue } from "@/lib/tour-counts";
 import { useCopy } from "@/lib/use-copy";
 
@@ -41,7 +41,8 @@ export function ParentRequestsList({
     <TourCountSummary counts={counts} locale={locale} />
     <ul className="grid gap-4" data-ke="parent-requests">
       {items.map((row) => {
-        const status = t(parentRequestStatusLabelKey(row));
+        const status =
+          row.kind === "tour" && row.status === "waiting" ? t("parentRequestTourAsked") : t(parentRequestStatusKey(row.status));
         return (
           <li key={`${row.kind}-${row.id}`} id={row.kind === "tour" ? `tour-${row.id}` : undefined}>
             <article className="overflow-hidden rounded-xl bg-surface ring-1 ring-border" data-ke="parent-request-card">

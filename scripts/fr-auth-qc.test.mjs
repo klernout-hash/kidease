@@ -9,8 +9,6 @@ import {
   RESET_SUBJECT_EN,
   RESET_SUBJECT_FR,
   authMailFrench,
-  explicitAuthUiLocale,
-  otpMailFrench,
   preferFrenchResetUrl,
 } from "../src/lib/fr-auth-qc.ts";
 import { localePath, localeSwitchPath } from "../src/lib/locale-path.ts";
@@ -90,48 +88,4 @@ test("verify-2fa French copy and verify mail order", () => {
   const reset = readFileSync(new URL("../src/lib/server/reset-mail.ts", import.meta.url), "utf8");
   assert.match(reset, /RESET_SUBJECT_EN/);
   assert.match(reset, /frenchAuthMailForEmail/);
-});
-
-test("#1014 item 4: an explicit sign-in UI language decides the code email, flag or not", () => {
-  // Explicit French UI with the QC flag off: French.
-  assert.equal(otpMailFrench({ uiLocale: "fr", flagOn: false }), true);
-  assert.equal(otpMailFrench({ uiLocale: "fr-CA", flagOn: false, locale: "en", acceptLanguage: "en-CA" }), true);
-  // Explicit English UI: English, even with the flag on and a Quebec IP.
-  assert.equal(otpMailFrench({ uiLocale: "en", flagOn: false }), false);
-  assert.equal(otpMailFrench({ uiLocale: "en", flagOn: true, province: "QC", country: "CA" }), false);
-  // No UI language and the flag off: English (unchanged).
-  assert.equal(otpMailFrench({ flagOn: false }), false);
-  assert.equal(otpMailFrench({ uiLocale: null, flagOn: false, locale: "fr", province: "QC", country: "CA" }), false);
-  // No UI language and the flag on: the Quebec guess still works.
-  assert.equal(otpMailFrench({ flagOn: true, province: "QC", country: "CA" }), true);
-  // Junk is not a language.
-  assert.equal(explicitAuthUiLocale("de"), null);
-  assert.equal(explicitAuthUiLocale(42), null);
-  assert.equal(explicitAuthUiLocale(" FR "), "fr");
-});
-
-test("#1014 item 4: /verify-2fa sends the screen language with every code request", () => {
-  const twoFa = readFileSync(new URL("../src/lib/server/two-factor.ts", import.meta.url), "utf8");
-  const route = readFileSync(new URL("../src/routes/verify-2fa.tsx", import.meta.url), "utf8");
-  const send = twoFa.slice(twoFa.indexOf("async function sendCodeEmail"), twoFa.indexOf("export const getVerify2faServerSession"));
-  assert.match(send, /async function sendCodeEmail\(to: string, code: string, uiLocale\?: "fr" \| "en" \| null\)/);
-  // Explicit UI language first; the flag-gated guess only when there is none.
-  assert.match(send, /const ui = explicitAuthUiLocale\(uiLocale\);\s*const french = ui\s*\? ui === "fr"\s*: await/);
-  assert.match(send, /frenchAuthMailForEmail\(to\)/);
-  assert.match(send, /french \? OTP_SUBJECT_FR : OTP_SUBJECT_EN/);
-  assert.equal(OTP_SUBJECT_FR, "Votre code de connexion KidEase");
-  assert.match(twoFa, /locale: explicitAuthUiLocale\(input\?\.locale\)/);
-  assert.match(twoFa, /sendCodeEmail\(email, code, data\.locale\)/);
-  assert.match(route, /const mailLocale: "fr" \| "en" = locale === "fr" \|\| isFrPath\(pathname\) \? "fr" : "en";/);
-  assert.match(route, /startTwoFactor\(\{ data: \{ force: false, locale: mailLocale \} \}\)/);
-  assert.match(route, /startTwoFactor\(\{ data: \{ force: true, locale: mailLocale \} \}\)/);
-  // The flag itself is untouched.
-  assert.equal(FLAG_DEFAULTS.FEATURE_FR_AUTH_QC, false);
-});
-
-test("#1014 item 7: the timed-out message and expired code errors read in French", () => {
-  const fr = "Votre connexion a expiré. Connectez-vous de nouveau pour recevoir un nouveau code.";
-  assert.equal(presentAuthCopy("fr", "Your sign-in timed out. Sign in again to get a new code."), fr);
-  assert.equal(presentAuthCopy("fr", "That code expired. Request a new one."), fr);
-  assert.equal(presentAuthCopy("fr", "Request a new code first."), fr);
 });

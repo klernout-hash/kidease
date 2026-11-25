@@ -62,20 +62,6 @@ export function govLoginRedirectForNext(
   return fr ? "/fr/gov/login" : "/gov/login";
 }
 
-/**
- * Where a signed-out /verify-2fa goes (#1014 item 7): the matching sign-in page
- * with `expired=1`, never `/`. Government desks go to /gov/login or
- * /fr/gov/login; everyone else to /login or /fr/login with the real
- * destination as `next` (not /verify-2fa).
- */
-export function verify2faSignedOutTarget(dest: string | null | undefined, routeLocale: "en" | "fr"): string {
-  const next = sanitizePostLoginNext(String(dest || "")) ?? "/parent";
-  const gov = govLoginRedirectForNext(next, routeLocale);
-  if (gov) return `${gov}?expired=1`;
-  const fr = routeLocale === "fr" || next === "/fr" || next.startsWith("/fr/");
-  return `${fr ? "/fr/login" : "/login"}?expired=1&next=${encodeURIComponent(next)}`;
-}
-
 /** Better Auth `getSession().data.user` → the app user shape, or null. */
 export function mapAuthSessionUser(user: unknown): AppUser | null {
   if (!user || typeof user !== "object") return null;

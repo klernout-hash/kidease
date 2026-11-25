@@ -24,9 +24,7 @@ import {
   displayedLeadStatus,
 } from "../src/lib/lead-requests.ts";
 import { providerDeskFromQuery } from "../src/lib/desk-nav.ts";
-import { parentRequestRows, parentRequestStatusKey, parentRequestStatusLabelKey } from "../src/lib/parent-request-rows.ts";
-import { tx } from "../src/lib/copy-runtime.ts";
-import "../src/lib/copy.ts";
+import { parentRequestRows, parentRequestStatusKey } from "../src/lib/parent-request-rows.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -302,7 +300,7 @@ test("My requests is one list with a plain status", () => {
   assert.match(src("src/components/parent-desk.tsx"), /parentRequestRows\(\{ leads, tours, bookings \}\)/);
   assert.doesNotMatch(src("src/components/parent-desk.tsx"), /pendingTours/);
   assert.match(src("src/components/parent-requests.tsx"), /id=\{row\.kind === "tour" \? `tour-\$\{row\.id\}` : undefined\}/);
-  assert.match(src("src/components/parent-requests.tsx"), /parentRequestStatusLabelKey\(row\)/);
+  assert.match(src("src/components/parent-requests.tsx"), /parentRequestStatusKey/);
   assert.match(src("src/components/parent-requests.tsx"), /openChat/);
 });
 
@@ -312,64 +310,4 @@ test("a direct /provider?desk=requests load stays on Requests", () => {
   assert.equal(providerDeskFromQuery(undefined, "?desk=overview"), "today");
   assert.equal(providerDeskFromQuery(undefined, ""), "today");
   assert.match(src("src/routes/provider.tsx"), /providerDeskFromQuery\(search\.desk, searchStr\)/);
-});
-
-// #1014 item 10: one request, one label, on parent home and on Requests.
-const STATUS_TABLE = [
-  // [source, raw status, EN, FR]
-  ["booking", "requested", "Waiting on centre", "En attente du centre"],
-  ["booking", "under_review", "Waiting on centre", "En attente du centre"],
-  ["booking", "waitlist", "Waiting on centre", "En attente du centre"],
-  ["booking", "accepted", "Enrolled", "Inscrit"],
-  ["booking", "declined", "Declined", "Refusée"],
-  ["booking", "active", "Enrolled", "Inscrit"],
-  ["booking", "cancelled", "Cancelled", "Annulée"],
-  ["lead", "requested", "Waiting on centre", "En attente du centre"],
-  ["lead", "received", "Waiting on centre", "En attente du centre"],
-  ["lead", "confirmed", "Confirmed", "Confirmée"],
-  ["lead", "answered", "Confirmed", "Confirmée"],
-  ["lead", "declined", "Declined", "Refusée"],
-  ["lead", "closed", "Cancelled", "Annulée"],
-  ["tour", "no_show", "Declined", "Refusée"],
-  ["tour", "lost", "Cancelled", "Annulée"],
-  ["tour", "expired", "Cancelled", "Annulée"],
-  ["tour", "completed", "Confirmed", "Confirmée"],
-];
-
-function requestInput(source, status) {
-  const base = { id: `${source}-1`, daycareId: "d1", daycareName: "Centre", daycareSlug: "centre", createdAt: "2026-11-20T12:00:00Z", conversationId: null };
-  if (source === "booking") return { bookings: [{ ...base, status }] };
-  if (source === "tour") return { tours: [{ ...base, status, preferredTimes: [] }] };
-  return { leads: [{ ...base, kind: "spot_inquiry", status, sourceKind: null, sourceId: null }] };
-}
-
-test("#1014 item 10: home and Requests label every raw status the same, EN and FR", () => {
-  const now = new Date("2026-11-25T17:00:00Z");
-  for (const [source, raw, en, fr] of STATUS_TABLE) {
-    // Both screens build the rows with parentRequestRows and label them with parentRequestStatusLabelKey.
-    const rows = parentRequestRows({ ...requestInput(source, raw), now });
-    assert.equal(rows.length, 1, `${source}:${raw}`);
-    const key = parentRequestStatusLabelKey(rows[0]);
-    assert.equal(tx("en", key), en, `${source}:${raw} EN`);
-    assert.equal(tx("fr", key), fr, `${source}:${raw} FR`);
-  }
-});
-
-test("#1014 item 10: a declined tour lead whose tour expired reads Cancelled on both screens", () => {
-  // The likely QA case: home listed the lead (Declined) while Requests folded it into its tour (Cancelled).
-  const rows = parentRequestRows({
-    tours: [{ id: "t1", daycareId: "d1", daycareName: "Centre", daycareSlug: "centre", status: "expired", createdAt: "2026-11-20T12:00:00Z", conversationId: null, preferredTimes: [] }],
-    leads: [{ id: "l1", kind: "tour", status: "declined", daycareId: "d1", daycareName: "Centre", daycareSlug: "centre", sourceKind: "tour_request", sourceId: "t1", conversationId: null, createdAt: "2026-11-20T12:00:00Z" }],
-    now: new Date("2026-11-25T17:00:00Z"),
-  });
-  assert.equal(rows.length, 1);
-  assert.equal(tx("en", parentRequestStatusLabelKey(rows[0])), "Cancelled");
-});
-
-test("#1014 item 10: parent home reads the Requests rows, not its own status mapping", () => {
-  const home = src("src/components/parent-home.tsx");
-  assert.match(home, /const requestRows = parentRequestRows\(\{ leads, tours, bookings \}\);/);
-  assert.match(home, /t\(parentRequestStatusLabelKey\(row\)\)/);
-  assert.doesNotMatch(home, /parentLeadLabel|leadStatusCopyKey|<StatusBadge/);
-  assert.match(src("src/components/parent-requests.tsx"), /t\(parentRequestStatusLabelKey\(row\)\)/);
 });

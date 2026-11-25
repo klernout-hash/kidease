@@ -152,7 +152,7 @@ function FilterModal({
       <Dialog.Overlay className="fixed inset-0 z-[80] bg-fg/40" />
       <Dialog.Content
         aria-describedby={undefined}
-        className="ke-safe-x fixed inset-x-0 bottom-0 z-[81] mx-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col rounded-t-xl bg-surface pt-5 [--ke-pad-x:1.25rem] pb-[max(1.25rem,env(safe-area-inset-bottom))] text-fg shadow-card ring-1 ring-border focus:outline-none md:inset-x-auto md:bottom-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-xl"
+        className="fixed inset-x-0 bottom-0 z-[81] mx-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col rounded-t-xl bg-surface p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-fg shadow-card ring-1 ring-border focus:outline-none md:inset-x-auto md:bottom-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-xl"
         onOpenAutoFocus={() => {
           const previous = document.activeElement;
           returnFocus.current = previous instanceof HTMLElement ? previous : null;

@@ -118,7 +118,7 @@ export function RequestMessageSheet({ daycare, open, onClose }: Props) {
 
   return (
     <div
-      className="ke-safe-x fixed inset-0 z-[60] flex items-end justify-center md:items-center"
+      className="fixed inset-0 z-[60] flex items-end justify-center md:items-center"
       role="presentation"
     >
       <button

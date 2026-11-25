@@ -68,7 +68,7 @@ test("login and 2FA use the shared continue helper", () => {
   assert.match(login, /openingDesk/);
   assert.match(twoFa, /assignPostAuthDest/);
   assert.match(twoFa, /pageStalled/);
-  assert.match(twoFa, /<TurnstileField\s/);
+  assert.match(twoFa, /needTurnstile/);
   assert.match(src("src/lib/auth/login-funnel.ts"), /waitForSignedInSession/);
   assert.match(src("src/lib/auth/login-funnel.ts"), /SESSION_SETTLE_RETRIES/);
   assert.match(src("src/routes/login.tsx"), /waitForSignedInSession/);
@@ -77,7 +77,7 @@ test("login and 2FA use the shared continue helper", () => {
   assert.match(twoFa, /waitForSignedInSession/);
   assert.match(twoFa, /Continue to your desk/);
   assert.match(twoFa, /autoComplete="one-time-code"/);
-  assert.match(twoFa, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*false(?:,\s*locale:\s*mailLocale)?\s*\}\s*\}\)/);
+  assert.match(twoFa, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*false\s*\}\s*\}\)/);
   assert.match(gates, /DeskSkeleton/);
   assert.match(gates, /sanitizePostLoginNext/);
   assert.match(gates, /to="\/verify-2fa"/);
@@ -121,31 +121,4 @@ test("session settle retries instead of failing the first empty getSession", asy
   assert.match(src("src/lib/care-type.ts"), /export function parseAgeGroup/);
   assert.match(src("src/lib/parent-match.ts"), /parseAgeGroup\(prefs\.ageGroup\)/);
   assert.match(src("src/lib/auth/login-funnel.ts"), /waitForSignedInSession/);
-});
-
-test("#1014 item 2: /verify-2fa mounts the security check up front and waits for it", () => {
-  const twoFa = src("src/routes/verify-2fa.tsx");
-  const form = twoFa.slice(twoFa.indexOf("function VerifyTwoFactorForm"));
-  // Not gated behind the first typed digit any more.
-  assert.doesNotMatch(twoFa, /needTurnstile/);
-  assert.doesNotMatch(form, /\? \(\s*<TurnstileField/);
-  assert.doesNotMatch(form, /<div className="min-h-\[65px\]" aria-hidden="true" \/>/);
-  assert.match(form, /<TurnstileField[\s\S]*?onKeyState=\{setTurnstileKey\}/);
-  // Verify stays off with a visible hint until the token arrives.
-  assert.match(form, /disabled=\{busy \|\| !turnstileReady\}/);
-  assert.match(form, /t\("verify2faTurnstileLoading"\)/);
-  assert.match(form, /data-ke="verify-turnstile-loading"/);
-  // Auto-submit on 6 digits once the token is ready, once per code.
-  assert.match(form, /autoSubmitted\.current === code/);
-  assert.match(form, /\[code, ready, busy, turnstileReady\]/);
-  assert.match(src("src/components/turnstile-field.tsx"), /onKeyState\?\.\(siteKey === undefined \? "loading"/);
-  // Short windows pin the card to the top so Verify stays on the first screen.
-  assert.match(form, /ke-auth-viewport ke-auth-top/);
-  assert.match(src("src/styles.css"), /@media \(max-height: 700px\) \{\s*\.ke-auth-viewport\.ke-auth-top \{\s*align-items: start;/);
-  for (const file of ["src/lib/copy-en.ts", "src/lib/copy-fr.ts"]) {
-    assert.match(src(file), /verify2faTurnstileLoading: "/);
-  }
-  assert.match(src("src/lib/copy-fr.ts"), /verify2faTurnstileLoading: "Chargement de la vérification de sécurité…"/);
-  // The French route reuses the same screen.
-  assert.match(src("src/routes/fr.verify-2fa.tsx"), /VerifyTwoFactorScreen/);
 });

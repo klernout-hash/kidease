@@ -5,10 +5,11 @@ import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { AreaWaitlistForm } from "@/components/area-waitlist-form";
 import { useRoleChrome } from "@/components/role-chrome";
 import { RoleUpgradeCard } from "@/components/role-upgrade-card";
+import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { parentHomeCardEligible, showHomeUpgradeCard } from "@/lib/upgrade-prompt";
 import { showsParentBrowseActions } from "@/lib/role-access";
-import type { LeadRequest } from "@/lib/lead-requests";
+import { isLeadStatus, leadStatusCopyKey } from "@/lib/lead-requests";
 import { spotOfferCopy } from "@/lib/spot-offer-copy";
 import { useCopy } from "@/lib/use-copy";
 import { useInNativeShell } from "@/lib/use-native-shell";
@@ -21,9 +22,32 @@ import {
 import { billDollars, billIsOpen, type Bill } from "@/lib/bill";
 import { PaymentStateBadge, PaymentStateNote } from "@/components/bill-status";
 import { failureReasonText } from "@/lib/payment-state";
-import { parentRequestRows, parentRequestStatusLabelKey, selectParentTours } from "@/lib/parent-request-rows";
+import { selectParentTours } from "@/lib/parent-request-rows";
 import { money } from "@/lib/utils";
 import type { Booking, DaycareCard, TourRequest } from "@/lib/types";
+
+type LeadSnap = { id: string; daycareName?: string | null; status: string };
+
+function parentLeadLabel(
+  status: string,
+  t: (
+    key:
+      | "statusWaitlist"
+      | "leadStatusRequested"
+      | "leadStatusConfirmed"
+      | "leadStatusDeclined"
+      | "leadStatusReceived"
+      | "leadStatusAnswered"
+      | "leadStatusClosed",
+  ) => string,
+  locale: string,
+): string {
+  const raw = status.trim().toLowerCase();
+  if (raw === "waiting" || raw === "waitlist") return t("statusWaitlist");
+  if (raw === "any") return locale === "fr" ? "Tout âge" : "Any age";
+  if (isLeadStatus(raw)) return t(leadStatusCopyKey(raw));
+  return status;
+}
 
 /** Prioritize the family’s current stage while keeping search available for siblings. */
 export function ParentHome({
@@ -49,7 +73,7 @@ export function ParentHome({
   saved: DaycareCard[];
   bookings: Booking[];
   tours: TourRequest[];
-  leads: LeadRequest[];
+  leads: LeadSnap[];
   paid?: boolean;
   planLabel?: string | null;
   renewsOn?: string | null;
@@ -71,9 +95,6 @@ export function ParentHome({
   const joinLabel = spotOfferCopy(locale).join;
   const parentPath = parentDeskPath(useRouterState({ select: (s) => s.location.pathname }));
   const tourSelection = selectParentTours(tours, new Date());
-  // Same rows and labels as the Requests tab (#1014 item 10), so one request
-  // never reads Declined here and Cancelled there.
-  const requestRows = parentRequestRows({ leads, tours, bookings });
   const nextTour = tourSelection.upcoming[0] ?? tourSelection.needsReply[0];
   const nextTourConfirmed = Boolean(nextTour && tourSelection.upcoming[0] === nextTour);
   const empty =
@@ -246,18 +267,29 @@ export function ParentHome({
         </div>
         {extrasState !== "ready" ? (
           extraNotice
-        ) : requestRows.length === 0 ? (
+        ) : bookings.length === 0 && leads.length === 0 ? (
           <p className="mt-2 text-sm text-muted">{t("parentHomeNoRequests")}</p>
         ) : (
-          <ul className="mt-2 space-y-2" data-ke="parent-home-requests">
-            {requestRows.slice(0, 4).map((row) => (
+          <ul className="mt-2 space-y-2">
+            {bookings.slice(0, 3).map((booking) => (
               <li
-                key={`${row.kind}-${row.id}`}
+                key={booking.id}
                 className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border"
               >
-                <span className="min-w-0 truncate text-sm">{row.daycareName || t("parentHomeRequests")}</span>
-                <span className="shrink-0 text-xs text-muted" data-ke="home-request-status" data-state={row.status}>
-                  {t(parentRequestStatusLabelKey(row))}
+                <span className="min-w-0 truncate text-sm">{booking.daycareName}</span>
+                <StatusBadge status={booking.status} />
+              </li>
+            ))}
+            {leads.slice(0, 3).map((lead) => (
+              <li
+                key={lead.id}
+                className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border"
+              >
+                <span className="min-w-0 truncate text-sm">
+                  {lead.daycareName || t("parentHomeRequests")}
+                </span>
+                <span className="text-xs text-muted">
+                  {parentLeadLabel(lead.status, t, locale)}
                 </span>
               </li>
             ))}

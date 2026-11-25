@@ -18,33 +18,6 @@ export function authMailFrench(input: {
   return acceptStartsFrench(input.acceptLanguage);
 }
 
-/** The sign-in screen's language when the client sent one: "fr", "en", or null. */
-export function explicitAuthUiLocale(raw: unknown): "fr" | "en" | null {
-  const value = typeof raw === "string" ? raw.trim().toLowerCase() : "";
-  if (value === "fr" || value.startsWith("fr-")) return "fr";
-  if (value === "en" || value.startsWith("en-")) return "en";
-  return null;
-}
-
-/**
- * Language of the sign-in code email.
- * An explicit sign-in UI language (the person is on /fr/... or /...) wins,
- * whatever FEATURE_FR_AUTH_QC says: a French screen is a choice, not a guess.
- * With no UI language, the flag-gated Quebec guess (authMailFrench) decides.
- */
-export function otpMailFrench(input: {
-  uiLocale?: string | null;
-  flagOn: boolean;
-  locale?: string | null;
-  province?: string | null;
-  country?: string | null;
-  acceptLanguage?: string | null;
-}): boolean {
-  const ui = explicitAuthUiLocale(input.uiLocale);
-  if (ui) return ui === "fr";
-  return authMailFrench(input);
-}
-
 export function preferFrenchResetUrl(url: string, french: boolean): string {
   if (!french || !url) return url;
   try {

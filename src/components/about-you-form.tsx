@@ -1,4 +1,4 @@
-import { useEffect, useState, type MutableRefObject } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Briefcase, GraduationCap, Languages, MapPin, PawPrint, Sparkles } from "lucide-react";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -21,26 +21,8 @@ function sameAbout(a: ProfileAbout, b: ProfileAbout) {
   return FIELDS.every((field) => a[field.key] === b[field.key]);
 }
 
-/** Saves the About you fields when they changed. Resolves false when the save failed. */
-export type AboutYouSave = () => Promise<boolean>;
-
-/**
- * Private About you. Nothing here is shown on a public daycare listing.
- *
- * `embedded`: inside the /account editor, next to the bio. The form then has
- * no Save / Cancel of its own; the editor's one Done button saves the bio and
- * calls `saveRef.current()` for these fields (#1014 item 9b). That removes the
- * greyed-out Save that sat under the bio and never saw bio edits.
- */
-export function AboutYouForm({
-  preview,
-  embedded = false,
-  saveRef,
-}: {
-  preview?: AboutProfile;
-  embedded?: boolean;
-  saveRef?: MutableRefObject<AboutYouSave | null>;
-}) {
+/** Private About you. Nothing here is shown on a public daycare listing. */
+export function AboutYouForm({ preview }: { preview?: AboutProfile }) {
   const { locale } = useCopy();
   const { user } = useCurrentUserState();
   const fr = locale === "fr";
@@ -77,8 +59,7 @@ export function AboutYouForm({
     };
   }, [fr, preview]);
 
-  async function onSave(): Promise<boolean> {
-    if (embedded && sameAbout(about, saved)) return true;
+  async function onSave() {
     setBusy(true);
     setNote("");
     try {
@@ -95,23 +76,12 @@ export function AboutYouForm({
       setAbout(next);
       setCentres(stored.centres);
       setNote(fr ? "Enregistré sur votre compte seulement." : "Saved on your account only.");
-      return true;
     } catch {
       setNote(fr ? "Enregistrement impossible." : "Could not save.");
-      return false;
     } finally {
       setBusy(false);
     }
   }
-
-  // Hand the latest save to the account editor's Done button.
-  useEffect(() => {
-    if (!embedded || !saveRef) return;
-    saveRef.current = onSave;
-    return () => {
-      saveRef.current = null;
-    };
-  });
 
   return (
     <fieldset className="mt-6 space-y-3" data-ke="about-you" data-dirty={dirty ? "1" : "0"}>
@@ -163,31 +133,29 @@ export function AboutYouForm({
           </ul>
         </div>
       ) : null}
-      {embedded ? null : (
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            data-ke="about-you-save"
-            disabled={busy || !dirty}
-            onClick={() => void onSave()}
-            className="inline-flex min-h-11 items-center rounded-full bg-fg px-4 text-sm font-semibold text-bg touch-manipulation disabled:opacity-50"
-          >
-            {busy ? (fr ? "Enregistrement" : "Saving") : fr ? "Enregistrer" : "Save"}
-          </button>
-          <button
-            type="button"
-            data-ke="about-you-cancel"
-            disabled={!dirty || busy}
-            onClick={() => {
-              setAbout(saved);
-              setNote("");
-            }}
-            className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold ring-1 ring-border touch-manipulation disabled:opacity-50"
-          >
-            {fr ? "Annuler" : "Cancel"}
-          </button>
-        </div>
-      )}
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          data-ke="about-you-save"
+          disabled={busy || !dirty}
+          onClick={() => void onSave()}
+          className="inline-flex min-h-11 items-center rounded-full bg-fg px-4 text-sm font-semibold text-bg touch-manipulation disabled:opacity-50"
+        >
+          {busy ? (fr ? "Enregistrement" : "Saving") : fr ? "Enregistrer" : "Save"}
+        </button>
+        <button
+          type="button"
+          data-ke="about-you-cancel"
+          disabled={!dirty || busy}
+          onClick={() => {
+            setAbout(saved);
+            setNote("");
+          }}
+          className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold ring-1 ring-border touch-manipulation disabled:opacity-50"
+        >
+          {fr ? "Annuler" : "Cancel"}
+        </button>
+      </div>
       {note ? (
         <p className="text-sm" role="status">
           {note}

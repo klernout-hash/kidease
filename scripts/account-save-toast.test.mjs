@@ -15,10 +15,8 @@ function onSaveBody() {
 test("the success toast shows right after saveMyContact resolves", () => {
   const body = onSaveBody();
   const contact = body.indexOf("await saveMyContact(");
+  const success = body.indexOf('toast.success(t("successProfileSaved"))');
   const confirm = body.indexOf('confirmAction(t, "profileSaved")');
-  // #1014 item 9a: exactly one toast. The catalog card is it; no extra sonner toast.
-  assert.doesNotMatch(body, /toast\.success\(/);
-  const success = confirm;
   const consents = body.indexOf("await saveMyCaslConsents(");
   const anchors = body.indexOf("await saveMySearchAnchors(");
   assert.ok(contact > 0 && success > contact, "toast after the contact save");
@@ -57,16 +55,4 @@ test("new account save strings exist in English and French Canadian", () => {
     assert.match(fr, new RegExp(`\\b${key}: "`));
   }
   assert.match(fr, /accountSavedStatus: "Enregistré"/);
-});
-
-test("#1014 item 9a: saving the profile shows one toast titled Saved / Enregistré", async () => {
-  const successConfirm = src("src/lib/success-confirm.ts");
-  assert.match(successConfirm, /profileSaved: \{ variant: "toast", titleKey: "successSaved", bodyKey: "successSavedBody" \}/);
-  assert.match(src("src/lib/copy-en.ts"), /\bsuccessSaved: "Saved",/);
-  assert.match(src("src/lib/copy-fr.ts"), /\bsuccessSaved: "Enregistré",/);
-  // Not the "saved" key: in French that one means Favourites.
-  assert.match(src("src/lib/copy-fr.ts"), /\n {4}saved: "Favoris",/);
-  const { SUCCESS_ACTIONS } = await import("../src/lib/success-confirm.ts");
-  assert.equal(SUCCESS_ACTIONS.profileSaved.titleKey, "successSaved");
-  assert.equal(SUCCESS_ACTIONS.profileSaved.variant, "toast");
 });

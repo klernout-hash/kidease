@@ -1381,7 +1381,7 @@ export function Listing() {
       </article>
 
       {!requestOpen && !tourOpen && !infoOpen && !messageOpen && !galleryOpen ? (
-      <div className={`ke-safe-x fixed inset-x-0 z-20 border-t border-border bg-surface/95 [--ke-pad-x:0.75rem] py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden bottom-[var(--ke-keyboard,0px)] [[data-channel=app]_&]:bottom-[calc(5rem+var(--ke-keyboard,0px))]`} data-ke="listing-sticky-bar">
+      <div className={`fixed inset-x-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden bottom-[var(--ke-keyboard,0px)] [[data-channel=app]_&]:bottom-[calc(5rem+var(--ke-keyboard,0px))]`} data-ke="listing-sticky-bar">
         <div className="mx-auto flex max-w-lg items-center gap-2" data-ke={parentActions ? "listing-parent-actions" : undefined}>
           {parentActions ? (
             <>

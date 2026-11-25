@@ -92,7 +92,7 @@ export function EarningsListScreen({
           ))}
         </ul>
       )}
-      <div className="ke-above-tabs ke-safe-x fixed inset-x-0 bottom-0 z-20 mx-auto flex w-full max-w-lg items-center justify-between gap-3 border-t border-border bg-bg [--ke-pad-x:1.25rem] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(5.5rem+env(safe-area-inset-bottom))]">
+      <div className="fixed inset-x-0 bottom-0 z-20 mx-auto flex w-full max-w-lg items-center justify-between gap-3 border-t border-border bg-bg px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(5.5rem+env(safe-area-inset-bottom))]">
         <p className="text-sm">
           <span className="block text-muted">{t("earningsFiltered")}</span>
           <span className="font-semibold tabular-nums">{total == null ? "" : cad(total)}</span>

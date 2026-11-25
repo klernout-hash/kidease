@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Building2, Calendar, ClipboardCheck, ClipboardList, Heart, Home, LifeBuoy, Menu, MessageCircle, Search } from "lucide-react";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { CountBadge } from "@/components/count-badge";
 import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -14,7 +14,6 @@ import { nativeStoreTabs, type NativeStoreTabId } from "@/lib/native-store-tabs"
 import { deskHrefForLocale, inboxListPath, menuDeskPath, parentDeskPath, providerDeskPath, supportDeskPath } from "@/lib/desk-nav";
 import { allows, type StaffGrants } from "@/lib/staff-permissions";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
-import { governmentHomePath } from "@/lib/sign-out-target";
 import { useCopy } from "@/lib/use-copy";
 import { useAirbnbUi } from "@/lib/use-airbnb-ui";
 import { cn } from "@/lib/utils";
@@ -110,7 +109,7 @@ export function AppTabBar() {
             storeTabs
               ? "grid-cols-4"
               : daycareTabs > 0 && daycareTabs !== 5
-                ? "grid-cols-[repeat(var(--ke-tab-cols),minmax(0,1fr))]"
+                ? ""
               : airbnb && kind === "parent"
                 ? "grid-cols-5"
               : airbnb && kind === "guest"
@@ -119,8 +118,7 @@ export function AppTabBar() {
                   ? "grid-cols-3"
                   : "grid-cols-5",
           )}
-          // A CSS variable, not an inline grid template, so the side rail (styles.css) can stack the same tabs.
-          style={daycareTabs > 0 && daycareTabs !== 5 ? ({ "--ke-tab-cols": daycareTabs } as CSSProperties) : undefined}
+          style={daycareTabs > 0 && daycareTabs !== 5 ? { gridTemplateColumns: `repeat(${daycareTabs}, minmax(0, 1fr))` } : undefined}
         >
           {storeTabs
             ? storeTabs.map((item) => (
@@ -233,7 +231,7 @@ export function AppTabBar() {
           ) : null}
           {kind === "government" && !storeTabs ? (
             <>
-              <Tab to={governmentHomePath(pathname, locale)} label={locale === "fr" ? "Bureau" : "Desk"} icon={Building2} marker="gov" active={bare.startsWith("/gov")} />
+              <Tab to={localePath("/gov", locale)} label={locale === "fr" ? "Bureau" : "Desk"} icon={Building2} marker="gov" active={bare.startsWith("/gov")} />
               <Tab to={localePath("/search", locale)} label={locale === "fr" ? "Fiches" : "Listings"} icon={Search} marker="listings" active={bare === "/search" || bare.startsWith("/search/") || bare.startsWith("/daycare")} />
               <Tab to="/account" search={{ tab: "profile" }} label={t("account")} icon={Menu} marker="account" active={bare.startsWith("/account")} />
             </>

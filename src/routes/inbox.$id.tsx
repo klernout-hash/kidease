@@ -373,7 +373,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             : null;
 
   return (
-      <main className="mx-auto flex h-[calc(100dvh-12.5rem)] min-h-0 w-full max-w-5xl flex-col lg:h-[calc(100dvh-8rem)] app-wide:h-[calc(100dvh-8rem)] min-[900px]:grid min-[900px]:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
+      <main className="mx-auto flex h-[calc(100dvh-12.5rem)] min-h-0 w-full max-w-5xl flex-col lg:h-[calc(100dvh-8rem)] lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {loadState === "ready" ? (
           <ThreadHeader
@@ -384,7 +384,6 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             subtitle={headerSub}
             avatars={avatars}
             onDetails={() => setDetailOpen(true)}
-            detailsDocked="900"
           />
         ) : (
           <div className="px-4 pt-4">
@@ -496,20 +495,20 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
         ) : null}
         </div>
         {loadState === "ready" ? (
-          <div className={detailOpen ? "fixed inset-0 z-[80] flex items-end bg-fg/40 max-[899px]:pl-[var(--ke-safe-left,0px)] max-[899px]:pr-[var(--ke-safe-right,0px)] min-[900px]:static min-[900px]:inset-auto min-[900px]:z-auto min-[900px]:block min-[900px]:bg-transparent" : "hidden min-[900px]:block"} role="presentation">
+          <div className={detailOpen ? "fixed inset-0 z-[80] flex items-end bg-fg/40 lg:static lg:inset-auto lg:z-auto lg:block lg:bg-transparent" : "hidden lg:block"} role="presentation">
             {detailOpen ? (
-              <button type="button" className="absolute inset-0 min-[900px]:hidden" aria-label={t("inboxDetailClose")} onClick={() => setDetailOpen(false)} />
+              <button type="button" className="absolute inset-0 lg:hidden" aria-label={t("inboxDetailClose")} onClick={() => setDetailOpen(false)} />
             ) : null}
             <div
               role="dialog"
               aria-modal={detailOpen ? true : undefined}
               aria-label={t("inboxDetail")}
-              className="relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-bg shadow-card ring-1 ring-border min-[900px]:max-h-none min-[900px]:h-full min-[900px]:rounded-none min-[900px]:shadow-none min-[900px]:ring-0 min-[900px]:border-l"
+              className="relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-bg shadow-card ring-1 ring-border lg:max-h-none lg:h-full lg:rounded-none lg:shadow-none lg:ring-0 lg:border-l"
             >
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <p className="font-medium">{t("inboxDetail")}</p>
                 {detailOpen ? (
-                <Button size="icon" variant="ghost" className="min-[900px]:hidden" data-ke="inbox-detail-close" onClick={() => setDetailOpen(false)} aria-label={t("inboxDetailClose")}>
+                <Button size="icon" variant="ghost" className="lg:hidden" data-ke="inbox-detail-close" onClick={() => setDetailOpen(false)} aria-label={t("inboxDetailClose")}>
                   <X className="size-5" />
                 </Button>
                 ) : null}

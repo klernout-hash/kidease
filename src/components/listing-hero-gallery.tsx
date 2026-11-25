@@ -200,7 +200,7 @@ export function ListingHeroGallery({
       <Dialog.Overlay className="fixed inset-0 z-[80] bg-fg/70" />
       <Dialog.Content
         data-ke="listing-gallery-viewer"
-        className="ke-safe-x fixed inset-0 z-[81] flex min-h-0 flex-col bg-bg [--ke-pad-x:1rem] pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] text-fg focus:outline-none md:inset-6 md:rounded-2xl md:p-6 md:[--ke-pad-x:1.5rem]"
+        className="fixed inset-0 z-[81] flex min-h-0 flex-col bg-bg p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] text-fg focus:outline-none md:inset-6 md:rounded-2xl md:p-6"
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           const previous = document.activeElement;

@@ -688,20 +688,6 @@ export const GROUPS = [
         notes: "Optional override. Default Signed up only. Never Approved.",
       },
       {
-        name: "GHL_SITE_PIPELINE_ID",
-        concealed: false,
-        vercel: "both",
-        required: false,
-        notes: "KidEase Site pipeline id. With GHL_SITE_SUPPORT_STAGE_ID, contact/help/report forms open a Support card. Unset = no card.",
-      },
-      {
-        name: "GHL_SITE_SUPPORT_STAGE_ID",
-        concealed: false,
-        vercel: "both",
-        required: false,
-        notes: "Support stage id in the KidEase Site pipeline. Unset = no card.",
-      },
-      {
         name: "GHL_WEBHOOK_DAYCARE_SIGNUP_URL",
         concealed: true,
         vercel: "both",

@@ -97,7 +97,7 @@ export function RoleEnrollDialog({
 
   return createPortal(
     <div
-      className="ke-safe-x fixed inset-0 z-[95] flex items-end justify-center bg-fg/40 sm:items-center sm:py-6 sm:[--ke-pad-x:1.5rem]"
+      className="fixed inset-0 z-[95] flex items-end justify-center bg-fg/40 sm:items-center sm:p-6"
       onClick={onClose}
     >
       <div

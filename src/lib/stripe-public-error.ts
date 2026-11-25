@@ -24,31 +24,14 @@ export class StripeApiError extends Error {
   readonly status: number;
   /** Stripe's error code (e.g. "account_invalid"), when Stripe sent one. */
   readonly code: string | null;
-  /** Stripe's error type (e.g. "invalid_request_error"), sanitised. */
-  readonly type: string | null;
-  /** Stripe's error param (e.g. "controller[losses][payments]"), sanitised. */
-  readonly param: string | null;
 
-  constructor(
-    stripeMessage: string,
-    status: number,
-    code?: string | null,
-    extra?: { type?: string | null; param?: string | null },
-  ) {
+  constructor(stripeMessage: string, status: number, code?: string | null) {
     super(stripeMessage);
     this.name = "StripeApiError";
     this.stripeMessage = stripeMessage;
     this.status = status;
     this.code = code ? String(code) : null;
-    this.type = safeStripeToken(extra?.type);
-    this.param = safeStripeToken(extra?.param);
   }
-}
-
-/** Keep only short machine tokens (type / param names), never free text. */
-function safeStripeToken(raw: unknown): string | null {
-  const value = typeof raw === "string" ? raw.trim().toLowerCase() : "";
-  return /^[a-z0-9_.[\]]{1,60}$/.test(value) ? value : null;
 }
 
 export function redactStripeDetail(detail: string): string {

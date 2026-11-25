@@ -187,19 +187,16 @@ export function AnchoredCoach({
     const nextSpot = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
     setSpot(nextSpot);
     const bubble = bubbleRef.current?.getBoundingClientRect();
-    const safe = readSafeX();
-    const vw = document.documentElement.clientWidth - safe.left - safe.right;
-    const vh = window.visualViewport?.height ?? window.innerHeight;
-    const width = Math.min(280, vw - 24);
+    const width = Math.min(280, window.innerWidth - 24);
     const height = bubble && bubble.height > 40 ? bubble.height : 168;
-    setPlace(placeCoachBubble(nextSpot, { width, height }, { width: vw, height: vh, left: safe.left }));
+    setPlace(placeCoachBubble(nextSpot, { width, height }, { width: window.innerWidth, height: window.innerHeight }));
   }, [step, safeIndex, live]);
 
   if (!live || !step || !spot || !place) return null;
   const last = safeIndex >= shown.length - 1;
   const arrowX = Math.max(16, Math.min(spot.left + spot.width / 2 - place.left - 8, place.width - 28));
   return createPortal(
-    <div className="ke-safe-x pointer-events-none fixed inset-0 z-[60]" data-ke="first-run-scrim">
+    <div className="pointer-events-none fixed inset-0 z-[60]" data-ke="first-run-scrim">
       <div
         data-ke="coach-hole"
         className="pointer-events-none fixed rounded-xl"
@@ -802,19 +799,4 @@ function ChecklistPortal({ page, children, provider }: { page: HTMLElement; chil
 
 function PortalInto({ node, children }: { node: HTMLElement; children: ReactNode }) {
   return createPortal(children, node);
-}
-
-/** Left and right safe insets in px (the shell's --ke-safe-* variables, resolved through a probe). */
-function readSafeX(): { left: number; right: number } {
-  if (typeof document === "undefined" || !document.body) return { left: 0, right: 0 };
-  const probe = document.createElement("div");
-  probe.setAttribute("aria-hidden", "true");
-  probe.style.cssText =
-    "position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-left:var(--ke-safe-left,env(safe-area-inset-left,0px));padding-right:var(--ke-safe-right,env(safe-area-inset-right,0px))";
-  document.body.appendChild(probe);
-  const style = getComputedStyle(probe);
-  const left = parseFloat(style.paddingLeft) || 0;
-  const right = parseFloat(style.paddingRight) || 0;
-  probe.remove();
-  return { left, right };
 }
