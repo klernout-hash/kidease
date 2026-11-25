@@ -3,6 +3,15 @@
 
 @custom-variant dark (&:where([data-resolved-theme="dark"], [data-resolved-theme="dark"] *));
 
+/* Inner foldable display, iPad landscape: two panes in the app look. Width only, never device. */
+@custom-variant app-wide {
+  @media (min-width: 900px) {
+    html[data-channel="app"] & {
+      @slot;
+    }
+  }
+}
+
 @font-face {
   font-family: "Plus Jakarta Sans";
   font-style: normal;
@@ -1766,7 +1775,7 @@ html:not([data-look="clean"]) :is(a, button, [role="button"]).h-11 {
   }
   .ke-help-bot {
     position: fixed;
-    right: max(1.25rem, env(safe-area-inset-right));
+    right: max(1.25rem, var(--ke-safe-right, env(safe-area-inset-right)));
     bottom: calc(1.25rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
     z-index: 45;
     display: flex;
@@ -2280,7 +2289,8 @@ dialog.msv2-dialog {
   width: 100%;
   max-width: 100%;
   border: 0;
-  padding: 0;
+  /* Left and right padding come from the class list: the safe insets on a phone. */
+  padding-block: 0;
   background: var(--color-bg);
   color: var(--color-fg);
   border-radius: 1.5rem 1.5rem 0 0;
@@ -2288,6 +2298,17 @@ dialog.msv2-dialog {
 }
 dialog.msv2-dialog::backdrop {
   background: rgb(15 23 42 / 0.45);
+}
+/* Tablet and the inner foldable display: a centred sheet, not a full-bleed one.
+   The sheet is portalled to <body>, so it stays visible when a phone unfolds. */
+@media (min-width: 768px) {
+  dialog.msv2-dialog {
+    margin: auto;
+    width: min(36rem, calc(100% - 2rem));
+    max-width: 36rem;
+    height: min(42rem, calc(100dvh - 4rem));
+    border-radius: 1.5rem;
+  }
 }
 @keyframes msv2-rise {
   from {
@@ -2664,6 +2685,13 @@ html {
   --ke-safe-left: env(safe-area-inset-left, 0px);
   font-size: calc(14px * var(--ke-text-scale, 1));
 }
+/* Fixed layers: keep content clear of the side strip on iPhone Duo and of
+   rounded corners elsewhere. Set the design padding in --ke-pad-x. Never use the
+   two-value padding shorthand with one inset: it mirrors one side onto the other. */
+.ke-safe-x {
+  padding-left: max(var(--ke-pad-x, 0px), var(--ke-safe-left, 0px));
+  padding-right: max(var(--ke-pad-x, 0px), var(--ke-safe-right, 0px));
+}
 header .min-h-16 {
   min-height: 3.2rem;
   padding-block: 0.15rem;
@@ -2712,9 +2740,11 @@ select.ke-lang-select.ke-header-chrome {
     margin-inline: auto;
   }
 }
-@media (min-width: 1024px) {
+/* Inner foldable display (951pt) and iPad landscape: fill the width. The panes
+   inside cap themselves, and forms keep their own max-w-lg / max-w-3xl. */
+@media (min-width: 900px) {
   html[data-channel="app"] .ke-page {
-    max-width: 880px;
+    max-width: min(100%, 1040px);
   }
 }
 @media (min-width: 1200px) {
@@ -2723,6 +2753,17 @@ select.ke-lang-select.ke-header-chrome {
   }
 }
 
+/* App look with the map beside the list (inner foldable display, iPad landscape):
+   the list is half the window, so one card per row until it is wide enough for two.
+   :not([data-channel="website"]) lifts it over the clean-look two-column rule below. */
+html[data-channel="app"]:not([data-channel="website"]) [data-ke="search-split"]:has(> [data-ke="search-split-map"]) .ke-result-stack {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 1100px) {
+  html[data-channel="app"]:not([data-channel="website"]) [data-ke="search-split"]:has(> [data-ke="search-split-map"]) .ke-result-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 /* List plus detail from a tablet width up. The website at 1280 and wider
    keeps the desk it already had. Slide Over stays one column. */
 .ke-split {
@@ -3190,6 +3231,14 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
     max-height: 22rem;
   }
 }
+/* Inner foldable display (951 x 669) and iPad landscape in the app look: a 4/3
+   hero capped at 46dvh is a short, cropped strip. Use the wide-screen frame. */
+@media (min-width: 900px) {
+  html[data-channel="app"] .ke-listing-hero:not([data-empty="true"]) {
+    aspect-ratio: 16 / 9;
+    max-height: min(22rem, 48dvh);
+  }
+}
 /* This file's space is about 0.17em. A normal word space is closer to 0.28em,
    and the heading tracking makes the gap look like the words ran together. */
 /* Listing and the provider editor are the surfaces this change owns.
@@ -3261,7 +3310,7 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
 }
 html[data-channel="app"] .ke-help-bot,
 html[data-runtime="native"] .ke-help-bot {
-  right: max(0.75rem, env(safe-area-inset-right, 0px));
+  right: max(0.75rem, var(--ke-safe-right, env(safe-area-inset-right, 0px)));
   bottom: calc(4.75rem + 0.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
   z-index: 40;
 }
@@ -3269,10 +3318,77 @@ html[data-channel="app"]:has([data-ke="listing-sticky-bar"]) .ke-help-bot,
 html[data-runtime="native"]:has([data-ke="listing-sticky-bar"]) .ke-help-bot {
   bottom: calc(6.75rem + 4.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
 }
+/* Tablet and inner foldable display. The app look keeps the same tabs as the
+   phone in every pose (Apple's iPhone Duo guidance: same functions on both
+   displays, bars at the side). Width and shape only, never device:
+   - wider than tall (min-aspect-ratio 6/5): a leading rail;
+   - otherwise (inner display rotated, iPad portrait, split view): the bottom bar.
+   The website look never shows the bar (Tailwind keeps it hidden there). */
 @media (min-width: 768px) {
-  html[data-channel="app"] [data-ke="app-tab-bar"],
-  html[data-ui="airbnb-v1"] [data-ke="app-tab-bar"] {
+  html[data-ui="airbnb-v1"]:not([data-channel="app"]) [data-ke="app-tab-bar"] {
     display: none !important;
+  }
+}
+@media (min-width: 768px) and (min-aspect-ratio: 6/5) {
+  html[data-channel="app"] {
+    --ke-rail-w: 5.5rem;
+  }
+  html[data-channel="app"] [data-ke="app-tab-bar"] {
+    top: 0;
+    bottom: 0;
+    right: auto;
+    left: 0;
+    width: calc(var(--ke-rail-w) + var(--ke-safe-left, env(safe-area-inset-left, 0px)));
+    border-top: 0;
+    border-right: 1px solid var(--color-border);
+    padding-top: calc(var(--ke-header-h, 3.5rem) + 0.5rem);
+    padding-right: 0;
+    overflow-y: auto;
+  }
+  html[data-channel="app"] [data-ke="app-tab-bar"] > div {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: none;
+    grid-template-columns: none !important;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+  /* Typing does not hide the rail: it is beside the keyboard, not under it. */
+  html[data-channel="app"][data-keyboard="open"] [data-ke="app-tab-bar"] {
+    display: block !important;
+  }
+  /* Only frames that own a bar make room for it (/login and 2FA have none). */
+  html[data-channel="app"] [data-ke="shell-frame"]:has(> [data-ke="app-tab-bar"]) {
+    padding-left: calc(var(--ke-rail-w) + var(--ke-safe-left, env(safe-area-inset-left, 0px)));
+  }
+  /* The rail replaces the bottom bar: no bottom clearance for it. */
+  html[data-channel="app"] .ke-tab-pad {
+    padding-bottom: 0;
+  }
+  html[data-channel="app"] [data-ke-viewport="inbox"] > [data-ke="shell-content"] {
+    padding-bottom: 0;
+  }
+  html[data-channel="app"] .ke-page::after {
+    height: calc(2rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  }
+  html[data-channel="app"] .ke-page.ke-provider-page {
+    padding-block-end: calc(2rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  }
+  /* Layers that used to sit "above the tab bar" drop back to the safe bottom. */
+  html[data-channel="app"] .ke-help-bot,
+  html[data-channel="app"]:is(:has([data-ke="listing-sticky-bar"]), :has([data-ke="role-switch-pill"]), :has([data-ke="centre-documents"]), :has([data-ke="claim-page"])) .ke-help-bot {
+    bottom: calc(1.25rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
+  }
+  html[data-channel="app"] [data-ke="cookie-consent"] {
+    bottom: calc(0.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  }
+  /* Bars that pad their own safe bottom (compare, prompts, payments, statements). */
+  html[data-channel="app"] .ke-above-tabs {
+    bottom: var(--ke-keyboard, 0px);
+  }
+  html[data-channel="app"] [data-ke="push-explain"] {
+    bottom: calc(0.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
   }
 }
 html[data-channel="app"] .ke-page::after,

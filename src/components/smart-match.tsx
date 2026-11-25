@@ -93,7 +93,7 @@ function SmartMatchDialog({
 
   return (
     <Dialog.Portal>
-    <div className="fixed inset-0 z-[100] flex items-end justify-center md:items-center" role="presentation">
+    <div className="ke-safe-x fixed inset-0 z-[100] flex items-end justify-center md:items-center" role="presentation">
       <Dialog.Overlay asChild>
         <button type="button" tabIndex={-1} className="absolute inset-0 bg-fg/40" aria-label={t("close")} onClick={onClose} />
       </Dialog.Overlay>

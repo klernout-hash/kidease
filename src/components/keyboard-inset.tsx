@@ -41,13 +41,27 @@ export function KeyboardInset() {
       );
     }
 
+    // A fold or unfold with the keyboard up leaves the px height that
+    // Keyboard resize:"body" wrote for the old screen. Clear it on a big width
+    // change; the next keyboardWillShow writes a fresh one. Keyboard.resize
+    // stays "body" (capacitor.config.ts) on every iPhone.
+    let lastWidth = window.innerWidth;
+    function onWindowResize() {
+      const width = window.innerWidth;
+      if (native && Math.abs(width - lastWidth) >= 120 && document.body.style.height.endsWith("px")) {
+        document.body.style.height = "";
+      }
+      lastWidth = width;
+      onViewport();
+    }
+
     function onFocus(event: FocusEvent) {
       reveal(event.target);
     }
 
     document.addEventListener("focusin", onFocus);
     onViewport();
-    window.addEventListener("resize", onViewport);
+    window.addEventListener("resize", onWindowResize);
     window.visualViewport?.addEventListener("resize", onViewport);
     window.visualViewport?.addEventListener("scroll", onViewport);
 
@@ -77,7 +91,7 @@ export function KeyboardInset() {
 
     return () => {
       document.removeEventListener("focusin", onFocus);
-      window.removeEventListener("resize", onViewport);
+      window.removeEventListener("resize", onWindowResize);
       window.visualViewport?.removeEventListener("resize", onViewport);
       window.visualViewport?.removeEventListener("scroll", onViewport);
       cancelNative();

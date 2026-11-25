@@ -68,4 +68,4 @@ The app shows “You’re offline” / “Vous êtes hors ligne” and Try again
 
 ## Still needed before the binary is uploaded
 
-Do not uncomment the push lines in `ios/App/App/Store.xcconfig`. Do not add an APNs key for this upload. Archive with Xcode 26 and the iOS 26 SDK. This file does not upload the binary.
+Do not uncomment the push lines in `ios/App/App/Store.xcconfig`. Do not add an APNs key for this upload. Archive with Xcode 27.1 or later and the iOS 27.1 SDK. Apps built with the iOS 26 SDK sit letterboxed in the middle of the iPhone Duo inner display and beside the status bar on its cover display. Run the iPhone Duo simulator pass (T1 in `docs/mobile-builds.md`) before archiving. This file does not upload the binary.

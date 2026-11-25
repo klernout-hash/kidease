@@ -139,7 +139,7 @@ export function ReauthDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-fg/40 p-4" role="dialog" aria-modal="true" data-ke="reauth-dialog">
+    <div className="ke-safe-x fixed inset-0 z-50 grid place-items-center bg-fg/40 py-4 [--ke-pad-x:1rem]" role="dialog" aria-modal="true" data-ke="reauth-dialog">
       <div className="w-full max-w-md rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
         <h2 className="font-display text-xl tracking-[-0.02em]">{t("reauthTitle")}</h2>
         <p className="mt-2 text-sm text-muted">

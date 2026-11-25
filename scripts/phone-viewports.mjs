@@ -39,8 +39,8 @@ const TEXT_SCALES = [1.35, 1.64, 2.12];
 const NATIVE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 KidEaseNative";
 
 function pageCap(width) {
-  if (width >= 1200) return 1040;
-  if (width >= 1024) return 880;
+  // App look: 720 on a tablet, then the full width up to 1040 from 900 (inner foldable display, iPad landscape).
+  if (width >= 900) return Math.min(width, 1040);
   if (width >= 768) return 720;
   return width;
 }
