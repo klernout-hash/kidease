@@ -19,6 +19,7 @@ import { extractStripeBillRef, type StripeBillObject } from "@/lib/stripe-bill-e
 import { createStripeCheckoutSession, retrieveStripeCheckoutSession } from "@/lib/server/stripe-checkout";
 import { rememberStripeCustomer } from "@/lib/server/stripe-lifecycle";
 import { notifyParentBill, notifyParentBillState, notifyPlatform } from "@/lib/server/notify";
+import { parseRefundState, planRefund } from "@/lib/wallet-ease";
 import {
   parsePaymentState,
   paymentStateMessage,
@@ -233,6 +234,21 @@ export async function applyStripeBillEvent(input: {
   if (type === "charge.refunded" || type === "charge.refund.updated") {
     const bill = await findBillForStripe(sql, ref);
     if (!bill) return { ok: true, billId: null, handled: type };
+    // PE-8: refunded only for the full amount. A partial refund keeps the bill
+    // Paid and sets refund_state = 'partly_refunded' (BillStatus is unchanged).
+    const refund = planRefund(input.object as unknown as Parameters<typeof planRefund>[0]);
+    await sql`
+      update invoices set
+        refunded_cents = ${refund.refundedCents},
+        refund_state = ${refund.refundState},
+        refunded_at = now(),
+        refund_method_label = coalesce(${refund.methodLabel}, refund_method_label)
+      where id = ${bill.id}
+    `.catch(() => undefined);
+    if (!refund.fullRefund) {
+      // No status: the bill stays Paid, and the paid-only side effects do not run again.
+      return { ok: true, billId: bill.id, handled: type };
+    }
     await sql`
       update invoices
       set status = ${"refunded"}, updated_at = now()
@@ -294,6 +310,14 @@ type PaymentStateRow = {
   failed_at: string | Date | null;
 };
 
+type RefundRow = {
+  id: string;
+  refunded_cents: number | null;
+  refund_state: string | null;
+  refunded_at: string | Date | null;
+  refund_method_label: string | null;
+};
+
 /** Adds payment_state to bills. Read separately so a missing column never hides bills. */
 async function withPaymentState(sql: Sql, bills: Bill[]): Promise<Bill[]> {
   if (!bills.length) return bills;
@@ -304,7 +328,24 @@ async function withPaymentState(sql: Sql, bills: Bill[]): Promise<Bill[]> {
     )
     .catch(() => [] as PaymentStateRow[]);
   const byId = new Map(rows.map((row) => [row.id, row]));
-  return bills.map((bill) => {
+  const refunds = await sql
+    .query<RefundRow>(
+      `select id, refunded_cents, refund_state, refunded_at, refund_method_label from invoices where id = any($1::text[])`,
+      [bills.map((bill) => bill.id)],
+    )
+    .catch(() => [] as RefundRow[]);
+  const refundById = new Map(refunds.map((row) => [row.id, row]));
+  return bills.map((source) => {
+    const refund = refundById.get(source.id);
+    const bill: Bill = refund
+      ? {
+          ...source,
+          refundState: parseRefundState(refund.refund_state),
+          refundedCents: refund.refunded_cents != null ? Number(refund.refunded_cents) : null,
+          refundedAt: refund.refunded_at ? new Date(refund.refunded_at).toISOString() : null,
+          refundMethodLabel: refund.refund_method_label,
+        }
+      : source;
     const row = byId.get(bill.id);
     if (!row) return bill;
     return {

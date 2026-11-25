@@ -1,11 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { ConnectPublicState, WalletMethodView } from "@/lib/connect-payments";
 import { useCopy } from "@/lib/use-copy";
-import { loadStripeClient, paymentElementOptions } from "@/lib/stripe-browser";
-import { createWalletSetup, listWalletMethods, removeWalletMethod, updateWalletMethod } from "@/lib/server/connect-payments";
+import { loadStripeClient, paymentElementOptions, type SetupIntentResult } from "@/lib/stripe-browser";
+import {
+  createWalletSetup,
+  getWalletMandate,
+  listWalletMethods,
+  removeWalletMethod,
+  retryFailedBill,
+  updateWalletMethod,
+} from "@/lib/server/connect-payments";
+import { planRemoveMethod, setupNextStep, type MandateView, type SetupNextStep } from "@/lib/wallet-ease";
 
 type Screen = "list" | "add" | "detail";
 
@@ -21,8 +30,94 @@ function BrandMark({ kind, brand }: { kind: WalletMethodView["kind"]; brand: str
   );
 }
 
-export function ParentWallet({ state }: { state: ConnectPublicState }) {
+function methodLabel(method: Pick<WalletMethodView, "brand" | "last4">): string {
+  return `${method.brand} ···· ${method.last4}`;
+}
+
+function ExpiryTag({ method }: { method: WalletMethodView }) {
   const { t } = useCopy();
+  if (method.expired) {
+    return (
+      <span className="block text-sm font-medium text-danger" data-ke="wallet-expired">
+        {t("walletExpired")}
+      </span>
+    );
+  }
+  if (method.expiresSoon) {
+    return (
+      <span className="block text-sm font-medium text-danger" data-ke="wallet-expires-soon">
+        {t("walletExpiresSoon")}
+      </span>
+    );
+  }
+  return null;
+}
+
+/** PE-4: the PAD agreement on a saved bank debit. */
+function MandateDetails({ method }: { method: WalletMethodView }) {
+  const { t, locale } = useCopy();
+  const [mandate, setMandate] = useState<MandateView | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    let cancel = false;
+    void getWalletMandate({ data: method.id })
+      .then((res) => {
+        if (!cancel) setMandate(res.ok ? res.mandate : null);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancel) setLoaded(true);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [method.id]);
+  const status = mandate
+    ? mandate.status === "active"
+      ? t("walletMandateActive")
+      : mandate.status === "inactive"
+        ? t("walletMandateInactive")
+        : t("walletMandatePending")
+    : null;
+  const accepted = mandate?.acceptedAt
+    ? new Date(mandate.acceptedAt).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium" })
+    : null;
+  return (
+    <div className="mt-6 rounded-[1.25rem] bg-surface p-4 ring-1 ring-border" data-ke="wallet-mandate">
+      <h3 className="text-base font-semibold">{t("walletMandateTitle")}</h3>
+      {!loaded ? null : mandate ? (
+        <dl className="mt-2 space-y-1 text-sm">
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted">{status}</dt>
+            <dd>···· {method.last4}</dd>
+          </div>
+          {accepted ? <p className="text-muted">{t("walletMandateAccepted").replace("{date}", accepted)}</p> : null}
+          {mandate.schedule === "sporadic" && mandate.transactionType === "personal" ? (
+            <p className="text-muted">{t("walletMandateKind")}</p>
+          ) : null}
+          {mandate.url ? (
+            <a
+              href={mandate.url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-11 items-center font-medium text-primary"
+              data-ke="wallet-mandate-link"
+            >
+              {t("walletMandateAgreement")}
+            </a>
+          ) : null}
+        </dl>
+      ) : (
+        <p className="mt-2 text-sm text-muted">{t("walletMandateNone")}</p>
+      )}
+    </div>
+  );
+}
+
+export function ParentWallet({ state, fixBillId = null }: { state: ConnectPublicState; fixBillId?: string | null }) {
+  const { t } = useCopy();
+  const retried = useRef(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const [screen, setScreen] = useState<Screen>("list");
   const [methods, setMethods] = useState<WalletMethodView[]>([]);
   const [selected, setSelected] = useState<WalletMethodView | null>(null);
@@ -59,10 +154,56 @@ export function ParentWallet({ state }: { state: ConnectPublicState }) {
     if (res.ok) setMethods(res.methods);
   }
 
+  /** PE-5: after a new card is saved from the update-card link, retry that bill once. */
+  async function afterSaved(step: SetupNextStep) {
+    await refresh().catch(() => undefined);
+    if (!fixBillId || retried.current || step.kind !== "done" || !step.paymentMethodId) return;
+    retried.current = true;
+    const res = await retryFailedBill({ data: { billId: fixBillId, paymentMethodId: step.paymentMethodId } }).catch(() => null);
+    if (res?.ok) toast.success(t("walletRetryDone"));
+    else toast.message(t("walletRetrySkipped"));
+  }
+
+  const removePlan = selected
+    ? planRemoveMethod({
+        removedId: selected.id,
+        defaultId: methods.find((method) => method.isDefault)?.id ?? null,
+        remaining: methods.map((method) => ({ id: method.id, kind: method.kind, created: method.created })),
+      })
+    : null;
+  const nextDefault = removePlan?.newDefaultId ? methods.find((method) => method.id === removePlan.newDefaultId) : null;
+
+  function removeSelected() {
+    if (!selected) return;
+    setBusy(true);
+    void removeWalletMethod({ data: selected.id })
+      .then(async (res) => {
+        if (!res.ok) {
+          toast.error(t("actionFailed"));
+          return;
+        }
+        toast.success(t("walletRemoved"));
+        if (res.newDefaultLabel) toast.message(t("walletNewDefault").replace("{method}", res.newDefaultLabel));
+        if (res.clearedAutopay) toast.message(t("walletAutopayOff"));
+        await refresh();
+        setScreen("list");
+      })
+      .catch(() => toast.error(t("actionFailed")))
+      .finally(() => {
+        setBusy(false);
+        setConfirmRemove(false);
+      });
+  }
+
   if (!state.enabled) return null;
 
   return (
     <section className="mt-8" data-ke="parent-wallet">
+      {fixBillId && state.ready ? (
+        <p className="mb-4 rounded-xl bg-danger/10 p-3 text-sm text-danger" role="status" data-ke="wallet-fix">
+          {t("walletFixLead")}
+        </p>
+      ) : null}
       {screen !== "list" ? (
         <button
           type="button"
@@ -98,6 +239,7 @@ export function ParentWallet({ state }: { state: ConnectPublicState }) {
                   </span>
                   {method.nickname ? <span className="block truncate text-sm text-muted">{method.nickname}</span> : null}
                   {method.isDefault ? <span className="block text-sm text-muted">{t("walletDefault")}</span> : null}
+                  <ExpiryTag method={method} />
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
               </button>
@@ -118,8 +260,8 @@ export function ParentWallet({ state }: { state: ConnectPublicState }) {
       {state.ready && screen === "add" ? (
         <AddMethod
           state={state}
-          onDone={() => {
-            void refresh();
+          onDone={(step) => {
+            void afterSaved(step);
             setScreen("list");
           }}
         />
@@ -137,8 +279,10 @@ export function ParentWallet({ state }: { state: ConnectPublicState }) {
                   {t("walletExpiry").replace("{date}", `${String(selected.expMonth).padStart(2, "0")}/${selected.expYear}`)}
                 </p>
               ) : null}
+              <ExpiryTag method={selected} />
             </div>
           </div>
+          {selected.kind === "acss_debit" ? <MandateDetails method={selected} /> : null}
           {editing ? (
             <form
               className="mt-6 space-y-3"
@@ -231,30 +375,51 @@ export function ParentWallet({ state }: { state: ConnectPublicState }) {
               >
                 {t("walletSetDefault")}
               </Button>
-              <Button
-                type="button"
-                variant="danger"
-                className="w-full"
-                disabled={busy}
-                data-ke="wallet-remove"
-                onClick={() => {
-                  setBusy(true);
-                  void removeWalletMethod({ data: selected.id })
-                    .then(async (res) => {
-                      if (!res.ok) {
-                        toast.error(t("actionFailed"));
-                        return;
-                      }
-                      toast.success(t("walletRemoved"));
-                      await refresh();
-                      setScreen("list");
-                    })
-                    .catch(() => toast.error(t("actionFailed")))
-                    .finally(() => setBusy(false));
-                }}
-              >
-                {t("walletRemove")}
-              </Button>
+              <AlertDialog.Root open={confirmRemove} onOpenChange={setConfirmRemove}>
+                <AlertDialog.Trigger asChild>
+                  <Button type="button" variant="danger" className="w-full" disabled={busy} data-ke="wallet-remove">
+                    {t("walletRemove")}
+                  </Button>
+                </AlertDialog.Trigger>
+                <AlertDialog.Portal>
+                  <AlertDialog.Overlay className="fixed inset-0 z-50 bg-fg/40" />
+                  <AlertDialog.Content
+                    className="fixed inset-x-4 top-1/2 z-50 mx-auto w-auto max-w-md -translate-y-1/2 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border"
+                    data-ke="wallet-remove-confirm"
+                  >
+                    <AlertDialog.Title className="font-display text-xl">
+                      {t("walletRemoveConfirmTitle").replace("{method}", methodLabel(selected))}
+                    </AlertDialog.Title>
+                    <AlertDialog.Description className="mt-2 space-y-1 text-sm text-muted">
+                      {removePlan?.wasDefault ? (
+                        <span className="block">
+                          {nextDefault
+                            ? t("walletRemoveConfirmNext").replace("{next}", methodLabel(nextDefault))
+                            : t("walletRemoveConfirmNone")}
+                        </span>
+                      ) : null}
+                      {selected.kind === "acss_debit" ? <span className="block">{t("walletRemoveConfirmPad")}</span> : null}
+                    </AlertDialog.Description>
+                    <div className="mt-5 flex flex-col gap-2 sm:flex-row-reverse">
+                      <Button
+                        type="button"
+                        variant="danger"
+                        className="w-full sm:w-auto"
+                        disabled={busy}
+                        data-ke="wallet-remove-yes"
+                        onClick={removeSelected}
+                      >
+                        {t("walletRemove")}
+                      </Button>
+                      <AlertDialog.Cancel asChild>
+                        <Button type="button" variant="secondary" className="w-full sm:w-auto">
+                          {t("walletRemoveKeep")}
+                        </Button>
+                      </AlertDialog.Cancel>
+                    </div>
+                  </AlertDialog.Content>
+                </AlertDialog.Portal>
+              </AlertDialog.Root>
             </div>
           )}
         </div>
@@ -273,13 +438,14 @@ type MountedStripe = HTMLElement & {
       elements: NonNullable<MountedStripe["__stripeElements"]>;
       redirect: "if_required";
       confirmParams?: { return_url?: string };
-    }) => Promise<{ error?: { message?: string } }>;
+    }) => Promise<{ error?: { message?: string }; setupIntent?: SetupIntentResult }>;
   };
 };
 
-function AddMethod({ state, onDone }: { state: ConnectPublicState; onDone: () => void }) {
+function AddMethod({ state, onDone }: { state: ConnectPublicState; onDone: (step: SetupNextStep) => void }) {
   const { t } = useCopy();
   const [busy, setBusy] = useState(false);
+  const [verify, setVerify] = useState<Extract<SetupNextStep, { kind: "verify_microdeposits" }> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mountId] = useState(() => "wallet-payment-element");
 
@@ -344,23 +510,46 @@ function AddMethod({ state, onDone }: { state: ConnectPublicState; onDone: () =>
               confirmParams: { return_url: `${window.location.origin}/account?section=wallet` },
             });
             if (result.error) throw new Error(result.error.message || t("actionFailed"));
+            const step = setupNextStep(result.setupIntent);
+            if (step.kind === "verify_microdeposits") {
+              // Bank debit (PAD) without instant verification: Stripe sends a micro-deposit.
+              setVerify(step);
+              return;
+            }
             toast.success(t("walletSaved"));
-            onDone();
+            onDone(step);
           })
           .catch((err: unknown) => setError(err instanceof Error ? err.message : t("actionFailed")))
           .finally(() => setBusy(false));
       }}
     >
       <p className="text-sm leading-6 text-muted">{t("walletAddBody")}</p>
-      <div id={mountId} className="min-h-24" data-ke="wallet-element" />
+      <div id={mountId} className={verify ? "hidden" : "min-h-24"} data-ke="wallet-element" />
+      {verify ? (
+        <div className="space-y-3 rounded-[1.25rem] bg-surface p-4 ring-1 ring-border" data-ke="wallet-verify-deposits" role="status">
+          <p className="text-sm">{t("walletVerifyDepositsBody")}</p>
+          {verify.url ? (
+            <Button asChild className="w-full">
+              <a href={verify.url} target="_blank" rel="noreferrer">
+                {t("walletVerifyDeposits")}
+              </a>
+            </Button>
+          ) : null}
+          <Button type="button" variant="secondary" className="w-full" onClick={() => onDone(verify)}>
+            {t("walletBack")}
+          </Button>
+        </div>
+      ) : null}
       {error ? (
         <p className="text-sm text-danger" role="alert">
           {error}
         </p>
       ) : null}
-      <Button type="submit" className="w-full" disabled={busy}>
-        {t("walletSave")}
-      </Button>
+      {verify ? null : (
+        <Button type="submit" className="w-full" disabled={busy}>
+          {t("walletSave")}
+        </Button>
+      )}
     </form>
   );
 }

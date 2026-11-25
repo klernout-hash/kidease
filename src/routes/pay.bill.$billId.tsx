@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { LedgerHonesty } from "@/components/listing-status-badge";
-import { BillStatusBadge, PaymentStateBadge, PaymentStateNote } from "@/components/bill-status";
+import { BillStatusBadge, PaymentStateBadge, PaymentStateNote, RefundNote } from "@/components/bill-status";
 import { createBillCheckout, getBill } from "@/lib/server/billing";
 import { getBillNextAction } from "@/lib/server/connect-payments";
 import { loadStripeClient } from "@/lib/stripe-browser";
@@ -244,6 +244,7 @@ function PayBillPage() {
             <p className="mt-1 text-xs text-subtle">
               {t("payCadNote")} · {bill.number}
             </p>
+            <RefundNote bill={bill} className="mt-2" />
             <p className="mt-3 text-sm text-muted">{t("connectFeeParentPay")}</p>
           </div>
         ) : null}
@@ -262,7 +263,7 @@ function PayBillPage() {
             ) : null}
             {paymentState === "failed" ? (
               <Button variant="secondary" className="w-full" asChild>
-                <Link to="/account" search={{ section: "wallet" }}>
+                <Link to="/account" search={{ section: "wallet", fix: bill?.id }}>
                   {t("billUpdateCard")}
                 </Link>
               </Button>
