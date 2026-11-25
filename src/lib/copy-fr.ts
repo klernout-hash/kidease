@@ -3526,6 +3526,7 @@ export const fr = {
     authTakingTooLong:
       "La connexion prend trop de temps. Réessayez, ou ouvrez votre bureau. Si cela continue, Cloudflare vérifie encore la demande de connexion.",
     authOpenFailed: "Impossible d’ouvrir votre bureau. Utilisez Réessayer, ou ouvrez https://www.kidease.ca/fr/login.",
+    authSignInTimedOut: "Votre connexion a expiré. Connectez-vous de nouveau pour recevoir un nouveau code.",
     authAdminTimeout: "La session administrateur a expiré. Entrez votre mot de passe pour continuer.",
     authEnterPassword: "Entrez votre mot de passe pour continuer.",
     plansLoadFailed: "Impossible de charger les forfaits du centre. Connectez-vous comme direction et réessayez.",

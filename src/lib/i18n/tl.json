@@ -2773,6 +2773,7 @@
   "authMailMissing": "Hindi kami makapagpadala ng email ngayon. Subukan muli o makipag-ugnayan sa support@kidease.ca.",
   "authTakingTooLong": "Masyadong matagal ang pag-sign in. Subukan muli, o buksan ang desk mo. Kung patuloy ito, sinusuri pa rin ng Cloudflare ang sign-in request.",
   "authOpenFailed": "Hindi mabuksan ang desk mo. Gamitin ang Subukan muli, o buksan ang https://www.kidease.ca/login.",
+  "authSignInTimedOut": "Your sign-in timed out. Sign in again to get a new code.",
   "authAdminTimeout": "Nag-time out ang admin session. Ilagay ang password mo para magpatuloy.",
   "authEnterPassword": "Ilagay ang password para magpatuloy.",
   "plansLoadFailed": "Hindi ma-load ang mga plano ng centre. Mag-sign in bilang director at subukan muli.",

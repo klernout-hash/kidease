@@ -2773,6 +2773,7 @@
   "authMailMissing": "Wir konnten gerade keine E-Mail senden. Versuche es erneut oder wende dich an support@kidease.ca.",
   "authTakingTooLong": "Die Anmeldung dauert zu lange. Versuchen Sie es erneut oder öffnen Sie Ihren Schreibtisch. Wenn dies weiterhin geschieht, prüft Cloudflare die Anmeldeanfrage noch.",
   "authOpenFailed": "Ihr Schreibtisch konnte nicht geöffnet werden. Verwenden Sie Erneut versuchen oder öffnen Sie https://www.kidease.ca/login.",
+  "authSignInTimedOut": "Your sign-in timed out. Sign in again to get a new code.",
   "authAdminTimeout": "Die Admin-Sitzung ist abgelaufen. Geben Sie Ihr Passwort ein, um fortzufahren.",
   "authEnterPassword": "Geben Sie Ihr Passwort ein, um fortzufahren.",
   "plansLoadFailed": "Die Einrichtungspläne konnten nicht geladen werden. Melden Sie sich als Leitung an und versuchen Sie es erneut.",

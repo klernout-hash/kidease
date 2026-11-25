@@ -2,6 +2,9 @@ import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { authClient, dropExistingSession, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
+import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
+import { tx } from "@/lib/copy-runtime";
+import { useCopy } from "@/lib/use-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { celebrateAfterNavigation } from "@/lib/success-confirm";
@@ -46,8 +49,10 @@ export function GovClosedNote({ locale }: { locale: GovLocale }) {
   );
 }
 
-export function GovLogin({ locale, invite }: { locale: GovLocale; invite: string }) {
+export function GovLogin({ locale, invite, expired = false }: { locale: GovLocale; invite: string; expired?: boolean }) {
   const copy = govCopy(locale);
+  // Subscribes to the French copy pack so translated auth errors render once it loads.
+  useCopy();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -59,7 +64,9 @@ export function GovLogin({ locale, invite }: { locale: GovLocale; invite: string
       : "",
   );
   const [busy, setBusy] = useState(false);
-  const { onToken, takeChallenge, resetSignal, onRequired } = useTurnstileToken();
+  const { token, onToken, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
+  // Like /login: wait for the security check so its error rarely shows at all.
+  const waitingForCheck = turnstileRequired && !token.trim();
   const home = govPath(locale);
   const other = locale === "fr" ? "en" : "fr";
 
@@ -127,6 +134,11 @@ export function GovLogin({ locale, invite }: { locale: GovLocale; invite: string
         <h1 className="mt-1 font-display text-3xl">{copy.loginTitle}</h1>
         <p className="mt-2 text-base">{copy.why}</p>
         <p className="mt-2 text-sm text-muted">{copy.next}</p>
+        {expired && !error ? (
+          <p className="mt-4 rounded-xl bg-surface-2 p-3 text-sm" role="status" data-ke="gov-login-expired">
+            {tx(locale, "authSignInTimedOut")}
+          </p>
+        ) : null}
         <form method="post" action={locale === "fr" ? "/fr/gov/login" : "/gov/login"} className="mt-6 space-y-4" onSubmit={(event) => void onSubmit(event)}>
           {invite ? (
             <label className="block text-sm font-medium">
@@ -175,11 +187,12 @@ export function GovLogin({ locale, invite }: { locale: GovLocale; invite: string
           </p>
           <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
           {error ? (
-            <p className="text-sm text-danger" role="alert">
-              {error}
+            <p className="text-sm text-danger" role="alert" data-ke="gov-login-error">
+              {/* Errors are stored in English (funnel matching) and shown in the page language. */}
+              {presentAuthCopy(locale, error)}
             </p>
           ) : null}
-          <Button type="submit" disabled={busy} className="w-full">
+          <Button type="submit" disabled={busy || waitingForCheck} className="w-full">
             {busy ? copy.signingIn : copy.signIn}
           </Button>
         </form>

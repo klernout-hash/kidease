@@ -2773,6 +2773,7 @@
   "authMailMissing": "تعذّر إرسال بريد إلكتروني الآن. حاول مجدداً أو تواصل مع support@kidease.ca.",
   "authTakingTooLong": "يستغرق تسجيل الدخول وقتاً طويلاً. أعد المحاولة، أو افتح مكتبك. إذا استمر هذا، فإن Cloudflare ما زال يتحقق من طلب تسجيل الدخول.",
   "authOpenFailed": "تعذّر فتح مكتبك. استخدم إعادة المحاولة، أو افتح https://www.kidease.ca/login.",
+  "authSignInTimedOut": "Your sign-in timed out. Sign in again to get a new code.",
   "authAdminTimeout": "انتهت مهلة جلسة المسؤول. أدخل كلمة المرور للمتابعة.",
   "authEnterPassword": "أدخل كلمة المرور للمتابعة.",
   "plansLoadFailed": "تعذّر تحميل خطط المركز. سجّل الدخول بصفة مدير وأعد المحاولة.",

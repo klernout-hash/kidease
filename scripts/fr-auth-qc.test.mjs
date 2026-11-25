@@ -128,3 +128,10 @@ test("#1014 item 4: /verify-2fa sends the screen language with every code reques
   // The flag itself is untouched.
   assert.equal(FLAG_DEFAULTS.FEATURE_FR_AUTH_QC, false);
 });
+
+test("#1014 item 7: the timed-out message and expired code errors read in French", () => {
+  const fr = "Votre connexion a expiré. Connectez-vous de nouveau pour recevoir un nouveau code.";
+  assert.equal(presentAuthCopy("fr", "Your sign-in timed out. Sign in again to get a new code."), fr);
+  assert.equal(presentAuthCopy("fr", "That code expired. Request a new one."), fr);
+  assert.equal(presentAuthCopy("fr", "Request a new code first."), fr);
+});

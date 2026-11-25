@@ -2773,6 +2773,7 @@
   "authMailMissing": "No pudimos enviar un correo ahora. Inténtalo de nuevo o contacta con support@kidease.ca.",
   "authTakingTooLong": "El inicio de sesión está tardando demasiado. Reintenta o abre tu escritorio. Si esto sigue pasando, Cloudflare sigue verificando la solicitud de inicio de sesión.",
   "authOpenFailed": "No se pudo abrir tu escritorio. Usa Reintentar o abre https://www.kidease.ca/login.",
+  "authSignInTimedOut": "Your sign-in timed out. Sign in again to get a new code.",
   "authAdminTimeout": "La sesión de administrador expiró. Ingresa tu contraseña para continuar.",
   "authEnterPassword": "Escriba su contraseña para continuar.",
   "plansLoadFailed": "No se pudieron cargar los planes del centro. Inicia sesión como director e inténtalo de nuevo.",

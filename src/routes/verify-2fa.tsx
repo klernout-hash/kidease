@@ -3,7 +3,6 @@ import { memo, useEffect, useRef, useState } from "react";
 import { ShellLite } from "@/components/shell-lite";
 import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
-import { RedirectToSignIn } from "@/lib/auth/gates";
 import { authClient } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
@@ -12,6 +11,7 @@ import {
   mapAuthSessionUser,
   VERIFY_2FA_SESSION_GRACE_MS,
   verify2faSearchNext,
+  verify2faSignedOutTarget,
 } from "@/lib/auth/verify-2fa-session";
 import { waitForSignedInSession } from "@/lib/auth/session-settle";
 import {
@@ -29,7 +29,11 @@ import {
   markContinued,
 } from "@/lib/auth/login-funnel";
 import { sanitizePostLoginNext, staffTwoFactorRequired } from "@/lib/desks";
-import { LOGIN_TAKING_TOO_LONG_MESSAGE } from "@/lib/auth/login-stall";
+import {
+  LOGIN_TAKING_TOO_LONG_MESSAGE,
+  twoFactorSessionGone,
+  twoFactorVerifyErrorMessage,
+} from "@/lib/auth/login-stall";
 import { isNative } from "@/lib/native";
 import { yieldToMain } from "@/lib/yield-main";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
@@ -129,14 +133,32 @@ function Verify2faChecking() {
   );
 }
 
-/** Both the browser and the server say signed out. Log it, then go to sign-in. */
+/** The sign-in page's language for this screen: /fr/verify-2fa or a French UI. */
+function useVerify2faLocale(): "fr" | "en" {
+  const { locale } = useCopy();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return locale === "fr" || isFrPath(pathname) ? "fr" : "en";
+}
+
+/**
+ * Both the browser and the server say signed out: the half-finished sign-in
+ * expired (#1014 item 7). Go to the matching sign-in page with expired=1 and
+ * the real destination, never `/` and never back to /verify-2fa.
+ */
 function Verify2faSignedOut({ dest }: { dest: string }) {
+  const routeLocale = useVerify2faLocale();
+  const target = verify2faSignedOutTarget(dest, routeLocale);
   useEffect(() => {
     if (isGovDeskPath(dest)) {
       captureLoginFunnel({ step: "failed", reason: "gov_session_missing", native: isNative() });
     }
-  }, [dest]);
-  return <RedirectToSignIn />;
+    window.location.replace(target);
+  }, [dest, target]);
+  return (
+    <ShellLite>
+      <Verify2faChecking />
+    </ShellLite>
+  );
 }
 
 function VerifyTwoFactorPage() {
@@ -283,6 +305,10 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
         })
         .catch((err) => {
           if (cancelled) return;
+          if (twoFactorSessionGone(err instanceof Error ? err.message : "")) {
+            window.location.replace(verify2faSignedOutTarget(dest, mailLocale));
+            return;
+          }
           if (!staff) {
             captureLoginFunnel({ step: "two_factor_skipped", reason: "status_unavailable" });
             return leave(dest);
@@ -328,8 +354,15 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
       })
       .catch((err) => {
         if (attempt.current !== id) return;
+        const raw = err instanceof Error ? err.message : "Could not verify";
+        if (twoFactorSessionGone(raw)) {
+          // The half-finished sign-in is gone: send them to sign in again, with the notice.
+          captureLoginFunnel({ step: "two_factor_failed", reason: "session_expired", native: isNative() });
+          window.location.replace(verify2faSignedOutTarget(dest, mailLocale));
+          return;
+        }
         captureLoginFunnel({ step: "two_factor_failed", reason: "code", native: isNative() });
-        setError(err instanceof Error ? err.message : "Could not verify");
+        setError(twoFactorVerifyErrorMessage(raw));
         resetTurnstile();
       })
       .finally(() => {

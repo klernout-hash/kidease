@@ -3512,6 +3512,7 @@ export const en = {
     authTakingTooLong:
       "Sign-in is taking too long. Retry, or open your desk. If this keeps happening, Cloudflare is still checking the sign-in request.",
     authOpenFailed: "Could not open your desk. Use Retry, or open https://www.kidease.ca/login.",
+    authSignInTimedOut: "Your sign-in timed out. Sign in again to get a new code.",
     authAdminTimeout: "Admin session timed out. Enter your password to continue.",
     authEnterPassword: "Enter your password to continue.",
     plansLoadFailed: "Could not load centre plans. Sign in as a director and try again.",

@@ -119,6 +119,8 @@ export type LoginSearch = {
   why?: SignupWhy;
   lang?: "en" | "fr";
   error?: string;
+  /** "1" when /verify-2fa sent the person back because the sign-in timed out (#1014 item 7). */
+  expired?: "1";
 };
 
 const WHY_LEAD: Record<SignupWhy, CopyKey> = {
@@ -249,6 +251,7 @@ export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
   if (s.step === "role") out.step = "role";
   if (isSignupWhy(s.why)) out.why = s.why;
   if (s.lang === "en" || s.lang === "fr") out.lang = s.lang;
+  if (s.expired === "1" || s.expired === 1) out.expired = "1";
   const oauthError = sanitizeNativeOAuthError(typeof s.error === "string" ? s.error : "");
   if (oauthError) out.error = oauthError;
   const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
@@ -262,7 +265,7 @@ export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
  */
 export function loginGovBeforeLoad(search: LoginSearch, routeLocale: "en" | "fr") {
   const href = govLoginRedirectForNext(search.next, routeLocale);
-  if (href) throw redirect({ href });
+  if (href) throw redirect({ href: search.expired === "1" ? `${href}?expired=1` : href });
 }
 
 export async function loginLoader() {
@@ -959,6 +962,11 @@ export function LoginScreen({
             <p className="mt-2 text-sm text-muted" data-ke="login-lead">
               {pickingRole ? t("facebookRoleLead") : busy && !error ? t("openingDesk") : lead}
             </p>
+            {search.expired === "1" && !error && !pickingRole ? (
+              <p className="mt-3 rounded-xl bg-surface-2 p-3 text-sm" role="status" data-ke="login-expired">
+                {t("authSignInTimedOut")}
+              </p>
+            ) : null}
             {pickingRole ? (
               <div className="mt-6 space-y-3" data-ke="facebook-role">
                 <p className="text-sm text-muted">{t("facebookRoleAdult")}</p>
