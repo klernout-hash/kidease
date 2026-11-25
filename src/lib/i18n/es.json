@@ -3780,5 +3780,11 @@
   "walletRetrySkipped": "Tu tarjeta está guardada. Paga la factura desde Pagos.",
   "billRefundedOn": "Reembolso de {amount} el {date}",
   "billRefundedTo": "a {method}",
-  "billPartlyRefunded": "Reembolso parcial"
+  "billPartlyRefunded": "Reembolso parcial",
+  "accountSavedStatus": "Guardado",
+  "accountConsentSaveFailed": "Tus datos se guardaron. Tus preferencias de correo y mensajes de texto no se guardaron. Inténtalo de nuevo.",
+  "accountAnchorSaveFailed": "Tus datos se guardaron. Tu dirección del trabajo no se guardó. Inténtalo de nuevo.",
+  "storePlayGet": "Consíguelo en Google Play",
+  "storePlayReadyLead": "KidEase está en Google Play. En una tableta Fire, usa Amazon Appstore.",
+  "searchCommuteChip": "Trayecto: {place}"
 }

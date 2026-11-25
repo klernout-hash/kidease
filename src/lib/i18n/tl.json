@@ -3780,5 +3780,11 @@
   "walletRetrySkipped": "Na-save ang card mo. Bayaran ang bill mula sa Payments.",
   "billRefundedOn": "Na-refund ang {amount} noong {date}",
   "billRefundedTo": "sa {method}",
-  "billPartlyRefunded": "Bahagyang na-refund"
+  "billPartlyRefunded": "Bahagyang na-refund",
+  "accountSavedStatus": "Na-save",
+  "accountConsentSaveFailed": "Na-save ang iyong mga detalye. Hindi na-save ang iyong mga pinili sa email at text. Subukan ulit.",
+  "accountAnchorSaveFailed": "Na-save ang iyong mga detalye. Hindi na-save ang address ng iyong trabaho. Subukan ulit.",
+  "storePlayGet": "Kunin sa Google Play",
+  "storePlayReadyLead": "Nasa Google Play na ang KidEase. Sa Fire tablet, gamitin ang Amazon Appstore.",
+  "searchCommuteChip": "Biyahe: {place}"
 }

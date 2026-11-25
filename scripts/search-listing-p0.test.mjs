@@ -65,7 +65,7 @@ test("search reserves rail space so Priority listings and the form do not shift"
 test("search and listing recover from hung fetches", () => {
   const search = src("src/routes/search.tsx");
   assert.match(search, /searchFailed/);
-  assert.match(search, /12_000/);
+  assert.match(search, /window\.setTimeout\(\(\) => fail\(\), LOADER_WATCHDOG_MS\)/);
   assert.match(search, /retrySearch/);
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /\.catch\(/);

@@ -3780,5 +3780,11 @@
   "walletRetrySkipped": "ਤੁਹਾਡਾ ਕਾਰਡ ਸੰਭਾਲ ਲਿਆ ਗਿਆ ਹੈ। ਭੁਗਤਾਨਾਂ ਵਿੱਚੋਂ ਬਿੱਲ ਭਰੋ।",
   "billRefundedOn": "{date} ਨੂੰ {amount} ਵਾਪਸ ਕੀਤੇ",
   "billRefundedTo": "{method} ਵਿੱਚ",
-  "billPartlyRefunded": "ਅੰਸ਼ਕ ਤੌਰ 'ਤੇ ਵਾਪਸ"
+  "billPartlyRefunded": "ਅੰਸ਼ਕ ਤੌਰ 'ਤੇ ਵਾਪਸ",
+  "accountSavedStatus": "ਸੇਵ ਹੋ ਗਿਆ",
+  "accountConsentSaveFailed": "ਤੁਹਾਡੇ ਵੇਰਵੇ ਸੰਭਾਲੇ ਗਏ ਹਨ। ਤੁਹਾਡੀਆਂ ਈਮੇਲ ਅਤੇ ਟੈਕਸਟ ਚੋਣਾਂ ਸੰਭਾਲ ਨਹੀਂ ਸਕੇ। ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+  "accountAnchorSaveFailed": "ਤੁਹਾਡੇ ਵੇਰਵੇ ਸੰਭਾਲੇ ਗਏ ਹਨ। ਤੁਹਾਡਾ ਕੰਮ ਦਾ ਪਤਾ ਸੰਭਾਲ ਨਹੀਂ ਸਕੇ। ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+  "storePlayGet": "Google Play ਤੋਂ ਲਓ",
+  "storePlayReadyLead": "KidEase Google Play ਉੱਤੇ ਹੈ। Fire ਟੈਬਲੇਟ ਉੱਤੇ Amazon Appstore ਵਰਤੋ।",
+  "searchCommuteChip": "ਆਉਣ-ਜਾਣ: {place}"
 }

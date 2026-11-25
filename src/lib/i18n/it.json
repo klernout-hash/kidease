@@ -3780,5 +3780,11 @@
   "walletRetrySkipped": "La carta è salvata. Paga la fattura da Pagamenti.",
   "billRefundedOn": "Rimborsati {amount} il {date}",
   "billRefundedTo": "su {method}",
-  "billPartlyRefunded": "Rimborsata in parte"
+  "billPartlyRefunded": "Rimborsata in parte",
+  "accountSavedStatus": "Salvato",
+  "accountConsentSaveFailed": "I tuoi dati sono salvati. Le tue scelte per email e SMS non sono state salvate. Riprova.",
+  "accountAnchorSaveFailed": "I tuoi dati sono salvati. L’indirizzo del lavoro non è stato salvato. Riprova.",
+  "storePlayGet": "Scarica da Google Play",
+  "storePlayReadyLead": "KidEase è su Google Play. Su un tablet Fire, usa Amazon Appstore.",
+  "searchCommuteChip": "Tragitto: {place}"
 }

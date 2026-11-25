@@ -240,21 +240,72 @@ export function listingMatchesSavedSearch(
   return matchesAgeBand(search.ageBand, row) && listingMatchesSavedFilters(row, search.filters);
 }
 
+/** Listing filters a person picks on purpose. Location, commute and age are not filters. */
+export type PickedListingFilters = Pick<
+  SavedSearchFilters,
+  | "avail"
+  | "ten"
+  | "meals"
+  | "outdoor"
+  | "inclusive"
+  | "extended"
+  | "infantOnly"
+  | "catchmentOnly"
+  | "confirmedOnly"
+  | "readyOnly"
+  | "claimVerifiedOnly"
+>;
+
+const PICKED_FLAGS = [
+  "ten",
+  "meals",
+  "outdoor",
+  "inclusive",
+  "extended",
+  "infantOnly",
+  "catchmentOnly",
+  "confirmedOnly",
+  "readyOnly",
+  "claimVerifiedOnly",
+] as const;
+
+/** Shared by the saved-search badge and the search Filters button. */
+export function pickedFilterCount(filters: Partial<PickedListingFilters>): number {
+  let n = filters.avail && filters.avail !== "any" ? 1 : 0;
+  for (const key of PICKED_FLAGS) if (filters[key]) n += 1;
+  return n;
+}
+
 export function activeFilterCount(filters: SavedSearchFilters, ageBand: AgeBand) {
   let n = ageBand !== "any" ? 1 : 0;
-  if (filters.avail !== "any") n += 1;
+  n += pickedFilterCount(filters);
   if (filters.liveOnly) n += 1;
-  if (filters.ten) n += 1;
-  if (filters.meals) n += 1;
-  if (filters.outdoor) n += 1;
-  if (filters.inclusive) n += 1;
-  if (filters.extended) n += 1;
-  if (filters.infantOnly) n += 1;
-  if (filters.catchmentOnly) n += 1;
-  if (filters.confirmedOnly) n += 1;
-  if (filters.readyOnly) n += 1;
-  if (filters.claimVerifiedOnly) n += 1;
   if (filters.startDate) n += 1;
+  return n;
+}
+
+/**
+ * The "Filters · N" badge on /search. Counts only filters picked for this
+ * search (sheet chips and filter params in the URL). A saved work address
+ * (commute anchor) and a category worked out from the age rail are not
+ * filters: the anchor shows as its own chip.
+ */
+export function searchSheetFilterCount(input: {
+  filters: Partial<PickedListingFilters>;
+  favoritesOnly?: boolean;
+  /** Care type from `?care=`. */
+  careType?: string | null;
+  /** A facility category named in `?cat=` (home, nursery, before-after). Not from `?age=`. */
+  urlFacilityCategory?: boolean;
+  /** Pioneer filter params in the URL. */
+  pioneer?: { cwelcc?: unknown; inclusive?: unknown; meals?: unknown; subsidy?: unknown; spoken?: unknown };
+}): number {
+  let n = pickedFilterCount(input.filters);
+  if (input.favoritesOnly) n += 1;
+  if (input.careType && input.careType !== "any") n += 1;
+  if (input.urlFacilityCategory) n += 1;
+  const pioneer = input.pioneer ?? {};
+  for (const key of ["cwelcc", "inclusive", "meals", "subsidy", "spoken"] as const) if (pioneer[key]) n += 1;
   return n;
 }
 

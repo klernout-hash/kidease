@@ -3780,5 +3780,11 @@
   "walletRetrySkipped": "你張卡已經儲存。請喺「付款」度付呢張帳單。",
   "billRefundedOn": "{date} 已退款 {amount}",
   "billRefundedTo": "退返去 {method}",
-  "billPartlyRefunded": "部分退款"
+  "billPartlyRefunded": "部分退款",
+  "accountSavedStatus": "已儲存",
+  "accountConsentSaveFailed": "你嘅資料已經儲存。你嘅電郵同短訊選擇儲存唔到。請再試一次。",
+  "accountAnchorSaveFailed": "你嘅資料已經儲存。你嘅工作地址儲存唔到。請再試一次。",
+  "storePlayGet": "喺 Google Play 下載",
+  "storePlayReadyLead": "KidEase 已經喺 Google Play。Fire 平板請用 Amazon Appstore。",
+  "searchCommuteChip": "通勤：{place}"
 }

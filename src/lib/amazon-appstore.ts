@@ -63,12 +63,27 @@ export function AMAZON_APPSTORE_URL(raw = readPublicEnv(AMAZON_APPSTORE_ENV)): s
   return null;
 }
 
-/** Fire and Android open the Amazon Appstore app. Desktop and iPhone use the web URL. */
-export function prefersAmazonDeepLink(userAgent: string | null | undefined): boolean {
+/** Fire tablets, Kindle and Amazon's WebView. Other Android phones use Google Play. */
+export const AMAZON_DEVICE_UA = /Silk|Kindle|KF[A-Z]{2}|AmazonWebView/i;
+
+/** `ke_store=amazon` marks an Amazon Appstore visit (set by the Amazon build or a store link). */
+export function amazonStoreCookie(cookie: string | null | undefined): boolean {
+  return /(?:^|;\s*)ke_store=amazon(?:;|$)/.test(String(cookie || ""));
+}
+
+/** Amazon first only on Amazon devices or with the ke_store=amazon cookie. */
+export function isAmazonDevice(userAgent: string | null | undefined, cookie?: string | null): boolean {
   const ua = String(userAgent || "");
   if (/iPhone|iPad|iPod/i.test(ua)) return false;
-  if (/Silk|Kindle|KF[A-Z]{2}|AmazonWebView/i.test(ua)) return true;
-  return /Android/i.test(ua);
+  return AMAZON_DEVICE_UA.test(ua) || amazonStoreCookie(cookie);
+}
+
+/**
+ * Fire devices open the Amazon Appstore app. Other Android phones, desktop and
+ * iPhone follow the web URL: most Android phones have no Amazon Appstore app.
+ */
+export function prefersAmazonDeepLink(userAgent: string | null | undefined, cookie?: string | null): boolean {
+  return isAmazonDevice(userAgent, cookie);
 }
 
 /** Package deep link. The web listing URL is the fallback. */
@@ -77,11 +92,12 @@ export function amazonAppstoreDeepLink(pkg = STORE.playPackageName): string {
 }
 
 /**
- * On Fire and Android, try the Appstore app, then the web listing if the
+ * On Fire devices, try the Appstore app, then the web listing if the
  * page is still visible. Other devices follow the web link.
  */
 export function openAmazonListing(webUrl: string, userAgent: string | null | undefined): boolean {
-  if (typeof window === "undefined" || !prefersAmazonDeepLink(userAgent)) return false;
+  if (typeof window === "undefined") return false;
+  if (!prefersAmazonDeepLink(userAgent, typeof document === "undefined" ? "" : document.cookie)) return false;
   const deep = amazonAppstoreDeepLink();
   const started = Date.now();
   const timer = window.setTimeout(() => {
