@@ -5,7 +5,7 @@
  */
 
 import type { MenuIconId } from "@/lib/menu-icons";
-import { localePath } from "./locale-path.ts";
+import { isFrPath, localePath } from "./locale-path.ts";
 
 export type ChromeRole = "guest" | "parent" | "provider" | "admin" | "support" | "government";
 
@@ -210,7 +210,9 @@ export function destinationAfterSignIn(input: {
     signedIn: true,
     role: daycare ? "provider" : input.role,
   });
-  if (decision.kind === "allow") return next;
+  // An English desk path (/parent, the default when no next was given) gets the
+  // French prefix after a French sign-in. Paths already in French stay as they are.
+  if (decision.kind === "allow") return locale === "fr" && !isFrPath(next) ? localePath(next, "fr") : next;
   if (decision.kind === "home") return place(decision.to);
   return place(home);
 }

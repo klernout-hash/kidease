@@ -126,6 +126,7 @@ export function ParentSignupForm({ providers: initialProviders = [] }: { provide
         next: "/parent",
         desk: "parent",
         role: "parent",
+        locale: locale === "fr" ? "fr" : "en",
         method: "email",
       });
     } catch (err) {

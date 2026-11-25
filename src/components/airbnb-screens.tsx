@@ -293,7 +293,7 @@ export function AirbnbAccount() {
       <nav className="ke-airbnb-hub" aria-label={copy.account}>
         {rows.map((id) =>
           id === "sign-out" ? (
-            <button key={id} type="button" className="ke-airbnb-row" data-ke="airbnb-sign-out" onClick={() => void signOut("/")}>
+            <button key={id} type="button" className="ke-airbnb-row" data-ke="airbnb-sign-out" onClick={() => void signOut(locale === "fr" ? "/fr" : "/")}>
               <span>{copy.signOut}</span>
             </button>
           ) : id === "notifications" ? (
