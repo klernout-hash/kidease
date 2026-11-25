@@ -1502,6 +1502,7 @@
   "messageSheetLead": "Escribe a {name}. Las respuestas quedan en Mensajes.",
   "successKicker": "¡Buen trabajo!",
   "successDone": "Listo",
+  "successSaved": "Saved",
   "successSavedBody": "Tus cambios están guardados.",
   "successProfileSaved": "Perfil guardado",
   "successChildAdded": "Niño agregado",

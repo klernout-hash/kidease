@@ -1902,6 +1902,7 @@ export const en = {
     messageSheetLead: "Write to {name}. Replies stay in Messages.",
     successKicker: "Good Job",
     successDone: "Done",
+    successSaved: "Saved",
     successSavedBody: "Your changes are saved.",
     successProfileSaved: "Profile saved",
     successChildAdded: "Child added",

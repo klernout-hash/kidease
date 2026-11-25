@@ -1908,6 +1908,7 @@ export const fr = {
     messageSheetLead: "Écrivez à {name}. Les réponses restent dans Messages.",
     successKicker: "Bravo !",
     successDone: "Terminé",
+    successSaved: "Enregistré",
     successSavedBody: "Vos changements sont enregistrés.",
     successProfileSaved: "Profil enregistré",
     successChildAdded: "Enfant ajouté",

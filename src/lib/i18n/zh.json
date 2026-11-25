@@ -1502,6 +1502,7 @@
   "messageSheetLead": "给{name}写消息。回复会留在消息中。",
   "successKicker": "做得好！",
   "successDone": "完成",
+  "successSaved": "Saved",
   "successSavedBody": "你的更改已保存。",
   "successProfileSaved": "个人资料已保存",
   "successChildAdded": "已添加孩子",

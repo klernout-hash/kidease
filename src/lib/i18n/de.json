@@ -1502,6 +1502,7 @@
   "messageSheetLead": "Schreiben Sie an {name}. Antworten bleiben unter Nachrichten.",
   "successKicker": "Gut gemacht!",
   "successDone": "Fertig",
+  "successSaved": "Saved",
   "successSavedBody": "Ihre Änderungen sind gespeichert.",
   "successProfileSaved": "Profil gespeichert",
   "successChildAdded": "Kind hinzugefügt",
