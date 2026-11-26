@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { AreaWaitlistForm } from "@/components/area-waitlist-form";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
-import { areaWaitlistCopy, centreWaitlistStatus } from "@/lib/area-waitlist-copy";
+import { areaAgeLabel, areaWaitlistCopy, centreWaitlistStatus } from "@/lib/area-waitlist-copy";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { removeAreaWaitlist } from "@/lib/server/area-waitlist";
 import { withdrawDaycareWaitlist } from "@/lib/server/spot-offers";
@@ -156,7 +156,7 @@ export function MyWaitlists() {
                     {row.postalCode ? `${row.postalCode} · ` : ""}
                     {copy.radiusKm.replace("{n}", String(row.radiusKm))}
                     {" · "}
-                    {row.ageGroup}
+                    {areaAgeLabel(copy, row.ageGroup)}
                     {row.startDate ? ` · ${row.startDate}` : ""}
                   </p>
                 </div>
@@ -184,7 +184,7 @@ export function MyWaitlists() {
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-muted">
-                    {row.ageGroup}
+                    {areaAgeLabel(copy, row.ageGroup)}
                     {row.place ? ` · ${locale === "fr" ? "Place" : "Place"} ${row.place}` : ""}
                   </p>
                   <p className="mt-1 text-xs text-subtle">{copy.joinedOn.replace("{date}", when(row.joinedAt, locale))}</p>

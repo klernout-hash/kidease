@@ -81,3 +81,14 @@ test("org #44: a parent absence report is hidden once the child is checked in", 
   const desk = src("src/components/child-checkin-desk.tsx");
   assert.match(desk, /\{child\.parentReport && !child\.events\.some\(\(event\) => event\.action === "check_in"\) \? \(\s+<p className="mt-2 text-sm" data-ke="parent-reported-absence">/);
 });
+
+test("org #45: waitlist lists show the age group in words, so FR never shows the raw 'any'", async () => {
+  const { areaAgeLabel, areaWaitlistCopy } = await import("../src/lib/area-waitlist-copy.ts");
+  const fr = areaWaitlistCopy("fr");
+  assert.equal(areaAgeLabel(fr, "any"), "Tout âge");
+  assert.equal(areaAgeLabel(fr, "infant"), fr.infantShort);
+  assert.equal(areaAgeLabel(areaWaitlistCopy("en"), "any"), "Any age");
+  const lists = src("src/components/my-waitlists.tsx");
+  assert.doesNotMatch(lists, /\{row\.ageGroup\}/);
+  assert.equal((lists.match(/areaAgeLabel\(copy, row\.ageGroup\)/g) || []).length, 2);
+});
