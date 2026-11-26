@@ -3,7 +3,8 @@ import { useEffect, type ReactNode } from "react";
 import { GovHelp } from "@/components/gov/gov-help";
 import { signOut } from "@/lib/auth/client";
 import { govCopy, govPath } from "@/lib/gov/copy";
-import { GOV_MENU, govMenuHref, govMenuLabel, type GovSection } from "@/lib/gov/menu";
+import { GOV_MENU, govGroupOf, govMenuHref, govMenuLabel, type GovSection } from "@/lib/gov/menu";
+import { govGroupPages, govPageHref, govPageTitle, type GovLeaf } from "@/lib/gov/desk";
 import { regionLabel } from "@/lib/gov/places";
 import type { GovLocale } from "@/lib/gov/aggregate";
 
@@ -24,36 +25,49 @@ export function scrollGovMain() {
 export function GovFrame({
   locale,
   section,
+  page,
   province,
-  region,
-  city,
+  region: regionProp,
+  city: cityProp,
   regions,
-  cities,
+  cities: citiesProp,
   asOf,
   orgName,
-  onFilter,
-  onSearch,
-  search,
+  onFilter: onFilterProp,
+  onSearch: onSearchProp,
+  search: searchProp,
   children,
 }: {
   locale: GovLocale;
   section: GovSection;
+  /** A desk page outside the dashboard view. Sets the title, language link, and group row. */
+  page?: GovLeaf;
   province: string;
-  region: string;
-  city: string;
-  regions: string[];
-  cities: string[];
+  region?: string;
+  city?: string;
+  /** Filters show only when regions are passed (dashboard sections). */
+  regions?: string[];
+  cities?: string[];
   asOf: string;
   orgName: string;
-  search: string;
-  onSearch: (value: string) => void;
-  onFilter: (next: { region?: string; city?: string }) => void;
+  search?: string;
+  onSearch?: (value: string) => void;
+  onFilter?: (next: { region?: string; city?: string }) => void;
   children: ReactNode;
 }) {
   const copy = govCopy(locale);
   const fr = locale === "fr";
   const other: GovLocale = fr ? "en" : "fr";
-  const title = govMenuLabel(section, locale);
+  const title = page ? govPageTitle(page, locale) : govMenuLabel(section, locale);
+  const group = govGroupOf(page ?? section);
+  const groupPages = group === "overview" ? [] : govGroupPages(group);
+  const region = regionProp ?? "ALL";
+  const city = cityProp ?? "ALL";
+  const cities = citiesProp ?? [];
+  const search = searchProp ?? "";
+  const onSearch = onSearchProp ?? (() => undefined);
+  const onFilter = onFilterProp ?? (() => undefined);
+  const otherHref = page ? govPageHref(other, page) : govMenuHref(other, section);
   useEffect(() => {
     document.title = title;
     scrollGovMain();
@@ -71,7 +85,7 @@ export function GovFrame({
         <div className="flex flex-wrap items-center gap-2">
           <GovHelp locale={locale} />
           <a
-            href={withSearch(govMenuHref(other, section), province, region, city)}
+            href={withSearch(otherHref, province, region, city)}
             className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium underline-offset-4 hover:underline"
           >
             {copy.language}
@@ -99,7 +113,7 @@ export function GovFrame({
       >
         <div className="mx-auto flex w-full max-w-5xl gap-1 overflow-x-auto px-4 py-2">
           {GOV_MENU.map((item) => {
-            const current = item.id === section;
+            const current = item.id === group;
             return (
               <a
                 key={item.id}
@@ -119,6 +133,28 @@ export function GovFrame({
             );
           })}
         </div>
+        {groupPages.length > 1 ? (
+          <div className="mx-auto flex w-full max-w-5xl gap-1 overflow-x-auto px-4 pb-2" data-ke="gov-subnav">
+            {groupPages.map((item) => {
+              const current = page ? item.leaf === page : item.leaf === section;
+              return (
+                <a
+                  key={item.leaf}
+                  href={withSearch(govPageHref(locale, item.leaf), province, region, city)}
+                  data-ke="gov-subtask"
+                  aria-current={current ? "page" : undefined}
+                  className={
+                    current
+                      ? "inline-flex min-h-11 shrink-0 items-center rounded-full bg-surface-2 px-3 text-sm font-semibold underline underline-offset-4 touch-manipulation"
+                      : "inline-flex min-h-11 shrink-0 items-center rounded-full px-3 text-sm text-muted touch-manipulation"
+                  }
+                >
+                  {fr ? item.fr : item.en}
+                </a>
+              );
+            })}
+          </div>
+        ) : null}
       </nav>
       <main id="gov-main" className="mx-auto w-full max-w-5xl px-4 pb-16" data-ke="gov-dashboard">
         <h1 className="font-display text-3xl" data-ke="gov-heading">{title}</h1>
@@ -127,7 +163,8 @@ export function GovFrame({
         <p className="mt-1 text-base" data-ke="gov-as-of" suppressHydrationWarning>
           {copy.asOf} {asOf}
         </p>
-        <div className="sticky top-14 z-20 -mx-4 mt-4 border-b border-border bg-bg px-4 py-3" data-ke="gov-filters">
+        {regions ? (
+        <div className={`sticky ${groupPages.length > 1 ? "top-28" : "top-14"} z-20 -mx-4 mt-4 border-b border-border bg-bg px-4 py-3`} data-ke="gov-filters">
           <label className="block text-sm font-medium" htmlFor="gov-search">
             {fr ? "Chercher un centre, un permis ou une ville" : "Search a centre, licence, or town"}
             <input
@@ -229,6 +266,7 @@ export function GovFrame({
             <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-bg to-transparent" data-ke="gov-pill-fade" aria-hidden="true" />
           </div>
         </div>
+        ) : null}
         {children}
       </main>
     </div>
