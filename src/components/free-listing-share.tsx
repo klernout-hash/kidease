@@ -8,6 +8,7 @@ import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { useCopy } from "@/lib/use-copy";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { cn } from "@/lib/utils";
+import { ListingShareKit } from "@/components/listing-share-kit";
 
 export function CopyListingLinkButton({
   slug,
@@ -140,6 +141,7 @@ export function FreePageExplainer({
                 province={row.province}
                 postalCode={row.postalCode}
               />
+              <ListingShareKit slug={row.slug} name={name} city={row.city} locale={locale} />
             </li>
           );
         })}
