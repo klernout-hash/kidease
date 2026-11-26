@@ -129,6 +129,8 @@ const FamilyInviteGap = lazy(() =>
 import { orgDeskStatus } from "@/lib/server/org-occupancy";
 import { gapCopy, moneyCentreChoice, pickCareCentre, pickCentre } from "@/lib/gap-features";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { refreshSessionDesks } from "@/components/session-desks";
+import { providerDocumentsEntry } from "@/lib/provider-documents-entry";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
 import { HostTodayHome } from "@/components/host-today-home";
@@ -596,6 +598,17 @@ export function ProviderPage() {
   const moneyListing = listings.find((row) => row.id === moneyChoice.id) ?? null;
   const deskListings = focusedId ? listings.filter((row) => row.id === focusedId) : listings;
   const gap = gapCopy(locale === "fr" ? "fr" : "en");
+  const documents = desk === "documents" ? providerDocumentsEntry({
+    deskSettled,
+    deskLoadFailed,
+    sessionReady,
+    hasSession: session != null,
+    canViewDocuments,
+    listingIds: listings.map((row) => row.id),
+    requestedCentre: search.centre,
+  }) : null;
+  const fr = locale === "fr";
+
 
   return (
     <TwoFactorGate next={search.desk ? `/provider?desk=${search.desk}` : "/provider"}>
@@ -657,7 +670,7 @@ export function ProviderPage() {
           <DeskSkeleton />
         </div>
       ) : null}
-      {deskSettled && deskLoadFailed && deskListings.length === 0 ? (
+      {desk !== "documents" && deskSettled && deskLoadFailed && deskListings.length === 0 ? (
         <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border" role="alert" data-ke="provider-desk-load-failed">
           <h2 className="font-display text-xl">
             {locale === "fr" ? "Votre bureau n’a pas pu se charger." : "Your desk did not load."}
@@ -671,7 +684,7 @@ export function ProviderPage() {
         </section>
       ) : null}
       {/* Session desks can still be loading or have failed (session null): do not leave Today empty. */}
-      {deskSettled && !deskLoadFailed && desk !== "insights" && ((deskListings.length === 0 && centreOwner) || (deskListings.length === 0 && session == null)) ? (
+      {deskSettled && !deskLoadFailed && desk !== "insights" && desk !== "documents" && ((deskListings.length === 0 && centreOwner) || (deskListings.length === 0 && session == null)) ? (
         <ProviderOnboarding />
       ) : null}
       {desk !== "today" && search.claimed && listings[0] ? (
@@ -1022,24 +1035,53 @@ export function ProviderPage() {
           ) : null}
         </>
       ) : null}
-      {desk === "documents" ? (
-        session && deskSettled && canViewDocuments && listings[0] ? (
-          <CentreDocumentChecklist daycareId={(listings.find((row) => row.id === search.centre) || listings[0]).id} />
-        ) : session && deskSettled && !canViewDocuments ? (
-          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="desk-no-access">
-            {locale === "fr" ? "Vous n’avez pas accès à ces documents." : "You do not have access to these documents."}
-          </p>
-        ) : listings[0] ? null : (
-          <EmptyState
-            title={t("deskNavDocuments")}
-            body={t("providerOnboardingLead")}
-            extra={
-              <Button asChild>
-                <Link to="/claim">{t("providerOnboardingClaim")}</Link>
-              </Button>
-            }
-          />
-        )
+      {documents?.kind === "pending" ? (
+        <div role="status" aria-live="polite" aria-label={t("loading")} data-ke="provider-documents-loading">
+          <DeskSkeleton />
+        </div>
+      ) : null}
+      {documents?.kind === "retry" ? (
+        <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border" role="alert" data-ke="provider-documents-load-failed">
+          <h2 className="font-display text-xl">{fr ? "Impossible de charger vos documents." : "Your documents could not load."}</h2>
+          <Button className="mt-4" onClick={() => {
+            refreshSessionDesks();
+            void load();
+          }}>
+            {fr ? "Réessayer" : "Try again"}
+          </Button>
+        </section>
+      ) : null}
+      {documents?.kind === "forbidden" ? (
+        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="desk-no-access">
+          {fr ? "Vous n’avez pas accès à ces documents." : "You do not have access to these documents."}
+        </p>
+      ) : null}
+      {documents?.kind === "centre-unavailable" ? (
+        <EmptyState
+          title={t("deskNavDocuments")}
+          body={fr ? "Ce centre n’est pas disponible dans votre bureau." : "This centre isn’t available in your desk."}
+          extra={
+            <Button asChild>
+              <Link to={deskPath} search={{ ...search, desk: "documents", centre: undefined }}>
+                {fr ? "Voir mes documents" : "View my documents"}
+              </Link>
+            </Button>
+          }
+        />
+      ) : null}
+      {documents?.kind === "empty" ? (
+        <EmptyState
+          title={t("deskNavDocuments")}
+          body={centreOwner ? t("providerOnboardingLead") : fr ? "Aucun centre n’est associé à ce bureau." : "No centre is linked to this desk."}
+          extra={centreOwner ? (
+            <Button asChild>
+              <Link to="/claim">{t("providerOnboardingClaim")}</Link>
+            </Button>
+          ) : undefined}
+        />
+      ) : null}
+      {documents?.kind === "ready" ? (
+        <CentreDocumentChecklist key={documents.centreId} daycareId={documents.centreId} />
       ) : null}
       {desk === "listings" && centreOwner && !(hostListing && listingEditorOpen) ? (
           <details

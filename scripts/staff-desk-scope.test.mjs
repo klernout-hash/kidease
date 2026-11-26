@@ -43,9 +43,9 @@ test("families link does not add an empty daycare id", () => {
 
 test("money and documents stay on their own pages", () => {
   assert.doesNotMatch(provider, /desk: "today"/);
-  assert.match(provider, /canViewDocuments && listings\[0\]/);
+  assert.match(provider, /providerDocumentsEntry\(\{[\s\S]*?canViewDocuments,/);
   assert.equal(provider.split("<CentreDocumentChecklist").length - 1, 1);
-  assert.match(provider, /!canViewDocuments \?/);
+  assert.match(provider, /documents\?\.kind === "forbidden"/);
 });
 
 test("bill and tap saves require bill edit, not a meal-plan write", () => {
