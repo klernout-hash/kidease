@@ -125,7 +125,7 @@ export function TwoFactorGate({
   if (!user) return <RedirectToSignIn />;
   if (state === "need") {
     const safeNext = sanitizePostLoginNext(next) ?? (staffTwoFactorRequired(next) ? "/admin" : isFrPath(next) ? "/fr/parent" : "/parent");
-    return <Navigate to="/verify-2fa" search={{ next: safeNext }} />;
+    return <Navigate to={isFrPath(safeNext) ? "/fr/verify-2fa" : "/verify-2fa"} search={{ next: safeNext }} />;
   }
   return <>{children}</>;
 }

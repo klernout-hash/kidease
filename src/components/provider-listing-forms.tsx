@@ -632,7 +632,8 @@ export function CapacityForm({
             ageMinMonths: state.ageMinMonths,
             ageMaxMonths: state.ageMaxMonths,
             hours: state.hours,
-            licenseNumber: state.licenseNumber,
+            // Licence mode no longer has its own number field; keep the saved value from the details form.
+            licenseNumber: mode === "licence" ? (daycare.licenseNumber ?? "") : state.licenseNumber,
             touchVacancy: mode === "listing",
             staffLanguages: state.staffLanguages,
             culturalPrograms: state.culturalPrograms,
@@ -688,7 +689,14 @@ export function CapacityForm({
       {mode === "licence" ? (
         <>
           <p className="text-sm text-muted">{t("licenceUploadLead")}</p>
-          <Field label={t("licenceNo")} value={state.licenseNumber} onChange={(v) => setState({ ...state, licenseNumber: v })} />
+          {/* The licence number is edited once, in the licence details above. Repeating the field here
+              gave two inputs with the same label that could disagree. */}
+          {state.licenseNumber ? (
+            <p className="text-sm" data-ke="licence-number-readonly">
+              <span className="text-muted">{t("licenceNo")}: </span>
+              <span className="font-medium">{state.licenseNumber}</span>
+            </p>
+          ) : null}
           <label className="block text-sm font-medium">
             {t("licensePhoto")}
             <input

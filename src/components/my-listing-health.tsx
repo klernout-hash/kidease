@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { ProfileHealthCard } from "@/components/profile-health-card";
 import type { ProfileHealth } from "@/lib/profile-health";
 import { loadMyListingHealth } from "@/lib/server/profile-health";
@@ -10,18 +11,40 @@ type Listing = { id: string; name: string };
  * The daycare's profile health, read from the same row and the same scoring
  * function Admin uses on the approval card.
  */
-export function MyListingHealth({ listings, locale }: { listings: Listing[]; locale: "en" | "fr" }) {
+export function MyListingHealth({
+  listings,
+  locale,
+  activeId,
+}: {
+  listings: Listing[];
+  locale: "en" | "fr";
+  /** The centre the desk is on (?centre=). Health is per centre, so follow it instead of the first listing. */
+  activeId?: string | null;
+}) {
+  // provider.tsx is mid-change in another PR, so read ?centre= here rather than threading a prop.
+  const urlCentre = useRouterState({
+    select: (state) => {
+      const value = (state.location.search as Record<string, unknown> | undefined)?.centre;
+      return typeof value === "string" ? value : null;
+    },
+  });
+  const followId = activeId ?? urlCentre;
   const [picked, setPicked] = useState<string | null>(null);
-  const [health, setHealth] = useState<ProfileHealth | null>(null);
-  const current = listings.find((row) => row.id === picked) ?? listings[0] ?? null;
+  const [health, setHealth] = useState<{ id: string; health: ProfileHealth } | null>(null);
+  const current =
+    listings.find((row) => row.id === picked) ?? listings.find((row) => row.id === followId) ?? listings[0] ?? null;
   const currentId = current?.id ?? "";
+
+  useEffect(() => {
+    if (followId) setPicked(null);
+  }, [followId]);
 
   useEffect(() => {
     if (!currentId) return;
     let cancelled = false;
     void loadMyListingHealth({ data: { daycareId: currentId } })
       .then((res) => {
-        if (!cancelled) setHealth(res.ok ? res.health : null);
+        if (!cancelled) setHealth(res.ok ? { id: currentId, health: res.health } : null);
       })
       .catch(() => {
         if (!cancelled) setHealth(null);
@@ -52,8 +75,14 @@ export function MyListingHealth({ listings, locale }: { listings: Listing[]; loc
           ))}
         </div>
       ) : null}
-      {health ? (
-        <ProfileHealthCard health={health} locale={locale} />
+      {listings.length > 1 ? (
+        <p className="text-sm font-semibold" data-ke="my-listing-health-name">
+          {current.name}
+        </p>
+      ) : null}
+      {/* Never show one centre's licence or photos under another centre's name while switching. */}
+      {health && health.id === current.id ? (
+        <ProfileHealthCard health={health.health} locale={locale} />
       ) : (
         <div className="h-40 animate-pulse rounded-2xl bg-surface ring-1 ring-border" aria-hidden="true" />
       )}

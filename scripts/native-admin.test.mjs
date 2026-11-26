@@ -106,7 +106,8 @@ test("the note page says Admin is on the website and does not open Safari", () =
   const desks = src("src/lib/desks.ts");
   const fn = desks.slice(desks.indexOf("export function openAdminDesk"));
   assert.match(fn, /nativeShellHidesAdminNow\(\)/);
-  assert.match(fn, /NATIVE_ADMIN_NOTE_PATH/);
+  // Locale-aware since 2026-11-25: /fr pages land on the French note.
+  assert.match(fn, /nativeAdminNotePathFor\(/);
   assert.match(fn, /location\.assign\(DESK_PATH\.admin\)/);
 });
 
@@ -114,7 +115,7 @@ test("server HTML, the boot script, and both shells block Access before Safari",
   const rootHtml = src("src/routes/__root.tsx");
   assert.match(rootHtml, /hideAdmin/);
   assert.match(rootHtml, /data-native/);
-  assert.match(rootHtml, /NATIVE_ADMIN_NOTE_PATH/);
+  assert.match(rootHtml, /nativeAdminNotePathFor\(/);
   assert.match(rootHtml, /channel-boot\.js\?v=10/);
   assert.equal(nativeAdminRedirectTarget({ pathname: "/admin", userAgent: IOS }), NATIVE_ADMIN_NOTE_PATH);
   assert.equal(nativeAdminRedirectTarget({ pathname: "/admin", cookie: "ke_shell=native" }), NATIVE_ADMIN_NOTE_PATH);

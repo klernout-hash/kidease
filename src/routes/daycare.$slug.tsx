@@ -434,7 +434,9 @@ export function Listing() {
       .join(", ");
     return (
       <Shell>
-        <main className="ke-listing-page mx-auto max-w-5xl overflow-x-hidden">
+        {/* min-h keeps the footer below the fold until the full listing paints;
+            on tall tablets the footer flashed in and jumped away (CLS ~0.24). */}
+        <main className="ke-listing-page mx-auto min-h-[100dvh] max-w-5xl overflow-x-hidden">
           <div className="lg:ke-gutter lg:pt-4">
             <div className="ke-listing-hero relative overflow-hidden lg:rounded-[14px]" data-empty={earlyReal ? undefined : "true"}>
               {earlyReal ? (

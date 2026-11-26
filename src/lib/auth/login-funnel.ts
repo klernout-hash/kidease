@@ -247,7 +247,7 @@ export async function continueAfterSignIn(input: {
     markContinued(dest, { method: input.method });
     if (needTwoFactor) {
       captureLoginFunnel({ step: "redirected_2fa", method: input.method, ...funnelDestMeta(dest) });
-      window.location.assign(twoFactorPageUrl(dest));
+      window.location.assign(twoFactorPageUrl(dest, input.locale));
       return dest;
     }
     assignPostAuthDest(dest);

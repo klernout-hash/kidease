@@ -21,6 +21,22 @@ export const NATIVE_SHELL_COOKIE = "ke_shell";
 export const NATIVE_SHELL_COOKIE_VALUE = "native";
 /** Outside /admin so Cloudflare Access cannot intercept it. */
 export const NATIVE_ADMIN_NOTE_PATH = "/app-admin-unavailable";
+/** French twin. Native shells and redirects keep the visitor's /fr prefix. */
+export const NATIVE_ADMIN_NOTE_PATH_FR = "/fr/app-admin-unavailable";
+
+/** The note page in the language of the path the visitor was on. */
+export function nativeAdminNotePathFor(fromPath: string | null | undefined): string {
+  const raw = String(fromPath || "");
+  let path = raw;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) {
+    try {
+      path = new URL(raw).pathname;
+    } catch {
+      path = "";
+    }
+  }
+  return path === "/fr" || path.startsWith("/fr/") ? NATIVE_ADMIN_NOTE_PATH_FR : NATIVE_ADMIN_NOTE_PATH;
+}
 /** Older iOS/Android binaries still open this path. Keep it. */
 export const NATIVE_ADMIN_NOTE_LEGACY_PATH = "/use-the-website";
 
@@ -146,7 +162,7 @@ export function nativeAdminRedirectTarget(input: {
   if (!isAccessProtectedPath(input.pathname)) return null;
   if (isNativeAdminNotePath(input.pathname)) return null;
   if (!nativeShellHidesAdmin(input)) return null;
-  return NATIVE_ADMIN_NOTE_PATH;
+  return nativeAdminNotePathFor(input.pathname);
 }
 
 /**
@@ -170,7 +186,7 @@ export function nativeAccountDest(input: {
 }
 
 export function notificationHrefForShell(href: string, hideAdmin: boolean): string {
-  if (hideAdmin && isAccessProtectedPath(href)) return NATIVE_ADMIN_NOTE_PATH;
+  if (hideAdmin && isAccessProtectedPath(href)) return nativeAdminNotePathFor(href);
   return href;
 }
 

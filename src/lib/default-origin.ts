@@ -406,9 +406,10 @@ export function shouldRequestExploreGeolocation(input: {
   consent?: string | null;
   savedTrusted?: boolean;
 }) {
-  if (input.consent === "denied") return false;
-  if (input.consent === "granted") return true;
-  return !input.savedTrusted;
+  // Ask only after the parent tapped "Near me" (consent "granted"). Never on
+  // page load: App Review and parents read a cold prompt as tracking.
+  void input.savedTrusted;
+  return input.consent === "granted";
 }
 
 export function resolveDefaultSearchOrigin(input: {

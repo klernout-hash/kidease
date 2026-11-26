@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type RefObject } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { BuildingPhoto } from "@/components/building-photo";
 import {
@@ -50,6 +50,10 @@ function copyFor(locale: string) {
     manage: fr ? "Gérer les photos" : "Manage photos",
     done: fr ? "Terminé" : "Done",
     addPhoto: fr ? "Ajouter une photo" : "Add a photo",
+    addPhotos: fr ? "Ajouter des photos" : "Add photos",
+    full: fr ? "Maximum de photos atteint. Retirez-en une pour en ajouter." : "Photo limit reached. Remove one to add another.",
+    enhancing: fr ? "Ajout et amélioration automatique de la photo…" : "Adding and auto-enhancing your photo…",
+    added: (n: number) => (fr ? `${n} photo${n === 1 ? " ajoutée" : "s ajoutées"}.` : `${n} photo${n === 1 ? "" : "s"} added.`),
     child: fr ? "Photo du centre seulement. Pas de photo d'enfant." : "Centre photo only. Do not add a photo of a child.",
     moveUnassigned: fr ? "Mettre dans Non assignées" : "Move to unassigned",
     removePhoto: fr ? "Retirer la photo de la fiche" : "Remove photo from the listing",
@@ -84,6 +88,9 @@ export function ListingSpacesEditor({ daycare, onChanged }: { daycare: Daycare; 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const fileId = useId();
+  const [uploading, setUploading] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -159,20 +166,36 @@ export function ListingSpacesEditor({ daycare, onChanged }: { daycare: Daycare; 
     if (!group || !files.length) return;
     const roomLeft = MAX_LISTING_PHOTOS - group.photos.length;
     if (roomLeft <= 0) {
-      setError(copy.savedError);
+      setError(copy.full);
       return;
     }
     const take = files.slice(0, roomLeft);
-    let photos = group.photos.slice();
-    for (const file of take) {
-      const dataUrl = await downgradeListingPhotoFile(file, { targetBytes: listingPhotoByteBudget(MAX_LISTING_PHOTOS) });
-      photos = [...photos, dataUrl];
+    setUploading(true);
+    setNotice(null);
+    setError(null);
+    try {
+      let photos = group.photos.slice();
+      for (const file of take) {
+        const dataUrl = await downgradeListingPhotoFile(file, { targetBytes: listingPhotoByteBudget(MAX_LISTING_PHOTOS) });
+        photos = [...photos, dataUrl];
+      }
+      // The server auto-enhances new uploads (straighten, crop, sharpen) before it saves them.
+      const saved = await run(() => saveListingPhotoListFn({ data: { daycareId: daycare.id, photos } }));
+      if (!saved) return;
+      const added = saved.photos.filter((src) => !group.photos.includes(src));
+      if (added.length) setNotice(copy.added(added.length));
+      if (room && view === "room" && added.length) await orderRoom([...room.photos, ...added]);
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : copy.savedError);
+    } finally {
+      setUploading(false);
     }
-    const saved = await run(() => saveListingPhotoListFn({ data: { daycareId: daycare.id, photos } }));
-    if (!saved || !room) return;
-    const added = saved.photos.filter((src) => !group.photos.includes(src));
-    if (added.length) await orderRoom([...room.photos, ...added]);
   }
+
+  const full = Boolean(group && group.photos.length >= MAX_LISTING_PHOTOS);
+  const addButton = (
+    <AddPhotosButton inputId={fileId} label={copy.addPhotos} disabled={full || uploading || busy} uploading={uploading} />
+  );
 
   if (!group) {
     return (
@@ -187,6 +210,15 @@ export function ListingSpacesEditor({ daycare, onChanged }: { daycare: Daycare; 
       {error ? (
         <p className="text-sm text-danger" role="alert">
           {error}
+        </p>
+      ) : null}
+      {uploading ? (
+        <p className="text-sm text-muted" role="status" data-ke="photo-enhancing">
+          {copy.enhancing}
+        </p>
+      ) : notice ? (
+        <p className="text-sm text-ok" role="status" data-ke="photo-added">
+          {notice}
         </p>
       ) : null}
       {view === "grid" ? (
@@ -204,6 +236,8 @@ export function ListingSpacesEditor({ daycare, onChanged }: { daycare: Daycare; 
           onCancelCreate={() => setCreating(false)}
           onCreate={() => void createSpace()}
           onAll={() => setView("all")}
+          addButton={addButton}
+          full={full}
           onOpen={(id) => {
             setRoomId(id);
             setManage(false);
@@ -218,6 +252,8 @@ export function ListingSpacesEditor({ daycare, onChanged }: { daycare: Daycare; 
           locale={locale}
           confirmPhoto={confirmPhoto}
           busy={busy}
+          addButton={addButton}
+          full={full}
           onBack={() => setView("grid")}
           onAskRemove={setConfirmPhoto}
           onCancelRemove={() => setConfirmPhoto(null)}
@@ -245,7 +281,7 @@ export function ListingSpacesEditor({ daycare, onChanged }: { daycare: Daycare; 
           confirmSpace={confirmSpace}
           confirmPhoto={confirmPhoto}
           busy={busy}
-          fileRef={fileRef}
+          fileId={fileId}
           onBack={() => {
             setView("grid");
             setConfirmSpace(false);
@@ -292,9 +328,13 @@ export function ListingSpacesEditor({ daycare, onChanged }: { daycare: Daycare; 
       ) : null}
       <input
         ref={fileRef}
+        id={fileId}
         type="file"
+        multiple
         accept={LISTING_PHOTO_ACCEPT}
         className="sr-only"
+        tabIndex={-1}
+        disabled={full || uploading}
         data-ke="space-photo-input"
         onChange={(event) => {
           const files = event.target.files ? Array.from(event.target.files) : [];
@@ -320,6 +360,8 @@ function SpacesGrid({
   onCancelCreate,
   onCreate,
   onAll,
+  addButton,
+  full,
   onOpen,
 }: {
   group: SpaceGroup;
@@ -335,6 +377,8 @@ function SpacesGrid({
   onCancelCreate: () => void;
   onCreate: () => void;
   onAll: () => void;
+  addButton: ReactNode;
+  full: boolean;
   onOpen: (id: string) => void;
 }) {
   const nameId = useId();
@@ -363,6 +407,13 @@ function SpacesGrid({
         </div>
       </div>
       <p className="mt-1 text-sm text-muted">{copy.roomsLead}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1" data-ke="space-photo-count">
+        {addButton}
+        <span className="text-sm text-muted">
+          {copy.photoCount(group.photos.length)} / {MAX_LISTING_PHOTOS}
+        </span>
+      </div>
+      {full ? <p className="mt-1 text-sm text-muted">{copy.full}</p> : <p className="mt-1 text-sm text-muted">{copy.child}</p>}
       {creating ? (
         <div className="mt-4 space-y-3 rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="space-create">
           <label className="block text-sm font-medium" htmlFor={nameId}>
@@ -455,7 +506,7 @@ function RoomDetail({
   confirmSpace,
   confirmPhoto,
   busy,
-  fileRef,
+  fileId,
   onBack,
   onManage,
   onRename,
@@ -478,7 +529,7 @@ function RoomDetail({
   confirmSpace: boolean;
   confirmPhoto: string | null;
   busy: boolean;
-  fileRef: RefObject<HTMLInputElement | null>;
+  fileId: string;
   onBack: () => void;
   onManage: () => void;
   onRename: (value: string) => void;
@@ -514,15 +565,15 @@ function RoomDetail({
           >
             {manage ? copy.done : copy.manage}
           </button>
-          <button
-            type="button"
-            className="inline-flex size-11 items-center justify-center rounded-full bg-surface shadow-card ring-1 ring-border"
+          <label
+            htmlFor={fileId}
+            className="inline-flex size-11 cursor-pointer items-center justify-center rounded-full bg-surface shadow-card ring-1 ring-border touch-manipulation"
             aria-label={copy.addPhoto}
+            title={copy.addPhoto}
             data-ke="space-photo-add"
-            onClick={() => fileRef.current?.click()}
           >
             <Plus className="size-5" aria-hidden />
-          </button>
+          </label>
         </div>
       </div>
       <label className="mt-3 block text-sm font-medium" htmlFor={nameId}>
@@ -654,6 +705,8 @@ function AllPhotos({
   locale,
   confirmPhoto,
   busy,
+  addButton,
+  full,
   onBack,
   onAskRemove,
   onCancelRemove,
@@ -665,6 +718,8 @@ function AllPhotos({
   locale: string;
   confirmPhoto: string | null;
   busy: boolean;
+  addButton: ReactNode;
+  full: boolean;
   onBack: () => void;
   onAskRemove: (src: string) => void;
   onCancelRemove: () => void;
@@ -678,8 +733,11 @@ function AllPhotos({
         {copy.rooms}
       </button>
       <h2 className="mt-2 font-display text-2xl font-bold">{copy.allPhotos}</h2>
-      <p className="text-sm text-muted">{copy.photoCount(group.photos.length)} / {MAX_LISTING_PHOTOS}</p>
-      <p className="mt-1 text-sm text-muted">{copy.child}</p>
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <p className="text-sm text-muted">{copy.photoCount(group.photos.length)} / {MAX_LISTING_PHOTOS}</p>
+        {addButton}
+      </div>
+      <p className="mt-1 text-sm text-muted">{full ? copy.full : copy.child}</p>
       <div className="mt-3 grid grid-cols-2 gap-2" data-ke="photo-groups">
         {group.photos.map((src, index) => (
           <div key={src} data-ke="listing-photo-card" data-photo-group={index === 0 ? "cover" : "inside"} className="rounded-xl bg-surface p-2 ring-1 ring-border">
@@ -797,4 +855,33 @@ function swap(list: string[], index: number, dir: -1 | 1): string[] {
   next[index] = next[target] ?? current;
   next[target] = current;
   return next;
+}
+
+/** A real, visible control for the hidden file input. A label opens the picker on iOS, Android and desktop
+ *  without a scripted click, which some WebViews block. */
+function AddPhotosButton({
+  inputId,
+  label,
+  disabled,
+  uploading,
+}: {
+  inputId: string;
+  label: string;
+  disabled: boolean;
+  uploading: boolean;
+}) {
+  return (
+    <label
+      htmlFor={inputId}
+      data-ke="listing-photo-add"
+      aria-disabled={disabled || undefined}
+      className={
+        "inline-flex min-h-11 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card touch-manipulation focus-within:ring-2 focus-within:ring-ring " +
+        (disabled ? "pointer-events-none opacity-50" : "cursor-pointer")
+      }
+    >
+      <Plus className="size-4" aria-hidden />
+      {uploading ? "…" : label}
+    </label>
+  );
 }

@@ -1,5 +1,5 @@
 import type { Sql } from "./db.ts";
-import { applyManagedListingPhotos, listingPhotosChanged, managedListingPhotos, splitPhotoList } from "./listing-photo.ts";
+import { applyManagedListingPhotos, listingPhotosChanged, managedListingPhotos, realManagedListingPhotos, splitPhotoList } from "./listing-photo.ts";
 import {
   MAX_LISTING_SPACES,
   PHOTO_DELETE_CONFIRM,
@@ -230,10 +230,16 @@ export async function writeListingPhotoList(
 ): Promise<SpaceGroup> {
   await assertCanEditSpaces(sql, userId, input.daycareId);
   const previous = await readPhotoColumn(sql, input.daycareId);
-  const before = splitPhotoList(previous);
+  // Compare the photos the manager shows (cover + interiors), not the raw column: logos and
+  // non-eligible extras are never sent back, so counting them made every add look like a removal.
+  // Stock and placeholder photos are not shown in the manager either, so they are replaced, not "removed".
+  const before = realManagedListingPhotos(previous);
+  const existing = new Set(splitPhotoList(previous));
   const polished: string[] = [];
   for (const src of input.photos) {
-    const next = await prepareListingUploadPhoto(src);
+    // Only new uploads get the auto-enhance pass. Re-polishing a saved photo changed its bytes,
+    // so the save saw it as "removed" and failed with "Confirm photo removal".
+    const next = existing.has((src || "").trim()) ? src : await prepareListingUploadPhoto(src);
     if (next) polished.push(next);
   }
   const photos = applyManagedListingPhotos(previous, polished);

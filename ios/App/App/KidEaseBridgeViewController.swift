@@ -49,16 +49,23 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
     }
 
     /// The live site never loaded, or the network dropped. Show the bundled page.
+    /// NWPathMonitor reports a brief "unsatisfied" right after a relaunch, so a
+    /// drop is rechecked before the page shows, and a slow load on a working
+    /// network is never called offline.
     private func startOfflineWatch() {
-        scheduleOfflineCheck(after: 12)
+        scheduleOfflineCheck(after: 20)
         pathMonitor.pathUpdateHandler = { [weak self] path in
             DispatchQueue.main.async {
                 guard let self else { return }
                 if path.status == .satisfied {
                     if self.remotePageReady { self.showingOffline = false }
+                    if self.showingOffline { self.recoverFromOffline() }
                     return
                 }
-                self.showOfflinePage()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+                    guard let self, self.pathMonitor.currentPath.status != .satisfied else { return }
+                    self.showOfflinePage()
+                }
             }
         }
         pathMonitor.start(queue: DispatchQueue(label: "ca.kidease.offline"))
@@ -83,7 +90,48 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
             scheduleOfflineCheck(after: 8)
             return
         }
+        if pathMonitor.currentPath.status == .satisfied {
+            // Online but slow. Ask the site before calling it offline.
+            probeSite { [weak self] reachable in
+                guard let self else { return }
+                if reachable && self.offlineWaits < 3 {
+                    self.offlineWaits += 1
+                    if self.offlineWaits == 2 { self.loadLiveSite() }
+                    self.scheduleOfflineCheck(after: 10)
+                } else if !reachable {
+                    self.showOfflinePage()
+                }
+            }
+            return
+        }
         showOfflinePage()
+    }
+
+    /// Any HTTP answer from kidease.ca means the network works.
+    private func probeSite(_ done: @escaping (Bool) -> Void) {
+        guard let url = URL(string: "https://www.kidease.ca/robots.txt?ke-probe=\(Int(Date().timeIntervalSince1970))") else { return done(true) }
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 6)
+        request.httpMethod = "HEAD"
+        URLSession.shared.dataTask(with: request) { _, response, _ in
+            DispatchQueue.main.async { done(response is HTTPURLResponse) }
+        }.resume()
+    }
+
+    private func loadLiveSite() {
+        let raw = bridge?.config.serverURL.absoluteString ?? "https://www.kidease.ca/"
+        guard let url = URL(string: raw) else { return }
+        webView?.load(URLRequest(url: url))
+    }
+
+    /// Back online while the bundled page shows: reopen the live site by itself.
+    private func recoverFromOffline() {
+        probeSite { [weak self] reachable in
+            guard let self, reachable, self.showingOffline else { return }
+            self.showingOffline = false
+            self.offlineWaits = 0
+            self.loadLiveSite()
+            self.scheduleOfflineCheck(after: 20)
+        }
     }
 
     private var remotePageStarted: Bool {
@@ -273,7 +321,8 @@ public class AdminWebOnlyPlugin: CAPPlugin, CAPBridgedPlugin {
         } else {
             parts.host = "www.kidease.ca"
         }
-        parts.path = "/app-admin-unavailable"
+        let french = url.path == "/fr" || url.path.hasPrefix("/fr/")
+        parts.path = french ? "/fr/app-admin-unavailable" : "/app-admin-unavailable"
         return parts.url
     }
 }

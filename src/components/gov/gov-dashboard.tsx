@@ -38,6 +38,67 @@ function TileInfo({ text, locale }: { text: string; locale: "en" | "fr" }) {
   );
 }
 
+/**
+ * Oversight tiles whose source is not connected yet. Shown as calm, explained
+ * placeholders (no zeros, no made-up counts): a blank tile must not read as
+ * "nothing happened". Sources: licensing_complaints (FEATURE_GOV_COMPLAINTS),
+ * serious_incidents (FEATURE_INCIDENTS), and the provincial licence register.
+ */
+function GovPendingTiles({ locale }: { locale: "en" | "fr" }) {
+  const fr = locale === "fr";
+  const base = fr ? "/fr/gov" : "/gov";
+  const tiles = [
+    {
+      key: "expiries",
+      href: `${base}/expiries`,
+      label: fr ? "Permis qui expirent (30, 60, 90 jours)" : "Licences expiring (30, 60, 90 days)",
+      note: fr
+        ? "S’affichera quand le registre provincial des permis sera relié."
+        : "Shows once the provincial licence register is connected.",
+    },
+    {
+      key: "complaints",
+      href: `${base}/reports?tab=complaints`,
+      label: fr ? "Plaintes ouvertes" : "Open complaints",
+      note: fr
+        ? "S’affichera quand le suivi des plaintes sera activé pour votre province."
+        : "Shows once complaint tracking is switched on for your province.",
+    },
+    {
+      key: "incidents",
+      href: `${base}/reports?tab=incidents`,
+      label: fr ? "Événements graves ce mois-ci" : "Serious occurrences this month",
+      note: fr
+        ? "S’affichera quand la déclaration des événements graves sera activée."
+        : "Shows once serious-occurrence reporting is switched on.",
+    },
+  ];
+  return (
+    <section className="mt-4" data-ke="gov-not-tracked" aria-labelledby="gov-pending-title">
+      <h2 id="gov-pending-title" className="text-sm font-medium text-muted">
+        {fr ? "Bientôt dans ce bureau" : "Coming to this desk"}
+      </h2>
+      <ul className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {tiles.map((tile) => (
+          <li key={tile.key}>
+            <a
+              href={tile.href}
+              className="flex h-full flex-col rounded-xl bg-surface p-4 no-underline ring-1 ring-border touch-manipulation"
+              data-ke={`gov-pending-${tile.key}`}
+            >
+              <span className="text-sm text-muted">{tile.label}</span>
+              <span className="mt-1 inline-flex w-fit items-center rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium text-fg ring-1 ring-border">
+                {fr ? "Pas encore relié" : "Not connected yet"}
+              </span>
+              <span className="mt-2 text-sm leading-5 text-muted">{tile.note}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 const REPORT_TABS = ["screening", "ratios", "complaints", "incidents", "funding"] as const;
 
 function GovReports({ locale, exportBase }: { locale: "en" | "fr"; exportBase: string }) {
@@ -336,14 +397,7 @@ export function GovDashboardView({
             <TileInfo text={copy.cardVacancyNote} locale={data.locale} />
           </a>
         </dl>
-        <section className="mt-4 rounded-xl bg-surface-2 p-4 text-sm text-muted" data-ke="gov-not-tracked">
-          <h2 className="font-medium text-fg">{data.locale === "fr" ? "Pas encore suivi" : "Not tracked yet"}</h2>
-          <ul className="mt-2 space-y-1">
-            <li><a className="underline-offset-4 hover:underline" href={data.locale === "fr" ? "/fr/gov/expiries" : "/gov/expiries"}>{data.locale === "fr" ? "Permis qui expirent dans 30, 60 ou 90 jours" : "Licences expiring in 30, 60, or 90 days"}</a></li>
-            <li><a className="underline-offset-4 hover:underline" href={data.locale === "fr" ? "/fr/gov/reports?tab=complaints" : "/gov/reports?tab=complaints"}>{data.locale === "fr" ? "Plaintes ouvertes" : "Open complaints"}</a></li>
-            <li><a className="underline-offset-4 hover:underline" href={data.locale === "fr" ? "/fr/gov/reports?tab=incidents" : "/gov/reports?tab=incidents"}>{data.locale === "fr" ? "Événements graves ce mois-ci" : "Serious occurrences this month"}</a></li>
-          </ul>
-        </section>
+        <GovPendingTiles locale={data.locale} />
         <OversightNote locale={data.locale} ratio={typeof data.childPerSpace === "number" ? data.childPerSpace : null} />
         <section className="mt-6" data-ke="gov-needs-attention" aria-labelledby="gov-needs-title">
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border">

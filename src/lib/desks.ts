@@ -1,6 +1,6 @@
 import { isKidEaseOperatorEmail } from "./admin-email.ts";
-import { stripLocalePrefix } from "./locale-path.ts";
-import { NATIVE_ADMIN_NOTE_PATH, nativeShellHidesAdminNow } from "./native-admin.ts";
+import { stripLocalePrefix, verify2faPagePath } from "./locale-path.ts";
+import { nativeAdminNotePathFor, nativeShellHidesAdminNow } from "./native-admin.ts";
 import type { ViewAsPublic } from "./view-as-public.ts";
 
 export type AppRole = "admin" | "support_lead" | "support" | "provider" | "parent" | "government";
@@ -422,9 +422,10 @@ export function resolvePostLoginPath(input: {
   return DESK_PATH.parent;
 }
 
-export function twoFactorPageUrl(dest: string): string {
+/** The email-code page for this destination. A French sign-in (or a /fr destination) keeps /fr/verify-2fa. */
+export function twoFactorPageUrl(dest: string, locale?: "en" | "fr" | null): string {
   const next = sanitizePostLoginNext(dest) ?? DESK_PATH.parent;
-  return `/verify-2fa?next=${encodeURIComponent(next)}`;
+  return `${verify2faPagePath(locale, next)}?next=${encodeURIComponent(next)}`;
 }
 
 export function loginErrorCallbackUrl(search: {
@@ -507,7 +508,7 @@ export function writeStickyDesk(desk: DeskKey): void {
  */
 export function openAdminDesk(): void {
   if (typeof window !== "undefined" && nativeShellHidesAdminNow()) {
-    window.location.assign(NATIVE_ADMIN_NOTE_PATH);
+    window.location.assign(nativeAdminNotePathFor(window.location.pathname));
     return;
   }
   writeStickyDesk("admin");

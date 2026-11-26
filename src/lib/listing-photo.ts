@@ -241,6 +241,24 @@ export function managedListingPhotos(raw: string | string[] | null | undefined):
   return [storefront, ...interiors].filter(Boolean).slice(0, MAX_LISTING_PHOTOS);
 }
 
+/** Stock (/photos/wpg/), shared fallbacks, logos and placeholders are not the centre's photos. */
+export function isCentreListingPhoto(src: string | null | undefined): boolean {
+  const p = (src || "").trim();
+  if (!p) return false;
+  if (p.includes("placeholder") || p.includes("-logo") || p.includes("/photos/wpg/")) return false;
+  if (isUnflaggedSharedFallbackSrc(p)) return false;
+  if (p.startsWith("data:image")) return true;
+  if (/^https?:\/\//i.test(p)) return true;
+  // Demo and preview centres keep their /photos/demo/ set; those are the centre's photos there.
+  return p.startsWith("/") && !p.startsWith("//") && !p.includes("..");
+}
+
+/** The photos the centre manages and the counts everyone shows: Photo tour, the photo manager
+ *  and Profile health all use this, so "1 photo" and "No photos" can't disagree. */
+export function realManagedListingPhotos(raw: string | string[] | null | undefined): string[] {
+  return managedListingPhotos(raw).filter(isCentreListingPhoto);
+}
+
 export function listingPhotoRoom(count: number): number {
   const n = Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0;
   return Math.max(0, MAX_LISTING_PHOTOS - n);

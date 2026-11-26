@@ -157,6 +157,7 @@ import { Route as FrIndexRouteImport } from './routes/fr.index'
 import { Route as FrAboutRouteImport } from './routes/fr.about'
 import { Route as FrAccountRouteImport } from './routes/fr.account'
 import { Route as FrAdminRouteImport } from './routes/fr.admin'
+import { Route as FrAppAdminUnavailableRouteImport } from './routes/fr.app-admin-unavailable'
 import { Route as FrBackgroundChecksRouteImport } from './routes/fr.background-checks'
 import { Route as FrBenefitsRouteImport } from './routes/fr.benefits'
 import { Route as FrBlogRouteImport } from './routes/fr.blog'
@@ -1107,6 +1108,11 @@ const FrAccountRoute = FrAccountRouteImport.update({
 const FrAdminRoute = FrAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrAppAdminUnavailableRoute = FrAppAdminUnavailableRouteImport.update({
+  id: '/app-admin-unavailable',
+  path: '/app-admin-unavailable',
   getParentRoute: () => FrRoute,
 } as any)
 const FrBackgroundChecksRoute = FrBackgroundChecksRouteImport.update({
@@ -2312,6 +2318,7 @@ export interface FileRoutesByFullPath {
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
   '/fr/admin': typeof FrAdminRoute
+  '/fr/app-admin-unavailable': typeof FrAppAdminUnavailableRoute
   '/fr/background-checks': typeof FrBackgroundChecksRouteWithChildren
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/blog': typeof FrBlogRoute
@@ -2670,6 +2677,7 @@ export interface FileRoutesByTo {
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
   '/fr/admin': typeof FrAdminRoute
+  '/fr/app-admin-unavailable': typeof FrAppAdminUnavailableRoute
   '/fr/background-checks': typeof FrBackgroundChecksRouteWithChildren
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/blog': typeof FrBlogRoute
@@ -3031,6 +3039,7 @@ export interface FileRoutesById {
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
   '/fr/admin': typeof FrAdminRoute
+  '/fr/app-admin-unavailable': typeof FrAppAdminUnavailableRoute
   '/fr/background-checks': typeof FrBackgroundChecksRouteWithChildren
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/blog': typeof FrBlogRoute
@@ -3393,6 +3402,7 @@ export interface FileRouteTypes {
     | '/fr/about'
     | '/fr/account'
     | '/fr/admin'
+    | '/fr/app-admin-unavailable'
     | '/fr/background-checks'
     | '/fr/benefits'
     | '/fr/blog'
@@ -3751,6 +3761,7 @@ export interface FileRouteTypes {
     | '/fr/about'
     | '/fr/account'
     | '/fr/admin'
+    | '/fr/app-admin-unavailable'
     | '/fr/background-checks'
     | '/fr/benefits'
     | '/fr/blog'
@@ -4111,6 +4122,7 @@ export interface FileRouteTypes {
     | '/fr/about'
     | '/fr/account'
     | '/fr/admin'
+    | '/fr/app-admin-unavailable'
     | '/fr/background-checks'
     | '/fr/benefits'
     | '/fr/blog'
@@ -5599,6 +5611,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/fr/admin'
       preLoaderRoute: typeof FrAdminRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/app-admin-unavailable': {
+      id: '/fr/app-admin-unavailable'
+      path: '/app-admin-unavailable'
+      fullPath: '/fr/app-admin-unavailable'
+      preLoaderRoute: typeof FrAppAdminUnavailableRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/background-checks': {
@@ -7172,6 +7191,7 @@ interface FrRouteChildren {
   FrAboutRoute: typeof FrAboutRoute
   FrAccountRoute: typeof FrAccountRoute
   FrAdminRoute: typeof FrAdminRoute
+  FrAppAdminUnavailableRoute: typeof FrAppAdminUnavailableRoute
   FrBackgroundChecksRoute: typeof FrBackgroundChecksRouteWithChildren
   FrBenefitsRoute: typeof FrBenefitsRoute
   FrBlogRoute: typeof FrBlogRoute
@@ -7269,6 +7289,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrAboutRoute: FrAboutRoute,
   FrAccountRoute: FrAccountRoute,
   FrAdminRoute: FrAdminRoute,
+  FrAppAdminUnavailableRoute: FrAppAdminUnavailableRoute,
   FrBackgroundChecksRoute: FrBackgroundChecksRouteWithChildren,
   FrBenefitsRoute: FrBenefitsRoute,
   FrBlogRoute: FrBlogRoute,

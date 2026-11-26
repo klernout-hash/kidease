@@ -5,8 +5,7 @@
  */
 
 import { checklistHasAges, checklistHasFees, checklistHasHours } from "./listing-incomplete.ts";
-import { splitPhotoList } from "./listing-photo.ts";
-import { isRealListingPhoto } from "./listing-readiness.ts";
+import { realManagedListingPhotos } from "./listing-photo.ts";
 import { profileHealth, type DaycareHealthRow, type ProfileHealth } from "./profile-health.ts";
 
 /** SQL column list for DaycareHealthRow (alias `d` = daycares). */
@@ -16,7 +15,8 @@ export const DAYCARE_HEALTH_COLUMNS = `d.photos, d.license_number, d.license_sta
   d.ages_confirmed, d.age_min_months, d.age_max_months, d.hours, d.phone, d.contact_email, d.address`;
 
 export function realPhotoList(photos: string | null | undefined): string[] {
-  return splitPhotoList(photos).filter((p) => isRealListingPhoto(p) || p.startsWith("data:image"));
+  // Same list the Photo tour and photo manager count.
+  return realManagedListingPhotos(photos);
 }
 
 export function healthFromDaycareRow(r: DaycareHealthRow, now: Date = new Date()): ProfileHealth {

@@ -54,7 +54,7 @@ import { ensureFrenchCopy } from "@/lib/copy-runtime";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import {
   isAccessProtectedPath,
-  NATIVE_ADMIN_NOTE_PATH,
+  nativeAdminNotePathFor,
   nativeShellHidesAdminNow,
 } from "@/lib/native-admin";
 import {
@@ -147,7 +147,7 @@ export const Route = createRootRoute({
     const nativeShell = shellBlocksCommerce(storeChannel);
     const hideAdmin = storeRead.hideAdmin;
     if (hideAdmin && isAccessProtectedPath(location.pathname)) {
-      throw redirect({ href: NATIVE_ADMIN_NOTE_PATH, statusCode: 302 });
+      throw redirect({ href: nativeAdminNotePathFor(location.pathname), statusCode: 302 });
     }
     return {
       roleChrome,
@@ -340,6 +340,8 @@ function RootDocument() {
       suppressHydrationWarning
     >
       <head>
+        {/* First: shims for old engines (Fire OS / Chrome 91 WebView). */}
+        <script src="/legacy-boot.js?v=1" />
         <script
           data-ke-style-nonce=""
           dangerouslySetInnerHTML={{ __html: STYLE_NONCE_BOOT }}

@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/empty-state";
 import { useRoleChrome } from "@/components/role-chrome";
 import { Shell } from "@/components/shell";
 import { useCopy } from "@/lib/use-copy";
+import { localePath } from "@/lib/locale-path";
 
 export function PageNotFound({
   title,
@@ -16,7 +17,7 @@ export function PageNotFound({
   action?: string;
   actionTo?: string;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const heading = title ?? t("pageNotFoundTitle");
   useEffect(() => {
     document.title = `${heading} · KidEase`;
@@ -25,12 +26,13 @@ export function PageNotFound({
     <Shell>
       <main className="ke-gutter mx-auto max-w-lg py-16" data-ke="page-not-found">
         <EmptyState
+          titleAs="h1"
           title={heading}
           body={body ?? t("pageNotFoundBody")}
           action={action ?? t("notFoundExplore")}
-          actionTo={actionTo ?? "/search"}
+          actionTo={actionTo ?? localePath("/search", locale)}
           secondary={t("notFoundHome")}
-          secondaryTo="/"
+          secondaryTo={localePath("/", locale)}
         />
       </main>
     </Shell>

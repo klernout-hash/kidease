@@ -166,13 +166,13 @@ function SafetyContact({ locale }: { locale: string }) {
       <ul className="mt-4 space-y-2 text-sm">
         <li>
           <span className="font-medium">{text.helpEmail}: </span>
-          <a className="max-md:break-all text-primary underline-offset-4 hover:underline" href={`mailto:${SUPPORT_INBOX_EMAIL}`}>
+          <a className="inline-flex min-h-11 items-center max-md:break-all text-primary underline-offset-4 hover:underline" href={`mailto:${SUPPORT_INBOX_EMAIL}`}>
             {SUPPORT_INBOX_EMAIL}
           </a>
         </li>
         <li>
           <span className="font-medium">{text.helpPrivacy}: </span>
-          <a className="max-md:break-all text-primary underline-offset-4 hover:underline" href={`mailto:${PRIVACY_CONTACT_EMAIL}`}>
+          <a className="inline-flex min-h-11 items-center max-md:break-all text-primary underline-offset-4 hover:underline" href={`mailto:${PRIVACY_CONTACT_EMAIL}`}>
             {PRIVACY_CONTACT_EMAIL}
           </a>
         </li>
