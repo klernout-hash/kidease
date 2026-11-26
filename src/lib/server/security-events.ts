@@ -41,7 +41,8 @@ export type SecurityKind =
   | "view_as_denied"
   | "view_as_blocked"
   | "ghl_lead_reconcile_denied"
-  | "ghl_lead_reconcile_run";
+  | "ghl_lead_reconcile_run"
+  | "stripe_notice";
 
 /** Insert-only audit row. Never pass secrets, card data, or medical notes. */
 export async function logSecurityEvent(input: {

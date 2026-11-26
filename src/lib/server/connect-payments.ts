@@ -977,8 +977,12 @@ export async function queueMonthlyFeeTax(billId: string): Promise<{ ok: boolean;
   return { ok: true };
 }
 
-export async function applyConnectSideEffect(type: string, object: Record<string, unknown> | null): Promise<ConnectEventAction> {
-  const action = classifyConnectEvent(type, object);
+export async function applyConnectSideEffect(
+  type: string,
+  object: Record<string, unknown> | null,
+  eventAccount?: string | null,
+): Promise<ConnectEventAction> {
+  const action = classifyConnectEvent(type, object, eventAccount);
   if (action.kind === "ignore" || action.kind === "bill") return action;
   const sql = await getSql();
   if (action.kind === "account") {
@@ -998,6 +1002,22 @@ export async function applyConnectSideEffect(type: string, object: Record<string
         stripe_payout_id = ${action.payoutId},
         paid_at = coalesce(paid_at, now())
       where stripe_payout_id = ${action.payoutId}
+    `.catch(() => undefined);
+  }
+  if (action.kind === "payout_failed") {
+    await sql`
+      update payouts set status = 'failed'
+      where stripe_payout_id = ${action.payoutId} and status <> 'paid'
+    `.catch(() => undefined);
+  }
+  if (action.kind === "deauthorized") {
+    // The daycare disconnected KidEase. Stop routing charges to that account.
+    await sql`
+      update stripe_accounts set
+        charges_enabled = 0,
+        payouts_enabled = 0,
+        updated_at = now()
+      where stripe_account_id = ${action.accountId}
     `.catch(() => undefined);
   }
   if (action.kind === "fee_tax") {

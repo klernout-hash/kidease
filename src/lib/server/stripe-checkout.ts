@@ -9,7 +9,7 @@
  * read clearly in CAD.
  */
 
-import { connectFeeBps, parentServiceFeeLabel } from "../connect-payments.ts";
+import { connectFeeBps, parentServiceFeeLabel, stripeAutomaticTaxEnabled } from "../connect-payments.ts";
 import { StripeApiError } from "../stripe-public-error.ts";
 import { checkoutCurrency, checkoutLocale, checkoutPaymentMethodTypes } from "../stripe-wallets.ts";
 
@@ -309,6 +309,9 @@ export function catalogCheckoutBody(input: CatalogCheckoutInput): Record<string,
     body.customer = input.customerId;
     body.customer_update = { address: "auto" };
   } else if (input.customerEmail) body.customer_email = input.customerEmail;
+  // GST/HST/PST/QST on KidEase's own plans. Needs a Tax head office and
+  // provincial registrations in Stripe before STRIPE_AUTOMATIC_TAX is turned on.
+  if (stripeAutomaticTaxEnabled()) body.automatic_tax = { enabled: true };
   if (input.mode === "subscription") {
     body.subscription_data = { metadata };
   } else {
@@ -436,8 +439,23 @@ export async function createCatalogCheckoutSession(input: CatalogCheckoutInput):
   };
 }
 
+/**
+ * Portal configuration ids are per mode. A live bpc_ id sent with a test key
+ * fails, so the id is only used with a live key; test keys get Stripe's default.
+ */
+export function portalConfigurationForKey(
+  configurationId: string | null | undefined,
+  secretKey: string | null | undefined,
+): string | null {
+  const id = String(configurationId || "").trim();
+  const key = String(secretKey || "").trim();
+  if (!id.startsWith("bpc_")) return null;
+  return key.startsWith("sk_live_") || key.startsWith("rk_live_") ? id : null;
+}
+
 export async function createBillingPortalSession(input: BillingPortalInput): Promise<{ url: string }> {
-  const json = await stripeRequest<{ url?: string | null }>("/billing_portal/sessions", billingPortalBody(input));
+  const scoped = { ...input, configurationId: portalConfigurationForKey(input.configurationId, process.env.STRIPE_SECRET_KEY) };
+  const json = await stripeRequest<{ url?: string | null }>("/billing_portal/sessions", billingPortalBody(scoped));
   if (!json.url) throw new Error("Stripe did not return a billing portal link");
   return { url: json.url };
 }
