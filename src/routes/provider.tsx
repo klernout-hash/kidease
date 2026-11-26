@@ -670,7 +670,7 @@ export function ProviderPage() {
           <DeskSkeleton />
         </div>
       ) : null}
-      {desk !== "documents" && deskSettled && deskLoadFailed && deskListings.length === 0 ? (
+      {desk !== "documents" && desk !== "calendar" && deskSettled && deskLoadFailed && deskListings.length === 0 ? (
         <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border" role="alert" data-ke="provider-desk-load-failed">
           <h2 className="font-display text-xl">
             {locale === "fr" ? "Votre bureau n’a pas pu se charger." : "Your desk did not load."}
@@ -684,7 +684,7 @@ export function ProviderPage() {
         </section>
       ) : null}
       {/* Session desks can still be loading or have failed (session null): do not leave Today empty. */}
-      {deskSettled && !deskLoadFailed && desk !== "insights" && desk !== "documents" && ((deskListings.length === 0 && centreOwner) || (deskListings.length === 0 && session == null)) ? (
+      {deskSettled && !deskLoadFailed && desk !== "insights" && desk !== "documents" && desk !== "calendar" && ((deskListings.length === 0 && centreOwner) || (deskListings.length === 0 && session == null)) ? (
         <ProviderOnboarding />
       ) : null}
       {desk !== "today" && search.claimed && listings[0] ? (
@@ -888,17 +888,33 @@ export function ProviderPage() {
         </div>
       ) : null}
 
-      {desk === "calendar" && hostListing ? (
-        <HostCalendarDesk
-          listings={deskListings}
-          centreFromUrl={search.centre}
-          onCentre={(id) => {
-            void navigate({ to: deskPath, search: { ...search, desk: "calendar", centre: id }, replace: true });
-          }}
-          onSaved={() => void load()}
-        />
+      {desk === "calendar" && hostListing && deskSettled && !deskLoadFailed ? (
+        listings.length === 0 && centreOwner && !search.centre ? <ProviderOnboarding /> : (
+          <HostCalendarDesk
+            listings={listings}
+            centreFromUrl={search.centre}
+            onCentre={(id) => {
+              void navigate({ to: deskPath, search: { ...search, desk: "calendar", centre: id }, replace: true });
+            }}
+            onSaved={() => void load()}
+          />
+        )
       ) : null}
-      {desk === "calendar" && !hostListingKnown ? (
+      {desk === "calendar" && ((!hostListingKnown && sessionReady) || (hostListing && deskLoadFailed)) ? (
+        <section className="mx-auto max-w-2xl px-4 py-6" role="alert" data-ke="host-calendar-desk-load-failed">
+          <h1 className="font-display text-2xl">{t("navCalendar")}</h1>
+          <p className="mt-2 text-sm text-muted">
+            {locale === "fr" ? "Le calendrier n’a pas pu se charger." : "Your calendar did not load."}
+          </p>
+          <Button className="mt-4" onClick={() => {
+            refreshSessionDesks();
+            void load();
+          }}>
+            {locale === "fr" ? "Réessayer" : "Try again"}
+          </Button>
+        </section>
+      ) : null}
+      {desk === "calendar" && ((!hostListingKnown && !sessionReady) || (hostListing && !deskSettled)) ? (
         <section className="mx-auto max-w-2xl px-4 py-6" data-ke="host-calendar" role="status" aria-live="polite" aria-busy="true">
           <h1 className="font-display text-2xl">{t("navCalendar")}</h1>
           <p className="mt-2 text-sm text-muted">{t("loading")}</p>
