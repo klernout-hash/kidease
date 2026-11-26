@@ -29,6 +29,7 @@ test("gov #31: unbuilt /gov pages show the unavailable screen in EN and FR, with
       const body = src(file);
       assert.ok(!/redirect\(/.test(body), `${file} does not redirect`);
       assert.match(body, new RegExp(`<GovDeskUnavailable locale="${locale}" />`), file);
+      assert.match(body, new RegExp(`guardGovDesk\\("${locale}"`), `${file} keeps the desk guard`);
     }
   }
 });
