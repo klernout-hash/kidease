@@ -6,14 +6,23 @@ import { shortlistUserId } from "@/lib/server/parent-tracker";
 import { parentRequestSms } from "@/lib/sms-copy";
 import { nid } from "@/lib/utils";
 import { ensureSeed, upsertDaycare } from "./seed";
-import { lookupUser, notifyNewAccountFromUser, notifyPlatform, notifyProviderJoined } from "./notify";
+import {
+  lookupUser,
+  notifyNewAccountFromUser,
+  notifyPlatform,
+  notifyProviderJoined,
+} from "./notify";
 import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
 import { ClientInputError } from "@/lib/observe";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
 import { isCanadianProvinceCode, provinceFromPostalCode, provincePin } from "@/lib/geo";
-import { isAdminOnlyListing, listingVisibilityForOwners, providerDeskListingVisible } from "@/lib/listing-visibility";
+import {
+  isAdminOnlyListing,
+  listingVisibilityForOwners,
+  providerDeskListingVisible,
+} from "@/lib/listing-visibility";
 import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
@@ -21,7 +30,17 @@ import { openHealth, revealChildHealth, sealHealth } from "@/lib/child-health-cr
 import { hideHealthText } from "@/lib/second-factor-policy";
 import { logChildProfileAccess } from "@/lib/server/child-access-log";
 import { childBirthdateMessage, childBirthdateProblem } from "@/lib/child-birthdate";
-import type { AgeGroup, Booking, BookingStatus, Child, Conversation, Locale, Message, PayMethod, Schedule } from "@/lib/types";
+import type {
+  AgeGroup,
+  Booking,
+  BookingStatus,
+  Child,
+  Conversation,
+  Locale,
+  Message,
+  PayMethod,
+  Schedule,
+} from "@/lib/types";
 
 async function familyHome(userId: string) {
   const { familyScopeFor } = await import("@/lib/server/coparent");
@@ -50,7 +69,11 @@ import {
   bookingPayInsertStatus,
   canParentMarkBookingPaid,
 } from "@/lib/booking-pay";
-import { STOCK_CREATE_PHOTOS, applyStorefrontPhoto, isStockListingPhoto } from "@/lib/listing-photo";
+import {
+  STOCK_CREATE_PHOTOS,
+  applyStorefrontPhoto,
+  isStockListingPhoto,
+} from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { overlayQuality } from "./quality";
 import { overlayDemandSnapshots, overlayParentRank } from "./rank";
@@ -61,7 +84,11 @@ import {
   loadProfileEntitlements,
   overlayFeaturedCity,
 } from "@/lib/server/provider-entitlements";
-import { accessDeniedMessage, assertCanMutateListing, canUpdateBookingStatus } from "@/lib/access-control";
+import {
+  accessDeniedMessage,
+  assertCanMutateListing,
+  canUpdateBookingStatus,
+} from "@/lib/access-control";
 import { providerMaySetBookingStatus } from "@/lib/marketplace-loop";
 import { claimRequestStatusTransition } from "@/lib/server/request-status-transition";
 import { resolveAdminAccess } from "@/lib/server/roles";
@@ -74,10 +101,7 @@ import {
 import { centreCanCreateListing, centreCanMutateVacancies } from "@/lib/centre-roles";
 import { enqueueProviderCreatedListing } from "@/lib/server/listing-queue";
 import { assertNewListingAllowed } from "@/lib/server/listing-guard";
-import {
-  DUPLICATE_LISTING_MESSAGE,
-  resolveCreateListingDuplicate,
-} from "@/lib/listing-identity";
+import { DUPLICATE_LISTING_MESSAGE, resolveCreateListingDuplicate } from "@/lib/listing-identity";
 
 async function ensureProfile(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
   const inserted = await sql<{ user_id: string }>`
@@ -120,10 +144,12 @@ function logCrmSkip(role: "parent" | "provider", reason: string) {
  * runtime, which Vercel could not resolve (ERR_MODULE_NOT_FOUND), so this mail
  * never sent. createServerOnlyFn keeps a literal, bundled import on the server.
  */
-const afterNewAccountUserMailServerOnly = createServerOnlyFn(async (userId: string, role: "parent" | "provider") => {
-  const { afterNewAccountUserMail } = await import("@/lib/server/signup-user-mail.server");
-  await afterNewAccountUserMail(userId, role);
-});
+const afterNewAccountUserMailServerOnly = createServerOnlyFn(
+  async (userId: string, role: "parent" | "provider") => {
+    const { afterNewAccountUserMail } = await import("@/lib/server/signup-user-mail.server");
+    await afterNewAccountUserMail(userId, role);
+  },
+);
 
 /**
  * Admin notice, GoHighLevel filing, then user mail. The admin notice and user
@@ -161,7 +187,8 @@ async function pingNewAccount(
   }
   let confirmed = false;
   try {
-    const { captureSignupIntakeFromUser, ghlIntakeConfirmed } = await import("@/lib/server/ghl-intake");
+    const { captureSignupIntakeFromUser, ghlIntakeConfirmed } =
+      await import("@/lib/server/ghl-intake");
     const result = await captureSignupIntakeFromUser({
       userId,
       role,
@@ -287,7 +314,13 @@ export const getFamily = createServerFn({ method: "GET" })
       void logChildProfileAccess(sql, { childId: row.id, actorId: context.userId, action: "read" });
     }
     const shortlistOwner = await shortlistUserId(context.userId);
-    const saved = await sql<DaycareRow & { track_status: string | null; call_note: string | null; tour_note: string | null }>`
+    const saved = await sql<
+      DaycareRow & {
+        track_status: string | null;
+        call_note: string | null;
+        tour_note: string | null;
+      }
+    >`
       select d.*, s.track_status, s.call_note, s.tour_note
       from daycares d
       join saved_daycares s on s.daycare_id = d.id
@@ -339,18 +372,19 @@ export const getFamily = createServerFn({ method: "GET" })
       from payments p join daycares d on d.id = p.daycare_id
       where p.user_id = ${homeId}
       order by p.created_at desc
-    `.catch(async () =>
-      sql<{
-        id: string;
-        daycare_id: string;
-        name: string;
-        amount: number;
-        method: PayMethod;
-        status: string;
-        reference: string | null;
-        created_at: string;
-        invoice_id: string | null;
-      }>`
+    `.catch(
+      async () =>
+        sql<{
+          id: string;
+          daycare_id: string;
+          name: string;
+          amount: number;
+          method: PayMethod;
+          status: string;
+          reference: string | null;
+          created_at: string;
+          invoice_id: string | null;
+        }>`
         select p.id, p.daycare_id, d.name, p.amount, p.method, p.status, p.reference, p.created_at,
                null as invoice_id
         from payments p join daycares d on d.id = p.daycare_id
@@ -376,37 +410,35 @@ export const getFamily = createServerFn({ method: "GET" })
     const viewedChildren = await childrenForViewer(sql, context.userId, home, shown);
     return {
       viewerId: context.userId,
-      role: (profile[0]?.role === "admin" ? "admin" : profile[0]?.role === "provider" ? "provider" : "parent") as
-        | "parent"
-        | "provider"
-        | "admin",
+      role: (profile[0]?.role === "admin"
+        ? "admin"
+        : profile[0]?.role === "provider"
+          ? "provider"
+          : "parent") as "parent" | "provider" | "admin",
       children: viewedChildren.children,
       portfolioLocked: viewedChildren.fileLocked,
-      saved: (
-        await overlayParentRank(
-          await overlayQuality(
-            saved
-              .flatMap((r) => {
-                try {
-                  const d = mapDaycare(r);
-                  return [
-                    {
-                      ...d,
-                      spotsTotal: spotsTotal(d),
-                      fromPrice: fromPrice(d),
-                      distanceKm: 0,
-                      trackStatus: parseTrackStatus(r.track_status),
-                      callNote: String(r.call_note ?? ""),
-                      tourNote: String(r.tour_note ?? ""),
-                    },
-                  ];
-                } catch {
-                  return [];
-                }
-              }),
-          ),
-          { distanceKnown: false, ageGroup: "any" },
-        )
+      saved: await overlayParentRank(
+        await overlayQuality(
+          saved.flatMap((r) => {
+            try {
+              const d = mapDaycare(r);
+              return [
+                {
+                  ...d,
+                  spotsTotal: spotsTotal(d),
+                  fromPrice: fromPrice(d),
+                  distanceKm: 0,
+                  trackStatus: parseTrackStatus(r.track_status),
+                  callNote: String(r.call_note ?? ""),
+                  tourNote: String(r.tour_note ?? ""),
+                },
+              ];
+            } catch {
+              return [];
+            }
+          }),
+        ),
+        { distanceKnown: false, ageGroup: "any" },
       ),
       bookings: bookings.map((b) => ({
         id: b.id,
@@ -569,10 +601,16 @@ export const updateChild = createServerFn({ method: "POST" })
       returning id
     `;
     if (!rows[0]) throw new Error("Child not found");
-    await logChildProfileAccess(sql, { childId: rows[0].id, actorId: context.userId, action: "write" });
+    await logChildProfileAccess(sql, {
+      childId: rows[0].id,
+      actorId: context.userId,
+      action: "write",
+    });
     if (beforePickup !== afterPickup) {
       const { notifyPickupChange } = await import("@/lib/server/coparent-email");
-      await notifyPickupChange(sql, home.dataUserId, context.userId, rows[0].id).catch(() => undefined);
+      await notifyPickupChange(sql, home.dataUserId, context.userId, rows[0].id).catch(
+        () => undefined,
+      );
     }
     return { id: rows[0].id };
   });
@@ -597,7 +635,11 @@ export const deleteChild = createServerFn({ method: "POST" })
       returning id
     `;
     if (!rows[0]) throw new Error("Child not found");
-    await logChildProfileAccess(sql, { childId: rows[0].id, actorId: context.userId, action: "delete" });
+    await logChildProfileAccess(sql, {
+      childId: rows[0].id,
+      actorId: context.userId,
+      action: "delete",
+    });
     return { id: rows[0].id };
   });
 
@@ -607,7 +649,10 @@ export const toggleSave = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
+    if (
+      isAdminOnlyListing(listed ?? { id: daycareId }) &&
+      !(await callerMayUseAdminOnlyListing())
+    ) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -654,7 +699,10 @@ export const saveDaycare = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
+    if (
+      isAdminOnlyListing(listed ?? { id: daycareId }) &&
+      !(await callerMayUseAdminOnlyListing())
+    ) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -680,13 +728,17 @@ export const unsaveDaycare = createServerFn({ method: "POST" })
 export const createBooking = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (input: {
-      daycareId: string;
-      childId: string | null;
-      startMonth: string;
-      schedule: Schedule;
-      ageGroup: AgeGroup;
-    } | undefined) => {
+    (
+      input:
+        | {
+            daycareId: string;
+            childId: string | null;
+            startMonth: string;
+            schedule: Schedule;
+            ageGroup: AgeGroup;
+          }
+        | undefined,
+    ) => {
       if (!input?.daycareId) throw new ClientInputError();
       return input;
     },
@@ -697,10 +749,26 @@ export const createBooking = createServerFn({ method: "POST" })
     const home = await familyWrite(context.userId);
     const homeId = home.dataUserId;
     const sql = await getSql();
+    let childId: string | null = null;
+    const requestedChildId = typeof data.childId === "string" ? data.childId.trim() : "";
+    if (requestedChildId) {
+      const owned = await sql<{ id: string }>`
+        select id from children where id = ${requestedChildId} and user_id = ${homeId} limit 1
+      `;
+      if (!owned[0]) throw new Error("Child not found");
+      childId = owned[0].id;
+    }
     const { assertChatNotBlocked } = await import("@/lib/server/safety");
-    await assertChatNotBlocked(sql, { senderId: homeId, parentUserId: homeId, daycareId: data.daycareId });
+    await assertChatNotBlocked(sql, {
+      senderId: homeId,
+      parentUserId: homeId,
+      daycareId: data.daycareId,
+    });
     const listed = await catalogByIdGet(data.daycareId);
-    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
+    if (
+      isAdminOnlyListing(listed ?? { id: data.daycareId }) &&
+      !(await callerMayUseAdminOnlyListing())
+    ) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -724,7 +792,7 @@ export const createBooking = createServerFn({ method: "POST" })
     let status: BookingStatus = spots > 0 ? "accepted" : "waitlist";
     if (status === "accepted") {
       const { holdIncompleteBooking } = await import("@/lib/server/child-portfolio");
-      if (await holdIncompleteBooking(sql, data.childId, d.province)) status = "requested";
+      if (await holdIncompleteBooking(sql, childId, d.province)) status = "requested";
     }
     const existingConvo = await sql<{ id: string }>`
       select id from conversations where user_id = ${homeId} and daycare_id = ${data.daycareId}
@@ -738,7 +806,7 @@ export const createBooking = createServerFn({ method: "POST" })
       insert into bookings (
         id, user_id, daycare_id, child_id, start_month, schedule, age_group, status, monthly_amount
       ) values (
-        ${id}, ${homeId}, ${data.daycareId}, ${data.childId},
+        ${id}, ${homeId}, ${data.daycareId}, ${childId},
         ${data.startMonth}, ${data.schedule}, ${data.ageGroup}, ${status}, ${amount}
       )
     `;
@@ -775,10 +843,15 @@ export const createBooking = createServerFn({ method: "POST" })
     `;
     const { rememberCentreLead } = await import("@/lib/server/lead-intake-write");
     await rememberCentreLead(sql, {
-      entry: status === "accepted" ? "booking_accepted" : status === "waitlist" ? "waitlist_join" : "enrol_now",
+      entry:
+        status === "accepted"
+          ? "booking_accepted"
+          : status === "waitlist"
+            ? "waitlist_join"
+            : "enrol_now",
       daycareId: data.daycareId,
       parentUserId: homeId,
-      childId: data.childId,
+      childId,
       ageGroup: data.ageGroup,
       desiredStart: data.startMonth,
       schedule: data.schedule,
@@ -804,7 +877,11 @@ export const createBooking = createServerFn({ method: "POST" })
     const { provinceCode } = await import("@/lib/product-events");
     void captureServerProductEvent(
       "enrolment_requested",
-      { province: provinceCode(d.province), result: status === "accepted" ? "accepted" : "waitlist", source: "booking" },
+      {
+        province: provinceCode(d.province),
+        result: status === "accepted" ? "accepted" : "waitlist",
+        source: "booking",
+      },
       context.userId,
     );
     void captureServerProductEvent(
@@ -818,19 +895,23 @@ export const createBooking = createServerFn({ method: "POST" })
 export const createSpotRequest = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (input: {
-      daycareId: string;
-      childId?: string;
-      childName: string;
-      birthdate: string;
-      startDate: string;
-      schedule: Schedule;
-      days?: string[];
-      message?: string;
-      parentName?: string;
-      locale?: Locale;
-      intakeEntry?: "enrol_now" | "assisted_enrol" | "application";
-    } | undefined) => {
+    (
+      input:
+        | {
+            daycareId: string;
+            childId?: string;
+            childName: string;
+            birthdate: string;
+            startDate: string;
+            schedule: Schedule;
+            days?: string[];
+            message?: string;
+            parentName?: string;
+            locale?: Locale;
+            intakeEntry?: "enrol_now" | "assisted_enrol" | "application";
+          }
+        | undefined,
+    ) => {
       if (!input?.daycareId) throw new ClientInputError();
       return input;
     },
@@ -841,9 +922,16 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     const sql = await getSql();
     await ensureProfile(sql, context.userId);
     const { assertChatNotBlocked } = await import("@/lib/server/safety");
-    await assertChatNotBlocked(sql, { senderId: homeId, parentUserId: homeId, daycareId: data.daycareId });
+    await assertChatNotBlocked(sql, {
+      senderId: homeId,
+      parentUserId: homeId,
+      daycareId: data.daycareId,
+    });
     const listed = await catalogByIdGet(data.daycareId);
-    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
+    if (
+      isAdminOnlyListing(listed ?? { id: data.daycareId }) &&
+      !(await callerMayUseAdminOnlyListing())
+    ) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -999,7 +1087,9 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     }
 
     void import("@/lib/server/sms-notify")
-      .then((mod) => mod.notifyCentreSms({ daycareId: data.daycareId, body: parentRequestSms(d.name, locale) }))
+      .then((mod) =>
+        mod.notifyCentreSms({ daycareId: data.daycareId, body: parentRequestSms(d.name, locale) }),
+      )
       .catch(() => undefined);
 
     void import("@/lib/server/product-events")
@@ -1022,7 +1112,6 @@ export const createSpotRequest = createServerFn({ method: "POST" })
       emailPreview: emailBody,
     };
   });
-
 
 export const listInbox = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -1083,7 +1172,8 @@ export const getThread = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     const conversationId = data.conversationId;
     const sql = await getSql();
-    const { requireConversationRead, markConversationRead } = await import("@/lib/server/thread-access");
+    const { requireConversationRead, markConversationRead } =
+      await import("@/lib/server/thread-access");
     const { listToursForConversation } = await import("@/lib/server/tours");
     let access;
     try {
@@ -1247,7 +1337,10 @@ export const openConversation = createServerFn({ method: "POST" })
     const home = await familyWrite(context.userId);
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
+    if (
+      isAdminOnlyListing(listed ?? { id: daycareId }) &&
+      !(await callerMayUseAdminOnlyListing())
+    ) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -1406,9 +1499,7 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
 
 export const createPayment = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator(
-    (input: { bookingId: string; method: PayMethod; locale?: Locale }) => input,
-  )
+  .validator((input: { bookingId: string; method: PayMethod; locale?: Locale }) => input)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const rows = await sql<{
@@ -1429,16 +1520,31 @@ export const createPayment = createServerFn({ method: "POST" })
     if (b.status !== "accepted") {
       throw new Error("Payment is available after the daycare approves your request.");
     }
-    const existing = await sql<{ id: string; status: string; reference: string | null; amount: number }>`
+    const existing = await sql<{
+      id: string;
+      status: string;
+      reference: string | null;
+      amount: number;
+    }>`
       select id, status, reference, amount from payments
       where booking_id = ${b.id} and user_id = ${context.userId} and status in ('paid','pending','pending_review')
       order by created_at desc limit 1
     `;
     if (existing[0]?.status === "paid") {
-      return { id: existing[0].id, status: existing[0].status, reference: existing[0].reference, amount: existing[0].amount };
+      return {
+        id: existing[0].id,
+        status: existing[0].status,
+        reference: existing[0].reference,
+        amount: existing[0].amount,
+      };
     }
     if (existing[0] && existing[0].status !== "paid") {
-      return { id: existing[0].id, status: existing[0].status, reference: existing[0].reference, amount: existing[0].amount };
+      return {
+        id: existing[0].id,
+        status: existing[0].status,
+        reference: existing[0].reference,
+        amount: existing[0].amount,
+      };
     }
     const id = nid("pay");
     const reference = `KE-${id.slice(-8).toUpperCase()}`;
@@ -1529,7 +1635,10 @@ export const setRole = createServerFn({ method: "POST" })
     return { role: written.role };
   });
 
-async function overlayClaimLicensePhotos(sql: Awaited<ReturnType<typeof getSql>>, rows: DaycareRow[]) {
+async function overlayClaimLicensePhotos(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  rows: DaycareRow[],
+) {
   const missing = rows.filter((row) => !(row.license_photo || "").trim()).map((row) => row.id);
   if (!missing.length) return rows;
   const claims = await sql
@@ -1559,10 +1668,9 @@ export const getProvider = createServerFn({ method: "GET" })
     await ensureSeed(sql);
     const accessIds = await listAccessibleDaycareIds(sql, context.userId);
     const ownedRows = accessIds.length
-      ? await sql.query<DaycareRow>(
-          `select d.* from daycares d where d.id = any($1::text[])`,
-          [accessIds],
-        )
+      ? await sql.query<DaycareRow>(`select d.* from daycares d where d.id = any($1::text[])`, [
+          accessIds,
+        ])
       : [];
     const owned = await overlayClaimLicensePhotos(sql, ownedRows);
     const entitlements = await loadProfileEntitlements(sql, context.userId);
@@ -1720,13 +1828,20 @@ export const getProvider = createServerFn({ method: "GET" })
         paymentStatus: b.payment_status,
         birthdate: b.birthdate,
         allergies: openHealth(b.allergies ?? ""),
-        epiPen: Boolean(b.epi_pen === true || b.epi_pen === 1 || b.epi_pen === "t" || b.epi_pen === "true"),
+        epiPen: Boolean(
+          b.epi_pen === true || b.epi_pen === 1 || b.epi_pen === "t" || b.epi_pen === "true",
+        ),
       })),
     };
   });
 
-function resolveListingProvince(chosen: string | null | undefined, postal: string | null | undefined): string {
-  const explicit = String(chosen || "").trim().toUpperCase();
+function resolveListingProvince(
+  chosen: string | null | undefined,
+  postal: string | null | undefined,
+): string {
+  const explicit = String(chosen || "")
+    .trim()
+    .toUpperCase();
   if (isCanadianProvinceCode(explicit)) return explicit;
   const fromPostal = provinceFromPostalCode(postal);
   if (fromPostal) return fromPostal;
@@ -1754,12 +1869,14 @@ export const createListing = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const ownerCount = (
-      await sql<{ n: number }>`
+    const ownerCount =
+      (
+        await sql<{ n: number }>`
         select count(*)::int as n from provider_daycares where user_id = ${context.userId}
       `.catch(() => [{ n: 0 }])
-    )[0]?.n ?? 0;
-    const staffOnly = ownerCount === 0 && (await listAccessibleDaycareIds(sql, context.userId)).length > 0;
+      )[0]?.n ?? 0;
+    const staffOnly =
+      ownerCount === 0 && (await listAccessibleDaycareIds(sql, context.userId)).length > 0;
     if (!centreCanCreateListing({ ownerCount, memberOnly: staffOnly })) {
       throw Object.assign(new Error("Only the centre owner can add a listing."), { status: 403 });
     }
@@ -1783,11 +1900,14 @@ export const createListing = createServerFn({ method: "POST" })
     const province = resolveListingProvince(data.province, data.postalCode);
     const pin = provincePin(province);
     const id = nid("d");
-    const slug = data.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 40) + "-" + id.slice(-4);
+    const slug =
+      data.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 40) +
+      "-" +
+      id.slice(-4);
     const actor = await lookupUser(context.userId);
     const visibilityWrite = listingVisibilityForOwners(
       {
@@ -1879,8 +1999,14 @@ export const createListing = createServerFn({ method: "POST" })
       userId: context.userId,
       daycareName: data.name,
     });
-    if (data.storefront && isRealListingPhoto(data.storefront) && !isStockListingPhoto(data.storefront)) {
-      await sql`update daycares set last_photo_updated_at = now() where id = ${id}`.catch(() => undefined);
+    if (
+      data.storefront &&
+      isRealListingPhoto(data.storefront) &&
+      !isStockListingPhoto(data.storefront)
+    ) {
+      await sql`update daycares set last_photo_updated_at = now() where id = ${id}`.catch(
+        () => undefined,
+      );
     }
     await writeProfileRole(context.userId, "provider");
     const providerIntake = await ensureCrmIntake(context.userId, "provider", {
@@ -1990,7 +2116,8 @@ export const updateCapacity = createServerFn({ method: "POST" })
             toddler: before[0]?.spots_toddler ?? null,
             preschool: before[0]?.spots_preschool ?? null,
           },
-          previousUpdatedAt: previousAt instanceof Date ? previousAt.toISOString() : previousAt ?? null,
+          previousUpdatedAt:
+            previousAt instanceof Date ? previousAt.toISOString() : (previousAt ?? null),
         }),
       )
       .catch(() => undefined);
@@ -2054,7 +2181,8 @@ export const updateCapacity = createServerFn({ method: "POST" })
               ? String(last[0].created_at)
               : null;
         if (!pulseRateLimited(lastIso)) {
-          const { insertWaitlistPulse, enqueueWaitlistPulse } = await import("@/lib/server/waitlist-pulse");
+          const { insertWaitlistPulse, enqueueWaitlistPulse } =
+            await import("@/lib/server/waitlist-pulse");
           const { pulseId } = await insertWaitlistPulse({
             daycareId: data.daycareId,
             actorUserId: context.userId,
@@ -2098,7 +2226,8 @@ export async function purgeAccountData(uid: string): Promise<boolean> {
     email: identity[0].email,
     stripeCustomerId: identity[0].stripe_customer_id,
   }).catch(() => undefined);
-  const { anonymizeRetainedRecords, purgeAccountExtras } = await import("@/lib/server/account-close");
+  const { anonymizeRetainedRecords, purgeAccountExtras } =
+    await import("@/lib/server/account-close");
   await anonymizeRetainedRecords(uid);
   await purgeAccountExtras(uid);
   const { purgeReferralRows } = await import("@/lib/server/referrals");
@@ -2108,7 +2237,9 @@ export async function purgeAccountData(uid: string): Promise<boolean> {
   await sql`delete from bookings where user_id = ${uid}`;
   await sql`delete from children where user_id = ${uid}`;
   await sql`delete from saved_daycares where user_id = ${uid}`;
-  await sql`delete from shortlist_shares where owner_user_id = ${uid} or accepted_user_id = ${uid}`.catch(() => undefined);
+  await sql`delete from shortlist_shares where owner_user_id = ${uid} or accepted_user_id = ${uid}`.catch(
+    () => undefined,
+  );
   await sql`delete from provider_daycares where user_id = ${uid}`;
   await sql`delete from centre_members where user_id = ${uid}`.catch(() => undefined);
   await sql`delete from centre_invites where invited_by = ${uid} or accepted_user_id = ${uid}`.catch(
@@ -2124,7 +2255,9 @@ export async function purgeAccountData(uid: string): Promise<boolean> {
   await purgeFamilyDocuments(uid);
   await sql`delete from profiles where user_id = ${uid}`;
   await sql`delete from "session" where "userId" = ${uid}`;
-  await sql`update device_sessions set revoked_at = now(), revoke_reason = 'account_delete' where user_id = ${uid}`.catch(() => undefined);
+  await sql`update device_sessions set revoked_at = now(), revoke_reason = 'account_delete' where user_id = ${uid}`.catch(
+    () => undefined,
+  );
   await sql`delete from "account" where "userId" = ${uid}`;
   await sql`delete from "user" where "id" = ${uid}`;
   return true;
@@ -2141,7 +2274,9 @@ export async function readDeletedAt(userId: string): Promise<string | null> {
 }
 
 /** Purge only after the restore window. Returns pending while restore is still open. */
-export async function purgeAccountIfExpired(userId: string): Promise<"active" | "pending" | "purged"> {
+export async function purgeAccountIfExpired(
+  userId: string,
+): Promise<"active" | "pending" | "purged"> {
   const deletedAt = await readDeletedAt(userId);
   if (!deletedAt) return "active";
   const { withinRestoreWindow } = await import("@/lib/account-delete");
@@ -2169,7 +2304,9 @@ export const deleteAccount = createServerFn({ method: "POST" })
       on conflict (user_id) do update set deleted_at = now()
     `;
     await sql`delete from "session" where "userId" = ${uid}`;
-    await sql`update device_sessions set revoked_at = now(), revoke_reason = 'account_delete' where user_id = ${uid}`.catch(() => undefined);
+    await sql`update device_sessions set revoked_at = now(), revoke_reason = 'account_delete' where user_id = ${uid}`.catch(
+      () => undefined,
+    );
     const { ACCOUNT_RESTORE_DAYS } = await import("@/lib/account-delete");
     return { ok: true as const, restoreDays: ACCOUNT_RESTORE_DAYS };
   });
