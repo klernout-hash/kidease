@@ -57,6 +57,14 @@ export const listInbox = createServerFn({ method: "GET" })
     const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
     assertRuntimeSwitch("FEATURE_INBOX");
     const sql = await getSql();
+    // B05 #29: the centre message scope does not depend on the thread rows. Start it now.
+    const messageCentresLoad: Promise<Set<string> | null> =
+      data.view === "family"
+        ? Promise.resolve(null)
+        : import("@/lib/server/centre-access")
+            .then((m) => m.daycareIdsForArea(sql, context.userId, "messages", "view"))
+            .then((ids) => new Set(ids));
+    messageCentresLoad.catch(() => undefined);
     const { familyScopeFor } = await import("@/lib/server/coparent");
     const parentId = (await familyScopeFor(context.userId)).dataUserId;
     const view = data.view ?? "all";
@@ -267,12 +275,7 @@ export const listInbox = createServerFn({ method: "GET" })
       limit 50
     `;
 
-    const messageCentres =
-      data.view === "family"
-        ? null
-        : new Set(
-            await (await import("@/lib/server/centre-access")).daycareIdsForArea(sql, context.userId, "messages", "view"),
-          );
+    const messageCentres = await messageCentresLoad;
     const out: Conversation[] = [];
     const now = Date.now();
     for (const r of rows) {

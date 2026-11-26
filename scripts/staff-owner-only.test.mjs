@@ -63,3 +63,26 @@ test("B05: insights, Families and the team list are scoped to owner and manager 
   assert.match(src("src/lib/server/centre-members.ts"), /filter\(\(row\) => row\.role === "manager"\)/);
   assert.match(src("src/lib/server/centre-access.ts"), /row\.role === "manager" \|\| row\.preset === "manager"/);
 });
+
+test("B05 #26: the staff inbox covers every active centre membership, not one centre", () => {
+  const inbox = src("src/lib/server/inbox.ts");
+  assert.match(inbox, /from centre_members m\s+where m\.user_id = \$\{context\.userId\} and m\.daycare_id = c\.daycare_id and m\.status = 'active'/);
+  assert.match(inbox, /daycareIdsForArea\(sql, context\.userId, "messages", "view"\)/);
+  // A centre reply lands on the parent's own thread, which the family view lists.
+  assert.match(inbox, /\$\{view\} <> 'centre' and c\.user_id = \$\{parentId\}/);
+});
+
+test("B05 #27: an open post at an unpublished centre tells the owner it is not public yet", () => {
+  const copy = src("src/lib/staff-jobs-copy.ts");
+  assert.match(copy, /jobNotPublicYet: "This post is not on the public job board yet/);
+  assert.match(copy, /jobNotPublicYet: "Cette offre n’est pas encore sur le tableau public/);
+  assert.match(src("src/components/staff-hiring-desk.tsx"), /job\.open && !job\.boardPublic/);
+  assert.match(src("src/lib/server/staff-jobs.ts"), /as board_public/);
+});
+
+test("B05 #29: Staff hours and the inbox start independent loads together", () => {
+  const ts = src("src/lib/server/timesheets.ts");
+  assert.match(ts, /let timesheetTablesReady: Promise<void> \| null = null/);
+  assert.match(ts, /const \[rows, edits\] = await Promise\.all/);
+  assert.match(src("src/lib/server/inbox.ts"), /const messageCentres = await messageCentresLoad;/);
+});
