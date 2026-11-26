@@ -3,17 +3,23 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { catalogByIdGet } from "@/lib/catalog";
 import { getSql, type Sql } from "@/lib/db";
 import { isKidEaseOperatorEmail } from "@/lib/admin-email";
-import { deskWaitlistVisible, isPublicListing, listingVisibilityInputFromDb } from "@/lib/listing-visibility";
-import { spotOfferMailEnabled, waitlistToolsEnabled } from "@/lib/features";
-import { moveInLine, placeFromRank, type RankRow } from "@/lib/gap-features";
+import {
+  deskWaitlistVisible,
+  isHiddenTestListing,
+  isPublicListing,
+  listingVisibilityInputFromDb,
+} from "@/lib/listing-visibility";
+import { spotOfferMailEnabled } from "@/lib/features";
+import { moveInLine } from "@/lib/gap-features";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 import { brandedNotice, renderBrandedEmail, renderBrandedText } from "@/lib/email-layout";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import {
   auditRowsForOffer,
   expireDue,
+  fairOfferOrder,
+  offerNextForAge,
   parseSpotAge,
-  placeInLine,
   rejectWaitlistFee,
   waitlistAuditCsv,
   respondToOffer,
@@ -27,6 +33,14 @@ import {
   type WaitlistEntry,
   type WaitlistStatus,
 } from "@/lib/spot-offers";
+import {
+  WAITLIST_EVENT,
+  orderFromIds,
+  staffChildTags,
+  waitlistJoinDecision,
+  waitlistOpenFromEvents,
+  type WaitlistEventRow,
+} from "@/lib/pipeline-features";
 import { signSpotOfferToken, spotOfferTokenSecret, verifySpotOfferToken } from "@/lib/spot-offer-token";
 import { SITEMAP_ORIGIN } from "@/lib/sitemap";
 import { nid } from "@/lib/utils";
@@ -44,6 +58,7 @@ type EntryRow = {
   joined_at: string | Date;
   sibling?: number | boolean | null;
   start_date?: string | Date | null;
+  rank_order?: number | null;
 };
 
 type OfferRow = {
@@ -67,6 +82,9 @@ export type CentreWaitlistFamily = {
   status: WaitlistStatus;
   joinedAt: string;
   place: number | null;
+  sibling: boolean;
+  staffChild: boolean;
+  rank: number | null;
 };
 
 export type CentreWaitlistCard = {
@@ -75,7 +93,10 @@ export type CentreWaitlistCard = {
   slug: string;
   families: CentreWaitlistFamily[];
   openOfferId: string | null;
+  openOfferWaitlistId: string | null;
+  openOfferExpiresAt: string | null;
   siblingPriority: boolean;
+  waitlistOpen: boolean;
 };
 
 export type MySpotOfferRow = {
@@ -135,6 +156,7 @@ function toEntry(row: EntryRow): WaitlistEntry {
     joinedAt: iso(row.joined_at),
     sibling: row.sibling === 1 || row.sibling === true,
     startDate: row.start_date ? iso(row.start_date).slice(0, 10) : null,
+    rank: row.rank_order == null ? null : Number(row.rank_order),
   };
 }
 
@@ -168,11 +190,22 @@ async function siblingPriorityOn(sql: Sql, daycareId: string): Promise<boolean> 
   }
 }
 
+async function readWaitlistEvents(sql: Sql, daycareId: string): Promise<WaitlistEventRow[]> {
+  const rows = await sql<{ action: string; entry_id: string | null; created_at: string | Date }>`
+    select action, entry_id, created_at from waitlist_audit
+    where daycare_id = ${daycareId}
+      and action in (${WAITLIST_EVENT.closed}, ${WAITLIST_EVENT.opened}, ${WAITLIST_EVENT.staffOn}, ${WAITLIST_EVENT.staffOff})
+    order by created_at desc
+    limit 500
+  `.catch(() => [] as { action: string; entry_id: string | null; created_at: string | Date }[]);
+  return rows.map((row) => ({ action: row.action, entryId: row.entry_id, createdAt: iso(row.created_at) }));
+}
+
 async function loadState(sql: Sql, daycareId: string): Promise<QueueSnapshot> {
   const siblingPriority = await siblingPriorityOn(sql, daycareId);
   const entries = await sql<EntryRow>`
     select id, daycare_id, user_id, age_group, child_label, note, status, joined_at,
-           sibling, start_date
+           sibling, start_date, rank_order
     from daycare_waitlist
     where daycare_id = ${daycareId}
   `.catch(() =>
@@ -182,12 +215,17 @@ async function loadState(sql: Sql, daycareId: string): Promise<QueueSnapshot> {
       where daycare_id = ${daycareId}
     `,
   );
+  const staff = staffChildTags(await readWaitlistEvents(sql, daycareId));
   const offers = await sql<OfferRow>`
     select id, waitlist_id, daycare_id, user_id, age_group, status, offered_at, expires_at
     from spot_offers
     where daycare_id = ${daycareId}
   `;
-  return { entries: entries.map(toEntry), offers: offers.map(toOffer), siblingPriority };
+  return {
+    entries: entries.map((row) => ({ ...toEntry(row), staffChild: staff.has(row.id) })),
+    offers: offers.map(toOffer),
+    siblingPriority,
+  };
 }
 
 async function persistStep(sql: Sql, before: QueueSnapshot, after: QueueSnapshot, created: SpotOffer[]) {
@@ -314,9 +352,26 @@ export const joinDaycareWaitlist = createServerFn({ method: "POST" })
       from daycares where id = ${daycareId} limit 1
     `;
     const row = rows[0];
-    if (!row || !isPublicListing(listingVisibilityInputFromDb(row))) {
-      console.info("[kidease-waitlist] listing not open", daycareId);
-      return { ok: false as const, error: "This listing is not open for a waitlist." };
+    const visibility = row ? listingVisibilityInputFromDb(row) : null;
+    const hiddenTest = Boolean(visibility && isHiddenTestListing(visibility));
+    const { callerIsTestAccount } = await import("@/lib/server/public-listing");
+    const decision = row
+      ? waitlistJoinDecision({
+          publicListing: isPublicListing(visibility),
+          hiddenTestListing: hiddenTest,
+          viewerIsTestAccount: hiddenTest ? await callerIsTestAccount() : false,
+          ownerOpen: waitlistOpenFromEvents(await readWaitlistEvents(sql, daycareId)),
+        })
+      : ({ ok: false, reason: "not_open" } as const);
+    if (!decision.ok) {
+      console.info("[kidease-waitlist] listing not open", daycareId, decision.reason);
+      return {
+        ok: false as const,
+        error:
+          decision.reason === "closed"
+            ? "This daycare closed its waitlist for now."
+            : "This listing is not open for a waitlist.",
+      };
     }
     const existing = await sql<EntryRow>`
       select id, daycare_id, user_id, age_group, child_label, note, status, joined_at
@@ -405,25 +460,15 @@ export const listMySpotOffers = createServerFn({ method: "GET" })
       if (!byWaitlist.has(offer.waitlist_id)) byWaitlist.set(offer.waitlist_id, offer);
     }
     const daycareIds = [...new Set(entries.map((row) => row.daycare_id))];
-    const lines = new Map<string, WaitlistEntry[]>();
-    const ranks = new Map<string, RankRow[]>();
-    const tools = waitlistToolsEnabled();
+    // Same order the owner sees: staff child, sibling rule, saved order, then sign-up date.
+    const places = new Map<string, number>();
     for (const daycareId of daycareIds) {
       const state = await loadState(sql, daycareId);
-      lines.set(daycareId, state.entries);
-      if (!tools) continue;
-      const rows = await sql<{ id: string; status: string; joined_at: string | Date; rank_order: number | null }>`
-        select id, status, joined_at, rank_order from daycare_waitlist where daycare_id = ${daycareId}
-      `.catch(() => [] as { id: string; status: string; joined_at: string | Date; rank_order: number | null }[]);
-      ranks.set(
-        daycareId,
-        rows.map((row) => ({
-          id: row.id,
-          status: row.status,
-          joinedAt: iso(row.joined_at),
-          rank: row.rank_order == null ? null : Number(row.rank_order),
-        })),
+      const inLine = fairOfferOrder(
+        state.entries.filter((row) => row.status === "waiting" || row.status === "offered"),
+        { siblingPriority: state.siblingPriority === true, spotAge: "any" },
       );
+      inLine.forEach((row, index) => places.set(row.id, index + 1));
     }
     const mine: MySpotOfferRow[] = entries.map((row) => {
       const offer = byWaitlist.get(row.id);
@@ -436,9 +481,7 @@ export const listMySpotOffers = createServerFn({ method: "GET" })
         ageGroup: age,
         status: asStatus(row.status),
         joinedAt: iso(row.joined_at),
-        place: tools && ranks.has(row.daycare_id)
-          ? placeFromRank(ranks.get(row.daycare_id) ?? [], row.id)
-          : placeInLine(lines.get(row.daycare_id) ?? [], row.id),
+        place: places.get(row.id) ?? null,
         offerId: offer?.id ?? null,
         offerStatus: offer ? asOfferStatus(offer.status) : null,
         expiresAt: offer ? iso(offer.expires_at) : null,
@@ -485,11 +528,11 @@ export const listCentreWaitlist = createServerFn({ method: "GET" })
       }
       centres.set(row.id, row);
     }
-    const tools = waitlistToolsEnabled();
     const cards: CentreWaitlistCard[] = [];
     for (const centre of centres.values()) {
       if (!(await canCentreWriteLeadsFor(sql, context.userId, centre.id))) continue;
       const state = await loadState(sql, centre.id);
+      const events = await readWaitlistEvents(sql, centre.id);
       const people = await sql<EntryRow & { parent_name: string | null }>`
         select w.id, w.daycare_id, w.user_id, w.age_group, w.child_label, w.note, w.status, w.joined_at,
                u.name as parent_name
@@ -499,28 +542,15 @@ export const listCentreWaitlist = createServerFn({ method: "GET" })
         order by w.joined_at asc
       `;
       const open = state.offers.find((row) => row.status === "open");
-      const ranked: RankRow[] = tools
-        ? people.map((row) => ({
-            id: row.id,
-            rank: null,
-            joinedAt: iso(row.joined_at),
-            status: row.status,
-          }))
-        : [];
-      if (tools) {
-        const ranks = await sql<{ id: string; rank_order: number | null }>`
-          select id, rank_order from daycare_waitlist where daycare_id = ${centre.id}
-        `.catch(() => [] as { id: string; rank_order: number | null }[]);
-        const byId = new Map(ranks.map((row) => [row.id, row.rank_order]));
-        for (const row of ranked) row.rank = byId.get(row.id) ?? null;
-      }
-      cards.push({
-        daycareId: centre.id,
-        daycareName: centre.name,
-        slug: centre.slug,
-        openOfferId: open?.id ?? null,
-        siblingPriority: state.siblingPriority === true,
-        families: people.map((row) => ({
+      const byId = new Map(state.entries.map((row) => [row.id, row]));
+      const inLine = fairOfferOrder(
+        state.entries.filter((row) => row.status === "waiting" || row.status === "offered"),
+        { siblingPriority: state.siblingPriority === true, spotAge: "any" },
+      );
+      const placeById = new Map(inLine.map((row, index) => [row.id, index + 1]));
+      const families: CentreWaitlistFamily[] = people.map((row) => {
+        const entry = byId.get(row.id);
+        return {
           id: row.id,
           userId: row.user_id,
           parentName: String(row.parent_name || "Parent").trim() || "Parent",
@@ -529,11 +559,32 @@ export const listCentreWaitlist = createServerFn({ method: "GET" })
           note: String(row.note || "").trim(),
           status: asStatus(row.status),
           joinedAt: iso(row.joined_at),
-          place: tools ? placeFromRank(ranked, row.id) : placeInLine(state.entries, row.id),
-        })),
+          place: placeById.get(row.id) ?? null,
+          sibling: entry?.sibling === true,
+          staffChild: entry?.staffChild === true,
+          rank: entry?.rank ?? null,
+        };
+      });
+      families.sort((a, b) => {
+        const pa = a.place ?? 1_000_000;
+        const pb = b.place ?? 1_000_000;
+        if (pa !== pb) return pa - pb;
+        return a.joinedAt.localeCompare(b.joinedAt);
+      });
+      cards.push({
+        daycareId: centre.id,
+        daycareName: centre.name,
+        slug: centre.slug,
+        openOfferId: open?.id ?? null,
+        openOfferWaitlistId: open?.waitlistId ?? null,
+        openOfferExpiresAt: open?.expiresAt ?? null,
+        siblingPriority: state.siblingPriority === true,
+        waitlistOpen: waitlistOpenFromEvents(events),
+        families,
       });
     }
-    return { centres: cards, emailEnabled: spotOfferMailEnabled(), toolsEnabled: tools };
+    // Owner order and tags are free tools on every plan, so they no longer wait on FEATURE_WAITLIST_TOOLS.
+    return { centres: cards, emailEnabled: spotOfferMailEnabled(), toolsEnabled: true };
   });
 
 export const sendCentreSpotOffer = createServerFn({ method: "POST" })
@@ -746,7 +797,6 @@ export const rankWaitlistEntry = createServerFn({ method: "POST" })
     direction: input?.direction === "down" ? ("down" as const) : ("up" as const),
   }))
   .handler(async ({ context, data }) => {
-    if (!waitlistToolsEnabled()) return { ok: false as const, reason: "off" as const };
     if (!data.id) throw new Error("That family is not waiting.");
     const sql = await getSql();
     const rows = await sql<{ daycare_id: string }>`
@@ -756,16 +806,13 @@ export const rankWaitlistEntry = createServerFn({ method: "POST" })
     if (!daycareId || !(await canCentreWriteLeadsFor(sql, context.userId, daycareId))) {
       throw new Error("This listing is not on your desk.");
     }
-    const line = await sql<{ id: string; status: string; joined_at: string | Date; rank_order: number | null }>`
-      select id, status, joined_at, rank_order from daycare_waitlist where daycare_id = ${daycareId}
-    `;
+    const state = await loadState(sql, daycareId);
+    const shown = fairOfferOrder(
+      state.entries.filter((row) => row.status === "waiting" || row.status === "offered"),
+      { siblingPriority: state.siblingPriority === true, spotAge: "any" },
+    );
     const next = moveInLine(
-      line.map((row) => ({
-        id: row.id,
-        status: row.status,
-        joinedAt: iso(row.joined_at),
-        rank: row.rank_order == null ? null : Number(row.rank_order),
-      })),
+      shown.map((row, index) => ({ id: row.id, status: row.status, joinedAt: row.joinedAt, rank: index + 1 })),
       data.id,
       data.direction,
     );
@@ -774,4 +821,138 @@ export const rankWaitlistEntry = createServerFn({ method: "POST" })
       await sql`update daycare_waitlist set rank_order = ${row.rank}, updated_at = now() where id = ${row.id}`;
     }
     return { ok: true as const };
+  });
+
+async function assertDeskWaitlist(sql: Sql, userId: string, daycareId: string) {
+  if (!daycareId || !(await canCentreWriteLeadsFor(sql, userId, daycareId))) {
+    throw new Error("This listing is not on your desk.");
+  }
+}
+
+async function logWaitlistEvent(sql: Sql, daycareId: string, action: string, entryId: string | null) {
+  await ensureAuditTable(sql);
+  await sql`
+    insert into waitlist_audit (id, daycare_id, entry_id, place, action, detail)
+    values (${nid("wla")}, ${daycareId}, ${entryId}, ${null}, ${action}, ${""})
+  `;
+}
+
+/** Listing page: is this waitlist open, and may this viewer use a hidden QA listing? */
+export const getListingPipelineState = createServerFn({ method: "GET" })
+  .validator((input: { daycareId?: string } | undefined) => ({ daycareId: String(input?.daycareId || "").trim() }))
+  .handler(async ({ data }) => {
+    if (!data.daycareId) return { waitlistOpen: false, fixtureUsable: false };
+    const sql = await getSql();
+    const rows = await sql<{
+      id: string;
+      slug: string;
+      name: string;
+      license_number: string | null;
+      address: string | null;
+      visibility: string | null;
+      is_test: number | null;
+      claim_status: string | null;
+      province: string | null;
+      fact_source: string | null;
+      merged_into: string | null;
+      import_fault: string | null;
+      listing_active: number | null;
+    }>`
+      select id, slug, name, license_number, address, visibility, is_test, claim_status,
+             province, fact_source, merged_into, import_fault, listing_active
+      from daycares where id = ${data.daycareId} limit 1
+    `.catch(() => []);
+    const row = rows[0];
+    const waitlistOpen = waitlistOpenFromEvents(await readWaitlistEvents(sql, data.daycareId));
+    if (!row) return { waitlistOpen, fixtureUsable: false };
+    const visibility = listingVisibilityInputFromDb(row);
+    if (!isHiddenTestListing(visibility)) return { waitlistOpen, fixtureUsable: false };
+    const { callerIsTestAccount } = await import("@/lib/server/public-listing");
+    return { waitlistOpen, fixtureUsable: await callerIsTestAccount() };
+  });
+
+export const setCentreWaitlistOpen = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; open?: boolean }) => ({
+    daycareId: String(input?.daycareId || "").trim(),
+    open: input?.open !== false,
+  }))
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    await assertDeskWaitlist(sql, context.userId, data.daycareId);
+    await logWaitlistEvent(sql, data.daycareId, data.open ? WAITLIST_EVENT.opened : WAITLIST_EVENT.closed, null);
+    return { ok: true as const, open: data.open };
+  });
+
+export const tagWaitlistFamily = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id?: string; tag?: string; on?: boolean }) => ({
+    id: String(input?.id || "").trim(),
+    tag: input?.tag === "staff_child" ? ("staff_child" as const) : ("sibling" as const),
+    on: input?.on === true,
+  }))
+  .handler(async ({ context, data }) => {
+    if (!data.id) throw new Error("That family is not waiting.");
+    const sql = await getSql();
+    const rows = await sql<{ daycare_id: string }>`
+      select daycare_id from daycare_waitlist where id = ${data.id} limit 1
+    `;
+    const daycareId = rows[0]?.daycare_id || "";
+    await assertDeskWaitlist(sql, context.userId, daycareId);
+    if (data.tag === "sibling") {
+      await sql`update daycare_waitlist set sibling = ${data.on ? 1 : 0}, updated_at = now() where id = ${data.id}`;
+    } else {
+      await logWaitlistEvent(sql, daycareId, data.on ? WAITLIST_EVENT.staffOn : WAITLIST_EVENT.staffOff, data.id);
+    }
+    return { ok: true as const };
+  });
+
+/** Save the whole order at once (drag or up/down on the desk). */
+export const saveWaitlistOrder = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; ids?: unknown }) => ({
+    daycareId: String(input?.daycareId || "").trim(),
+    ids: Array.isArray(input?.ids) ? input.ids.slice(0, 500).map((id) => String(id || "")) : [],
+  }))
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    await assertDeskWaitlist(sql, context.userId, data.daycareId);
+    const line = await sql<{ id: string }>`
+      select id from daycare_waitlist
+      where daycare_id = ${data.daycareId} and status in ('waiting', 'offered')
+    `;
+    const order = orderFromIds(data.ids, new Set(line.map((row) => row.id)));
+    for (const row of order) {
+      await sql`update daycare_waitlist set rank_order = ${row.rank}, updated_at = now() where id = ${row.id}`;
+    }
+    return { ok: true as const, saved: order.length };
+  });
+
+/** Open spot for one age: offer it to the top waiting family for 48 hours. */
+export const offerSpotToNextFamily = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; ageGroup?: string; fee?: unknown }) => input)
+  .handler(async ({ context, data }) => {
+    const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
+    assertRuntimeSwitch("FEATURE_WAITLIST_SPOTS");
+    const blocked = rejectWaitlistFee(data);
+    if (blocked) throw new Error(blocked);
+    const daycareId = String(data.daycareId || "").trim();
+    const age = parseSpotAge(data.ageGroup);
+    if (!age) throw new Error("Choose an age group.");
+    const sql = await getSql();
+    await assertDeskWaitlist(sql, context.userId, daycareId);
+    const before = await loadState(sql, daycareId);
+    const step = offerNextForAge(before, daycareId, age, Date.now(), () => nid("so"));
+    await persistStep(sql, before, step.state, step.createdOffers);
+    const sent = await notifyCreated(sql, step.createdOffers);
+    if (!step.ok) throw new Error(step.error || "No family is waiting for this age group.");
+    const offer = step.createdOffers[step.createdOffers.length - 1];
+    return {
+      ok: true as const,
+      waitlistId: offer?.waitlistId ?? null,
+      expiresAt: offer?.expiresAt ?? null,
+      emailed: sent,
+      emailEnabled: spotOfferMailEnabled(),
+    };
   });

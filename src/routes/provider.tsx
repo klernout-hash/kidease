@@ -115,6 +115,10 @@ const SafeArrivalPanel = lazy(() =>
 const ChildHealthLog = lazy(() =>
   import("@/components/child-health-log").then((m) => ({ default: m.ChildHealthLog })),
 );
+const CentreEceCerts = lazy(() =>
+  import("@/components/staff-certs").then((m) => ({ default: m.CentreEceCerts })),
+);
+const MyEceCerts = lazy(() => import("@/components/staff-certs").then((m) => ({ default: m.MyEceCerts })));
 const CertExpiryPanel = lazy(() =>
   import("@/components/cert-expiry-panel").then((m) => ({ default: m.CertExpiryPanel })),
 );
@@ -135,6 +139,9 @@ import { syncHostActionNotices } from "@/lib/server/host-action";
 import { HostListingsDesk } from "@/components/host-listing-desk";
 const AgeOpenSpotsDesk = lazy(() =>
   import("@/components/age-open-spots-desk").then((m) => ({ default: m.AgeOpenSpotsDesk })),
+);
+const CentreWithdrawalNotices = lazy(() =>
+  import("@/components/withdrawal-notices").then((m) => ({ default: m.CentreWithdrawalNotices })),
 );
 const SpotOfferDesk = lazy(() =>
   import("@/components/spot-offer-desk").then((m) => ({ default: m.SpotOfferDesk })),
@@ -705,6 +712,9 @@ export function ProviderPage() {
               {locale === "fr" ? "Vos heures" : "Your hours"}
             </Link>
           </p>
+          <Suspense fallback={null}>
+            <MyEceCerts />
+          </Suspense>
         </div>
       ) : null}
       {desk === "today" && hostListing && deskListings.length > 0 && !staffDesk ? (
@@ -758,6 +768,7 @@ export function ProviderPage() {
           <Suspense fallback={<div className="min-h-44" aria-hidden="true" />}>
             {centreOwner ? <SafeArrivalPanel /> : null}
             {centreOwner ? <CertExpiryPanel /> : null}
+            {centreOwner ? <CentreEceCerts /> : null}
             {centreOwner ? <ChildHealthLog /> : null}
             {centreOwner ? <FamilyInviteGap /> : null}
           </Suspense>
@@ -837,6 +848,7 @@ export function ProviderPage() {
         )}
         {/* Family documents come after the enquiries. The block hides itself when there are none. */}
         {canWrite ? <CentreFamilyDocs hideWhenEmpty /> : null}
+        {canWrite ? <CentreWithdrawalNotices hideWhenEmpty /> : null}
         </div>
       ) : null}
 

@@ -126,7 +126,6 @@ import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
 import { Route as ApiAlexaRouteImport } from './routes/api/alexa'
 import { Route as ApiAutomationsRouteImport } from './routes/api/automations'
 import { Route as ApiBackgroundCheckFilesRouteImport } from './routes/api/background-check-files'
-import { Route as ApiStaffResumeRouteImport } from './routes/api/staff-resume'
 import { Route as ApiCentreLeadAlertsRouteImport } from './routes/api/centre-lead-alerts'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
@@ -143,6 +142,7 @@ import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screenin
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiSpotOffersRouteImport } from './routes/api/spot-offers'
+import { Route as ApiStaffResumeRouteImport } from './routes/api/staff-resume'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BackgroundChecksCodeRouteImport } from './routes/background-checks.$code'
@@ -954,11 +954,6 @@ const ApiBackgroundCheckFilesRoute = ApiBackgroundCheckFilesRouteImport.update({
   path: '/api/background-check-files',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiStaffResumeRoute = ApiStaffResumeRouteImport.update({
-  id: '/api/staff-resume',
-  path: '/api/staff-resume',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiCentreLeadAlertsRoute = ApiCentreLeadAlertsRouteImport.update({
   id: '/api/centre-lead-alerts',
   path: '/api/centre-lead-alerts',
@@ -1037,6 +1032,11 @@ const ApiSeedCatalogRoute = ApiSeedCatalogRouteImport.update({
 const ApiSpotOffersRoute = ApiSpotOffersRouteImport.update({
   id: '/api/spot-offers',
   path: '/api/spot-offers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStaffResumeRoute = ApiStaffResumeRouteImport.update({
+  id: '/api/staff-resume',
+  path: '/api/staff-resume',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
@@ -2282,7 +2282,6 @@ export interface FileRoutesByFullPath {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2299,6 +2298,7 @@ export interface FileRoutesByFullPath {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -2640,7 +2640,6 @@ export interface FileRoutesByTo {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2657,6 +2656,7 @@ export interface FileRoutesByTo {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -3001,7 +3001,6 @@ export interface FileRoutesById {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -3018,6 +3017,7 @@ export interface FileRoutesById {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -3363,7 +3363,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3380,6 +3379,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -3721,7 +3721,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3738,6 +3737,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -4081,7 +4081,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -4098,6 +4097,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -4439,7 +4439,6 @@ export interface RootRouteChildren {
   ApiAlexaRoute: typeof ApiAlexaRoute
   ApiAutomationsRoute: typeof ApiAutomationsRoute
   ApiBackgroundCheckFilesRoute: typeof ApiBackgroundCheckFilesRouteWithChildren
-  ApiStaffResumeRoute: typeof ApiStaffResumeRoute
   ApiCentreLeadAlertsRoute: typeof ApiCentreLeadAlertsRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
@@ -4456,6 +4455,7 @@ export interface RootRouteChildren {
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   ApiSpotOffersRoute: typeof ApiSpotOffersRoute
+  ApiStaffResumeRoute: typeof ApiStaffResumeRoute
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BlogSlugRoute: typeof BlogSlugRoute
@@ -5384,13 +5384,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBackgroundCheckFilesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/staff-resume': {
-      id: '/api/staff-resume'
-      path: '/api/staff-resume'
-      fullPath: '/api/staff-resume'
-      preLoaderRoute: typeof ApiStaffResumeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/centre-lead-alerts': {
       id: '/api/centre-lead-alerts'
       path: '/api/centre-lead-alerts'
@@ -5501,6 +5494,13 @@ declare module '@tanstack/react-router' {
       path: '/api/spot-offers'
       fullPath: '/api/spot-offers'
       preLoaderRoute: typeof ApiSpotOffersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/staff-resume': {
+      id: '/api/staff-resume'
+      path: '/api/staff-resume'
+      fullPath: '/api/staff-resume'
+      preLoaderRoute: typeof ApiStaffResumeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/tour-holds': {
@@ -7627,7 +7627,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAlexaRoute: ApiAlexaRoute,
   ApiAutomationsRoute: ApiAutomationsRoute,
   ApiBackgroundCheckFilesRoute: ApiBackgroundCheckFilesRouteWithChildren,
-  ApiStaffResumeRoute: ApiStaffResumeRoute,
   ApiCentreLeadAlertsRoute: ApiCentreLeadAlertsRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,
@@ -7644,6 +7643,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   ApiSpotOffersRoute: ApiSpotOffersRoute,
+  ApiStaffResumeRoute: ApiStaffResumeRoute,
   ApiTourHoldsRoute: ApiTourHoldsRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BlogSlugRoute: BlogSlugRoute,

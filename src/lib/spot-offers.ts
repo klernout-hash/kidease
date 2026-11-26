@@ -33,6 +33,10 @@ export type WaitlistEntry = {
   joinedAt: string;
   sibling?: boolean;
   startDate?: string | null;
+  /** Owner's saved order (1 = first). Missing means sign-up order. */
+  rank?: number | null;
+  /** Owner tag: child of a staff member. Always offered first. */
+  staffChild?: boolean;
 };
 
 export type SpotOffer = {
@@ -134,8 +138,13 @@ function startSortKey(value: string | null | undefined) {
   return raw;
 }
 
+function rankSortKey(value: number | null | undefined): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : 1_000_000;
+}
+
 /**
- * Offer order: sibling first only when the daycare turned that on,
+ * Offer order: a staff-child tag first, then sibling only when the daycare turned that on,
+ * then the owner's saved order,
  * then an age match, then an earlier start date, then sign-up date.
  * A missing start date stays last. It is not invented.
  */
@@ -150,10 +159,14 @@ export function fairOfferOrder(
     return 2;
   };
   return entries.slice().sort((a, b) => {
+    const staff = Number(b.staffChild === true) - Number(a.staffChild === true);
+    if (staff !== 0) return staff;
     if (options.siblingPriority) {
       const sibling = Number(b.sibling === true) - Number(a.sibling === true);
       if (sibling !== 0) return sibling;
     }
+    const rank = rankSortKey(a.rank) - rankSortKey(b.rank);
+    if (rank !== 0) return rank;
     const age = ageRank(a) - ageRank(b);
     if (age !== 0) return age;
     const start = startSortKey(a.startDate).localeCompare(startSortKey(b.startDate));
@@ -372,4 +385,38 @@ export function activeEntryForUser(
         (row.status === "waiting" || row.status === "offered"),
     ) ?? null
   );
+}
+
+/**
+ * "Offer to next family" for one age group: the top waiting family for that age
+ * (staff child, sibling rule, saved order, then sign-up date) gets a 48-hour offer.
+ */
+export function offerNextForAge(
+  state: QueueSnapshot,
+  daycareId: string,
+  age: SpotAge,
+  now: number,
+  nextId: () => string,
+): QueueStep {
+  const expired = expireDue(state, now, nextId);
+  const copy = expired.state;
+  if (openOfferFor(copy.offers, daycareId, now)) {
+    return {
+      ok: false,
+      error: "Another family already has an open offer. Wait for their answer.",
+      state: copy,
+      createdOffers: expired.createdOffers,
+    };
+  }
+  const next = pickNext(copy.entries, daycareId, age, copy.siblingPriority === true);
+  if (!next) {
+    return {
+      ok: false,
+      error: "No family is waiting for this age group.",
+      state: copy,
+      createdOffers: expired.createdOffers,
+    };
+  }
+  const offer = mintOffer(copy, next, now, nextId);
+  return { ok: true, state: copy, createdOffers: [...expired.createdOffers, offer] };
 }

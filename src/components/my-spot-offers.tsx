@@ -10,6 +10,8 @@ import { listMySpotOffers, respondMySpotOffer, type MySpotOfferRow } from "@/lib
 import { useCopy } from "@/lib/use-copy";
 import { RuntimePaused } from "@/components/runtime-paused";
 import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
+import { pipelineCopy } from "@/lib/pipeline-copy";
+import { countdownLabel, offerCountdown } from "@/lib/pipeline-features";
 
 function when(iso: string, locale: string) {
   const date = new Date(iso);
@@ -25,6 +27,13 @@ export function MySpotOffers() {
   const [rows, setRows] = useState<MySpotOfferRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const pc = pipelineCopy(locale);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   function load() {
     return listMySpotOffers()
@@ -95,12 +104,15 @@ export function MySpotOffers() {
                   </Link>
                 </p>
                 <p className="mt-1 text-sm text-muted">
-                  {row.ageGroup} · {row.status}
+                  {pc.ages[row.ageGroup]} · {pc.statuses[row.status]}
                   {row.place ? ` · ${copy.place} ${row.place}` : ""}
                 </p>
                 {row.offerStatus === "open" && row.expiresAt ? (
                   <p className="mt-1 text-sm text-muted">
                     {copy.answerBy} {when(row.expiresAt, locale)}
+                    <span className="ml-1 font-medium text-fg" data-ke="parent-offer-countdown">
+                      · {countdownLabel(offerCountdown(row.expiresAt, now), locale)}
+                    </span>
                   </p>
                 ) : null}
               </li>

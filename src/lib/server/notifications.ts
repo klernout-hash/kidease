@@ -299,6 +299,7 @@ export async function projectUserNotifications(sql: Sql, userId: string): Promis
     projectFromSearchAlerts(sql, userId),
     projectFromPlatformSignups(sql, isAdmin),
     projectFromAlertOutbox(sql, userId),
+    import("./pipeline-notifications").then((m) => m.projectFromPipeline(sql, userId)).catch(() => []),
   ]);
   return batches.flat().filter((row) => isAllowedNotificationHref(row.href));
 }

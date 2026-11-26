@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmAction, confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
+import { pipelineCopy } from "@/lib/pipeline-copy";
+import { tourVisitPast } from "@/lib/pipeline-features";
 import { cancelTourRequest, proposeTourTime, respondTourRequest, advanceTourRequest, tourPipelineFlag } from "@/lib/server/tours";
 import { localePath } from "@/lib/locale-path";
 import { listCentreTourWindows } from "@/lib/server/tour-calendar";
@@ -226,7 +228,11 @@ export function TourCard({
             {tour.status === "accepted" ? (
               <>
                 <Button size="sm" disabled={busy !== null} onClick={() => void advance("completed")}>
-                  {busy === "completed" ? t("loading") : t("markTourCompleted")}
+                  {busy === "completed"
+                    ? t("loading")
+                    : tourVisitPast(tour.preferredTimes, Date.now())
+                      ? pipelineCopy(loc).attended
+                      : t("markTourCompleted")}
                 </Button>
                 <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => setProposeOpen(true)}>
                   {t("todayProposeTime")}
@@ -237,7 +243,7 @@ export function TourCard({
                 <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void advance("lost")}>
                   {busy === "lost" ? t("loading") : t("markTourLost")}
                 </Button>
-                {noShowOn ? (
+                {noShowOn || tourVisitPast(tour.preferredTimes, Date.now()) ? (
                   <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void advance("no_show")}>
                     {busy === "no_show" ? t("loading") : loc === "fr" ? "Absent" : "No-show"}
                   </Button>

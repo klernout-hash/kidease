@@ -21,6 +21,8 @@ import {
   type ParentAgreementChip,
 } from "@/lib/server/parent-agreement";
 import { useCopy } from "@/lib/use-copy";
+import { InAppAgreementDownload, InAppAgreementSigner } from "@/components/in-app-agreement";
+import { pipelineCopy } from "@/lib/pipeline-copy";
 
 function useFrench() {
   const { locale } = useCopy();
@@ -407,8 +409,16 @@ export function AgreementRequestAction({
     setBusy(true);
     setError("");
     try {
-      await sendParentAgreement({ data: { bookingId } });
-      toast.success(fr ? "Entente envoyée dans DocuSign." : "Agreement sent in DocuSign.");
+      const sent = await sendParentAgreement({ data: { bookingId } });
+      toast.success(
+        sent.inApp
+          ? fr
+            ? "Entente envoyée. Le parent la signe dans KidEase."
+            : "Agreement sent. The parent signs it in KidEase."
+          : fr
+            ? "Entente envoyée dans DocuSign."
+            : "Agreement sent in DocuSign.",
+      );
       onSent();
     } catch (err) {
       setError(explain(err, fr));
@@ -427,9 +437,16 @@ export function AgreementRequestAction({
       {action === "wait" && chip ? (
         <p className="text-sm text-muted" role="status">
           {agreementStatusLabel(chip.status, locale)}
+          {chip.inApp && chip.status === "sent" ? ` · ${pipelineCopy(locale).agreementWaitParent}` : ""}
         </p>
       ) : null}
-      {action === "download" && chip ? (
+      {action === "wait" && chip?.inApp && chip.status === "parent_signed" ? (
+        <div className="mt-2">
+          <InAppAgreementSigner agreementId={chip.agreementId} label={pipelineCopy(locale).agreementCountersign} onSigned={onSent} />
+        </div>
+      ) : null}
+      {action === "download" && chip?.inApp ? <InAppAgreementDownload agreementId={chip.agreementId} /> : null}
+      {action === "download" && chip && !chip.inApp ? (
         <a className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline" href={signedPdfPath(chip.contractId)}>
           {fr ? "Télécharger l’entente signée" : "Download the signed agreement"}
         </a>
@@ -447,6 +464,8 @@ export function ChildAgreementFile({ childId }: { childId: string }) {
   const fr = useFrench();
   const [enabled, setEnabled] = useState(false);
   const [rows, setRows] = useState<ParentAgreementChip[]>([]);
+  const [tick, setTick] = useState(0);
+  const reload = () => setTick((n) => n + 1);
 
   useEffect(() => {
     void listChildAgreements({ data: { childId } })
@@ -455,7 +474,7 @@ export function ChildAgreementFile({ childId }: { childId: string }) {
         setRows(result.rows);
       })
       .catch(() => setEnabled(false));
-  }, [childId]);
+  }, [childId, tick]);
 
   if (!enabled) return null;
   const locale = fr ? "fr" : "en";
@@ -477,7 +496,17 @@ export function ChildAgreementFile({ childId }: { childId: string }) {
                 {row.childName} · {agreementStatusLabel(row.status, locale)}
                 {row.startDate ? ` · ${row.startDate}` : ""}
               </p>
-              {row.status === "completed" ? (
+              {row.inApp && row.status === "sent" ? (
+                <div className="mt-2">
+                  <InAppAgreementSigner agreementId={row.agreementId} label={pipelineCopy(locale).agreementReview} onSigned={reload} />
+                </div>
+              ) : null}
+              {row.status === "completed" && row.inApp ? (
+                <div className="mt-2">
+                  <InAppAgreementDownload agreementId={row.agreementId} />
+                </div>
+              ) : null}
+              {row.status === "completed" && !row.inApp ? (
                 <a className="inline-flex min-h-11 items-center text-sm text-primary underline" href={signedPdfPath(row.contractId)}>
                   {fr ? "Télécharger le PDF signé" : "Download the signed PDF"}
                 </a>

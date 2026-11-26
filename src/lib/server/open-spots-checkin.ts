@@ -12,8 +12,10 @@ import {
   isOpenSpotsBand,
   viewsWindowStart,
   type OpenSpotsBand,
+  type SpotAge,
   type SpotCounts,
 } from "@/lib/open-spots-checkin";
+import { spotsFromAgeCounts } from "@/lib/open-spots-by-age";
 import { openSpotsCheckinMailEnabled, openSpotsCheckinSmsEnabled, pushEnabled, subscriptionsEnabled } from "@/lib/features";
 import {
   openSpotsTokenSecret,
@@ -92,6 +94,8 @@ export type OpenSpotsPreview =
       name: string;
       views: number;
       confirmedOpenSpots: number | null;
+      ages: SpotAge[];
+      spots: SpotCounts;
     };
 
 export async function previewOpenSpotsLink(token: string, now = Date.now()): Promise<OpenSpotsPreview> {
@@ -105,7 +109,42 @@ export async function previewOpenSpotsLink(token: string, now = Date.now()): Pro
     name: row.name,
     views,
     confirmedOpenSpots: row.confirmed_open_spots == null ? null : Number(row.confirmed_open_spots),
+    ages: ageGroupsInRange(row.age_min_months, row.age_max_months),
+    spots: spotsOf(row),
   };
+}
+
+/** Exact counts per age group from the same tokenized link. No login. */
+export async function applyOpenSpotsByAge(
+  token: string,
+  counts: Partial<Record<SpotAge, unknown>>,
+  now = Date.now(),
+): Promise<{ ok: false; reason: "invalid" | "bad_count" } | { ok: true; name: string; spots: SpotCounts; total: number }> {
+  const payload = verifyOpenSpotsToken(token, openSpotsTokenSecret(), now);
+  if (!payload) return { ok: false, reason: "invalid" };
+  const row = await loadClaimed(payload.daycareId);
+  if (!row) return { ok: false, reason: "invalid" };
+  const groups = ageGroupsInRange(row.age_min_months, row.age_max_months);
+  const next = spotsFromAgeCounts(groups.length ? groups : ["infant", "toddler", "preschool"], counts);
+  if (!next.ok) return { ok: false, reason: "bad_count" };
+  const views = await viewsThisWeek(row.id, now);
+  const sql = await getSql();
+  await sql`
+    update daycares set
+      spots_infant = ${next.spots.infant},
+      spots_toddler = ${next.spots.toddler},
+      spots_preschool = ${next.spots.preschool},
+      confirmed_open_spots = ${next.band},
+      last_vacancy_updated_at = now(),
+      open_spots_hidden_at = null
+    where id = ${row.id}
+  `;
+  const id = `osc_${randomBytes(8).toString("hex")}`;
+  await sql`
+    insert into open_spots_checkins (id, daycare_id, band, views_week, split_known)
+    values (${id}, ${row.id}, ${next.band}, ${views}, ${true})
+  `.catch(() => undefined);
+  return { ok: true, name: row.name, spots: next.spots, total: next.total };
 }
 
 export async function applyOpenSpotsLink(
@@ -340,3 +379,13 @@ export const saveOpenSpotsCheckin = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }) => applyOpenSpotsLink(data.token, data.band, Date.now(), data));
+
+export const saveOpenSpotsByAge = createServerFn({ method: "POST" })
+  .validator((input: { token?: string; infant?: unknown; toddler?: unknown; preschool?: unknown }) => {
+    const token = String(input?.token || "").trim();
+    if (!token) throw new Error("This link is not valid.");
+    return { token, infant: input?.infant, toddler: input?.toddler, preschool: input?.preschool };
+  })
+  .handler(async ({ data }) =>
+    applyOpenSpotsByAge(data.token, { infant: data.infant, toddler: data.toddler, preschool: data.preschool }),
+  );

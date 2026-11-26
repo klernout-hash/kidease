@@ -688,6 +688,11 @@ export const updateLeadRequest = createServerFn({ method: "POST" })
 
     const next = nextLeadStatus(lead.status, data.action);
     if (!next) throw new Error("This request was already answered");
+    if ((data.action === "confirm" || data.action === "decline") && lead.source_kind === "booking" && lead.source_id) {
+      // A spot request answered from the lead card also accepts or declines the booking.
+      const { applyLeadDecisionToBooking } = await import("@/lib/server/pipeline-sync");
+      await applyLeadDecisionToBooking(lead.source_id, data.action);
+    }
 
     const note = (data.note || "").trim() || null;
     if ((data.action === "confirm" || data.action === "decline") && (lead.kind === "tour" || lead.source_kind === "tour_request")) {
