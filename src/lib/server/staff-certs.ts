@@ -15,7 +15,7 @@ import {
   parseCertLink,
   type CertLink,
 } from "@/lib/staff-certs";
-import { nid } from "@/lib/utils";
+import { randomBytes } from "node:crypto";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
 
@@ -50,7 +50,7 @@ async function writeCertLink(sql: Sql, link: CertLink) {
   await sql`delete from wiring_notices where feature = ${ECE_CERT_LINK_FEATURE} and mode = ${link.certId}`;
   await sql`
     insert into wiring_notices (id, feature, user_id, channel, mode, body)
-    values (${nid("ecl")}, ${ECE_CERT_LINK_FEATURE}, ${link.staffUserId || ""}, ${"cert"}, ${link.certId}, ${JSON.stringify(link)})
+    values (${`ecl_${randomBytes(9).toString("hex")}`}, ${ECE_CERT_LINK_FEATURE}, ${link.staffUserId || ""}, ${"cert"}, ${link.certId}, ${JSON.stringify(link)})
   `;
 }
 
@@ -197,7 +197,7 @@ async function insertCert(
     province: string;
   }>`select province from daycares where id = ${input.daycareId} limit 1`;
   const province = (provinceRows[0]?.province || "").slice(0, 8);
-  const id = nid("ece");
+  const id = `ece_${randomBytes(9).toString("hex")}`;
   const stored = await storeCertFile(id, input.daycareId, input.file);
   await sql`
     insert into ece_certificates (

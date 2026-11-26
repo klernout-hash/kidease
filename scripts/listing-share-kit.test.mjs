@@ -13,7 +13,7 @@ test("share kit posts carry the link in EN and FR", () => {
       ["short", "facebook", "instagram"],
     );
     for (const post of posts) {
-      assert.ok(post.text.includes(url));
+      assert.ok(post.text.split(/\s/).some((word) => word === url));
       assert.ok(post.text.includes("Little Acorns (Winnipeg)"));
     }
   }
