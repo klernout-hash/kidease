@@ -222,7 +222,8 @@ test("typed signature must match the parent's name and the box must be ticked", 
     signatures: [{ role: "parent", name: "<script>", at: "2026-11-25T18:00:00.000Z" }],
   });
   assert.match(html, /Signatures \/ Signatures/);
-  assert.doesNotMatch(html, /<script>/);
+  assert.equal(html.includes("<script>"), false);
+  assert.equal(html.includes("&lt;script&gt;"), true);
 });
 
 test("withdrawal notice can be cancelled until the last day", () => {
