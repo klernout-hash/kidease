@@ -29,11 +29,7 @@
  * No secret values live here.
  */
 
-import {
-  DEFAULT_PLATFORM_FEE_BPS,
-  MAX_PLATFORM_FEE_BPS,
-  platformFeeBps,
-} from "./stripe-methods.ts";
+import { DEFAULT_PLATFORM_FEE_BPS, MAX_PLATFORM_FEE_BPS, platformFeeBps } from "./stripe-methods.ts";
 import { stripeCredentialsForMode, type PaymentStripeMode } from "./stripe-route.ts";
 import { expiryStatus } from "./wallet-ease.ts";
 
@@ -70,7 +66,9 @@ export type ProvinceFeeTax = {
   labelFr: string;
 };
 
-export type ConnectChargeGate = { ok: true } | { ok: false; reason: "off" | "missing" | "live" };
+export type ConnectChargeGate =
+  | { ok: true }
+  | { ok: false; reason: "off" | "missing" | "live" };
 
 function envOn(raw: string | undefined | null): boolean {
   const v = String(raw || "")
@@ -94,10 +92,7 @@ export function connectLiveEnabled(env: ConnectEnv = process.env): boolean {
 
 export type StripeKeyMode = "missing" | "test" | "live" | "other";
 
-export function stripeKeyMode(
-  raw: string | undefined | null,
-  kind: "secret" | "publishable",
-): StripeKeyMode {
+export function stripeKeyMode(raw: string | undefined | null, kind: "secret" | "publishable"): StripeKeyMode {
   const key = clean(raw);
   if (!key) return "missing";
   const test = kind === "secret" ? "sk_test_" : "pk_test_";
@@ -130,9 +125,7 @@ export function connectChargeGate(env: ConnectEnv = process.env): ConnectChargeG
   return { ok: true };
 }
 
-export function connectFeeBps(
-  raw: string | undefined | null = process.env.KIDEASE_PLATFORM_FEE_BPS,
-): number {
+export function connectFeeBps(raw: string | undefined | null = process.env.KIDEASE_PLATFORM_FEE_BPS): number {
   return platformFeeBps(raw);
 }
 
@@ -155,17 +148,13 @@ function feeList(raw: string | undefined): string[] {
  * pays it out of the payout; parents never pay it. Env names are unchanged.
  * On everywhere unless the env is 0, or this centre or province is listed.
  */
-export function parentServiceFeeApplies(
-  input: {
-    province?: string | null;
-    daycareId?: string | null;
-    env?: ConnectEnv;
-  } = {},
-): boolean {
+export function parentServiceFeeApplies(input: {
+  province?: string | null;
+  daycareId?: string | null;
+  env?: ConnectEnv;
+} = {}): boolean {
   const env = input.env ?? process.env;
-  const raw = String(env.KIDEASE_PARENT_SERVICE_FEE ?? "")
-    .trim()
-    .toLowerCase();
+  const raw = String(env.KIDEASE_PARENT_SERVICE_FEE ?? "").trim().toLowerCase();
   if (raw === "0" || raw === "false" || raw === "off") return false;
   const provinces = new Set(
     feeList(env.KIDEASE_PARENT_FEE_EXCLUDE_PROVINCES)
@@ -228,9 +217,7 @@ export function parentChargeQuote(input: {
   const invoiceCents = Math.max(0, Math.round(Number(input.invoiceCents)) || 0);
   const bps = input.bps ?? connectFeeBps(input.env?.KIDEASE_PLATFORM_FEE_BPS);
   const applies = parentServiceFeeApplies(input);
-  const kidEaseFeeCents = applies
-    ? Math.min(applicationFeeCents(invoiceCents, bps), invoiceCents)
-    : 0;
+  const kidEaseFeeCents = applies ? Math.min(applicationFeeCents(invoiceCents, bps), invoiceCents) : 0;
   return {
     invoiceCents,
     feeCents: 0,
@@ -249,23 +236,10 @@ export function parentChargeQuote(input: {
  * The pay page shows the amount Checkout will charge: always the bill.
  * Without a Connect destination there is no application fee to deduct.
  */
-export function quoteShownOnPayPage(
-  quote: ParentChargeQuote,
-  hasDestination: boolean,
-): ParentChargeQuote {
-  const base = {
-    ...quote,
-    feeCents: 0,
-    parentPaysCents: quote.invoiceCents,
-    passedToParent: false,
-  };
+export function quoteShownOnPayPage(quote: ParentChargeQuote, hasDestination: boolean): ParentChargeQuote {
+  const base = { ...quote, feeCents: 0, parentPaysCents: quote.invoiceCents, passedToParent: false };
   if (hasDestination) return base;
-  return {
-    ...base,
-    kidEaseFeeCents: 0,
-    applicationFeeCents: 0,
-    centreReceivesCents: quote.invoiceCents,
-  };
+  return { ...base, kidEaseFeeCents: 0, applicationFeeCents: 0, centreReceivesCents: quote.invoiceCents };
 }
 
 export function destinationChargeFields(input: {
@@ -285,10 +259,8 @@ export function destinationChargeFields(input: {
   const destination = clean(input.destination);
   if (!destination.startsWith("acct_")) throw new Error("Connect account id required");
   const quote = parentChargeQuote(input);
-  if (!Number.isFinite(quote.invoiceCents) || quote.invoiceCents <= 0)
-    throw new Error("Invoice amount required");
-  if (quote.applicationFeeCents > quote.parentPaysCents)
-    throw new Error("Fee is larger than the invoice");
+  if (!Number.isFinite(quote.invoiceCents) || quote.invoiceCents <= 0) throw new Error("Invoice amount required");
+  if (quote.applicationFeeCents > quote.parentPaysCents) throw new Error("Fee is larger than the invoice");
   return {
     amount: quote.parentPaysCents,
     currency: "cad",
@@ -307,62 +279,17 @@ export function destinationChargeFields(input: {
  */
 export const PROVINCE_FEE_TAX: readonly ProvinceFeeTax[] = [
   { code: "AB", perMillion: 50_000, labelEn: "Alberta GST", labelFr: "TPS de l'Alberta" },
-  {
-    code: "BC",
-    perMillion: 120_000,
-    labelEn: "British Columbia GST and PST",
-    labelFr: "TPS et TVP de la Colombie-Britannique",
-  },
-  {
-    code: "MB",
-    perMillion: 120_000,
-    labelEn: "Manitoba GST and RST",
-    labelFr: "TPS et TVD du Manitoba",
-  },
-  {
-    code: "NB",
-    perMillion: 150_000,
-    labelEn: "New Brunswick HST",
-    labelFr: "TVH du Nouveau-Brunswick",
-  },
-  {
-    code: "NL",
-    perMillion: 150_000,
-    labelEn: "Newfoundland and Labrador HST",
-    labelFr: "TVH de Terre-Neuve-et-Labrador",
-  },
-  {
-    code: "NS",
-    perMillion: 140_000,
-    labelEn: "Nova Scotia HST",
-    labelFr: "TVH de la Nouvelle-Écosse",
-  },
-  {
-    code: "NT",
-    perMillion: 50_000,
-    labelEn: "Northwest Territories GST",
-    labelFr: "TPS des Territoires du Nord-Ouest",
-  },
+  { code: "BC", perMillion: 120_000, labelEn: "British Columbia GST and PST", labelFr: "TPS et TVP de la Colombie-Britannique" },
+  { code: "MB", perMillion: 120_000, labelEn: "Manitoba GST and RST", labelFr: "TPS et TVD du Manitoba" },
+  { code: "NB", perMillion: 150_000, labelEn: "New Brunswick HST", labelFr: "TVH du Nouveau-Brunswick" },
+  { code: "NL", perMillion: 150_000, labelEn: "Newfoundland and Labrador HST", labelFr: "TVH de Terre-Neuve-et-Labrador" },
+  { code: "NS", perMillion: 140_000, labelEn: "Nova Scotia HST", labelFr: "TVH de la Nouvelle-Écosse" },
+  { code: "NT", perMillion: 50_000, labelEn: "Northwest Territories GST", labelFr: "TPS des Territoires du Nord-Ouest" },
   { code: "NU", perMillion: 50_000, labelEn: "Nunavut GST", labelFr: "TPS du Nunavut" },
   { code: "ON", perMillion: 130_000, labelEn: "Ontario HST", labelFr: "TVH de l'Ontario" },
-  {
-    code: "PE",
-    perMillion: 150_000,
-    labelEn: "Prince Edward Island HST",
-    labelFr: "TVH de l'Île-du-Prince-Édouard",
-  },
-  {
-    code: "QC",
-    perMillion: 149_750,
-    labelEn: "Quebec GST and QST",
-    labelFr: "TPS et TVQ du Québec",
-  },
-  {
-    code: "SK",
-    perMillion: 110_000,
-    labelEn: "Saskatchewan GST and PST",
-    labelFr: "TPS et TVP de la Saskatchewan",
-  },
+  { code: "PE", perMillion: 150_000, labelEn: "Prince Edward Island HST", labelFr: "TVH de l'Île-du-Prince-Édouard" },
+  { code: "QC", perMillion: 149_750, labelEn: "Quebec GST and QST", labelFr: "TPS et TVQ du Québec" },
+  { code: "SK", perMillion: 110_000, labelEn: "Saskatchewan GST and PST", labelFr: "TPS et TVP de la Saskatchewan" },
   { code: "YT", perMillion: 50_000, labelEn: "Yukon GST", labelFr: "TPS du Yukon" },
 ];
 
@@ -383,7 +310,7 @@ const PROVINCE_NAME_TO_CODE: Record<string, string> = {
   "nouveau brunswick": "NB",
   nl: "NL",
   "newfoundland and labrador": "NL",
-  newfoundland: "NL",
+  "newfoundland": "NL",
   "terre-neuve-et-labrador": "NL",
   "terre neuve et labrador": "NL",
   ns: "NS",
@@ -436,9 +363,7 @@ export function provinceFeeTax(raw: string | null | undefined): ProvinceFeeTax |
 function formatTaxPercent(perMillion: number, locale: "en" | "fr"): string {
   const pct = perMillion / 10_000;
   const rounded = Math.round(pct * 1000) / 1000;
-  const text = Number.isInteger(rounded)
-    ? String(rounded)
-    : rounded.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+  const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
   if (locale === "fr") return `${text.replace(".", ",")} %`;
   return `${text}%`;
 }
@@ -458,18 +383,12 @@ export function taxCentsFromPerMillion(feeCents: number, perMillion: number): nu
   return Math.round((fee * rate) / 1_000_000);
 }
 
-function configuredFeeTax(env: ConnectEnv): {
-  manualId: string | null;
-  hasBps: boolean;
-  taxBps: number;
-} {
+function configuredFeeTax(env: ConnectEnv): { manualId: string | null; hasBps: boolean; taxBps: number } {
   const rateId = clean(env.STRIPE_FEE_TAX_RATE_ID);
   const manualId = rateId.startsWith("txr_") ? rateId : null;
   const bpsRaw = env.KIDEASE_FEE_TAX_BPS;
   const hasBps = bpsRaw != null && String(bpsRaw).trim() !== "" && Number.isFinite(Number(bpsRaw));
-  const taxBps = hasBps
-    ? Math.min(Math.max(Math.round(Number(bpsRaw)), 0), CONNECT_FEE_BPS_MAX)
-    : -1;
+  const taxBps = hasBps ? Math.min(Math.max(Math.round(Number(bpsRaw)), 0), CONNECT_FEE_BPS_MAX) : -1;
   return { manualId, hasBps, taxBps };
 }
 
@@ -500,10 +419,7 @@ export function manualFeeTaxCents(feeCents: number, plan: FeeTaxPlan): number | 
   return Math.round((fee * plan.taxBps) / 10000);
 }
 
-export function stripeTaxCalculationBody(
-  feeCents: number,
-  place?: FeeTaxPlace | null,
-): Record<string, unknown> {
+export function stripeTaxCalculationBody(feeCents: number, place?: FeeTaxPlace | null): Record<string, unknown> {
   const amount = Math.round(Number(feeCents));
   const address: Record<string, string> = { country: "CA" };
   const code = provinceCodeFromPlace(place?.province);
@@ -651,10 +567,7 @@ export function parentInvoiceBody(input: {
   return body;
 }
 
-export function parentInvoiceLine(
-  invoiceCents: number,
-  description: string,
-): Record<string, unknown> {
+export function parentInvoiceLine(invoiceCents: number, description: string): Record<string, unknown> {
   const amount = Math.round(Number(invoiceCents));
   return { amount, currency: "cad", description: description.slice(0, 250) || "Daycare bill" };
 }
@@ -663,10 +576,7 @@ export function parentInvoiceLine(
  * A parent-paid fee line. Parents no longer pay a KidEase fee, so callers
  * pass quote.feeCents (0) and get null. Kept for old drafts. Tax is not this line.
  */
-export function parentServiceFeeLine(
-  feeCents: number,
-  label: string,
-): Record<string, unknown> | null {
+export function parentServiceFeeLine(feeCents: number, label: string): Record<string, unknown> | null {
   const amount = Math.round(Number(feeCents));
   if (!Number.isFinite(amount) || amount <= 0) return null;
   return { amount, currency: "cad", description: label.slice(0, 250) };
@@ -749,10 +659,7 @@ export type ConnectPublicState = {
   googlePayMerchantId: string | null;
 };
 
-export function publicConnectState(
-  env: ConnectEnv = process.env,
-  mode?: PaymentStripeMode,
-): ConnectPublicState {
+export function publicConnectState(env: ConnectEnv = process.env, mode?: PaymentStripeMode): ConnectPublicState {
   const enabled = connectPaymentsEnabled(env);
   const merchants = {
     appleMerchantId: enabled ? clean(env.APPLE_MERCHANT_ID) || null : null,
@@ -825,13 +732,7 @@ export function shapeWalletMethod(
   if (!raw?.id) return null;
   const wallet = raw.card?.wallet?.type;
   const kind: WalletMethodKind =
-    wallet === "apple_pay"
-      ? "apple_pay"
-      : wallet === "google_pay"
-        ? "google_pay"
-        : raw.type === "acss_debit"
-          ? "acss_debit"
-          : "card";
+    wallet === "apple_pay" ? "apple_pay" : wallet === "google_pay" ? "google_pay" : raw.type === "acss_debit" ? "acss_debit" : "card";
   const last4 = clean(kind === "acss_debit" ? raw.acss_debit?.last4 : raw.card?.last4);
   if (!/^\d{4}$/.test(last4)) return null;
   const brand =
@@ -843,14 +744,8 @@ export function shapeWalletMethod(
           ? clean(raw.acss_debit?.bank_name) || "Bank"
           : clean(raw.card?.brand) || "Card";
   const nickname = clean(raw.metadata?.nickname) || null;
-  const expMonth =
-    kind === "card" || kind === "apple_pay" || kind === "google_pay"
-      ? Number(raw.card?.exp_month) || null
-      : null;
-  const expYear =
-    kind === "card" || kind === "apple_pay" || kind === "google_pay"
-      ? Number(raw.card?.exp_year) || null
-      : null;
+  const expMonth = kind === "card" || kind === "apple_pay" || kind === "google_pay" ? Number(raw.card?.exp_month) || null : null;
+  const expYear = kind === "card" || kind === "apple_pay" || kind === "google_pay" ? Number(raw.card?.exp_year) || null : null;
   return {
     id: raw.id,
     brand,
@@ -876,13 +771,7 @@ export type ConnectEventAction =
       detailsSubmitted: boolean;
     }
   | { kind: "payout"; payoutId: string }
-  | {
-      kind: "fee_tax";
-      invoiceId: string;
-      status: string;
-      daycareId: string | null;
-      period: string | null;
-    }
+  | { kind: "fee_tax"; invoiceId: string; status: string; daycareId: string | null; period: string | null }
   | { kind: "bill"; billId: string | null };
 
 function metaOf(object: Record<string, unknown> | null): Record<string, string> {
@@ -895,10 +784,7 @@ function metaOf(object: Record<string, unknown> | null): Record<string, string> 
   return out;
 }
 
-export function classifyConnectEvent(
-  type: string,
-  object: Record<string, unknown> | null,
-): ConnectEventAction {
+export function classifyConnectEvent(type: string, object: Record<string, unknown> | null): ConnectEventAction {
   const meta = metaOf(object);
   if (type === "account.updated") {
     const accountId = clean(typeof object?.id === "string" ? object.id : "");
@@ -927,20 +813,14 @@ export function classifyConnectEvent(
       period: meta.period || null,
     };
   }
-  if (
-    (type === "invoice.paid" || type === "payment_intent.succeeded") &&
-    (meta.kidease === "bill" || meta.bill_id)
-  ) {
+  if ((type === "invoice.paid" || type === "payment_intent.succeeded") && (meta.kidease === "bill" || meta.bill_id)) {
     return { kind: "bill", billId: meta.bill_id || null };
   }
   return { kind: "ignore" };
 }
 
 export function webhookSecrets(env: ConnectEnv = process.env): string[] {
-  const values = [
-    clean(env.STRIPE_WEBHOOK_SECRET),
-    clean(env.STRIPE_CONNECT_WEBHOOK_SECRET),
-  ].filter(Boolean);
+  const values = [clean(env.STRIPE_WEBHOOK_SECRET), clean(env.STRIPE_CONNECT_WEBHOOK_SECRET)].filter(Boolean);
   return [...new Set(values)];
 }
 
@@ -961,10 +841,7 @@ export function peekStripeLivemode(rawBody: string): boolean | null {
   return null;
 }
 
-export function selectStripeWebhookSecrets(
-  rawBody: string,
-  env: ConnectEnv = process.env,
-): string[] {
+export function selectStripeWebhookSecrets(rawBody: string, env: ConnectEnv = process.env): string[] {
   const live = webhookSecrets(env);
   if (peekStripeLivemode(rawBody) !== false) return live;
   const test = clean(env.STRIPE_WEBHOOK_SECRET_TEST);

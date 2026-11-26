@@ -124,8 +124,7 @@ export async function buildVisualControlsFixture(root, out, phase) {
     "map host class",
   );
   const sourceFiles = [
-    "src/lib/utils.ts",
-    "src/lib/cad-format.ts",
+    "src/lib/utils.ts", "src/lib/cad-format.ts",
     "src/lib/html-text.ts",
     "src/lib/languages.ts",
     "src/lib/units.ts",

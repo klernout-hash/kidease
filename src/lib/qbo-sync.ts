@@ -58,11 +58,7 @@ export function qboKeyBytes(raw: string): boolean {
   }
 }
 
-export function qboAuthorizeUrl(input: {
-  clientId: string;
-  redirectUri: string;
-  state: string;
-}): string {
+export function qboAuthorizeUrl(input: { clientId: string; redirectUri: string; state: string }): string {
   const url = new URL(QBO_AUTHORIZE_URL);
   url.searchParams.set("client_id", input.clientId);
   url.searchParams.set("redirect_uri", input.redirectUri);
@@ -72,12 +68,7 @@ export function qboAuthorizeUrl(input: {
   return url.toString();
 }
 
-export function qboTokenRequest(input: {
-  clientId: string;
-  clientSecret: string;
-  code: string;
-  redirectUri: string;
-}) {
+export function qboTokenRequest(input: { clientId: string; clientSecret: string; code: string; redirectUri: string }) {
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code: input.code,
@@ -138,10 +129,7 @@ export function qboJournal(input: {
       debitCents: invoice - fee,
       creditCents: 0,
       tax: "exempt",
-      memo:
-        fee > 0
-          ? "Stripe deposit of the centre bill, after the KidEase fee."
-          : "Stripe deposit of the full centre bill.",
+      memo: fee > 0 ? "Stripe deposit of the centre bill, after the KidEase fee." : "Stripe deposit of the full centre bill.",
     },
   ];
   if (fee > 0) {
@@ -177,11 +165,7 @@ export function qboJournalBody(input: {
   txnDate: string;
   docNumber: string;
 }): { ok: true; body: Record<string, unknown> } | { ok: false; missing: QboAccount[] } {
-  const needed = [
-    ...new Set(
-      input.lines.filter((line) => line.debitCents || line.creditCents).map((line) => line.account),
-    ),
-  ];
+  const needed = [...new Set(input.lines.filter((line) => line.debitCents || line.creditCents).map((line) => line.account))];
   const missing = needed.filter((account) => !String(input.accounts[account] || "").trim());
   if (missing.length) return { ok: false, missing };
   return {
@@ -189,8 +173,7 @@ export function qboJournalBody(input: {
     body: {
       TxnDate: input.txnDate,
       DocNumber: input.docNumber.slice(0, 21),
-      PrivateNote:
-        "KidEase export. Confirm GST/HST with your accountant. KidEase does not file this return.",
+      PrivateNote: "KidEase export. Confirm GST/HST with your accountant. KidEase does not file this return.",
       Line: input.lines
         .filter((line) => line.debitCents || line.creditCents)
         .map((line) => ({

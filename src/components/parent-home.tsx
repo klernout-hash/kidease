@@ -21,11 +21,7 @@ import {
 import { billDollars, billIsOpen, type Bill } from "@/lib/bill";
 import { PaymentStateBadge, PaymentStateNote } from "@/components/bill-status";
 import { failureReasonText } from "@/lib/payment-state";
-import {
-  parentRequestRows,
-  parentRequestStatusLabelKey,
-  selectParentTours,
-} from "@/lib/parent-request-rows";
+import { parentRequestRows, parentRequestStatusLabelKey, selectParentTours } from "@/lib/parent-request-rows";
 import { money } from "@/lib/utils";
 import type { Booking, DaycareCard, TourRequest } from "@/lib/types";
 
@@ -190,9 +186,7 @@ export function ParentHome({
                         search={{}}
                         className="inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium text-primary"
                       >
-                        {bill.paymentState === "requires_action"
-                          ? t("billConfirmPayment")
-                          : t("billPayAgain")}
+                        {bill.paymentState === "requires_action" ? t("billConfirmPayment") : t("billPayAgain")}
                       </Link>
                     </span>
                   ) : bill.paymentState === "processing" ? (
@@ -283,14 +277,8 @@ export function ParentHome({
                 key={`${row.kind}-${row.id}`}
                 className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border"
               >
-                <span className="min-w-0 truncate text-sm">
-                  {row.daycareName || t("parentHomeRequests")}
-                </span>
-                <span
-                  className="shrink-0 text-xs text-muted"
-                  data-ke="home-request-status"
-                  data-state={row.status}
-                >
+                <span className="min-w-0 truncate text-sm">{row.daycareName || t("parentHomeRequests")}</span>
+                <span className="shrink-0 text-xs text-muted" data-ke="home-request-status" data-state={row.status}>
                   {t(parentRequestStatusLabelKey(row))}
                 </span>
               </li>
@@ -336,16 +324,15 @@ export function ParentHome({
       </form>
     ),
     area: <AreaWaitlistForm returnTo={parentPath} />,
-    plan:
-      card && !nativeShell ? (
-        <RoleUpgradeCard
-          role="parent"
-          paid={card === "plan"}
-          planLabel={planLabel}
-          renewsOn={renewsOn}
-          onDismiss={card === "upgrade" ? onDismiss : undefined}
-        />
-      ) : null,
+    plan: card && !nativeShell ? (
+      <RoleUpgradeCard
+        role="parent"
+        paid={card === "plan"}
+        planLabel={planLabel}
+        renewsOn={renewsOn}
+        onDismiss={card === "upgrade" ? onDismiss : undefined}
+      />
+    ) : null,
   };
 
   return (

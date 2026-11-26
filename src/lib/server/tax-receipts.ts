@@ -110,8 +110,7 @@ export type TaxReceiptDesk = {
 };
 
 async function loadInvoices(userId: string, desk: "parent" | "centre"): Promise<TaxReceiptDesk> {
-  if (!taxReceiptsEnabled())
-    return { enabled: false, ok: false, reason: "off", years: [], groups: [] };
+  if (!taxReceiptsEnabled()) return { enabled: false, ok: false, reason: "off", years: [], groups: [] };
   const sql = await getSql();
   let rows: InvoiceRow[];
   try {
@@ -185,46 +184,26 @@ export const listTaxReceipts = createServerFn({ method: "GET" })
 
 export const downloadTaxReceipt = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator(
-    (input: {
-      desk?: string;
-      year?: number;
-      daycareId?: string;
-      childId?: string;
-      parentUserId?: string;
-      kind?: string;
-      locale?: string;
-    }) => ({
-      locale: input?.locale === "fr" ? ("fr" as const) : ("en" as const),
-      desk: input?.desk === "centre" ? ("centre" as const) : ("parent" as const),
-      year: input?.year,
-      daycareId: input?.daycareId,
-      childId: input?.childId,
-      parentUserId: input?.parentUserId,
-      kind:
-        input?.kind === "rl24"
-          ? ("rl24" as const)
-          : input?.kind === "federal"
-            ? ("federal" as const)
-            : "",
-    }),
-  )
+  .validator((input: { desk?: string; year?: number; daycareId?: string; childId?: string; parentUserId?: string; kind?: string; locale?: string }) => ({
+    locale: input?.locale === "fr" ? ("fr" as const) : ("en" as const),
+    desk: input?.desk === "centre" ? ("centre" as const) : ("parent" as const),
+    year: input?.year,
+    daycareId: input?.daycareId,
+    childId: input?.childId,
+    parentUserId: input?.parentUserId,
+    kind: input?.kind === "rl24" ? ("rl24" as const) : input?.kind === "federal" ? ("federal" as const) : "",
+  }))
   .handler(async ({ context, data }) => {
     const year = safeYear(data.year);
     const daycareId = safeId(data.daycareId);
     const childId = safeId(data.childId, true);
-    const kind =
-      data.kind === "rl24" || data.kind === "federal" ? (data.kind as TaxReceiptKind) : null;
+    const kind = data.kind === "rl24" || data.kind === "federal" ? (data.kind as TaxReceiptKind) : null;
     if (year == null || !daycareId || childId == null || !kind) {
       return { ok: false as const, reason: "none" as const };
     }
     const loaded = await loadInvoices(context.userId, data.desk);
     if (!loaded.enabled) return { ok: false as const, reason: "off" as const };
-    if (!loaded.ok)
-      return {
-        ok: false as const,
-        reason: loaded.reason === "too-many" ? ("too-many" as const) : ("unavailable" as const),
-      };
+    if (!loaded.ok) return { ok: false as const, reason: loaded.reason === "too-many" ? ("too-many" as const) : ("unavailable" as const) };
     const wantedParent = data.desk === "centre" ? safeId(data.parentUserId) : null;
     const match = loaded.groups.find(
       (group) =>

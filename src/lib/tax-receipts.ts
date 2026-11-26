@@ -175,12 +175,7 @@ export function addressLine(parts: {
     .slice(0, 180);
 }
 
-export function receiptReference(
-  year: number,
-  daycareId: string,
-  childId: string,
-  parentUserId: string,
-): string {
+export function receiptReference(year: number, daycareId: string, childId: string, parentUserId: string): string {
   const raw = `${year}|${daycareId}|${childId}|${parentUserId}`;
   let hash = 0;
   for (let i = 0; i < raw.length; i += 1) hash = (Math.imul(hash, 33) + raw.charCodeAt(i)) >>> 0;
@@ -314,19 +309,14 @@ function wrapLines(lines: readonly string[], width = 88): string[] {
   return out;
 }
 
-export function federalReceiptLines(
-  group: TaxReceiptGroup,
-  locale: TaxReceiptLocale = "en",
-): string[] {
+export function federalReceiptLines(group: TaxReceiptGroup, locale: TaxReceiptLocale = "en"): string[] {
   const ontario = group.province === "ON";
   const fr = locale === "fr";
   const money = cadFromCents(group.amountCents, locale);
   if (fr) {
     const lines = [
       "KidEase",
-      ontario
-        ? "Reçu de frais de garde d’enfants (Ontario et fédéral)"
-        : "Reçu de frais de garde d’enfants (fédéral)",
+      ontario ? "Reçu de frais de garde d’enfants (Ontario et fédéral)" : "Reçu de frais de garde d’enfants (fédéral)",
       `Année d’imposition : ${group.year}`,
       `Reçu pour : ${group.parentName}`,
     ];
@@ -378,10 +368,7 @@ export function federalReceiptLines(
 const NOT_ON_FILE = "(not on file)";
 const NOT_ON_FILE_FR = "(non inscrit au dossier)";
 
-export function rl24ReceiptLines(
-  group: TaxReceiptGroup,
-  locale: TaxReceiptLocale = "en",
-): string[] | null {
+export function rl24ReceiptLines(group: TaxReceiptGroup, locale: TaxReceiptLocale = "en"): string[] | null {
   if (group.province !== "QC") return null;
   const money = cadFromCents(group.amountCents, locale);
   if (locale === "fr") {
@@ -445,31 +432,22 @@ export function rl24ReceiptLines(
   return lines;
 }
 
-export function taxReceiptLines(
-  group: TaxReceiptGroup,
-  kind: TaxReceiptKind,
-  locale: TaxReceiptLocale = "en",
-): string[] | null {
+export function taxReceiptLines(group: TaxReceiptGroup, kind: TaxReceiptKind, locale: TaxReceiptLocale = "en"): string[] | null {
   if (group.amountCents <= 0) return null;
   return kind === "rl24" ? rl24ReceiptLines(group, locale) : federalReceiptLines(group, locale);
 }
 
-export function taxReceiptPdf(
-  group: TaxReceiptGroup,
-  kind: TaxReceiptKind,
-  locale: TaxReceiptLocale = "en",
-): Uint8Array | null {
+export function taxReceiptPdf(group: TaxReceiptGroup, kind: TaxReceiptKind, locale: TaxReceiptLocale = "en"): Uint8Array | null {
   const lines = taxReceiptLines(group, kind, locale);
   if (!lines) return null;
   return renderTextPdf(wrapLines(lines));
 }
 
 export function taxReceiptFileName(kind: TaxReceiptKind, year: number, centre: string): string {
-  const slug =
-    clean(centre, 40)
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "") || "centre";
+  const slug = clean(centre, 40)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "centre";
   const name = kind === "rl24" ? "rl-24" : "child-care";
   return `kidease-${name}-${year}-${slug}.pdf`;
 }

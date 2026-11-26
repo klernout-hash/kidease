@@ -4,11 +4,7 @@ import { formatPlanCad, yearlySavingsLine } from "../src/lib/upgrade-plans.ts";
 import { planPriceHint, providerPlan } from "../src/lib/provider-plans.ts";
 import { plusPriceHint } from "../src/lib/parent-plus.ts";
 import { billingPriceLabel } from "../src/lib/subscription-lifecycle.ts";
-import {
-  STRIPE_CHECKOUT_LOCALES,
-  checkoutCurrency,
-  checkoutLocale,
-} from "../src/lib/stripe-wallets.ts";
+import { STRIPE_CHECKOUT_LOCALES, checkoutCurrency, checkoutLocale } from "../src/lib/stripe-wallets.ts";
 import { cadLookupPrice } from "../src/lib/stripe-price-mode.ts";
 import {
   CHECKOUT_BILLING_COUNTRY,
@@ -42,29 +38,14 @@ test("plan prices use a CA$ prefix in English and fr-CA dollars in French", () =
   assert.equal(plusPriceHint("year", "fr"), "59,00\u00a0$\u00a0CA/an");
   assert.equal(planPriceHint(providerPlan("pro"), "month", "en"), "CA$49/month");
   assert.equal(planPriceHint(providerPlan("pro"), "year", "en"), "CA$490/year");
-  assert.equal(
-    planPriceHint(providerPlan("network"), "month", "fr"),
-    "39,00\u00a0$\u00a0CA/site/mois",
-  );
+  assert.equal(planPriceHint(providerPlan("network"), "month", "fr"), "39,00\u00a0$\u00a0CA/site/mois");
   assert.equal(planPriceHint(providerPlan("network"), "year", "en"), "CA$390/site/year");
   assert.equal(planPriceHint(providerPlan("free"), "month", "en"), "CA$0/month");
   assert.equal(planPriceHint(providerPlan("free"), "month", "fr"), "0,00\u00a0$\u00a0CA/mois");
-  assert.equal(
-    billingPriceLabel({ product: "pro", interval: "year", locale: "en" }),
-    "CA$490/year",
-  );
-  assert.equal(
-    billingPriceLabel({ product: "network", interval: "month", locale: "en" }),
-    "CA$39/site/month",
-  );
-  assert.equal(
-    billingPriceLabel({ product: "plus", interval: "month", locale: "fr" }),
-    "7,99\u00a0$\u00a0CA/mois",
-  );
-  assert.equal(
-    billingPriceLabel({ product: "featured_city", interval: "month", locale: "en" }),
-    "CA$29/month",
-  );
+  assert.equal(billingPriceLabel({ product: "pro", interval: "year", locale: "en" }), "CA$490/year");
+  assert.equal(billingPriceLabel({ product: "network", interval: "month", locale: "en" }), "CA$39/site/month");
+  assert.equal(billingPriceLabel({ product: "plus", interval: "month", locale: "fr" }), "7,99\u00a0$\u00a0CA/mois");
+  assert.equal(billingPriceLabel({ product: "featured_city", interval: "month", locale: "en" }), "CA$29/month");
   assert.equal(yearlySavingsLine(49, 490, "en"), "or CA$490/year · save CA$98");
   assert.doesNotMatch(formatPlanCad(49, "en"), /^\$/);
 });
@@ -91,9 +72,7 @@ test("checkout session params are Canada and CAD", () => {
   assert.equal(checkoutCurrency("CAD"), "cad");
   assert.throws(() => checkoutCurrency("usd"), /Canadian dollars \(CAD\) only/);
 
-  const customer = Object.fromEntries(
-    flattenStripeBody(canadaCustomerParams({ email: "parent@example.com" })),
-  );
+  const customer = Object.fromEntries(flattenStripeBody(canadaCustomerParams({ email: "parent@example.com" })));
   assert.equal(customer["address[country]"], "CA");
   assert.equal(customer.email, "parent@example.com");
 
@@ -144,14 +123,8 @@ test("checkout session params are Canada and CAD", () => {
 test("lookup reuse rejects a non-CAD price", () => {
   assert.equal(cadLookupPrice({ id: "price_cad", currency: "CAD" }), "price_cad");
   assert.equal(cadLookupPrice(null), null);
-  assert.throws(
-    () => cadLookupPrice({ id: "price_usd", currency: "usd" }),
-    /Canadian dollars \(CAD\) only/,
-  );
-  assert.throws(
-    () => cadLookupPrice({ id: "price_blank", currency: "" }),
-    /Canadian dollars \(CAD\) only/,
-  );
+  assert.throws(() => cadLookupPrice({ id: "price_usd", currency: "usd" }), /Canadian dollars \(CAD\) only/);
+  assert.throws(() => cadLookupPrice({ id: "price_blank", currency: "" }), /Canadian dollars \(CAD\) only/);
 });
 
 test("an existing Stripe address is left unchanged", async () => {
@@ -173,13 +146,7 @@ test("an existing Stripe address is left unchanged", async () => {
     if (method === "GET" && url.includes("/customers/cus_full")) {
       return json({
         id: "cus_full",
-        address: {
-          country: "US",
-          line1: "1 King St",
-          city: "Toronto",
-          state: "ON",
-          postal_code: "M5V 1A1",
-        },
+        address: { country: "US", line1: "1 King St", city: "Toronto", state: "ON", postal_code: "M5V 1A1" },
       });
     }
     if (method === "GET" && url.includes("/customers/cus_street")) {
@@ -205,16 +172,12 @@ test("an existing Stripe address is left unchanged", async () => {
     };
     await createCatalogCheckoutSession({ ...sessionInput, customerId: "cus_full" });
     await createCatalogCheckoutSession({ ...sessionInput, customerId: "cus_street" });
-    const kept = calls.filter(
-      (call) => call.method === "POST" && call.url.includes("/customers/cus_"),
-    );
+    const kept = calls.filter((call) => call.method === "POST" && call.url.includes("/customers/cus_"));
     assert.deepEqual(kept, []);
 
     const before = calls.length;
     await createCatalogCheckoutSession({ ...sessionInput, customerId: "cus_empty" });
-    const countryOnly = calls
-      .slice(before)
-      .find((call) => call.method === "POST" && call.url.includes("/customers/cus_empty"));
+    const countryOnly = calls.slice(before).find((call) => call.method === "POST" && call.url.includes("/customers/cus_empty"));
     assert.ok(countryOnly);
     const posted = new URLSearchParams(countryOnly.body);
     assert.equal(posted.get("address[country]"), "CA");
@@ -242,13 +205,7 @@ test("creating a checkout session sets Canada on the customer and cad on the ses
     if (method === "GET" && url.includes("/customers/cus_us")) {
       return json({
         id: "cus_us",
-        address: {
-          country: "US",
-          state: "ON",
-          city: "Toronto",
-          postal_code: "M5V 1A1",
-          line1: "1 King St",
-        },
+        address: { country: "US", state: "ON", city: "Toronto", postal_code: "M5V 1A1", line1: "1 King St" },
       });
     }
     if (method === "GET" && url.includes("/customers/cus_ca")) {
@@ -292,10 +249,7 @@ test("creating a checkout session sets Canada on the customer and cad on the ses
       metadata: { kidease: "addon" },
     });
     const extra = calls.slice(before);
-    assert.equal(
-      extra.some((call) => call.method === "POST" && call.url.includes("/customers/cus_ca")),
-      false,
-    );
+    assert.equal(extra.some((call) => call.method === "POST" && call.url.includes("/customers/cus_ca")), false);
     const addon = extra.find((call) => call.url.endsWith("/checkout/sessions"));
     assert.equal(new URLSearchParams(addon.body).get("currency"), "cad");
     assert.equal(new URLSearchParams(addon.body).get("locale"), "en");
@@ -313,20 +267,19 @@ test("creating a checkout session sets Canada on the customer and cad on the ses
       customerEmail: "parent@example.com",
       locale: "en",
     });
-    const created = calls
-      .slice(billBefore)
-      .find((call) => call.method === "POST" && call.url.endsWith("/customers"));
+    const created = calls.slice(billBefore).find((call) => call.method === "POST" && call.url.endsWith("/customers"));
     assert.ok(created);
     assert.equal(new URLSearchParams(created.body).get("address[country]"), "CA");
     assert.equal(new URLSearchParams(created.body).get("email"), "parent@example.com");
-    const billSession = calls
-      .slice(billBefore)
-      .find((call) => call.url.endsWith("/checkout/sessions"));
+    const billSession = calls.slice(billBefore).find((call) => call.url.endsWith("/checkout/sessions"));
     const billPosted = new URLSearchParams(billSession.body);
     assert.equal(billPosted.get("currency"), "cad");
     assert.equal(billPosted.get("customer"), "cus_new");
     assert.equal(billPosted.get("customer_update[address]"), "auto");
-    assert.equal(billPosted.get("payment_intent_data[transfer_data][destination]"), null);
+    assert.equal(
+      billPosted.get("payment_intent_data[transfer_data][destination]"),
+      null,
+    );
   } finally {
     setStripeFetchForTests(null);
     if (previous == null) delete process.env.STRIPE_SECRET_KEY;
@@ -375,21 +328,14 @@ test("a new Stripe customer is saved before Checkout, and a failed session still
   try {
     await assert.rejects(() => createCatalogCheckoutSession(sessionInput), /session failed/);
     const remembered = steps.findIndex((step) => step.step === "remember");
-    const created = steps.findIndex(
-      (step) => step.step === "POST" && step.url?.endsWith("/customers"),
-    );
-    const failedSession = steps.findIndex(
-      (step) => step.step === "POST" && step.url?.endsWith("/checkout/sessions"),
-    );
+    const created = steps.findIndex((step) => step.step === "POST" && step.url?.endsWith("/customers"));
+    const failedSession = steps.findIndex((step) => step.step === "POST" && step.url?.endsWith("/checkout/sessions"));
     assert.ok(created >= 0 && remembered > created && failedSession > remembered);
     assert.equal(steps[remembered].userId, "user_parent");
     assert.equal(steps[remembered].customerId, "cus_saved");
 
     const beforeRetry = steps.length;
-    const session = await createCatalogCheckoutSession({
-      ...sessionInput,
-      customerId: savedCustomerId,
-    });
+    const session = await createCatalogCheckoutSession({ ...sessionInput, customerId: savedCustomerId });
     assert.equal(session.id, "cs_ok");
     const retry = steps.slice(beforeRetry);
     assert.equal(

@@ -72,10 +72,7 @@ export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centr
             ? copy.taxSaved
             : "";
   const help = (
-    <Link
-      to={localePath("/help", locale)}
-      className="inline-flex min-h-11 items-center text-sm font-medium text-primary"
-    >
+    <Link to={localePath("/help", locale)} className="inline-flex min-h-11 items-center text-sm font-medium text-primary">
       {copy.help}
     </Link>
   );
@@ -97,13 +94,7 @@ export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centr
     })
       .then((result) => {
         if (!result.ok) {
-          setProblem(
-            result.reason === "too-many"
-              ? "too-many"
-              : result.reason === "unavailable"
-                ? "unavailable"
-                : "none",
-          );
+          setProblem(result.reason === "too-many" ? "too-many" : result.reason === "unavailable" ? "unavailable" : "none");
           return;
         }
         savePdf(result.filename, result.pdfBase64);
@@ -115,10 +106,7 @@ export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centr
   }
 
   return (
-    <section
-      className="w-full max-w-3xl rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border"
-      data-ke="tax-receipts"
-    >
+    <section className="w-full max-w-3xl rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border" data-ke="tax-receipts">
       <h2 className="font-display text-2xl">{copy.taxTitle}</h2>
       <p className="mt-1 max-w-2xl text-sm text-muted">{copy.taxLead}</p>
       <label className="mt-3 block max-w-xs text-sm">
@@ -142,16 +130,9 @@ export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centr
             const quebec = group.province === "QC";
             const ontario = group.province === "ON";
             const primaryKind = quebec ? "rl24" : "federal";
-            const primaryLabel = quebec
-              ? copy.taxDownloadRl24
-              : ontario
-                ? copy.taxDownloadOntario
-                : copy.taxDownloadFederal;
+            const primaryLabel = quebec ? copy.taxDownloadRl24 : ontario ? copy.taxDownloadOntario : copy.taxDownloadFederal;
             return (
-              <li
-                key={`${group.daycareId}:${group.childId}:${group.parentUserId}`}
-                className="rounded-xl bg-bg p-4 ring-1 ring-border"
-              >
+              <li key={`${group.daycareId}:${group.childId}:${group.parentUserId}`} className="rounded-xl bg-bg p-4 ring-1 ring-border">
                 <p className="font-medium">
                   {copy.taxReceiptFor} {group.parentName}
                 </p>
@@ -162,9 +143,7 @@ export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centr
                   {copy.taxChild}: {group.childName || copy.taxChildMissing}
                 </p>
                 <p className="mt-2 text-sm">
-                  {copy.taxAmount}
-                  {locale === "fr" ? " : " : ": "}
-                  {cadFromCents(group.amountCents, locale === "fr" ? "fr" : "en")}
+                  {copy.taxAmount}{locale === "fr" ? " : " : ": "}{cadFromCents(group.amountCents, locale === "fr" ? "fr" : "en")}
                 </p>
                 <p className="text-sm text-muted">
                   {copy.taxPeriod}: {group.periodStart} - {group.periodEnd}
@@ -174,20 +153,11 @@ export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centr
                   {group.daysOfCare != null ? ` · ${copy.taxDays}: ${group.daysOfCare}` : ""}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    disabled={busy !== ""}
-                    onClick={() => download(group, primaryKind)}
-                  >
+                  <Button type="button" disabled={busy !== ""} onClick={() => download(group, primaryKind)}>
                     {primaryLabel}
                   </Button>
                   {quebec ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      disabled={busy !== ""}
-                      onClick={() => download(group, "federal")}
-                    >
+                    <Button type="button" variant="secondary" disabled={busy !== ""} onClick={() => download(group, "federal")}>
                       {copy.taxDownloadFederal}
                     </Button>
                   ) : null}

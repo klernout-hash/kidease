@@ -11,26 +11,13 @@ import { money } from "@/lib/utils";
 import type { Locale } from "@/lib/types";
 import { currentPeriod, periodLabel, platformFeePercentLabel } from "@/lib/stripe-methods";
 import { type Bill, type BillParty, billDollars, earningsSummary, receiveCents } from "@/lib/bill";
-import {
-  createBill,
-  listBillParties,
-  listProviderBills,
-  sendBill,
-  sendBillReminder,
-  voidBill,
-} from "@/lib/server/billing";
+import { createBill, listBillParties, listProviderBills, sendBill, sendBillReminder, voidBill } from "@/lib/server/billing";
 import { StripeInvoiceList } from "@/components/stripe-invoice-list";
 import { PayoutStatusCard } from "@/components/payout-status-card";
 import { loadEarningsDesk } from "@/lib/server/earnings-desk";
 import { Field } from "@/components/provider-listing-forms";
 
-export function ProviderMoneyPanel({
-  showPayouts = true,
-  canEdit = true,
-}: {
-  showPayouts?: boolean;
-  canEdit?: boolean;
-}) {
+export function ProviderMoneyPanel({ showPayouts = true, canEdit = true }: { showPayouts?: boolean; canEdit?: boolean }) {
   const { t, locale } = useCopy();
   const [bills, setBills] = useState<Bill[]>([]);
   const [parties, setParties] = useState<BillParty[]>([]);
@@ -65,9 +52,7 @@ export function ProviderMoneyPanel({
         partyKey: `${first.userId}:${first.daycareId}`,
         childId: first.children[0]?.id ?? "",
         bookingId: first.bookings[0]?.id ?? "",
-        amountCad: first.bookings[0]?.monthlyAmount
-          ? String(first.bookings[0].monthlyAmount)
-          : cur.amountCad,
+        amountCad: first.bookings[0]?.monthlyAmount ? String(first.bookings[0].monthlyAmount) : cur.amountCad,
       }));
     }
   }
@@ -87,26 +72,16 @@ export function ProviderMoneyPanel({
   const party = parties.find((p) => `${p.userId}:${p.daycareId}` === form.partyKey) ?? null;
   const amountCad = Number(form.amountCad) || 0;
 
-  const open = useMemo(
-    () => bills.filter((b) => b.status === "draft" || b.status === "sent"),
-    [bills],
-  );
-  const done = useMemo(
-    () => bills.filter((b) => b.status !== "draft" && b.status !== "sent"),
-    [bills],
-  );
+  const open = useMemo(() => bills.filter((b) => b.status === "draft" || b.status === "sent"), [bills]);
+  const done = useMemo(() => bills.filter((b) => b.status !== "draft" && b.status !== "sent"), [bills]);
   const summary = useMemo(() => earningsSummary(bills), [bills]);
   const fr = locale === "fr";
 
   return (
     <section className="space-y-8" data-tour="provider-money">
       <div>
-        <h2 className="font-display text-2xl" data-tour="provider-money-title">
-          {t("deskNavMoney")}
-        </h2>
-        <p className="mt-1 text-sm text-muted">
-          {canEdit ? t("moneyDeskLead") : t("moneyDeskViewLead")}
-        </p>
+        <h2 className="font-display text-2xl" data-tour="provider-money-title">{t("deskNavMoney")}</h2>
+        <p className="mt-1 text-sm text-muted">{canEdit ? t("moneyDeskLead") : t("moneyDeskViewLead")}</p>
         {canEdit && ready && stripeLive ? (
           <p className="mt-2 text-sm text-muted">{t("newBillLiveHint")}</p>
         ) : canEdit ? (
@@ -116,32 +91,21 @@ export function ProviderMoneyPanel({
           <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3" data-ke="earnings-summary">
             <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
               <dt className="text-sm text-muted">{fr ? "À recevoir" : "Owed to you"}</dt>
-              <dd className="mt-1 text-2xl font-semibold tabular-nums">
-                {money(summary.owedCents / 100, locale)}
-              </dd>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums">{money(summary.owedCents / 100, locale)}</dd>
               <dd className="text-xs text-muted">
-                {fr
-                  ? `${summary.owedCount} facture(s) envoyée(s)`
-                  : `${summary.owedCount} sent ${summary.owedCount === 1 ? "bill" : "bills"}`}
+                {fr ? `${summary.owedCount} facture(s) envoyée(s)` : `${summary.owedCount} sent ${summary.owedCount === 1 ? "bill" : "bills"}`}
               </dd>
             </div>
             <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
               <dt className="text-sm text-muted">{fr ? "Payé ce mois-ci" : "Paid this month"}</dt>
-              <dd className="mt-1 text-2xl font-semibold tabular-nums">
-                {money(summary.paidThisMonthCents / 100, locale)}
-              </dd>
-              <dd className="text-xs text-muted">
-                {fr ? "Après les frais KidEase" : "After the KidEase fee"}
-              </dd>
+              <dd className="mt-1 text-2xl font-semibold tabular-nums">{money(summary.paidThisMonthCents / 100, locale)}</dd>
+              <dd className="text-xs text-muted">{fr ? "Après les frais KidEase" : "After the KidEase fee"}</dd>
             </div>
             <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
               <dt className="text-sm text-muted">{fr ? "Brouillons" : "Drafts"}</dt>
               <dd className="mt-1 text-2xl font-semibold tabular-nums">{summary.draftCount}</dd>
               <dd>
-                <a
-                  href="#new-bill"
-                  className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
-                >
+                <a href="#new-bill" className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline">
                   {fr ? "Nouvelle facture" : "New bill"}
                 </a>
               </dd>
@@ -155,152 +119,134 @@ export function ProviderMoneyPanel({
         ) : null}
       </div>
 
-      {canEdit ? (
-        <form
-          id="new-bill"
-          className="scroll-mt-24 rounded-xl bg-surface p-5 ring-1 ring-border"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!party) {
-              toast.error(t("billNeedApprovedFamily"));
-              return;
-            }
-            setBusy("create");
-            void createBill({
-              data: {
-                daycareId: party.daycareId,
-                parentUserId: party.userId,
-                childId: form.childId || null,
-                bookingId: form.bookingId || null,
-                amountCad,
-                period: form.period,
-                dueAt: form.dueAt || null,
-                memo: form.memo || null,
-              },
+      {canEdit ? <form
+        id="new-bill"
+        className="scroll-mt-24 rounded-xl bg-surface p-5 ring-1 ring-border"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!party) {
+            toast.error(t("billNeedApprovedFamily"));
+            return;
+          }
+          setBusy("create");
+          void createBill({
+            data: {
+              daycareId: party.daycareId,
+              parentUserId: party.userId,
+              childId: form.childId || null,
+              bookingId: form.bookingId || null,
+              amountCad,
+              period: form.period,
+              dueAt: form.dueAt || null,
+              memo: form.memo || null,
+            },
+          })
+            .then(() => {
+              confirmSuccess({ variant: "toast", title: t("billDraftSavedTitle"), body: t("billDraftSavedBody") });
+              setForm((cur) => ({ ...cur, memo: "" }));
+              return load();
             })
-              .then(() => {
-                confirmSuccess({
-                  variant: "toast",
-                  title: t("billDraftSavedTitle"),
-                  body: t("billDraftSavedBody"),
-                });
-                setForm((cur) => ({ ...cur, memo: "" }));
-                return load();
-              })
-              .catch((err) => toast.error(err instanceof Error ? err.message : t("billSaveFailed")))
-              .finally(() => setBusy(null));
-          }}
-        >
-          <h3 className="font-display text-xl">{t("newBill")}</h3>
-          {parties.length === 0 ? (
-            <p className="mt-3 text-sm text-muted">{t("billIncomingFamilies")}</p>
-          ) : (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm">
-                <span className="text-muted">{t("billFamilyLabel")}</span>
-                <select
-                  className="ke-input"
-                  value={form.partyKey}
-                  onChange={(e) => {
-                    const next = parties.find(
-                      (p) => `${p.userId}:${p.daycareId}` === e.target.value,
-                    );
-                    setForm((cur) => ({
-                      ...cur,
-                      partyKey: e.target.value,
-                      childId: next?.children[0]?.id ?? "",
-                      bookingId: next?.bookings[0]?.id ?? "",
-                      amountCad: next?.bookings[0]?.monthlyAmount
-                        ? String(next.bookings[0].monthlyAmount)
-                        : cur.amountCad,
-                    }));
-                  }}
-                >
-                  {parties.map((p) => (
-                    <option key={`${p.userId}:${p.daycareId}`} value={`${p.userId}:${p.daycareId}`}>
-                      {p.name || p.email || "Parent"} · {p.daycareName}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="text-muted">{t("child")}</span>
-                <select
-                  className="ke-input"
-                  value={form.childId}
-                  onChange={(e) => setForm({ ...form, childId: e.target.value })}
-                >
-                  <option value="">—</option>
-                  {party?.children.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <Field
-                label={`${t("amount")} CAD`}
-                value={form.amountCad}
-                onChange={(v) => setForm({ ...form, amountCad: v })}
+            .catch((err) => toast.error(err instanceof Error ? err.message : t("billSaveFailed")))
+            .finally(() => setBusy(null));
+        }}
+      >
+        <h3 className="font-display text-xl">{t("newBill")}</h3>
+        {parties.length === 0 ? (
+          <p className="mt-3 text-sm text-muted">
+            {t("billIncomingFamilies")}
+          </p>
+        ) : (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-1 text-sm">
+              <span className="text-muted">{t("billFamilyLabel")}</span>
+              <select
+                className="ke-input"
+                value={form.partyKey}
+                onChange={(e) => {
+                  const next = parties.find((p) => `${p.userId}:${p.daycareId}` === e.target.value);
+                  setForm((cur) => ({
+                    ...cur,
+                    partyKey: e.target.value,
+                    childId: next?.children[0]?.id ?? "",
+                    bookingId: next?.bookings[0]?.id ?? "",
+                    amountCad: next?.bookings[0]?.monthlyAmount
+                      ? String(next.bookings[0].monthlyAmount)
+                      : cur.amountCad,
+                  }));
+                }}
+              >
+                {parties.map((p) => (
+                  <option key={`${p.userId}:${p.daycareId}`} value={`${p.userId}:${p.daycareId}`}>
+                    {p.name || p.email || "Parent"} · {p.daycareName}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm">
+              <span className="text-muted">{t("child")}</span>
+              <select
+                className="ke-input"
+                value={form.childId}
+                onChange={(e) => setForm({ ...form, childId: e.target.value })}
+              >
+                <option value="">—</option>
+                {party?.children.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Field
+              label={`${t("amount")} CAD`}
+              value={form.amountCad}
+              onChange={(v) => setForm({ ...form, amountCad: v })}
+            />
+            <Field
+              label={t("billPeriod")}
+              value={form.period}
+              onChange={(v) => setForm({ ...form, period: v })}
+            />
+            <label className="grid gap-1 text-sm">
+              <span className="text-muted">{t("billDue")}</span>
+              <input
+                type="date"
+                className="ke-input"
+                value={form.dueAt}
+                onChange={(e) => setForm({ ...form, dueAt: e.target.value })}
               />
-              <Field
-                label={t("billPeriod")}
-                value={form.period}
-                onChange={(v) => setForm({ ...form, period: v })}
-              />
-              <label className="grid gap-1 text-sm">
-                <span className="text-muted">{t("billDue")}</span>
-                <input
-                  type="date"
-                  className="ke-input"
-                  value={form.dueAt}
-                  onChange={(e) => setForm({ ...form, dueAt: e.target.value })}
-                />
-              </label>
-              <Field
-                label={t("billNote")}
-                value={form.memo}
-                onChange={(v) => setForm({ ...form, memo: v })}
-              />
-            </div>
-          )}
-          {amountCad > 0 ? (
-            <p className="mt-3 text-sm text-muted">
-              {stripeLive ? (
-                <>
-                  {t("youReceive")}{" "}
-                  <span className="font-medium text-fg">
-                    {money(
-                      receiveCents(Math.round(amountCad * 100), undefined, feeBps ?? undefined) /
-                        100,
-                      locale,
-                    )}
-                  </span>{" "}
-                  {t("afterKidEaseFee")}
-                  {platformFeePercentLabel(feeBps) ? ` (${platformFeePercentLabel(feeBps)})` : ""}
-                </>
-              ) : (
-                <>
-                  {t("connectFeePreviewOff")}
-                  {platformFeePercentLabel(feeBps) ? ` ${platformFeePercentLabel(feeBps)}` : ""}
-                </>
-              )}
-            </p>
-          ) : null}
-          <div className="mt-4">
-            <Button type="submit" disabled={!ready || !party || amountCad < 1 || busy === "create"}>
-              {t("newBill")}
-            </Button>
-            {ready && !party ? (
-              <p className="mt-2 text-sm text-muted">{t("newBillNeedFamily")}</p>
-            ) : null}
-            {ready && party && amountCad < 1 ? (
-              <p className="mt-2 text-sm text-muted">{t("newBillNeedAmount")}</p>
-            ) : null}
+            </label>
+            <Field label={t("billNote")} value={form.memo} onChange={(v) => setForm({ ...form, memo: v })} />
           </div>
-          {/* Deposit CTA from an offered spot can deep-link here later (/provider?desk=money). */}
-        </form>
-      ) : null}
+        )}
+        {amountCad > 0 ? (
+          <p className="mt-3 text-sm text-muted">
+            {stripeLive ? (
+              <>
+                {t("youReceive")}{" "}
+                <span className="font-medium text-fg">
+                  {money(receiveCents(Math.round(amountCad * 100), undefined, feeBps ?? undefined) / 100, locale)}
+                </span>{" "}
+                {t("afterKidEaseFee")}
+                {platformFeePercentLabel(feeBps) ? ` (${platformFeePercentLabel(feeBps)})` : ""}
+              </>
+            ) : (
+              <>
+                {t("connectFeePreviewOff")}
+                {platformFeePercentLabel(feeBps) ? ` ${platformFeePercentLabel(feeBps)}` : ""}
+              </>
+            )}
+          </p>
+        ) : null}
+        <div className="mt-4">
+          <Button type="submit" disabled={!ready || !party || amountCad < 1 || busy === "create"}>
+            {t("newBill")}
+          </Button>
+          {ready && !party ? <p className="mt-2 text-sm text-muted">{t("newBillNeedFamily")}</p> : null}
+          {ready && party && amountCad < 1 ? <p className="mt-2 text-sm text-muted">{t("newBillNeedAmount")}</p> : null}
+        </div>
+        {/* Deposit CTA from an offered spot can deep-link here later (/provider?desk=money). */}
+      </form> : null}
 
       <BillList
         title={t("openBills")}
@@ -309,76 +255,42 @@ export function ProviderMoneyPanel({
         stripeLive={stripeLive}
         locale={locale}
         busy={busy}
-        onSend={
-          canEdit
-            ? (id) => {
-                setBusy(id);
-                void sendBill({ data: id })
-                  .then(() => {
-                    confirmSuccess({ variant: "toast", title: t("billSentToast") });
-                    return load();
-                  })
-                  .catch((err) => toast.error(err instanceof Error ? err.message : t("sendFailed")))
-                  .finally(() => setBusy(null));
+        onSend={canEdit ? (id) => {
+          setBusy(id);
+          void sendBill({ data: id })
+            .then(() => {
+              confirmSuccess({ variant: "toast", title: t("billSentToast") });
+              return load();
+            })
+            .catch((err) => toast.error(err instanceof Error ? err.message : t("sendFailed")))
+            .finally(() => setBusy(null));
+        } : undefined}
+        onRemind={canEdit && remindersOn ? (id) => {
+          setBusy(id);
+          void sendBillReminder({ data: id })
+            .then((res) => {
+              if (!res.ok) {
+                toast.error(fr ? "Le rappel n’a pas été envoyé." : "The reminder was not sent.");
+                return;
               }
-            : undefined
-        }
-        onRemind={
-          canEdit && remindersOn
-            ? (id) => {
-                setBusy(id);
-                void sendBillReminder({ data: id })
-                  .then((res) => {
-                    if (!res.ok) {
-                      toast.error(
-                        fr ? "Le rappel n’a pas été envoyé." : "The reminder was not sent.",
-                      );
-                      return;
-                    }
-                    if (res.result === "sent")
-                      toast.success(
-                        fr ? "Rappel envoyé au parent." : "Reminder sent to the parent.",
-                      );
-                    else if (res.result === "duplicate")
-                      toast.message(
-                        fr
-                          ? "Un rappel a déjà été envoyé aujourd’hui."
-                          : "A reminder already went out today.",
-                      );
-                    else if (res.result === "dry_run")
-                      toast.message(
-                        fr
-                          ? "Rappel enregistré en mode test. Aucun courriel envoyé."
-                          : "Reminder logged in test mode. No email went out.",
-                      );
-                    else
-                      toast.message(
-                        fr
-                          ? "Rappel retenu (règles d’envoi)."
-                          : "Reminder held by the sending rules.",
-                      );
-                  })
-                  .catch((err) => toast.error(err instanceof Error ? err.message : t("sendFailed")))
-                  .finally(() => setBusy(null));
-              }
-            : undefined
-        }
-        onVoid={
-          canEdit
-            ? (id) => {
-                setBusy(id);
-                void voidBill({ data: id })
-                  .then(() => {
-                    toast.success(t("billVoided"));
-                    return load();
-                  })
-                  .catch((err) =>
-                    toast.error(err instanceof Error ? err.message : t("billVoidFailed")),
-                  )
-                  .finally(() => setBusy(null));
-              }
-            : undefined
-        }
+              if (res.result === "sent") toast.success(fr ? "Rappel envoyé au parent." : "Reminder sent to the parent.");
+              else if (res.result === "duplicate") toast.message(fr ? "Un rappel a déjà été envoyé aujourd’hui." : "A reminder already went out today.");
+              else if (res.result === "dry_run") toast.message(fr ? "Rappel enregistré en mode test. Aucun courriel envoyé." : "Reminder logged in test mode. No email went out.");
+              else toast.message(fr ? "Rappel retenu (règles d’envoi)." : "Reminder held by the sending rules.");
+            })
+            .catch((err) => toast.error(err instanceof Error ? err.message : t("sendFailed")))
+            .finally(() => setBusy(null));
+        } : undefined}
+        onVoid={canEdit ? (id) => {
+          setBusy(id);
+          void voidBill({ data: id })
+            .then(() => {
+              toast.success(t("billVoided"));
+              return load();
+            })
+            .catch((err) => toast.error(err instanceof Error ? err.message : t("billVoidFailed")))
+            .finally(() => setBusy(null));
+        } : undefined}
       />
 
       <BillList
@@ -423,11 +335,7 @@ function BillList({
       <div>
         <h3 className="font-display text-xl">{title}</h3>
         <div className="mt-3">
-          <EmptyState
-            title={t("noPayments")}
-            body={empty}
-            extra={<FirstRunExample id="provider-money" />}
-          />
+          <EmptyState title={t("noPayments")} body={empty} extra={<FirstRunExample id="provider-money" />} />
         </div>
       </div>
     );
@@ -455,9 +363,7 @@ function BillList({
                 {b.status !== "void" && b.platformFeeCents > 0 ? (
                   <p className="mt-1 text-sm text-muted" data-ke="bill-centre-fee">
                     {t("earningsServiceFee")}: {money(b.platformFeeCents / 100, locale)} ·{" "}
-                    {t("youReceive")}{" "}
-                    {money(receiveCents(b.amountCents, b.platformFeeCents) / 100, locale)}{" "}
-                    {t("afterKidEaseFee")}
+                    {t("youReceive")} {money(receiveCents(b.amountCents, b.platformFeeCents) / 100, locale)} {t("afterKidEaseFee")}
                   </p>
                 ) : null}
               </div>
@@ -471,23 +377,12 @@ function BillList({
                   </Button>
                 ) : null}
                 {b.status === "sent" && !b.paidAt && onRemind ? (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={busy !== null}
-                    onClick={() => onRemind(b.id)}
-                    data-ke="bill-send-reminder"
-                  >
+                  <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => onRemind(b.id)} data-ke="bill-send-reminder">
                     {fr ? "Envoyer un rappel" : "Send reminder"}
                   </Button>
                 ) : null}
                 {onVoid ? (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={busy !== null}
-                    onClick={() => onVoid(b.id)}
-                  >
+                  <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => onVoid(b.id)}>
                     {t("voidBill")}
                   </Button>
                 ) : null}

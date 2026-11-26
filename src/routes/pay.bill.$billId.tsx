@@ -7,12 +7,7 @@ import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { LedgerHonesty } from "@/components/listing-status-badge";
-import {
-  BillStatusBadge,
-  PaymentStateBadge,
-  PaymentStateNote,
-  RefundNote,
-} from "@/components/bill-status";
+import { BillStatusBadge, PaymentStateBadge, PaymentStateNote, RefundNote } from "@/components/bill-status";
 import { createBillCheckout, getBill } from "@/lib/server/billing";
 import { getBillNextAction } from "@/lib/server/connect-payments";
 import { loadStripeClient } from "@/lib/stripe-browser";
@@ -132,9 +127,7 @@ function PayBillPage() {
   // Processing: a bank debit (PAD) is on its way, so paying again could charge twice.
   // Requires action: the parent confirms the existing payment instead.
   const waitingOnStripe = paymentState === "processing" || paymentState === "requires_action";
-  const canPay = Boolean(
-    stripeLive && bill?.status === "sent" && !confirming && !alreadyPaid && !waitingOnStripe,
-  );
+  const canPay = Boolean(stripeLive && bill?.status === "sent" && !confirming && !alreadyPaid && !waitingOnStripe);
 
   async function confirmWithBank() {
     if (!bill || paymentState !== "requires_action") return;
@@ -153,12 +146,7 @@ function PayBillPage() {
       }
       const result = await stripe.handleNextAction({ clientSecret: res.clientSecret });
       if (result.error) {
-        toast.error(
-          publicPayMessage(
-            result.error.message ? new Error(result.error.message) : null,
-            t("actionFailed"),
-          ),
-        );
+        toast.error(publicPayMessage(result.error.message ? new Error(result.error.message) : null, t("actionFailed")));
         return;
       }
       toast.success(t("billConfirmDone"));
@@ -214,19 +202,11 @@ function PayBillPage() {
   return (
     <Shell>
       <main className="mx-auto max-w-lg px-4 py-8">
-        <Link
-          to="/parent"
-          search={{ tab: "payments" }}
-          className="text-sm text-muted hover:text-fg"
-        >
+        <Link to="/parent" search={{ tab: "payments" }} className="text-sm text-muted hover:text-fg">
           ← {t("payments")}
         </Link>
-        <h1 className="mt-3 font-display text-3xl">
-          {alreadyPaid ? t("receiptTitle") : t("payBillTitle")}
-        </h1>
-        <p className="mt-2 text-sm text-muted">
-          {alreadyPaid ? t("receiptLead") : t("payBillLead")}
-        </p>
+        <h1 className="mt-3 font-display text-3xl">{alreadyPaid ? t("receiptTitle") : t("payBillTitle")}</h1>
+        <p className="mt-2 text-sm text-muted">{alreadyPaid ? t("receiptLead") : t("payBillLead")}</p>
         <LedgerHonesty stripeLive={stripeLive} surface="bill" className="mt-3" />
 
         {missing ? (
@@ -276,20 +256,13 @@ function PayBillPage() {
         ) : null}
 
         {paymentState ? (
-          <div
-            className="mt-6 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border"
-            data-ke="bill-payment-state"
-          >
+          <div className="mt-6 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="bill-payment-state">
             <PaymentStateNote
               state={paymentState}
               reason={failureReasonText(bill?.lastErrorCode, locale === "fr" ? "fr" : "en")}
             />
             {paymentState === "requires_action" ? (
-              <Button
-                className="w-full"
-                disabled={busy || confirming}
-                onClick={() => void confirmWithBank()}
-              >
+              <Button className="w-full" disabled={busy || confirming} onClick={() => void confirmWithBank()}>
                 <Lock className="size-4" />
                 {t("billConfirmPayment")}
               </Button>
@@ -318,9 +291,7 @@ function PayBillPage() {
         ) : null}
 
         {search.paid && bill?.status === "sent" ? (
-          <p className="mt-4 text-sm text-muted">
-            We’re confirming your payment. This page updates when the bill is Paid.
-          </p>
+          <p className="mt-4 text-sm text-muted">We’re confirming your payment. This page updates when the bill is Paid.</p>
         ) : null}
 
         {canPay ? (
@@ -342,8 +313,7 @@ function PayBillPage() {
             </span>
             <p className="mt-3 font-display text-2xl">{t("paid")}</p>
             <p className="mt-1 text-sm text-muted">
-              {t("paidTo")} {bill.daycareName} ·{" "}
-              {money((serviceFee?.parentPaysCents ?? bill.amountCents) / 100, locale)}
+              {t("paidTo")} {bill.daycareName} · {money((serviceFee?.parentPaysCents ?? bill.amountCents) / 100, locale)}
             </p>
             {serviceFee && serviceFee.feeCents > 0 ? (
               <p className="mt-2 text-sm text-muted">

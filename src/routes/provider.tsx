@@ -1,11 +1,4 @@
-import {
-  createFileRoute,
-  Link,
-  Outlet,
-  useNavigate,
-  useRouterState,
-  useSearch,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState, useSearch } from "@tanstack/react-router";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
@@ -48,20 +41,11 @@ import { DaycareLeadInbox } from "@/components/daycare-lead-inbox";
 const CentreFamilyDocs = lazy(() =>
   import("@/components/family-vault").then((m) => ({ default: m.CentreFamilyDocs })),
 );
-import {
-  FamilyEmailPreview,
-  FormSharePreview,
-  TourFollowupPreview,
-} from "@/components/phase0-mail-preview";
+import { FamilyEmailPreview, FormSharePreview, TourFollowupPreview } from "@/components/phase0-mail-preview";
 import { EmptyState } from "@/components/empty-state";
 import { TodayUrgencyHome } from "@/components/today-urgency-home";
 import { TodayMore } from "@/components/today-more";
-import {
-  providerDeskAlias,
-  providerDeskFromQuery,
-  providerDeskPath,
-  type DaycareDesk,
-} from "@/lib/desk-nav";
+import { providerDeskAlias, providerDeskFromQuery, providerDeskPath, type DaycareDesk } from "@/lib/desk-nav";
 import { capturePostHogEvent } from "@/lib/posthog";
 import type { LeadRequest } from "@/lib/lead-requests";
 import { listCentrePipeline } from "@/lib/server/crm-pipeline";
@@ -190,9 +174,7 @@ const StaffTimesheetDesk = lazy(() =>
   import("@/components/staff-timesheet-desk").then((m) => ({ default: m.StaffTimesheetDesk })),
 );
 const PayrollAttendanceReview = lazy(() =>
-  import("@/components/payroll-attendance-review").then((m) => ({
-    default: m.PayrollAttendanceReview,
-  })),
+  import("@/components/payroll-attendance-review").then((m) => ({ default: m.PayrollAttendanceReview })),
 );
 const PayDay = lazy(() =>
   import("@/components/payroll-payday").then((m) => ({ default: m.PayDay })),
@@ -231,41 +213,13 @@ const TopRatedDesk = lazy(() =>
   import("@/components/top-rated-desk").then((m) => ({ default: m.TopRatedDesk })),
 );
 const AgreementRequestAction = lazy(() =>
-  import("@/components/parent-agreement-panel").then((m) => ({
-    default: m.AgreementRequestAction,
-  })),
+  import("@/components/parent-agreement-panel").then((m) => ({ default: m.AgreementRequestAction })),
 );
 const CentreAgreementEditor = lazy(() =>
   import("@/components/parent-agreement-panel").then((m) => ({ default: m.CentreAgreementEditor })),
 );
 
-const DESKS: DaycareDesk[] = [
-  "today",
-  "requests",
-  "money",
-  "listings",
-  "insights",
-  "top-rated",
-  "tours",
-  "calendar",
-  "licence",
-  "documents",
-  "contract",
-  "contracts",
-  "promote",
-  "employees",
-  "screening",
-  "staff",
-  "stories",
-  "sites",
-  "learning",
-  "hours",
-  "tools",
-  "care",
-  "pay",
-  "books",
-  "shift",
-];
+const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "top-rated", "tours", "calendar", "licence", "documents", "contract", "contracts", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools", "care", "pay", "books", "shift"];
 const DEFAULT_DESK: DaycareDesk = "today";
 const COACH_FOCUS = new Set<ListingCoachFocus>([
   "license",
@@ -302,30 +256,30 @@ export function providerHead({ matches }: { matches?: Array<{ pathname: string }
 }
 
 export function providerValidateSearch(s: Record<string, unknown>) {
-  const out: {
-    desk?: DaycareDesk;
-    preview?: "support";
-    claimed?: boolean;
-    focus?: ListingCoachFocus;
-    centre?: string;
-    section?: string;
-    qboCode?: string;
-    qboState?: string;
-    realmId?: string;
-  } = {};
-  const deskRaw = typeof s.desk === "string" ? s.desk : "";
-  const desk = providerDeskAlias(deskRaw);
-  if (DESKS.includes(desk as DaycareDesk)) out.desk = desk as DaycareDesk;
-  if (s.preview === "support") out.preview = "support";
-  if (s.claimed === true || s.claimed === "1" || s.claimed === "true") out.claimed = true;
-  const focus = typeof s.focus === "string" ? s.focus : "";
-  if (COACH_FOCUS.has(focus as ListingCoachFocus)) out.focus = focus as ListingCoachFocus;
-  if (typeof s.centre === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(s.centre)) out.centre = s.centre;
-  if (typeof s.section === "string" && isHostSection(s.section)) out.section = s.section;
-  if (typeof s.code === "string" && s.code.length > 0 && s.code.length <= 512) out.qboCode = s.code;
-  if (typeof s.state === "string" && /^[A-Za-z0-9_-]{8,80}$/.test(s.state)) out.qboState = s.state;
-  if (typeof s.realmId === "string" && /^[0-9]{1,32}$/.test(s.realmId)) out.realmId = s.realmId;
-  if (out.qboCode && out.qboState && out.realmId) out.desk = "money";
+    const out: {
+      desk?: DaycareDesk;
+      preview?: "support";
+      claimed?: boolean;
+      focus?: ListingCoachFocus;
+      centre?: string;
+      section?: string;
+      qboCode?: string;
+      qboState?: string;
+      realmId?: string;
+    } = {};
+    const deskRaw = typeof s.desk === "string" ? s.desk : "";
+    const desk = providerDeskAlias(deskRaw);
+    if (DESKS.includes(desk as DaycareDesk)) out.desk = desk as DaycareDesk;
+    if (s.preview === "support") out.preview = "support";
+    if (s.claimed === true || s.claimed === "1" || s.claimed === "true") out.claimed = true;
+    const focus = typeof s.focus === "string" ? s.focus : "";
+    if (COACH_FOCUS.has(focus as ListingCoachFocus)) out.focus = focus as ListingCoachFocus;
+    if (typeof s.centre === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(s.centre)) out.centre = s.centre;
+    if (typeof s.section === "string" && isHostSection(s.section)) out.section = s.section;
+    if (typeof s.code === "string" && s.code.length > 0 && s.code.length <= 512) out.qboCode = s.code;
+    if (typeof s.state === "string" && /^[A-Za-z0-9_-]{8,80}$/.test(s.state)) out.qboState = s.state;
+    if (typeof s.realmId === "string" && /^[0-9]{1,32}$/.test(s.realmId)) out.realmId = s.realmId;
+    if (out.qboCode && out.qboState && out.realmId) out.desk = "money";
   return out;
 }
 
@@ -362,8 +316,7 @@ export function ProviderPage() {
   const ownerPending = !session && !sessionReady;
   const ownerUnknown = !session;
   const centreRole = session?.centreRole;
-  const canBills =
-    centreOwner || (session?.centreGrants != null && session.centreGrants.bills !== "none");
+  const canBills = centreOwner || (session?.centreGrants != null && session.centreGrants.bills !== "none");
   const canEditBills = centreOwner || session?.centreGrants?.bills === "edit";
   const canInviteStaff = centreOwner || session?.centreCanInvite === true;
   const staffDesk = centreRole === "staff" || centreRole === "read_only";
@@ -459,9 +412,7 @@ export function ProviderPage() {
   const [storefrontError, setStorefrontError] = useState<string | null>(null);
   const [storefrontProgress, setStorefrontProgress] = useState<number | null>(null);
   const [publishing, setPublishing] = useState(false);
-  const [publishMessage, setPublishMessage] = useState<{ tone: "ok" | "err"; text: string } | null>(
-    null,
-  );
+  const [publishMessage, setPublishMessage] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const provinceLocked = useRef(false);
 
@@ -515,9 +466,7 @@ export function ProviderPage() {
 
   useEffect(() => {
     if (!user?.id) return;
-    void orgDeskStatus()
-      .then((row) => setOrgOn(row.enabled))
-      .catch(() => setOrgOn(false));
+    void orgDeskStatus().then((row) => setOrgOn(row.enabled)).catch(() => setOrgOn(false));
   }, [user?.id]);
 
   useEffect(() => {
@@ -634,968 +583,746 @@ export function ProviderPage() {
   // getProvider already returns only centres this account owns or belongs to.
   // Their own demo stays on Today, listings, tours (calendar), and fees.
   // Public search and the sitemap still use isPublicListing.
-  const focusedId = orgOn
-    ? pickCentre(
-        listings.map((row) => row.id),
-        search.centre,
-      )
-    : null;
-  const moneyChoice = moneyCentreChoice(
-    listings.map((row) => row.id),
-    search.centre,
-  );
+  const focusedId = orgOn ? pickCentre(listings.map((row) => row.id), search.centre) : null;
+  const moneyChoice = moneyCentreChoice(listings.map((row) => row.id), search.centre);
   const moneyListing = listings.find((row) => row.id === moneyChoice.id) ?? null;
   const deskListings = focusedId ? listings.filter((row) => row.id === focusedId) : listings;
   const gap = gapCopy(locale === "fr" ? "fr" : "en");
 
   return (
     <TwoFactorGate next={search.desk ? `/provider?desk=${search.desk}` : "/provider"}>
-      <LoginFunnelDeskLand desk="provider" />
-      <HealthSecondFactorBanner />
-      {search.preview === "support" && operatorTools ? <SupportPreviewBanner /> : null}
-      <DeskShell
-        desk="daycare"
-        pageClassName="ke-provider-page"
-        headingMode={desk === "listings" && hostListing && !listingEditorOpen ? "aside" : "page"}
-        active={desk}
-        onSelect={(id) => {
-          if (id === "add") {
-            if (!centreOwner) return;
-            setDesk("listings");
+    <LoginFunnelDeskLand desk="provider" />
+    <HealthSecondFactorBanner />
+    {search.preview === "support" && operatorTools ? <SupportPreviewBanner /> : null}
+    <DeskShell
+      desk="daycare"
+      pageClassName="ke-provider-page"
+      headingMode={desk === "listings" && hostListing && !listingEditorOpen ? "aside" : "page"}
+      active={desk}
+      onSelect={(id) => {
+        if (id === "add") {
+          if (!centreOwner) return;
+          setDesk("listings");
+          setCreateListingOpen(true);
+          queueMicrotask(() => {
+            const el = document.getElementById("list-new");
+            if (el instanceof HTMLDetailsElement) el.open = true;
+            el?.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+          return;
+        }
+        const nextDesk = id as DaycareDesk;
+        setDesk(nextDesk);
+        void navigate({ to: deskPath, search: { ...search, desk: nextDesk }, replace: true });
+      }}
+    >
+      <Suspense fallback={
+        <div role="status" aria-live="polite" aria-label={t("loading")}>
+          <DeskSkeleton />
+        </div>
+      }>
+      {centreRole === "read_only" ? (
+        <p className="mb-4 rounded-xl bg-surface px-4 py-3 text-sm ring-1 ring-border" role="status" data-ke="read-only-banner">
+          {locale === "fr" ? "Vous pouvez regarder ce centre. Vous ne pouvez pas le modifier." : "You can look at this centre. You cannot change it."}
+        </p>
+      ) : null}
+      {desk === "contracts" ? (
+        canContracts ? (
+          <>
+            <ProviderContractsPanel />
+            <CentreAgreementEditor />
+          </>
+        ) : (
+          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="desk-no-access">
+            {locale === "fr" ? "Vous n’avez pas accès aux contrats." : "You do not have access to contracts."}
+          </p>
+        )
+      ) : null}
+      {desk === "insights" ? <ProviderInsightsDesk /> : null}
+      {desk === "top-rated" ? <TopRatedDesk on={topRated} /> : null}
+      {desk === "today" && !deskSettled ? (
+        <div role="status" aria-live="polite" aria-label={t("loading")} data-ke="provider-today-loading">
+          <DeskSkeleton />
+        </div>
+      ) : null}
+      {deskSettled && deskLoadFailed && deskListings.length === 0 ? (
+        <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border" role="alert" data-ke="provider-desk-load-failed">
+          <h2 className="font-display text-xl">
+            {locale === "fr" ? "Votre bureau n’a pas pu se charger." : "Your desk did not load."}
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            {locale === "fr" ? "Vérifiez votre connexion, puis réessayez." : "Check your connection, then try again."}
+          </p>
+          <Button className="mt-4" onClick={() => void load()} data-ke="provider-desk-retry">
+            {locale === "fr" ? "Réessayer" : "Try again"}
+          </Button>
+        </section>
+      ) : null}
+      {/* Session desks can still be loading or have failed (session null): do not leave Today empty. */}
+      {deskSettled && !deskLoadFailed && desk !== "insights" && ((deskListings.length === 0 && centreOwner) || (deskListings.length === 0 && session == null)) ? (
+        <ProviderOnboarding />
+      ) : null}
+      {desk !== "today" && search.claimed && listings[0] ? (
+        <section className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20">
+          <h2 className="font-display text-2xl">{t("claimSuccessTitle")}</h2>
+          <p className="mt-2 text-sm text-muted">{t("claimSuccessLead")}</p>
+        </section>
+      ) : null}
+      {desk === "today" && deskListings.length > 0 ? (
+        <Phase5Desk locale={locale === "fr" ? "fr" : "en"} role={staffDesk ? "staff" : "owner"} slug={deskListings[0]?.slug} actionsOnly />
+      ) : null}
+      {focusedId ? (
+        <p className="mb-4 text-sm">
+          {gap.orgShowing} {deskListings[0]?.name}.{" "}
+          <Link to="/provider" search={{ desk }} className="inline-flex min-h-11 items-center font-medium text-primary">
+            {gap.orgAll}
+          </Link>
+        </p>
+      ) : null}
+      {desk === "today" && hostToday && deskListings.length > 0 && !staffDesk ? (
+        <HostStyleToday
+          locale={locale === "fr" ? "fr" : "en"}
+          leads={leads}
+          tours={tours}
+          listings={deskListings}
+          owner={centreOwner}
+        />
+      ) : null}
+      {desk === "today" && hostToday && deskListings.length > 0 && !staffDesk ? <ChildCheckinDesk /> : null}
+      {desk === "today" && deskListings.length > 0 && !staffDesk ? (
+        <div data-ke="provider-setup-reserve" className="mb-4 min-h-[28rem]" />
+      ) : null}
+      {desk === "today" && deskListings.length > 0 && staffDesk ? (
+        <div data-ke="staff-today">
+          <ChildCheckinDesk />
+          <p className="mt-4">
+            <Link
+              to="/provider"
+              search={{ desk: "hours" }}
+              data-ke="staff-hours-link"
+              className="inline-flex min-h-11 items-center font-medium text-primary"
+            >
+              {locale === "fr" ? "Vos heures" : "Your hours"}
+            </Link>
+          </p>
+        </div>
+      ) : null}
+      {desk === "today" && hostListing && deskListings.length > 0 && !staffDesk ? (
+        <HostTodayHome listings={deskListings} stats={stats} onChanged={() => void load()} />
+      ) : null}
+      {desk === "today" && !hostListing && deskListings.length > 0 && !staffDesk ? (
+        <>
+        <DaycareDeskHome
+          listings={deskListings}
+          leads={leads}
+          tours={tours}
+          planName={
+            subscription?.paid
+              ? subscription.selectedPlan === "network"
+                ? "Network"
+                : "Pro"
+              : FOUNDING_PAGE[foundingLocale(locale)].daycarePill
+          }
+          paid={Boolean(subscription?.paid)}
+          renewsOn={chrome.renewsOn}
+          inquiryUsed={subscription?.inquiryUsed ?? 0}
+          inquiryCap={subscription?.inquiryCap ?? null}
+          dismissed={upgradeDismissed}
+          settled={deskSettled}
+          onDismiss={() => {
+            void dismissUpgradeCard()
+              .then(() => setUpgradeDismissed(true))
+              .catch(() => setUpgradeDismissed(false));
+          }}
+          hideListingGaps={hostToday}
+        />
+        <TodayUrgencyHome
+          listings={listings}
+          tours={tours}
+          leads={leads}
+          onChanged={() => void load()}
+          onOpenDesk={(next) => setDesk(next)}
+          quietSetup={hostToday}
+        />
+        <FamilyEmailPreview centreName={listings[0]?.name || ""} />
+        </>
+      ) : null}
+      {/* What needs doing first, then check-in, then records and settings folded under one heading. */}
+      {desk === "today" && !hostToday && !staffDesk && deskListings.length > 0 ? <ChildCheckinDesk /> : null}
+      {desk === "today" && !staffDesk && deskListings.length > 0 ? (
+        <TodayMore locale={locale === "fr" ? "fr" : "en"}>
+          <AuditDeskLink locale={locale === "fr" ? "fr" : "en"} />
+          <StoriesDeskLink />
+          <CurriculumDeskLink />
+          <OrgDeskLink />
+          <Suspense fallback={<div className="min-h-44" aria-hidden="true" />}>
+            {centreOwner ? <SafeArrivalPanel /> : null}
+            {centreOwner ? <CertExpiryPanel /> : null}
+            {centreOwner ? <ChildHealthLog /> : null}
+            {centreOwner ? <FamilyInviteGap /> : null}
+          </Suspense>
+          <EceJobDesk mode={centreOwner ? "daycare" : "staff"} />
+        </TodayMore>
+      ) : null}
+      {desk === "requests" ? (
+        <div className="min-w-0 max-w-full space-y-6" data-tour="provider-requests">
+        <h1 className="font-display text-2xl" data-ke="provider-requests-title">{t("navRequests")}</h1>
+        {canWrite ? <FormSharePreview /> : null}
+        {leads.length === 0 && tours.length === 0 && pipeline.length === 0 && waiting.length === 0 ? (
+          <EmptyState title={t("enquiriesEmptyTitle")} body={t("enquiriesEmptyLead")} extra={<FirstRunExample id="provider-requests" />} />
+        ) : (
+        <section className="space-y-8">
+          <DaycareLeadInbox items={leads} onChanged={() => void load()} canWrite={canWrite} />
+          {pipeline.length ? <CentrePipeline cards={pipeline} /> : null}
+          {tours.length ? (
+          <div>
+            <h2 className="font-display text-2xl">{t("pendingTours")}</h2>
+            <p className="mt-1 text-sm text-muted">{t("pendingToursLead")}</p>
+            <ul className="mt-4 space-y-3">
+              {tours.map((tour) => (
+                <li key={tour.id}>
+                  <TourCard tour={tour} canRespond onChanged={() => void load()} />
+                </li>
+              ))}
+            </ul>
+          </div>
+          ) : null}
+          {waiting.length ? (
+          <div>
+            <h2 className="font-display text-2xl">{t("directorNudgeTitle")}</h2>
+            <p className="mt-1 text-sm text-muted">{t("requestsWaitingLead")}</p>
+            <RequestList
+              items={waiting}
+              empty={t("providerRequestsEmpty")}
+              canWrite={canWrite}
+              canContracts={canContracts}
+              onDecide={async (id, decision) => {
+                await decideParentRequest({ data: { bookingId: id, decision } });
+                confirmSuccess({
+                  variant: "toast",
+                  title:
+                    decision === "approve"
+                      ? t("requestApprovedToast")
+                      : decision === "decline"
+                        ? t("requestDeclinedToast")
+                        : t("requestWaitingToast"),
+                });
+                await load();
+              }}
+              onChanged={() => void load()}
+              locale={locale}
+            />
+          </div>
+          ) : null}
+          {later.length ? (
+          <div>
+            <h2 className="font-display text-2xl">{t("requestsDecidedTitle")}</h2>
+            <p className="mt-1 text-sm text-muted">{t("requestsDecidedLead")}</p>
+            <RequestList
+              items={later}
+              empty={t("requestsDecidedEmpty")}
+              canWrite={canWrite}
+              canContracts={canContracts}
+              onDecide={async (id, decision) => {
+                await decideParentRequest({ data: { bookingId: id, decision } });
+                confirmSuccess({ variant: "toast", title: t("requestUpdatedToast") });
+                await load();
+              }}
+              onChanged={() => void load()}
+              locale={locale}
+            />
+          </div>
+          ) : null}
+        </section>
+        )}
+        {/* Family documents come after the enquiries. The block hides itself when there are none. */}
+        {canWrite ? <CentreFamilyDocs hideWhenEmpty /> : null}
+        </div>
+      ) : null}
+
+      {desk === "tours" ? (
+        <div className="space-y-8">
+          <TourCalendarPage audience="provider" />
+          <TourFollowupPreview centreName={listings[0]?.name || ""} />
+          <TourAvailabilityDesk listings={listings} onSaved={() => void load()} />
+        </div>
+      ) : null}
+
+      {desk === "calendar" && hostListing ? (
+        <HostCalendarDesk
+          listings={deskListings}
+          centreFromUrl={search.centre}
+          onCentre={(id) => {
+            void navigate({ to: deskPath, search: { ...search, desk: "calendar", centre: id }, replace: true });
+          }}
+          onSaved={() => void load()}
+        />
+      ) : null}
+      {desk === "calendar" && !hostListingKnown ? (
+        <section className="mx-auto max-w-2xl px-4 py-6" data-ke="host-calendar" role="status" aria-live="polite" aria-busy="true">
+          <h1 className="font-display text-2xl">{t("navCalendar")}</h1>
+          <p className="mt-2 text-sm text-muted">{t("loading")}</p>
+        </section>
+      ) : null}
+      {desk === "calendar" && hostListingKnown && !hostListing ? (
+        <section className="mx-auto max-w-2xl px-4 py-6" data-ke="host-calendar">
+          <h1 className="font-display text-2xl">{t("navCalendar")}</h1>
+          <p className="mt-2 text-sm text-muted">{t("comingSoon")}</p>
+        </section>
+      ) : null}
+      {desk === "listings" && !staffDesk && deskListings.length && !listingEditorOpen ? (
+        <MyListingHealth listings={deskListings.map((row) => ({ id: row.id, name: row.name }))} locale={locale === "fr" ? "fr" : "en"} />
+      ) : null}
+      {desk === "listings" && hostListing ? (
+        <HostListingsDesk
+          listings={deskListings}
+          onSaved={() => void load()}
+          onOpenChange={setListingEditorOpen}
+          onCreateListing={() => {
             setCreateListingOpen(true);
             queueMicrotask(() => {
               const el = document.getElementById("list-new");
               if (el instanceof HTMLDetailsElement) el.open = true;
-              el?.scrollIntoView({ behavior: "smooth", block: "start" });
+              el?.scrollIntoView({ block: "start" });
+              el?.querySelector<HTMLElement>("input, textarea, select")?.focus();
             });
-            return;
-          }
-          const nextDesk = id as DaycareDesk;
-          setDesk(nextDesk);
-          void navigate({ to: deskPath, search: { ...search, desk: nextDesk }, replace: true });
-        }}
-      >
-        <Suspense
-          fallback={
-            <div role="status" aria-live="polite" aria-label={t("loading")}>
-              <DeskSkeleton />
-            </div>
-          }
-        >
-          {centreRole === "read_only" ? (
-            <p
-              className="mb-4 rounded-xl bg-surface px-4 py-3 text-sm ring-1 ring-border"
-              role="status"
-              data-ke="read-only-banner"
-            >
-              {locale === "fr"
-                ? "Vous pouvez regarder ce centre. Vous ne pouvez pas le modifier."
-                : "You can look at this centre. You cannot change it."}
-            </p>
+          }}
+          initialSection={search.section && isHostSection(search.section) ? search.section : hostSectionFromFocus(search.focus)}
+          initialCentre={search.centre}
+        />
+      ) : null}
+      {desk === "listings" && !hostListing ? <AgeOpenSpotsDesk listings={deskListings.map((row) => ({ id: row.id, name: row.name }))} /> : null}
+      {desk === "listings" && !hostListing ? (
+        <>
+          {operatorTools ? (
+          <label className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border" data-ke="test-listing-toggle">
+            <input type="checkbox" checked={showTestListings} onChange={(e) => setShowTestListings(e.target.checked)} />
+            {t("showTestListings")}{testListingCount ? ` · ${testListingCount}` : ""}
+          </label>
           ) : null}
-          {desk === "contracts" ? (
-            canContracts ? (
-              <>
-                <ProviderContractsPanel />
-                <CentreAgreementEditor />
-              </>
-            ) : (
-              <p
-                className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border"
-                data-ke="desk-no-access"
-              >
-                {locale === "fr"
-                  ? "Vous n’avez pas accès aux contrats."
-                  : "You do not have access to contracts."}
-              </p>
-            )
-          ) : null}
-          {desk === "insights" ? <ProviderInsightsDesk /> : null}
-          {desk === "top-rated" ? <TopRatedDesk on={topRated} /> : null}
-          {desk === "today" && !deskSettled ? (
-            <div
-              role="status"
-              aria-live="polite"
-              aria-label={t("loading")}
-              data-ke="provider-today-loading"
-            >
-              <DeskSkeleton />
-            </div>
-          ) : null}
-          {deskSettled && deskLoadFailed && deskListings.length === 0 ? (
-            <section
-              className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border"
-              role="alert"
-              data-ke="provider-desk-load-failed"
-            >
-              <h2 className="font-display text-xl">
-                {locale === "fr"
-                  ? "Votre bureau n’a pas pu se charger."
-                  : "Your desk did not load."}
-              </h2>
-              <p className="mt-2 text-sm text-muted">
-                {locale === "fr"
-                  ? "Vérifiez votre connexion, puis réessayez."
-                  : "Check your connection, then try again."}
-              </p>
-              <Button className="mt-4" onClick={() => void load()} data-ke="provider-desk-retry">
-                {locale === "fr" ? "Réessayer" : "Try again"}
-              </Button>
-            </section>
-          ) : null}
-          {/* Session desks can still be loading or have failed (session null): do not leave Today empty. */}
-          {deskSettled &&
-          !deskLoadFailed &&
-          desk !== "insights" &&
-          ((deskListings.length === 0 && centreOwner) ||
-            (deskListings.length === 0 && session == null)) ? (
-            <ProviderOnboarding />
-          ) : null}
-          {desk !== "today" && search.claimed && listings[0] ? (
-            <section className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20">
-              <h2 className="font-display text-2xl">{t("claimSuccessTitle")}</h2>
-              <p className="mt-2 text-sm text-muted">{t("claimSuccessLead")}</p>
-            </section>
-          ) : null}
-          {desk === "today" && deskListings.length > 0 ? (
-            <Phase5Desk
-              locale={locale === "fr" ? "fr" : "en"}
-              role={staffDesk ? "staff" : "owner"}
-              slug={deskListings[0]?.slug}
-              actionsOnly
+          <DirectorNudgeQueue listings={deskListings} stats={stats} onConfirmed={() => void load()} skipConfirmSpots />
+          <VacancyConfirmLoop listings={deskListings} onConfirmed={() => void load()} />
+          <SpotOfferDesk includeTest={operatorTools && showTestListings} />
+          {deskListings.length ? (
+            <FreePageExplainer
+              listings={deskListings.map((d) => ({
+                slug: d.slug,
+                name: d.name,
+                nameFr: d.nameFr,
+                lat: d.lat,
+                lng: d.lng,
+                address: d.address,
+                city: d.city,
+                province: d.province,
+                postalCode: d.postalCode,
+              }))}
             />
           ) : null}
-          {focusedId ? (
-            <p className="mb-4 text-sm">
-              {gap.orgShowing} {deskListings[0]?.name}.{" "}
-              <Link
-                to="/provider"
-                search={{ desk }}
-                className="inline-flex min-h-11 items-center font-medium text-primary"
-              >
-                {gap.orgAll}
-              </Link>
-            </p>
-          ) : null}
-          {desk === "today" && hostToday && deskListings.length > 0 && !staffDesk ? (
-            <HostStyleToday
-              locale={locale === "fr" ? "fr" : "en"}
-              leads={leads}
-              tours={tours}
-              listings={deskListings}
-              owner={centreOwner}
-            />
-          ) : null}
-          {desk === "today" && hostToday && deskListings.length > 0 && !staffDesk ? (
-            <ChildCheckinDesk />
-          ) : null}
-          {desk === "today" && deskListings.length > 0 && !staffDesk ? (
-            <div data-ke="provider-setup-reserve" className="mb-4 min-h-[28rem]" />
-          ) : null}
-          {desk === "today" && deskListings.length > 0 && staffDesk ? (
-            <div data-ke="staff-today">
-              <ChildCheckinDesk />
-              <p className="mt-4">
-                <Link
-                  to="/provider"
-                  search={{ desk: "hours" }}
-                  data-ke="staff-hours-link"
-                  className="inline-flex min-h-11 items-center font-medium text-primary"
-                >
-                  {locale === "fr" ? "Vos heures" : "Your hours"}
-                </Link>
-              </p>
-            </div>
-          ) : null}
-          {desk === "today" && hostListing && deskListings.length > 0 && !staffDesk ? (
-            <HostTodayHome listings={deskListings} stats={stats} onChanged={() => void load()} />
-          ) : null}
-          {desk === "today" && !hostListing && deskListings.length > 0 && !staffDesk ? (
-            <>
-              <DaycareDeskHome
-                listings={deskListings}
-                leads={leads}
-                tours={tours}
-                planName={
-                  subscription?.paid
-                    ? subscription.selectedPlan === "network"
-                      ? "Network"
-                      : "Pro"
-                    : FOUNDING_PAGE[foundingLocale(locale)].daycarePill
-                }
-                paid={Boolean(subscription?.paid)}
-                renewsOn={chrome.renewsOn}
-                inquiryUsed={subscription?.inquiryUsed ?? 0}
-                inquiryCap={subscription?.inquiryCap ?? null}
-                dismissed={upgradeDismissed}
-                settled={deskSettled}
-                onDismiss={() => {
-                  void dismissUpgradeCard()
-                    .then(() => setUpgradeDismissed(true))
-                    .catch(() => setUpgradeDismissed(false));
-                }}
-                hideListingGaps={hostToday}
-              />
-              <TodayUrgencyHome
-                listings={listings}
-                tours={tours}
-                leads={leads}
-                onChanged={() => void load()}
-                onOpenDesk={(next) => setDesk(next)}
-                quietSetup={hostToday}
-              />
-              <FamilyEmailPreview centreName={listings[0]?.name || ""} />
-            </>
-          ) : null}
-          {/* What needs doing first, then check-in, then records and settings folded under one heading. */}
-          {desk === "today" && !hostToday && !staffDesk && deskListings.length > 0 ? (
-            <ChildCheckinDesk />
-          ) : null}
-          {desk === "today" && !staffDesk && deskListings.length > 0 ? (
-            <TodayMore locale={locale === "fr" ? "fr" : "en"}>
-              <AuditDeskLink locale={locale === "fr" ? "fr" : "en"} />
-              <StoriesDeskLink />
-              <CurriculumDeskLink />
-              <OrgDeskLink />
-              <Suspense fallback={<div className="min-h-44" aria-hidden="true" />}>
-                {centreOwner ? <SafeArrivalPanel /> : null}
-                {centreOwner ? <CertExpiryPanel /> : null}
-                {centreOwner ? <ChildHealthLog /> : null}
-                {centreOwner ? <FamilyInviteGap /> : null}
-              </Suspense>
-              <EceJobDesk mode={centreOwner ? "daycare" : "staff"} />
-            </TodayMore>
-          ) : null}
-          {desk === "requests" ? (
-            <div className="min-w-0 max-w-full space-y-6" data-tour="provider-requests">
-              <h1 className="font-display text-2xl" data-ke="provider-requests-title">
-                {t("navRequests")}
-              </h1>
-              {canWrite ? <FormSharePreview /> : null}
-              {leads.length === 0 &&
-              tours.length === 0 &&
-              pipeline.length === 0 &&
-              waiting.length === 0 ? (
-                <EmptyState
-                  title={t("enquiriesEmptyTitle")}
-                  body={t("enquiriesEmptyLead")}
-                  extra={<FirstRunExample id="provider-requests" />}
-                />
-              ) : (
-                <section className="space-y-8">
-                  <DaycareLeadInbox
-                    items={leads}
-                    onChanged={() => void load()}
-                    canWrite={canWrite}
-                  />
-                  {pipeline.length ? <CentrePipeline cards={pipeline} /> : null}
-                  {tours.length ? (
-                    <div>
-                      <h2 className="font-display text-2xl">{t("pendingTours")}</h2>
-                      <p className="mt-1 text-sm text-muted">{t("pendingToursLead")}</p>
-                      <ul className="mt-4 space-y-3">
-                        {tours.map((tour) => (
-                          <li key={tour.id}>
-                            <TourCard tour={tour} canRespond onChanged={() => void load()} />
-                          </li>
-                        ))}
-                      </ul>
+          {deskListings.map((d) => {
+            const st = stats.find((s) => s.daycareId === d.id);
+            const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
+            return (
+              <section key={d.id} className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link to="/daycare/$slug" params={{ slug: d.slug }} className="font-display text-2xl hover:underline">
+                        {storedCentreName(d.name, d.nameFr)}
+                      </Link>
+                      <ListingStatusBadge claimStatus={d.claimStatus} live={d.live} />
                     </div>
-                  ) : null}
-                  {waiting.length ? (
-                    <div>
-                      <h2 className="font-display text-2xl">{t("directorNudgeTitle")}</h2>
-                      <p className="mt-1 text-sm text-muted">{t("requestsWaitingLead")}</p>
-                      <RequestList
-                        items={waiting}
-                        empty={t("providerRequestsEmpty")}
-                        canWrite={canWrite}
-                        canContracts={canContracts}
-                        onDecide={async (id, decision) => {
-                          await decideParentRequest({ data: { bookingId: id, decision } });
-                          confirmSuccess({
-                            variant: "toast",
-                            title:
-                              decision === "approve"
-                                ? t("requestApprovedToast")
-                                : decision === "decline"
-                                  ? t("requestDeclinedToast")
-                                  : t("requestWaitingToast"),
-                          });
-                          await load();
-                        }}
-                        onChanged={() => void load()}
-                        locale={locale}
-                      />
-                    </div>
-                  ) : null}
-                  {later.length ? (
-                    <div>
-                      <h2 className="font-display text-2xl">{t("requestsDecidedTitle")}</h2>
-                      <p className="mt-1 text-sm text-muted">{t("requestsDecidedLead")}</p>
-                      <RequestList
-                        items={later}
-                        empty={t("requestsDecidedEmpty")}
-                        canWrite={canWrite}
-                        canContracts={canContracts}
-                        onDecide={async (id, decision) => {
-                          await decideParentRequest({ data: { bookingId: id, decision } });
-                          confirmSuccess({ variant: "toast", title: t("requestUpdatedToast") });
-                          await load();
-                        }}
-                        onChanged={() => void load()}
-                        locale={locale}
-                      />
-                    </div>
-                  ) : null}
-                </section>
-              )}
-              {/* Family documents come after the enquiries. The block hides itself when there are none. */}
-              {canWrite ? <CentreFamilyDocs hideWhenEmpty /> : null}
-            </div>
-          ) : null}
-
-          {desk === "tours" ? (
-            <div className="space-y-8">
-              <TourCalendarPage audience="provider" />
-              <TourFollowupPreview centreName={listings[0]?.name || ""} />
-              <TourAvailabilityDesk listings={listings} onSaved={() => void load()} />
-            </div>
-          ) : null}
-
-          {desk === "calendar" && hostListing ? (
-            <HostCalendarDesk
-              listings={deskListings}
-              centreFromUrl={search.centre}
-              onCentre={(id) => {
-                void navigate({
-                  to: deskPath,
-                  search: { ...search, desk: "calendar", centre: id },
-                  replace: true,
-                });
-              }}
-              onSaved={() => void load()}
-            />
-          ) : null}
-          {desk === "calendar" && !hostListingKnown ? (
-            <section
-              className="mx-auto max-w-2xl px-4 py-6"
-              data-ke="host-calendar"
-              role="status"
-              aria-live="polite"
-              aria-busy="true"
-            >
-              <h1 className="font-display text-2xl">{t("navCalendar")}</h1>
-              <p className="mt-2 text-sm text-muted">{t("loading")}</p>
-            </section>
-          ) : null}
-          {desk === "calendar" && hostListingKnown && !hostListing ? (
-            <section className="mx-auto max-w-2xl px-4 py-6" data-ke="host-calendar">
-              <h1 className="font-display text-2xl">{t("navCalendar")}</h1>
-              <p className="mt-2 text-sm text-muted">{t("comingSoon")}</p>
-            </section>
-          ) : null}
-          {desk === "listings" && !staffDesk && deskListings.length && !listingEditorOpen ? (
-            <MyListingHealth
-              listings={deskListings.map((row) => ({ id: row.id, name: row.name }))}
-              locale={locale === "fr" ? "fr" : "en"}
-            />
-          ) : null}
-          {desk === "listings" && hostListing ? (
-            <HostListingsDesk
-              listings={deskListings}
-              onSaved={() => void load()}
-              onOpenChange={setListingEditorOpen}
-              onCreateListing={() => {
-                setCreateListingOpen(true);
-                queueMicrotask(() => {
-                  const el = document.getElementById("list-new");
-                  if (el instanceof HTMLDetailsElement) el.open = true;
-                  el?.scrollIntoView({ block: "start" });
-                  el?.querySelector<HTMLElement>("input, textarea, select")?.focus();
-                });
-              }}
-              initialSection={
-                search.section && isHostSection(search.section)
-                  ? search.section
-                  : hostSectionFromFocus(search.focus)
-              }
-              initialCentre={search.centre}
-            />
-          ) : null}
-          {desk === "listings" && !hostListing ? (
-            <AgeOpenSpotsDesk
-              listings={deskListings.map((row) => ({ id: row.id, name: row.name }))}
-            />
-          ) : null}
-          {desk === "listings" && !hostListing ? (
-            <>
-              {operatorTools ? (
-                <label
-                  className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
-                  data-ke="test-listing-toggle"
-                >
-                  <input
-                    type="checkbox"
-                    checked={showTestListings}
-                    onChange={(e) => setShowTestListings(e.target.checked)}
-                  />
-                  {t("showTestListings")}
-                  {testListingCount ? ` · ${testListingCount}` : ""}
-                </label>
-              ) : null}
-              <DirectorNudgeQueue
-                listings={deskListings}
-                stats={stats}
-                onConfirmed={() => void load()}
-                skipConfirmSpots
-              />
-              <VacancyConfirmLoop listings={deskListings} onConfirmed={() => void load()} />
-              <SpotOfferDesk includeTest={operatorTools && showTestListings} />
-              {deskListings.length ? (
-                <FreePageExplainer
-                  listings={deskListings.map((d) => ({
-                    slug: d.slug,
-                    name: d.name,
-                    nameFr: d.nameFr,
-                    lat: d.lat,
-                    lng: d.lng,
-                    address: d.address,
-                    city: d.city,
-                    province: d.province,
-                    postalCode: d.postalCode,
-                  }))}
-                />
-              ) : null}
-              {deskListings.map((d) => {
-                const st = stats.find((s) => s.daycareId === d.id);
-                const declined =
-                  listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
-                return (
-                  <section key={d.id} className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Link
-                            to="/daycare/$slug"
-                            params={{ slug: d.slug }}
-                            className="font-display text-2xl hover:underline"
-                          >
-                            {storedCentreName(d.name, d.nameFr)}
-                          </Link>
-                          <ListingStatusBadge claimStatus={d.claimStatus} live={d.live} />
-                        </div>
-                        <p className="text-sm text-muted">
-                          {d.address}, {d.city} ·{" "}
-                          {officialLicenceNumber(d.licenseNumber, d.id) ??
-                            t("trustLicenseUnverified")}
-                        </p>
-                        <TrustSignals item={d} surface="provider" compact className="mt-2" />
-                        <KidEaseApprovalStrip
-                          eligible={publicApprovalEligible(d)}
-                          audience="daycare"
-                        />
-                      </div>
-                      {d.priority ? <PriorityPill /> : null}
-                    </div>
-                    <p className="mt-3 text-xs text-subtle">
-                      {subscription?.analyticsDays === 90 ? t("analytics90") : t("analytics")}
+                    <p className="text-sm text-muted">
+                      {d.address}, {d.city} · {officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustLicenseUnverified")}
                     </p>
-                    <dl className="mt-2 grid grid-cols-3 gap-3 text-center text-sm">
-                      <div className="rounded-md bg-bg p-3">
-                        <dt className="text-muted">{t("views")}</dt>
-                        <dd className="font-display text-2xl tabular-nums">{st?.views ?? 0}</dd>
-                      </div>
-                      <div className="rounded-md bg-bg p-3">
-                        <dt className="text-muted">{t("inquiries")}</dt>
-                        <dd className="font-display text-2xl tabular-nums">{st?.inquiries ?? 0}</dd>
-                      </div>
-                      <div className="rounded-md bg-bg p-3">
-                        <dt className="text-muted">{t("conversion")}</dt>
-                        <dd className="font-display text-2xl tabular-nums">{st?.requests ?? 0}</dd>
-                      </div>
-                    </dl>
-                    <DemandCues snapshot={st?.demand} />
-                    <ClaimProgressMeter item={d} />
-                    <CompletenessChecklist item={d} />
-                    {declined ? (
-                      <p className="mt-4 rounded-lg bg-danger/10 p-3 text-sm text-danger">
-                        KidEase declined this listing. Parent requests and Promote stay off. Add
-                        another centre below, or wait for a re-review after Kyle asks for more.
-                      </p>
-                    ) : null}
-                    <CapacityForm daycare={d} onSaved={() => load()} mode="listing" />
-                  </section>
-                );
-              })}
-              {subscription?.orgDashboard && subscription.siteCount >= 3 ? (
-                <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
-                  <h2 className="font-display text-2xl">{t("planOrgLive")}</h2>
-                  <dl className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
-                    <div className="rounded-md bg-bg p-3">
-                      <dt className="text-muted">{t("views")}</dt>
-                      <dd className="font-display text-2xl tabular-nums">
-                        {stats.reduce((sum, s) => sum + s.views, 0)}
-                      </dd>
-                    </div>
-                    <div className="rounded-md bg-bg p-3">
-                      <dt className="text-muted">{t("inquiries")}</dt>
-                      <dd className="font-display text-2xl tabular-nums">
-                        {stats.reduce((sum, s) => sum + s.inquiries, 0)}
-                      </dd>
-                    </div>
-                    <div className="rounded-md bg-bg p-3">
-                      <dt className="text-muted">{t("conversion")}</dt>
-                      <dd className="font-display text-2xl tabular-nums">
-                        {stats.reduce((sum, s) => sum + s.requests, 0)}
-                      </dd>
-                    </div>
-                  </dl>
-                </section>
-              ) : null}
-            </>
+                    <TrustSignals item={d} surface="provider" compact className="mt-2" />
+                    <KidEaseApprovalStrip eligible={publicApprovalEligible(d)} audience="daycare" />
+                  </div>
+                  {d.priority ? <PriorityPill /> : null}
+                </div>
+                <p className="mt-3 text-xs text-subtle">
+                  {subscription?.analyticsDays === 90 ? t("analytics90") : t("analytics")}
+                </p>
+                <dl className="mt-2 grid grid-cols-3 gap-3 text-center text-sm">
+                  <div className="rounded-md bg-bg p-3">
+                    <dt className="text-muted">{t("views")}</dt>
+                    <dd className="font-display text-2xl tabular-nums">{st?.views ?? 0}</dd>
+                  </div>
+                  <div className="rounded-md bg-bg p-3">
+                    <dt className="text-muted">{t("inquiries")}</dt>
+                    <dd className="font-display text-2xl tabular-nums">{st?.inquiries ?? 0}</dd>
+                  </div>
+                  <div className="rounded-md bg-bg p-3">
+                    <dt className="text-muted">{t("conversion")}</dt>
+                    <dd className="font-display text-2xl tabular-nums">{st?.requests ?? 0}</dd>
+                  </div>
+                </dl>
+                <DemandCues snapshot={st?.demand} />
+                <ClaimProgressMeter item={d} />
+                <CompletenessChecklist item={d} />
+                {declined ? (
+                  <p className="mt-4 rounded-lg bg-danger/10 p-3 text-sm text-danger">
+                    KidEase declined this listing. Parent requests and Promote stay off. Add another centre below, or wait for a re-review after Kyle asks for more.
+                  </p>
+                ) : null}
+                <CapacityForm daycare={d} onSaved={() => load()} mode="listing" />
+              </section>
+            );
+          })}
+          {subscription?.orgDashboard && subscription.siteCount >= 3 ? (
+            <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
+              <h2 className="font-display text-2xl">{t("planOrgLive")}</h2>
+              <dl className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
+                <div className="rounded-md bg-bg p-3">
+                  <dt className="text-muted">{t("views")}</dt>
+                  <dd className="font-display text-2xl tabular-nums">
+                    {stats.reduce((sum, s) => sum + s.views, 0)}
+                  </dd>
+                </div>
+                <div className="rounded-md bg-bg p-3">
+                  <dt className="text-muted">{t("inquiries")}</dt>
+                  <dd className="font-display text-2xl tabular-nums">
+                    {stats.reduce((sum, s) => sum + s.inquiries, 0)}
+                  </dd>
+                </div>
+                <div className="rounded-md bg-bg p-3">
+                  <dt className="text-muted">{t("conversion")}</dt>
+                  <dd className="font-display text-2xl tabular-nums">
+                    {stats.reduce((sum, s) => sum + s.requests, 0)}
+                  </dd>
+                </div>
+              </dl>
+            </section>
           ) : null}
-          {desk === "documents" ? (
-            session && deskSettled && canViewDocuments && listings[0] ? (
-              <CentreDocumentChecklist
-                daycareId={(listings.find((row) => row.id === search.centre) || listings[0]).id}
-              />
-            ) : session && deskSettled && !canViewDocuments ? (
-              <p
-                className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border"
-                data-ke="desk-no-access"
-              >
-                {locale === "fr"
-                  ? "Vous n’avez pas accès à ces documents."
-                  : "You do not have access to these documents."}
-              </p>
-            ) : listings[0] ? null : (
-              <EmptyState
-                title={t("deskNavDocuments")}
-                body={t("providerOnboardingLead")}
-                extra={
-                  <Button asChild>
-                    <Link to="/claim">{t("providerOnboardingClaim")}</Link>
-                  </Button>
+        </>
+      ) : null}
+      {desk === "documents" ? (
+        session && deskSettled && canViewDocuments && listings[0] ? (
+          <CentreDocumentChecklist daycareId={(listings.find((row) => row.id === search.centre) || listings[0]).id} />
+        ) : session && deskSettled && !canViewDocuments ? (
+          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="desk-no-access">
+            {locale === "fr" ? "Vous n’avez pas accès à ces documents." : "You do not have access to these documents."}
+          </p>
+        ) : listings[0] ? null : (
+          <EmptyState
+            title={t("deskNavDocuments")}
+            body={t("providerOnboardingLead")}
+            extra={
+              <Button asChild>
+                <Link to="/claim">{t("providerOnboardingClaim")}</Link>
+              </Button>
+            }
+          />
+        )
+      ) : null}
+      {desk === "listings" && centreOwner && !(hostListing && listingEditorOpen) ? (
+          <details
+            id="list-new"
+            className="group rounded-xl bg-surface ring-1 ring-border"
+            data-ke="list-missing-centre"
+            hidden={hostListing && !createListingOpen ? true : undefined}
+          >
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
+              <span className="font-display text-lg">{t("providerOnboardingListNew")}</span>
+              <ChevronDown className="size-5 shrink-0 text-muted transition-transform group-open:rotate-180" aria-hidden />
+            </summary>
+            <div className="px-5 pb-5">
+            <p className="text-sm text-muted">{t("publishListingMissing")}</p>
+            <form
+              className="mt-4 grid gap-3 sm:grid-cols-2"
+              data-ke="publish-listing-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (publishing) return;
+                const next = mergeListingDraft(form, new FormData(e.currentTarget));
+                setForm(next);
+                const missing = listingPublishMissing(next);
+                setMissingFields(missing);
+                if (missing.length) {
+                  const message = t("publishListingMissing");
+                  setPublishMessage({ tone: "err", text: message });
+                  toast.error(message);
+                  return;
                 }
-              />
-            )
-          ) : null}
-          {desk === "listings" && centreOwner && !(hostListing && listingEditorOpen) ? (
-            <details
-              id="list-new"
-              className="group rounded-xl bg-surface ring-1 ring-border"
-              data-ke="list-missing-centre"
-              hidden={hostListing && !createListingOpen ? true : undefined}
-            >
-              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
-                <span className="font-display text-lg">{t("providerOnboardingListNew")}</span>
-                <ChevronDown
-                  className="size-5 shrink-0 text-muted transition-transform group-open:rotate-180"
-                  aria-hidden
-                />
-              </summary>
-              <div className="px-5 pb-5">
-                <p className="text-sm text-muted">{t("publishListingMissing")}</p>
-                <form
-                  className="mt-4 grid gap-3 sm:grid-cols-2"
-                  data-ke="publish-listing-form"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (publishing) return;
-                    const next = mergeListingDraft(form, new FormData(e.currentTarget));
-                    setForm(next);
-                    const missing = listingPublishMissing(next);
-                    setMissingFields(missing);
-                    if (missing.length) {
-                      const message = t("publishListingMissing");
+                setPublishing(true);
+                setPublishMessage(null);
+                void createListing({ data: next })
+                  .then((res) => {
+                    if (res && res.ok === false) {
+                      const message =
+                        locale === "fr" ? t("daycareAlreadyListed") : res.message || DUPLICATE_LISTING_MESSAGE;
                       setPublishMessage({ tone: "err", text: message });
                       toast.error(message);
                       return;
                     }
-                    setPublishing(true);
-                    setPublishMessage(null);
-                    void createListing({ data: next })
-                      .then((res) => {
-                        if (res && res.ok === false) {
-                          const message =
-                            locale === "fr"
-                              ? t("daycareAlreadyListed")
-                              : res.message || DUPLICATE_LISTING_MESSAGE;
-                          setPublishMessage({ tone: "err", text: message });
-                          toast.error(message);
-                          return;
-                        }
-                        const message = t("publishListingDone");
-                        setPublishMessage({ tone: "ok", text: message });
-                        confirmSuccess({
-                          variant: "modal",
-                          title: t("createListing"),
-                          body: message,
-                        });
-                        setForm((s) => ({ ...s, storefront: "" }));
-                        return load();
-                      })
-                      .catch((err) => {
-                        const message = listingCreateErrorMessage(err);
-                        const text = isDaycareAlreadyListedMessage(message)
-                          ? duplicateListingUserMessage(locale)
-                          : message || t("actionFailed");
-                        setPublishMessage({ tone: "err", text });
-                        toast.error(text);
-                      })
-                      .finally(() => setPublishing(false));
+                    const message = t("publishListingDone");
+                    setPublishMessage({ tone: "ok", text: message });
+                    confirmSuccess({
+                      variant: "modal",
+                      title: t("createListing"),
+                      body: message,
+                    });
+                    setForm((s) => ({ ...s, storefront: "" }));
+                    return load();
+                  })
+                  .catch((err) => {
+                    const message = listingCreateErrorMessage(err);
+                    const text = isDaycareAlreadyListedMessage(message)
+                      ? duplicateListingUserMessage(locale)
+                      : message || t("actionFailed");
+                    setPublishMessage({ tone: "err", text });
+                    toast.error(text);
+                  })
+                  .finally(() => setPublishing(false));
+              }}
+            >
+              <Field name="name" required french={locale === "fr"} invalid={missingFields.includes("name")} label={t("centreName")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
+              <Field name="licenseNumber" required french={locale === "fr"} invalid={missingFields.includes("licenseNumber")} label={t("licenceNo")} value={form.licenseNumber} onChange={(v) => setForm({ ...form, licenseNumber: v })} />
+              <Field name="address" required french={locale === "fr"} invalid={missingFields.includes("address")} label={t("addressLabel")} value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
+              <Field name="city" required french={locale === "fr"} invalid={missingFields.includes("city")} label={t("cityLabel")} value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
+              <Field
+                name="postalCode"
+                required
+                french={locale === "fr"}
+                invalid={missingFields.includes("postalCode")}
+                label={t("postalLabel")}
+                value={form.postalCode}
+                onChange={(v) => {
+                  const guessed = provinceFromPostalCode(v);
+                  setForm((current) => ({
+                    ...current,
+                    postalCode: v,
+                    province: provinceLocked.current ? current.province : guessed || current.province,
+                  }));
+                }}
+              />
+              <label className="text-sm font-medium text-fg">
+                <span>
+                  {t("provinceLabel")}
+                  <RequiredMark french={locale === "fr"} />
+                </span>
+                <select
+                  name="province"
+                  required
+                  aria-invalid={missingFields.includes("province") || undefined}
+                  aria-required="true"
+                  className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3 text-fg"
+                  value={form.province}
+                  onChange={(e) => {
+                    provinceLocked.current = true;
+                    setForm((current) => ({ ...current, province: e.target.value }));
                   }}
                 >
-                  <Field
-                    name="name"
-                    required
-                    french={locale === "fr"}
-                    invalid={missingFields.includes("name")}
-                    label={t("centreName")}
-                    value={form.name}
-                    onChange={(v) => setForm({ ...form, name: v })}
-                  />
-                  <Field
-                    name="licenseNumber"
-                    required
-                    french={locale === "fr"}
-                    invalid={missingFields.includes("licenseNumber")}
-                    label={t("licenceNo")}
-                    value={form.licenseNumber}
-                    onChange={(v) => setForm({ ...form, licenseNumber: v })}
-                  />
-                  <Field
-                    name="address"
-                    required
-                    french={locale === "fr"}
-                    invalid={missingFields.includes("address")}
-                    label={t("addressLabel")}
-                    value={form.address}
-                    onChange={(v) => setForm({ ...form, address: v })}
-                  />
-                  <Field
-                    name="city"
-                    required
-                    french={locale === "fr"}
-                    invalid={missingFields.includes("city")}
-                    label={t("cityLabel")}
-                    value={form.city}
-                    onChange={(v) => setForm({ ...form, city: v })}
-                  />
-                  <Field
-                    name="postalCode"
-                    required
-                    french={locale === "fr"}
-                    invalid={missingFields.includes("postalCode")}
-                    label={t("postalLabel")}
-                    value={form.postalCode}
-                    onChange={(v) => {
-                      const guessed = provinceFromPostalCode(v);
-                      setForm((current) => ({
-                        ...current,
-                        postalCode: v,
-                        province: provinceLocked.current
-                          ? current.province
-                          : guessed || current.province,
-                      }));
-                    }}
-                  />
-                  <label className="text-sm font-medium text-fg">
-                    <span>
-                      {t("provinceLabel")}
-                      <RequiredMark french={locale === "fr"} />
-                    </span>
-                    <select
-                      name="province"
-                      required
-                      aria-invalid={missingFields.includes("province") || undefined}
-                      aria-required="true"
-                      className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3 text-fg"
-                      value={form.province}
-                      onChange={(e) => {
-                        provinceLocked.current = true;
-                        setForm((current) => ({ ...current, province: e.target.value }));
-                      }}
-                    >
-                      <option value="">
-                        {locale === "fr" ? "Choisir une province" : "Choose a province"}
-                      </option>
-                      {PROVINCES.map((row) => (
-                        <option key={row.code} value={row.code}>
-                          {locale === "fr" ? row.nameFr : row.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <Field
-                    name="infantMonthly"
-                    label={`${t("infantFee")} CAD`}
-                    value={form.infantMonthly ? String(form.infantMonthly) : ""}
-                    onChange={(v) => setForm({ ...form, infantMonthly: Number(v) || 0 })}
-                  />
-                  <Field
-                    name="toddlerMonthly"
-                    label={`${t("toddlerFee")} CAD`}
-                    value={form.toddlerMonthly ? String(form.toddlerMonthly) : ""}
-                    onChange={(v) => setForm({ ...form, toddlerMonthly: Number(v) || 0 })}
-                  />
-                  <Field
-                    name="preschoolMonthly"
-                    label={`${t("preschoolFee")} CAD`}
-                    value={form.preschoolMonthly ? String(form.preschoolMonthly) : ""}
-                    onChange={(v) => setForm({ ...form, preschoolMonthly: Number(v) || 0 })}
-                  />
-                  <div className="sm:col-span-2">
-                    <p className="text-sm font-medium">{t("storefrontPhoto")}</p>
-                    <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start">
-                      {form.storefront ? (
-                        <img
-                          src={form.storefront}
-                          alt=""
-                          className="h-36 w-full max-w-xs rounded-xl object-cover ring-1 ring-border sm:h-28 sm:w-40"
-                        />
-                      ) : (
-                        <div className="grid h-36 w-full max-w-xs place-items-center rounded-xl bg-bg text-sm text-muted ring-1 ring-dashed ring-border sm:h-28 sm:w-40">
-                          {t("storefrontPhoto")}
-                        </div>
-                      )}
-                      <label className="flex min-h-28 flex-1 cursor-pointer flex-col items-start justify-center gap-2 rounded-xl border border-dashed border-border bg-bg px-4 py-3 text-sm">
-                        <span className="font-medium text-primary">{t("storefrontCta")}</span>
-                        <input
-                          type="file"
-                          accept={LISTING_PHOTO_ACCEPT}
-                          className="sr-only"
-                          data-ke="create-listing-photo"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            e.target.value = "";
-                            if (!file) return;
-                            setStorefrontError(null);
-                            setStorefrontProgress(8);
-                            void downgradeListingPhotoFile(file, {
-                              targetBytes: listingPhotoByteBudget(1),
-                              onProgress: setStorefrontProgress,
-                            })
-                              .then((value) => setForm((s) => ({ ...s, storefront: value })))
-                              .catch((err) => {
-                                const unreadable =
-                                  err instanceof ListingPhotoPrepareError &&
-                                  err.code === "unreadable";
-                                const message = t(unreadable ? "photoUnreadable" : "photoTooBig");
-                                setStorefrontError(message);
-                                toast.error(message);
-                              })
-                              .finally(() => setStorefrontProgress(null));
-                          }}
-                        />
-                        {storefrontProgress !== null ? (
-                          <div
-                            data-ke="listing-photo-progress"
-                            className="h-1.5 w-full overflow-hidden rounded-full bg-border"
-                            role="progressbar"
-                            aria-valuemin={0}
-                            aria-valuemax={100}
-                            aria-valuenow={storefrontProgress}
-                          >
-                            <div
-                              className="h-full bg-primary"
-                              style={{ width: `${storefrontProgress}%` }}
-                            />
-                          </div>
-                        ) : null}
-                        <UploadLimitHint hint={t("uploadPhotoHint")} error={storefrontError} />
-                      </label>
+                  <option value="">{locale === "fr" ? "Choisir une province" : "Choose a province"}</option>
+                  {PROVINCES.map((row) => (
+                    <option key={row.code} value={row.code}>
+                      {locale === "fr" ? row.nameFr : row.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Field name="infantMonthly" label={`${t("infantFee")} CAD`} value={form.infantMonthly ? String(form.infantMonthly) : ""} onChange={(v) => setForm({ ...form, infantMonthly: Number(v) || 0 })} />
+              <Field name="toddlerMonthly" label={`${t("toddlerFee")} CAD`} value={form.toddlerMonthly ? String(form.toddlerMonthly) : ""} onChange={(v) => setForm({ ...form, toddlerMonthly: Number(v) || 0 })} />
+              <Field name="preschoolMonthly" label={`${t("preschoolFee")} CAD`} value={form.preschoolMonthly ? String(form.preschoolMonthly) : ""} onChange={(v) => setForm({ ...form, preschoolMonthly: Number(v) || 0 })} />
+              <div className="sm:col-span-2">
+                <p className="text-sm font-medium">{t("storefrontPhoto")}</p>
+                <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start">
+                  {form.storefront ? (
+                    <img src={form.storefront} alt="" className="h-36 w-full max-w-xs rounded-xl object-cover ring-1 ring-border sm:h-28 sm:w-40" />
+                  ) : (
+                    <div className="grid h-36 w-full max-w-xs place-items-center rounded-xl bg-bg text-sm text-muted ring-1 ring-dashed ring-border sm:h-28 sm:w-40">
+                      {t("storefrontPhoto")}
                     </div>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <ListingCultureFields
-                      value={{
-                        staffLanguages: form.staffLanguages,
-                        culturalPrograms: form.culturalPrograms,
-                        culturalTeamNote: form.culturalTeamNote,
+                  )}
+                  <label className="flex min-h-28 flex-1 cursor-pointer flex-col items-start justify-center gap-2 rounded-xl border border-dashed border-border bg-bg px-4 py-3 text-sm">
+                    <span className="font-medium text-primary">{t("storefrontCta")}</span>
+                    <input
+                      type="file"
+                      accept={LISTING_PHOTO_ACCEPT}
+                      className="sr-only"
+                      data-ke="create-listing-photo"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (!file) return;
+                        setStorefrontError(null);
+                        setStorefrontProgress(8);
+                        void downgradeListingPhotoFile(file, {
+                          targetBytes: listingPhotoByteBudget(1),
+                          onProgress: setStorefrontProgress,
+                        })
+                          .then((value) => setForm((s) => ({ ...s, storefront: value })))
+                          .catch((err) => {
+                            const unreadable = err instanceof ListingPhotoPrepareError && err.code === "unreadable";
+                            const message = t(unreadable ? "photoUnreadable" : "photoTooBig");
+                            setStorefrontError(message);
+                            toast.error(message);
+                          })
+                          .finally(() => setStorefrontProgress(null));
                       }}
-                      onChange={(culture) => setForm({ ...form, ...culture })}
                     />
-                  </div>
-                  <div className="sm:col-span-2 flex flex-col items-start gap-2">
-                    <Button
-                      type="submit"
-                      data-ke="publish-listing"
-                      disabled={publishing}
-                      aria-busy={publishing}
-                    >
-                      {publishing ? t("publishListingWorking") : t("createListing")}
-                    </Button>
-                    {publishMessage ? (
-                      <p
-                        data-ke="publish-listing-status"
-                        role={publishMessage.tone === "err" ? "alert" : "status"}
-                        className={
-                          publishMessage.tone === "err" ? "text-sm text-danger" : "text-sm text-ok"
-                        }
+                    {storefrontProgress !== null ? (
+                      <div
+                        data-ke="listing-photo-progress"
+                        className="h-1.5 w-full overflow-hidden rounded-full bg-border"
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={storefrontProgress}
                       >
-                        {publishMessage.text}
-                      </p>
+                        <div className="h-full bg-primary" style={{ width: `${storefrontProgress}%` }} />
+                      </div>
                     ) : null}
-                  </div>
-                </form>
+                    <UploadLimitHint hint={t("uploadPhotoHint")} error={storefrontError} />
+                  </label>
+                </div>
               </div>
-            </details>
-          ) : null}
-
-          {desk === "employees" ? <BackgroundCheckDesk /> : null}
-          {desk === "employees" ? (
-            <CentreEmployeesPanel canInvite={canInviteStaff} canEditPermissions={centreOwner} />
-          ) : null}
-          {desk === "employees" ? <EceJobDesk mode="staff" /> : null}
-          {desk === "staff" ? <StaffSchedulingDesk /> : null}
-          {desk === "hours" ? <StaffTimesheetDesk /> : null}
-          {desk === "pay" && session?.providerPayroll && centreOwner ? (
-            <PayrollAttendanceReview key={user?.id} locale={locale === "fr" ? "fr" : "en"} />
-          ) : null}
-          {desk === "pay" && session?.providerPayroll && listings[0]?.id ? (
-            <PayDay
-              key={listings[0].id}
-              locale={locale === "fr" ? "fr" : "en"}
-              daycareId={listings[0].id}
-            />
-          ) : null}
-          {desk === "pay" && session && !session.providerPayroll ? (
-            <p
-              className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border"
-              data-ke="payroll-off"
-            >
-              {locale === "fr" ? "Le jour de paie est fermé." : "Pay day is turned off."}
-            </p>
-          ) : null}
-          {desk === "books" && session?.providerBooks && centreOwner ? (
-            <PayrollPreview locale={locale === "fr" ? "fr" : "en"} screen="books" />
-          ) : null}
-          {desk === "books" && session?.providerBooks && !centreOwner ? (
-            <PayrollDesk locale={locale === "fr" ? "fr" : "en"} owner={false} />
-          ) : null}
-          {desk === "shift" && session?.providerPayroll ? (
-            <PayrollPreview locale={locale === "fr" ? "fr" : "en"} screen="staff" />
-          ) : null}
-          {desk === "shift" && session?.providerPayroll && listings[0]?.id ? (
-            <MyPayHours
-              key={listings[0].id}
-              locale={locale === "fr" ? "fr" : "en"}
-              daycareId={listings[0].id}
-            />
-          ) : null}
-          {desk === "shift" && session?.providerPayroll && listings[0]?.id ? (
-            <MyTaxForms
-              key={`forms-${listings[0].id}`}
-              locale={locale === "fr" ? "fr" : "en"}
-              daycareId={listings[0].id}
-            />
-          ) : null}
-          {desk === "tools" ? <CentreToolsDesk /> : null}
-          {desk === "care" ? (
-            <ProviderCareDesk daycareId={listings[0]?.id} owner={centreOwner} />
-          ) : null}
-          {desk === "staff" ? <EceJobDesk mode="staff" /> : null}
-          {desk === "stories" ? <LearningStoriesDesk /> : null}
-          {desk === "learning" ? <CurriculumPackDesk /> : null}
-          {desk === "sites" ? <OrgOccupancyDesk /> : null}
-
-          {desk === "screening" ? <BackgroundCheckDesk /> : null}
-          {desk === "screening" ? <ProviderScreeningPanel /> : null}
-
-          {desk === "licence" && !centreOwner ? (
-            <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} />
-          ) : null}
-
-          {desk === "licence" && centreOwner ? (
-            !deskSettled ? null : deskListings.length === 0 ? (
-              <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
-                {t("providerOnboardingLead")}
-              </p>
-            ) : (
-              deskListings.map((d) => (
-                <section key={d.id} className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
-                  <h2 className="font-display text-2xl">{storedCentreName(d.name, d.nameFr)}</h2>
-                  <p className="mt-1 text-sm text-muted">{t("trustChecklistTitle")}</p>
-                  <ListingReadinessCoach item={d} variant="card" />
-                  <div className="mt-4">
-                    <ProviderTrustChecklist daycare={d} onSaved={() => void load()} />
-                  </div>
-                  <div className="mt-6 border-t border-border pt-5">
-                    <h3 className="font-display text-xl">{t("licenceRecord")}</h3>
-                    <CapacityForm daycare={d} onSaved={() => load()} mode="licence" />
-                  </div>
-                </section>
-              ))
-            )
-          ) : null}
-
-          {desk === "money" ? (
-            canBills ? (
-              <div className="space-y-6">
-                <ProviderMoneyPanel showPayouts={centreOwner} canEdit={canEditBills} />
-                {centreOwner && moneyChoice.needsPick ? (
-                  <section
-                    className="rounded-xl bg-surface p-5 ring-1 ring-border"
-                    data-ke="money-centre-pick"
+              <div className="sm:col-span-2">
+                <ListingCultureFields
+                  value={{
+                    staffLanguages: form.staffLanguages,
+                    culturalPrograms: form.culturalPrograms,
+                    culturalTeamNote: form.culturalTeamNote,
+                  }}
+                  onChange={(culture) => setForm({ ...form, ...culture })}
+                />
+              </div>
+              <div className="sm:col-span-2 flex flex-col items-start gap-2">
+                <Button type="submit" data-ke="publish-listing" disabled={publishing} aria-busy={publishing}>
+                  {publishing ? t("publishListingWorking") : t("createListing")}
+                </Button>
+                {publishMessage ? (
+                  <p
+                    data-ke="publish-listing-status"
+                    role={publishMessage.tone === "err" ? "alert" : "status"}
+                    className={publishMessage.tone === "err" ? "text-sm text-danger" : "text-sm text-ok"}
                   >
-                    <h2 className="font-display text-xl">
-                      {locale === "fr" ? "Choisissez un centre" : "Pick a centre"}
-                    </h2>
-                    <p className="mt-2 text-sm text-muted">
-                      {locale === "fr"
-                        ? "QuickBooks est enregistré pour un centre à la fois."
-                        : "QuickBooks is saved for one centre at a time."}
-                    </p>
-                    <ul className="mt-3 space-y-1">
-                      {listings.map((row) => (
-                        <li key={row.id}>
-                          <Link
-                            to="/provider"
-                            search={{ ...search, desk: "money", centre: row.id }}
-                            className="inline-flex min-h-11 items-center font-medium text-primary"
-                          >
-                            {storedCentreName(row.name, row.nameFr)}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                ) : centreOwner && moneyListing ? (
-                  <div data-ke="money-centre-name">
-                    <p className="text-sm text-muted">
-                      {storedCentreName(moneyListing.name, moneyListing.nameFr)}
-                    </p>
-                    <QboPanel daycareId={moneyListing.id} />
-                  </div>
+                    {publishMessage.text}
+                  </p>
                 ) : null}
-                {centreOwner ? <CwelccPanel /> : null}
-                {centreOwner ? <TaxReceiptStudio desk="centre" /> : null}
               </div>
-            ) : (
-              <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} />
-            )
-          ) : null}
+            </form>
+            </div>
+          </details>
+      ) : null}
 
-          {desk === "contract" ? (
-            centreOwner ? (
-              <>
-                <ProviderContractsPanel />
-                <CentreAgreementEditor />
-              </>
-            ) : (
-              <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} />
-            )
-          ) : null}
+      {desk === "employees" ? <BackgroundCheckDesk /> : null}
+      {desk === "employees" ? (
+        <CentreEmployeesPanel canInvite={canInviteStaff} canEditPermissions={centreOwner} />
+      ) : null}
+      {desk === "employees" ? <EceJobDesk mode="staff" /> : null}
+      {desk === "staff" ? <StaffSchedulingDesk /> : null}
+      {desk === "hours" ? <StaffTimesheetDesk /> : null}
+      {desk === "pay" && session?.providerPayroll && centreOwner ? (
+        <PayrollAttendanceReview key={user?.id} locale={locale === "fr" ? "fr" : "en"} />
+      ) : null}
+      {desk === "pay" && session?.providerPayroll && listings[0]?.id ? (
+        <PayDay key={listings[0].id} locale={locale === "fr" ? "fr" : "en"} daycareId={listings[0].id} />
+      ) : null}
+      {desk === "pay" && session && !session.providerPayroll ? (
+        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="payroll-off">
+          {locale === "fr" ? "Le jour de paie est fermé." : "Pay day is turned off."}
+        </p>
+      ) : null}
+      {desk === "books" && session?.providerBooks && centreOwner ? <PayrollPreview locale={locale === "fr" ? "fr" : "en"} screen="books" /> : null}
+      {desk === "books" && session?.providerBooks && !centreOwner ? <PayrollDesk locale={locale === "fr" ? "fr" : "en"} owner={false} /> : null}
+      {desk === "shift" && session?.providerPayroll ? <PayrollPreview locale={locale === "fr" ? "fr" : "en"} screen="staff" /> : null}
+      {desk === "shift" && session?.providerPayroll && listings[0]?.id ? (
+        <MyPayHours key={listings[0].id} locale={locale === "fr" ? "fr" : "en"} daycareId={listings[0].id} />
+      ) : null}
+      {desk === "shift" && session?.providerPayroll && listings[0]?.id ? (
+        <MyTaxForms key={`forms-${listings[0].id}`} locale={locale === "fr" ? "fr" : "en"} daycareId={listings[0].id} />
+      ) : null}
+      {desk === "tools" ? <CentreToolsDesk /> : null}
+      {desk === "care" ? <ProviderCareDesk daycareId={listings[0]?.id} owner={centreOwner} /> : null}
+      {desk === "staff" ? <EceJobDesk mode="staff" /> : null}
+      {desk === "stories" ? <LearningStoriesDesk /> : null}
+      {desk === "learning" ? <CurriculumPackDesk /> : null}
+      {desk === "sites" ? <OrgOccupancyDesk /> : null}
 
-          {desk === "promote" && !nativeShell ? (
-            <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">
-              {t("plansNotOffered")}
-            </p>
-          ) : null}
-        </Suspense>
-      </DeskShell>
+      {desk === "screening" ? <BackgroundCheckDesk /> : null}
+      {desk === "screening" ? <ProviderScreeningPanel /> : null}
+
+      {desk === "licence" && !centreOwner ? <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} /> : null}
+
+      {desk === "licence" && centreOwner ? (
+        !deskSettled ? null : deskListings.length === 0 ? (
+          <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
+            {t("providerOnboardingLead")}
+          </p>
+        ) : (
+          deskListings.map((d) => (
+            <section key={d.id} className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
+              <h2 className="font-display text-2xl">{storedCentreName(d.name, d.nameFr)}</h2>
+              <p className="mt-1 text-sm text-muted">{t("trustChecklistTitle")}</p>
+              <ListingReadinessCoach item={d} variant="card" />
+              <div className="mt-4">
+                <ProviderTrustChecklist daycare={d} onSaved={() => void load()} />
+              </div>
+              <div className="mt-6 border-t border-border pt-5">
+                <h3 className="font-display text-xl">{t("licenceRecord")}</h3>
+                <CapacityForm daycare={d} onSaved={() => load()} mode="licence" />
+              </div>
+            </section>
+          ))
+        )
+      ) : null}
+
+      {desk === "money" ? (
+        canBills ? (
+          <div className="space-y-6">
+            <ProviderMoneyPanel showPayouts={centreOwner} canEdit={canEditBills} />
+            {centreOwner && moneyChoice.needsPick ? (
+              <section className="rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="money-centre-pick">
+                <h2 className="font-display text-xl">{locale === "fr" ? "Choisissez un centre" : "Pick a centre"}</h2>
+                <p className="mt-2 text-sm text-muted">
+                  {locale === "fr"
+                    ? "QuickBooks est enregistré pour un centre à la fois."
+                    : "QuickBooks is saved for one centre at a time."}
+                </p>
+                <ul className="mt-3 space-y-1">
+                  {listings.map((row) => (
+                    <li key={row.id}>
+                      <Link
+                        to="/provider"
+                        search={{ ...search, desk: "money", centre: row.id }}
+                        className="inline-flex min-h-11 items-center font-medium text-primary"
+                      >
+                        {storedCentreName(row.name, row.nameFr)}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : centreOwner && moneyListing ? (
+              <div data-ke="money-centre-name">
+                <p className="text-sm text-muted">{storedCentreName(moneyListing.name, moneyListing.nameFr)}</p>
+                <QboPanel daycareId={moneyListing.id} />
+              </div>
+            ) : null}
+            {centreOwner ? <CwelccPanel /> : null}
+            {centreOwner ? <TaxReceiptStudio desk="centre" /> : null}
+          </div>
+        ) : (
+          <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} />
+        )
+      ) : null}
+
+      {desk === "contract" ? (
+        centreOwner ? (
+          <>
+            <ProviderContractsPanel />
+            <CentreAgreementEditor />
+          </>
+        ) : (
+          <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} />
+        )
+      ) : null}
+
+      {desk === "promote" && !nativeShell ? (
+        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>
+      ) : null}
+      </Suspense>
+    </DeskShell>
     </TwoFactorGate>
   );
 }
@@ -1610,27 +1337,15 @@ function OwnerOnlyNotice({ pending, unknown }: { pending: boolean; unknown: bool
   const fr = locale === "fr";
   if (pending) {
     return (
-      <p
-        className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border"
-        data-ke="owner-check-pending"
-        aria-busy="true"
-      >
+      <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="owner-check-pending" aria-busy="true">
         {fr ? "Vérification de votre accès…" : "Checking your access…"}
       </p>
     );
   }
   if (unknown) {
     return (
-      <div
-        className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border"
-        data-ke="owner-check-failed"
-        role="alert"
-      >
-        <p>
-          {fr
-            ? "Nous n’avons pas pu confirmer votre accès. Réessayez."
-            : "We couldn't confirm your access. Try again."}
-        </p>
+      <div className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="owner-check-failed" role="alert">
+        <p>{fr ? "Nous n’avons pas pu confirmer votre accès. Réessayez." : "We couldn't confirm your access. Try again."}</p>
         <button
           type="button"
           className="mt-3 inline-flex min-h-11 items-center font-medium text-primary"
@@ -1641,21 +1356,14 @@ function OwnerOnlyNotice({ pending, unknown }: { pending: boolean; unknown: bool
       </div>
     );
   }
-  return (
-    <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">
-      {t("employeeStaffForbidden")}
-    </p>
-  );
+  return <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>;
 }
 
 function ProviderOnboarding() {
   const { t } = useCopy();
   const nativeShell = useInNativeShell();
   return (
-    <section
-      className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20"
-      data-ke="provider-claim-only"
-    >
+    <section className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20" data-ke="provider-claim-only">
       <h2 className="font-display text-2xl">{t("providerOnboardingTitle")}</h2>
       <p className="mt-2 text-sm text-muted">{t("providerOnboardingLead")}</p>
       {nativeShell ? null : <p className="mt-2 text-sm font-medium">{t("listingStayFree")}</p>}
@@ -1688,11 +1396,7 @@ function RequestList({
   const { t } = useCopy();
   const agreements = useCentreAgreementChips();
   if (!items.length) {
-    return (
-      <p className="mt-4 rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
-        {empty}
-      </p>
-    );
+    return <p className="mt-4 rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{empty}</p>;
   }
   return (
     <ul className="mt-4 divide-y divide-border overflow-hidden rounded-xl bg-surface shadow-card ring-1 ring-border">
@@ -1707,10 +1411,8 @@ function RequestList({
                 <StatusBadge status={r.status} />
               </div>
               <p className="mt-1 text-sm text-muted">
-                {r.daycareName} ·{" "}
-                {r.birthdate ? formatAgeLabel(r.birthdate, locale as "en") : t(r.ageGroup)} ·{" "}
-                {formatStart(r.startDate ?? r.startMonth, locale as "en")} ·{" "}
-                {scheduleLabel(r.schedule, r.days, locale as "en")}
+                {r.daycareName} · {r.birthdate ? formatAgeLabel(r.birthdate, locale as "en") : t(r.ageGroup)} ·{" "}
+                {formatStart(r.startDate ?? r.startMonth, locale as "en")} · {scheduleLabel(r.schedule, r.days, locale as "en")}
               </p>
             </div>
             {r.conversationId ? (
@@ -1724,80 +1426,59 @@ function RequestList({
           {canWrite && r.parentUserId ? (
             <BlockFamilyButton parentUserId={r.parentUserId} daycareId={r.daycareId} />
           ) : null}
-          <ChildPacket
-            child={r.child}
-            allergies={r.allergies}
-            epiPen={r.epiPen}
-            note={r.parentNote}
-          />
+          <ChildPacket child={r.child} allergies={r.allergies} epiPen={r.epiPen} note={r.parentNote} />
           {canWrite ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {["accepted", "declined", "active", "cancelled"].includes(r.status) ? (
-                <p className="text-xs text-muted">
-                  {t("requestAlready").replace("{status}", requestStatusLabel(r.status, t))}
-                </p>
-              ) : (
-                <>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={r.status === "accepted" ? "primary" : "secondary"}
-                    onClick={() =>
-                      void onDecide(r.id, "approve").catch((err) => {
-                        const message = err instanceof Error ? err.message : "";
-                        toast.error(
-                          message === "portfolio:incomplete"
-                            ? portfolioCopy(locale).approveBlocked
-                            : message === "safety_blocked"
-                              ? custodyCopy(locale).blockedFamily
-                              : message || t("requestUpdateFailed"),
-                        );
-                      })
-                    }
-                  >
-                    {t("approveRequest")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={
-                      r.status === "under_review" || r.status === "requested"
-                        ? "primary"
-                        : "secondary"
-                    }
-                    onClick={() =>
-                      void onDecide(r.id, "waiting").catch((err) =>
-                        toast.error(err instanceof Error ? err.message : t("requestUpdateFailed")),
-                      )
-                    }
-                  >
-                    {t("waitingRequest")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={r.status === "declined" ? "primary" : "secondary"}
-                    onClick={() =>
-                      void onDecide(r.id, "decline").catch((err) =>
-                        toast.error(err instanceof Error ? err.message : t("requestUpdateFailed")),
-                      )
-                    }
-                  >
-                    {t("declineRequest")}
-                  </Button>
-                </>
-              )}
-            </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {["accepted", "declined", "active", "cancelled"].includes(r.status) ? (
+              <p className="text-xs text-muted">{t("requestAlready").replace("{status}", requestStatusLabel(r.status, t))}</p>
+            ) : (
+              <>
+            <Button
+              type="button"
+              size="sm"
+              variant={r.status === "accepted" ? "primary" : "secondary"}
+              onClick={() =>
+                void onDecide(r.id, "approve").catch((err) => {
+                  const message = err instanceof Error ? err.message : "";
+                  toast.error(
+                    message === "portfolio:incomplete"
+                      ? portfolioCopy(locale).approveBlocked
+                      : message === "safety_blocked"
+                        ? custodyCopy(locale).blockedFamily
+                        : message || t("requestUpdateFailed"),
+                  );
+                })
+              }
+            >
+              {t("approveRequest")}
+            </Button>
+            <Button
+              size="sm"
+              variant={r.status === "under_review" || r.status === "requested" ? "primary" : "secondary"}
+              onClick={() => void onDecide(r.id, "waiting").catch((err) => toast.error(err instanceof Error ? err.message : t("requestUpdateFailed")))}
+            >
+              {t("waitingRequest")}
+            </Button>
+            <Button
+              size="sm"
+              variant={r.status === "declined" ? "primary" : "secondary"}
+              onClick={() => void onDecide(r.id, "decline").catch((err) => toast.error(err instanceof Error ? err.message : t("requestUpdateFailed")))}
+            >
+              {t("declineRequest")}
+            </Button>
+              </>
+            )}
+          </div>
           ) : null}
-          {canWrite ? (
-            <CentreRequestGuard request={r} onChanged={onChanged ?? (() => undefined)} />
-          ) : null}
+          {canWrite ? <CentreRequestGuard request={r} onChanged={onChanged ?? (() => undefined)} /> : null}
           {canContracts ? (
-            <AgreementRequestAction
-              bookingId={r.id}
-              bookingStatus={r.status}
-              chip={agreements.chipFor(r.id)}
-              enabled={agreements.enabled}
-              onSent={agreements.refresh}
-            />
+          <AgreementRequestAction
+            bookingId={r.id}
+            bookingStatus={r.status}
+            chip={agreements.chipFor(r.id)}
+            enabled={agreements.enabled}
+            onSent={agreements.refresh}
+          />
           ) : null}
         </li>
       ))}
@@ -1842,8 +1523,7 @@ function ChildPacket({
     child?.napRoutine && `${t("packetNaps")}: ${child.napRoutine}`,
     child?.toilet && `${t("toilet")}: ${child.toilet}`,
     child?.homeLanguage && `${t("homeLanguage")}: ${child.homeLanguage}`,
-    child?.emergencyName &&
-      `${t("packetEmergency")}: ${child.emergencyName} ${child.emergencyPhone || ""}`.trim(),
+    child?.emergencyName && `${t("packetEmergency")}: ${child.emergencyName} ${child.emergencyPhone || ""}`.trim(),
     child?.pickupPeople && `${t("packetPickup")}: ${child.pickupPeople}`,
     note && `${t("packetNote")}: ${note}`,
   ].filter(Boolean) as string[];
@@ -1853,10 +1533,7 @@ function ChildPacket({
   return (
     <ul className="ph-no-capture mt-3 flex flex-wrap gap-1.5">
       {bits.map((b) => (
-        <li
-          key={b}
-          className="rounded-full bg-bg px-2.5 py-1 text-xs text-muted ring-1 ring-border"
-        >
+        <li key={b} className="rounded-full bg-bg px-2.5 py-1 text-xs text-muted ring-1 ring-border">
           {b}
         </li>
       ))}

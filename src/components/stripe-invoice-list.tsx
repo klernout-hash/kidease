@@ -84,15 +84,9 @@ export function StripeInvoiceList({
   return (
     <section className="space-y-4" data-ke="stripe-invoice-list">
       <div>
-        <Title className={asPage ? "font-display text-3xl md:text-5xl" : "font-display text-2xl"}>
-          {t("invoicesTitle")}
-        </Title>
-        <p className="mt-1 text-sm text-muted">
-          {t(daycare ? "invoicesDaycareLead" : "invoicesLead")}
-        </p>
-        <p className="mt-1 text-sm text-muted">
-          {t(daycare ? "invoicesDaycareNext" : "invoicesNext")}
-        </p>
+        <Title className={asPage ? "font-display text-3xl md:text-5xl" : "font-display text-2xl"}>{t("invoicesTitle")}</Title>
+        <p className="mt-1 text-sm text-muted">{t(daycare ? "invoicesDaycareLead" : "invoicesLead")}</p>
+        <p className="mt-1 text-sm text-muted">{t(daycare ? "invoicesDaycareNext" : "invoicesNext")}</p>
         <div className="no-print mt-3">
           <Button variant="secondary" asChild>
             <Link to={helpTo} data-ke="invoice-help">
@@ -102,9 +96,7 @@ export function StripeInvoiceList({
         </div>
       </div>
       {rows == null && !failed ? (
-        <p className="text-sm text-muted" role="status">
-          {t("loading")}
-        </p>
+        <p className="text-sm text-muted" role="status">{t("loading")}</p>
       ) : null}
       {failed && !rows ? (
         <EmptyState
@@ -133,39 +125,21 @@ export function StripeInvoiceList({
       {invoices.length ? (
         <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
           {invoices.map((invoice) => {
-            const money = formatInvoiceMoney(
-              invoice.amountCents,
-              invoice.currency,
-              locale === "fr" ? "fr" : "en",
-            );
+            const money = formatInvoiceMoney(invoice.amountCents, invoice.currency, locale === "fr" ? "fr" : "en");
             const payHref = invoice.payPath || invoice.hostedInvoiceUrl;
-            const canPay =
-              invoice.viewer !== "daycare" && invoice.status === "open" && Boolean(payHref);
+            const canPay = invoice.viewer !== "daycare" && invoice.status === "open" && Boolean(payHref);
             const primary = emphasizePay && canPay && !primaryUsed;
             if (primary) primaryUsed = true;
             return (
-              <li
-                key={invoice.id}
-                className="flex flex-wrap items-center justify-between gap-3 p-4"
-                data-ke="invoice-row"
-                data-status={invoice.status}
-              >
+              <li key={invoice.id} className="flex flex-wrap items-center justify-between gap-3 p-4" data-ke="invoice-row" data-status={invoice.status}>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     {invoice.payPath ? (
-                      <a
-                        href={invoice.payPath}
-                        className="font-medium underline-offset-4 hover:underline"
-                      >
+                      <a href={invoice.payPath} className="font-medium underline-offset-4 hover:underline">
                         {invoice.number}
                       </a>
                     ) : (
-                      <Link
-                        to={detailTo}
-                        params={{ id: invoice.id }}
-                        search={{}}
-                        className="font-medium underline-offset-4 hover:underline"
-                      >
+                      <Link to={detailTo} params={{ id: invoice.id }} search={{}} className="font-medium underline-offset-4 hover:underline">
                         {invoice.number}
                       </Link>
                     )}
@@ -199,12 +173,7 @@ export function StripeInvoiceList({
                     {t("invoiceDownloadPdf")}
                   </Button>
                   <Button size="md" variant="secondary" asChild>
-                    <Link
-                      to={detailTo}
-                      params={{ id: invoice.id }}
-                      search={{ print: "1" }}
-                      data-ke="invoice-print"
-                    >
+                    <Link to={detailTo} params={{ id: invoice.id }} search={{ print: "1" }} data-ke="invoice-print">
                       {t("invoicePrint")}
                     </Link>
                   </Button>
@@ -216,10 +185,7 @@ export function StripeInvoiceList({
       ) : null}
       {audience !== "all" && invoices.length ? (
         <p className="text-sm">
-          <Link
-            to={listTo}
-            className="font-semibold text-primary underline-offset-4 hover:underline"
-          >
+          <Link to={listTo} className="font-semibold text-primary underline-offset-4 hover:underline">
             {t("invoicesTitle")}
           </Link>
         </p>
@@ -230,12 +196,7 @@ export function StripeInvoiceList({
 
 function InvoiceBadge({ status }: { status: StripeInvoiceView["status"] }) {
   const { t } = useCopy();
-  const label =
-    status === "paid"
-      ? t("invoiceStatusPaid")
-      : status === "failed"
-        ? t("invoiceStatusFailed")
-        : t("invoiceStatusOpen");
+  const label = status === "paid" ? t("invoiceStatusPaid") : status === "failed" ? t("invoiceStatusFailed") : t("invoiceStatusOpen");
   const tone =
     status === "paid"
       ? "bg-ok/10 text-ok ring-ok/20"
@@ -243,10 +204,7 @@ function InvoiceBadge({ status }: { status: StripeInvoiceView["status"] }) {
         ? "bg-danger/10 text-danger ring-danger/20"
         : "bg-primary/10 text-primary ring-primary/20";
   return (
-    <span
-      data-ke="invoice-status"
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 ring-inset ${tone}`}
-    >
+    <span data-ke="invoice-status" className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 ring-inset ${tone}`}>
       {label}
     </span>
   );
@@ -257,41 +215,26 @@ export function InvoiceDetail({ invoice }: { invoice: StripeInvoiceView }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const listTo = isFrPath(pathname) ? "/fr/invoices" : "/invoices";
   const helpTo = isFrPath(pathname) ? "/fr/help" : "/help";
-  const money = formatInvoiceMoney(
-    invoice.amountCents,
-    invoice.currency,
-    locale === "fr" ? "fr" : "en",
-  );
+  const money = formatInvoiceMoney(invoice.amountCents, invoice.currency, locale === "fr" ? "fr" : "en");
   const paid = invoice.status === "paid";
-  const canPay =
-    invoice.viewer !== "daycare" && invoice.status === "open" && Boolean(invoice.hostedInvoiceUrl);
+  const canPay = invoice.viewer !== "daycare" && invoice.status === "open" && Boolean(invoice.hostedInvoiceUrl);
   return (
-    <article
-      className="relative rounded-xl bg-surface p-5 ring-1 ring-border"
-      data-ke="invoice-detail"
-    >
+    <article className="relative rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="invoice-detail">
       {paid ? (
-        <p
-          className="pointer-events-none absolute end-6 top-16 rotate-[-12deg] text-4xl font-black tracking-widest text-ok/70"
-          data-ke="invoice-stamp"
-        >
+        <p className="pointer-events-none absolute end-6 top-16 rotate-[-12deg] text-4xl font-black tracking-widest text-ok/70" data-ke="invoice-stamp">
           {t("invoiceStamp")}
         </p>
       ) : null}
       <p className="text-sm font-semibold text-primary">KidEase</p>
       <h1 className="mt-2 font-display text-3xl">{invoice.number}</h1>
       <p className="mt-2 text-sm text-muted">{t("invoicesLead")}</p>
-      <p className="mt-1 text-sm text-muted">
-        {paid ? t("invoicesDaycareNext") : t("invoicesNext")}
-      </p>
+      <p className="mt-1 text-sm text-muted">{paid ? t("invoicesDaycareNext") : t("invoicesNext")}</p>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <InvoiceBadge status={invoice.status} />
         {money ? <p className="font-display text-2xl tabular-nums">{money}</p> : null}
       </div>
       {invoice.daycareName ? <p className="mt-3 text-sm">{invoice.daycareName}</p> : null}
-      {invoice.paidAt ? (
-        <p className="mt-1 text-sm text-muted">{invoice.paidAt.slice(0, 10)}</p>
-      ) : null}
+      {invoice.paidAt ? <p className="mt-1 text-sm text-muted">{invoice.paidAt.slice(0, 10)}</p> : null}
       <div className="no-print mt-5 flex flex-wrap gap-2">
         {canPay && invoice.hostedInvoiceUrl ? (
           <Button asChild>
@@ -300,12 +243,7 @@ export function InvoiceDetail({ invoice }: { invoice: StripeInvoiceView }) {
             </a>
           </Button>
         ) : null}
-        <Button
-          variant="secondary"
-          type="button"
-          data-ke="invoice-pdf"
-          onClick={() => saveInvoicePdf(invoice, locale === "fr" ? "fr" : "en")}
-        >
+        <Button variant="secondary" type="button" data-ke="invoice-pdf" onClick={() => saveInvoicePdf(invoice, locale === "fr" ? "fr" : "en")}>
           {t("invoiceDownloadPdf")}
         </Button>
         <Button

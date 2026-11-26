@@ -3,37 +3,37 @@
  */
 
 const WIN: Record<string, number> = {
-  é: 0xe9,
-  è: 0xe8,
-  ê: 0xea,
-  ë: 0xeb,
-  à: 0xe0,
-  â: 0xe2,
-  ä: 0xe4,
-  ù: 0xf9,
-  û: 0xfb,
-  ü: 0xfc,
-  ç: 0xe7,
-  ô: 0xf4,
-  ö: 0xf6,
-  î: 0xee,
-  ï: 0xef,
-  É: 0xc9,
-  È: 0xc8,
-  Ê: 0xca,
-  À: 0xc0,
-  Â: 0xc2,
-  Ç: 0xc7,
-  Ô: 0xd4,
-  Ù: 0xd9,
-  Î: 0xce,
+  "é": 0xe9,
+  "è": 0xe8,
+  "ê": 0xea,
+  "ë": 0xeb,
+  "à": 0xe0,
+  "â": 0xe2,
+  "ä": 0xe4,
+  "ù": 0xf9,
+  "û": 0xfb,
+  "ü": 0xfc,
+  "ç": 0xe7,
+  "ô": 0xf4,
+  "ö": 0xf6,
+  "î": 0xee,
+  "ï": 0xef,
+  "É": 0xc9,
+  "È": 0xc8,
+  "Ê": 0xca,
+  "À": 0xc0,
+  "Â": 0xc2,
+  "Ç": 0xc7,
+  "Ô": 0xd4,
+  "Ù": 0xd9,
+  "Î": 0xce,
   "’": 0x92,
   "‘": 0x91,
   "“": 0x93,
   "”": 0x94,
   "…": 0x85,
-  œ: 0x9c,
-  Œ: 0x8c,
+  "œ": 0x9c,
+  "Œ": 0x8c,
   "€": 0x80,
   "–": 0x96,
   "—": 0x97,
@@ -94,8 +94,7 @@ export function renderTextPdf(lines: readonly string[]): Uint8Array {
     nextId += 1;
     pageObjectIds.push(pageId);
     const stream = pageStream(chunk.length ? chunk : [""]);
-    objects[contentId] =
-      `${contentId} 0 obj\n<< /Length ${stream.length} >>\nstream\n${stream}\nendstream\nendobj\n`;
+    objects[contentId] = `${contentId} 0 obj\n<< /Length ${stream.length} >>\nstream\n${stream}\nendstream\nendobj\n`;
     objects[pageId] =
       `${pageId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents ${contentId} 0 R /Resources << /Font << /F1 3 0 R >> >> >>\nendobj\n`;
   }

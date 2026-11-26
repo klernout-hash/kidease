@@ -178,7 +178,7 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
   const honesty = src("src/components/listing-status-badge.tsx");
   assert.match(honesty, /moneyModeLoading/);
   assert.match(honesty, /if \(!ready\)/);
-  const copy = src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.equal(tx("en", "moneyModeLoading"), "Checking payment details…");
   for (const locale of ["en", "fr"]) {
     assert.doesNotMatch(tx(locale, "moneyModeLoading"), /Stripe|live|en direct|test|keys|clés/i);
@@ -201,7 +201,7 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
   assert.match(inbox, /pay\/bill\/\$billId|payUseBill/);
   assert.doesNotMatch(inbox, /to="\/pay\/\$bookingId"/);
 
-  const admin = src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx");
+  const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(admin, /connectFeeAdminLive/);
   assert.doesNotMatch(admin, /about 3%/);
 

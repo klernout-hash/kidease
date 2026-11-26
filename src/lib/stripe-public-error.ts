@@ -62,20 +62,13 @@ export function redactStripeDetail(detail: string): string {
     .slice(0, 500);
 }
 
-export function mapCheckoutError(
-  err: unknown,
-  fallback = CHECKOUT_COULD_NOT_START,
-): {
+export function mapCheckoutError(err: unknown, fallback = CHECKOUT_COULD_NOT_START): {
   publicMessage: string;
   detail: string;
   passthrough: boolean;
 } {
   if (err instanceof CheckoutUserError) {
-    return {
-      publicMessage: err.message,
-      detail: redactStripeDetail(err.detail),
-      passthrough: false,
-    };
+    return { publicMessage: err.message, detail: redactStripeDetail(err.detail), passthrough: false };
   }
   if (err instanceof StripeApiError) {
     return {
@@ -88,11 +81,7 @@ export function mapCheckoutError(
   if (message && STRIPE_LEAK.test(message)) {
     return { publicMessage: fallback, detail: redactStripeDetail(message), passthrough: false };
   }
-  return {
-    publicMessage: message || fallback,
-    detail: redactStripeDetail(message || "unknown"),
-    passthrough: true,
-  };
+  return { publicMessage: message || fallback, detail: redactStripeDetail(message || "unknown"), passthrough: true };
 }
 
 /** Last line of defence in the browser if a server message still looks like Stripe. */

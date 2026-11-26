@@ -32,9 +32,7 @@ export function compareFeeAfterSubsidy(
   return locale === "fr" ? "Demandez au centre" : "Ask the centre";
 }
 
-function confirmedParentMonthly(
-  listing: ListingFeeInput & { fromPrice?: number | null },
-): number | null {
+function confirmedParentMonthly(listing: ListingFeeInput & { fromPrice?: number | null }): number | null {
   const fromCard = parentListingMonthlyFee(listing);
   if (fromCard != null) return fromCard;
   if (!listing.feeConfirmed && listing.feeConfidence !== "centre") return null;

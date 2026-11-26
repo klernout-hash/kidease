@@ -46,9 +46,11 @@ import { EMPTY_ATTENTION, type AttentionCounts } from "@/lib/attention";
 import { restoreDeadline, withinRestoreWindow } from "@/lib/account-delete";
 import { isViewAsReadOnly, readViewAsPublic } from "@/lib/view-as-public";
 
-export const ADMIN_PROMOTE_SQL = "update profiles set role = 'admin' where user_id = '…';";
+export const ADMIN_PROMOTE_SQL =
+  "update profiles set role = 'admin' where user_id = '…';";
 
-export const SUPPORT_PROMOTE_SQL = "update profiles set role = 'support' where user_id = '…';";
+export const SUPPORT_PROMOTE_SQL =
+  "update profiles set role = 'support' where user_id = '…';";
 
 export const SUPPORT_LEAD_PROMOTE_SQL =
   "update profiles set role = 'support_lead' where user_id = '…';";
@@ -138,14 +140,11 @@ async function loadAttention(
   unread: { all: number; family: number; centre: number },
   notificationUnread: number,
 ): Promise<AttentionCounts> {
-  const mine = await countOrZero(
-    () => sql<{ n: number }>`
+  const mine = await countOrZero(() => sql<{ n: number }>`
     select count(*)::int as n from lead_requests
     where user_id = ${userId} and status in ('requested', 'received')
-  `,
-  );
-  const centre = await countOrZero(
-    () => sql<{ n: number }>`
+  `);
+  const centre = await countOrZero(() => sql<{ n: number }>`
     select count(*)::int as n from lead_requests lr
     where lr.status in ('requested', 'received')
       and (
@@ -158,32 +157,24 @@ async function loadAttention(
           where m.user_id = ${userId} and m.daycare_id = lr.daycare_id and m.status = 'active'
         )
       )
-  `,
-  );
+  `);
   const isAdmin = stored === "admin";
   const signups = isAdmin
-    ? await countOrZero(
-        () => sql<{ n: number }>`
+    ? await countOrZero(() => sql<{ n: number }>`
         select count(*)::int as n from listing_claims where status = 'pending'
-      `,
-      )
+      `)
     : 0;
   const claims = isAdmin
-    ? await countOrZero(
-        () => sql<{ n: number }>`
+    ? await countOrZero(() => sql<{ n: number }>`
         select count(*)::int as n from listing_claims where status = 'waiting'
-      `,
-      )
+      `)
     : 0;
   const reviews = isAdmin
-    ? await countOrZero(
-        () => sql<{ n: number }>`
+    ? await countOrZero(() => sql<{ n: number }>`
         select count(*)::int as n from reviews where status = 'pending'
-      `,
-      )
+      `)
     : 0;
-  const messages =
-    stored === "provider" ? unread.centre : stored === "admin" ? unread.all : unread.family;
+  const messages = stored === "provider" ? unread.centre : stored === "admin" ? unread.all : unread.family;
   return {
     ...EMPTY_ATTENTION,
     messages,
@@ -272,10 +263,7 @@ export async function requireSupport(userId: string) {
 }
 
 /** Read-only consumers skip intake sends and cleanup; authorization checks still apply. */
-export async function resolveSessionDesks(
-  userId: string,
-  options: { readOnly?: boolean } = {},
-): Promise<SessionDesks> {
+export async function resolveSessionDesks(userId: string, options: { readOnly?: boolean } = {}): Promise<SessionDesks> {
   const sql = await getSql();
   const viewing = readViewAsPublic();
   if (!viewing) {
@@ -322,8 +310,7 @@ export async function resolveSessionDesks(
   const deletedPending = readDeletedAt(userId);
   // Mark them handled now so a rejection before its await cannot crash the
   // function (the real await below still sees the error).
-  for (const pending of [actorPending, unreadPending, deletedPending])
-    pending.catch(() => undefined);
+  for (const pending of [actorPending, unreadPending, deletedPending]) pending.catch(() => undefined);
   const owned = await ownsCentre(sql, userId);
   // Do not claim Parent Onboard here. A new profile defaults to parent, and
   // this loader runs for every signed-in page — including a daycare signup
@@ -332,9 +319,7 @@ export async function resolveSessionDesks(
   // runs once the stored role or an owned centre says this is a daycare.
   // View-as never files intake or closes an account.
   const intakePending =
-    !options.readOnly && !viewing && (stored === "provider" || owned)
-      ? claimProviderCrmIntake(userId)
-      : Promise.resolve();
+    !options.readOnly && !viewing && (stored === "provider" || owned) ? claimProviderCrmIntake(userId) : Promise.resolve();
   const { listMemberGrants } = await import("@/lib/server/centre-access");
   const [member, memberRoles, grantRows] = owned
     ? [false, [] as Array<{ role: string }>, [] as Awaited<ReturnType<typeof listMemberGrants>>]
@@ -346,24 +331,21 @@ export async function resolveSessionDesks(
         listMemberGrants(sql, userId),
       ]);
   const { maxCentreRole, parseCentreMemberRole } = await import("@/lib/centre-roles");
-  const centreRole = owned
-    ? ("owner" as const)
-    : maxCentreRole(memberRoles.map((row) => parseCentreMemberRole(row.role)));
+  const centreRole = owned ? ("owner" as const) : maxCentreRole(memberRoles.map((row) => parseCentreMemberRole(row.role)));
   const { grantsForMember, mergeGrants } = await import("@/lib/staff-permissions");
-  const centreGrants =
-    owned || !grantRows.length ? null : mergeGrants(grantRows.map((row) => grantsForMember(row)));
-  const centreCanInvite =
-    owned || grantRows.some((row) => row.role === "manager" || row.preset === "manager");
+  const centreGrants = owned || !grantRows.length ? null : mergeGrants(grantRows.map((row) => grantsForMember(row)));
+  const centreCanInvite = owned || grantRows.some((row) => row.role === "manager" || row.preset === "manager");
   const desks = desksFor({ role: stored, ownsCentre: owned || member });
   const deletedAt = await deletedPending;
   if (!viewing && deletedAt && !withinRestoreWindow(deletedAt)) {
     if (!options.readOnly) await purgeAccountIfExpired(userId);
     throw new Error("Account closed");
   }
-  const restoreUntil =
-    deletedAt && withinRestoreWindow(deletedAt) ? restoreDeadline(deletedAt).toISOString() : null;
-  const [{ all: unread, family: unreadFamily, centre: unreadCentre }, notificationUnread] =
-    await Promise.all([unreadPending, notificationPending]);
+  const restoreUntil = deletedAt && withinRestoreWindow(deletedAt) ? restoreDeadline(deletedAt).toISOString() : null;
+  const [{ all: unread, family: unreadFamily, centre: unreadCentre }, notificationUnread] = await Promise.all([
+    unreadPending,
+    notificationPending,
+  ]);
   const attention = await loadAttention(
     sql,
     userId,

@@ -3,11 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import {
-  flattenStripeBody,
-  setStripeFetchForTests,
-  stripeRequest,
-} from "../src/lib/server/stripe-checkout.ts";
+import { flattenStripeBody, setStripeFetchForTests, stripeRequest } from "../src/lib/server/stripe-checkout.ts";
 import { StripeApiError } from "../src/lib/stripe-public-error.ts";
 import {
   applicationFeeCents,
@@ -67,11 +63,7 @@ test("Connect fee is exactly 3% and tax stays off the application fee", () => {
   const taxed = feeTaxPlan({ KIDEASE_FEE_TAX_BPS: "500" });
   assert.equal(manualFeeTaxCents(200, taxed), 10);
   assert.equal(applicationFeeCents(10_000, 200), 200);
-  const charge = destinationChargeFields({
-    invoiceCents: 10_000,
-    destination: "acct_day",
-    bps: 200,
-  });
+  const charge = destinationChargeFields({ invoiceCents: 10_000, destination: "acct_day", bps: 200 });
   assert.equal(charge.application_fee_amount, 200);
   assert.equal(charge.on_behalf_of, "acct_day");
   assert.equal(charge.transfer_data.destination, "acct_day");
@@ -193,14 +185,10 @@ test("tax invoice is skipped unless a rate is configured", () => {
   assert.equal(monthlyFeeTaxLine({ plan: { kind: "none" }, feeCents: 200 }), null);
   assert.equal(monthlyFeeTaxLine({ plan: { kind: "stripe_tax" }, feeCents: 200 }), null);
   assert.equal(
-    monthlyFeeTaxLine({ plan: { kind: "stripe_tax" }, feeCents: 200, calculatedTaxCents: 10 })
-      ?.amount,
+    monthlyFeeTaxLine({ plan: { kind: "stripe_tax" }, feeCents: 200, calculatedTaxCents: 10 })?.amount,
     10,
   );
-  const manual = monthlyFeeTaxLine({
-    plan: { kind: "manual", rateId: "txr_ca", taxBps: 500 },
-    feeCents: 200,
-  });
+  const manual = monthlyFeeTaxLine({ plan: { kind: "manual", rateId: "txr_ca", taxBps: 500 }, feeCents: 200 });
   assert.equal(manual?.amount, 10);
   assert.equal(manual?.description, FEE_TAX_DESCRIPTION);
   assert.match(manual?.description, /Tax on KidEase fees/);
@@ -211,19 +199,11 @@ test("fee tax follows the daycare province, or Stripe Tax when that flag is on",
   assert.equal(PROVINCE_FEE_TAX.length, 13);
   assert.equal(feeTaxPlan({}).kind, "none");
   assert.deepEqual(
-    feeTaxPlan({
-      STRIPE_AUTOMATIC_TAX: "1",
-      KIDEASE_FEE_TAX_BPS: "500",
-      KIDEASE_FEE_TAX_MODE: "province",
-    }),
+    feeTaxPlan({ STRIPE_AUTOMATIC_TAX: "1", KIDEASE_FEE_TAX_BPS: "500", KIDEASE_FEE_TAX_MODE: "province" }),
     { kind: "stripe_tax" },
   );
   assert.equal(feeTaxPlan({ KIDEASE_FEE_TAX_BPS: "500" }).kind, "manual");
-  const table = feeTaxPlan({
-    KIDEASE_FEE_TAX_MODE: "province",
-    KIDEASE_FEE_TAX_BPS: "500",
-    STRIPE_FEE_TAX_RATE_ID: "txr_flat",
-  });
+  const table = feeTaxPlan({ KIDEASE_FEE_TAX_MODE: "province", KIDEASE_FEE_TAX_BPS: "500", STRIPE_FEE_TAX_RATE_ID: "txr_flat" });
   assert.equal(table.kind, "province");
   assert.equal(table.fallbackBps, 500);
   assert.equal(table.rateId, "txr_flat");
@@ -247,20 +227,14 @@ test("fee tax follows the daycare province, or Stripe Tax when that flag is on",
   assert.match(qc?.description, /QST 14.975%/);
   assert.match(qc?.description, /TVQ du Québec 14,975 %/);
   const noFallback = feeTaxPlan({ KIDEASE_FEE_TAX_MODE: "province" });
-  assert.equal(
-    monthlyFeeTaxLine({ plan: noFallback, feeCents: 10_000, province: "California" }),
-    null,
-  );
+  assert.equal(monthlyFeeTaxLine({ plan: noFallback, feeCents: 10_000, province: "California" }), null);
   assert.equal(monthlyFeeTaxLine({ plan: noFallback, feeCents: 10_000, province: "" }), null);
   const fallback = monthlyFeeTaxLine({ plan: table, feeCents: 10_000, province: "" });
   assert.equal(fallback?.amount, 500);
   assert.equal(fallback?.description, FEE_TAX_DESCRIPTION);
 
   const onTax = stripeTaxCalculationBody(10_000, { province: "ON", postalCode: "m5v2t6" });
-  const qcTax = stripeTaxCalculationBody(10_000, {
-    province: "Quebec",
-    postalCode: "not-a-postal",
-  });
+  const qcTax = stripeTaxCalculationBody(10_000, { province: "Quebec", postalCode: "not-a-postal" });
   const blank = stripeTaxCalculationBody(10_000, { province: "" });
   assert.equal(onTax.customer_details.address.country, "CA");
   assert.equal(onTax.customer_details.address.state, "ON");
@@ -332,14 +306,8 @@ test("live Connect keys need payments on and KIDEASE_CONNECT_LIVE=1", () => {
     STRIPE_PUBLISHABLE_KEY: "pk_live_example",
   };
   assert.deepEqual(connectChargeGate({ ...liveKeys }), { ok: false, reason: "off" });
-  assert.deepEqual(connectChargeGate({ KIDEASE_CONNECT_PAYMENTS: "on", ...liveKeys }), {
-    ok: false,
-    reason: "live",
-  });
-  assert.deepEqual(connectChargeGate({ KIDEASE_CONNECT_LIVE: "1", ...liveKeys }), {
-    ok: false,
-    reason: "off",
-  });
+  assert.deepEqual(connectChargeGate({ KIDEASE_CONNECT_PAYMENTS: "on", ...liveKeys }), { ok: false, reason: "live" });
+  assert.deepEqual(connectChargeGate({ KIDEASE_CONNECT_LIVE: "1", ...liveKeys }), { ok: false, reason: "off" });
   assert.deepEqual(
     connectChargeGate({ KIDEASE_CONNECT_PAYMENTS: "on", KIDEASE_CONNECT_LIVE: "0", ...liveKeys }),
     { ok: false, reason: "live" },
@@ -402,10 +370,7 @@ test("wallet save and invoices do not use a hosted page", () => {
   assert.equal(setup.usage, "off_session");
   assert.deepEqual(setup.payment_method_types, ["card", "acss_debit"]);
   assert.equal(setup.payment_method_options.acss_debit.currency, "cad");
-  assert.equal(
-    setup.payment_method_options.acss_debit.mandate_options.transaction_type,
-    "personal",
-  );
+  assert.equal(setup.payment_method_options.acss_debit.mandate_options.transaction_type, "personal");
   const settings = connectInvoicePaymentSettings();
   assert.deepEqual(settings.payment_method_types, ["card", "acss_debit"]);
   const invoice = parentInvoiceBody({
@@ -431,11 +396,7 @@ test("wallet save and invoices do not use a hosted page", () => {
   assert.equal(automatic.collection_method, "charge_automatically");
   assert.equal(automatic.default_payment_method, "pm_card");
   assert.deepEqual(automatic.payment_settings.payment_method_types, ["card", "acss_debit"]);
-  const stripped = withoutHostedInvoice({
-    id: "in_1",
-    hosted_invoice_url: "https://invoice.stripe.com/i/secret",
-    invoice_pdf: "https://files.stripe.com/secret",
-  });
+  const stripped = withoutHostedInvoice({ id: "in_1", hosted_invoice_url: "https://invoice.stripe.com/i/secret", invoice_pdf: "https://files.stripe.com/secret" });
   assert.equal("hosted_invoice_url" in stripped, false);
   assert.equal("invoice_pdf" in stripped, false);
   const account = connectedAccountBody();
@@ -454,47 +415,25 @@ test("wallet save and invoices do not use a hosted page", () => {
 });
 
 test("webhook shapes and saved methods come from Stripe, not invented numbers", () => {
-  assert.deepEqual(
-    classifyConnectEvent("account.updated", {
-      id: "acct_1",
-      charges_enabled: true,
-      payouts_enabled: false,
-      details_submitted: true,
-    }),
-    {
-      kind: "account",
-      accountId: "acct_1",
-      chargesEnabled: true,
-      payoutsEnabled: false,
-      detailsSubmitted: true,
-    },
-  );
+  assert.deepEqual(classifyConnectEvent("account.updated", { id: "acct_1", charges_enabled: true, payouts_enabled: false, details_submitted: true }), {
+    kind: "account",
+    accountId: "acct_1",
+    chargesEnabled: true,
+    payoutsEnabled: false,
+    detailsSubmitted: true,
+  });
   assert.equal(classifyConnectEvent("payout.paid", { id: "po_123" }).kind, "payout");
   assert.equal(classifyConnectEvent("payout.paid", { id: "1234" }).kind, "ignore");
-  assert.equal(
-    classifyConnectEvent("invoice.paid", {
-      id: "in_1",
-      metadata: { kidease: "fee_tax", daycare_id: "d1", period: "2026-10" },
-    }).kind,
-    "fee_tax",
-  );
+  assert.equal(classifyConnectEvent("invoice.paid", { id: "in_1", metadata: { kidease: "fee_tax", daycare_id: "d1", period: "2026-10" } }).kind, "fee_tax");
   assert.equal(shapeWalletMethod({ id: "pm_1" }, null), null);
   const card = shapeWalletMethod(
-    {
-      id: "pm_1",
-      type: "card",
-      card: { brand: "visa", last4: "4242", exp_month: 4, exp_year: 2028, wallet: null },
-      metadata: { nickname: "Daycare" },
-    },
+    { id: "pm_1", type: "card", card: { brand: "visa", last4: "4242", exp_month: 4, exp_year: 2028, wallet: null }, metadata: { nickname: "Daycare" } },
     "pm_1",
   );
   assert.equal(card?.last4, "4242");
   assert.equal(card?.nickname, "Daycare");
   assert.equal(card?.isDefault, true);
-  assert.deepEqual(
-    webhookSecrets({ STRIPE_WEBHOOK_SECRET: "whsec_a", STRIPE_CONNECT_WEBHOOK_SECRET: "whsec_a" }),
-    ["whsec_a"],
-  );
+  assert.deepEqual(webhookSecrets({ STRIPE_WEBHOOK_SECRET: "whsec_a", STRIPE_CONNECT_WEBHOOK_SECRET: "whsec_a" }), ["whsec_a"]);
 });
 
 test("Connect source does not hardcode live keys or merchant ids", () => {
@@ -527,13 +466,7 @@ const FAKE_KEYS = {
 };
 
 const QA_CENTRE = { id: "dc_qa", slug: "sunny-centre", visibility: "public", isTest: 1, isDemo: 0 };
-const LIVE_CENTRE = {
-  id: "dc_live",
-  slug: "real-centre",
-  visibility: "public",
-  isTest: 0,
-  isDemo: 0,
-};
+const LIVE_CENTRE = { id: "dc_live", slug: "real-centre", visibility: "public", isTest: 0, isDemo: 0 };
 const OWNER = { email: "owner@example.ca", isTest: 0 };
 
 function onboardingDeps(overrides = {}) {
@@ -543,13 +476,7 @@ function onboardingDeps(overrides = {}) {
     daycareId: "dc_qa",
     ownsCentre: async () => true,
     route: async () =>
-      routeStripeCall({
-        paymentsEnabled: true,
-        liveEnabled: true,
-        payer: OWNER,
-        centre: QA_CENTRE,
-        env: FAKE_KEYS,
-      }),
+      routeStripeCall({ paymentsEnabled: true, liveEnabled: true, payer: OWNER, centre: QA_CENTRE, env: FAKE_KEYS }),
     existingAccountId: async () => null,
     saveAccount: async (id) => {
       calls.saved.push(id);
@@ -587,13 +514,7 @@ test("A1: a live centre with KIDEASE_CONNECT_LIVE=1 is live with the pk_live_ ke
   const { deps } = onboardingDeps({
     daycareId: "dc_live",
     route: async () =>
-      routeStripeCall({
-        paymentsEnabled: true,
-        liveEnabled: connectLiveEnabled({ KIDEASE_CONNECT_LIVE: "1" }),
-        payer: OWNER,
-        centre: LIVE_CENTRE,
-        env: FAKE_KEYS,
-      }),
+      routeStripeCall({ paymentsEnabled: true, liveEnabled: connectLiveEnabled({ KIDEASE_CONNECT_LIVE: "1" }), payer: OWNER, centre: LIVE_CENTRE, env: FAKE_KEYS }),
   });
   const res = await runConnectOnboarding(deps);
   assert.equal(res.ok, true);
@@ -602,43 +523,18 @@ test("A1: a live centre with KIDEASE_CONNECT_LIVE=1 is live with the pk_live_ ke
 });
 
 test("A1: off, live and missing keys stay separate reasons and are logged", async () => {
-  const off = onboardingDeps({
-    route: async () =>
-      routeStripeCall({
-        paymentsEnabled: false,
-        liveEnabled: true,
-        payer: OWNER,
-        centre: LIVE_CENTRE,
-        env: FAKE_KEYS,
-      }),
-  });
+  const off = onboardingDeps({ route: async () => routeStripeCall({ paymentsEnabled: false, liveEnabled: true, payer: OWNER, centre: LIVE_CENTRE, env: FAKE_KEYS }) });
   assert.equal((await runConnectOnboarding(off.deps)).reason, "off");
   assert.equal(off.calls.records[0].surface, "connect_onboarding");
 
-  const live = onboardingDeps({
-    route: async () =>
-      routeStripeCall({
-        paymentsEnabled: true,
-        liveEnabled: false,
-        payer: OWNER,
-        centre: LIVE_CENTRE,
-        env: FAKE_KEYS,
-      }),
-  });
+  const live = onboardingDeps({ route: async () => routeStripeCall({ paymentsEnabled: true, liveEnabled: false, payer: OWNER, centre: LIVE_CENTRE, env: FAKE_KEYS }) });
   const liveRes = await runConnectOnboarding(live.deps);
   assert.equal(liveRes.reason, "live");
   assert.equal(liveRes.mode, "live");
   assert.equal(live.calls.stripe.length, 0);
 
   const missing = onboardingDeps({
-    route: async () =>
-      routeStripeCall({
-        paymentsEnabled: true,
-        liveEnabled: true,
-        payer: OWNER,
-        centre: QA_CENTRE,
-        env: { STRIPE_SECRET_KEY: "sk_live_xxx", STRIPE_PUBLISHABLE_KEY: "pk_live_xxx" },
-      }),
+    route: async () => routeStripeCall({ paymentsEnabled: true, liveEnabled: true, payer: OWNER, centre: QA_CENTRE, env: { STRIPE_SECRET_KEY: "sk_live_xxx", STRIPE_PUBLISHABLE_KEY: "pk_live_xxx" } }),
   });
   const missingRes = await runConnectOnboarding(missing.deps);
   assert.equal(missingRes.reason, "missing");
@@ -659,9 +555,7 @@ test("A1: a non-owner gets not_owner, not missing", async () => {
 test("A1: a Stripe error returns stripe_error with its code and records connect_onboarding", async () => {
   const { deps, calls } = onboardingDeps({
     stripePost: async () => {
-      const err = new Error(
-        "Your platform needs to accept the platform-controls profile. sk_test_abcdefgh123",
-      );
+      const err = new Error("Your platform needs to accept the platform-controls profile. sk_test_abcdefgh123");
       err.code = "platform_account_required";
       throw err;
     },
@@ -676,15 +570,9 @@ test("A1: a Stripe error returns stripe_error with its code and records connect_
   assert.equal(stripeErrorCode({ code: "Bad Code!" }), "unknown");
   assert.equal(stripeErrorCode({ type: "invalid_request_error" }), "invalid_request_error");
   assert.equal(stripeErrorCode({ param: "controller" }), "controller");
-  assert.equal(
-    stripeErrorCode({ param: "controller[losses][payments]" }),
-    "controller_losses_payments",
-  );
+  assert.equal(stripeErrorCode({ param: "controller[losses][payments]" }), "controller_losses_payments");
   assert.equal(stripeErrorCode({ status: 400 }), "http_400");
-  assert.equal(
-    stripeErrorCode({ code: "account_invalid", param: "controller", status: 400 }),
-    "account_invalid",
-  );
+  assert.equal(stripeErrorCode({ code: "account_invalid", param: "controller", status: 400 }), "account_invalid");
   assert.equal(stripeErrorCode({ code: "Bad Code!", status: 400 }), "http_400");
 });
 
@@ -692,10 +580,7 @@ test("A1: StripeApiError keeps a sanitised type and param, and onboarding never 
   // The Nov 25 failure: Stripe sent type + message but no code.
   const stripeMessage =
     "When controlling requirement collection, the Connect application must also control losses, fees, and specify a dashboard type of none.";
-  const err = new StripeApiError(stripeMessage, 400, undefined, {
-    type: "invalid_request_error",
-    param: "controller",
-  });
+  const err = new StripeApiError(stripeMessage, 400, undefined, { type: "invalid_request_error", param: "controller" });
   assert.equal(err.code, null);
   assert.equal(err.type, "invalid_request_error");
   assert.equal(err.param, "controller");
@@ -704,10 +589,7 @@ test("A1: StripeApiError keeps a sanitised type and param, and onboarding never 
   assert.equal(stripeErrorCode(typeOnly), "invalid_request_error");
   const statusOnly = new StripeApiError(stripeMessage, 502, null);
   assert.equal(stripeErrorCode(statusOnly), "http_502");
-  const dirty = new StripeApiError(stripeMessage, 400, null, {
-    type: "Has spaces and acct_123 text!",
-    param: "x".repeat(80),
-  });
+  const dirty = new StripeApiError(stripeMessage, 400, null, { type: "Has spaces and acct_123 text!", param: "x".repeat(80) });
   assert.equal(dirty.type, null);
   assert.equal(dirty.param, null);
   const { deps } = onboardingDeps({
@@ -723,18 +605,11 @@ test("A1: StripeApiError keeps a sanitised type and param, and onboarding never 
 });
 
 test("A1: stripeRequest passes Stripe's error type and param to StripeApiError", async () => {
-  setStripeFetchForTests(
-    async () =>
-      new Response(
-        JSON.stringify({
-          error: {
-            type: "invalid_request_error",
-            param: "controller[losses][payments]",
-            message: "Nope.",
-          },
-        }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
-      ),
+  setStripeFetchForTests(async () =>
+    new Response(
+      JSON.stringify({ error: { type: "invalid_request_error", param: "controller[losses][payments]", message: "Nope." } }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    ),
   );
   try {
     await assert.rejects(
@@ -777,10 +652,7 @@ test("A1: earnings-payouts starts Connect.js with the session's key, not connect
   const src = read("src/components/earnings-payouts.tsx");
   assert.doesNotMatch(src, /loadConnectInstance\(\s*publishableKey/);
   assert.doesNotMatch(src, /connect\?*\.publishableKey/);
-  assert.match(
-    src,
-    /loadConnectInstance\(first\.publishableKey, firstSecretOnce\(first\.clientSecret/,
-  );
+  assert.match(src, /loadConnectInstance\(first\.publishableKey, firstSecretOnce\(first\.clientSecret/);
   assert.match(src, /withReauth\(/);
   const server = read("src/lib/server/connect-payments.ts");
   assert.match(server, /runConnectOnboarding\(\{/);

@@ -150,22 +150,14 @@ export function automationLiveEnv(flag: string): string {
  * Flag on, without FEATURE_*_LIVE → dry-run (log the intended send).
  * Both on → live. A request dry-run always wins over live.
  */
-export function automationMode(
-  flagOn: boolean,
-  liveRaw: string | undefined | null,
-  requestDryRun = false,
-): AutomationMode {
+export function automationMode(flagOn: boolean, liveRaw: string | undefined | null, requestDryRun = false): AutomationMode {
   if (!flagOn) return "off";
   if (requestDryRun) return "dry_run";
   if (envFlagOn(liveRaw)) return "live";
   return "dry_run";
 }
 
-export function automationModeFromEnv(
-  flag: NewAutomationFlag,
-  env: EnvMap,
-  requestDryRun = false,
-): AutomationMode {
+export function automationModeFromEnv(flag: NewAutomationFlag, env: EnvMap, requestDryRun = false): AutomationMode {
   const on = envFlagOn(env[flag]);
   return automationMode(on, env[automationLiveEnv(flag)], requestDryRun);
 }
@@ -190,22 +182,13 @@ export function recipientAllowed(email: string, allowlist: string[] | null): boo
 export function automationZone(zone?: string | null, province?: string | null): string {
   const trimmed = String(zone || "").trim();
   if (isValidTimeZone(trimmed)) return trimmed;
-  const fromProvince =
-    PROVINCE_TIME_ZONE[
-      String(province || "")
-        .trim()
-        .toUpperCase()
-    ];
+  const fromProvince = PROVINCE_TIME_ZONE[String(province || "").trim().toUpperCase()];
   if (fromProvince && isValidTimeZone(fromProvince)) return fromProvince;
   return AUTOMATION_FALLBACK_TZ;
 }
 
 /** 9pm–8am in the recipient's zone. Unknown zone uses Winnipeg so we do not send at night. */
-export function automationQuietNow(
-  now: Date,
-  zone?: string | null,
-  province?: string | null,
-): boolean {
+export function automationQuietNow(now: Date, zone?: string | null, province?: string | null): boolean {
   return quietHourInZone(now, automationZone(zone, province));
 }
 
@@ -220,10 +203,7 @@ export function isCommercialAutomation(automation: string): boolean {
   return (COMMERCIAL_AUTOMATIONS as readonly string[]).includes(automation);
 }
 
-export function dedupeDecision(alreadySent: boolean): {
-  send: boolean;
-  reason: "ok" | "duplicate";
-} {
+export function dedupeDecision(alreadySent: boolean): { send: boolean; reason: "ok" | "duplicate" } {
   if (alreadySent) return { send: false, reason: "duplicate" };
   return { send: true, reason: "ok" };
 }
@@ -233,12 +213,8 @@ export function weeklyCapAllows(sentInWindow: number, cap = AUTOMATION_WEEKLY_CA
   return sentInWindow < cap;
 }
 
-export function claimDailyCapAllows(
-  sentToday: number,
-  cap = CLAIM_REMINDER_DAILY_CAP_DEFAULT,
-): boolean {
-  const limit =
-    Number.isFinite(cap) && cap > 0 ? Math.floor(cap) : CLAIM_REMINDER_DAILY_CAP_DEFAULT;
+export function claimDailyCapAllows(sentToday: number, cap = CLAIM_REMINDER_DAILY_CAP_DEFAULT): boolean {
+  const limit = Number.isFinite(cap) && cap > 0 ? Math.floor(cap) : CLAIM_REMINDER_DAILY_CAP_DEFAULT;
   return sentToday < limit;
 }
 
@@ -249,7 +225,8 @@ export function parseDailyCap(raw: string | undefined | null): number {
 }
 
 export type SmsGate =
-  { ok: true } | { ok: false; reason: "sms_off" | "no_consent" | "blocked" | "quiet" };
+  | { ok: true }
+  | { ok: false; reason: "sms_off" | "no_consent" | "blocked" | "quiet" };
 
 /** SMS leaves only with FEATURE_SMS, stored CASL consent, and outside quiet hours. */
 export function smsAutomationGate(input: {
@@ -304,28 +281,13 @@ export function weekKey(now: Date, zone = AUTOMATION_FALLBACK_TZ): string {
   return noon.toISOString().slice(0, 10);
 }
 
-const PAID = new Set([
-  "paid",
-  "void",
-  "refunded",
-  "draft",
-  "uncollectible",
-  "canceled",
-  "cancelled",
-]);
+const PAID = new Set(["paid", "void", "refunded", "draft", "uncollectible", "canceled", "cancelled"]);
 const FAILED = new Set(["past_due", "payment_failed", "failed"]);
 const OPENABLE = new Set(["sent", "open", "unpaid", "past_due", "payment_failed", "failed"]);
 
-export function invoiceClosed(
-  status: string | null | undefined,
-  paidAt: string | null | undefined,
-): boolean {
+export function invoiceClosed(status: string | null | undefined, paidAt: string | null | undefined): boolean {
   if (paidAt && String(paidAt).trim()) return true;
-  return PAID.has(
-    String(status || "")
-      .trim()
-      .toLowerCase(),
-  );
+  return PAID.has(String(status || "").trim().toLowerCase());
 }
 
 export function invoiceReminderStage(
@@ -379,9 +341,7 @@ export function planInvoiceMail(input: {
   dunningOn: boolean;
 }): InvoicePlan {
   if (invoiceClosed(input.status, input.paidAt)) return { kind: "stop", reason: "paid" };
-  const status = String(input.status || "")
-    .trim()
-    .toLowerCase();
+  const status = String(input.status || "").trim().toLowerCase();
   if (!OPENABLE.has(status)) return { kind: "stop", reason: "draft" };
   const failed = FAILED.has(status) || input.paymentState === "failed";
   if (input.dunningOn && failed) {
@@ -412,8 +372,7 @@ export function listingPhotoMissing(photos: string | null | undefined): boolean 
 export function hoursMissing(hours: string | null | undefined): boolean {
   const value = String(hours || "").trim();
   if (!value || value === "—" || value === "-") return true;
-  if (/^hours not/i.test(value) || /^see (the )?centre/i.test(value) || /^tbd$/i.test(value))
-    return true;
+  if (/^hours not/i.test(value) || /^see (the )?centre/i.test(value) || /^tbd$/i.test(value)) return true;
   return value.length < 4;
 }
 
@@ -477,10 +436,7 @@ export function parentChildProfileMissing(completeChildren: number): boolean {
 
 const ONBOARD_DAY: Record<OnboardStep, number> = { d0: 0, d2: 2, d7: 7 };
 
-export function onboardingStep(
-  claimedAt: string | null | undefined,
-  today: string,
-): OnboardStep | null {
+export function onboardingStep(claimedAt: string | null | undefined, today: string): OnboardStep | null {
   const claimed = calendarDay(claimedAt);
   if (!claimed) return null;
   const age = daysBetweenDates(claimed, today);
@@ -493,13 +449,7 @@ export function onboardingStep(
   return null;
 }
 
-const BLOCKED_EMAIL_HOSTS = new Set([
-  "example.com",
-  "example.org",
-  "example.net",
-  "test.com",
-  "localhost",
-]);
+const BLOCKED_EMAIL_HOSTS = new Set(["example.com", "example.org", "example.net", "test.com", "localhost"]);
 
 /** Published centre email. Not a KidEase mailbox and not a placeholder host. */
 export function isPublicBusinessEmail(raw: string | null | undefined): boolean {
@@ -527,12 +477,8 @@ export function claimReminderPlan(input: {
   if (!isPublicBusinessEmail(input.email)) return { send: false, reason: "not_due", dedupeKey };
   if (input.suppressed) return { send: false, reason: "suppressed", dedupeKey };
   if (input.sentCount >= CLAIM_REMINDER_MAX) return { send: false, reason: "complete", dedupeKey };
-  if (!claimDailyCapAllows(input.sentToday, input.dailyCap))
-    return { send: false, reason: "daily_cap", dedupeKey };
-  if (
-    input.lastSentMs != null &&
-    input.nowMs - input.lastSentMs < CLAIM_REMINDER_GAP_DAYS * DAY_MS
-  ) {
+  if (!claimDailyCapAllows(input.sentToday, input.dailyCap)) return { send: false, reason: "daily_cap", dedupeKey };
+  if (input.lastSentMs != null && input.nowMs - input.lastSentMs < CLAIM_REMINDER_GAP_DAYS * DAY_MS) {
     return { send: false, reason: "duplicate", dedupeKey };
   }
   return { send: true, reason: "ok", dedupeKey };
@@ -613,9 +559,9 @@ export function backupObjectKey(day: string): string {
   return `backups/neon/${day}.dump`;
 }
 
-export function pgConnEnv(
-  databaseUrl: string | undefined | null,
-): { ok: true; env: Record<string, string> } | { ok: false; error: "missing" | "not_postgres" } {
+export function pgConnEnv(databaseUrl: string | undefined | null):
+  | { ok: true; env: Record<string, string> }
+  | { ok: false; error: "missing" | "not_postgres" } {
   const raw = String(databaseUrl || "").trim();
   if (!raw) return { ok: false, error: "missing" };
   let url: URL;
@@ -657,10 +603,7 @@ function esc(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-export function caslMailFooter(
-  locale: AutomationLocale,
-  basis: string,
-): { text: string; html: string } {
+export function caslMailFooter(locale: AutomationLocale, basis: string): { text: string; html: string } {
   const unsub = `${AUTOMATION_ORIGIN}${CASL_SENDER.unsubscribePath}`;
   if (locale === "fr") {
     const text = `\n\n${basis}\nKidEase · ${CASL_SENDER.city}\n${CASL_SENDER.email}\nSe désabonner : ${unsub}\n`;
@@ -678,14 +621,7 @@ export function localePrefix(locale: AutomationLocale): string {
 
 export function providerFixHref(locale: AutomationLocale, field: MissingField | "vacancy"): string {
   const desk = field === "licence" ? "licence" : "listings";
-  const focus =
-    field === "contact"
-      ? ""
-      : field === "licence"
-        ? "license"
-        : field === "photos"
-          ? "photo"
-          : field;
+  const focus = field === "contact" ? "" : field === "licence" ? "license" : field === "photos" ? "photo" : field;
   const params = new URLSearchParams({ desk });
   if (focus) params.set("focus", focus);
   return `${AUTOMATION_ORIGIN}${localePrefix(locale)}/provider?${params.toString()}`;
@@ -935,9 +871,7 @@ export function invoiceLetter(input: {
 }): AutomationLetter {
   const fr = input.locale === "fr";
   if (input.kind === "dunning" && input.billId) {
-    const subject = fr
-      ? `Paiement refusé pour la facture ${input.number}`
-      : `Payment didn't go through for bill ${input.number}`;
+    const subject = fr ? `Paiement refusé pour la facture ${input.number}` : `Payment didn't go through for bill ${input.number}`;
     const update = updateCardHref(input.locale, input.billId);
     return automationLetter(
       subject,
@@ -1074,9 +1008,7 @@ export function opsDigestLetter(input: {
   failures: string[];
   critical: boolean;
 }): { subject: string; text: string; html: string } {
-  const subject = input.critical
-    ? "KidEase alert: a job failed or errors spiked"
-    : "KidEase daily automation digest";
+  const subject = input.critical ? "KidEase alert: a job failed or errors spiked" : "KidEase daily automation digest";
   const failureLine = input.failures.length ? input.failures.join(", ") : "none";
   const text = [
     input.critical
@@ -1095,48 +1027,13 @@ export function cronHeartbeatEnv(job: string): string {
 }
 
 export const AUTOMATION_CRONS = [
-  {
-    job: "ops-alerts",
-    path: "/api/automations?job=ops-alerts",
-    vercel: "5 * * * *",
-    inngest: "TZ=America/Winnipeg 5 * * * *",
-  },
-  {
-    job: "invoice-reminders",
-    path: "/api/automations?job=invoice-reminders",
-    vercel: "30 13 * * *",
-    inngest: "TZ=America/Winnipeg 30 8 * * *",
-  },
-  {
-    job: "listing-reminders",
-    path: "/api/automations?job=listing-reminders",
-    vercel: "45 14 * * *",
-    inngest: "TZ=America/Winnipeg 45 9 * * *",
-  },
-  {
-    job: "stale-open-spots",
-    path: "/api/automations?job=stale-open-spots",
-    vercel: "15 15 * * *",
-    inngest: "TZ=America/Winnipeg 15 10 * * *",
-  },
-  {
-    job: "tour-followups",
-    path: "/api/automations?job=tour-followups",
-    vercel: "25 * * * *",
-    inngest: "TZ=America/Winnipeg 25 * * * *",
-  },
-  {
-    job: "neon-backup",
-    path: "/api/automations?job=neon-backup",
-    vercel: "30 8 * * 0",
-    inngest: "TZ=America/Winnipeg 30 2 * * 0",
-  },
-  {
-    job: "care-reminders",
-    path: "/api/automations?job=care-reminders",
-    vercel: "*/5 * * * *",
-    inngest: "TZ=America/Winnipeg */5 * * * *",
-  },
+  { job: "ops-alerts", path: "/api/automations?job=ops-alerts", vercel: "5 * * * *", inngest: "TZ=America/Winnipeg 5 * * * *" },
+  { job: "invoice-reminders", path: "/api/automations?job=invoice-reminders", vercel: "30 13 * * *", inngest: "TZ=America/Winnipeg 30 8 * * *" },
+  { job: "listing-reminders", path: "/api/automations?job=listing-reminders", vercel: "45 14 * * *", inngest: "TZ=America/Winnipeg 45 9 * * *" },
+  { job: "stale-open-spots", path: "/api/automations?job=stale-open-spots", vercel: "15 15 * * *", inngest: "TZ=America/Winnipeg 15 10 * * *" },
+  { job: "tour-followups", path: "/api/automations?job=tour-followups", vercel: "25 * * * *", inngest: "TZ=America/Winnipeg 25 * * * *" },
+  { job: "neon-backup", path: "/api/automations?job=neon-backup", vercel: "30 8 * * 0", inngest: "TZ=America/Winnipeg 30 2 * * 0" },
+  { job: "care-reminders", path: "/api/automations?job=care-reminders", vercel: "*/5 * * * *", inngest: "TZ=America/Winnipeg */5 * * * *" },
 ] as const;
 
 export type AutomationCronJob = (typeof AUTOMATION_CRONS)[number]["job"];

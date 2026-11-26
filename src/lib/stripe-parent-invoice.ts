@@ -14,8 +14,7 @@ import { formatCad } from "./cad-format.ts";
 
 export type InvoiceLocale = "en" | "fr";
 export type ParentInvoiceStatus = "open" | "paid" | "failed";
-export type ParentInvoiceEventType =
-  "invoice.finalized" | "invoice.paid" | "invoice.payment_failed";
+export type ParentInvoiceEventType = "invoice.finalized" | "invoice.paid" | "invoice.payment_failed";
 
 export type InvoiceParty = {
   userId: string | null;
@@ -67,12 +66,7 @@ export type ParentInvoicePlan = {
   notices: PlannedInvoiceNotice[];
 };
 
-export function invoiceNoticeKey(
-  eventId: string,
-  audience: string,
-  channel: string,
-  address: string,
-): string {
+export function invoiceNoticeKey(eventId: string, audience: string, channel: string, address: string): string {
   return `${eventId}:${audience}:${channel}:${address.trim().toLowerCase()}`.slice(0, 240);
 }
 
@@ -111,11 +105,7 @@ export function invoiceStatusLabel(status: ParentInvoiceStatus, locale: InvoiceL
   return "Open";
 }
 
-export function formatInvoiceMoney(
-  cents: number | null,
-  currency: string,
-  locale: InvoiceLocale,
-): string | null {
+export function formatInvoiceMoney(cents: number | null, currency: string, locale: InvoiceLocale): string | null {
   if (cents == null || !Number.isFinite(cents)) return null;
   const code = /^[a-z]{3}$/i.test(currency) ? currency.toUpperCase() : "CAD";
   if (code === "CAD") return formatCad(cents / 100, locale === "fr" ? "fr-CA" : "en-CA");
@@ -154,11 +144,7 @@ export function planParentInvoice(input: {
   if (parsed.skip) return { outcome: "ignore", reason: parsed.skip, invoice: null, notices: [] };
 
   const type = input.type;
-  if (
-    type !== "invoice.finalized" &&
-    type !== "invoice.paid" &&
-    type !== "invoice.payment_failed"
-  ) {
+  if (type !== "invoice.finalized" && type !== "invoice.paid" && type !== "invoice.payment_failed") {
     return { outcome: "ignore", reason: "type", invoice: null, notices: [] };
   }
 
@@ -216,16 +202,7 @@ function pushParty(
   const money = formatInvoiceMoney(invoice.amountCents, invoice.currency, locale);
   const when = formatWhen(invoice.paidAt, locale, now);
   if (email) {
-    const copy = emailCopy({
-      kind,
-      locale,
-      number: invoice.number,
-      money,
-      when,
-      appUrl,
-      payUrl: invoice.hostedInvoiceUrl,
-      pdfUrl: invoice.invoicePdf,
-    });
+    const copy = emailCopy({ kind, locale, number: invoice.number, money, when, appUrl, payUrl: invoice.hostedInvoiceUrl, pdfUrl: invoice.invoicePdf });
     notices.push({
       audience,
       channel: "email",
@@ -245,15 +222,7 @@ function pushParty(
     smsBlocked: party.smsBlocked,
     quiet: quietHourInZone(now, party.timeZone),
   });
-  const body = smsBody({
-    kind,
-    locale,
-    number: invoice.number,
-    money,
-    when,
-    appUrl,
-    payUrl: invoice.hostedInvoiceUrl,
-  });
+  const body = smsBody({ kind, locale, number: invoice.number, money, when, appUrl, payUrl: invoice.hostedInvoiceUrl });
   if (sms.action === "skip") {
     notices.push({
       audience,
@@ -338,19 +307,12 @@ function parseInvoiceObject(
   if (kidease === "fee_tax") {
     return emptyParsed(id, "fee_tax");
   }
-  const parentUserId =
-    cleanId(links?.parentUserId) || cleanId(meta.parent_user_id) || cleanId(meta.parentUserId);
-  const daycareId =
-    cleanId(links?.daycareId) || cleanId(meta.daycare_id) || cleanId(meta.daycareId);
+  const parentUserId = cleanId(links?.parentUserId) || cleanId(meta.parent_user_id) || cleanId(meta.parentUserId);
+  const daycareId = cleanId(links?.daycareId) || cleanId(meta.daycare_id) || cleanId(meta.daycareId);
   const billId = cleanId(meta.bill_id) || cleanId(meta.billId);
-  const linked = Boolean(
-    parentUserId || daycareId || billId || kidease === "bill" || kidease === "parent_invoice",
-  );
+  const linked = Boolean(parentUserId || daycareId || billId || kidease === "bill" || kidease === "parent_invoice");
   const subscription = row.subscription;
-  const hasSubscription =
-    typeof subscription === "string"
-      ? subscription.trim() !== ""
-      : Boolean(subscription && typeof subscription === "object");
+  const hasSubscription = typeof subscription === "string" ? subscription.trim() !== "" : Boolean(subscription && typeof subscription === "object");
   if (hasSubscription && !linked) return emptyParsed(id, "subscription");
   const transitions = asRecord(row.status_transitions);
   const paidUnix = typeof transitions?.paid_at === "number" ? transitions.paid_at : null;
@@ -466,9 +428,7 @@ function emailCopy(input: {
           `View the invoice in KidEase: ${input.appUrl}`,
         ];
   } else if (input.kind === "failed") {
-    subject = fr
-      ? `Paiement échoué pour la facture ${number}`
-      : `Payment failed for invoice ${number}`;
+    subject = fr ? `Paiement échoué pour la facture ${number}` : `Payment failed for invoice ${number}`;
     lines = fr
       ? [
           `Le paiement de la facture ${number} n’est pas passé.`,

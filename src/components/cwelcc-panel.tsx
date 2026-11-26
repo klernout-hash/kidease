@@ -52,11 +52,7 @@ export function CwelccPanel() {
       }),
     [province, participating, eligible, full, prior, tenDollar, reduction],
   );
-  const subsidies = applySubsidies(
-    fee.parentCents,
-    dollarsToCents(provincial),
-    dollarsToCents(municipal),
-  );
+  const subsidies = applySubsidies(fee.parentCents, dollarsToCents(provincial), dollarsToCents(municipal));
   const split = splitFamilyBill(subsidies.parentOwingCents, [
     { key: "a", bps: Math.round(Number(shareA) * 100) },
     { key: "b", bps: Math.round(Number(shareB) * 100) },
@@ -107,152 +103,79 @@ export function CwelccPanel() {
         </select>
       </label>
       <label className="mt-3 flex min-h-11 items-center gap-3 text-sm">
-        <input
-          type="checkbox"
-          checked={participating}
-          onChange={(event) => setParticipating(event.target.checked)}
-        />
+        <input type="checkbox" checked={participating} onChange={(event) => setParticipating(event.target.checked)} />
         {fr ? "Ce centre participe" : "This centre participates"}
       </label>
       <label className="flex min-h-11 items-center gap-3 text-sm">
-        <input
-          type="checkbox"
-          checked={eligible}
-          onChange={(event) => setEligible(event.target.checked)}
-        />
+        <input type="checkbox" checked={eligible} onChange={(event) => setEligible(event.target.checked)} />
         {fr ? "Cet enfant est admissible" : "This child is eligible"}
       </label>
       {province === "BC" ? (
         <label className="flex min-h-11 items-center gap-3 text-sm">
-          <input
-            type="checkbox"
-            checked={tenDollar}
-            onChange={(event) => setTenDollar(event.target.checked)}
-          />
+          <input type="checkbox" checked={tenDollar} onChange={(event) => setTenDollar(event.target.checked)} />
           {fr ? "Site à 10 $ par jour" : "$10-a-day site"}
         </label>
       ) : null}
       <label className="mt-3 block text-sm">
         {fr ? "Frais complets par jour ($)" : "Full fee per day ($)"}
-        <input
-          inputMode="decimal"
-          className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3"
-          value={full}
-          onChange={(event) => setFull(event.target.value)}
-        />
+        <input inputMode="decimal" className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3" value={full} onChange={(event) => setFull(event.target.value)} />
       </label>
       {province === "ON" ? (
         <label className="mt-3 block text-sm">
-          {fr
-            ? "Frais du 31 décembre 2024 ($), s'il est plus bas"
-            : "December 31, 2024 fee ($), if it was lower"}
-          <input
-            inputMode="decimal"
-            className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3"
-            value={prior}
-            onChange={(event) => setPrior(event.target.value)}
-          />
+          {fr ? "Frais du 31 décembre 2024 ($), s'il est plus bas" : "December 31, 2024 fee ($), if it was lower"}
+          <input inputMode="decimal" className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3" value={prior} onChange={(event) => setPrior(event.target.value)} />
         </label>
       ) : (
         <label className="mt-3 block text-sm">
           {fr ? "Réduction que vous entrez ($)" : "Reduction you enter ($)"}
-          <input
-            inputMode="decimal"
-            className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3"
-            value={reduction}
-            onChange={(event) => setReduction(event.target.value)}
-          />
+          <input inputMode="decimal" className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3" value={reduction} onChange={(event) => setReduction(event.target.value)} />
         </label>
       )}
       <label className="mt-3 block text-sm">
         {fr ? "Subvention provinciale ($)" : "Provincial subsidy ($)"}
-        <input
-          inputMode="decimal"
-          className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3"
-          value={provincial}
-          onChange={(event) => setProvincial(event.target.value)}
-        />
+        <input inputMode="decimal" className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3" value={provincial} onChange={(event) => setProvincial(event.target.value)} />
       </label>
       <label className="mt-3 block text-sm">
         {fr ? "Subvention municipale ($)" : "Municipal subsidy ($)"}
-        <input
-          inputMode="decimal"
-          className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3"
-          value={municipal}
-          onChange={(event) => setMunicipal(event.target.value)}
-        />
+        <input inputMode="decimal" className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3" value={municipal} onChange={(event) => setMunicipal(event.target.value)} />
       </label>
       <p className="mt-4 text-sm" data-ke="cwelcc-result">
         {fr ? "Frais parent : " : "Parent fee: "}
-        {formatCad(fee.parentCents / 100, fr ? "fr-CA" : "en-CA")}.{" "}
-        {fr ? "Réduction : " : "Reduction: "}
-        {formatCad(fee.reductionCents / 100, fr ? "fr-CA" : "en-CA")}.{" "}
-        {fr ? "À payer : " : "Owing: "}
+        {formatCad(fee.parentCents / 100, fr ? "fr-CA" : "en-CA")}. {fr ? "Réduction : " : "Reduction: "}
+        {formatCad(fee.reductionCents / 100, fr ? "fr-CA" : "en-CA")}. {fr ? "À payer : " : "Owing: "}
         {formatCad(subsidies.parentOwingCents / 100, fr ? "fr-CA" : "en-CA")}.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="block text-sm">
           {fr ? "Part du premier foyer (%)" : "First household share (%)"}
-          <input
-            inputMode="numeric"
-            className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3"
-            value={shareA}
-            onChange={(event) => setShareA(event.target.value)}
-          />
+          <input inputMode="numeric" className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3" value={shareA} onChange={(event) => setShareA(event.target.value)} />
         </label>
         <label className="block text-sm">
           {fr ? "Part du second foyer (%)" : "Second household share (%)"}
-          <input
-            inputMode="numeric"
-            className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3"
-            value={shareB}
-            onChange={(event) => setShareB(event.target.value)}
-          />
+          <input inputMode="numeric" className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3" value={shareB} onChange={(event) => setShareB(event.target.value)} />
         </label>
       </div>
       <p className="mt-2 text-sm">
         {split.ok
-          ? split.parts
-              .map(
-                (part) =>
-                  `${part.key === "a" ? (fr ? "Premier" : "First") : fr ? "Second" : "Second"} ${formatCad(part.cents / 100, fr ? "fr-CA" : "en-CA")}`,
-              )
-              .join(". ")
+          ? split.parts.map((part) => `${part.key === "a" ? (fr ? "Premier" : "First") : fr ? "Second" : "Second"} ${formatCad(part.cents / 100, fr ? "fr-CA" : "en-CA")}`).join(". ")
           : fr
             ? "Les deux parts doivent faire 100 %."
             : "The two shares must add up to 100%."}
       </p>
       <p className="mt-4 text-sm">
-        {fr ? "Présences" : "Present"} {attendance.present}. {fr ? "Absences" : "Absent"}{" "}
-        {attendance.absent}. {fr ? "Fermetures" : "Closed"} {attendance.closed}.
+        {fr ? "Présences" : "Present"} {attendance.present}. {fr ? "Absences" : "Absent"} {attendance.absent}. {fr ? "Fermetures" : "Closed"} {attendance.closed}.
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <label className="block text-sm">
           {fr ? "Première signature" : "First sign-off"}
-          <input
-            className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3"
-            value={firstSign}
-            onChange={(event) => setFirstSign(event.target.value)}
-          />
+          <input className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3" value={firstSign} onChange={(event) => setFirstSign(event.target.value)} />
         </label>
         <label className="block text-sm">
           {fr ? "Deuxième signature" : "Second sign-off"}
-          <input
-            className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3"
-            value={secondSign}
-            onChange={(event) => setSecondSign(event.target.value)}
-          />
+          <input className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3" value={secondSign} onChange={(event) => setSecondSign(event.target.value)} />
         </label>
       </div>
-      <p className="mt-2 text-sm">
-        {signed
-          ? fr
-            ? "Deux personnes ont signé."
-            : "Two people have signed."
-          : fr
-            ? "Il faut une deuxième personne."
-            : "A second person still needs to sign."}
-      </p>
+      <p className="mt-2 text-sm">{signed ? (fr ? "Deux personnes ont signé." : "Two people have signed.") : fr ? "Il faut une deuxième personne." : "A second person still needs to sign."}</p>
       <pre className="mt-4 overflow-x-auto whitespace-pre-wrap text-sm" data-ke="cwelcc-sheet">
         {sheet}
       </pre>

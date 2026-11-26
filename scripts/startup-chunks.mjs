@@ -222,13 +222,12 @@ export const STARTUP_HELPER_ROOTS = Object.freeze([
   "src/lib/use-huawei-call-push.ts",
   "src/lib/use-native-shell.ts",
   "src/lib/use-push.ts",
-  "src/lib/utils.ts",
-  "src/lib/cad-format.ts",
+  "src/lib/utils.ts", "src/lib/cad-format.ts",
   "src/lib/vacancy-history.ts",
   "src/lib/vacancy-rank.ts",
   "src/lib/view-as.ts",
   "src/lib/web-vitals.ts",
-  "src/lib/zod-csp.ts",
+  "src/lib/zod-csp.ts"
 ]);
 
 const helperRoots = new Set(STARTUP_HELPER_ROOTS);

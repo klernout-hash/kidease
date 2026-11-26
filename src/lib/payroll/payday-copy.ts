@@ -77,8 +77,7 @@ const EN = {
   bonusHint: "Leave empty if there is no bonus.",
   student: "Student (minimum wage)",
   editors: "Who can do pay",
-  editorsLead:
-    "People you add here can do everything on Pay day, including approve. Every change records who made it.",
+  editorsLead: "People you add here can do everything on Pay day, including approve. Every change records who made it.",
   editorAdd: "Give pay access",
   editorRemove: "Remove",
   editorNone: "Only you can do pay right now.",
@@ -92,8 +91,7 @@ const EN = {
   notSet: "not set",
   setInSettings: "Add it in Pay settings.",
   settings: "Pay settings",
-  settingsLead:
-    "Used for employer costs and when to send government money. Leave a box empty if you do not know yet.",
+  settingsLead: "Used for employer costs and when to send government money. Leave a box empty if you do not know yet.",
   remitter: "How often you send source deductions to CRA",
   remitterRegular: "Monthly (regular)",
   remitterQuarterly: "Every 3 months (quarterly)",
@@ -141,10 +139,8 @@ const EN = {
   officialVersion: "Official version",
   formError: "Check the boxes in red and try again.",
   slips: "Year-end slips (T4, T4A, RL-1)",
-  slipsLead:
-    "Download the files for your accountant or to upload to CRA yourself. KidEase does not file them.",
-  slipsCheck:
-    "Check before filing. These files follow CRA's published layout but were not tested against CRA's schema file. The RL-1 file is a draft for your accountant: it needs Revenu Québec slip numbers and a certified software number.",
+  slipsLead: "Download the files for your accountant or to upload to CRA yourself. KidEase does not file them.",
+  slipsCheck: "Check before filing. These files follow CRA's published layout but were not tested against CRA's schema file. The RL-1 file is a draft for your accountant: it needs Revenu Québec slip numbers and a certified software number.",
   slipsYear: "Tax year",
   slipsEmployer: "Employer details on the slips",
   slipsBn: "CRA payroll account (123456789RP0001)",
@@ -167,8 +163,7 @@ const EN = {
   slipsRqCert: "Software certification number (from your accountant)",
   slipsSave: "Save details",
   slipsDownload: "Download slip files",
-  slipsMissing:
-    "No slip for these people yet. They need to send their slip details (with SIN) and you need to approve them:",
+  slipsMissing: "No slip for these people yet. They need to send their slip details (with SIN) and you need to approve them:",
   slipsMissingEmployer: "Add these employer details first:",
   slipsNone: "No slips for this year yet.",
   slipsLogged: "Downloaded. This download is logged.",
@@ -183,8 +178,7 @@ const EN = {
   emp_rq_id: "Revenu Québec identification number",
   kind_slip_info: "Slip details (SIN)",
   slipDetails: "Slip details for your T4 or RL-1",
-  slipDetailsLead:
-    "Your legal name, home address, and SIN go on your year-end tax slip. We lock your SIN. Only the last 3 digits show on screen.",
+  slipDetailsLead: "Your legal name, home address, and SIN go on your year-end tax slip. We lock your SIN. Only the last 3 digits show on screen.",
   firstName: "Legal first name",
   lastName: "Legal last name",
   initialLabel: "Middle initial (optional)",
@@ -205,8 +199,7 @@ const FR: PaydayCopy = {
   choose: "Choisir une personne",
   search: "Chercher par nom",
   noMatch: "Personne n’a ce nom. Effacez la recherche pour voir tout le monde.",
-  nobody:
-    "Personne n’est encore inscrit à la paie dans ce centre. Ajoutez le personnel dans la page Équipe d’abord.",
+  nobody: "Personne n’est encore inscrit à la paie dans ce centre. Ajoutez le personnel dans la page Équipe d’abord.",
   hours: "Heures",
   overtime: "Heures supplémentaires",
   rate: "Taux horaire",
@@ -220,8 +213,7 @@ const FR: PaydayCopy = {
   vacation: "Paie de vacances",
   deductions: "Retenues",
   net: "Paie nette",
-  contractorNote:
-    "Travailleurs autonomes : aucun impôt, RPC ou AE retenu. KidEase prépare seulement un brouillon de facture.",
+  contractorNote: "Travailleurs autonomes : aucun impôt, RPC ou AE retenu. KidEase prépare seulement un brouillon de facture.",
   salesTax: "TPS/TVH sur leur facture",
   edited: "Vous avez changé ceci. Enregistrez avec une raison.",
   reason: "Raison (obligatoire)",
@@ -255,8 +247,7 @@ const FR: PaydayCopy = {
   loading: "Chargement de la paie…",
   problem: "Impossible de charger. Vérifiez votre connexion et réessayez.",
   retry: "Réessayer",
-  stale:
-    "Quelqu’un vient de changer ceci. Nous avons chargé la version la plus récente. Réessayez.",
+  stale: "Quelqu’un vient de changer ceci. Nous avons chargé la version la plus récente. Réessayez.",
   permission: "Seul le propriétaire ou une personne autorisée peut changer la paie.",
   saved: "Enregistré.",
   myHours: "Mes heures",
@@ -267,15 +258,13 @@ const FR: PaydayCopy = {
   flagSaved: "Enregistré. Le propriétaire le verra au jour de paie.",
   notOnPay: "Vous n’êtes pas encore sur la liste de paie de ce centre. Demandez au propriétaire.",
   wageAsOf: "Salaires minimums en date du",
-  wageNote:
-    "Les taux changent, en général une fois par année. KidEase utilise le taux en vigueur chaque jour travaillé.",
+  wageNote: "Les taux changent, en général une fois par année. KidEase utilise le taux en vigueur chaque jour travaillé.",
   bonus: "Prime (facultatif)",
   bonusTax: "Impôt sur la prime",
   bonusHint: "Laissez vide s’il n’y a pas de prime.",
   student: "Aux études (salaire minimum)",
   editors: "Qui peut faire la paie",
-  editorsLead:
-    "Les personnes ajoutées ici peuvent tout faire au jour de paie, y compris approuver. Chaque changement indique qui l’a fait.",
+  editorsLead: "Les personnes ajoutées ici peuvent tout faire au jour de paie, y compris approuver. Chaque changement indique qui l’a fait.",
   editorAdd: "Donner l’accès à la paie",
   editorRemove: "Retirer",
   editorNone: "Vous seul pouvez faire la paie pour l’instant.",
@@ -289,24 +278,20 @@ const FR: PaydayCopy = {
   notSet: "non indiqué",
   setInSettings: "Ajoutez-le dans les réglages de paie.",
   settings: "Réglages de paie",
-  settingsLead:
-    "Sert aux coûts de l’employeur et aux dates d’envoi au gouvernement. Laissez une case vide si vous ne savez pas encore.",
+  settingsLead: "Sert aux coûts de l’employeur et aux dates d’envoi au gouvernement. Laissez une case vide si vous ne savez pas encore.",
   remitter: "À quelle fréquence vous envoyez les retenues à l’ARC",
   remitterRegular: "Chaque mois (régulier)",
   remitterQuarterly: "Aux 3 mois (trimestriel)",
   remitterAcc1: "Deux fois par mois (accéléré 1)",
   remitterAcc2: "Jusqu’à 4 fois par mois (accéléré 2)",
-  wcbRate:
-    "Taux de la commission des accidents du travail ou de la CNESST, en dollars par 100 $ de paie",
+  wcbRate: "Taux de la commission des accidents du travail ou de la CNESST, en dollars par 100 $ de paie",
   wcbHint: "Selon l’avis reçu, par exemple 1,25",
   yearlyPayroll: "Masse salariale annuelle du centre (dollars)",
   exemption: "Nous avons droit à l’exemption de l’impôt-santé",
-  exemptionHint:
-    "Par exemple, l’exemption de 1 million $ de l’Ontario. Demandez à votre comptable au besoin.",
+  exemptionHint: "Par exemple, l’exemption de 1 million $ de l’Ontario. Demandez à votre comptable au besoin.",
   saveSettings: "Enregistrer les réglages",
   forms: "Formulaires du personnel",
-  formsLead:
-    "Les formulaires TD1 et du Québec envoyés par votre personnel. Approuvez-les pour que la paie utilise leurs montants.",
+  formsLead: "Les formulaires TD1 et du Québec envoyés par votre personnel. Approuvez-les pour que la paie utilise leurs montants.",
   formsNone: "Aucun formulaire pour l’instant. Le personnel les envoie depuis Mes heures.",
   pending: "En attente",
   approvedTag: "Approuvé",
@@ -322,8 +307,7 @@ const FR: PaydayCopy = {
   kind_emergency: "Personne à joindre",
   kind_new_hire: "Fiche d’embauche",
   myForms: "Mes formulaires",
-  myFormsLead:
-    "Remplissez-les pour que votre paie retienne le bon impôt. Le propriétaire les vérifie.",
+  myFormsLead: "Remplissez-les pour que votre paie retienne le bon impôt. Le propriétaire les vérifie.",
   claimBasic: "Je demande seulement le montant personnel de base",
   claimTotal: "J’ai rempli le formulaire officiel. Mon montant total est :",
   claimZero: "Je demande 0 $ ici (un autre emploi utilise mes montants)",
@@ -342,10 +326,8 @@ const FR: PaydayCopy = {
   officialVersion: "Version officielle",
   formError: "Vérifiez les cases en rouge et réessayez.",
   slips: "Feuillets de fin d’année (T4, T4A, RL-1)",
-  slipsLead:
-    "Téléchargez les fichiers pour votre comptable ou pour les envoyer vous-même à l’ARC. KidEase ne les transmet pas.",
-  slipsCheck:
-    "À vérifier avant de produire. Ces fichiers suivent la structure publiée par l’ARC, mais n’ont pas été validés avec le fichier de schéma de l’ARC. Le fichier RL-1 est un brouillon pour votre comptable : il faut les numéros de relevés de Revenu Québec et un numéro de logiciel autorisé.",
+  slipsLead: "Téléchargez les fichiers pour votre comptable ou pour les envoyer vous-même à l’ARC. KidEase ne les transmet pas.",
+  slipsCheck: "À vérifier avant de produire. Ces fichiers suivent la structure publiée par l’ARC, mais n’ont pas été validés avec le fichier de schéma de l’ARC. Le fichier RL-1 est un brouillon pour votre comptable : il faut les numéros de relevés de Revenu Québec et un numéro de logiciel autorisé.",
   slipsYear: "Année d’imposition",
   slipsEmployer: "Renseignements de l’employeur sur les feuillets",
   slipsBn: "Compte de retenues de l’ARC (123456789RP0001)",
@@ -368,8 +350,7 @@ const FR: PaydayCopy = {
   slipsRqCert: "Numéro d’autorisation du logiciel (de votre comptable)",
   slipsSave: "Enregistrer",
   slipsDownload: "Télécharger les fichiers",
-  slipsMissing:
-    "Aucun feuillet pour ces personnes pour l’instant. Elles doivent envoyer leurs renseignements (avec le NAS) et vous devez les approuver :",
+  slipsMissing: "Aucun feuillet pour ces personnes pour l’instant. Elles doivent envoyer leurs renseignements (avec le NAS) et vous devez les approuver :",
   slipsMissingEmployer: "Ajoutez d’abord ces renseignements de l’employeur :",
   slipsNone: "Aucun feuillet pour cette année.",
   slipsLogged: "Téléchargé. Ce téléchargement est consigné.",
@@ -384,8 +365,7 @@ const FR: PaydayCopy = {
   emp_rq_id: "numéro d’identification de Revenu Québec",
   kind_slip_info: "Renseignements pour les feuillets (NAS)",
   slipDetails: "Renseignements pour votre T4 ou RL-1",
-  slipDetailsLead:
-    "Votre nom légal, votre adresse et votre NAS figurent sur votre feuillet de fin d’année. Votre NAS est chiffré. Seuls les 3 derniers chiffres s’affichent.",
+  slipDetailsLead: "Votre nom légal, votre adresse et votre NAS figurent sur votre feuillet de fin d’année. Votre NAS est chiffré. Seuls les 3 derniers chiffres s’affichent.",
   firstName: "Prénom légal",
   lastName: "Nom de famille légal",
   initialLabel: "Initiale (facultatif)",
@@ -415,18 +395,15 @@ type CheckCode =
   | "student_rate";
 
 const CHECK_EN: Record<CheckCode, string> = {
-  missing_td1:
-    "TD1 not on file. Pay uses the basic personal amounts until the person's forms are approved.",
+  missing_td1: "TD1 not on file. Pay uses the basic personal amounts until the person's forms are approved.",
   over_60_hours: "More than 60 hours in one week. Check the days.",
   under_minimum_wage: "The rate is under the province's minimum wage.",
-  minimum_wage_unverified:
-    "KidEase has no minimum wage on file for this date. Check the official page.",
+  minimum_wage_unverified: "KidEase has no minimum wage on file for this date. Check the official page.",
   missed_checkout: "A day has no check-out. Fix that day first.",
   zero_pay: "Pay is $0 for this period.",
   mid_period_start: "Started during this period. Check the first day.",
   mid_period_end: "Left during this period. Check the last day and the ROE.",
-  overtime_unverified:
-    "Over 40 hours in a week. We could not confirm the overtime rule for this province. Check the official page.",
+  overtime_unverified: "Over 40 hours in a week. We could not confirm the overtime rule for this province. Check the official page.",
   vacation_below_law: "Vacation pay is lower than the law asks for after these years.",
   flagged_day: "Staff flagged a day as wrong.",
   no_table: "KidEase cannot work out this pay. Nothing is shown as final.",
@@ -434,24 +411,19 @@ const CHECK_EN: Record<CheckCode, string> = {
 };
 
 const CHECK_FR: Record<CheckCode, string> = {
-  missing_td1:
-    "TD1 non reçu. La paie utilise les montants personnels de base jusqu’à l’approbation des formulaires.",
+  missing_td1: "TD1 non reçu. La paie utilise les montants personnels de base jusqu’à l’approbation des formulaires.",
   over_60_hours: "Plus de 60 heures dans une semaine. Vérifiez les jours.",
   under_minimum_wage: "Le taux est sous le salaire minimum de la province.",
-  minimum_wage_unverified:
-    "KidEase n’a pas de salaire minimum pour cette date. Vérifiez la page officielle.",
+  minimum_wage_unverified: "KidEase n’a pas de salaire minimum pour cette date. Vérifiez la page officielle.",
   missed_checkout: "Un jour n’a pas de départ pointé. Corrigez ce jour d’abord.",
   zero_pay: "La paie est de 0 $ pour cette période.",
   mid_period_start: "A commencé pendant cette période. Vérifiez le premier jour.",
   mid_period_end: "A quitté pendant cette période. Vérifiez le dernier jour et le RE.",
-  overtime_unverified:
-    "Plus de 40 heures dans une semaine. Nous n’avons pas pu confirmer la règle des heures supplémentaires. Vérifiez la page officielle.",
-  vacation_below_law:
-    "La paie de vacances est plus basse que ce que la loi demande après ces années.",
+  overtime_unverified: "Plus de 40 heures dans une semaine. Nous n’avons pas pu confirmer la règle des heures supplémentaires. Vérifiez la page officielle.",
+  vacation_below_law: "La paie de vacances est plus basse que ce que la loi demande après ces années.",
   flagged_day: "Le personnel a signalé un jour faux.",
   no_table: "KidEase ne peut pas calculer cette paie. Rien n’est affiché comme final.",
-  student_rate:
-    "Vous avez indiqué que cette personne est aux études. Le salaire minimum étudiant est utilisé.",
+  student_rate: "Vous avez indiqué que cette personne est aux études. Le salaire minimum étudiant est utilisé.",
 };
 
 export function checkWords(code: CheckCode, locale: "en" | "fr"): string {
@@ -464,25 +436,14 @@ function cad(cents: number, locale: "en" | "fr"): string {
 
 function longDate(date: string, locale: "en" | "fr"): string {
   if (locale === "fr" && date.endsWith("-01")) {
-    const month = new Date(`${date}T12:00:00Z`).toLocaleDateString("fr-CA", {
-      month: "long",
-      timeZone: "UTC",
-    });
+    const month = new Date(`${date}T12:00:00Z`).toLocaleDateString("fr-CA", { month: "long", timeZone: "UTC" });
     return `1er ${month} ${date.slice(0, 4)}`;
   }
-  return new Date(`${date}T12:00:00Z`).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC",
-  });
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
 }
 
 /** A check with its numbers filled in (minimum wage names the rate and the day). */
-export function checkText(
-  check: { code: CheckCode; amountCents?: number; date?: string; detail?: string },
-  locale: "en" | "fr",
-): string {
+export function checkText(check: { code: CheckCode; amountCents?: number; date?: string; detail?: string }, locale: "en" | "fr"): string {
   if (check.code === "under_minimum_wage" && check.amountCents != null && check.date) {
     const rate = check.detail ? cad(Number(check.detail), locale) : "";
     return locale === "fr"
@@ -505,22 +466,7 @@ export function payErrorWords(message: string, locale: "en" | "fr"): string {
   if (code === "permission" || code === "owner_only") return copy.permission;
   if (code === "reason") return copy.reasonHint;
   if (code === "preflight") return copy.blocked;
-  if (
-    [
-      "mode",
-      "amount",
-      "signature",
-      "certify",
-      "bank",
-      "contact",
-      "settings",
-      "form",
-      "sin",
-      "name",
-      "address",
-    ].includes(code)
-  )
-    return copy.formError;
+  if (["mode", "amount", "signature", "certify", "bank", "contact", "settings", "form", "sin", "name", "address"].includes(code)) return copy.formError;
   return copy.problem;
 }
 

@@ -11,11 +11,7 @@ import {
   runConnectOnboarding,
   stableBodyHash,
 } from "../src/lib/connect-onboarding.ts";
-import {
-  parentChargeQuote,
-  quoteShownOnPayPage,
-  connectedAccountBody,
-} from "../src/lib/connect-payments.ts";
+import { parentChargeQuote, quoteShownOnPayPage, connectedAccountBody } from "../src/lib/connect-payments.ts";
 import { checkoutSessionBody, flattenStripeBody } from "../src/lib/server/stripe-checkout.ts";
 import { formatCad, frenchCad } from "../src/lib/cad-format.ts";
 import { money } from "../src/lib/utils.ts";
@@ -46,18 +42,9 @@ function pdfText(bytes) {
 // ---------- 1. Connect "Set up payouts" ----------
 
 test("the account idempotency key changes with the body, not with key order", () => {
-  const a = connectAccountIdempotencyKey("test", "d_1", {
-    country: "CA",
-    controller: { fees: { payer: "application" } },
-  });
-  const b = connectAccountIdempotencyKey("test", "d_1", {
-    controller: { fees: { payer: "application" } },
-    country: "CA",
-  });
-  const c = connectAccountIdempotencyKey("test", "d_1", {
-    country: "CA",
-    controller: { fees: { payer: "account" } },
-  });
+  const a = connectAccountIdempotencyKey("test", "d_1", { country: "CA", controller: { fees: { payer: "application" } } });
+  const b = connectAccountIdempotencyKey("test", "d_1", { controller: { fees: { payer: "application" } }, country: "CA" });
+  const c = connectAccountIdempotencyKey("test", "d_1", { country: "CA", controller: { fees: { payer: "account" } } });
   assert.equal(a, b);
   assert.notEqual(a, c);
   assert.match(a, /^connect-acct-test-d_1-[0-9a-z]+$/);
@@ -71,12 +58,7 @@ function onboardingDeps(overrides = {}) {
     userId: "u_1",
     daycareId: "d_1",
     ownsCentre: async () => true,
-    route: async () => ({
-      ok: true,
-      mode: "test",
-      secret: "sk_test_fixture",
-      publishable: "pk_test_fixture",
-    }),
+    route: async () => ({ ok: true, mode: "test", secret: "sk_test_fixture", publishable: "pk_test_fixture" }),
     existingAccountId: async () => null,
     saveAccount: async (id) => calls.saved.push(id),
     stripePost: async (path, body, opts) => {
@@ -100,13 +82,10 @@ test("an idempotency_error retries once with a fresh key and logs the Stripe req
       calls.posts.push({ path, key: opts.idempotencyKey });
       if (path === "/accounts" && first) {
         first = false;
-        throw Object.assign(
-          new Error("Keys for idempotent requests can only be used with the same parameters"),
-          {
-            code: "idempotency_error",
-            requestId: "req_fixture123",
-          },
-        );
+        throw Object.assign(new Error("Keys for idempotent requests can only be used with the same parameters"), {
+          code: "idempotency_error",
+          requestId: "req_fixture123",
+        });
       }
       if (path === "/accounts") return { id: "acct_retry" };
       return { client_secret: "accs_secret_fixture" };
@@ -133,15 +112,10 @@ test("an account Stripe already made for the centre is reused, never duplicated"
 test("other Stripe errors fail cleanly with the request id in the log", async () => {
   const { deps, calls } = onboardingDeps({
     stripePost: async () => {
-      throw Object.assign(
-        new Error(
-          "When controlling requirement collection, the Connect application must also control losses",
-        ),
-        {
-          code: "invalid_request_error",
-          requestId: "req_other",
-        },
-      );
+      throw Object.assign(new Error("When controlling requirement collection, the Connect application must also control losses"), {
+        code: "invalid_request_error",
+        requestId: "req_other",
+      });
     },
   });
   const res = await runConnectOnboarding(deps);
@@ -159,11 +133,7 @@ test("parents pay exactly the bill; the 3% KidEase fee comes out of the payout",
   assert.equal(quote.kidEaseFeeCents, 3_600);
   assert.equal(quote.applicationFeeCents, 3_600);
   assert.equal(quote.centreReceivesCents, 116_400);
-  assert.equal(
-    quoteShownOnPayPage(quote, false).applicationFeeCents,
-    0,
-    "no Connect destination: nothing deducted",
-  );
+  assert.equal(quoteShownOnPayPage(quote, false).applicationFeeCents, 0, "no Connect destination: nothing deducted");
   const body = checkoutSessionBody({
     billId: "bl_1",
     number: "KE-1",
@@ -188,10 +158,7 @@ test("the QuickBooks journal balances with the KidEase fee as a centre expense",
   assert.equal(lines.find((l) => l.account === "stripe_clearing").debitCents, 9_700);
   assert.equal(lines.find((l) => l.account === "platform_fee").debitCents, 300);
   assert.equal(lines.find((l) => l.account === "parent_fees").creditCents, 10_000);
-  assert.equal(
-    qboJournalBalances(qboJournal({ invoiceCents: 10_000, feeCents: 0, province: "ON" })),
-    true,
-  );
+  assert.equal(qboJournalBalances(qboJournal({ invoiceCents: 10_000, feeCents: 0, province: "ON" })), true);
 });
 
 test("parent copy no longer adds a KidEase fee; centres see it on bills and earnings", () => {
@@ -259,10 +226,7 @@ test("invoice PDFs carry CAD, the GST/HST wording and the centre address", () =>
   const pdf = pdfText(brandedInvoicePdf({ ...base, locale: "fr" }));
   assert.match(pdf, /WinAnsiEncoding/);
   // "é" and "É" print as single WinAnsi bytes, not folded to ASCII.
-  assert.ok(
-    pdf.includes("Pay\u00e9e") || pdf.includes("Pay\\351e"),
-    "Statut : Payée keeps its accent",
-  );
+  assert.ok(pdf.includes("Pay\u00e9e") || pdf.includes("Pay\\351e"), "Statut : Payée keeps its accent");
   assert.ok(pdf.includes("PAY\u00c9E") || pdf.includes("PAY\\311E"), "PAYÉE stamp");
   assert.equal(pdfEscape("(é’)"), "\\(\\351\\222\\)");
 });
@@ -307,10 +271,7 @@ test("old earnings and bills paths redirect to the real tabs", () => {
   const home = src("src/components/parent-home.tsx");
   assert.match(home, /data-ke="parent-home-bills-heading"/);
   assert.match(home, /onOpenPayments/);
-  assert.match(
-    src("src/components/parent-desk.tsx"),
-    /onOpenPayments=\{\(\) => selectParentTab\("payments"\)\}/,
-  );
+  assert.match(src("src/components/parent-desk.tsx"), /onOpenPayments=\{\(\) => selectParentTab\("payments"\)\}/);
 });
 
 // ---------- 2. Contract desk owner check ----------

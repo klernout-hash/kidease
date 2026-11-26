@@ -48,9 +48,7 @@ export type ConnectOnboardingMessageKey =
   | "connectErrStripe";
 
 /** Copy key for each reason. connectErrStripe has a {code} slot. */
-export function connectOnboardingMessageKey(
-  reason: ConnectOnboardingReason | string | null | undefined,
-): ConnectOnboardingMessageKey {
+export function connectOnboardingMessageKey(reason: ConnectOnboardingReason | string | null | undefined): ConnectOnboardingMessageKey {
   switch (reason) {
     case "off":
       return "connectErrOff";
@@ -72,13 +70,7 @@ export function connectOnboardingMessageKey(
  */
 export function stripeErrorCode(err: unknown): string {
   if (err && typeof err === "object") {
-    const bag = err as {
-      code?: unknown;
-      stripeCode?: unknown;
-      param?: unknown;
-      type?: unknown;
-      status?: unknown;
-    };
+    const bag = err as { code?: unknown; stripeCode?: unknown; param?: unknown; type?: unknown; status?: unknown };
     for (const raw of [bag.stripeCode, bag.code, bag.param, bag.type]) {
       const code = typeof raw === "string" ? raw.trim().toLowerCase() : "";
       const token = /^[a-z0-9_.[\]]{1,60}$/.test(code) ? normaliseStripeToken(code) : "";
@@ -111,19 +103,10 @@ export type ConnectOnboardingDeps = {
   existingAccountId: () => Promise<string | null>;
   saveAccount: (accountId: string) => Promise<void>;
   /** POST to Stripe with the routed secret. */
-  stripePost: <T>(
-    path: string,
-    body: Record<string, unknown>,
-    opts: { idempotencyKey: string; secret: string },
-  ) => Promise<T>;
+  stripePost: <T>(path: string, body: Record<string, unknown>, opts: { idempotencyKey: string; secret: string }) => Promise<T>;
   accountBody: () => Record<string, unknown>;
   sessionBody: (accountId: string) => Record<string, unknown>;
-  record: (input: {
-    userId: string;
-    surface: string;
-    publicMessage: string;
-    detail: string;
-  }) => Promise<void>;
+  record: (input: { userId: string; surface: string; publicMessage: string; detail: string }) => Promise<void>;
   nonce: () => string;
   /**
    * Find a connected account Stripe already made for this centre (matched on
@@ -162,11 +145,7 @@ function stableJson(value: unknown): string {
  * idempotency_error, while a double click with the same body still reuses
  * the same key and cannot make two accounts.
  */
-export function connectAccountIdempotencyKey(
-  mode: string,
-  daycareId: string,
-  body: Record<string, unknown>,
-): string {
+export function connectAccountIdempotencyKey(mode: string, daycareId: string, body: Record<string, unknown>): string {
   return `connect-acct-${mode}-${daycareId}-${stableBodyHash(body)}`;
 }
 
@@ -181,17 +160,11 @@ function stripeRequestIdOf(err: unknown): string {
   return typeof id === "string" && id ? ` [${id}]` : "";
 }
 
-function fail(
-  reason: ConnectOnboardingReason,
-  mode: PaymentStripeMode | null,
-  code: string | null = null,
-): ConnectOnboardingResult {
+function fail(reason: ConnectOnboardingReason, mode: PaymentStripeMode | null, code: string | null = null): ConnectOnboardingResult {
   return { ok: false, reason, clientSecret: null, publishableKey: null, mode, code };
 }
 
-export async function runConnectOnboarding(
-  deps: ConnectOnboardingDeps,
-): Promise<ConnectOnboardingResult> {
+export async function runConnectOnboarding(deps: ConnectOnboardingDeps): Promise<ConnectOnboardingResult> {
   const log = async (reason: ConnectOnboardingReason, detail: string) => {
     await deps
       .record({
@@ -225,22 +198,14 @@ export async function runConnectOnboarding(
       const key = connectAccountIdempotencyKey(routed.mode, deps.daycareId, body);
       let created: { id?: string } | null = null;
       try {
-        created = await deps.stripePost<{ id?: string }>("/accounts", body, {
-          idempotencyKey: key,
-          secret: routed.secret,
-        });
+        created = await deps.stripePost<{ id?: string }>("/accounts", body, { idempotencyKey: key, secret: routed.secret });
       } catch (err) {
         // The key was used before with other params (or Stripe cached an
         // earlier failure). Reuse an account if one exists, else retry once
         // with a fresh key. Never loop.
         if (!isIdempotencyError(err)) throw err;
-        await log(
-          "stripe_error",
-          `idempotency_error on ${key}; retrying with a fresh key${stripeRequestIdOf(err)}`,
-        );
-        const found = deps.findAccountForCentre
-          ? String((await deps.findAccountForCentre().catch(() => null)) || "")
-          : "";
+        await log("stripe_error", `idempotency_error on ${key}; retrying with a fresh key${stripeRequestIdOf(err)}`);
+        const found = deps.findAccountForCentre ? String((await deps.findAccountForCentre().catch(() => null)) || "") : "";
         if (found.startsWith("acct_")) {
           created = { id: found };
         } else {
@@ -257,27 +222,16 @@ export async function runConnectOnboarding(
       }
       await deps.saveAccount(accountId);
     }
-    const session = await deps.stripePost<{ client_secret?: string }>(
-      "/account_sessions",
-      deps.sessionBody(accountId),
-      {
-        idempotencyKey: `connect-session-${routed.mode}-${accountId}-${deps.nonce()}`,
-        secret: routed.secret,
-      },
-    );
+    const session = await deps.stripePost<{ client_secret?: string }>("/account_sessions", deps.sessionBody(accountId), {
+      idempotencyKey: `connect-session-${routed.mode}-${accountId}-${deps.nonce()}`,
+      secret: routed.secret,
+    });
     const clientSecret = String(session?.client_secret || "");
     if (!clientSecret) {
       await log("stripe_error", "account session returned no client secret");
       return fail("stripe_error", routed.mode, "no_client_secret");
     }
-    return {
-      ok: true,
-      reason: null,
-      clientSecret,
-      publishableKey: routed.publishable,
-      mode: routed.mode,
-      code: null,
-    };
+    return { ok: true, reason: null, clientSecret, publishableKey: routed.publishable, mode: routed.mode, code: null };
   } catch (err) {
     const code = stripeErrorCode(err);
     await log("stripe_error", `${code}: ${errorDetail(err)}${stripeRequestIdOf(err)}`);
@@ -289,10 +243,7 @@ export async function runConnectOnboarding(
  * Connect.js asks for a client secret at start and again when a session
  * expires. Hand out the first secret once, then fetch a fresh one.
  */
-export function firstSecretOnce(
-  first: string,
-  fetchFresh: () => Promise<string>,
-): () => Promise<string> {
+export function firstSecretOnce(first: string, fetchFresh: () => Promise<string>): () => Promise<string> {
   let pending: string | null = first || null;
   return async () => {
     if (pending) {

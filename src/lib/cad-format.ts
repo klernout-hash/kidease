@@ -34,9 +34,5 @@ export function frenchCad(dollars: number): string {
 export function formatCad(dollars: number, locale: string, options: CadFormatOptions = {}): string {
   if (isFrenchLocale(locale)) return frenchCad(dollars);
   const value = Number.isFinite(Number(dollars)) ? Number(dollars) : 0;
-  return new Intl.NumberFormat(locale || "en-CA", {
-    style: "currency",
-    currency: "CAD",
-    ...options,
-  }).format(value);
+  return new Intl.NumberFormat(locale || "en-CA", { style: "currency", currency: "CAD", ...options }).format(value);
 }

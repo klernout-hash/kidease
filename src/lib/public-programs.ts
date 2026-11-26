@@ -165,13 +165,7 @@ export function listingFeeNotes(d: {
     return { priceList: true, mb10: false, source: null, unconfirmed: false, confidence };
   }
   if (listed) {
-    return {
-      priceList: false,
-      mb10: false,
-      source: feeSourceKind(d.factSource),
-      unconfirmed: false,
-      confidence,
-    };
+    return { priceList: false, mb10: false, source: feeSourceKind(d.factSource), unconfirmed: false, confidence };
   }
   return { priceList: false, mb10: false, source: null, unconfirmed: true, confidence: null };
 }

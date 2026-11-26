@@ -25,12 +25,7 @@ test("parent Pay stays focused on centre bills at either subscription setting", 
     assert.match(tx(locale, parentPayLeadKey(true, true)), /Stripe Checkout/);
   }
   // The KidEase fee moved to the centre: parent copy never adds a fee.
-  for (const key of [
-    "ledgerLiveParentBills",
-    "ledgerLiveParent",
-    "connectFeeParentPay",
-    "payBillLead",
-  ]) {
+  for (const key of ["ledgerLiveParentBills", "ledgerLiveParent", "connectFeeParentPay", "payBillLead"]) {
     assert.doesNotMatch(tx("en", key), /plus a KidEase service fee/i);
     assert.doesNotMatch(tx("fr", key), /plus des frais de service KidEase/i);
   }
@@ -67,9 +62,6 @@ test("profile bio save ignores a stale load and checks the stored bio", () => {
   const profile = src("src/lib/server/profile-contact.ts");
   assert.match(profile, /export const getMyContact = createServerFn\(\{ method: "POST" \}\)/);
   const save = profile.slice(profile.indexOf("export const saveMyContact"));
-  assert.match(
-    save,
-    /select display_name, phone, bio(?:, created_at)? from profiles where user_id/,
-  );
+  assert.match(save, /select display_name, phone, bio(?:, created_at)? from profiles where user_id/);
   assert.match(save, /bio: row\?\.bio\?\.trim\(\) \|\| ""/);
 });

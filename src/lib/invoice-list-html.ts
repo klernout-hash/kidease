@@ -17,10 +17,7 @@ export type InvoiceListRow = {
   daycareName: string | null;
 };
 
-export function invoiceListHtml(
-  invoices: readonly InvoiceListRow[],
-  locale: InvoiceLocale = "en",
-): string {
+export function invoiceListHtml(invoices: readonly InvoiceListRow[], locale: InvoiceLocale = "en"): string {
   const fr = locale === "fr";
   const title = fr ? "Factures" : "Invoices";
   const lead = fr
@@ -39,9 +36,7 @@ export function invoiceListHtml(
         invoice.status === "open" && invoice.hostedInvoiceUrl
           ? `<a class="pay" href="${escapeAttr(invoice.hostedInvoiceUrl)}">${fr ? "Payer la facture" : "Pay invoice"}</a>`
           : "";
-      const detail = fr
-        ? `/fr/invoices/${encodeURIComponent(invoice.id)}?print=1`
-        : `/invoices/${encodeURIComponent(invoice.id)}?print=1`;
+      const detail = fr ? `/fr/invoices/${encodeURIComponent(invoice.id)}?print=1` : `/invoices/${encodeURIComponent(invoice.id)}?print=1`;
       return `<li data-ke="invoice-row" data-status="${invoice.status}">
         <div>
           <strong>${escapeHtml(invoice.number)}</strong>

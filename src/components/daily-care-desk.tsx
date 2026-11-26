@@ -25,29 +25,12 @@ import {
 } from "@/lib/daily-care";
 import { safetyText } from "@/lib/safety";
 import { sendConnectedMessage } from "@/lib/server/inbox";
-import {
-  listDailyJournals,
-  logDailyCare,
-  postDailyJournal,
-  type DailyJournalRow,
-} from "@/lib/server/daily-care";
+import { listDailyJournals, logDailyCare, postDailyJournal, type DailyJournalRow } from "@/lib/server/daily-care";
 import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
-import {
-  listCareOps,
-  getLicensedMonth,
-  saveDayNote,
-  saveEnrolmentSplit,
-  type CareOpsPayload,
-  type LicensedMonthChild,
-} from "@/lib/server/care-ops";
+import { listCareOps, getLicensedMonth, saveDayNote, saveEnrolmentSplit, type CareOpsPayload, type LicensedMonthChild } from "@/lib/server/care-ops";
 import { getWeekSchedule, saveAttendance, type AttendanceRow } from "@/lib/server/ops";
 import { createBill, sendBill } from "@/lib/server/billing";
-import {
-  buildMonthLedger,
-  canWriteDayNote,
-  dollarsToDailyCents,
-  parentShareDollars,
-} from "@/lib/licensed-day";
+import { buildMonthLedger, canWriteDayNote, dollarsToDailyCents, parentShareDollars } from "@/lib/licensed-day";
 import { CareChildOps } from "@/components/care-child-ops";
 import { ChildCheckHistory } from "@/components/child-checkin-desk";
 import { KioskParentScan, KioskTablet } from "@/components/qr-kiosk-panel";
@@ -71,7 +54,13 @@ function childKey(row: Pick<AttendanceRow, "daycareId" | "childName" | "bookingI
   return `${row.daycareId}:${row.bookingId ?? row.childName}`;
 }
 
-export function DailyCareDesk({ role, daycareId }: { role: CareDeskRole; daycareId?: string }) {
+export function DailyCareDesk({
+  role,
+  daycareId,
+}: {
+  role: CareDeskRole;
+  daycareId?: string;
+}) {
   const { t, locale } = useCopy();
   const staffWrite = useCentreWrite("care");
   const viewing = useViewAs();
@@ -81,18 +70,12 @@ export function DailyCareDesk({ role, daycareId }: { role: CareDeskRole; daycare
   const [ops, setOps] = useState<CareOpsPayload | null>(null);
   const [scheduleReady, setScheduleReady] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
-  const [drafts, setDrafts] = useState<Record<string, { body: string; photos: JournalPhoto[] }>>(
-    {},
-  );
+  const [drafts, setDrafts] = useState<Record<string, { body: string; photos: JournalPhoto[] }>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [monthChildren, setMonthChildren] = useState<LicensedMonthChild[]>([]);
   const [monthLabel, setMonthLabel] = useState(day.slice(0, 7));
-  const [dayDrafts, setDayDrafts] = useState<
-    Record<string, { food: string; nap: string; incident: string; photo: string }>
-  >({});
-  const [splitDrafts, setSplitDrafts] = useState<
-    Record<string, { parent: string; program: string; kind: string; label: string }>
-  >({});
+  const [dayDrafts, setDayDrafts] = useState<Record<string, { food: string; nap: string; incident: string; photo: string }>>({});
+  const [splitDrafts, setSplitDrafts] = useState<Record<string, { parent: string; program: string; kind: string; label: string }>>({});
   const [careFocus, setCareFocus] = useState<string | null>(null);
   const [careOpen, setCareOpen] = useState(false);
   const [logsOn, setLogsOn] = useState(false);
@@ -104,10 +87,7 @@ export function DailyCareDesk({ role, daycareId }: { role: CareDeskRole; daycare
         items: [] as AttendanceRow[],
         role,
       })),
-      listDailyJournals({ data: { daycareId, day } }).catch(() => ({
-        day,
-        items: [] as DailyJournalRow[],
-      })),
+      listDailyJournals({ data: { daycareId, day } }).catch(() => ({ day, items: [] as DailyJournalRow[] })),
     ]).then(([week, feed]) => {
       setItems(week.items.filter((row) => row.day === day));
       setJournals(feed.items);
@@ -151,8 +131,7 @@ export function DailyCareDesk({ role, daycareId }: { role: CareDeskRole; daycare
       if (hit) hit.journals.push(journal);
       else {
         const loose = [...map.values()].find(
-          (entry) =>
-            entry.row.daycareId === journal.daycareId && entry.row.childName === journal.childName,
+          (entry) => entry.row.daycareId === journal.daycareId && entry.row.childName === journal.childName,
         );
         if (loose) loose.journals.push(journal);
       }
@@ -206,17 +185,12 @@ export function DailyCareDesk({ role, daycareId }: { role: CareDeskRole; daycare
     }
     const text = (notes[childKey(row)] || "").trim();
     if (!text || !row.conversationId) return;
-    if (!parentCanMessageCentre({ hasConversation: Boolean(row.conversationId), enrolled: true }))
-      return;
+    if (!parentCanMessageCentre({ hasConversation: Boolean(row.conversationId), enrolled: true })) return;
     setBusy(`${childKey(row)}:note`);
     try {
-      const res = await sendConnectedMessage({
-        data: { conversationId: row.conversationId, body: text },
-      });
+      const res = await sendConnectedMessage({ data: { conversationId: row.conversationId, body: text } });
       if (!res.ok) {
-        throw new Error(
-          "blocked" in res && res.blocked ? safetyText(locale).blockedSend : t("tourRespondFailed"),
-        );
+        throw new Error("blocked" in res && res.blocked ? safetyText(locale).blockedSend : t("tourRespondFailed"));
       }
       confirmSuccess({ variant: "toast", title: t("careMessageSent") });
       setNotes((prev) => ({ ...prev, [childKey(row)]: "" }));
@@ -275,13 +249,7 @@ export function DailyCareDesk({ role, daycareId }: { role: CareDeskRole; daycare
       (src) => {
         setDrafts((prev) => {
           const next = prev[key] ?? { body: "", photos: [] };
-          return {
-            ...prev,
-            [key]: {
-              ...next,
-              photos: [...next.photos, { src, name: file.name }].slice(0, JOURNAL_MAX_PHOTOS),
-            },
-          };
+          return { ...prev, [key]: { ...next, photos: [...next.photos, { src, name: file.name }].slice(0, JOURNAL_MAX_PHOTOS) } };
         });
       },
       () => toast.error(t("carePhotoTooBig")),
@@ -306,10 +274,7 @@ export function DailyCareDesk({ role, daycareId }: { role: CareDeskRole; daycare
         },
       });
       confirmSuccess({ variant: "toast", title: t("careDayNoteSaved") });
-      setDayDrafts((prev) => ({
-        ...prev,
-        [childKey(row)]: { food: "", nap: "", incident: "", photo: "" },
-      }));
+      setDayDrafts((prev) => ({ ...prev, [childKey(row)]: { food: "", nap: "", incident: "", photo: "" } }));
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
@@ -320,12 +285,7 @@ export function DailyCareDesk({ role, daycareId }: { role: CareDeskRole; daycare
 
   async function saveSplit(row: AttendanceRow) {
     if (!row.bookingId) return;
-    const draft = splitDrafts[childKey(row)] ?? {
-      parent: "",
-      program: "",
-      kind: "cwelcc",
-      label: "",
-    };
+    const draft = splitDrafts[childKey(row)] ?? { parent: "", program: "", kind: "cwelcc", label: "" };
     const parentDailyCents = dollarsToDailyCents(draft.parent);
     const programDailyCents = draft.kind === "none" ? 0 : dollarsToDailyCents(draft.program);
     if (parentDailyCents == null || programDailyCents == null) {
@@ -372,9 +332,7 @@ export function DailyCareDesk({ role, daycareId }: { role: CareDeskRole; daycare
           bookingId: child.bookingId,
           amountCad: dollars,
           period: monthLabel,
-          memo: t("careShareMemo")
-            .replace("{month}", monthLabel)
-            .replace("{days}", String(ledger.present)),
+          memo: t("careShareMemo").replace("{month}", monthLabel).replace("{days}", String(ledger.present)),
         },
       });
       await sendBill({ data: bill.id });
@@ -394,17 +352,11 @@ export function DailyCareDesk({ role, daycareId }: { role: CareDeskRole; daycare
     <section className="space-y-6" data-ke="daily-care">
       <div>
         <h2 className="font-display text-2xl">{t("dailyCare")}</h2>
-        <p className="mt-1 text-sm text-muted">
-          {role === "provider" ? t("dailyCareStaffLead") : t("dailyCareParentLead")}
-        </p>
+        <p className="mt-1 text-sm text-muted">{role === "provider" ? t("dailyCareStaffLead") : t("dailyCareParentLead")}</p>
         <p className="mt-2 text-xs text-subtle">{t("careOpsLite")}</p>
         <p className="mt-1 text-xs text-subtle">{t("careLaterOut")}</p>
       </div>
-      {role === "provider" && staffWrite ? (
-        <KioskTablet daycareId={daycareId} />
-      ) : role === "parent" ? (
-        <KioskParentScan />
-      ) : null}
+      {role === "provider" && staffWrite ? <KioskTablet daycareId={daycareId} /> : role === "parent" ? <KioskParentScan /> : null}
       {role === "parent" ? <ChildCheckHistory /> : null}
 
       {ops ? (
@@ -468,286 +420,228 @@ export function DailyCareDesk({ role, daycareId }: { role: CareDeskRole; daycare
               {t("back")}
             </button>
             <ul className="space-y-4">
-              {byChild.map(({ row, journals: childJournals }) => {
-                const key = childKey(row);
-                const rest = key !== (careFocus ?? childKey(byChild[0].row));
-                const presence = presenceFromAttendance(row.status);
-                const draft = drafts[key] ?? { body: "", photos: [] };
-                return (
-                  <li
-                    key={key}
-                    className={`rounded-xl bg-surface p-4 shadow-card ring-1 ring-border${rest ? " ke-child-rest" : ""}`}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-medium">{row.childName}</p>
-                        <p className="text-sm text-muted">{row.daycareName}</p>
-                        <p className="mt-1 flex flex-wrap gap-2 text-sm">
-                          <span
-                            className="rounded-full bg-ok/10 px-2.5 py-0.5 text-xs font-medium text-ok"
-                            data-ke="care-enrolment"
-                          >
-                            {t("statusAccepted")}
-                          </span>
-                          {role === "provider" ? (
-                            <span
-                              className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
-                              data-ke="care-presence"
-                            >
-                              {t(PRESENCE_COPY[presence])}
-                            </span>
-                          ) : null}
-                        </p>
-                        {ops ? (
-                          <div className="mt-2">
-                            <CareChildRoomSelect
-                              role={role}
-                              row={row}
-                              ops={ops}
-                              busy={busy}
-                              setBusy={setBusy}
-                              onReload={load}
-                            />
-                          </div>
-                        ) : null}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {role === "provider" && staffWrite ? (
-                          <>
-                            <Button
-                              size="sm"
-                              disabled={busy !== null || row.status === "arrived"}
-                              onClick={() => void mark(row, "check_in")}
-                            >
-                              {busy === `${key}:check_in` ? t("loading") : t("careCheckIn")}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              disabled={busy !== null || row.status === "departed"}
-                              onClick={() => void mark(row, "check_out")}
-                            >
-                              {busy === `${key}:check_out` ? t("loading") : t("careCheckOut")}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              disabled={busy !== null || row.status === "absent"}
-                              onClick={() => void mark(row, "absent")}
-                            >
-                              {t("careMarkAbsent")}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              disabled={busy !== null || row.status === "sick"}
-                              onClick={() => void mark(row, "sick")}
-                            >
-                              {t("careMarkSick")}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              disabled={busy !== null || row.status === "vacation"}
-                              onClick={() => void mark(row, "vacation")}
-                            >
-                              {t("careMarkVacation")}
-                            </Button>
-                          </>
-                        ) : null}
-                        {row.conversationId ? (
-                          <Button size="sm" variant="secondary" asChild>
-                            <Link to="/inbox/$id" params={{ id: row.conversationId }}>
-                              {t("openChat")}
-                            </Link>
-                          </Button>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <DayRecord
-                      role={role}
-                      writable={staffWrite}
-                      row={row}
-                      note={
-                        ops?.dayNotes.find(
-                          (n) => n.daycareId === row.daycareId && n.childName === row.childName,
-                        ) ?? null
-                      }
-                      split={
-                        ops?.splits.find((s) => s.bookingId && s.bookingId === row.bookingId) ??
-                        null
-                      }
-                      draft={dayDrafts[key] ?? { food: "", nap: "", incident: "", photo: "" }}
-                      splitDraft={splitDrafts[key]}
-                      busy={busy}
-                      onDraft={(next) => setDayDrafts((prev) => ({ ...prev, [key]: next }))}
-                      onSplit={(next) => setSplitDrafts((prev) => ({ ...prev, [key]: next }))}
-                      onSaveDay={() => void saveDay(row)}
-                      onSaveSplit={() => void saveSplit(row)}
-                      logsOn={logsOn}
-                      onPhoto={(file) => {
-                        if (!file) return;
-                        const decision = journalPhotoDecision({ type: file.type, size: file.size });
-                        if (decision !== "ok") {
-                          toast.error(
-                            decision === "video"
-                              ? t("carePhotoVideoBlocked")
-                              : t("carePhotoTooBig"),
-                          );
-                          return;
-                        }
-                        readListingImage(
-                          file,
-                          (src) =>
-                            setDayDrafts((prev) => ({
-                              ...prev,
-                              [key]: {
-                                ...(prev[key] ?? { food: "", nap: "", incident: "", photo: "" }),
-                                photo: src,
-                              },
-                            })),
-                          () => toast.error(t("carePhotoTooBig")),
-                        );
-                      }}
-                    />
-
-                    {row.conversationId ? (
-                      <div className="mt-4">
-                        <label className="text-sm font-medium" htmlFor={`care-note-${key}`}>
-                          {t("careMessage")}
-                        </label>
-                        <textarea
-                          id={`care-note-${key}`}
-                          rows={2}
-                          className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
-                          placeholder={t("careMessagePh")}
-                          value={notes[key] ?? ""}
-                          onChange={(e) => setNotes((prev) => ({ ...prev, [key]: e.target.value }))}
-                        />
-                        <div className="mt-2">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            disabled={busy !== null || !(notes[key] || "").trim()}
-                            onClick={() => void sendNote(row)}
-                          >
-                            {busy === `${key}:note` ? t("loading") : t("send")}
-                          </Button>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {logsOn && role === "provider" && staffWrite ? (
-                      <MealNapLog
-                        row={row}
-                        locale={locale}
-                        busy={busy}
-                        onBusy={setBusy}
-                        onLogged={() => void load()}
-                      />
-                    ) : null}
-
-                    {logsOn && role === "provider" && staffWrite ? (
-                      <div className="mt-4 border-t border-border pt-4">
-                        <p className="font-medium">{t("careJournal")}</p>
-                        <p className="mt-1 text-sm text-muted">{t("careJournalLead")}</p>
-                        <textarea
-                          rows={3}
-                          className="mt-2 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
-                          placeholder={t("careJournalBody")}
-                          value={draft.body}
-                          onChange={(e) =>
-                            setDrafts((prev) => ({
-                              ...prev,
-                              [key]: { body: e.target.value, photos: prev[key]?.photos ?? [] },
-                            }))
-                          }
-                        />
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <label className="text-sm">
-                            <span className="sr-only">{t("careJournalPhotos")}</span>
-                            <input
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp,image/gif"
-                              className="text-sm"
-                              onChange={(e) => {
-                                addPhoto(row, e.target.files?.[0]);
-                                e.currentTarget.value = "";
-                              }}
-                            />
-                            <UploadLimitHint hint={t("carePhotoTooBig")} />
-                          </label>
-                          <Button
-                            size="sm"
-                            disabled={busy !== null}
-                            onClick={() => void publishJournal(row)}
-                          >
-                            {busy === `${key}:journal` ? t("loading") : t("careJournalPost")}
-                          </Button>
-                        </div>
-                        {draft.photos.length ? (
-                          <ul className="mt-3 flex flex-wrap gap-2">
-                            {draft.photos.map((photo, i) => (
-                              <li key={`${photo.src.slice(0, 24)}-${i}`}>
-                                <img
-                                  src={photo.src}
-                                  alt={photo.name || t("careJournalPhotos")}
-                                  className="h-16 w-16 rounded-md object-cover ring-1 ring-border"
-                                />
-                              </li>
-                            ))}
-                          </ul>
-                        ) : null}
-                      </div>
-                    ) : null}
-
+          {byChild.map(({ row, journals: childJournals }) => {
+            const key = childKey(row);
+            const rest = key !== (careFocus ?? childKey(byChild[0].row));
+            const presence = presenceFromAttendance(row.status);
+            const draft = drafts[key] ?? { body: "", photos: [] };
+            return (
+              <li key={key} className={`rounded-xl bg-surface p-4 shadow-card ring-1 ring-border${rest ? " ke-child-rest" : ""}`}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium">{row.childName}</p>
+                    <p className="text-sm text-muted">{row.daycareName}</p>
+                    <p className="mt-1 flex flex-wrap gap-2 text-sm">
+                      <span className="rounded-full bg-ok/10 px-2.5 py-0.5 text-xs font-medium text-ok" data-ke="care-enrolment">
+                        {t("statusAccepted")}
+                      </span>
+                      {role === "provider" ? <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary" data-ke="care-presence">
+                        {t(PRESENCE_COPY[presence])}
+                      </span> : null}
+                    </p>
                     {ops ? (
-                      <CareChildOps
-                        role={role}
-                        locked={role === "provider" && !staffWrite}
-                        row={row}
-                        ops={ops}
-                        busy={busy}
-                        setBusy={setBusy}
-                        onReload={load}
-                      />
+                      <div className="mt-2">
+                        <CareChildRoomSelect
+                          role={role}
+                          row={row}
+                          ops={ops}
+                          busy={busy}
+                          setBusy={setBusy}
+                          onReload={load}
+                        />
+                      </div>
                     ) : null}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {role === "provider" && staffWrite ? <>
+                    <Button
+                      size="sm"
+                      disabled={busy !== null || row.status === "arrived"}
+                      onClick={() => void mark(row, "check_in")}
+                    >
+                      {busy === `${key}:check_in` ? t("loading") : t("careCheckIn")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy !== null || row.status === "departed"}
+                      onClick={() => void mark(row, "check_out")}
+                    >
+                      {busy === `${key}:check_out` ? t("loading") : t("careCheckOut")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy !== null || row.status === "absent"}
+                      onClick={() => void mark(row, "absent")}
+                    >
+                      {t("careMarkAbsent")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy !== null || row.status === "sick"}
+                      onClick={() => void mark(row, "sick")}
+                    >
+                      {t("careMarkSick")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy !== null || row.status === "vacation"}
+                      onClick={() => void mark(row, "vacation")}
+                    >
+                      {t("careMarkVacation")}
+                    </Button>
+                    </> : null}
+                    {row.conversationId ? (
+                      <Button size="sm" variant="secondary" asChild>
+                        <Link to="/inbox/$id" params={{ id: row.conversationId }}>
+                          {t("openChat")}
+                        </Link>
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
 
-                    <div className="mt-4 space-y-3">
-                      {childJournals.length === 0 && role === "parent" ? (
-                        <p className="text-sm text-muted">{t("careJournalEmpty")}</p>
-                      ) : null}
-                      {childJournals.map((journal) => (
-                        <article
-                          key={journal.id}
-                          className="rounded-lg bg-bg p-3 ring-1 ring-border"
-                        >
-                          <p className="text-xs text-subtle">
-                            {new Date(journal.createdAt).toLocaleString()}
-                          </p>
-                          {journal.body ? (
-                            <p className="mt-1 whitespace-pre-wrap text-sm">{journal.body}</p>
-                          ) : null}
-                          {journal.photos.length ? (
-                            <ul className="mt-2 flex flex-wrap gap-2">
-                              {journal.photos.map((photo, i) => (
-                                <li key={`${journal.id}-${i}`}>
-                                  <img
-                                    src={photo.src}
-                                    alt={photo.name || journal.childName}
-                                    className="h-24 w-24 rounded-md object-cover ring-1 ring-border"
-                                  />
-                                </li>
-                              ))}
-                            </ul>
-                          ) : null}
-                        </article>
-                      ))}
+                <DayRecord
+                  role={role}
+                  writable={staffWrite}
+                  row={row}
+                  note={ops?.dayNotes.find((n) => n.daycareId === row.daycareId && n.childName === row.childName) ?? null}
+                  split={ops?.splits.find((s) => s.bookingId && s.bookingId === row.bookingId) ?? null}
+                  draft={dayDrafts[key] ?? { food: "", nap: "", incident: "", photo: "" }}
+                  splitDraft={splitDrafts[key]}
+                  busy={busy}
+                  onDraft={(next) => setDayDrafts((prev) => ({ ...prev, [key]: next }))}
+                  onSplit={(next) => setSplitDrafts((prev) => ({ ...prev, [key]: next }))}
+                  onSaveDay={() => void saveDay(row)}
+                  onSaveSplit={() => void saveSplit(row)}
+                  logsOn={logsOn}
+                  onPhoto={(file) => {
+                    if (!file) return;
+                    const decision = journalPhotoDecision({ type: file.type, size: file.size });
+                    if (decision !== "ok") {
+                      toast.error(decision === "video" ? t("carePhotoVideoBlocked") : t("carePhotoTooBig"));
+                      return;
+                    }
+                    readListingImage(
+                      file,
+                      (src) => setDayDrafts((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { food: "", nap: "", incident: "", photo: "" }), photo: src } })),
+                      () => toast.error(t("carePhotoTooBig")),
+                    );
+                  }}
+                />
+
+                {row.conversationId ? (
+                  <div className="mt-4">
+                    <label className="text-sm font-medium" htmlFor={`care-note-${key}`}>
+                      {t("careMessage")}
+                    </label>
+                    <textarea
+                      id={`care-note-${key}`}
+                      rows={2}
+                      className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                      placeholder={t("careMessagePh")}
+                      value={notes[key] ?? ""}
+                      onChange={(e) => setNotes((prev) => ({ ...prev, [key]: e.target.value }))}
+                    />
+                    <div className="mt-2">
+                      <Button size="sm" variant="secondary" disabled={busy !== null || !(notes[key] || "").trim()} onClick={() => void sendNote(row)}>
+                        {busy === `${key}:note` ? t("loading") : t("send")}
+                      </Button>
                     </div>
-                  </li>
-                );
-              })}
+                  </div>
+                ) : null}
+
+                {logsOn && role === "provider" && staffWrite ? (
+                  <MealNapLog
+                    row={row}
+                    locale={locale}
+                    busy={busy}
+                    onBusy={setBusy}
+                    onLogged={() => void load()}
+                  />
+                ) : null}
+
+                {logsOn && role === "provider" && staffWrite ? (
+                  <div className="mt-4 border-t border-border pt-4">
+                    <p className="font-medium">{t("careJournal")}</p>
+                    <p className="mt-1 text-sm text-muted">{t("careJournalLead")}</p>
+                    <textarea
+                      rows={3}
+                      className="mt-2 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                      placeholder={t("careJournalBody")}
+                      value={draft.body}
+                      onChange={(e) =>
+                        setDrafts((prev) => ({ ...prev, [key]: { body: e.target.value, photos: prev[key]?.photos ?? [] } }))
+                      }
+                    />
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <label className="text-sm">
+                        <span className="sr-only">{t("careJournalPhotos")}</span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          className="text-sm"
+                          onChange={(e) => {
+                            addPhoto(row, e.target.files?.[0]);
+                            e.currentTarget.value = "";
+                          }}
+                        />
+                        <UploadLimitHint hint={t("carePhotoTooBig")} />
+                      </label>
+                      <Button size="sm" disabled={busy !== null} onClick={() => void publishJournal(row)}>
+                        {busy === `${key}:journal` ? t("loading") : t("careJournalPost")}
+                      </Button>
+                    </div>
+                    {draft.photos.length ? (
+                      <ul className="mt-3 flex flex-wrap gap-2">
+                        {draft.photos.map((photo, i) => (
+                          <li key={`${photo.src.slice(0, 24)}-${i}`}>
+                            <img src={photo.src} alt={photo.name || t("careJournalPhotos")} className="h-16 w-16 rounded-md object-cover ring-1 ring-border" />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {ops ? (
+                  <CareChildOps
+                    role={role}
+                    locked={role === "provider" && !staffWrite}
+                    row={row}
+                    ops={ops}
+                    busy={busy}
+                    setBusy={setBusy}
+                    onReload={load}
+                  />
+                ) : null}
+
+                <div className="mt-4 space-y-3">
+                  {childJournals.length === 0 && role === "parent" ? (
+                    <p className="text-sm text-muted">{t("careJournalEmpty")}</p>
+                  ) : null}
+                  {childJournals.map((journal) => (
+                    <article key={journal.id} className="rounded-lg bg-bg p-3 ring-1 ring-border">
+                      <p className="text-xs text-subtle">{new Date(journal.createdAt).toLocaleString()}</p>
+                      {journal.body ? <p className="mt-1 whitespace-pre-wrap text-sm">{journal.body}</p> : null}
+                      {journal.photos.length ? (
+                        <ul className="mt-2 flex flex-wrap gap-2">
+                          {journal.photos.map((photo, i) => (
+                            <li key={`${journal.id}-${i}`}>
+                              <img src={photo.src} alt={photo.name || journal.childName} className="h-24 w-24 rounded-md object-cover ring-1 ring-border" />
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </article>
+                  ))}
+                </div>
+              </li>
+            );
+          })}
             </ul>
           </div>
         </div>
@@ -788,12 +682,7 @@ function DayRecord({
   writable?: boolean;
   row: AttendanceRow;
   note: { food: string; nap: string; incident: string; photo: string } | null;
-  split: {
-    parentDailyCents: number;
-    programDailyCents: number;
-    programKind: string;
-    programLabel: string;
-  } | null;
+  split: { parentDailyCents: number; programDailyCents: number; programKind: string; programLabel: string } | null;
   draft: { food: string; nap: string; incident: string; photo: string };
   splitDraft?: { parent: string; program: string; kind: string; label: string };
   busy: string | null;
@@ -815,33 +704,13 @@ function DayRecord({
   return (
     <div className="mt-4 border-t border-border pt-4" data-ke="day-record">
       <p className="font-medium">{t("careDayNote")}</p>
-      {role === "provider" && !marked ? (
-        <p className="mt-1 text-sm text-muted">{t("careDayNoteLocked")}</p>
-      ) : null}
+      {role === "provider" && !marked ? <p className="mt-1 text-sm text-muted">{t("careDayNoteLocked")}</p> : null}
       {note && (note.food || note.nap || note.incident || note.photo) ? (
         <div className="mt-2 space-y-1 text-sm">
-          {logsOn && note.food ? (
-            <p>
-              {t("careFood")}: {note.food}
-            </p>
-          ) : null}
-          {logsOn && note.nap ? (
-            <p>
-              {t("careNap")}: {note.nap}
-            </p>
-          ) : null}
-          {note.incident ? (
-            <p>
-              {t("careIncidentNote")}: {note.incident}
-            </p>
-          ) : null}
-          {note.photo ? (
-            <img
-              src={note.photo}
-              alt=""
-              className="mt-2 h-24 w-24 rounded-md object-cover ring-1 ring-border"
-            />
-          ) : null}
+          {logsOn && note.food ? <p>{t("careFood")}: {note.food}</p> : null}
+          {logsOn && note.nap ? <p>{t("careNap")}: {note.nap}</p> : null}
+          {note.incident ? <p>{t("careIncidentNote")}: {note.incident}</p> : null}
+          {note.photo ? <img src={note.photo} alt="" className="mt-2 h-24 w-24 rounded-md object-cover ring-1 ring-border" /> : null}
         </div>
       ) : null}
       {role === "provider" && writable && marked ? (
@@ -850,30 +719,17 @@ function DayRecord({
             <>
               <label className="block text-sm">
                 {t("careFood")}
-                <input
-                  className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
-                  value={draft.food}
-                  onChange={(e) => onDraft({ ...draft, food: e.target.value })}
-                />
+                <input className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" value={draft.food} onChange={(e) => onDraft({ ...draft, food: e.target.value })} />
               </label>
               <label className="block text-sm">
                 {t("careNap")}
-                <input
-                  className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
-                  value={draft.nap}
-                  onChange={(e) => onDraft({ ...draft, nap: e.target.value })}
-                />
+                <input className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" value={draft.nap} onChange={(e) => onDraft({ ...draft, nap: e.target.value })} />
               </label>
             </>
           ) : null}
           <label className="block text-sm">
             {t("careIncidentNote")}
-            <textarea
-              rows={2}
-              className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
-              value={draft.incident}
-              onChange={(e) => onDraft({ ...draft, incident: e.target.value })}
-            />
+            <textarea rows={2} className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" value={draft.incident} onChange={(e) => onDraft({ ...draft, incident: e.target.value })} />
           </label>
           <label className="block text-sm">
             {t("careJournalPhotos")}
@@ -899,36 +755,15 @@ function DayRecord({
           <div className="flex flex-wrap gap-2">
             <label className="text-sm">
               {t("careParentDaily")}
-              <input
-                className="mt-1 block w-28 rounded-md border border-border bg-bg px-3 py-2 text-sm"
-                inputMode="decimal"
-                value={amounts.parent}
-                onChange={(e) => onSplit({ ...amounts, parent: e.target.value })}
-              />
+              <input className="mt-1 block w-28 rounded-md border border-border bg-bg px-3 py-2 text-sm" inputMode="decimal" value={amounts.parent} onChange={(e) => onSplit({ ...amounts, parent: e.target.value })} />
             </label>
             <label className="text-sm">
               {t("careProgramDaily")}
-              <input
-                className="mt-1 block w-28 rounded-md border border-border bg-bg px-3 py-2 text-sm"
-                inputMode="decimal"
-                value={amounts.program}
-                onChange={(e) => onSplit({ ...amounts, program: e.target.value })}
-                disabled={amounts.kind === "none"}
-              />
+              <input className="mt-1 block w-28 rounded-md border border-border bg-bg px-3 py-2 text-sm" inputMode="decimal" value={amounts.program} onChange={(e) => onSplit({ ...amounts, program: e.target.value })} disabled={amounts.kind === "none"} />
             </label>
             <label className="text-sm">
               {t("careProgramKind")}
-              <select
-                className="mt-1 block rounded-md border border-border bg-bg px-2 py-2 text-sm"
-                value={amounts.kind}
-                onChange={(e) =>
-                  onSplit({
-                    ...amounts,
-                    kind: e.target.value,
-                    program: e.target.value === "none" ? "0" : amounts.program,
-                  })
-                }
-              >
+              <select className="mt-1 block rounded-md border border-border bg-bg px-2 py-2 text-sm" value={amounts.kind} onChange={(e) => onSplit({ ...amounts, kind: e.target.value, program: e.target.value === "none" ? "0" : amounts.program })}>
                 <option value="cwelcc">{t("careProgramCwelcc")}</option>
                 <option value="subsidy">{t("careProgramSubsidy")}</option>
                 <option value="none">{t("careProgramNone")}</option>
@@ -936,12 +771,7 @@ function DayRecord({
             </label>
             <label className="min-w-40 flex-1 text-sm">
               {t("careProgramLabel")}
-              <input
-                className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
-                placeholder={t("careProgramLabelPh")}
-                value={amounts.label}
-                onChange={(e) => onSplit({ ...amounts, label: e.target.value })}
-              />
+              <input className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" placeholder={t("careProgramLabelPh")} value={amounts.label} onChange={(e) => onSplit({ ...amounts, label: e.target.value })} />
             </label>
           </div>
           <Button size="sm" variant="secondary" disabled={busy !== null} onClick={onSaveSplit}>
@@ -970,10 +800,7 @@ function MonthShares({
 }) {
   const { t } = useCopy();
   return (
-    <section
-      className="rounded-xl bg-surface p-4 shadow-card ring-1 ring-border"
-      data-ke="licensed-month"
-    >
+    <section className="rounded-xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="licensed-month">
       <h3 className="font-medium">{t("careMonthTitle").replace("{month}", month)}</h3>
       <p className="mt-1 text-sm text-muted">{t("careMonthLead")}</p>
       <ul className="mt-3 space-y-3">
@@ -987,10 +814,7 @@ function MonthShares({
           return (
             <li key={child.bookingId} className="rounded-lg bg-bg p-3 ring-1 ring-border">
               <p className="font-medium">{child.childName}</p>
-              <p className="text-sm text-muted">
-                {child.daycareName}
-                {child.split?.programLabel ? ` · ${child.split.programLabel}` : ""}
-              </p>
+              <p className="text-sm text-muted">{child.daycareName}{child.split?.programLabel ? ` · ${child.split.programLabel}` : ""}</p>
               <p className="mt-1 text-sm">
                 {t("carePresentDays").replace("{n}", String(ledger.present))}
                 {" · "}
@@ -1007,12 +831,7 @@ function MonthShares({
               </p>
               <p className="mt-1 text-xs text-subtle">{t("careProgramNotCollected")}</p>
               {role === "provider" && dollars && child.parentUserId ? (
-                <Button
-                  className="mt-2"
-                  size="sm"
-                  disabled={busy !== null}
-                  onClick={() => onSend(child)}
-                >
+                <Button className="mt-2" size="sm" disabled={busy !== null} onClick={() => onSend(child)}>
                   {busy === `bill:${child.bookingId}` ? t("loading") : t("careSendParentShare")}
                 </Button>
               ) : null}
@@ -1102,77 +921,35 @@ function MealNapLog({
   return (
     <div className="mt-4 space-y-3 border-t border-border pt-4" data-ke="meal-nap-log">
       <p className="font-medium">{fr ? "Repas et sieste" : "Meals and naps"}</p>
-      <p className="text-sm text-muted">
-        {fr
-          ? "Le parent le voit dans le journal. Aucun courriel."
-          : "The parent sees it in the journal. No email."}
-      </p>
+      <p className="text-sm text-muted">{fr ? "Le parent le voit dans le journal. Aucun courriel." : "The parent sees it in the journal. No email."}</p>
       <label className="block text-sm">
         {fr ? "Repas" : "Meal"}
-        <select
-          className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3"
-          value={slot}
-          onChange={(event) => {
-            if (isMealSlot(event.target.value)) setSlot(event.target.value);
-          }}
-        >
+        <select className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3" value={slot} onChange={(event) => { if (isMealSlot(event.target.value)) setSlot(event.target.value); }}>
           {MEAL_SLOTS.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
+            <option key={item} value={item}>{item}</option>
           ))}
         </select>
       </label>
       <label className="block text-sm">
         {fr ? "Note" : "Note"}
-        <input
-          className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3"
-          value={note}
-          maxLength={200}
-          onChange={(event) => setNote(event.target.value)}
-          onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
-        />
+        <input className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3" value={note} maxLength={200} onChange={(event) => setNote(event.target.value)} onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })} />
       </label>
-      <Button
-        type="button"
-        size="sm"
-        disabled={busy !== null || note.trim().length < 1}
-        onClick={() => void saveMeal()}
-      >
+      <Button type="button" size="sm" disabled={busy !== null || note.trim().length < 1} onClick={() => void saveMeal()}>
         {fr ? "Enregistrer le repas" : "Save the meal"}
       </Button>
       <label className="block text-sm">
         {fr ? "Sieste" : "Nap"}
-        <select
-          className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3"
-          value={nap}
-          onChange={(event) => {
-            if (isNapState(event.target.value)) setNap(event.target.value);
-          }}
-        >
+        <select className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3" value={nap} onChange={(event) => { if (isNapState(event.target.value)) setNap(event.target.value); }}>
           {NAP_STATES.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
+            <option key={item} value={item}>{item}</option>
           ))}
         </select>
       </label>
       <label className="block text-sm">
         {fr ? "Minutes" : "Minutes"}
-        <input
-          className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3"
-          inputMode="numeric"
-          value={minutes}
-          onChange={(event) => setMinutes(event.target.value.replace(/[^\d]/g, "").slice(0, 3))}
-        />
+        <input className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3" inputMode="numeric" value={minutes} onChange={(event) => setMinutes(event.target.value.replace(/[^\d]/g, "").slice(0, 3))} />
       </label>
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        disabled={busy !== null}
-        onClick={() => void saveNap()}
-      >
+      <Button type="button" variant="secondary" size="sm" disabled={busy !== null} onClick={() => void saveNap()}>
         {fr ? "Enregistrer la sieste" : "Save the nap"}
       </Button>
     </div>

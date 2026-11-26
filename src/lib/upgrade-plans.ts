@@ -38,28 +38,10 @@ export type PaidPlanPrice = {
  * Parent Alerts ($14.99 / $149) and Network yearly ($390/site) are proposals for Kyle.
  */
 export const PAID_PLAN_PRICES: PaidPlanPrice[] = [
-  {
-    id: "plus",
-    monthlyCad: 7.99,
-    yearlyCad: 59,
-    hideUntilBothPrices: false,
-    yearlyProposal: false,
-  },
-  {
-    id: "alerts",
-    monthlyCad: 14.99,
-    yearlyCad: 149,
-    hideUntilBothPrices: true,
-    yearlyProposal: true,
-  },
+  { id: "plus", monthlyCad: 7.99, yearlyCad: 59, hideUntilBothPrices: false, yearlyProposal: false },
+  { id: "alerts", monthlyCad: 14.99, yearlyCad: 149, hideUntilBothPrices: true, yearlyProposal: true },
   { id: "pro", monthlyCad: 49, yearlyCad: 490, hideUntilBothPrices: false, yearlyProposal: false },
-  {
-    id: "network",
-    monthlyCad: 39,
-    yearlyCad: 390,
-    hideUntilBothPrices: false,
-    yearlyProposal: true,
-  },
+  { id: "network", monthlyCad: 39, yearlyCad: 390, hideUntilBothPrices: false, yearlyProposal: true },
 ];
 
 /** Catalog keys. Client-safe strings; the server maps them to STRIPE_PRICE_* env names. */
@@ -127,10 +109,7 @@ export function daycareAddon(id: string): DaycareAddon {
   return DAYCARE_ADDONS.find((addon) => addon.id === id) ?? DAYCARE_ADDONS[0]!;
 }
 
-export function daycareAddonVisible(
-  id: string,
-  flags: Partial<Record<string, boolean>> | null | undefined,
-): boolean {
+export function daycareAddonVisible(id: string, flags: Partial<Record<string, boolean>> | null | undefined): boolean {
   return Boolean(flags?.[id]);
 }
 
@@ -283,10 +262,7 @@ export function daycareUpgradePlan(id: string): UpgradePlanCopy {
 }
 
 /** Positive dollars saved by paying yearly instead of twelve months. */
-export function yearlySavingsCad(
-  monthly: number,
-  yearly: number | null | undefined,
-): number | null {
+export function yearlySavingsCad(monthly: number, yearly: number | null | undefined): number | null {
   if (yearly == null) return null;
   const save = Math.round((monthly * 12 - yearly) * 100) / 100;
   return save > 0 ? save : null;
@@ -300,36 +276,24 @@ function cents(amountCad: number): number {
  * Floor of (monthly × 12 − yearly) / (monthly × 12), as a percent.
  * Rounded down so the saving is never overstated. Null when yearly is not cheaper.
  */
-export function yearlySavingsPercentFromCents(
-  monthlyCents: number,
-  yearlyCents: number,
-): number | null {
+export function yearlySavingsPercentFromCents(monthlyCents: number, yearlyCents: number): number | null {
   if (!Number.isFinite(monthlyCents) || !Number.isFinite(yearlyCents)) return null;
   const full = monthlyCents * 12;
   if (full <= 0 || yearlyCents >= full) return null;
   return Math.floor(((full - yearlyCents) * 100) / full);
 }
 
-export function yearlySavingsPercent(
-  monthlyCad: number,
-  yearlyCad: number | null | undefined,
-): number | null {
+export function yearlySavingsPercent(monthlyCad: number, yearlyCad: number | null | undefined): number | null {
   if (yearlyCad == null) return null;
   return yearlySavingsPercentFromCents(cents(monthlyCad), cents(yearlyCad));
 }
 
 /** One pill for the yearly side of a toggle. A range uses each plan's floored percent. */
-export function yearlySavingsToggleLabel(
-  percents: Array<number | null | undefined>,
-  locale: PlanLocale,
-): string | null {
-  const unique = [
-    ...new Set(percents.filter((n): n is number => typeof n === "number" && n > 0)),
-  ].sort((a, b) => a - b);
+export function yearlySavingsToggleLabel(percents: Array<number | null | undefined>, locale: PlanLocale): string | null {
+  const unique = [...new Set(percents.filter((n): n is number => typeof n === "number" && n > 0))].sort((a, b) => a - b);
   if (!unique.length) return null;
   if (locale === "fr") {
-    const span =
-      unique.length === 1 ? `${unique[0]} %` : `${unique[0]}–${unique[unique.length - 1]} %`;
+    const span = unique.length === 1 ? `${unique[0]} %` : `${unique[0]}–${unique[unique.length - 1]} %`;
     return `Économisez ${span}`;
   }
   const span = unique.length === 1 ? `${unique[0]}%` : `${unique[0]}–${unique[unique.length - 1]}%`;
@@ -377,9 +341,7 @@ export function checkoutCtaLabel(input: {
   }
   const percent = yearlySavingsPercent(input.monthly, input.yearly);
   if (percent == null) {
-    return input.locale === "fr"
-      ? `Choisir ${input.planName} à l’année`
-      : `Choose ${input.planName} yearly`;
+    return input.locale === "fr" ? `Choisir ${input.planName} à l’année` : `Choose ${input.planName} yearly`;
   }
   return input.locale === "fr"
     ? `Choisir ${input.planName} à l’année · économisez ${percent} %`
@@ -430,16 +392,10 @@ export function formatPlanCad(amount: number, locale: PlanLocale): string {
   return `${negative ? "-" : ""}CA$${numeric}`;
 }
 
-export function yearlySavingsLine(
-  monthly: number,
-  yearly: number | null | undefined,
-  locale: PlanLocale,
-): string | null {
+export function yearlySavingsLine(monthly: number, yearly: number | null | undefined, locale: PlanLocale): string | null {
   const save = yearlySavingsCad(monthly, yearly);
   if (save == null || yearly == null) return null;
   const year = formatPlanCad(yearly, locale);
   const saved = formatPlanCad(save, locale);
-  return locale === "fr"
-    ? `ou ${year}/an · économisez ${saved}`
-    : `or ${year}/year · save ${saved}`;
+  return locale === "fr" ? `ou ${year}/an · économisez ${saved}` : `or ${year}/year · save ${saved}`;
 }

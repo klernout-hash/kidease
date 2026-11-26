@@ -57,10 +57,7 @@ function polishCentreName(value: string) {
     .replace(/\bcenters\b/gi, "Centres")
     .replace(/\bcenter\b/gi, "Centre")
     .replace(/(\d)\s*[–—-]\s*(\d)/g, "$1–$2")
-    .replace(
-      /(^|[^A-Za-zÀ-ÿ])mc([a-zà-ÿ])/gi,
-      (_match, pre: string, ch: string) => `${pre}Mc${ch.toUpperCase()}`,
-    );
+    .replace(/(^|[^A-Za-zÀ-ÿ])mc([a-zà-ÿ])/gi, (_match, pre: string, ch: string) => `${pre}Mc${ch.toUpperCase()}`);
 
   let seenWord = false;
   let prev = "";
@@ -79,8 +76,7 @@ function polishCentreName(value: string) {
       const lower = word.toLowerCase();
       let next = word;
       if (NAME_KEEP_UPPER.has(lower)) next = lower.toUpperCase();
-      else if (seenWord && NAME_SMALL_WORDS.has(lower) && !(word.length === 1 && prev === "&"))
-        next = lower;
+      else if (seenWord && NAME_SMALL_WORDS.has(lower) && !(word.length === 1 && prev === "&")) next = lower;
       seenWord = true;
       prev = next;
       return `${lead}${next}${trail}`;
@@ -91,7 +87,7 @@ function polishCentreName(value: string) {
 /** Registry typos we refuse to show on parent-facing cards. Display only — the master row stays as stored. */
 export function displayCentreName(value: string | null | undefined) {
   const decoded = decodeHtml(value)
-    .replace(/[“”«»]/g, '"')
+    .replace(/[“”«»]/g, "\"")
     .replace(/[‘’]/g, "'")
     .replace(/(^|\s)["']+|["']+(\s|$)/g, "$1$2")
     .replace(/\bCetnre\b/g, "Centre")

@@ -2,12 +2,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { DEV_FALLBACK_USER_ID, resolveRequiredUserId } from "@/lib/access-control";
 import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
 import { parseTimestampMs } from "@/lib/admin-idle";
-import {
-  aliasInboundAuthCookies,
-  isKideasePublicHost,
-  unsignedSessionToken,
-  withE2eSessionCookie,
-} from "./cookies";
+import { aliasInboundAuthCookies, isKideasePublicHost, unsignedSessionToken, withE2eSessionCookie } from "./cookies";
 import { auth, authConfigured } from "./server";
 
 /**
@@ -111,9 +106,7 @@ export async function getVerifiedAuthSession(
   // it as null looks like a real sign-out and beforeLoad sends /account to
   // /login?intent=in&next=/account with no save confirmation.
   const session = await withTimeout(
-    sharedSessionLookup(`${cookie || ""}\n${bearerToken || ""}`, () =>
-      auth.api.getSession({ headers }),
-    ),
+    sharedSessionLookup(`${cookie || ""}\n${bearerToken || ""}`, () => auth.api.getSession({ headers })),
     SQL_SETTLE_MS,
     "get-session-timeout",
   );
@@ -123,12 +116,7 @@ export async function getVerifiedAuthSession(
   const persistentFlag = String(process.env.FEATURE_PERSISTENT_SESSIONS || "")
     .trim()
     .toLowerCase();
-  if (
-    persistentFlag === "1" ||
-    persistentFlag === "true" ||
-    persistentFlag === "on" ||
-    persistentFlag === "yes"
-  ) {
+  if (persistentFlag === "1" || persistentFlag === "true" || persistentFlag === "on" || persistentFlag === "yes") {
     const { enforcePersistentSession } = await import("@/lib/server/persistent-session.server");
     if (!(await enforcePersistentSession(token))) return null;
   }
@@ -152,7 +140,9 @@ export async function getVerifiedAuthSession(
  * as a bearer token, which we present as `Authorization: Bearer …` (the `bearer`
  * plugin resolves it). When deployed no token is passed and the cookie is used.
  */
-export async function getSessionUser(bearerToken?: string): Promise<VerifiedUser | null> {
+export async function getSessionUser(
+  bearerToken?: string,
+): Promise<VerifiedUser | null> {
   const session = await getVerifiedAuthSession(bearerToken);
   if (!session) return null;
   // Browser bundles never overlay. The server re-checks admin, then may

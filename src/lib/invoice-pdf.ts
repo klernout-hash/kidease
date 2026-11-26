@@ -22,11 +22,7 @@ export type InvoicePdfInput = {
 };
 
 /** Amount with an explicit CAD marker in both languages ("$1.00 CAD", "1,00 $ CA"). */
-export function invoicePdfMoney(
-  cents: number | null,
-  currency: string,
-  locale: InvoiceLocale,
-): string | null {
+export function invoicePdfMoney(cents: number | null, currency: string, locale: InvoiceLocale): string | null {
   const text = formatInvoiceMoney(cents, currency, locale);
   if (!text) return null;
   const code = /^[a-z]{3}$/i.test(currency) ? currency.toUpperCase() : "CAD";
@@ -50,9 +46,7 @@ export function invoicePdfLines(invoice: InvoicePdfInput): string[] {
       ? "TPS/TVH : aucune taxe facturée (les services de garde d’enfants sont exonérés)."
       : "GST/HST: no tax charged (child care services are tax-exempt).",
     `${fr ? "Statut : " : "Status: "}${invoiceStatusLabel(invoice.status, locale)}`,
-    invoice.paidAt
-      ? `${fr ? "Date du paiement : " : "Paid on: "}${invoice.paidAt.slice(0, 10)}`
-      : "",
+    invoice.paidAt ? `${fr ? "Date du paiement : " : "Paid on: "}${invoice.paidAt.slice(0, 10)}` : "",
   ];
   return lines.filter(Boolean);
 }
@@ -73,9 +67,7 @@ export function brandedInvoicePdf(invoice: InvoicePdfInput): Uint8Array {
     const y = 700 - index * 18;
     const size = index === 0 ? 18 : 12;
     const font = index === 0 ? "F2" : "F1";
-    commands.push(
-      `BT /${font} ${size} Tf 56 ${y} Td (${pdfEscape(Array.from(line).slice(0, 90).join(""))}) Tj ET`,
-    );
+    commands.push(`BT /${font} ${size} Tf 56 ${y} Td (${pdfEscape(Array.from(line).slice(0, 90).join(""))}) Tj ET`);
   });
   const stream = `${commands.join("\n")}\n`;
   const objects = [
@@ -103,11 +95,7 @@ export function brandedInvoicePdf(invoice: InvoicePdfInput): Uint8Array {
 }
 
 export function invoicePdfFilename(number: string): string {
-  const safe =
-    number
-      .replace(/[^\w.-]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 60) || "invoice";
+  const safe = number.replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "invoice";
   return `kidease-${safe}.pdf`;
 }
 
