@@ -64,20 +64,29 @@ function makeCode() {
   return out;
 }
 
-async function persistLicenseInput(raw?: string | null, daycareId?: string | null) {
+type LicenseUpload = { body: Buffer; mime: string };
+
+/**
+ * A licence file the caller sent just now, as a data URL. A stored private key
+ * is refused so a caller cannot point a centre at an object it did not upload.
+ * Nothing is written here; call persistLicenseUpload once the caller is cleared.
+ */
+async function parseLicenseInput(raw?: string | null): Promise<LicenseUpload | null> {
   const v = (raw || "").trim();
-  if (!v) return null;
-  const { parsePrivateUpload, persistPrivateDoc, licenseObjectTail } = await import("@/lib/server/private-docs");
-  const { R2_LICENSE_PREFIX } = await import("@/lib/server/r2");
-  const { isPrivateR2Key } = await import("@/lib/private-docs");
-  if (isPrivateR2Key(v)) return v;
+  if (!v.startsWith("data:")) return null;
+  const { parsePrivateUpload } = await import("@/lib/server/private-docs");
   const parsed = parsePrivateUpload({ dataUrl: v, filename: "licence" });
-  if (!parsed.ok) return null;
+  return parsed.ok ? { body: parsed.body, mime: parsed.mime } : null;
+}
+
+async function persistLicenseUpload(upload: LicenseUpload, keyScope: string) {
+  const { persistPrivateDoc, licenseObjectTail } = await import("@/lib/server/private-docs");
+  const { R2_LICENSE_PREFIX } = await import("@/lib/server/r2");
   const stored = await persistPrivateDoc({
     prefix: R2_LICENSE_PREFIX,
-    keyTail: licenseObjectTail(daycareId || "claim"),
-    body: parsed.body,
-    mime: parsed.mime,
+    keyTail: licenseObjectTail(keyScope),
+    body: upload.body,
+    mime: upload.mime,
   });
   return stored.storageRef;
 }
@@ -350,8 +359,8 @@ export const verifyClaim = createServerFn({ method: "POST" })
     }
     const { assertTurnstileToken } = await import("@/lib/server/turnstile");
     await assertTurnstileToken(data.turnstileToken);
-    const photo = await persistLicenseInput(data.licensePhoto, data.daycareId);
-    if (!photo) throw new Error("Upload a photo or PDF of your provincial licence");
+    const upload = await parseLicenseInput(data.licensePhoto);
+    if (!upload) throw new Error("Upload a photo or PDF of your provincial licence");
     const sql = await getSql();
     const waiting = await sql<{ id: string }>`
       select id from listing_claims
@@ -395,14 +404,18 @@ export const verifyClaim = createServerFn({ method: "POST" })
             : "That code does not match",
       );
     }
-    await sql`
+    const photo = await persistLicenseUpload(upload, data.daycareId);
+    // The file stays on this claim for KidEase review. runApproval copies it to
+    // the centre only when an admin approves this claim.
+    const moved = await sql<{ id: string }>`
       update listing_claims
       set status = 'waiting',
           license_photo = ${photo},
           verified_at = case when ${judged.matched} then now() else verified_at end
-      where id = ${claim.id}
+      where id = ${claim.id} and user_id = ${context.userId} and daycare_id = ${data.daycareId} and status = 'pending'
+      returning id
     `;
-    await storeLicensePhoto(sql, data.daycareId, photo);
+    if (!moved[0]) throw new Error("No pending claim");
     {
       const { getRequest } = await import("@tanstack/react-start/server");
       const { clientIpFromHeaders } = await import("@/lib/server/turnstile-verify");
@@ -542,16 +555,19 @@ export const submitEnrollLicense = createServerFn({ method: "POST" })
     const centre = data.centre.trim();
     const city = data.city.trim();
     const body = data.body.trim();
-    const photo = await persistLicenseInput(data.licensePhoto, data.daycareId);
     if (!name || !email || !centre || !city || !body) throw new Error("Missing fields");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid email");
-    if (!photo) throw new Error("Upload a photo or PDF of your provincial licence");
+    const upload = await parseLicenseInput(data.licensePhoto);
+    if (!upload) throw new Error("Upload a photo or PDF of your provincial licence");
     if (data.daycareId) {
       const listed = await catalogByIdGet(data.daycareId);
       if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerIsAdmin())) {
         throw new Error("Listing not found");
       }
     }
+    // Anyone can send this form, so the file is kept only on license_uploads
+    // for KidEase to review. It never becomes the centre's licence on file.
+    const photo = await persistLicenseUpload(upload, "enroll");
     const sql = await getSql();
     const id = nid("lic");
     await sql`
@@ -568,7 +584,6 @@ export const submitEnrollLicense = createServerFn({ method: "POST" })
         values (${id}, ${centre.slice(0, 160)}, ${email.slice(0, 200)}, ${photo})
       `;
     });
-    if (data.daycareId) await storeLicensePhoto(sql, data.daycareId, photo);
     void import("@/lib/server/admin-tools")
       .then((mod) =>
         mod.maybeReadLicence({
@@ -757,7 +772,8 @@ export const updateListing = createServerFn({ method: "POST" })
     const centreFees = infantMonthly > 0 || toddlerMonthly > 0 || preschoolMonthly > 0;
     const { ensureFeeConfidenceColumn } = await import("@/lib/server/fee-confidence");
     if (centreFees) await ensureFeeConfidenceColumn();
-    const license = await persistLicenseInput(data.licensePhoto, data.daycareId);
+    const licenseUpload = await parseLicenseInput(data.licensePhoto);
+    const license = licenseUpload ? await persistLicenseUpload(licenseUpload, data.daycareId) : null;
     const hours = (data.hours ?? "").trim();
     const licenseNumber = (data.licenseNumber ?? "").trim().slice(0, 80);
     const licenseExpiry = (data.licenseExpiry ?? "").trim().slice(0, 10) || null;

@@ -15,7 +15,7 @@ function src(rel) {
     : text;
 }
 
-test("a stored claim or enroll file fills an empty daycare licence photo", async () => {
+test("a stored claim file fills an empty daycare licence photo; an anonymous enrol upload does not", async () => {
   const queries = [];
   const sql = {
     query: async (text, params) => {
@@ -25,10 +25,6 @@ test("a stored claim or enroll file fills an empty daycare licence photo", async
       if (text.includes("from listing_claims")) {
         assert.deepEqual(params[0], ["ab-kh2t", "ab-enroll", "ab-none"]);
         return [{ daycare_id: "ab-kh2t", license_photo: "licenses/ab-kh2t/licence.pdf" }];
-      }
-      if (text.includes("from license_uploads")) {
-        assert.deepEqual(params[0], ["ab-enroll", "ab-none"]);
-        return [{ daycare_id: "ab-enroll", license_photo: "licenses/ab-enroll/enrol.pdf" }];
       }
       throw new Error(text);
     },
@@ -42,9 +38,9 @@ test("a stored claim or enroll file fills an empty daycare licence photo", async
   assert.equal(rows[0].license_photo, "licenses/ab-kh2t/licence.pdf");
   assert.equal(rows[0].license_number, "70051797");
   assert.equal(rows[1].license_photo, "licenses/ab-file/current.pdf");
-  assert.equal(rows[2].license_photo, "licenses/ab-enroll/enrol.pdf");
+  assert.equal(rows[2].license_photo, "  ");
   assert.equal(rows[3].license_photo, null);
-  assert.equal(queries.length, 2);
+  assert.equal(queries.length, 1);
 
   assert.match(src("src/lib/server/admin-centres.ts"), /overlayStoredLicensePhotos/);
   assert.match(src("src/routes/api/license-docs.$daycareId.ts"), /overlayStoredLicensePhotos/);

@@ -266,6 +266,16 @@ export async function runApproval(
             review_note = ${input.note?.trim() || null}
         where id = ${plan.canonicalClaimId}
       `;
+      // A claimant's licence stays on the claim until this approval.
+      await sql`
+        update daycares d
+        set license_photo = c.license_photo
+        from listing_claims c
+        where c.id = ${plan.canonicalClaimId}
+          and c.daycare_id = d.id
+          and d.id = ${row.id}
+          and nullif(btrim(c.license_photo), '') is not null
+      `;
       const claimant = await sql<{ user_id: string }>`
         select user_id from listing_claims where id = ${plan.canonicalClaimId} limit 1
       `;
