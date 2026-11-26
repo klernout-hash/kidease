@@ -193,6 +193,7 @@ export function DeskShell({
     centreLinked: session?.centreLinked,
     centreGrants: session?.centreGrants,
     centreCanInvite: session?.centreCanInvite,
+    centreRole: session?.centreRole,
     curriculumPack: session?.curriculumPack,
     coparentLink: session?.coparentLink,
     coparentEmail: session?.coparentEmail,

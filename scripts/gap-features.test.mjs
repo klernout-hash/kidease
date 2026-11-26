@@ -66,7 +66,7 @@ test("job board powers differ on each desk and stay on one flag", () => {
   assert.equal(jobDeskForViewer({ centreOwner: false, surface: "staff" }), "staff");
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /EceJobDesk mode=\{centreOwner \? "daycare" : "staff"\}/);
-  assert.match(provider, /desk === "employees" \? <EceJobDesk mode="staff"/);
+  assert.match(provider, /desk === "employees" && !staffDesk \? <EceJobDesk mode="staff"/);
   assert.match(provider, /desk === "staff" \? <EceJobDesk mode="staff"/);
   const desk = src("src/components/ece-job-desk.tsx");
   assert.match(desk, /data-ke=\{`ece-jobs-\$\{mode\}`\}/);

@@ -21,6 +21,7 @@ import { ProfileAvatar } from "@/components/profile-avatar";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
+import { isStaffOnlyLogin } from "@/lib/staff-permissions";
 import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
 import { polishProfilePhoto } from "@/lib/server/profile-photo";
 import { authClient, signOut } from "@/lib/auth/client";
@@ -919,7 +920,11 @@ function ProfilePane() {
             </Button>
           </section>
         ) : null}
-        {section === "delete" ? (
+        {section === "delete" && desk === "provider" && isStaffOnlyLogin({ centreOwner: session?.centreOwner, centreRole: session?.centreRole }) ? (
+          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="staff-owner-only">
+            {t("employeeStaffForbidden")}
+          </p>
+        ) : section === "delete" ? (
           <div data-ke="account-delete">
             <DeleteAccountPanel signedIn={Boolean(user) || (chrome.signedIn && !chrome.pending)} />
           </div>

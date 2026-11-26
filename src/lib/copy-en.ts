@@ -3160,7 +3160,7 @@ export const en = {
     employeeRoleManager: "Manager",
     employeeRoleStaff: "Staff",
     employeeRoleReadOnly: "Read-only",
-    employeeRoleStaffAccess: "Today, check-in and check-out, their own hours, messages, requests, and open spots. Can view whether each family at this centre has paid. Cannot send, change, or void a bill, and cannot open earnings, payouts, or bank details.",
+    employeeRoleStaffAccess: "Today, check-in and check-out, their own hours, messages, requests, and open spots. Cannot see bills, earnings, insights, or the family list. Cannot open payouts or bank details. Those stay with the owner.",
     employeeRoleManagerAccess: "Can edit bills, messages, child records, the listing, the calendar, the schedule, requests, and documents. Cannot open payouts, the bank, the contract, or the licence.",
     employeePresetStaff: "Staff",
     employeePresetLead: "Lead",

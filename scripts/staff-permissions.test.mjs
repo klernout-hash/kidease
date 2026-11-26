@@ -27,35 +27,37 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("staff preset can view bill status and cannot edit money", () => {
-  assert.equal(STAFF_GRANTS.bills, "view");
+test("staff preset has no bill access (B05) and cannot edit money", () => {
+  assert.equal(STAFF_GRANTS.bills, "none");
   assert.equal(STAFF_GRANTS.messages, "edit");
   assert.equal(STAFF_GRANTS.calendar, "edit");
   assert.equal(STAFF_GRANTS.requests, "edit");
   assert.equal(STAFF_GRANTS.schedule, "edit");
   assert.equal(STAFF_GRANTS.children, "none");
-  assert.equal(grantsForMember({ role: "staff", preset: null, permissions: null }).bills, "view");
+  assert.equal(grantsForMember({ role: "staff", preset: null, permissions: null }).bills, "none");
   assert.equal(grantsForMember({ role: "staff", preset: "staff", permissions: null }).messages, "edit");
-  assert.match(src("src/lib/copy-en.ts"), /Can view whether each family at this centre has paid/);
-  assert.match(src("src/lib/copy-fr.ts"), /Peut voir si chaque famille de ce centre a payé/);
-  assert.match(src("src/lib/copy-en.ts"), /cannot open earnings, payouts, or bank details/);
+  assert.match(src("src/lib/copy-en.ts"), /Cannot see bills, earnings, insights, or the family list/);
+  assert.match(src("src/lib/copy-fr.ts"), /Ne voit pas les factures, les revenus/);
 });
 
 test("lead adds child records view; manager edits every grantable area", () => {
   assert.equal(LEAD_GRANTS.children, "view");
   assert.equal(LEAD_GRANTS.messages, "edit");
   assert.equal(LEAD_GRANTS.calendar, "edit");
-  assert.equal(LEAD_GRANTS.bills, "view");
+  assert.equal(LEAD_GRANTS.bills, "none");
   for (const level of Object.values(MANAGER_GRANTS)) assert.equal(level, "edit");
   assert.equal(presetGrants("manager").listing, "edit");
 });
 
-test("staff can view bills at their centre, cannot edit them, and cannot see another centre", () => {
+test("staff with a custom bill view see their centre, cannot edit, and cannot see another centre", () => {
+  // B05: the plain staff preset is refused bills.
+  const plain = { daycareId: "centre-a", role: "staff", preset: "staff", permissions: null };
+  assert.equal(decideBillsList({ ownedIds: [], memberships: [plain] }).ok, false);
   const staff = {
     daycareId: "centre-a",
     role: "staff",
-    preset: "staff",
-    permissions: null,
+    preset: "custom",
+    permissions: { ...STAFF_GRANTS, bills: "view" },
   };
   const blocked = {
     daycareId: "centre-b",

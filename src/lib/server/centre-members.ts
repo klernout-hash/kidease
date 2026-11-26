@@ -131,7 +131,8 @@ export const listCentreTeam = createServerFn({ method: "GET" })
         where m.user_id = ${context.userId} and m.status = 'active'
         order by d.name
       `.catch(() => []);
-      const staffIds = staffCentres.map((row) => row.id);
+      // Only a manager sees the team list. Staff see their own centres, not colleagues (B05).
+      const staffIds = staffCentres.filter((row) => row.role === "manager").map((row) => row.id);
       const members = staffIds.length
         ? await sql.query<{
             id: string;

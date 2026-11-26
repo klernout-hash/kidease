@@ -633,8 +633,12 @@ export function ProviderPage() {
           </p>
         )
       ) : null}
-      {desk === "insights" ? <ProviderInsightsDesk /> : null}
-      {desk === "top-rated" ? <TopRatedDesk on={topRated} /> : null}
+      {/* B05: staff logins do not see owner numbers. The server refuses them too. */}
+      {staffDesk && (desk === "insights" || desk === "top-rated" || desk === "employees") ? (
+        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="staff-owner-only">{t("employeeStaffForbidden")}</p>
+      ) : null}
+      {desk === "insights" && !staffDesk ? <ProviderInsightsDesk /> : null}
+      {desk === "top-rated" && !staffDesk ? <TopRatedDesk on={topRated} /> : null}
       {desk === "today" && !deskSettled ? (
         <div role="status" aria-live="polite" aria-label={t("loading")} data-ke="provider-today-loading">
           <DeskSkeleton />
@@ -1200,11 +1204,11 @@ export function ProviderPage() {
           </details>
       ) : null}
 
-      {desk === "employees" ? <BackgroundCheckDesk /> : null}
-      {desk === "employees" ? (
+      {desk === "employees" && !staffDesk ? <BackgroundCheckDesk /> : null}
+      {desk === "employees" && !staffDesk ? (
         <CentreEmployeesPanel canInvite={canInviteStaff} canEditPermissions={centreOwner} />
       ) : null}
-      {desk === "employees" ? <EceJobDesk mode="staff" /> : null}
+      {desk === "employees" && !staffDesk ? <EceJobDesk mode="staff" /> : null}
       {desk === "staff" ? <StaffSchedulingDesk /> : null}
       {desk === "hours" ? <StaffTimesheetDesk /> : null}
       {desk === "pay" && session?.providerPayroll && centreOwner ? (
@@ -1265,7 +1269,7 @@ export function ProviderPage() {
       ) : null}
 
       {desk === "money" ? (
-        canBills ? (
+        canBills && !staffDesk ? (
           <div className="space-y-6">
             <ProviderMoneyPanel showPayouts={centreOwner} canEdit={canEditBills} />
             {centreOwner && moneyChoice.needsPick ? (

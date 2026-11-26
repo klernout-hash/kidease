@@ -1,6 +1,6 @@
 import type { CopyKey } from "./copy.ts";
 import { toolsForBillAccess } from "./centre-tools.ts";
-import { navGrantAllows, type StaffGrants } from "./staff-permissions.ts";
+import { navGrantAllows, staffDeskBlocked, type StaffGrants } from "./staff-permissions.ts";
 import type { ParentUrlTab } from "./parent-tab.ts";
 import { CENTRE_TOOLS } from "./centre-tools.ts";
 import { frenchPath, isFrenchDeskPath, isFrPath, stripLocalePrefix } from "./locale-path.ts";
@@ -339,6 +339,8 @@ type DeskNavOpts = {
   centreGrants?: StaffGrants | null;
   /** Manager preset may invite Staff and Lead. */
   centreCanInvite?: boolean;
+  /** Centre role for a member login. Staff and read-only lose owner-only desks. */
+  centreRole?: string | null;
   /** Province learning pack. Hidden until FEATURE_CURRICULUM_PACK is on. */
   curriculumPack?: boolean;
   /** Second parent invite. Hidden until FEATURE_COPARENT_LINK or FEATURE_COPARENT_EMAIL is on. */
@@ -414,6 +416,7 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
     if (desk === "daycare" && opts?.centreLinked === false && !BEFORE_CENTRE_NAV.has(item.id)) return false;
+    if (desk === "daycare" && opts && staffDeskBlocked(item.id, opts)) return false;
     if (item.id === "learning") return opts?.curriculumPack === true;
     if (item.id === "family") return opts?.coparentLink === true || opts?.coparentEmail === true;
     if (item.id === "hours") return opts?.staffTimesheets === true;

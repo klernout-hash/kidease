@@ -17,7 +17,7 @@
  * - Staff: ratio_checks and ece_certificates. No certificate numbers.
  * - Reviews: published (or legacy approved) reviews. Not the star number stored on the listing.
  *
- * The caller's centres come from listAccessibleDaycareIds. A centre id that
+ * The caller's centres come from listOwnerOrManagerDaycareIds. A centre id that
  * is not on the account returns not_yours and no rows.
  */
 
@@ -26,7 +26,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { providerInsightsEnabled } from "@/lib/features";
 import { ENROLLED_BOOKING_STATUSES } from "@/lib/review-gate";
-import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
+import { listOwnerOrManagerDaycareIds } from "@/lib/server/centre-access";
 import {
   anonymousAreaMedians,
   assembleProviderInsights,
@@ -96,7 +96,8 @@ export const loadProviderInsights = createServerFn({ method: "GET" })
   .handler(async ({ context, data }): Promise<ProviderInsightsResult> => {
     if (!providerInsightsEnabled()) return { enabled: false };
     const sql = await getSql();
-    const access = await listAccessibleDaycareIds(sql, context.userId);
+    // Owner and manager only. A staff login gets "not_yours" (B05).
+    const access = await listOwnerOrManagerDaycareIds(sql, context.userId);
     const scoped = scopeCentreIds(access, data.centreId);
     if (!scoped.ok)
       return { enabled: true, error: "not_yours", centreId: "all", centreOptions: [] };
