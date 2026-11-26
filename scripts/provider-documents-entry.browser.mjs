@@ -8,7 +8,7 @@ import { build } from "vite";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const source = readFileSync(new URL("../src/routes/provider.tsx", import.meta.url), "utf8");
 const first = source.indexOf('{documents?.kind === "pending"');
-const last = source.indexOf('{desk === "listings" && centreOwner', first);
+const last = source.indexOf('{(listingState === "ready" || listingState === "empty") && centreOwner', first);
 assert.ok(first >= 0 && last > first, "The fixture must exercise the actual route render branches");
 // Real route JSX and resolver. Auth, listings, navigation and private documents are synthetic.
 const entry = `
