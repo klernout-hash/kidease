@@ -10,11 +10,22 @@ import { mapAdminCentreSqlRow, type AdminCentreSqlRow } from "@/lib/admin-centre
 import { incompleteMissing } from "@/lib/listing-incomplete";
 import type { AdminCentreRow } from "@/lib/server/admin-centres";
 
+/**
+ * Admin desk test #34: inline data: photos were sent for every card (up to 4 each,
+ * ~290 cards), which made /admin's first payload huge and crashed the tab.
+ * Keep small inline images; drop large ones from the queue payload. Hosted photo URLs are unchanged,
+ * and photoCount still counts every real photo.
+ */
+export const QUEUE_INLINE_PHOTO_MAX = 60_000;
+
+export function queuePhotoOk(p: string): boolean {
+  if (p.startsWith("data:image")) return p.length <= QUEUE_INLINE_PHOTO_MAX;
+  return isRealListingPhoto(p);
+}
+
 /** Licence + storefront photos for Admin verify — daycare photos, not the raw CSV. */
 function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
-  const storefront = splitPhotoList(photos).find(
-    (p) => isRealListingPhoto(p) || p.startsWith("data:image"),
-  );
+  const storefront = splitPhotoList(photos).find(queuePhotoOk);
   return {
     licensePhoto: licenseReviewMarker(licensePhoto),
     storefrontPhoto: storefront || null,
@@ -164,7 +175,7 @@ export async function readAdminCentreQueueRows(): Promise<AdminCentreRow[]> {
       live,
       ...photos,
       photoCount: realPhotos.length,
-      photoThumbs: realPhotos.slice(0, 4),
+      photoThumbs: realPhotos.filter(queuePhotoOk).slice(0, 4),
       health,
       missing: incompleteMissing({
         claimStatus: row.claimStatus,
