@@ -3813,5 +3813,10 @@
   "videoCallStarted": "Videollamada iniciada",
   "videoCallJoinShort": "Unirse",
   "videoCallIncoming": "Videollamada entrante",
-  "videoCallDecline": "Ahora no"
+  "videoCallDecline": "Ahora no",
+  "voiceCheckingMic": "Comprobando el micrófono…",
+  "voiceNoMic": "No se encontró ningún micrófono. Conecta uno o usa tu teléfono.",
+  "reportNameRequired": "Escribe tu nombre.",
+  "reportEmailInvalid": "Escribe un correo como nombre@ejemplo.ca.",
+  "reportMessageRequired": "Cuéntanos qué está mal en la ficha."
 }

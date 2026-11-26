@@ -28,6 +28,9 @@ export function DeleteAccountPanel({ signedIn }: { signedIn: boolean }) {
             {t("deleteAccountSignIn")}
           </Link>
         </Button>
+        <Button variant="secondary" size="lg" className="h-14 min-h-14 w-full px-7 text-base" asChild>
+          <Link to={localePath("/", locale)} data-ke="delete-account-cancel">{t("cancel")}</Link>
+        </Button>
         <p className="text-xs text-subtle">
           <Link to={localePath("/unsubscribe", locale)} search={{ token: undefined, channel: undefined }} className="underline-offset-4 hover:underline">
             {t("unsubscribe")}
@@ -89,6 +92,12 @@ export function DeleteAccountPanel({ signedIn }: { signedIn: boolean }) {
         }}
       >
         {t("deleteAccountConfirm")}
+      </Button>
+      {/* D1: a clear way out that keeps the account. */}
+      <Button variant="secondary" className="ml-3 mt-4" asChild>
+        <Link to={localePath("/account", locale)} search={{ tab: "profile" } as never} data-ke="delete-account-cancel">
+          {t("cancel")}
+        </Link>
       </Button>
     </div>
     </ViewAsWriteLock>

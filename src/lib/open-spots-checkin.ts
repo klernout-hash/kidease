@@ -74,6 +74,45 @@ export function checkinDispatchPlan(mailEnabled: boolean, smsEnabled: boolean) {
   };
 }
 
+/**
+ * OPEN_SPOTS_CHECKIN_QA_ALLOWLIST: emails and phone numbers, comma separated.
+ * Set = QA mode. The weekly job then sends only to listed emails / phones
+ * (QA test listings included) and never to any other daycare. Unset = normal.
+ * "*" is ignored on purpose: QA mode can never mean everyone.
+ */
+export type CheckinQaAllowlist = { active: boolean; emails: Set<string>; phones: Set<string> };
+
+export function normalizeCheckinPhone(raw: string | null | undefined): string {
+  const digits = String(raw || "").replace(/\D+/g, "");
+  return digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+}
+
+export function parseCheckinQaAllowlist(raw: string | null | undefined): CheckinQaAllowlist {
+  const emails = new Set<string>();
+  const phones = new Set<string>();
+  for (const part of String(raw || "").split(/[,;\n]+/)) {
+    const item = part.trim().toLowerCase();
+    if (!item || item === "*") continue;
+    if (item.includes("@")) emails.add(item);
+    else {
+      const phone = normalizeCheckinPhone(item);
+      if (phone.length >= 10) phones.add(phone);
+    }
+  }
+  return { active: emails.size + phones.size > 0, emails, phones };
+}
+
+/** Normal mode allows everything. QA mode allows only listed emails / phones. */
+export function checkinQaAllows(allow: CheckinQaAllowlist, kind: "email" | "phone", value: string | null | undefined): boolean {
+  if (!allow.active) return true;
+  if (kind === "email") {
+    const email = String(value || "").trim().toLowerCase();
+    return Boolean(email) && allow.emails.has(email);
+  }
+  const phone = normalizeCheckinPhone(value);
+  return Boolean(phone) && allow.phones.has(phone);
+}
+
 export function checkinEmailText(input: {
   name: string;
   views: number;

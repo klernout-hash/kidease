@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChipButton } from "@/components/chip";
 import { isCommuteMode, type CommuteMode } from "@/lib/commute-isochrone";
-import { resolveLocationQuery } from "@/components/place-search";
+import { resolveLocationQuery, type ResolvedPlace } from "@/components/place-search";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 
@@ -14,7 +14,18 @@ const LABEL: Record<CommuteMode, { en: string; fr: string }> = {
   bike: { en: "Bike", fr: "Vélo" },
 };
 
-export function CommuteDetourBar() {
+/**
+ * S-N1: "Set" here used to save the work place in the store only, so search
+ * never used it (no chip, no minutes). Search passes these so the place it
+ * sets is the one search and the cards use.
+ */
+export function CommuteDetourBar({
+  onWorkSet,
+  onWorkClear,
+}: {
+  onWorkSet?: (place: ResolvedPlace) => void;
+  onWorkClear?: () => void;
+} = {}) {
   const { locale } = useCopy();
   const fr = locale === "fr";
   const origin = useAppStore((s) => s.origin);
@@ -34,6 +45,7 @@ export function CommuteDetourBar() {
     setMiss(false);
     setWork(hit);
     setWorkText(hit.label);
+    onWorkSet?.(hit);
   }
 
   return (
@@ -56,7 +68,13 @@ export function CommuteDetourBar() {
               className="ke-input min-w-0 flex-1"
               value={workText}
               maxLength={80}
+              enterKeyHint="done"
               onChange={(event) => setWorkText(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter") return;
+                event.preventDefault();
+                void saveWork();
+              }}
               onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
             />
             <ChipButton className="shrink-0" onClick={() => void saveWork()}>
@@ -86,6 +104,7 @@ export function CommuteDetourBar() {
             onClick={() => {
               setWork(null);
               setWorkText("");
+              onWorkClear?.();
             }}
           >
             {fr ? "Effacer le travail" : "Clear work"}

@@ -6,7 +6,9 @@ import {
   ageGroupsInRange,
   applyOpenSpotsBand,
   checkinDispatchPlan,
+  checkinQaAllows,
   checkinWeekKey,
+  parseCheckinQaAllowlist,
   isOpenSpotsBand,
   viewsWindowStart,
   type OpenSpotsBand,
@@ -205,8 +207,10 @@ export async function applyOpenSpotsLink(
 
 type Recipient = DaycareRow & { phone: string | null; province?: string | null; owner_locale?: string | null };
 
-async function listRecipients(): Promise<Recipient[]> {
+async function listRecipients(includeTest = false): Promise<Recipient[]> {
   const sql = await getSql();
+  // QA mode reads test listings too. The allowlist below still filters every send.
+  const testCap = includeTest ? 1 : 0;
   return sql<Recipient>`
     select d.id, d.name, d.phone, d.age_min_months, d.age_max_months,
            d.spots_infant, d.spots_toddler, d.spots_preschool, d.confirmed_open_spots,
@@ -224,7 +228,7 @@ async function listRecipients(): Promise<Recipient[]> {
       limit 1
     ) owner on true
     where d.claimed_at is not null
-      and coalesce(d.is_test, 0) = 0
+      and coalesce(d.is_test, 0) <= ${testCap}
       and coalesce(d.claim_status, '') not in ('rejected', 'superseded', 'unclaimed')
     order by d.id
     limit 2000
@@ -272,7 +276,8 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
     return { ok: true, skipped: true, reason: "no-secret", emailed: 0, sms: 0, pushed: 0 };
   }
   const week = checkinWeekKey(now);
-  const rows = await listRecipients();
+  const qa = parseCheckinQaAllowlist(process.env.OPEN_SPOTS_CHECKIN_QA_ALLOWLIST);
+  const rows = await listRecipients(qa.active);
   let emailed = 0;
   let sms = 0;
   let pushed = 0;
@@ -284,6 +289,10 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
   const { sendSms } = await import("@/lib/server/sms");
   const { readConsent } = await import("@/lib/server/casl-consent");
   for (const row of rows) {
+    const emailAllowed = checkinQaAllows(qa, "email", row.email);
+    const phoneAllowed = checkinQaAllows(qa, "phone", row.phone);
+    // QA mode: a daycare with no listed email or phone gets nothing, push included.
+    if (!emailAllowed && !phoneAllowed) continue;
     const token = secret
       ? signOpenSpotsToken({ daycareId: row.id, exp: now + OPEN_SPOTS_TOKEN_TTL_MS }, secret)
       : null;
@@ -305,7 +314,7 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
       });
       if (result.pushed) pushed += 1;
     }
-    if (plan.email && row.email && links) {
+    if (plan.email && row.email && links && emailAllowed) {
       const claimed = options.dryRun ? true : await claimSend(row.id, week, "email");
       if (claimed && !options.dryRun) {
         const mail = openSpotsCheckinEmail({ locale, centreName: row.name, views, links, plansOn });
@@ -333,7 +342,7 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
         emailed += 1;
       }
     }
-    if (plan.sms && row.phone && row.owner_id && token) {
+    if (plan.sms && row.phone && row.owner_id && token && phoneAllowed) {
       const consent = await readConsent(row.owner_id, "sms", "service").catch(() => null);
       if (!consent?.granted) continue;
       const claimed = options.dryRun ? true : await claimSend(row.id, week, "sms");
@@ -353,7 +362,7 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
       else await releaseSend(row.id, week, "sms");
     }
   }
-  return { ok: true, skipped: false, reason: null, emailed, sms, pushed, dryRun: Boolean(options.dryRun) };
+  return { ok: true, skipped: false, reason: null, emailed, sms, pushed, dryRun: Boolean(options.dryRun), qaAllowlist: qa.active };
 }
 
 export const previewOpenSpotsCheckin = createServerFn({ method: "GET" })

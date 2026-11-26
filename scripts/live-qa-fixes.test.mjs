@@ -33,7 +33,7 @@ test("the search page asks the server for the name and counts the cards it shows
   const server = src("src/lib/server/daycares.ts");
   assert.match(server, /if \(\(data\.name \|\| ""\)\.trim\(\)\.length >= 2\) return searchByName/);
   assert.match(server, /filterByDaycareName/);
-  assert.match(search, /const centreCount = resultTotal/);
+  assert.match(search, /const centreCount = [^;]*resultTotal;/);
   assert.match(search, /filters: resultFilters/);
   assert.match(server, /filters\.name = query\.name \|\| filters\.name/);
   assert.match(server, /const narrowed = await filteredSearchRows\(query\)/);

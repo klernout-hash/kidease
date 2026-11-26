@@ -20,7 +20,7 @@ import { LicenceTypeFilters } from "@/components/licence-type-filters";
 import { careKeysParam, parseCareKeys, type CareDetailKey } from "@/lib/inclusive-search";
 import { licenceFromSearch, type LicenceBucket } from "@/lib/phase1-search";
 import { CommuteDetourBar } from "@/components/commute-detour-bar";
-import { SearchCardAgesProvider, SearchCardOriginProvider } from "@/components/search-card-context";
+import { SearchCardAgesProvider, SearchCardOriginProvider, SearchCardWorkProvider } from "@/components/search-card-context";
 import { resolveSearchCardOrigin } from "@/lib/search-card-origin";
 import { DaycareCard } from "@/components/daycare-card";
 import { AreaWaitlistForm } from "@/components/area-waitlist-form";
@@ -1917,7 +1917,9 @@ export function SearchScreen({
   const whereSet = Boolean(whereLabel);
   const mapOrigin = anchors.primary;
   const nameSearch = Boolean(nameQuery.trim());
-  const centreCount = resultTotal;
+  // S-N4: the count line said "1 licensed centre" beside "No centres match that
+  // name". When the list on screen is empty, the count is 0 too.
+  const centreCount = items !== null && visualItems.length === 0 && showSearchEmpty ? 0 : resultTotal;
   const licensedCount = coverage.incomplete ? coverage.count(centreCount) : centreCount === 1
     ? t("searchLicensedCountOne") : t("searchLicensedCount").replace("{n}", new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA").format(centreCount));
   const browseHint = splitLiveBrowseHint(t("exploreBrowseHint").replace("{n}", String(fabric.live)));
@@ -2110,6 +2112,7 @@ export function SearchScreen({
   return (
     <SearchCardOriginProvider value={cardOrigin}>
     <SearchCardAgesProvider ages={selectedAges}>
+    <SearchCardWorkProvider value={commuteAnchorOn ? workForSearch : null}>
     <Shell>
       <div className="ke-dense ke-gutter mx-auto max-w-7xl pb-6 pt-2">
         {boot.mobileSearchV2 ? (
@@ -2342,7 +2345,7 @@ export function SearchScreen({
             <span>{searchFailed
               ? locale === "fr" ? "Les résultats n’ont pas pu être actualisés. Les fiches affichées peuvent ne plus être à jour." : "Results could not be refreshed. Any listings shown may be out of date."
               : coverage.detail}</span>
-            {visualItems.length > 0 ? <>
+            {visualItems.length > 0 && (searchFailed || coverage.evidence.retryable) ? <>
               <Button type="button" variant="secondary" size="sm" onClick={retrySearch} disabled={refreshing}>{coverage.retry}</Button>
               <Link to={localePath("/", locale)} search={{ change: "1" }} className="inline-flex min-h-11 items-center underline">{coverage.changeArea}</Link>
             </> : null}
@@ -2450,7 +2453,16 @@ export function SearchScreen({
               </div>
             </div>
             <PioneerFilterRail value={parsePioneerSearch(incoming as Record<string, unknown>)} onChange={writePioneer} />
-            <CommuteDetourBar />
+            <CommuteDetourBar
+              onWorkSet={(place) => {
+                setWorkQuery(place.label);
+                if (anchorMode === "home") setAnchorMode("both");
+              }}
+              onWorkClear={() => {
+                setWorkQuery("");
+                setAnchorMode("home");
+              }}
+            />
             <div className="flex items-center justify-end gap-3">
               {user ? (
                 <ChipButton onClick={openSaveSearch}>{t("saveSearch")}</ChipButton>
@@ -2843,6 +2855,7 @@ export function SearchScreen({
         <CompareBar />
       </Suspense>
     </Shell>
+    </SearchCardWorkProvider>
     </SearchCardAgesProvider>
     </SearchCardOriginProvider>
   );

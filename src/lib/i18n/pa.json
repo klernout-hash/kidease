@@ -3813,5 +3813,10 @@
   "videoCallStarted": "ਵੀਡੀਓ ਕਾਲ ਸ਼ੁਰੂ ਹੋਈ",
   "videoCallJoinShort": "ਸ਼ਾਮਲ ਹੋਵੋ",
   "videoCallIncoming": "ਆ ਰਹੀ ਵੀਡੀਓ ਕਾਲ",
-  "videoCallDecline": "ਹੁਣ ਨਹੀਂ"
+  "videoCallDecline": "ਹੁਣ ਨਹੀਂ",
+  "voiceCheckingMic": "ਮਾਈਕ੍ਰੋਫ਼ੋਨ ਦੀ ਜਾਂਚ ਹੋ ਰਹੀ ਹੈ…",
+  "voiceNoMic": "ਕੋਈ ਮਾਈਕ੍ਰੋਫ਼ੋਨ ਨਹੀਂ ਮਿਲਿਆ। ਇੱਕ ਲਗਾਓ ਜਾਂ ਆਪਣਾ ਫ਼ੋਨ ਵਰਤੋ।",
+  "reportNameRequired": "ਆਪਣਾ ਨਾਮ ਲਿਖੋ।",
+  "reportEmailInvalid": "ਈਮੇਲ ਲਿਖੋ, ਜਿਵੇਂ name@example.ca।",
+  "reportMessageRequired": "ਸਾਨੂੰ ਦੱਸੋ ਕਿ ਇਸ ਸੂਚੀ ਵਿੱਚ ਕੀ ਗਲਤ ਹੈ।"
 }

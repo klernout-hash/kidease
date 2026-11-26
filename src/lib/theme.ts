@@ -38,6 +38,26 @@ export function readThemePreference(): ThemePreference {
   }
 }
 
+/** The guest's explicit choice on this device, or null when nothing was saved. */
+export function readStoredThemePreference(): ThemePreference | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return raw === "light" || raw === "dark" || raw === "system" ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * T1: on sign-in, an account on System (or never set) takes the guest's
+ * explicit Light/Dark choice from this device and saves it to the account.
+ */
+export function signInThemePlan(account: ThemePreference | null, guest: ThemePreference | null): { theme: ThemePreference; save: boolean } {
+  if ((account === null || account === "system") && (guest === "light" || guest === "dark")) return { theme: guest, save: true };
+  return { theme: account ?? DEFAULT_THEME_PREFERENCE, save: false };
+}
+
 export function writeThemePreference(preference: ThemePreference): void {
   if (typeof window === "undefined") return;
   try {

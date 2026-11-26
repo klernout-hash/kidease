@@ -3813,5 +3813,10 @@
   "videoCallStarted": "Videoanruf gestartet",
   "videoCallJoinShort": "Beitreten",
   "videoCallIncoming": "Eingehender Videoanruf",
-  "videoCallDecline": "Jetzt nicht"
+  "videoCallDecline": "Jetzt nicht",
+  "voiceCheckingMic": "Mikrofon wird geprüft…",
+  "voiceNoMic": "Kein Mikrofon gefunden. Schließe eines an oder nutze dein Handy.",
+  "reportNameRequired": "Gib deinen Namen ein.",
+  "reportEmailInvalid": "Gib eine E-Mail wie name@beispiel.ca ein.",
+  "reportMessageRequired": "Sag uns, was an dem Eintrag falsch ist."
 }

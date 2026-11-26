@@ -3813,5 +3813,10 @@
   "videoCallStarted": "視像通話已開始",
   "videoCallJoinShort": "加入",
   "videoCallIncoming": "視像通話來電",
-  "videoCallDecline": "遲啲先"
+  "videoCallDecline": "遲啲先",
+  "voiceCheckingMic": "檢查緊咪高峰…",
+  "voiceNoMic": "搵唔到咪高峰。請駁一個或者用手機。",
+  "reportNameRequired": "請輸入你嘅名。",
+  "reportEmailInvalid": "請輸入電郵，例如 name@example.ca。",
+  "reportMessageRequired": "話俾我哋知呢個資料有咩問題。"
 }

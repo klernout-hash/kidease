@@ -11,6 +11,8 @@ export type SafeErrorCopy = {
   explore: string;
   admin: string;
   support: string;
+  /** Old Android System WebView (Fire tablets). Tells the person how to update it. */
+  webview: string;
 };
 
 export function safeErrorCopy(pathname: string): SafeErrorCopy {
@@ -25,6 +27,8 @@ export function safeErrorCopy(pathname: string): SafeErrorCopy {
       explore: "Explorer",
       admin: "Admin",
       support: "Écrire au soutien",
+      webview:
+        "Cet appareil utilise une ancienne version d’Android System WebView. Mettez-la à jour dans l’Appstore ou le Play Store, puis rouvrez KidEase. Vous pouvez aussi utiliser www.kidease.ca dans le navigateur.",
     };
   }
   return {
@@ -35,6 +39,8 @@ export function safeErrorCopy(pathname: string): SafeErrorCopy {
     explore: "Explore",
     admin: "Admin",
     support: "Email support",
+    webview:
+      "This device has an old Android System WebView. Update it in the Appstore or Play Store, then open KidEase again. You can also use www.kidease.ca in the browser.",
   };
 }
 

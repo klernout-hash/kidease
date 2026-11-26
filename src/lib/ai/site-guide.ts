@@ -48,9 +48,17 @@ const NAV: readonly NavPage[] = [
   },
   {
     path: "/parent",
-    phrases: ["waitlist", "waitlists", "liste d attente", "listes d attente", "parent desk", "bureau parent", "my requests", "mes demandes", "saved centres"],
-    en: "The parent desk holds your requests, waitlists, and saved centres. Open Parent, then Waitlists, to see a request or withdraw it. Other families are not shown.",
-    fr: "Le bureau parent garde vos demandes, vos listes d'attente et vos centres enregistrés. Ouvrez Parent, puis Listes d'attente, pour voir une demande ou la retirer. Les autres familles ne s'affichent pas.",
+    phrases: ["waitlist", "waitlists", "liste d attente", "listes d attente", "join a waitlist", "join the waitlist", "joindre la liste", "joindre une liste", "inscrire sur la liste", "parent desk", "bureau parent", "my requests", "mes demandes", "saved centres"],
+    // G4: say how to join first, then where to track it.
+    en: "To join a waitlist, open the centre in Search, choose Join the waitlist, pick your child's age, and send. Joining is free. Then open Parent, then Waitlists, to see it or withdraw it. Other families are not shown.",
+    fr: "Pour joindre une liste d'attente, ouvrez le centre dans Recherche, choisissez Joindre la liste d'attente, indiquez l'âge de l'enfant et envoyez. C'est gratuit. Ouvrez ensuite Parent, puis Listes d'attente, pour la voir ou la retirer. Les autres familles ne s'affichent pas.",
+  },
+  {
+    // G3: owners asking about open spots get the /help answer, not "I don't know".
+    path: "/provider",
+    phrases: ["update my open spots", "update open spots", "my open spots", "my openings", "my spots", "update spots", "update openings", "my vacancies", "mes places", "mettre a jour mes places", "modifier mes places"],
+    en: "To update your open spots, open your daycare desk, then Listings. Change the openings for each age and save. Families only see what you enter.",
+    fr: "Pour mettre à jour vos places libres, ouvrez le bureau de la garderie, puis Fiches. Changez les places pour chaque âge et enregistrez. Les familles voient seulement ce que vous entrez.",
   },
   {
     path: "/provider",

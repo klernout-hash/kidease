@@ -6,13 +6,14 @@ import { DEFAULT_THEME_PREFERENCE, parseThemePreference, type ThemePreference } 
 
 export const getMyTheme = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }): Promise<ThemePreference> => {
+  .handler(async ({ context }): Promise<ThemePreference | null> => {
     try {
       const sql = await getSql();
       const rows = await sql<{ theme: string | null }>`
         select theme from profiles where user_id = ${context.userId} limit 1
       `;
-      return parseThemePreference(rows[0]?.theme);
+      // T1: null means the account never chose, so the guest choice can carry over.
+      return rows[0]?.theme ? parseThemePreference(rows[0].theme) : null;
     } catch {
       return DEFAULT_THEME_PREFERENCE;
     }

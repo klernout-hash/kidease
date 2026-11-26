@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,8 @@ import { OPEN_COOKIE_SETTINGS_EVENT } from "@/lib/prompt-manager";
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { useCopy } from "@/lib/use-copy";
 
+const AUTH_PAGE = /^\/(?:fr\/)?(?:login|signup|parent\/signup|verify-2fa|forgot-password|reset-password)\/?$/;
+
 /**
  * Essential vs Allow. Website and the Capacitor shell both wait for a choice
  * before PostHog or native crash reports start. Essential = required cookies only.
@@ -22,6 +24,12 @@ export function CookieConsentBanner() {
   const { t, locale } = useCopy();
   const native = useNativeHidesAdmin();
   const [open, setOpen] = useState(false);
+  const [reopened, setReopened] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // EM4: on phones the bar covered Password and Sign in. Sign-in pages wait
+  // for the choice until the next page. Analytics stay off until then.
+  const authPage = AUTH_PAGE.test(pathname);
+  const visible = open && (reopened || !authPage);
 
   useEffect(() => {
     if (!shouldShowAnalyticsConsentBanner()) return;
@@ -30,13 +38,16 @@ export function CookieConsentBanner() {
 
   // Footer "Cookie settings" reopens the bar. The saved choice otherwise lasts forever.
   useEffect(() => {
-    const reopen = () => setOpen(true);
+    const reopen = () => {
+      setReopened(true);
+      setOpen(true);
+    };
     window.addEventListener(OPEN_COOKIE_SETTINGS_EVENT, reopen);
     return () => window.removeEventListener(OPEN_COOKIE_SETTINGS_EVENT, reopen);
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!visible) return;
     document.documentElement.dataset.cookieBanner = "open";
     if (native) document.documentElement.dataset.nativePrompt = "open";
     return () => {
@@ -45,7 +56,7 @@ export function CookieConsentBanner() {
         delete document.documentElement.dataset.nativePrompt;
       }
     };
-  }, [native, open]);
+  }, [native, visible]);
 
   function choose(value: "granted" | "denied") {
     writeAnalyticsConsent(value);
@@ -59,7 +70,7 @@ export function CookieConsentBanner() {
     setOpen(false);
   }
 
-  if (!open) return null;
+  if (!visible) return null;
 
   // Slim bar: pinned above the tab bar (safe area) on phones, bottom-centre max 560px on desktop.
   return (
