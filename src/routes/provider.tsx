@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState, useSearch } from "@tanstack/react-router";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { centreCanAccessPrivileged, centreCanWriteLeads } from "@/lib/centre-roles";
@@ -129,6 +129,8 @@ const FamilyInviteGap = lazy(() =>
 import { orgDeskStatus } from "@/lib/server/org-occupancy";
 import { gapCopy, moneyCentreChoice, pickCareCentre, pickCentre } from "@/lib/gap-features";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { refreshSessionDesks } from "@/components/session-desks";
+import { providerListingsEntry } from "@/lib/provider-listings-entry";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
 import { HostTodayHome } from "@/components/host-today-home";
@@ -350,13 +352,18 @@ export function ProviderPage() {
   const hostListingKnown = session != null && typeof session.hostListing === "boolean";
   const hostListing = session?.hostListing === true;
   const topRated = session?.topRated === true;
-  const [listingEditorOpen, setListingEditorOpen] = useState(false);
+  const [listingEditorScope, setListingEditorScope] = useState<string | null>(null);
   const [createListingOpen, setCreateListingOpen] = useState(false);
   useEffect(() => {
     if (!hostListing || !user?.id) return;
     void syncHostActionNotices().catch(() => undefined);
   }, [hostListing, user?.id]);
   const search = useSearch({ strict: false }) as ReturnType<typeof providerValidateSearch>;
+  const listingScope = search.centre ?? "";
+  const listingEditorOpen = listingEditorScope === listingScope;
+  const noteListingEditorOpen = useCallback((open: boolean) => {
+    setListingEditorScope(open ? listingScope : null);
+  }, [listingScope]);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const searchStr = useRouterState({ select: (s) => s.location.searchStr });
@@ -437,6 +444,7 @@ export function ProviderPage() {
       listCentrePipeline().catch(() => [] as PipelineCard[]),
       listLeadRequests({ data: { desk: "centre" } }).catch(() => [] as LeadRequest[]),
     ]);
+    if (!res || !Array.isArray(res.listings)) throw new Error("provider-listings-unavailable");
     return { res, incoming, tourRows, pipelineRows, leadRows };
   }
 
@@ -595,6 +603,15 @@ export function ProviderPage() {
   const moneyChoice = moneyCentreChoice(listings.map((row) => row.id), search.centre);
   const moneyListing = listings.find((row) => row.id === moneyChoice.id) ?? null;
   const deskListings = focusedId ? listings.filter((row) => row.id === focusedId) : listings;
+  const listingState = desk === "listings" ? providerListingsEntry({
+    deskSettled,
+    deskLoadFailed,
+    sessionReady,
+    layoutKnown: hostListingKnown,
+    listingIds: listings.map((row) => row.id),
+    requestedCentre: search.centre,
+  }) : null;
+  const listingRows = search.centre ? listings.filter((row) => row.id === search.centre) : listings;
   const gap = gapCopy(locale === "fr" ? "fr" : "en");
 
   return (
@@ -605,7 +622,7 @@ export function ProviderPage() {
     <DeskShell
       desk="daycare"
       pageClassName="ke-provider-page"
-      headingMode={desk === "listings" && hostListing && !listingEditorOpen ? "aside" : "page"}
+      headingMode={listingState === "ready" && hostListing && !listingEditorOpen ? "aside" : "page"}
       active={desk}
       onSelect={(id) => {
         if (id === "add") {
@@ -620,6 +637,7 @@ export function ProviderPage() {
           return;
         }
         const nextDesk = id as DaycareDesk;
+        if (nextDesk !== "listings") noteListingEditorOpen(false);
         setDesk(nextDesk);
         void navigate({ to: deskPath, search: { ...search, desk: nextDesk }, replace: true });
       }}
@@ -657,7 +675,7 @@ export function ProviderPage() {
           <DeskSkeleton />
         </div>
       ) : null}
-      {deskSettled && deskLoadFailed && deskListings.length === 0 ? (
+      {listingState == null && deskSettled && deskLoadFailed && deskListings.length === 0 ? (
         <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border" role="alert" data-ke="provider-desk-load-failed">
           <h2 className="font-display text-xl">
             {locale === "fr" ? "Votre bureau n’a pas pu se charger." : "Your desk did not load."}
@@ -671,7 +689,7 @@ export function ProviderPage() {
         </section>
       ) : null}
       {/* Session desks can still be loading or have failed (session null): do not leave Today empty. */}
-      {deskSettled && !deskLoadFailed && desk !== "insights" && ((deskListings.length === 0 && centreOwner) || (deskListings.length === 0 && session == null)) ? (
+      {listingState == null && deskSettled && !deskLoadFailed && desk !== "insights" && ((deskListings.length === 0 && centreOwner) || (deskListings.length === 0 && session == null)) ? (
         <ProviderOnboarding />
       ) : null}
       {desk !== "today" && search.claimed && listings[0] ? (
@@ -683,7 +701,7 @@ export function ProviderPage() {
       {desk === "today" && deskListings.length > 0 ? (
         <Phase5Desk locale={locale === "fr" ? "fr" : "en"} role={staffDesk ? "staff" : "owner"} slug={deskListings[0]?.slug} actionsOnly />
       ) : null}
-      {focusedId ? (
+      {focusedId && (listingState == null || listingState === "ready") ? (
         <p className="mb-4 text-sm">
           {gap.orgShowing} {deskListings[0]?.name}.{" "}
           <Link to="/provider" search={{ desk }} className="inline-flex min-h-11 items-center font-medium text-primary">
@@ -897,14 +915,56 @@ export function ProviderPage() {
           <p className="mt-2 text-sm text-muted">{t("comingSoon")}</p>
         </section>
       ) : null}
-      {desk === "listings" && !staffDesk && deskListings.length && !listingEditorOpen ? (
-        <MyListingHealth listings={deskListings.map((row) => ({ id: row.id, name: row.name }))} locale={locale === "fr" ? "fr" : "en"} />
+      {listingState === "pending" ? (
+        <div role="status" aria-live="polite" aria-label={t("loading")} data-ke="provider-listings-loading">
+          <DeskSkeleton />
+        </div>
       ) : null}
-      {desk === "listings" && hostListing ? (
+      {listingState === "retry" ? (
+        <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border" role="alert" data-ke="provider-listings-failed">
+          <h2 className="font-display text-xl">
+            {locale === "fr" ? "Impossible de charger vos fiches." : "Your listings could not load."}
+          </h2>
+          <Button className="mt-4" onClick={() => {
+            refreshSessionDesks();
+            void load();
+          }}>
+            {locale === "fr" ? "Réessayer" : "Try again"}
+          </Button>
+        </section>
+      ) : null}
+      {listingState === "unavailable" ? (
+        <div data-ke="provider-listings-unavailable">
+          <EmptyState
+            title={t("deskNavListings")}
+            body={locale === "fr" ? "Ce centre n’est pas disponible dans votre bureau." : "This centre isn’t available in your desk."}
+            extra={
+              <Button asChild>
+                <Link to={deskPath} search={{ desk: "listings" }} onClick={() => noteListingEditorOpen(false)}>
+                  {locale === "fr" ? "Voir mes fiches" : "View my listings"}
+                </Link>
+              </Button>
+            }
+          />
+        </div>
+      ) : null}
+      {listingState === "empty" ? (
+        centreOwner ? <ProviderOnboarding /> : (
+          <EmptyState
+            title={t("deskNavListings")}
+            body={locale === "fr" ? "Aucune fiche n’est associée à ce bureau." : "No listings are linked to this desk."}
+          />
+        )
+      ) : null}
+      {listingState === "ready" && !staffDesk && listingRows.length && !listingEditorOpen ? (
+        <MyListingHealth listings={listingRows.map((row) => ({ id: row.id, name: row.name }))} locale={locale === "fr" ? "fr" : "en"} />
+      ) : null}
+      {listingState === "ready" && hostListing ? (
         <HostListingsDesk
-          listings={deskListings}
+          key={listingScope}
+          listings={listingRows}
           onSaved={() => void load()}
-          onOpenChange={setListingEditorOpen}
+          onOpenChange={noteListingEditorOpen}
           onCreateListing={() => {
             setCreateListingOpen(true);
             queueMicrotask(() => {
@@ -918,8 +978,8 @@ export function ProviderPage() {
           initialCentre={search.centre}
         />
       ) : null}
-      {desk === "listings" && !hostListing ? <AgeOpenSpotsDesk listings={deskListings.map((row) => ({ id: row.id, name: row.name }))} /> : null}
-      {desk === "listings" && !hostListing ? (
+      {listingState === "ready" && !hostListing ? <AgeOpenSpotsDesk listings={listingRows.map((row) => ({ id: row.id, name: row.name }))} /> : null}
+      {listingState === "ready" && !hostListing ? (
         <>
           {operatorTools ? (
           <label className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border" data-ke="test-listing-toggle">
@@ -927,12 +987,12 @@ export function ProviderPage() {
             {t("showTestListings")}{testListingCount ? ` · ${testListingCount}` : ""}
           </label>
           ) : null}
-          <DirectorNudgeQueue listings={deskListings} stats={stats} onConfirmed={() => void load()} skipConfirmSpots />
-          <VacancyConfirmLoop listings={deskListings} onConfirmed={() => void load()} />
-          <SpotOfferDesk includeTest={operatorTools && showTestListings} />
-          {deskListings.length ? (
+          <DirectorNudgeQueue listings={listingRows} stats={stats} onConfirmed={() => void load()} skipConfirmSpots />
+          <VacancyConfirmLoop listings={listingRows} onConfirmed={() => void load()} />
+          <SpotOfferDesk includeTest={operatorTools && showTestListings} centreId={search.centre} />
+          {listingRows.length ? (
             <FreePageExplainer
-              listings={deskListings.map((d) => ({
+              listings={listingRows.map((d) => ({
                 slug: d.slug,
                 name: d.name,
                 nameFr: d.nameFr,
@@ -945,7 +1005,7 @@ export function ProviderPage() {
               }))}
             />
           ) : null}
-          {deskListings.map((d) => {
+          {listingRows.map((d) => {
             const st = stats.find((s) => s.daycareId === d.id);
             const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
             return (
@@ -1041,12 +1101,12 @@ export function ProviderPage() {
           />
         )
       ) : null}
-      {desk === "listings" && centreOwner && !(hostListing && listingEditorOpen) ? (
+      {(listingState === "ready" || listingState === "empty") && centreOwner && !(hostListing && listingEditorOpen) ? (
           <details
             id="list-new"
             className="group rounded-xl bg-surface ring-1 ring-border"
             data-ke="list-missing-centre"
-            hidden={hostListing && !createListingOpen ? true : undefined}
+            hidden={hostListing && listingState !== "empty" && !createListingOpen ? true : undefined}
           >
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
               <span className="font-display text-lg">{t("providerOnboardingListNew")}</span>
