@@ -465,6 +465,17 @@ export function AdminReviewCard({
         <div className="min-w-0">
           <h3 className="font-display text-lg leading-tight tracking-tight">{displayCentreName(centre.name)}</h3>
           <p className="mt-0.5 text-sm text-muted">{place || "Location not on file"}</p>
+          {centre.fraudFlags?.length ? (
+            <p
+              className="mt-1 inline-flex flex-wrap items-center gap-1 rounded-full bg-danger/10 px-3 py-1 text-xs font-medium text-danger ring-1 ring-danger/30"
+              data-ke="admin-claim-fraud"
+            >
+              Spam or fraud flag
+              {centre.fraudFlags[0]?.score != null ? ` · score ${centre.fraudFlags[0].score}` : ""}
+              {centre.fraudFlags[0]?.reasons ? ` · ${centre.fraudFlags[0].reasons.replace(/_/g, " ")}` : ""}
+              {centre.fraudFlags.length > 1 ? ` · +${centre.fraudFlags.length - 1} more` : ""}
+            </p>
+          ) : null}
           {centre.addonLine ? (
             <p className="mt-1 text-sm text-fg" data-ke="admin-centre-addons">
               {centre.addonLine}

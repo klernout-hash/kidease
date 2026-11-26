@@ -32,6 +32,38 @@ function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) 
   };
 }
 
+type FraudFlag = { score: number | null; reasons: string; createdAt: string };
+
+/**
+ * Claim and spam flags per centre, newest first, three at most. A missing table or a
+ * failed read gives no flags; it must not empty the queue.
+ */
+async function readClaimFraudFlags(sql: Awaited<ReturnType<typeof getSql>>, ids: string[]): Promise<Map<string, FraudFlag[]>> {
+  const out = new Map<string, FraudFlag[]>();
+  if (!ids.length) return out;
+  const rows = await sql
+    .query<{ daycare_id: string; score: number | null; reasons: string | null; created_at: string | Date }>(
+      `select daycare_id, score, reasons, created_at
+       from fraud_flags
+       where daycare_id = any($1::text[])
+       order by created_at desc
+       limit 2000`,
+      [ids],
+    )
+    .catch(() => [] as { daycare_id: string; score: number | null; reasons: string | null; created_at: string | Date }[]);
+  for (const row of rows) {
+    const list = out.get(row.daycare_id) ?? [];
+    if (list.length >= 3) continue;
+    list.push({
+      score: row.score == null ? null : Number(row.score),
+      reasons: String(row.reasons || "").slice(0, 200),
+      createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    });
+    out.set(row.daycare_id, list);
+  }
+  return out;
+}
+
 /** Server-only queue read. Caller must authorize before invoking; no subscription enrichment. */
 export async function readAdminCentreQueueRows(): Promise<AdminCentreRow[]> {
   const sql = await getSql();
@@ -131,7 +163,10 @@ export async function readAdminCentreQueueRows(): Promise<AdminCentreRow[]> {
     throw first instanceof Error ? first : new Error("Could not load the admin queue.");
   }
 
-  const withFiles = await overlayStoredLicensePhotos(sql, rows);
+  const [withFiles, fraudByCentre] = await Promise.all([
+    overlayStoredLicensePhotos(sql, rows),
+    readClaimFraudFlags(sql, rows.map((r) => r.daycare_id)),
+  ]);
   const mapped: AdminCentreRow[] = withFiles.map((r) => {
     const row = mapAdminCentreSqlRow(r);
     const live =
@@ -176,6 +211,7 @@ export async function readAdminCentreQueueRows(): Promise<AdminCentreRow[]> {
       ...photos,
       photoCount: realPhotos.length,
       photoThumbs: realPhotos.filter(queuePhotoOk).slice(0, 4),
+      fraudFlags: fraudByCentre.get(r.daycare_id) ?? [],
       health,
       missing: incompleteMissing({
         claimStatus: row.claimStatus,

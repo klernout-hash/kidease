@@ -47,3 +47,26 @@ test("admin #35: Site tools in the admin System menu opens the tools on the Dayc
   assert.match(page, /canUseOperatorTools\(session\?\.email\) \? <LocationChecker \/> : null/);
   assert.match(page, /Show QA fixtures/);
 });
+
+test("admin #36: claim cards show spam and fraud flags; a failed flag read does not empty the queue", () => {
+  const queue = src("src/lib/server/admin-centre-queue.ts");
+  assert.match(queue, /from fraud_flags\s+where daycare_id = any\(\$1::text\[\]\)/);
+  assert.match(queue, /\.catch\(\(\) => \[\] as \{ daycare_id: string/);
+  assert.match(queue, /fraudFlags: fraudByCentre\.get\(r\.daycare_id\) \?\? \[\]/);
+  assert.match(src("src/components/admin-review-card.tsx"), /data-ke="admin-claim-fraud"/);
+});
+
+test("admin #36: completeness counts expiry and screening; a claim with the basics but neither is Almost, not Needs work", async () => {
+  const { profileHealth } = await import("../src/lib/profile-health.ts");
+  const base = {
+    licenseNumber: "MB-123", licenseStatus: "active", registryMatchState: "matched", licensePhoto: "file",
+    photoCount: 5, hasFees: true, hasAges: true, hasHours: true, phone: "204-555-0100", email: "a@b.ca", address: "1 Main St",
+  };
+  const h = profileHealth({ ...base, licenseExpiry: null, screeningOnFile: false, staffScreeningAttested: false }, new Date("2026-11-25T12:00:00Z"));
+  assert.equal(h.band, "almost");
+  assert.ok(h.checks.find((c) => c.id === "licence_expiry").state === "missing");
+  const full = profileHealth({ ...base, licenseExpiry: "2027-09-30", screeningOnFile: true }, new Date("2026-11-25T12:00:00Z"));
+  assert.equal(full.band, "ready");
+  const bare = profileHealth({ ...base, photoCount: 0, hasFees: false }, new Date("2026-11-25T12:00:00Z"));
+  assert.equal(bare.band, "needs_work");
+});
