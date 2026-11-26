@@ -3789,5 +3789,16 @@
   "accountAnchorSaveFailed": "ਤੁਹਾਡੇ ਵੇਰਵੇ ਸੰਭਾਲੇ ਗਏ ਹਨ। ਤੁਹਾਡਾ ਕੰਮ ਦਾ ਪਤਾ ਸੰਭਾਲ ਨਹੀਂ ਸਕੇ। ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
   "storePlayGet": "Google Play ਤੋਂ ਲਓ",
   "storePlayReadyLead": "KidEase Google Play ਉੱਤੇ ਹੈ। Fire ਟੈਬਲੇਟ ਉੱਤੇ Amazon Appstore ਵਰਤੋ।",
-  "searchCommuteChip": "ਆਉਣ-ਜਾਣ: {place}"
+  "searchCommuteChip": "ਆਉਣ-ਜਾਣ: {place}",
+  "callsLockedParent": "ਡੇਅਕੇਅਰ ਵੱਲੋਂ ਤੁਹਾਡਾ ਟੂਰ ਜਾਂ ਸੀਟ ਦੀ ਬੇਨਤੀ ਮੰਨਣ ਤੋਂ ਬਾਅਦ ਕਾਲ ਅਤੇ ਵੀਡੀਓ ਖੁੱਲ੍ਹਦੇ ਹਨ।",
+  "callsLockedCentre": "ਇਸ ਪਰਿਵਾਰ ਦਾ ਟੂਰ ਜਾਂ ਸੀਟ ਦੀ ਬੇਨਤੀ ਮੰਨਣ ਤੋਂ ਬਾਅਦ ਕਾਲ ਅਤੇ ਵੀਡੀਓ ਖੁੱਲ੍ਹਦੇ ਹਨ।",
+  "callsUnavailableTitle": "ਕਾਲਾਂ ਅਜੇ ਉਪਲਬਧ ਨਹੀਂ ਹਨ",
+  "callsUnavailable": "ਕਾਲਾਂ ਅਜੇ ਉਪਲਬਧ ਨਹੀਂ ਹਨ। ਤੁਸੀਂ ਫਿਰ ਵੀ ਸੁਨੇਹਾ ਭੇਜ ਸਕਦੇ ਹੋ।",
+  "callsUnavailableApp": "ਇਸ ਐਪ ਵਿੱਚ ਕਾਲਾਂ ਅਜੇ ਉਪਲਬਧ ਨਹੀਂ ਹਨ। ਤੁਸੀਂ ਫਿਰ ਵੀ ਸੁਨੇਹਾ ਭੇਜ ਸਕਦੇ ਹੋ।",
+  "callsNotMatched": "ਡੇਅਕੇਅਰ ਵੱਲੋਂ ਟੂਰ ਜਾਂ ਸੀਟ ਦੀ ਬੇਨਤੀ ਮੰਨਣ ਤੋਂ ਬਾਅਦ ਕਾਲਾਂ ਖੁੱਲ੍ਹਦੀਆਂ ਹਨ। ਤੁਸੀਂ ਫਿਰ ਵੀ ਸੁਨੇਹਾ ਭੇਜ ਸਕਦੇ ਹੋ।",
+  "callsInAppNote": "ਸਿਰਫ਼ ਐਪ ਅੰਦਰ ਕਾਲ। ਕੋਈ ਫ਼ੋਨ ਨੰਬਰ ਨਹੀਂ ਮਿਲਾਇਆ ਜਾਂਦਾ।",
+  "videoCallStarted": "ਵੀਡੀਓ ਕਾਲ ਸ਼ੁਰੂ ਹੋਈ",
+  "videoCallJoinShort": "ਸ਼ਾਮਲ ਹੋਵੋ",
+  "videoCallIncoming": "ਆ ਰਹੀ ਵੀਡੀਓ ਕਾਲ",
+  "videoCallDecline": "ਹੁਣ ਨਹੀਂ"
 }

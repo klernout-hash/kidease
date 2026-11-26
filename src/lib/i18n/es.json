@@ -3789,5 +3789,16 @@
   "accountAnchorSaveFailed": "Tus datos se guardaron. Tu dirección del trabajo no se guardó. Inténtalo de nuevo.",
   "storePlayGet": "Consíguelo en Google Play",
   "storePlayReadyLead": "KidEase está en Google Play. En una tableta Fire, usa Amazon Appstore.",
-  "searchCommuteChip": "Trayecto: {place}"
+  "searchCommuteChip": "Trayecto: {place}",
+  "callsLockedParent": "Las llamadas y el video se abren cuando la guardería acepta tu visita o solicitud de plaza.",
+  "callsLockedCentre": "Las llamadas y el video se abren cuando aceptas la visita o solicitud de plaza de esta familia.",
+  "callsUnavailableTitle": "Las llamadas aún no están disponibles",
+  "callsUnavailable": "Las llamadas aún no están disponibles. Puedes enviar un mensaje.",
+  "callsUnavailableApp": "Las llamadas aún no están disponibles en esta app. Puedes enviar un mensaje.",
+  "callsNotMatched": "Las llamadas se abren cuando la guardería acepta una visita o solicitud de plaza. Puedes enviar un mensaje.",
+  "callsInAppNote": "Solo llamada dentro de la app. No se marca ningún número de teléfono.",
+  "videoCallStarted": "Videollamada iniciada",
+  "videoCallJoinShort": "Unirse",
+  "videoCallIncoming": "Videollamada entrante",
+  "videoCallDecline": "Ahora no"
 }

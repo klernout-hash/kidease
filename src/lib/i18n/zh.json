@@ -3789,5 +3789,16 @@
   "accountAnchorSaveFailed": "你的资料已保存。你的工作地址没能保存。请再试一次。",
   "storePlayGet": "在 Google Play 下载",
   "storePlayReadyLead": "KidEase 已在 Google Play 上架。Fire 平板请使用 Amazon Appstore。",
-  "searchCommuteChip": "通勤：{place}"
+  "searchCommuteChip": "通勤：{place}",
+  "callsLockedParent": "托儿所接受您的参观或学位申请后，即可通话和视频。",
+  "callsLockedCentre": "您接受这个家庭的参观或学位申请后，即可通话和视频。",
+  "callsUnavailableTitle": "通话暂不可用",
+  "callsUnavailable": "通话暂不可用。您仍可发送消息。",
+  "callsUnavailableApp": "此应用暂不支持通话。您仍可发送消息。",
+  "callsNotMatched": "托儿所接受参观或学位申请后即可通话。您仍可发送消息。",
+  "callsInAppNote": "仅限应用内通话，不会拨打任何电话号码。",
+  "videoCallStarted": "视频通话已开始",
+  "videoCallJoinShort": "加入",
+  "videoCallIncoming": "视频通话来电",
+  "videoCallDecline": "稍后"
 }

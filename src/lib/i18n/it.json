@@ -3789,5 +3789,16 @@
   "accountAnchorSaveFailed": "I tuoi dati sono salvati. L’indirizzo del lavoro non è stato salvato. Riprova.",
   "storePlayGet": "Scarica da Google Play",
   "storePlayReadyLead": "KidEase è su Google Play. Su un tablet Fire, usa Amazon Appstore.",
-  "searchCommuteChip": "Tragitto: {place}"
+  "searchCommuteChip": "Tragitto: {place}",
+  "callsLockedParent": "Chiamate e video si aprono quando l’asilo accetta la tua visita o richiesta di posto.",
+  "callsLockedCentre": "Chiamate e video si aprono quando accetti la visita o la richiesta di posto di questa famiglia.",
+  "callsUnavailableTitle": "Le chiamate non sono ancora disponibili",
+  "callsUnavailable": "Le chiamate non sono ancora disponibili. Puoi comunque inviare un messaggio.",
+  "callsUnavailableApp": "Le chiamate non sono ancora disponibili in questa app. Puoi comunque inviare un messaggio.",
+  "callsNotMatched": "Le chiamate si aprono quando l’asilo accetta una visita o una richiesta di posto. Puoi comunque inviare un messaggio.",
+  "callsInAppNote": "Solo chiamata nell’app. Nessun numero di telefono viene composto.",
+  "videoCallStarted": "Videochiamata iniziata",
+  "videoCallJoinShort": "Partecipa",
+  "videoCallIncoming": "Videochiamata in arrivo",
+  "videoCallDecline": "Non ora"
 }
