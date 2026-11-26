@@ -327,6 +327,41 @@ export default defineConfig(({ command, isPreview, mode }) => {
               minSize: 0,
               minShareCount: 1,
             },
+            {
+              // Client JS budget: the small parent_/provider_ desk pages (route
+              // split pieces only, never the eager route tree) share one chunk.
+              name: "desk-wiring-pages",
+              test: /src[\\/]routes[\\/](?:fr\.)?(?:parent|provider)_\.[\w-]+\.tsx\?tsr-split/,
+              minSize: 0,
+              minShareCount: 1,
+              // Only the route pieces themselves; shared helpers keep their own chunks.
+              includeDependenciesRecursively: false,
+            },
+            {
+              // Client JS budget: government desk route split pieces share one chunk.
+              name: "gov-desk-pages",
+              test: /src[\\/]routes[\\/](?:fr\.)?gov(?:_\.[\w-]+)?\.tsx\?tsr-split/,
+              minSize: 0,
+              minShareCount: 1,
+              includeDependenciesRecursively: false,
+            },
+            {
+              // Client JS budget: the government desk screens (only officials load them).
+              // gov-help and gov-section-strip are shared with centre pages and stay apart.
+              name: "gov-desk-screens",
+              test: /src[\\/](?:components[\\/]gov[\\/](?!gov-help|gov-section-strip)[\w-]+\.tsx|lib[\\/]gov[\\/]as-of\.ts)$/,
+              minSize: 0,
+              minShareCount: 1,
+              includeDependenciesRecursively: false,
+            },
+            {
+              // Client JS budget: admin desk route pieces and the admin government tabs.
+              name: "admin-desk-pages",
+              test: /src[\\/](?:routes[\\/](?:fr\.)?admin[\w.-]*\.tsx\?tsr-split|components[\\/]admin-gov-[\w-]+\.tsx$)/,
+              minSize: 0,
+              minShareCount: 1,
+              includeDependenciesRecursively: false,
+            },
             ...(["zh", "yue", "pa", "es", "ar", "tl", "it", "de"] as const).map((code) => ({
             name: `locale-${code}`,
             test: new RegExp(`/src/lib/i18n/${code}\\.json$`),

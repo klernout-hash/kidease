@@ -17,7 +17,7 @@ const ALIASES = {
   demand: "analytics",
 };
 
-test("gov #31: unbuilt /gov pages show the unavailable screen in EN and FR, with no redirect", () => {
+test("gov #31 + #1031: former unbuilt /gov pages are real desk pages in EN and FR, guarded, with no redirect", () => {
   for (const leaf of UNBUILT) {
     for (const [prefix, locale] of [["", "en"], ["fr.", "fr"]]) {
       const file = `src/routes/${prefix}gov_.${leaf}.tsx`;
@@ -28,7 +28,8 @@ test("gov #31: unbuilt /gov pages show the unavailable screen in EN and FR, with
       }
       const body = src(file);
       assert.ok(!/redirect\(/.test(body), `${file} does not redirect`);
-      assert.match(body, new RegExp(`<GovDeskUnavailable locale="${locale}" />`), file);
+      assert.ok(!body.includes("GovDeskUnavailable"), `${file} is a real page now (#1031)`);
+      assert.match(body, /loader:/, `${file} loads desk data`);
       assert.match(body, new RegExp(`guardGovDesk\\("${locale}"`), `${file} keeps the desk guard`);
     }
   }
@@ -42,10 +43,13 @@ test("gov #31: unknown /gov and /fr/gov paths use the same screen", () => {
   assert.match(nf, /actionTo=\{french \? "\/fr\/gov" : "\/gov"\}/);
 });
 
-test("gov #31: deliberate aliases match in EN and FR", () => {
-  for (const [leaf, target] of Object.entries(ALIASES)) {
-    assert.ok(src(`src/routes/gov_.${leaf}.tsx`).includes(`href: "/gov/${target}"`), leaf);
-    assert.ok(src(`src/routes/fr.gov_.${leaf}.tsx`).includes(`href: "/fr/gov/${target}"`), `fr ${leaf}`);
+test("gov #31 + #1031: former alias paths are real guarded desk pages in EN and FR", () => {
+  for (const leaf of Object.keys(ALIASES)) {
+    for (const [prefix, locale] of [["", "en"], ["fr.", "fr"]]) {
+      const body = src(`src/routes/${prefix}gov_.${leaf}.tsx`);
+      assert.ok(!/redirect\(/.test(body), `${prefix}${leaf} does not redirect`);
+      assert.match(body, new RegExp(`guardGovDesk\\("${locale}"`), `${prefix}${leaf} keeps the desk guard`);
+    }
   }
 });
 

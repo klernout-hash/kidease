@@ -3,6 +3,7 @@ import { Copy, Download, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { copyText, listingShareUrl } from "@/lib/share";
+import { listingShareQrSvg } from "@/lib/server/share-kit-qr";
 import {
   shareKitFileName,
   shareKitPosts,
@@ -116,11 +117,10 @@ export function ListingShareKit({
   useEffect(() => {
     if (!open) return;
     let live = true;
-    void import("qrcode")
-      .then((mod) =>
-        mod.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M", width: 280 }),
-      )
-      .then(async (svg) => {
+    // Drawn on the server: keeps the qrcode library out of the client bundle.
+    void listingShareQrSvg({ data: { slug } })
+      .then(async ({ svg }) => {
+        if (!svg) return;
         if (!live) return;
         setQrSvg(svg);
         const png = await drawSocialImage({ name, city, url, locale: lang, qrSvg: svg });
@@ -130,7 +130,7 @@ export function ListingShareKit({
     return () => {
       live = false;
     };
-  }, [open, url, name, city, lang]);
+  }, [open, slug, url, name, city, lang]);
 
   async function onCopy(text: string) {
     if (await copyText(text)) toast.success(copy.copied);

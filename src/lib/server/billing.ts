@@ -770,19 +770,39 @@ export const sendBillReminder = createServerFn({ method: "POST" })
     const bill = mapBill(row);
     if (bill.status !== "sent" || bill.paidAt) return { ok: false as const, reason: "not_open" as const };
     if (!bill.parentEmail) return { ok: false as const, reason: "no_email" as const };
-    const { automationModeFromEnv, automationLocale, automationQuietNow, manualInvoiceReminderLetter, parseAllowlist, AUTOMATION_FALLBACK_TZ } =
+    const { automationModeFromEnv, automationLocale, automationQuietNow, parseAllowlist, AUTOMATION_FALLBACK_TZ } =
       await import("@/lib/automations");
+    const { billReminderEmail } = await import("@/lib/notification-templates");
+    const { renderBrandedEmail, renderBrandedText } = await import("@/lib/email-layout");
+    const { showPayCtas } = await import("@/lib/features");
     const { dayKeyInTimeZone } = await import("@/lib/family-time");
     const { dispatchAutomationMail } = await import("@/lib/server/automation-mail");
     const prefs = await sql<{ locale: string | null; time_zone: string | null }>`
       select locale, time_zone from profiles where user_id = ${bill.parentUserId} limit 1
     `.catch(() => [] as { locale: string | null; time_zone: string | null }[]);
+    const centreContact = await sql<{ phone: string | null; contact_email: string | null }>`
+      select phone, contact_email from daycares where id = ${row.daycare_id} limit 1
+    `.catch(() => [] as { phone: string | null; contact_email: string | null }[]);
     const now = new Date();
-    const letter = manualInvoiceReminderLetter({
-      locale: automationLocale(prefs[0]?.locale),
-      centreName: bill.daycareName || "your centre",
+    // Polished EN/FR template (#1030). While pay buttons are off the copy never promises online payment.
+    const mail = billReminderEmail({
+      locale: automationLocale(prefs[0]?.locale) === "fr" ? "fr" : "en",
+      parentName: bill.parentName,
+      childName: bill.childName,
+      centreName: bill.daycareName || "",
+      centreEmail: centreContact[0]?.contact_email ?? null,
+      centrePhone: centreContact[0]?.phone ?? null,
       number: bill.number,
+      amountCents: bill.amountCents,
+      dueDate: bill.dueAt,
+      payOnline: showPayCtas(),
     });
+    const letter = {
+      subject: mail.subject,
+      text: renderBrandedText(mail.branded),
+      html: renderBrandedEmail(mail.branded),
+      branded: mail.branded,
+    };
     const result = await dispatchAutomationMail({
       automation: "invoice_reminder",
       dedupeKey: `manual:${bill.id}:${dayKeyInTimeZone(now, AUTOMATION_FALLBACK_TZ)}`,

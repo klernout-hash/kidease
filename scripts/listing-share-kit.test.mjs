@@ -53,7 +53,8 @@ test("share kit sits on the Listings desk and loads the QR library only when ope
     new URL("../src/components/listing-share-kit.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(kit, /import\("qrcode"\)/);
+  assert.match(kit, /listingShareQrSvg\(\{ data: \{ slug \} \}\)/);
+  assert.match(readFileSync(new URL("../src/lib/server/share-kit-qr.ts", import.meta.url), "utf8"), /import\("qrcode"\)/);
   assert.match(kit, /Nothing is posted for you/);
   assert.match(kit, /Rien n'est publié pour vous/);
 });
