@@ -5,7 +5,7 @@
  */
 
 import type { MenuIconId } from "@/lib/menu-icons";
-import { isFrPath, localePath } from "./locale-path.ts";
+import { frenchGovPath, isFrPath, localePath } from "./locale-path.ts";
 
 export type ChromeRole = "guest" | "parent" | "provider" | "admin" | "support" | "government";
 
@@ -194,8 +194,10 @@ export function destinationAfterSignIn(input: {
   const place = (path: string) => (locale === "fr" ? localePath(path, "fr") : path);
   if (chromeRole(input.role) === "government") {
     const next = String(input.next || "").trim();
-    if (next.startsWith("/gov") || next.startsWith("/fr/gov")) return next.split("?")[0] || place("/gov");
-    return place("/gov");
+    // localePath() has no /gov pair, so a French sign-in maps the gov desk explicitly.
+    const gov = (path: string) => (locale === "fr" ? frenchGovPath(path) : path);
+    if (next.startsWith("/gov") || next.startsWith("/fr/gov")) return gov(next.split("?")[0] || "/gov");
+    return gov("/gov");
   }
   const role = chromeRole(input.role);
   const daycare =

@@ -467,7 +467,9 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
   return (
     <Shell
       headerCategories={boot.airbnbUi ? (
-        <Suspense fallback={null}>
+        // Sized fallback: a null fallback collapsed the 102px category row for a frame
+        // after hydration and pushed the whole page (CLS ~0.28 on phones).
+        <Suspense fallback={<div className="ke-header-cats-fallback" aria-hidden="true" />}>
           <AirbnbCareCategories />
         </Suspense>
       ) : (

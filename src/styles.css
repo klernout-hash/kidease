@@ -1646,7 +1646,7 @@ html:not([data-look="clean"]) :is(a, button, [role="button"]).h-11 {
     display: inline-flex;
     flex: 0 0 auto;
     align-items: center;
-    min-height: 2.75rem;
+    min-height: max(44px, 2.75rem);
     margin-bottom: -1px;
     border-bottom: 2px solid transparent;
     color: var(--color-primary);
@@ -3534,6 +3534,15 @@ html[data-ui="airbnb-v1"][data-theme="dark"] {
 .ke-airbnb-cats::-webkit-scrollbar { display: none; }
 /* Home categories belong to the sticky header. The row scrolls inside its own
    space on smaller screens, without covering the account or menu controls. */
+/* Holds the header category row's height while its lazy chunk loads (CLS). */
+.ke-header-cats-fallback {
+  min-height: 6.375rem;
+}
+@media (min-width: 768px) {
+  .ke-header-cats-fallback {
+    min-height: 0;
+  }
+}
 [data-ke="header-care-categories"] .ke-airbnb-cats {
   justify-content: safe center;
   gap: 0;
@@ -3975,6 +3984,111 @@ dialog.msv2-dialog,
 /* Parts that only belong to the clean look stay hidden in today's look. */
 html:not([data-look="clean"]) .ke-clean-only {
   display: none !important;
+}
+
+/* Mobile polish (2026-11-25 device audit). The root font is 14px, so rem sizes
+   land under 12px and rem tap heights under 44px. These floors keep the look
+   but lift the smallest text and targets. Unlayered on purpose. */
+:root {
+  --text-xs: max(0.75rem, 12px);
+}
+.ke-chip,
+.ke-crumb {
+  font-size: max(0.75rem, 12px);
+}
+.ke-crumb {
+  min-height: 44px;
+}
+.ke-honesty,
+.ke-footer-link {
+  font-size: max(0.75rem, 12px);
+}
+.ke-airbnb-cat-label,
+[data-ke="header-care-categories"] .ke-airbnb-cat-label {
+  font-size: 12px;
+}
+[data-ke="app-tab"] {
+  font-size: max(0.72rem, 11px);
+}
+/* Phone landscape is wider than 767px but short. Drop the help label there so
+   the launcher stays a 44px icon and does not sit on the hero search button,
+   map controls, or the listing card. */
+@media (max-height: 500px) and (pointer: coarse) {
+  .ke-help-bot > button > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+/* Small phones on their side (640x360 and similar): the header, care strip
+   and tab bar took about a third of the screen. Tighten them. */
+@media (max-height: 430px) and (min-width: 560px) {
+  [data-ke="header-care-categories"] .ke-airbnb-cats {
+    padding-block: 0;
+  }
+  [data-ke="header-care-categories"] .ke-airbnb-cat {
+    width: 5.5rem;
+    min-height: 3.25rem;
+    padding: 0.15rem 0.25rem 0.35rem;
+    gap: 0.15rem;
+  }
+  [data-ke="header-care-categories"] .ke-category-art {
+    width: 2rem;
+    height: 2rem;
+    margin-block: 0;
+  }
+  [data-ke="header-care-categories"] .ke-airbnb-cat-label {
+    min-height: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    overflow: hidden;
+  }
+  .ke-header-cats-fallback {
+    min-height: 3.5rem;
+  }
+  [data-ke="app-tab"] {
+    flex-direction: row;
+    gap: 0.4rem;
+  }
+  /* Help is in the header here. The floating launcher sat on the search bar
+     and on Find my match. */
+  .ke-help-bot {
+    display: none;
+  }
+}
+/* Phones: the launcher covered form fields and the submit row (login, sign-up,
+   claim, the daycare intake). Help stays in the header and the menu. */
+@media (max-width: 767px) {
+  html:has(main form input:is([type="email"], [type="password"], [type="tel"])) .ke-help-bot,
+  html:has(main :is(input, textarea, select):focus) .ke-help-bot {
+    display: none;
+  }
+}
+/* Narrow phones (folded iPhone Duo with the Safari sidebar, 320-420px): the
+   French action labels wrapped unevenly. Keep both inside the 44px pill. */
+@media (max-width: 420px) {
+  [data-ke="listing-sticky-bar"] :is([data-ke="listing-sticky-cta"], [data-ke="listing-sticky-tour"]) {
+    padding-inline: 0.6rem;
+    font-size: 13px;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+}
+@media (pointer: coarse) {
+  /* Sliders are 14px tall. Padding grows the touch area without moving layout. */
+  input[type="range"] {
+    box-sizing: content-box;
+    padding-block: 15px;
+    margin-block: -15px;
+  }
 }
 
 /*

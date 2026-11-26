@@ -890,6 +890,9 @@ export function SearchScreen({
   mapGate.current.select(view === "map" && mapCanSearch ? searchMapKey : "");
   const requestData = useRef(searchData);
   requestData.current = searchData;
+  const keepBootRows = useRef(true);
+  const bootRowsRef = useRef(items);
+  bootRowsRef.current = items;
   useEffect(() => {
     if (!pageCanSearch) {
       setItems([]);
@@ -919,8 +922,15 @@ export function SearchScreen({
     }
     setRefreshing(true);
     setSearchFailed(false);
+    // First run after hydration: keep the server-rendered rows on screen while the
+    // client revalidates. Swapping them for "Loading centres…" and back was the
+    // biggest layout shift on phones (CLS 0.6-1.3 on /search).
+    const keepBoot = keepBootRows.current;
+    keepBootRows.current = false;
     if (cached) apply(cached);
-    else {
+    else if (keepBoot && (bootRowsRef.current?.length ?? 0) > 0) {
+      /* revalidating; server rows stay until the fresh page arrives */
+    } else {
       setItems(null);
       setNextPage(null);
       setPageLimitReached(false);

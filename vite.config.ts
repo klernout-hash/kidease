@@ -280,6 +280,11 @@ export default defineConfig(({ command, isPreview, mode }) => {
     ? { define: { "import.meta.env.VITE_GOOGLE_MAPS_API_KEY": JSON.stringify(mapsBrowserKey) } }
     : {}),
   build: {
+    // Fire OS tablets ship WebView/Silk 91. Lower JS syntax so the app boots
+    // there (APIs are shimmed by public/legacy-boot.js). CSS keeps the old
+    // default target so modern browsers get the same stylesheet.
+    target: ["es2020", "chrome91", "edge91", "firefox91", "safari15"],
+    cssTarget: ["chrome107", "edge107", "firefox104", "safari16"],
     sourcemap: Boolean(
       process.env.POSTHOG_CLI_API_KEY ||
         process.env.POSTHOG_PERSONAL_API_KEY ||

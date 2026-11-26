@@ -290,8 +290,8 @@ export function NativeBoot() {
     setLocated(true);
     let cancelled = false;
     const consent = readLocationConsent();
-    const askGps =
-      consent === "granted" || (consent !== "denied" && (isStandalone() || isNative()));
+    // Only after an earlier "Near me" tap. The first ask comes from that tap.
+    const askGps = consent === "granted";
     if (!askGps) {
       return () => {
         cancelled = true;

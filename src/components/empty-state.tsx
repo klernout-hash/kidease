@@ -15,6 +15,7 @@ export function EmptyState({
   icon: Icon = Search,
   art,
   extra,
+  titleAs = "p",
 }: {
   title: string;
   body?: string;
@@ -27,7 +28,10 @@ export function EmptyState({
   icon?: LucideIcon;
   art?: ReactNode;
   extra?: ReactNode;
+  /** "h1" when the empty state is the whole page (404). */
+  titleAs?: "p" | "h1" | "h2";
 }) {
+  const Title = titleAs;
   return (
     <div className="mx-auto max-w-md px-4 py-6 text-center">
       {art ?? (
@@ -35,7 +39,7 @@ export function EmptyState({
           <Icon className="size-4" strokeWidth={1.8} />
         </span>
       )}
-      <p className="mt-2 font-display text-lg tracking-tight">{title}</p>
+      <Title className="mt-2 font-display text-lg tracking-tight">{title}</Title>
       {body ? <p className="mt-1 text-sm leading-5 text-muted">{body}</p> : null}
       {action && (actionTo || onAction) ? (
         <div className="mt-5 flex flex-col items-center justify-center gap-2 sm:flex-row">

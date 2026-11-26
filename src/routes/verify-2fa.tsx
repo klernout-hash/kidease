@@ -38,7 +38,7 @@ import { isNative } from "@/lib/native";
 import { yieldToMain } from "@/lib/yield-main";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { useCopy } from "@/lib/use-copy";
-import { isFrPath } from "@/lib/locale-path";
+import { isFrPath, localizeAuthDest } from "@/lib/locale-path";
 
 export const verify2faValidateSearch = (s: Record<string, unknown>) => ({
   next: verify2faSearchNext(s.next),
@@ -219,8 +219,9 @@ const OtpCodeField = memo(function OtpCodeField({
   );
 });
 
-async function leave(rawDest: string) {
-  const fallback = sanitizePostLoginNext(rawDest) ?? "/parent";
+async function leave(rawDest: string, locale: "en" | "fr" = "en") {
+  // A French code page sends the person to the French desk (/fr/gov, /fr/parent…).
+  const fallback = localizeAuthDest(sanitizePostLoginNext(rawDest) ?? "/parent", locale);
   markContinued(fallback);
   assignPostAuthDest(fallback);
 }
@@ -295,7 +296,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
           if (cancelled) return;
           if (s.verified) {
             captureLoginFunnel({ step: "two_factor_skipped", reason: "already_verified" });
-            return leave(dest);
+            return leave(dest, mailLocale);
           }
           return startTwoFactor({ data: { force: false, locale: mailLocale } }).then((res) => {
             if (cancelled) return;
@@ -311,7 +312,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
           }
           if (!staff) {
             captureLoginFunnel({ step: "two_factor_skipped", reason: "status_unavailable" });
-            return leave(dest);
+            return leave(dest, mailLocale);
           }
           setDelivered(false);
           setError(err instanceof Error ? err.message : "Could not send a code. Use Send a new code, or go back to sign in.");
@@ -350,7 +351,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
       .then(() => verifyTwoFactor({ data: { code, remember, turnstileToken: takeChallenge() } }))
       .then(() => {
         captureLoginFunnel({ step: "two_factor_verified", native: isNative() });
-        return leave(dest);
+        return leave(dest, mailLocale);
       })
       .catch((err) => {
         if (attempt.current !== id) return;
@@ -515,7 +516,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
                 step: "two_factor_skipped",
                 reason: stalled || pageStalled ? "stall_continue" : "continue_without_code",
               });
-              void leave(dest);
+              void leave(dest, mailLocale);
             }}
           >
             {show("Continue to your desk")}

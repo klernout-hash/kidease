@@ -216,6 +216,44 @@ export function isFrenchDeskPath(pathname: string | null | undefined): boolean {
   return false;
 }
 
+/** Government desk pages that ship a `/fr/gov…` twin (src/routes/fr.gov*.tsx). */
+export const FRENCH_GOV_LEAVES = [
+  "", "analytics", "audit", "broadcasts", "centres", "complaints", "compliance", "data", "demand", "expiries",
+  "exports", "fee-caps", "funding", "incidents", "login", "map", "ratios", "reports", "screening", "settings", "vacancies",
+] as const;
+
+/**
+ * `/gov` or `/gov/<leaf>` → `/fr/gov…` when that French page exists. Anything else
+ * (already French, unknown leaf, not a gov path) comes back unchanged. Query/hash kept.
+ */
+export function frenchGovPath(path: string): string {
+  const cut = ["?", "#"].map((mark) => path.indexOf(mark)).filter((n) => n >= 0).sort((a, b) => a - b)[0] ?? path.length;
+  const bare = dropTrailingSlashes(path.slice(0, cut));
+  const rest = path.slice(cut);
+  const m = bare.match(/^\/gov(?:\/([a-z-]+))?$/);
+  if (!m) return path;
+  const leaf = m[1] ?? "";
+  if (!(FRENCH_GOV_LEAVES as readonly string[]).includes(leaf)) return path;
+  return `${FR_PREFIX}${bare}${rest}`;
+}
+
+/** Where the email-code page lives for a sign-in in this language. */
+export function verify2faPagePath(locale: string | null | undefined, dest?: string | null): "/verify-2fa" | "/fr/verify-2fa" {
+  return locale === "fr" || isFrPath(dest) ? "/fr/verify-2fa" : "/verify-2fa";
+}
+
+/**
+ * A post-sign-in destination in the sign-in's language: `/gov` → `/fr/gov`,
+ * `/parent` → `/fr/parent`, etc. Admin has no French desk and stays English.
+ */
+export function localizeAuthDest(dest: string, locale: string | null | undefined): string {
+  if (locale !== "fr" || isFrPath(dest)) return dest;
+  if (/^\/admin(?:[-/_?#]|$)/.test(dest)) return dest;
+  const gov = frenchGovPath(dest);
+  if (gov !== dest) return gov;
+  return localePath(dest, "fr");
+}
+
 /** Prefix a paired English path when the UI locale is French. `/search` ↔ `/fr/search`. Query and hash stay on the path. */
 export function localePath(enPath: string, locale: string): string {
   const bareInput = enPath.startsWith("/") ? enPath : `/${enPath}`;

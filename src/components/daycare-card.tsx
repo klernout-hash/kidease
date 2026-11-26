@@ -358,7 +358,7 @@ export const DaycareCard = memo(function DaycareCard({
             {placeLine || "\u00a0"}
           </p>
           {ages ? (
-            <p className="mt-0.5 truncate text-[13px] font-medium leading-5 text-fg" data-ke="card-age-range">
+            <p className="mt-0.5 line-clamp-2 whitespace-normal text-[13px] font-medium leading-5 text-fg" data-ke="card-age-range" title={ages}>
               {ages}
             </p>
           ) : null}

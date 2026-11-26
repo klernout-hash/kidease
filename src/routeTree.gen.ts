@@ -126,7 +126,6 @@ import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
 import { Route as ApiAlexaRouteImport } from './routes/api/alexa'
 import { Route as ApiAutomationsRouteImport } from './routes/api/automations'
 import { Route as ApiBackgroundCheckFilesRouteImport } from './routes/api/background-check-files'
-import { Route as ApiStaffResumeRouteImport } from './routes/api/staff-resume'
 import { Route as ApiCentreLeadAlertsRouteImport } from './routes/api/centre-lead-alerts'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
@@ -143,6 +142,7 @@ import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screenin
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiSpotOffersRouteImport } from './routes/api/spot-offers'
+import { Route as ApiStaffResumeRouteImport } from './routes/api/staff-resume'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BackgroundChecksCodeRouteImport } from './routes/background-checks.$code'
@@ -157,6 +157,7 @@ import { Route as FrIndexRouteImport } from './routes/fr.index'
 import { Route as FrAboutRouteImport } from './routes/fr.about'
 import { Route as FrAccountRouteImport } from './routes/fr.account'
 import { Route as FrAdminRouteImport } from './routes/fr.admin'
+import { Route as FrAppAdminUnavailableRouteImport } from './routes/fr.app-admin-unavailable'
 import { Route as FrBackgroundChecksRouteImport } from './routes/fr.background-checks'
 import { Route as FrBenefitsRouteImport } from './routes/fr.benefits'
 import { Route as FrBlogRouteImport } from './routes/fr.blog'
@@ -954,11 +955,6 @@ const ApiBackgroundCheckFilesRoute = ApiBackgroundCheckFilesRouteImport.update({
   path: '/api/background-check-files',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiStaffResumeRoute = ApiStaffResumeRouteImport.update({
-  id: '/api/staff-resume',
-  path: '/api/staff-resume',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiCentreLeadAlertsRoute = ApiCentreLeadAlertsRouteImport.update({
   id: '/api/centre-lead-alerts',
   path: '/api/centre-lead-alerts',
@@ -1039,6 +1035,11 @@ const ApiSpotOffersRoute = ApiSpotOffersRouteImport.update({
   path: '/api/spot-offers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiStaffResumeRoute = ApiStaffResumeRouteImport.update({
+  id: '/api/staff-resume',
+  path: '/api/staff-resume',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
   id: '/api/tour-holds',
   path: '/api/tour-holds',
@@ -1107,6 +1108,11 @@ const FrAccountRoute = FrAccountRouteImport.update({
 const FrAdminRoute = FrAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrAppAdminUnavailableRoute = FrAppAdminUnavailableRouteImport.update({
+  id: '/app-admin-unavailable',
+  path: '/app-admin-unavailable',
   getParentRoute: () => FrRoute,
 } as any)
 const FrBackgroundChecksRoute = FrBackgroundChecksRouteImport.update({
@@ -2282,7 +2288,6 @@ export interface FileRoutesByFullPath {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2299,6 +2304,7 @@ export interface FileRoutesByFullPath {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -2312,6 +2318,7 @@ export interface FileRoutesByFullPath {
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
   '/fr/admin': typeof FrAdminRoute
+  '/fr/app-admin-unavailable': typeof FrAppAdminUnavailableRoute
   '/fr/background-checks': typeof FrBackgroundChecksRouteWithChildren
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/blog': typeof FrBlogRoute
@@ -2640,7 +2647,6 @@ export interface FileRoutesByTo {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2657,6 +2663,7 @@ export interface FileRoutesByTo {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -2670,6 +2677,7 @@ export interface FileRoutesByTo {
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
   '/fr/admin': typeof FrAdminRoute
+  '/fr/app-admin-unavailable': typeof FrAppAdminUnavailableRoute
   '/fr/background-checks': typeof FrBackgroundChecksRouteWithChildren
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/blog': typeof FrBlogRoute
@@ -3001,7 +3009,6 @@ export interface FileRoutesById {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -3018,6 +3025,7 @@ export interface FileRoutesById {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -3031,6 +3039,7 @@ export interface FileRoutesById {
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
   '/fr/admin': typeof FrAdminRoute
+  '/fr/app-admin-unavailable': typeof FrAppAdminUnavailableRoute
   '/fr/background-checks': typeof FrBackgroundChecksRouteWithChildren
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/blog': typeof FrBlogRoute
@@ -3363,7 +3372,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3380,6 +3388,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -3393,6 +3402,7 @@ export interface FileRouteTypes {
     | '/fr/about'
     | '/fr/account'
     | '/fr/admin'
+    | '/fr/app-admin-unavailable'
     | '/fr/background-checks'
     | '/fr/benefits'
     | '/fr/blog'
@@ -3721,7 +3731,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3738,6 +3747,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -3751,6 +3761,7 @@ export interface FileRouteTypes {
     | '/fr/about'
     | '/fr/account'
     | '/fr/admin'
+    | '/fr/app-admin-unavailable'
     | '/fr/background-checks'
     | '/fr/benefits'
     | '/fr/blog'
@@ -4081,7 +4092,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -4098,6 +4108,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -4111,6 +4122,7 @@ export interface FileRouteTypes {
     | '/fr/about'
     | '/fr/account'
     | '/fr/admin'
+    | '/fr/app-admin-unavailable'
     | '/fr/background-checks'
     | '/fr/benefits'
     | '/fr/blog'
@@ -4439,7 +4451,6 @@ export interface RootRouteChildren {
   ApiAlexaRoute: typeof ApiAlexaRoute
   ApiAutomationsRoute: typeof ApiAutomationsRoute
   ApiBackgroundCheckFilesRoute: typeof ApiBackgroundCheckFilesRouteWithChildren
-  ApiStaffResumeRoute: typeof ApiStaffResumeRoute
   ApiCentreLeadAlertsRoute: typeof ApiCentreLeadAlertsRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
@@ -4456,6 +4467,7 @@ export interface RootRouteChildren {
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   ApiSpotOffersRoute: typeof ApiSpotOffersRoute
+  ApiStaffResumeRoute: typeof ApiStaffResumeRoute
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BlogSlugRoute: typeof BlogSlugRoute
@@ -5384,13 +5396,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBackgroundCheckFilesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/staff-resume': {
-      id: '/api/staff-resume'
-      path: '/api/staff-resume'
-      fullPath: '/api/staff-resume'
-      preLoaderRoute: typeof ApiStaffResumeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/centre-lead-alerts': {
       id: '/api/centre-lead-alerts'
       path: '/api/centre-lead-alerts'
@@ -5503,6 +5508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSpotOffersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/staff-resume': {
+      id: '/api/staff-resume'
+      path: '/api/staff-resume'
+      fullPath: '/api/staff-resume'
+      preLoaderRoute: typeof ApiStaffResumeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/tour-holds': {
       id: '/api/tour-holds'
       path: '/api/tour-holds'
@@ -5599,6 +5611,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/fr/admin'
       preLoaderRoute: typeof FrAdminRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/app-admin-unavailable': {
+      id: '/fr/app-admin-unavailable'
+      path: '/app-admin-unavailable'
+      fullPath: '/fr/app-admin-unavailable'
+      preLoaderRoute: typeof FrAppAdminUnavailableRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/background-checks': {
@@ -7172,6 +7191,7 @@ interface FrRouteChildren {
   FrAboutRoute: typeof FrAboutRoute
   FrAccountRoute: typeof FrAccountRoute
   FrAdminRoute: typeof FrAdminRoute
+  FrAppAdminUnavailableRoute: typeof FrAppAdminUnavailableRoute
   FrBackgroundChecksRoute: typeof FrBackgroundChecksRouteWithChildren
   FrBenefitsRoute: typeof FrBenefitsRoute
   FrBlogRoute: typeof FrBlogRoute
@@ -7269,6 +7289,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrAboutRoute: FrAboutRoute,
   FrAccountRoute: FrAccountRoute,
   FrAdminRoute: FrAdminRoute,
+  FrAppAdminUnavailableRoute: FrAppAdminUnavailableRoute,
   FrBackgroundChecksRoute: FrBackgroundChecksRouteWithChildren,
   FrBenefitsRoute: FrBenefitsRoute,
   FrBlogRoute: FrBlogRoute,
@@ -7627,7 +7648,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAlexaRoute: ApiAlexaRoute,
   ApiAutomationsRoute: ApiAutomationsRoute,
   ApiBackgroundCheckFilesRoute: ApiBackgroundCheckFilesRouteWithChildren,
-  ApiStaffResumeRoute: ApiStaffResumeRoute,
   ApiCentreLeadAlertsRoute: ApiCentreLeadAlertsRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,
@@ -7644,6 +7664,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   ApiSpotOffersRoute: ApiSpotOffersRoute,
+  ApiStaffResumeRoute: ApiStaffResumeRoute,
   ApiTourHoldsRoute: ApiTourHoldsRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BlogSlugRoute: BlogSlugRoute,

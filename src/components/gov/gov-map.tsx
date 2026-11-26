@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GovDashboard } from "@/lib/gov/aggregate";
 import { dashboardView } from "@/lib/gov/aggregate";
 import { govCopy } from "@/lib/gov/copy";
@@ -11,8 +11,14 @@ export function GovMap({ data }: { data: GovDashboard }) {
   const host = useRef<HTMLDivElement>(null);
   const channel = useStoreChannel();
   const [phase, setPhase] = useState<"loading" | "ready" | "failed">("loading");
+  const [attempt, setAttempt] = useState(0);
   const view = dashboardView(data.province);
-  const points = data.map;
+  // Rebuild only when the points really change. A fresh `data.map` array from a
+  // loader revalidation used to tear the map down mid-load and start over, which
+  // could leave "Loading the map." on screen indefinitely.
+  const pointsKey = data.map.map((point) => `${point.lat},${point.lng},${point.centres}`).join("|");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const points = useMemo(() => data.map.filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lng)), [pointsKey]);
 
   useEffect(() => {
     const el = host.current;
@@ -22,6 +28,25 @@ export function GovMap({ data }: { data: GovDashboard }) {
     let map: { destroy: () => void } | null = null;
     const circles: { setMap: (value: null) => void }[] = [];
     const ac = new AbortController();
+    // Watchdog: once the map is on screen, give it 20 s, then show the failure
+    // note with a Retry button instead of a loading line that never ends.
+    let watchdog = 0;
+    const io =
+      typeof IntersectionObserver === "function"
+        ? new IntersectionObserver(
+            (entries) => {
+              if (!entries.some((entry) => entry.isIntersecting) || watchdog) return;
+              watchdog = window.setTimeout(() => {
+                if (!dead) {
+                  ac.abort();
+                  setPhase("failed");
+                }
+              }, 20000);
+            },
+            { rootMargin: "200px" },
+          )
+        : null;
+    io?.observe(el);
     void (async () => {
       try {
         const { createKidEaseMap } = await import("@/lib/osm-map");
@@ -58,18 +83,25 @@ export function GovMap({ data }: { data: GovDashboard }) {
         for (const point of points) bounds.extend({ lat: point.lat, lng: point.lng });
         if (!bounds.isEmpty()) created.map.fitBounds(bounds, 48);
         created.map.resize();
+        window.clearTimeout(watchdog);
         if (!dead) setPhase(created.tilesReady ? "ready" : "failed");
-      } catch {
+      } catch (err) {
+        window.clearTimeout(watchdog);
+        if (!dead && !ac.signal.aborted) {
+          console.warn("[kidease-gov-map] map did not load", err instanceof Error ? err.message.slice(0, 120) : "");
+        }
         if (!dead) setPhase("failed");
       }
     })();
     return () => {
       dead = true;
+      io?.disconnect();
+      window.clearTimeout(watchdog);
       ac.abort();
       for (const circle of circles) circle.setMap(null);
       map?.destroy();
     };
-  }, [channel, points, view.lat, view.lng, view.zoom]);
+  }, [channel, points, view.lat, view.lng, view.zoom, attempt]);
 
   return (
     <section className="mt-8" aria-labelledby="gov-map-title">
@@ -84,7 +116,19 @@ export function GovMap({ data }: { data: GovDashboard }) {
       ) : points.length === 0 ? (
         <p className="mt-3 text-sm text-muted" role="status" data-ke="gov-map-empty">{copy.mapEmpty}</p>
       ) : phase === "failed" ? (
-        <p className="mt-3 text-sm text-muted" role="alert" data-ke="gov-map-failed">{copy.mapFailed}</p>
+        <div className="mt-3" data-ke="gov-map-failed">
+          <p className="text-sm text-muted" role="alert">{copy.mapFailed}</p>
+          <button
+            type="button"
+            className="mt-2 inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium text-primary ring-1 ring-border touch-manipulation"
+            onClick={() => {
+              setPhase("loading");
+              setAttempt((n) => n + 1);
+            }}
+          >
+            {data.locale === "fr" ? "Réessayer" : "Try again"}
+          </button>
+        </div>
       ) : (
         <div
           className="relative mt-3 w-full overflow-hidden rounded-2xl bg-surface-2"

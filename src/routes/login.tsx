@@ -3,7 +3,7 @@ import { createFileRoute, Link, redirect, useRouteContext, useRouter, useRouterS
 import { authBackFallback, currentAuthBackFallback } from "@/lib/auth/auth-back";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
-import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
+import { authClientErrorMessage, friendlyAuthError, TURNSTILE_REQUIRED_MESSAGE } from "@/lib/auth/login-errors";
 import { loginSubmittedText } from "@/lib/login-fields";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { govLoginRedirectForNext } from "@/lib/auth/verify-2fa-session";
@@ -285,8 +285,8 @@ export const Route = createFileRoute("/login")({
   component: Login,
 });
 
-function twoFactorUrl(dest: string) {
-  return twoFactorPageUrl(dest);
+function twoFactorUrl(dest: string, locale?: "en" | "fr") {
+  return twoFactorPageUrl(dest, locale);
 }
 
 export function Login() {
@@ -376,7 +376,7 @@ export function LoginScreen({
   const [smsConsent, setSmsConsent] = useState(false);
   const [error, setError] = useState<string | null>(() => oauthErrorText(search.error));
   const [busy, setBusy] = useState(false);
-  const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
+  const { onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
   const submitLock = useRef(false);
   const continued = useRef(false);
   const attempt = useRef(0);
@@ -733,9 +733,14 @@ export function LoginScreen({
         throw new Error("Operator sign-in is only for the KidEase owner account.");
       }
       const challenge = takeChallenge();
-      const reviewerBypass = mode === "in" && reviewerSignInSkipsTurnstile(email);
+      // Reviewer bypass: the widget is unmounted for store reviewers (sign-in only).
+      // The server still enforces Turnstile for everyone else.
+      const reviewerBypass = mode === "in" && (reviewerSignIn || reviewerSignInSkipsTurnstile(email));
       if (turnstileRequired && !challenge && !reviewerBypass) {
-        throw new Error("Please complete the security check, then try again.");
+        // takeChallenge() already fell back to the hidden cf-turnstile-response
+        // field; nothing there either. The catch below shows the message and
+        // calls resetTurnstile() to remint the check.
+        throw new Error(TURNSTILE_REQUIRED_MESSAGE);
       }
       captureLoginFunnel({ step: "submitted", method: "email", native: isNative() });
       markLoginSubmitted();
@@ -848,7 +853,7 @@ export function LoginScreen({
         callbackURL:
           staged ??
           (staffTwoFactorRequired(socialDest)
-            ? twoFactorUrl(socialDest)
+            ? twoFactorUrl(socialDest, authLocale)
             : loginErrorCallbackUrl({
                 next: search.next,
                 role,
@@ -1131,12 +1136,16 @@ export function LoginScreen({
                 {t("loginMethodsFailed")}
               </p>
             ) : null}
+            {/* Only `busy` disables submit. Browser/password-manager autofill does not
+                always fire input events (seen on FR /login), and the Turnstile token can
+                land after the fields are filled. onSubmit reads the form values and the
+                hidden cf-turnstile-response, and explains a missing check. */}
             <Button
               type="submit"
               size="lg"
               className="w-full min-h-12"
               data-ke="email-primary"
-              disabled={busy || (!askEmailOnly && turnstileRequired && !token.trim())}
+              disabled={busy}
             >
               {askEmailOnly
                 ? locale === "fr" ? "Continuer" : "Continue"

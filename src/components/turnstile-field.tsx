@@ -106,7 +106,16 @@ export const TurnstileField = memo(function TurnstileField({
   const copyLocale = locale === "fr" ? "fr" : "en";
   const [siteKey, setSiteKey] = useState<string | null | undefined>(undefined);
   const [loadError, setLoadError] = useState<string | null>(null);
-  onTokenRef.current = onToken;
+  const [hasToken, setHasToken] = useState(false);
+  const [showRetry, setShowRetry] = useState(false);
+  const autoResetDone = useRef(false);
+  const onRequiredRef = useRef(onRequired);
+  onRequiredRef.current = onRequired;
+  onTokenRef.current = (token: string) => {
+    setHasToken(Boolean(token.trim()));
+    if (token.trim()) setShowRetry(false);
+    onToken(token);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -131,6 +140,17 @@ export const TurnstileField = memo(function TurnstileField({
   useEffect(() => {
     onRequired?.(Boolean(siteKey));
   }, [siteKey, onRequired]);
+
+  // When the widget unmounts (e.g. a store reviewer email hides it), the form
+  // must stop waiting for a token that can never arrive.
+  useEffect(() => () => onRequiredRef.current?.(false), []);
+
+  // No token ~8s after the widget renders: offer a manual "Retry check".
+  useEffect(() => {
+    if (!siteKey || hasToken) return;
+    const id = window.setTimeout(() => setShowRetry(true), 8000);
+    return () => window.clearTimeout(id);
+  }, [siteKey, hasToken]);
 
   useEffect(() => {
     onKeyState?.(siteKey === undefined ? "loading" : siteKey ? "on" : "off");
@@ -175,7 +195,15 @@ export const TurnstileField = memo(function TurnstileField({
           "error-callback": (code?: string) => {
             onTokenRef.current("");
             setLoadError(tx(copyLocale, "turnstileFailed"));
-            if (code) console.error("[kidease-turnstile] widget error", String(code).slice(0, 40));
+            if (code) console.warn("[kidease-turnstile] widget error", String(code).slice(0, 40));
+            // Cloudflare errors are often transient (network blip, iframe reload).
+            // Reset once, ~2s later, before asking the person to act.
+            if (!autoResetDone.current) {
+              autoResetDone.current = true;
+              window.setTimeout(() => {
+                if (!cancelled) resetWidget(widgetId.current, (token) => onTokenRef.current(token));
+              }, 2000);
+            }
           },
         });
       })
@@ -250,6 +278,20 @@ export const TurnstileField = memo(function TurnstileField({
           without our callback, so Success never enables the button. */}
       <div ref={host} className="w-full max-w-full" data-ke-turnstile-host="" />
       {loadError ? <p className="mt-2 text-sm text-danger" role="alert">{loadError}</p> : null}
+      {showRetry && !hasToken ? (
+        <button
+          type="button"
+          data-ke="turnstile-retry"
+          className="mt-1 inline-flex min-h-[44px] min-w-[44px] items-center text-sm font-medium text-primary underline underline-offset-4"
+          onClick={() => {
+            setShowRetry(false);
+            setLoadError(null);
+            resetWidget(widgetId.current, (token) => onTokenRef.current(token));
+          }}
+        >
+          {copyLocale === "fr" ? "Réessayer la vérification" : "Retry check"}
+        </button>
+      ) : null}
     </div>
   );
 });

@@ -21,7 +21,7 @@ export const CCB = {
   howMuchEn:
     "https://www.canada.ca/en/revenue-agency/services/child-family-benefits/canada-child-benefit/how-much.html",
   howMuchFr:
-    "https://www.canada.ca/fr/agence-revenu/services/prestations-enfants-familles/allocation-canadienne-enfants/combien.html",
+    "https://www.canada.ca/fr/agence-revenu/services/prestations-enfants-familles/allocation-canadienne-enfants/combien-recevoir.html",
   overviewEn:
     "https://www.canada.ca/en/revenue-agency/services/child-family-benefits/canada-child-benefit.html",
   overviewFr:
@@ -39,7 +39,7 @@ export const CDB = {
 
 export const CWELCC_HREF = {
   en: "https://www.canada.ca/en/early-learning-child-care-agreement.html",
-  fr: "https://www.canada.ca/fr/entente-apprentissage-garde-jeunes-enfants.html",
+  fr: "https://www.canada.ca/fr/accord-apprentissage-garde-jeunes-enfants.html",
 } as const;
 
 export const MB_SUBSIDY_HREF =
