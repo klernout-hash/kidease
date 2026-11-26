@@ -122,7 +122,7 @@ const FamilyInviteGap = lazy(() =>
   import("@/components/family-invite-gap").then((m) => ({ default: m.FamilyInviteGap })),
 );
 import { orgDeskStatus } from "@/lib/server/org-occupancy";
-import { gapCopy, moneyCentreChoice, pickCentre } from "@/lib/gap-features";
+import { gapCopy, moneyCentreChoice, pickCareCentre, pickCentre } from "@/lib/gap-features";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
@@ -1232,7 +1232,7 @@ export function ProviderPage() {
         <MyTaxForms key={`forms-${listings[0].id}`} locale={locale === "fr" ? "fr" : "en"} daycareId={listings[0].id} />
       ) : null}
       {desk === "tools" ? <CentreToolsDesk /> : null}
-      {desk === "care" ? <ProviderCareDesk daycareId={listings[0]?.id} owner={centreOwner} /> : null}
+      {desk === "care" ? <ProviderCareDesk daycareId={pickCareCentre(listings.map((row) => row.id), search.centre, requests)} owner={centreOwner} /> : null}
       {desk === "staff" ? <EceJobDesk mode="staff" /> : null}
       {desk === "stories" ? <LearningStoriesDesk /> : null}
       {desk === "learning" ? <CurriculumPackDesk /> : null}

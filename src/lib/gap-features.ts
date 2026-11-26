@@ -234,6 +234,24 @@ export function pickCentre(ids: readonly string[], requested: string | null | un
   return ids.includes(want) ? want : null;
 }
 
+/**
+ * Centre for the care desk (daily care, room roster, kiosk). The URL pick wins.
+ * Without one, use the first centre that has an enrolled child, so an owner of
+ * several listings doesn't land on an empty one (B-org #38). getProvider has no order.
+ */
+export function pickCareCentre(
+  ids: readonly string[],
+  requested: string | null | undefined,
+  bookings: readonly { daycareId: string; status: string }[],
+): string | undefined {
+  const picked = pickCentre(ids, requested);
+  if (picked) return picked;
+  const enrolled = new Set(
+    bookings.filter((row) => row.status === "accepted" || row.status === "active").map((row) => row.daycareId),
+  );
+  return ids.find((id) => enrolled.has(id)) ?? ids[0];
+}
+
 /** QuickBooks belongs to one centre. Two or more centres need an explicit pick. */
 export function moneyCentreChoice(
   ids: readonly string[],
