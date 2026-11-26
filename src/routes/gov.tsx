@@ -3,6 +3,7 @@ import { GovDashboardView } from "@/components/gov/gov-dashboard";
 import { GovNativeNote } from "@/components/gov/gov-login";
 import { guardGovDesk, govRobotsHead, govRobotsHeaders } from "@/lib/gov/desk-guard";
 import { govDeskSearch, govFilter } from "@/lib/gov/search";
+import { loadGovSummary } from "@/lib/server/gov-desk";
 import { getGovDashboard } from "@/lib/server/gov-portal";
 
 export const Route = createFileRoute("/gov")({
@@ -16,9 +17,13 @@ export const Route = createFileRoute("/gov")({
   loader: async ({ context, deps }) => {
     const gate = context as { nativeOnly?: boolean };
     if (gate.nativeOnly) return null;
-    return getGovDashboard({
+    const [dashboard, summary] = await Promise.all([
+      getGovDashboard({
       data: { province: deps.province, region: deps.region, city: deps.city, locale: "en" },
-    });
+    }),
+      loadGovSummary({ data: { locale: "en" } }).catch(() => undefined),
+    ]);
+    return { ...dashboard, summary };
   },
   head: () => govRobotsHead("Overview"),
   headers: govRobotsHeaders,
@@ -29,5 +34,5 @@ function GovPage() {
   const gate = Route.useRouteContext() as { nativeOnly?: boolean };
   const data = Route.useLoaderData();
   if (gate.nativeOnly || !data) return <GovNativeNote locale="en" />;
-  return <GovDashboardView data={data} section="overview" />;
+  return <GovDashboardView data={data} section="overview" summary={data.summary} />;
 }

@@ -12,6 +12,7 @@ import {
   reviewChange,
 } from "@/lib/wiring/change-requests";
 import { deliverNotice, governmentUserIds, newId } from "@/lib/server/wiring/runtime";
+import { changeTransition, changeView } from "@/lib/gov/desk";
 
 export const submitChangeRequest = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
@@ -158,4 +159,97 @@ export const providerChanges = createServerFn({ method: "GET" })
       order by created_at desc limit 20
     `.catch(() => [] as { id: string; field: string; proposed_value: string; status: string }[]);
     return { enabled: true as const, rows };
+  });
+
+type MyChangeRow = {
+  id: string;
+  daycare_id: string;
+  centre: string;
+  field: string;
+  proposed_value: string;
+  status: string;
+  review_note: string | null;
+  returned_at: string | null;
+  created_at: string;
+};
+
+/** Every request for the centres this account runs, with the province's note when it was sent back. */
+export const myChangeRequests = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    if (!changeRequestsEnabled()) return { enabled: false as const, centres: [], rows: [] as Array<MyChangeRow & { view: string }> };
+    const sql = await getSql();
+    const ids = await listAccessibleDaycareIds(sql, context.userId);
+    if (!ids.length) return { enabled: true as const, centres: [], rows: [] as Array<MyChangeRow & { view: string }> };
+    const centres = await sql<{ id: string; name: string }>`
+      select id, name from daycares where id = any(${ids}) order by name limit 50
+    `.catch(() => [] as { id: string; name: string }[]);
+    let rows = await sql<MyChangeRow>`
+      select r.id, r.daycare_id, coalesce(d.name, '') as centre, r.field, r.proposed_value, r.status,
+             r.review_note, r.returned_at::text as returned_at, r.created_at::text as created_at
+      from listing_change_requests r left join daycares d on d.id = r.daycare_id
+      where r.daycare_id = any(${ids})
+      order by r.created_at desc limit 50
+    `.catch(() => null);
+    if (!rows) {
+      // Before migration 0234: no return columns yet.
+      rows = await sql<MyChangeRow>`
+        select r.id, r.daycare_id, coalesce(d.name, '') as centre, r.field, r.proposed_value, r.status,
+               null::text as review_note, null::text as returned_at, r.created_at::text as created_at
+        from listing_change_requests r left join daycares d on d.id = r.daycare_id
+        where r.daycare_id = any(${ids})
+        order by r.created_at desc limit 50
+      `.catch(() => [] as MyChangeRow[]);
+    }
+    return { enabled: true as const, centres, rows: rows.map((row) => ({ ...row, view: changeView(row) })) };
+  });
+
+/** A centre fixes a request the province sent back and sends it again. */
+export const resubmitChangeRequest = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id?: string; value?: string }) => ({
+    id: String(input?.id || "").slice(0, 80),
+    value: String(input?.value || "").slice(0, 200),
+  }))
+  .handler(async ({ context, data }) => {
+    if (!changeRequestsEnabled()) return { ok: false as const, error: "off" };
+    const sql = await getSql();
+    const rows = await sql<{ id: string; daycare_id: string; province: string; field: string; status: string; returned_at: string | null }>`
+      select id, daycare_id, province, field, status, returned_at::text as returned_at
+      from listing_change_requests where id = ${data.id} limit 1
+    `.catch(() => null);
+    if (!rows) return { ok: false as const, error: "migration" };
+    const row = rows[0];
+    if (!row) return { ok: false as const, error: "missing" };
+    const ids = await listAccessibleDaycareIds(sql, context.userId);
+    if (!ids.includes(row.daycare_id)) return { ok: false as const, error: "centre" };
+    const step = changeTransition(changeView(row), "resubmit", "centre");
+    if (!step.ok) return { ok: false as const, error: step.error };
+    const parsed = parseChangeValue(row.field, data.value);
+    if (!parsed.ok) return { ok: false as const, error: parsed.error };
+    await sql`
+      update listing_change_requests
+      set proposed_value = ${parsed.value}, returned_at = null, resubmitted_at = now()
+      where id = ${row.id} and status = 'pending'
+    `;
+    await sql`
+      insert into listing_change_request_events (id, request_id, actor_id, actor_role, action, note)
+      values (${newId("cre")}, ${row.id}, ${context.userId}, 'centre', 'resubmit', null)
+    `.catch(() => undefined);
+    const mode = changeRequestsMode();
+    for (const userId of await governmentUserIds(row.province)) {
+      await deliverNotice({
+        feature: "change_requests",
+        flag: "FEATURE_CHANGE_REQUESTS",
+        mode,
+        userId,
+        role: "government",
+        title: "Listing change sent again",
+        body: `A centre fixed a returned ${parsed.field} change. The public listing stays as it is until you approve.`,
+        href: "/gov/change-requests",
+        senderUserId: context.userId,
+        province: row.province,
+      });
+    }
+    return { ok: true as const };
   });

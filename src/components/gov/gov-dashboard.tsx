@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { GovSummary, type GovSummaryItem } from "@/components/gov/gov-summary";
 import { useRouterState } from "@tanstack/react-router";
 import { govMenuHref, type GovSection } from "@/lib/gov/menu";
 import type { GovDashboard } from "@/lib/gov/aggregate";
@@ -280,7 +281,10 @@ function SourceRegister({ copy }: { copy: ReturnType<typeof govCopy> }) {
 export function GovDashboardView({
   data,
   section = "overview",
+  summary,
 }: {
+  /** Summary tiles and page menu, shown first on the overview. */
+  summary?: GovSummaryItem[];
   data: GovDashboard & {
     licenceFlags?: Array<{ slug: string; name: string; city: string; status: string; expiry?: string | null }>;
     childPerSpace?: number | null;
@@ -365,6 +369,8 @@ export function GovDashboardView({
         {data.demo ? <p className="mt-3 rounded-xl bg-surface px-4 py-3 text-sm ring-1 ring-border">{copy.demo}</p> : null}
         {section === "overview" ? (
         <>
+        {summary ? <GovSummary locale={data.locale === "fr" ? "fr" : "en"} items={summary} /> : null}
+        {summary ? <h2 className="mt-8 font-display text-xl" data-ke="gov-overview-detail">{data.locale === "fr" ? "Détails de la province" : "Province detail"}</h2> : null}
         <div className="flex flex-wrap gap-3">
           <a
             href={`${exportBase}&format=pdf&locale=${data.locale}`}

@@ -1,19 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { GovDeskUnavailable } from "@/components/page-not-found";
-import { guardGovDesk } from "@/lib/gov/desk-guard";
+import { GovExportsPage } from "@/components/gov/gov-exports";
+import { GovNativeNote } from "@/components/gov/gov-login";
+import { govDeskSearch, govFilter } from "@/lib/gov/search";
+import { guardGovDesk, govRobotsHead, govRobotsHeaders } from "@/lib/gov/desk-guard";
+import { getGovDashboard } from "@/lib/server/gov-portal";
 
-/**
- * Not built yet. A signed-in official sees the same screen as any unknown /gov page,
- * in EN and FR, with no redirect (gov desk test #31). The desk guard still runs first.
- */
 export const Route = createFileRoute("/fr/gov_/exports")({
-  beforeLoad: async ({ context }) => {
-    await guardGovDesk("fr", Boolean((context as { nativeShell?: boolean }).nativeShell));
+  validateSearch: (search: Record<string, unknown>) => govDeskSearch(search, { tab: true }),
+  beforeLoad: ({ context }) => guardGovDesk("fr", Boolean((context as { nativeShell?: boolean }).nativeShell)),
+  loaderDeps: ({ search }) => ({ province: govFilter(search.province), region: govFilter(search.region), city: govFilter(search.city) }),
+  loader: async ({ context, deps }) => {
+    const gate = context as { nativeOnly?: boolean };
+    if (gate.nativeOnly) return null;
+    return getGovDashboard({ data: { province: deps.province, region: deps.region, city: deps.city, locale: "fr" } });
   },
-  head: () => ({ meta: [{ name: "robots", content: "noindex" }] }),
-  component: GovUnbuilt,
+  head: () => govRobotsHead("Exportations"),
+  headers: govRobotsHeaders,
+  component: Page,
 });
 
-function GovUnbuilt() {
-  return <GovDeskUnavailable locale="fr" />;
+function Page() {
+  const gate = Route.useRouteContext() as { nativeOnly?: boolean };
+  const data = Route.useLoaderData();
+  if (gate.nativeOnly || !data) return <GovNativeNote locale="fr" />;
+  return <GovExportsPage data={data} />;
 }

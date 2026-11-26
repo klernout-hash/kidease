@@ -1,10 +1,17 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { guardGovDesk } from "@/lib/gov/desk-guard";
-import { govLegacyHref } from "@/lib/gov/legacy";
+import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
+import { guardGovDesk, govRobotsHead, govRobotsHeaders } from "@/lib/gov/desk-guard";
+import { loadGovDeskPage } from "@/lib/server/gov-desk";
 
 export const Route = createFileRoute("/fr/gov_/vacancies")({
-  beforeLoad: async ({ context }) => {
-    await guardGovDesk("fr", Boolean((context as { nativeShell?: boolean }).nativeShell));
-    throw redirect({ href: govLegacyHref("fr", "vacancies") });
+  // All desk pages share one lazy screen chunk (client JS file budget).
+  codeSplitGroupings: [],
+  beforeLoad: ({ context }) => guardGovDesk("fr", Boolean((context as { nativeShell?: boolean }).nativeShell)),
+  loader: async ({ context }) => {
+    const gate = context as { nativeOnly?: boolean };
+    if (gate.nativeOnly) return null;
+    return loadGovDeskPage({ data: { leaf: "vacancies", locale: "fr" } });
   },
+  head: () => govRobotsHead("Places libres"),
+  headers: govRobotsHeaders,
+  component: lazyRouteComponent(() => import("@/components/gov/gov-desk-route"), "GovDeskRouteView"),
 });
