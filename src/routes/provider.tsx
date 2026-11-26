@@ -23,6 +23,7 @@ import { HealthSecondFactorBanner } from "@/components/email-code-setting";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useLocallySignedOut, useSettledUser } from "@/lib/auth/use-current-user";
 import { createListing, getProvider } from "@/lib/server/family";
+import { setOrgCentre } from "@/lib/server/org-occupancy";
 import { dismissUpgradeCard } from "@/lib/server/upgrade-card";
 import {
   DUPLICATE_LISTING_MESSAGE,
@@ -707,7 +708,17 @@ export function ProviderPage() {
         </div>
       ) : null}
       {desk === "today" && hostListing && deskListings.length > 0 && !staffDesk ? (
-        <HostTodayHome listings={deskListings} stats={stats} onChanged={() => void load()} />
+        <HostTodayHome
+          listings={deskListings}
+          stats={stats}
+          onChanged={() => void load()}
+          centreFromUrl={search.centre}
+          onCentre={(id) => {
+            // Same as "Work in this centre": remember it and put it in the URL.
+            void setOrgCentre({ data: { daycareId: id } }).catch(() => undefined);
+            void navigate({ to: deskPath, search: { ...search, desk: "today", centre: id } });
+          }}
+        />
       ) : null}
       {desk === "today" && !hostListing && deskListings.length > 0 && !staffDesk ? (
         <>
