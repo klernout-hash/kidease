@@ -1,4 +1,4 @@
-import { CITIES, PROVINCES, haversineKm, type LatLng } from "./geo.ts";
+import { CITIES, PROVINCES, exactCity, haversineKm, type LatLng } from "./geo.ts";
 
 /**
  * A pin this close to a catalogue city or province coordinate is the city-list
@@ -98,7 +98,9 @@ export function doorDistanceKm(
   if (!origin || !point || !isDoorPin(point.lat, point.lng)) return null;
   if (!Number.isFinite(origin.lat) || !Number.isFinite(origin.lng)) return null;
   if (origin.lat === 0 && origin.lng === 0) return null;
-  return Math.round(haversineKm(origin, { lat: Number(point.lat), lng: Number(point.lng) }) * 10) / 10;
+  return (
+    Math.round(haversineKm(origin, { lat: Number(point.lat), lng: Number(point.lng) }) * 10) / 10
+  );
 }
 
 /** Distance used for ordering. Stand-in pins sort after measured doors. */
@@ -118,4 +120,46 @@ export function shownCardKm(km: number | null | undefined): number | null {
   if (typeof km !== "number" || !Number.isFinite(km)) return null;
   if (km <= 0 || km >= UNMEASURED_DISTANCE_KM) return null;
   return km;
+}
+
+/** A stored pin this far from its own named city is a regional stand-in, not the centre. */
+export const STRAY_PIN_KM = 150;
+
+const CITY_HIT_CACHE = new Map<string, LatLng | null>();
+
+/**
+ * Some registry rows carry a regional pin (Iqaluit listings stored ~1,800 km
+ * north, at the Qikiqtaaluk centroid). When the listing names a catalogue city
+ * in the same province and the pin is far from it, use the city centre. That
+ * point is a stand-in, so no distance is printed, but the listing is found by
+ * a search of its own city.
+ */
+export function cityPinForStrayListing(row: {
+  lat?: number | null;
+  lng?: number | null;
+  city?: string | null;
+  province?: string | null;
+}): LatLng | null {
+  const name =
+    String(row.city || "")
+      .split(",")[0]
+      ?.trim() || "";
+  const province = String(row.province || "")
+    .trim()
+    .toUpperCase();
+  if (!name || !province) return null;
+  const key = `${name.toLowerCase()}|${province}`;
+  let hit = CITY_HIT_CACHE.get(key);
+  if (hit === undefined) {
+    const found = exactCity(name);
+    hit = found && found.province === province ? found : null;
+    if (CITY_HIT_CACHE.size > 5_000) CITY_HIT_CACHE.clear();
+    CITY_HIT_CACHE.set(key, hit);
+  }
+  if (!hit) return null;
+  const la = Number(row.lat);
+  const ln = Number(row.lng);
+  const pinned = Number.isFinite(la) && Number.isFinite(ln) && !(la === 0 && ln === 0);
+  if (pinned && haversineKm({ lat: la, lng: ln }, hit) <= STRAY_PIN_KM) return null;
+  return { lat: hit.lat, lng: hit.lng };
 }
