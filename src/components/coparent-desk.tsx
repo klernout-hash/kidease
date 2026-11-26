@@ -4,7 +4,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { coparentCopy } from "@/lib/coparent-copy";
-import { invitePath } from "@/lib/coparent";
+import { inviteShareUrl } from "@/lib/coparent";
+import { shouldOfferWebShare } from "@/lib/native";
+import { copyText, shareOrCopy } from "@/lib/share";
 import { parentDeskPath } from "@/lib/desk-nav";
 import { custodyCopy } from "@/lib/custody-copy";
 import { inviteCoparentByEmail } from "@/lib/server/coparent-email";
@@ -56,7 +58,9 @@ export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | nu
     return <EmptyState title={copy.offTitle} body={copy.offBody} action={copy.home} actionTo={deskPath} />;
   }
 
-  const link = desk.inviteToken ? invitePath(desk.inviteToken, deskPath) : "";
+  const link = desk.inviteToken
+    ? inviteShareUrl(desk.inviteToken, deskPath, typeof window === "undefined" ? undefined : window.location.origin)
+    : "";
   const showJoin = Boolean(inviteToken) && desk.role !== "owner" && desk.role !== "member";
 
   return (
@@ -65,7 +69,7 @@ export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | nu
         <h2 className="font-display text-2xl">{copy.title}</h2>
         <p className="mt-1 text-sm text-muted">{copy.lead}</p>
         <p className="mt-2 text-sm">{copy.shared}</p>
-        <p className="mt-2 text-sm text-muted">{desk.emailEnabled ? emailCopy.lead : copy.noSend}</p>
+        {!link ? <p className="mt-2 text-sm text-muted">{desk.emailEnabled ? emailCopy.lead : copy.noSend}</p> : null}
       </div>
       {desk.role === "member" && desk.access === "view" ? (
         <p className="rounded-xl bg-surface p-4 text-sm ring-1 ring-border" role="status">
@@ -202,19 +206,37 @@ export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | nu
           </label>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             {link ? (
-              <Button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  const full = `${window.location.origin}${link}`;
-                  void navigator.clipboard.writeText(full).then(
-                    () => toast.success(copy.copied),
-                    () => setError(copy.bad),
-                  );
-                }}
-              >
-                {copy.copy}
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setError("");
+                    void copyText(link).then((copied) => {
+                      if (copied) toast.success(copy.copied);
+                      else setError(copy.bad);
+                    });
+                  }}
+                >
+                  {copy.copy}
+                </Button>
+                {shouldOfferWebShare({ title: copy.title, url: link }) ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={busy}
+                    onClick={() => {
+                      setError("");
+                      void shareOrCopy({ title: copy.title, text: "", url: link }).then((outcome) => {
+                        if (outcome === "copied") toast.success(copy.copied);
+                        else if (outcome === "failed") setError(copy.bad);
+                      });
+                    }}
+                  >
+                    {copy.share}
+                  </Button>
+                ) : null}
+              </>
             ) : (
               <Button asChild>
                 <Link to={deskPath} search={{ tab: "children" }}>

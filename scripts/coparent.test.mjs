@@ -8,6 +8,7 @@ import {
   canSetAccess,
   decideAccept,
   invitePath,
+  inviteShareUrl,
   recordOnFamily,
   scopeFromLinks,
   tokenOk,
@@ -82,6 +83,33 @@ test("an invite is an in-app link and a second login does not share until it is 
     canWrite: true,
     linked: false,
   });
+});
+
+test("family share URLs are public HTTPS and retain the localized invite path", () => {
+  const token = "test-only_".padEnd(24, "a");
+  const en = `https://www.kidease.ca/parent?tab=family&invite=${token}`;
+  assert.equal(inviteShareUrl(token), en);
+  assert.equal(inviteShareUrl(token, "/parent", "https://kidease.ca"), en);
+  assert.equal(inviteShareUrl(token, "/parent", "https://www.kidease.ca"), en);
+  const fr = inviteShareUrl(token, "/fr/parent", "capacitor://localhost");
+  assert.equal(fr, `https://www.kidease.ca/fr/parent?tab=family&invite=${token}`);
+  assert.equal(inviteShareUrl(token, "/parent", "null"), en);
+});
+
+test("family share URLs stay on the current preview or local test environment", () => {
+  const token = "test-only_".padEnd(24, "a");
+  const path = invitePath(token, "/fr/parent");
+  for (const origin of ["https://preview.example.invalid", "http://127.0.0.1:8080"]) {
+    assert.equal(inviteShareUrl(token, "/fr/parent", origin), origin + path);
+  }
+});
+
+test("family invite display, clipboard, and native share use the same URL", () => {
+  const screen = src("src/components/coparent-desk.tsx");
+  assert.match(screen, /inviteShareUrl\(desk\.inviteToken/);
+  assert.match(screen, /<span className="mt-1 block font-medium">\{link\}<\/span>/);
+  assert.match(screen, /copyText\(link\)/);
+  assert.match(screen, /shareOrCopy\(\{ title: copy\.title, text: "", url: link \}\)/);
 });
 
 test("shared children, tours, waitlists, messages, and bills follow the main parent", () => {
