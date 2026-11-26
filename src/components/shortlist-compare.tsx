@@ -39,15 +39,8 @@ export function ShortlistCompareTable({
             <th className="p-2" />
             {items.map((d) => (
               <th key={d.id} className="p-2 align-bottom">
-                <BuildingPhoto
-                  src={listingThumb(d.photos)}
-                  className="ke-card-photo mb-2 w-full rounded-lg object-cover"
-                />
-                <Link
-                  to="/daycare/$slug"
-                  params={{ slug: d.slug }}
-                  className="font-semibold hover:underline"
-                >
+                <BuildingPhoto src={listingThumb(d.photos)} className="ke-card-photo mb-2 w-full rounded-lg object-cover" />
+                <Link to="/daycare/$slug" params={{ slug: d.slug }} className="font-semibold hover:underline">
                   {displayCentreName(locale === "fr" ? d.nameFr : d.name)}
                 </Link>
               </th>
@@ -61,9 +54,7 @@ export function ShortlistCompareTable({
               <td key={d.id} className="p-2">
                 <div className="flex flex-col items-start gap-1.5">
                   {listingIsVerified(d) ? (
-                    <span className="rounded-full bg-ok/10 px-2 py-0.5 text-xs font-medium text-ok">
-                      {t("compareVerified")}
-                    </span>
+                    <span className="rounded-full bg-ok/10 px-2 py-0.5 text-xs font-medium text-ok">{t("compareVerified")}</span>
                   ) : (
                     <span>{t("trustNotVerified")}</span>
                   )}
@@ -78,20 +69,14 @@ export function ShortlistCompareTable({
           />
           <CompareRow
             label={t("hours")}
-            values={items.map(
-              (d) => (locale === "fr" ? d.hoursFr || d.hours : d.hours) || t("noneListed"),
-            )}
+            values={items.map((d) => (locale === "fr" ? d.hoursFr || d.hours : d.hours) || t("noneListed"))}
           />
           <CompareRow
             label={t("compareDistance")}
             values={items.map((d) => {
               return (
-                parentDistanceLabel({
-                  km: distancesKm[d.id],
-                  away: t("kmAway"),
-                  locale,
-                  show: located,
-                }) || t("noneListed")
+                parentDistanceLabel({ km: distancesKm[d.id], away: t("kmAway"), locale, show: located }) ||
+                t("noneListed")
               );
             })}
           />
@@ -118,11 +103,7 @@ export function ShortlistCompareTable({
               <th className="p-2" />
               {items.map((d) => (
                 <td key={d.id} className="p-2">
-                  <button
-                    type="button"
-                    className="min-h-11 text-sm text-muted hover:text-fg"
-                    onClick={() => onRemove(d.id)}
-                  >
+                  <button type="button" className="min-h-11 text-sm text-muted hover:text-fg" onClick={() => onRemove(d.id)}>
                     {t("unsave")}
                   </button>
                 </td>

@@ -201,9 +201,7 @@ function OsmMapView({
   const mapsApiRef = useRef<KidEaseMaps | null>(null);
   const overlayFactoryRef = useRef<typeof createListingOverlay | null>(null);
   const pinsRef = useRef<AnyPin[]>([]);
-  const pinHitRef = useRef<(event: { clientX: number; clientY: number }) => DotItem | null>(
-    () => null,
-  );
+  const pinHitRef = useRef<(event: { clientX: number; clientY: number }) => DotItem | null>(() => null);
   const youRef = useRef<MovableDot | null>(null);
   const workYouRef = useRef<MovableDot | null>(null);
   const circleRef = useRef<KidEaseCircle | null>(null);
@@ -211,12 +209,7 @@ function OsmMapView({
   const markersBySlug = useRef(new Map<string, SlugPin>());
   const popupRef = useRef<HTMLDivElement>(null);
   const popupBoxRef = useRef<PinPopupBox | null>(null);
-  const popupPointRef = useRef<{
-    x: number;
-    y: number;
-    mapWidth: number;
-    mapHeight: number;
-  } | null>(null);
+  const popupPointRef = useRef<{ x: number; y: number; mapWidth: number; mapHeight: number } | null>(null);
   const popupSlugRef = useRef<string | null>(null);
   const pinClickAt = useRef(0);
   const onSelectRef = useRef(onSelect);
@@ -256,9 +249,7 @@ function OsmMapView({
   openPinRef.current = (item) => {
     pinClickAt.current = Date.now();
     const seq = ++detailSeq.current;
-    const fromList = itemsRef.current.find(
-      (row) => row.id === item.id || (item.slug && row.slug === item.slug),
-    );
+    const fromList = itemsRef.current.find((row) => row.id === item.id || (item.slug && row.slug === item.slug));
     if (fromList) {
       setPicked(fromList.slug);
       setPickedPin(null);
@@ -287,8 +278,7 @@ function OsmMapView({
     if (item.slug && "address" in item && item.address) return;
     void mapPinDetail({ data: { id: item.id } }).then((pin) => {
       if (detailSeq.current !== seq || !pin) return;
-      if (searchPinsRef.current && !searchPinsRef.current.some((match) => match.id === pin.id))
-        return;
+      if (searchPinsRef.current && !searchPinsRef.current.some((match) => match.id === pin.id)) return;
       setPicked(pin.slug || pin.id);
       setPickedPin(pin);
       if (pin.slug) onSelectRef.current(pin.slug);
@@ -303,8 +293,7 @@ function OsmMapView({
     if (!picked) return null;
     const fromList = items.find((item) => item.slug === picked || item.id === picked);
     if (fromList) return fromList;
-    if (!itemsOnly && pickedPin && (pickedPin.slug === picked || pickedPin.id === picked))
-      return mapPinToCard(pickedPin, origin);
+    if (!itemsOnly && pickedPin && (pickedPin.slug === picked || pickedPin.id === picked)) return mapPinToCard(pickedPin, origin);
     return null;
   }, [items, itemsOnly, picked, pickedPin, origin]);
   const selectedRef = useRef(selected);
@@ -445,11 +434,7 @@ function OsmMapView({
     writeMapBase(base);
   }, [base, ready]);
 
-  const itemsFrameKey = itemsOnly
-    ? searchCardsToMapPins(items)
-        .map((pin) => `${pin.id}:${pin.lat}:${pin.lng}`)
-        .join(",")
-    : "";
+  const itemsFrameKey = itemsOnly ? searchCardsToMapPins(items).map((pin) => `${pin.id}:${pin.lat}:${pin.lng}`).join(",") : "";
 
   useEffect(() => {
     const map = mapRef.current;
@@ -479,10 +464,7 @@ function OsmMapView({
           { lat: first.lat, lng: first.lng },
         );
         for (const pin of saved.slice(1)) bounds.extend({ lat: pin.lat, lng: pin.lng });
-        map.fitBounds(
-          bounds,
-          el.clientWidth > 0 ? radiusFitPadding(el.clientWidth) : MAP_RADIUS_FIT_PAD,
-        );
+        map.fitBounds(bounds, el.clientWidth > 0 ? radiusFitPadding(el.clientWidth) : MAP_RADIUS_FIT_PAD);
         return;
       }
       const home = originRef.current;
@@ -577,10 +559,7 @@ function OsmMapView({
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
         if (!framing || userMovedRef.current) return;
-        if (
-          radiusFrameKey(originRef.current, radiusRef.current, secondOriginRef.current) !== frameKey
-        )
-          return;
+        if (radiusFrameKey(originRef.current, radiusRef.current, secondOriginRef.current) !== frameKey) return;
         maps.event.trigger(map, "resize");
         fit();
       }, 80);
@@ -607,17 +586,7 @@ function OsmMapView({
       if (idle) maps.event?.removeListener?.(idle);
       maps.event.removeListener(drag);
     };
-  }, [
-    origin.lat,
-    origin.lng,
-    secondOrigin?.lat,
-    secondOrigin?.lng,
-    radiusKm,
-    ready,
-    mapEpoch,
-    itemsOnly,
-    itemsFrameKey,
-  ]);
+  }, [origin.lat, origin.lng, secondOrigin?.lat, secondOrigin?.lng, radiusKm, ready, mapEpoch, itemsOnly, itemsFrameKey]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -697,11 +666,10 @@ function OsmMapView({
           active,
           retryDelayMs: mapBatchRetryDelayMs,
           sleep: (ms) => waitForMapRetry(ms, readLifetime.signal),
-          load: () =>
-            withMapReadDeadline(
-              (signal) => mapPinTiles({ data: { zoom: zoomNow, tiles: missing }, signal }),
-              readLifetime.signal,
-            ),
+          load: () => withMapReadDeadline(
+            (signal) => mapPinTiles({ data: { zoom: zoomNow, tiles: missing }, signal }),
+            readLifetime.signal,
+          ),
         })
           .then((raw) => {
             if (!active() || !raw) return;
@@ -811,8 +779,7 @@ function OsmMapView({
     if (seeded.mode !== "pins" || seeded.pins.length === 0) return;
     const signature = seeded.pins.map((pin) => pin.id).join(",");
     setViewData((current) => {
-      if (current?.mode === "pins" && current.pins.map((pin) => pin.id).join(",") === signature)
-        return current;
+      if (current?.mode === "pins" && current.pins.map((pin) => pin.id).join(",") === signature) return current;
       return seeded;
     });
   }, [items, origin, radiusKm, itemsOnly, searchScoped]);
@@ -840,21 +807,14 @@ function OsmMapView({
               maxLng: ne.lng(),
             })
           : null;
-      const scoped =
-        searchScoped && searchPins !== undefined && frame
-          ? projectMapRows(searchPins, zoom, frame)
-          : null;
+      const scoped = searchScoped && searchPins !== undefined && frame
+        ? projectMapRows(searchPins, zoom, frame)
+        : null;
       const seeded =
         !searchScoped && frame && (itemsOnly || !viewData || !bboxCovers(viewData.bbox, frame))
           ? listPinsForCamera(searchCardsToMapPins(items), zoom, frame, { itemsOnly })
           : null;
-      const view = itemsOnly
-        ? seeded
-        : searchScoped
-          ? scoped
-          : seeded && frame && bboxCovers(seeded.bbox, frame)
-            ? seeded
-            : viewData;
+      const view = itemsOnly ? seeded : searchScoped ? scoped : seeded && frame && bboxCovers(seeded.bbox, frame) ? seeded : viewData;
       const drawn = markersForMapView({
         items,
         view,
@@ -899,9 +859,7 @@ function OsmMapView({
         map,
         zoom,
         pins: dotPins.filter((item) => item.id !== picked && item.slug !== picked),
-        label: itemsOnly
-          ? t("mapSavedCount").replace("{n}", String(markerCount(drawn.markers)))
-          : undefined,
+        label: itemsOnly ? t("mapSavedCount").replace("{n}", String(markerCount(drawn.markers))) : undefined,
         locale: locale === "fr" ? "fr" : "en",
         onPick: (item) => openPinRef.current(item),
       });
@@ -934,29 +892,16 @@ function OsmMapView({
     // Clear previous directory markers before painting either supplied-data mode.
     if (itemsOnly || searchScoped) paint();
     const timer = itemsOnly || searchScoped ? 0 : window.setTimeout(paint, 50);
-    const idle =
-      itemsOnly || searchScoped
-        ? maps.event.addListener(map, "idle", paint)
-        : maps.event.addListenerOnce(map, "idle", paint);
+    const idle = itemsOnly || searchScoped
+      ? maps.event.addListener(map, "idle", paint)
+      : maps.event.addListenerOnce(map, "idle", paint);
 
     return () => {
       window.clearTimeout(timer);
       maps.event.removeListener(idle);
       pinHitRef.current = () => null;
     };
-  }, [
-    items,
-    itemsOnly,
-    locale,
-    picked,
-    ready,
-    zoom,
-    viewData,
-    mapEpoch,
-    t,
-    searchPins,
-    searchScoped,
-  ]);
+  }, [items, itemsOnly, locale, picked, ready, zoom, viewData, mapEpoch, t, searchPins, searchScoped]);
 
   useEffect(() => {
     const maps = mapsApiRef.current;
@@ -1046,9 +991,7 @@ function OsmMapView({
       const current = selectedRef.current;
       const projection = overlay?.getProjection();
       if (!el || !hostEl || !current || !projection) return;
-      const point = projection.fromLatLngToContainerPixel(
-        new maps.LatLng(current.lat, current.lng),
-      );
+      const point = projection.fromLatLngToContainerPixel(new maps.LatLng(current.lat, current.lng));
       if (!point) return;
       popupPointRef.current = {
         x: point.x,
@@ -1174,20 +1117,14 @@ function OsmMapView({
         <div className="overflow-hidden rounded-full bg-surface text-xs font-medium shadow-card ring-1 ring-border">
           <button
             type="button"
-            className={cn(
-              "inline-flex min-h-11 min-w-11 items-center justify-center px-3 py-1.5 touch-manipulation",
-              base === "roadmap" ? "bg-primary text-primary-fg" : "text-muted",
-            )}
+            className={cn("inline-flex min-h-11 min-w-11 items-center justify-center px-3 py-1.5 touch-manipulation", base === "roadmap" ? "bg-primary text-primary-fg" : "text-muted")}
             onClick={() => setBase("roadmap")}
           >
             {t("mapRoad")}
           </button>
           <button
             type="button"
-            className={cn(
-              "inline-flex min-h-11 min-w-11 items-center justify-center px-3 py-1.5 touch-manipulation",
-              base === "satellite" ? "bg-primary text-primary-fg" : "text-muted",
-            )}
+            className={cn("inline-flex min-h-11 min-w-11 items-center justify-center px-3 py-1.5 touch-manipulation", base === "satellite" ? "bg-primary text-primary-fg" : "text-muted")}
             onClick={() => setBase("satellite")}
           >
             {t("mapSat")}
@@ -1283,8 +1220,7 @@ function MapPinPopup({
     km: item.distanceKm,
     away: t("km"),
     locale,
-    approximate:
-      Boolean(item.addressProtected) || ("radiusM" in item && Number(item.radiusM) >= 500),
+    approximate: Boolean(item.addressProtected) || ("radiusM" in item && Number(item.radiusM) >= 500),
     about: t("homeAddressAbout"),
     show:
       isDoorPin(item.lat, item.lng) &&
@@ -1292,17 +1228,9 @@ function MapPinPopup({
       originIsParentLocation(originSource) &&
       plausibleListingKm(item.distanceKm, item.city, origin.label),
   });
-  const areaPostal =
-    "postalCode" in item
-      ? String(item.postalCode || "")
-          .replace(/\s+/g, "")
-          .slice(0, 3)
-      : "";
+  const areaPostal = "postalCode" in item ? String(item.postalCode || "").replace(/\s+/g, "").slice(0, 3) : "";
   const place = mapPinPlaceLine({
-    address:
-      item.addressProtected || ("radiusM" in item && Number(item.radiusM) >= 500)
-        ? ""
-        : displayListingText(item.address),
+    address: item.addressProtected || ("radiusM" in item && Number(item.radiusM) >= 500) ? "" : displayListingText(item.address),
     city: item.addressPlace || [item.city, areaPostal].filter(Boolean).join(" · "),
     away,
   });
@@ -1360,39 +1288,18 @@ function MapPinPopup({
           params={{ slug: item.slug }}
           className="flex items-start gap-2 px-2 pb-1.5 pt-2 text-inherit no-underline"
         >
-          <PinPopupSummary
-            thumb={thumb}
-            name={name}
-            place={place}
-            facts={facts}
-            approved={approved}
-            approvedLabel={t("kideaseApprovedMarker")}
-            verifiedCheck={verifiedCheck}
-            sponsored={FEATURE_SPONSORED_LISTINGS && item.featuredCity ? t("sponsored") : ""}
-          />
+          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} verifiedCheck={verifiedCheck} sponsored={FEATURE_SPONSORED_LISTINGS && item.featuredCity ? t("sponsored") : ""} />
         </Link>
       ) : (
         <div className="flex items-start gap-2 px-2 pb-1.5 pt-2">
-          <PinPopupSummary
-            thumb={thumb}
-            name={name}
-            place={place}
-            facts={facts}
-            approved={approved}
-            approvedLabel={t("kideaseApprovedMarker")}
-            verifiedCheck={verifiedCheck}
-            sponsored={FEATURE_SPONSORED_LISTINGS && item.featuredCity ? t("sponsored") : ""}
-          />
+          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} verifiedCheck={verifiedCheck} sponsored={FEATURE_SPONSORED_LISTINGS && item.featuredCity ? t("sponsored") : ""} />
         </div>
       )}
       <div className="px-2 pb-2">
         {showLivePill || subsidy || offerClaim ? (
           <div className="mb-2 flex flex-wrap items-center gap-1" data-ke="map-card-pills">
             {showLivePill ? (
-              <span
-                data-ke="card-live-pill"
-                className="inline-flex items-center rounded-full bg-[#22C55E] px-2 py-0.5 text-[10px] font-bold leading-none text-[#052e16]"
-              >
+              <span data-ke="card-live-pill" className="inline-flex items-center rounded-full bg-[#22C55E] px-2 py-0.5 text-[10px] font-bold leading-none text-[#052e16]">
                 {t("live")}
               </span>
             ) : null}
@@ -1456,15 +1363,10 @@ function PinPopupSummary({
         </span>
       ) : null}
       <span className="min-w-0 flex-1 pr-9">
-        <p className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.02em]">
-          {name}
-        </p>
+        <p className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.02em]">{name}</p>
         {sponsored ? (
           <p className="mt-1">
-            <span
-              data-ke="sponsored"
-              className="inline-flex items-center rounded-full bg-[#1c2438] px-2 py-0.5 text-[11px] font-semibold leading-none text-white"
-            >
+            <span data-ke="sponsored" className="inline-flex items-center rounded-full bg-[#1c2438] px-2 py-0.5 text-[11px] font-semibold leading-none text-white">
               {sponsored}
             </span>
           </p>
@@ -1472,10 +1374,7 @@ function PinPopupSummary({
         {place ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{place}</p> : null}
         {facts ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{facts}</p> : null}
         {approved || verifiedCheck ? (
-          <p
-            className="mt-0.5 flex flex-wrap items-center gap-1 text-[12px] font-medium leading-4 text-primary"
-            data-ke={approved ? "kidease-approved-marker" : undefined}
-          >
+          <p className="mt-0.5 flex flex-wrap items-center gap-1 text-[12px] font-medium leading-4 text-primary" data-ke={approved ? "kidease-approved-marker" : undefined}>
             {approved ? approvedLabel : null}
             {verifiedCheck ? <VerifiedCheck /> : null}
           </p>
@@ -1528,10 +1427,7 @@ function mountPinCanvas(input: {
     focusIndex = index;
     const item = placed[index];
     if (!canvas) return;
-    canvas.setAttribute(
-      "aria-label",
-      item ? pinLabel(item, locale) : canvas.dataset.keMapLabel || "Map",
-    );
+    canvas.setAttribute("aria-label", item ? pinLabel(item, locale) : canvas.dataset.keMapLabel || "Map");
   };
   const moveFocus = (dx: number, dy: number) => {
     if (centers.length === 0) return;
@@ -1653,13 +1549,9 @@ function mountPinCanvas(input: {
       }
       const areaRadius = pinAreaRadiusM(item);
       if (areaRadius) {
-        const edge = projection.fromLatLngToDivPixel(
-          new maps.LatLng(item.lat + areaRadius / 111320, item.lng),
-        );
+        const edge = projection.fromLatLngToDivPixel(new maps.LatLng(item.lat + areaRadius / 111320, item.lng));
         const edgeLocal = edge ? mapPinCanvasPoint(edge, frame) : null;
-        const rPx = edgeLocal
-          ? Math.max(10, Math.hypot(edgeLocal.x - local.x, edgeLocal.y - local.y))
-          : 18;
+        const rPx = edgeLocal ? Math.max(10, Math.hypot(edgeLocal.x - local.x, edgeLocal.y - local.y)) : 18;
         ctx.beginPath();
         ctx.arc(local.x, local.y, rPx, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(26, 55, 144, 0.18)";
@@ -1738,3 +1630,4 @@ function wrapOverlayPin(overlay: ListingOverlay): SlugPin {
     },
   };
 }
+

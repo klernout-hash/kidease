@@ -98,9 +98,7 @@ export function doorDistanceKm(
   if (!origin || !point || !isDoorPin(point.lat, point.lng)) return null;
   if (!Number.isFinite(origin.lat) || !Number.isFinite(origin.lng)) return null;
   if (origin.lat === 0 && origin.lng === 0) return null;
-  return (
-    Math.round(haversineKm(origin, { lat: Number(point.lat), lng: Number(point.lng) }) * 10) / 10
-  );
+  return Math.round(haversineKm(origin, { lat: Number(point.lat), lng: Number(point.lng) }) * 10) / 10;
 }
 
 /** Distance used for ordering. Stand-in pins sort after measured doors. */
@@ -140,13 +138,8 @@ export function cityPinForStrayListing(row: {
   city?: string | null;
   province?: string | null;
 }): LatLng | null {
-  const name =
-    String(row.city || "")
-      .split(",")[0]
-      ?.trim() || "";
-  const province = String(row.province || "")
-    .trim()
-    .toUpperCase();
+  const name = String(row.city || "").split(",")[0]?.trim() || "";
+  const province = String(row.province || "").trim().toUpperCase();
   if (!name || !province) return null;
   const key = `${name.toLowerCase()}|${province}`;
   let hit = CITY_HIT_CACHE.get(key);

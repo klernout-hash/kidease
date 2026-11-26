@@ -28,8 +28,7 @@ export const Route = createFileRoute("/need-care-fast")({
   head: () =>
     pageSeoHead({
       title: "Need care fast · KidEase",
-      description:
-        "Licensed daycares that confirmed an open spot in the last 7 days, closest first.",
+      description: "Licensed daycares that confirmed an open spot in the last 7 days, closest first.",
       path: "/need-care-fast",
     }),
   component: NeedCareFastPage,
@@ -120,24 +119,23 @@ export function NeedCareFastView({ data: raw }: { data: NeedCareFastViewData | n
             {data.hits.map((hit) => {
               const confirmed = formatConfirmedDay(hit.confirmedAt, fr);
               return (
-                <li key={hit.id} className="py-4">
-                  <Link
-                    to="/daycare/$slug"
-                    params={{ slug: hit.slug }}
-                    className="font-medium text-fg underline-offset-4 hover:underline"
-                  >
-                    {hit.name}
-                  </Link>
-                  <p className="mt-1 text-sm text-muted">
-                    {hit.city}
-                    {hit.province ? `, ${hit.province}` : ""} ·{" "}
-                    {fastDistanceLine(hit.distanceLabel, fr, copy.away)}
-                  </p>
-                  <p className="mt-1 text-sm text-muted">
-                    {hit.spots} {copy.spots}
-                    {confirmed ? ` · ${copy.confirmed} ${confirmed}` : ""}
-                  </p>
-                </li>
+              <li key={hit.id} className="py-4">
+                <Link
+                  to="/daycare/$slug"
+                  params={{ slug: hit.slug }}
+                  className="font-medium text-fg underline-offset-4 hover:underline"
+                >
+                  {hit.name}
+                </Link>
+                <p className="mt-1 text-sm text-muted">
+                  {hit.city}
+                  {hit.province ? `, ${hit.province}` : ""} · {fastDistanceLine(hit.distanceLabel, fr, copy.away)}
+                </p>
+                <p className="mt-1 text-sm text-muted">
+                  {hit.spots} {copy.spots}
+                  {confirmed ? ` · ${copy.confirmed} ${confirmed}` : ""}
+                </p>
+              </li>
               );
             })}
           </ul>

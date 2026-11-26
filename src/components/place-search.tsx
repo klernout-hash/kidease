@@ -178,11 +178,7 @@ export function PlaceSearch({
   const holdDest = useRef(false);
   const onCentreRef = useRef(onCentre);
   onCentreRef.current = onCentre;
-  const showDestinations =
-    Boolean(emptyMenu) &&
-    destOpen &&
-    !open &&
-    (value.trim().length < 2 || value === focusedValue.current);
+  const showDestinations = Boolean(emptyMenu) && destOpen && !open && (value.trim().length < 2 || value === focusedValue.current);
 
   function close() {
     setOpen(false);
@@ -202,16 +198,14 @@ export function PlaceSearch({
     }
     let live = true;
     const tmr = window.setTimeout(() => {
-      void loadSuggestions(q, origin, session.current, Boolean(onCentreRef.current)).then(
-        (rows) => {
-          if (!live || holdDest.current) return;
-          if (!placeHostVisible(wrap.current)) return;
-          if (document.activeElement !== input.current) return;
-          setHits(rows);
-          setOpen(rows.length > 0);
-          setActive(0);
-        },
-      );
+      void loadSuggestions(q, origin, session.current, Boolean(onCentreRef.current)).then((rows) => {
+        if (!live || holdDest.current) return;
+        if (!placeHostVisible(wrap.current)) return;
+        if (document.activeElement !== input.current) return;
+        setHits(rows);
+        setOpen(rows.length > 0);
+        setActive(0);
+      });
     }, 180);
     return () => {
       live = false;

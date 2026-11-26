@@ -1,12 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { sealPublicHomes } from "@/lib/server/home-address-privacy";
-import {
-  eceJobsEnabled,
-  hostListingEnabled,
-  inclusiveFiltersEnabled,
-  reviewReportsEnabled,
-} from "@/lib/features";
+import { eceJobsEnabled, hostListingEnabled, inclusiveFiltersEnabled, reviewReportsEnabled } from "@/lib/features";
 import { patchAvailabilityMonth } from "@/lib/host-calendar";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { cardSortKm, cityPinForStrayListing, includeCardInRadius } from "@/lib/card-distance";
@@ -26,28 +21,11 @@ import {
 } from "@/lib/catalog";
 import { filterByDaycareName, readLiveSearchFlag } from "@/lib/explore-search";
 import { listingHasOwnerClaim } from "@/lib/approve-live";
-import {
-  hideListingFromPublicPage,
-  isAdminOnlyListing,
-  isExactSlugDemoListing,
-  isHiddenTestListing,
-  isPublicListing,
-  publicListings,
-} from "@/lib/listing-visibility";
+import { hideListingFromPublicPage, isAdminOnlyListing, isExactSlugDemoListing, isHiddenTestListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
-import {
-  nearbyListings,
-  nearbyListingsAlongResult,
-  nearbyListingsDualResult,
-  nearbyListingsResult,
-  type NearbyListing,
-} from "./nearby";
+import { nearbyListings, nearbyListingsAlongResult, nearbyListingsDualResult, nearbyListingsResult, type NearbyListing } from "./nearby";
 import { callerIsTestAccount, callerMayViewHiddenListing } from "./public-listing";
-import {
-  applyListingReadiness,
-  compareFreshOpenSpots,
-  hasConfirmedAges,
-} from "@/lib/listing-readiness";
+import { applyListingReadiness, compareFreshOpenSpots, hasConfirmedAges } from "@/lib/listing-readiness";
 import { standardGroupsForRange } from "@/lib/standard-age-groups";
 import { listingAgeUnknown } from "@/lib/now-loops";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
@@ -58,21 +36,12 @@ import { overlayParentReviews } from "./reviews";
 import { overlayQuality } from "./quality";
 import { overlayParentRank } from "./rank";
 import { overlayPriority } from "./promos";
-import {
-  featuredCentreIdsInLock,
-  featuredCentreIdsInLockResult,
-  overlayFeaturedCity,
-} from "@/lib/server/provider-entitlements";
+import { featuredCentreIdsInLock, featuredCentreIdsInLockResult, overlayFeaturedCity } from "@/lib/server/provider-entitlements";
 import { compareWithPaidPins, sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
 import { sponsoredPinsFirst } from "@/lib/sponsored-flag";
 import { collapseAdjacentDuplicates, withJunkLast } from "@/lib/search-result-quality";
 import { parseSearchSort } from "@/lib/search-sort";
-import {
-  compareSmartMatchOrNearest,
-  whyForListing,
-  type RankAge,
-  type SmartMatchQuery,
-} from "@/lib/ranking/score";
+import { compareSmartMatchOrNearest, whyForListing, type RankAge, type SmartMatchQuery } from "@/lib/ranking/score";
 import { excludeRankingV2, rankingV2TieBreak } from "@/lib/ranking/v2";
 import { rankingV2Enabled } from "@/lib/features";
 import { parseCareKeys } from "@/lib/inclusive-search";
@@ -92,32 +61,16 @@ import { compareParentUrgency } from "@/lib/parent-urgency";
 import { parentReviewSummary } from "@/lib/review-gate";
 import { hasLicenceEvidence } from "@/lib/approve-live";
 import { isPlatformLive } from "@/lib/live";
-import {
-  defaultTrustFields,
-  isClaimVerified,
-  normalizeLicenseStatus,
-  normalizeMatchState,
-} from "@/lib/trust";
+import { defaultTrustFields, isClaimVerified, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 import { applyLocalRegistryTrust } from "@/lib/server/license-match";
 import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { pageFromSearch, sliceSearchPage } from "@/lib/search-page";
-import {
-  filterSearchResults,
-  hasSearchCoordinates,
-  normalizeSearchResultFilters,
-  projectSearchMapPins,
-  type SearchResultFilters,
-} from "@/lib/search-result-filters";
+import { filterSearchResults, hasSearchCoordinates, normalizeSearchResultFilters, projectSearchMapPins, type SearchResultFilters } from "@/lib/search-result-filters";
 import { rememberSearch, searchMemoKey } from "./search-memo";
 import { mergeApprovedCityListings, mergeApprovedCityListingsResult } from "./approved-search";
-import {
-  mergeSearchEvidence,
-  searchEvidence,
-  withSearchRows,
-  type SearchBatch,
-} from "@/lib/search-evidence";
+import { mergeSearchEvidence, searchEvidence, withSearchRows, type SearchBatch } from "@/lib/search-evidence";
 import { combineSearchReads, settleSearchRead } from "@/lib/search-retrieval";
 import { alignSearchOrigin } from "@/lib/search-query";
 import { transactionalMailConfigured } from "@/lib/transactional-mail";
@@ -137,8 +90,7 @@ import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/
 
 export type CentreJobPost = { id: string; role: string; note: string; createdAt: string };
 
-type SearchSort =
-  "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency" | "best";
+type SearchSort = "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency" | "best";
 type SearchSchedule = "full" | "part" | "flexible";
 
 type SearchInput = {
@@ -189,23 +141,18 @@ function parseSort(raw: unknown): SearchSort {
 }
 
 function parseRankAge(raw: unknown): RankAge {
-  if (raw === "infant" || raw === "toddler" || raw === "preschool" || raw === "school-age")
-    return raw;
+  if (raw === "infant" || raw === "toddler" || raw === "preschool" || raw === "school-age") return raw;
   return "any";
 }
 
 function parseSchedules(raw: unknown): SearchSchedule[] {
   if (!Array.isArray(raw)) return [];
-  return raw.filter(
-    (item): item is SearchSchedule => item === "full" || item === "part" || item === "flexible",
-  );
+  return raw.filter((item): item is SearchSchedule => item === "full" || item === "part" || item === "flexible");
 }
 
 function smartQuery(data: SearchInput): SmartMatchQuery {
   const work =
-    typeof data.lat2 === "number" && typeof data.lng2 === "number"
-      ? { lat: data.lat2, lng: data.lng2 }
-      : null;
+    typeof data.lat2 === "number" && typeof data.lng2 === "number" ? { lat: data.lat2, lng: data.lng2 } : null;
   return {
     home: { lat: data.lat, lng: data.lng },
     work,
@@ -248,111 +195,99 @@ function usesParentFitSort(sort: SearchSort) {
 }
 
 function toDaycare(d: CatalogDaycare): Daycare {
-  const mapped = applyLocalRegistryTrust(
-    applyListingReadiness({
-      id: d.id,
-      slug: d.slug,
-      name: d.name,
-      nameFr: d.nameFr,
-      tagline: d.tagline,
-      taglineFr: d.taglineFr,
-      description: d.description,
-      descriptionFr: d.descriptionFr,
-      address: d.address,
-      city: d.city,
-      province: d.province,
-      postalCode: d.postalCode,
-      lat: d.lat,
-      lng: d.lng,
-      phone: d.phone || null,
-      website: d.website || null,
-      hours: d.hours,
-      hoursFr: d.hoursFr,
+  const mapped = applyLocalRegistryTrust(applyListingReadiness({
+    id: d.id,
+    slug: d.slug,
+    name: d.name,
+    nameFr: d.nameFr,
+    tagline: d.tagline,
+    taglineFr: d.taglineFr,
+    description: d.description,
+    descriptionFr: d.descriptionFr,
+    address: d.address,
+    city: d.city,
+    province: d.province,
+    postalCode: d.postalCode,
+    lat: d.lat,
+    lng: d.lng,
+    phone: d.phone || null,
+    website: d.website || null,
+    hours: d.hours,
+    hoursFr: d.hoursFr,
+    ageMinMonths: d.ageMinMonths,
+    ageMaxMonths: d.ageMaxMonths,
+    infantMonthly: d.infantMonthly,
+    toddlerMonthly: d.toddlerMonthly,
+    preschoolMonthly: d.preschoolMonthly,
+    partTimeMonthly: d.partTimeMonthly,
+    factSource: d.factSource || null,
+    spotsInfant: d.spotsInfant,
+    spotsToddler: d.spotsToddler,
+    spotsPreschool: d.spotsPreschool,
+    waitlist: d.waitlist,
+    ratingX10: d.ratingX10,
+    reviewCount: d.reviewCount || d.reviews.length,
+    parentRatingX10: 0,
+    parentReviewCount: 0,
+    googlePlaceId: d.googlePlaceId,
+    licenseNumber: d.licenseNumber,
+    languages: d.languages,
+    staffLanguages: d.staffLanguages ?? [],
+    culturalPrograms: d.culturalPrograms ?? [],
+    culturalTeamNote: d.culturalTeamNote ?? null,
+    amenities: d.amenities,
+    photos: d.photos,
+    verified: true,
+    claimed: Boolean(d.claimed || d.claimedAt),
+    claimedAt: d.claimedAt ?? null,
+    claimStatus: d.claimStatus ?? null,
+    listingActive: d.listingActive !== false,
+    live: isPlatformLive(d.id, Boolean(d.claimed || d.claimedAt), {
+      listingActive: d.listingActive,
+      ratingX10: d.ratingX10,
+      reviewCount: d.reviewCount,
+      claimStatus: d.claimStatus,
+      claimedAt: d.claimedAt,
+    }) && !isAdminOnlyListing(d),
+    contactEmail: null,
+    feeConfirmed: Boolean(d.feeConfirmed),
+    feeProgram: d.feeProgram || null,
+    availabilityKnown: false,
+    spotsUpdatedAt: null,
+    lastVacancyUpdatedAt: null,
+    ...defaultTrustFields(),
+    staffScreeningAttested: Boolean(d.staffScreeningAttested),
+    screeningOnFile: Boolean(d.screeningOnFile),
+    licenseStatus: normalizeLicenseStatus(d.licenseStatus),
+    registryMatchState: normalizeMatchState(d.registryMatchState),
+    licenseVerificationSource: d.licenseVerificationSource ?? null,
+    priority: false,
+    priorityUntil: null,
+    featuredCity: false,
+    agesKnown: hasConfirmedAges({
+      agesKnown: d.agesKnown,
       ageMinMonths: d.ageMinMonths,
       ageMaxMonths: d.ageMaxMonths,
-      infantMonthly: d.infantMonthly,
-      toddlerMonthly: d.toddlerMonthly,
-      preschoolMonthly: d.preschoolMonthly,
-      partTimeMonthly: d.partTimeMonthly,
-      factSource: d.factSource || null,
-      spotsInfant: d.spotsInfant,
-      spotsToddler: d.spotsToddler,
-      spotsPreschool: d.spotsPreschool,
-      waitlist: d.waitlist,
-      ratingX10: d.ratingX10,
-      reviewCount: d.reviewCount || d.reviews.length,
-      parentRatingX10: 0,
-      parentReviewCount: 0,
-      googlePlaceId: d.googlePlaceId,
-      licenseNumber: d.licenseNumber,
-      languages: d.languages,
-      staffLanguages: d.staffLanguages ?? [],
-      culturalPrograms: d.culturalPrograms ?? [],
-      culturalTeamNote: d.culturalTeamNote ?? null,
-      amenities: d.amenities,
-      photos: d.photos,
-      verified: true,
-      claimed: Boolean(d.claimed || d.claimedAt),
-      claimedAt: d.claimedAt ?? null,
-      claimStatus: d.claimStatus ?? null,
-      listingActive: d.listingActive !== false,
-      live:
-        isPlatformLive(d.id, Boolean(d.claimed || d.claimedAt), {
-          listingActive: d.listingActive,
-          ratingX10: d.ratingX10,
-          reviewCount: d.reviewCount,
-          claimStatus: d.claimStatus,
-          claimedAt: d.claimedAt,
-        }) && !isAdminOnlyListing(d),
-      contactEmail: null,
-      feeConfirmed: Boolean(d.feeConfirmed),
-      feeProgram: d.feeProgram || null,
-      availabilityKnown: false,
-      spotsUpdatedAt: null,
-      lastVacancyUpdatedAt: null,
-      ...defaultTrustFields(),
-      staffScreeningAttested: Boolean(d.staffScreeningAttested),
-      screeningOnFile: Boolean(d.screeningOnFile),
-      licenseStatus: normalizeLicenseStatus(d.licenseStatus),
-      registryMatchState: normalizeMatchState(d.registryMatchState),
-      licenseVerificationSource: d.licenseVerificationSource ?? null,
-      priority: false,
-      priorityUntil: null,
-      featuredCity: false,
-      agesKnown: hasConfirmedAges({
-        agesKnown: d.agesKnown,
-        ageMinMonths: d.ageMinMonths,
-        ageMaxMonths: d.ageMaxMonths,
-      }),
-      agesSource: d.agesSource || null,
-      agesSourceUrl: d.agesSourceUrl || null,
-      visibility: d.visibility,
-      isTest: d.isTest,
-      timezone: resolveListingTourTimezone(null, d.province),
     }),
-  );
+    agesSource: d.agesSource || null,
+    agesSourceUrl: d.agesSourceUrl || null,
+    visibility: d.visibility,
+    isTest: d.isTest,
+    timezone: resolveListingTourTimezone(null, d.province),
+  }));
   return applyMasterCareType({
     ...mapped,
     live: Boolean(mapped.live) && hasLicenceEvidence(mapped) && !isAdminOnlyListing(mapped),
   });
 }
 
-function toCard(
-  d: NearbyListing,
-  origin: { lat: number; lng: number },
-  originFsa?: string,
-): DaycareCard {
+function toCard(d: NearbyListing, origin: { lat: number; lng: number }, originFsa?: string): DaycareCard {
   // A regional stand-in pin far from the listing's own city moves to that city's centre.
   const stray = cityPinForStrayListing(d);
   const point = stray ?? { lat: d.lat, lng: d.lng };
   const daycare = stray ? { ...toDaycare(d), lat: stray.lat, lng: stray.lng } : toDaycare(d);
   const km = cardSortKm(origin, point);
-  const catchm = catchmentMatch(
-    origin,
-    { lat: point.lat, lng: point.lng, postalCode: d.postalCode },
-    km,
-    originFsa,
-  );
+  const catchm = catchmentMatch(origin, { lat: point.lat, lng: point.lng, postalCode: d.postalCode }, km, originFsa);
   return {
     ...daycare,
     distanceKm: km,
@@ -414,8 +349,7 @@ function mergeClaimedCard<T extends DaycareCard>(card: T, claimed: Daycare): T {
     priorityUntil: claimed.priorityUntil,
     ageMinMonths: claimed.agesKnown ? claimed.ageMinMonths : card.ageMinMonths,
     ageMaxMonths: claimed.agesKnown ? claimed.ageMaxMonths : card.ageMaxMonths,
-    agesKnown:
-      claimed.agesKnown === true || (claimed.agesKnown !== false && Boolean(card.agesKnown)),
+    agesKnown: claimed.agesKnown === true || (claimed.agesKnown !== false && Boolean(card.agesKnown)),
     agesSource: claimed.agesSource || card.agesSource || null,
     agesSourceUrl: claimed.agesSourceUrl || card.agesSourceUrl || null,
     hours: claimed.hours || card.hours,
@@ -477,9 +411,7 @@ function withQualityCards<T extends { id: string; qualityScore?: number; guestFa
  * Search and featured cards drop long copy and contact fields.
  * The street stays so a map pin can open the same directions as the listing page.
  */
-async function withProvincial<
-  T extends { id: string; claimed?: boolean; lastVacancyUpdatedAt?: string | null },
->(rows: T[]): Promise<T[]> {
+async function withProvincial<T extends { id: string; claimed?: boolean; lastVacancyUpdatedAt?: string | null }>(rows: T[]): Promise<T[]> {
   try {
     const { stampProvincialOpenings } = await import("@/lib/server/provincial-vacancy");
     return await stampProvincialOpenings(rows);
@@ -488,14 +420,9 @@ async function withProvincial<
   }
 }
 
-async function stampPaidPlacement<
-  T extends {
-    id: string;
-    priority?: boolean;
-    priorityUntil?: string | null;
-    featuredCity?: boolean;
-  },
->(items: T[]): Promise<T[]> {
+async function stampPaidPlacement<T extends { id: string; priority?: boolean; priorityUntil?: string | null; featuredCity?: boolean }>(
+  items: T[],
+): Promise<T[]> {
   const placed = sponsoredPinsFirst() ? await overlayPriority(items) : items;
   return overlayFeaturedCity(placed);
 }
@@ -543,19 +470,15 @@ async function liveCardsForSearchResult(data: SearchInput): Promise<SearchCandid
     label: data.label,
     q: data.q,
   });
-  const batch = await mergeApprovedCityListingsResult(
-    { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) },
-    {
-      origin,
-      radiusKm: data.radiusKm,
-      lock,
-      label: data.label || data.q,
-    },
-    { refresh: data.refresh },
+  const batch = await mergeApprovedCityListingsResult({ rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) }, {
+    origin,
+    radiusKm: data.radiusKm,
+    lock,
+    label: data.label || data.q,
+  }, { refresh: data.refresh });
+  const listed = publicListings(uniqueById(batch.rows.map((row) => toCard(row, origin, data.fsa)))).filter((card) =>
+    includeCardInRadius(card, origin, data.radiusKm),
   );
-  const listed = publicListings(
-    uniqueById(batch.rows.map((row) => toCard(row, origin, data.fsa))),
-  ).filter((card) => includeCardInRadius(card, origin, data.radiusKm));
   const claimed = await overlayClaimedSearchResult(listed, mergeClaimedCard);
   const pinned = await stampPaidPlacement(publicListings(claimed.rows));
   return {
@@ -568,13 +491,11 @@ async function liveCardsForSearchResult(data: SearchInput): Promise<SearchCandid
 /** Public catalogue matches for a centre name. Distance is display-only. */
 async function searchByName(data: SearchInput): Promise<SearchCandidates> {
   const q = (data.name || "").trim();
-  if (q.length < 2)
-    return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) };
+  if (q.length < 2) return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) };
   const origin = { lat: data.lat, lng: data.lng };
   let matched: SearchBatch<CatalogDaycare> | null = null;
   try {
-    const { queryNeonListingsByIdsResult, queryNeonPublicNameIndexResult } =
-      await import("@/lib/server/catalog-neon");
+    const { queryNeonListingsByIdsResult, queryNeonPublicNameIndexResult } = await import("@/lib/server/catalog-neon");
     const options = { refresh: data.refresh };
     const index = await queryNeonPublicNameIndexResult(options);
     if (index) {
@@ -582,18 +503,9 @@ async function searchByName(data: SearchInput): Promise<SearchCandidates> {
         index.rows.map((row) => ({ id: row.id, name: row.name, nameFr: row.name_fr || "" })),
         q,
       );
-      const found =
-        hits.length === 0
-          ? { rows: [], evidence: index.evidence }
-          : await queryNeonListingsByIdsResult(
-              hits.map((row) => row.id),
-              options,
-            );
-      if (found)
-        matched = {
-          rows: found.rows,
-          evidence: mergeSearchEvidence(index.evidence, found.evidence),
-        };
+      const found = hits.length === 0 ? { rows: [], evidence: index.evidence }
+        : await queryNeonListingsByIdsResult(hits.map((row) => row.id), options);
+      if (found) matched = { rows: found.rows, evidence: mergeSearchEvidence(index.evidence, found.evidence) };
     }
   } catch {
     matched = null;
@@ -608,8 +520,7 @@ async function searchByName(data: SearchInput): Promise<SearchCandidates> {
   const cards = await stampPaidPlacement(publicListings(claimed.rows).map(slimCard));
   cards.sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name));
   return {
-    rows: cards,
-    evidence: mergeSearchEvidence(matched.evidence, claimed.evidence),
+    rows: cards, evidence: mergeSearchEvidence(matched.evidence, claimed.evidence),
     excludedIds: claimed.rows.filter((card) => !isPublicListing(card)).map((card) => card.id),
   };
 }
@@ -620,28 +531,24 @@ async function searchIncludingLive(data: SearchInput): Promise<SearchCandidates>
   if (decision.kind === "unknown") return { rows: [], evidence: searchEvidence() };
   const hub = decision.kind === "hub" ? cityHubDefBySlug(decision.slug) : null;
   const searched = alignedSearchInput(
-    hub ? { ...data, q: data.q || cityHubMapSearchQuery(hub), directorySlug: hub.slug } : data,
+    hub
+      ? { ...data, q: data.q || cityHubMapSearchQuery(hub), directorySlug: hub.slug }
+      : data,
   );
   if (hub) return runSearch({ ...searched, directorySlug: hub.slug });
   const livePromise = liveCardsForSearchResult(searched);
   void livePromise.catch(() => undefined);
   const full = await settleSearchRead(runSearch(searched), LOADER_SETTLE_MS);
-  const live = await settleSearchRead(
-    livePromise,
-    full.kind === "result" && full.batch.rows.length > 0 ? 80 : 400,
-  );
+  const live = await settleSearchRead(livePromise, full.kind === "result" && full.batch.rows.length > 0 ? 80 : 400);
   const facility = data.facility;
   const combined = combineSearchReads(full, live);
   const excludedIds = new Set([
-    ...(full.kind === "result" ? ((full.batch as SearchCandidates).excludedIds ?? []) : []),
-    ...(live.kind === "result" ? ((live.batch as SearchCandidates).excludedIds ?? []) : []),
+    ...(full.kind === "result" ? (full.batch as SearchCandidates).excludedIds ?? [] : []),
+    ...(live.kind === "result" ? (live.batch as SearchCandidates).excludedIds ?? [] : []),
   ]);
   const rows = uniqueById(combined.rows).filter((card) => !excludedIds.has(card.id));
   return {
-    ...withSearchRows(
-      combined,
-      facility ? rows.filter((card) => matchesListedDaycareType(card, facility)) : rows,
-    ),
+    ...withSearchRows(combined, facility ? rows.filter((card) => matchesListedDaycareType(card, facility)) : rows),
     excludedIds: [...excludedIds],
   };
 }
@@ -664,10 +571,8 @@ async function mergePinnedCentres(
 }
 
 async function mergePinnedSearchCentres(
-  batch: SearchBatch<DaycareCard>,
-  lock: ReturnType<typeof resolveLocationLock>,
-  origin: { lat: number; lng: number },
-  data: SearchInput,
+  batch: SearchBatch<DaycareCard>, lock: ReturnType<typeof resolveLocationLock>,
+  origin: { lat: number; lng: number }, data: SearchInput,
 ): Promise<SearchBatch<DaycareCard>> {
   const ids = await featuredCentreIdsInLockResult(lock);
   const have = new Set(batch.rows.map((card) => card.id));
@@ -675,13 +580,10 @@ async function mergePinnedSearchCentres(
   const evidence = mergeSearchEvidence(batch.evidence, ids.evidence);
   if (!missing.length) return { rows: batch.rows, evidence };
   const found = await catalogByIdsGetResult(missing, { refresh: data.refresh });
-  const extra = found.rows
-    .map((row) => toCard(row, origin, data.fsa))
+  const extra = found.rows.map((row) => toCard(row, origin, data.fsa))
     .filter((card) => filterByLocationLock([card], lock).length > 0);
-  return {
-    rows: extra.length ? [...batch.rows, ...extra] : batch.rows,
-    evidence: mergeSearchEvidence(evidence, found.evidence),
-  };
+  return { rows: extra.length ? [...batch.rows, ...extra] : batch.rows,
+    evidence: mergeSearchEvidence(evidence, found.evidence) };
 }
 
 /** Exact city + province rows, even when the stored pin is outside the radius. */
@@ -698,13 +600,8 @@ async function withNamedCityListings(
   const options = { refresh: data.refresh };
   const neon = await queryNeonCityHubListingsResult(lock.province, [key], options);
   const extra =
-    neon && neon.rows.length > 0
-      ? neon
-      : await catalogNamedCityFromJsonResult(lock.city, lock.province, options);
-  return {
-    rows: uniqueById([...rows, ...extra.rows]),
-    evidence: mergeSearchEvidence(batch.evidence, extra.evidence),
-  };
+    neon && neon.rows.length > 0 ? neon : await catalogNamedCityFromJsonResult(lock.city, lock.province, options);
+  return { rows: uniqueById([...rows, ...extra.rows]), evidence: mergeSearchEvidence(batch.evidence, extra.evidence) };
 }
 
 async function runSearch(data: SearchInput): Promise<SearchCandidates> {
@@ -727,33 +624,22 @@ async function runSearch(data: SearchInput): Promise<SearchCandidates> {
   const directory = data.directorySlug ? cityHubDefBySlug(data.directorySlug) : null;
   const corridor =
     !directory && anchors.intersect && anchors.secondary
-      ? await nearbyListingsAlongResult(anchors.primary, anchors.secondary, data.radiusKm, {
-          refresh: data.refresh,
-        })
+      ? await nearbyListingsAlongResult(anchors.primary, anchors.secondary, data.radiusKm, { refresh: data.refresh })
       : null;
   const pool = directory
     ? await listingsForCityHubResult(directory.slug, { refresh: data.refresh })
-    : anchors.intersect && anchors.secondary
-      ? await nearbyListingsDualResult(anchors.primary, anchors.secondary, data.radiusKm, {
-          refresh: data.refresh,
-        })
-      : await nearbyListingsResult(
-          origin,
-          data.radiusKm,
-          data.facility ? CITY_TYPE_LIST_CAP : 400,
-          { refresh: data.refresh },
-        );
+    : (
+        anchors.intersect && anchors.secondary
+          ? await nearbyListingsDualResult(anchors.primary, anchors.secondary, data.radiusKm, { refresh: data.refresh })
+          : await nearbyListingsResult(origin, data.radiusKm, data.facility ? CITY_TYPE_LIST_CAP : 400, { refresh: data.refresh })
+      );
   const lockedPool = directory ? pool : withSearchRows(pool, filterByLocationLock(pool.rows, lock));
-  const merged = await mergeApprovedCityListingsResult(
-    lockedPool,
-    {
-      origin,
-      radiusKm: data.radiusKm,
-      lock,
-      label: data.label || data.q,
-    },
-    { refresh: data.refresh },
-  );
+  const merged = await mergeApprovedCityListingsResult(lockedPool, {
+    origin,
+    radiusKm: data.radiusKm,
+    lock,
+    label: data.label || data.q,
+  }, { refresh: data.refresh });
   const listings = directory ? merged : await withNamedCityListings(merged, lock, data);
   let cards: DaycareCard[] = [];
   for (const d of listings.rows) {
@@ -771,24 +657,12 @@ async function runSearch(data: SearchInput): Promise<SearchCandidates> {
       if (!kept.has(row.id)) cards.push(toCard(row, origin, data.fsa));
     }
   }
-  const candidateBatch = await mergePinnedSearchCentres(
-    {
-      rows: cards,
-      evidence: corridor
-        ? mergeSearchEvidence(listings.evidence, corridor.evidence)
-        : listings.evidence,
-    },
-    lock,
-    origin,
-    data,
-  );
+  const candidateBatch = await mergePinnedSearchCentres({ rows: cards,
+    evidence: corridor ? mergeSearchEvidence(listings.evidence, corridor.evidence) : listings.evidence }, lock, origin, data);
   cards = candidateBatch.rows;
   const overlayCap = 192;
   const rankSort =
-    data.sort === "best" ||
-    data.sort === "match" ||
-    data.sort === "recommended" ||
-    data.sort === "urgency";
+    data.sort === "best" || data.sort === "match" || data.sort === "recommended" || data.sort === "urgency";
   if (!rankSort && cards.length > overlayCap) {
     cards.sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name));
   }
@@ -822,10 +696,7 @@ async function runSearch(data: SearchInput): Promise<SearchCandidates> {
   }
   const fit = parentFitApplies(data.parentFit) ? data.parentFit : null;
   if (fit) {
-    cards = cards.map((card) => ({
-      ...card,
-      parentFitChips: parentFitScore(fitListing(card), fit).chips,
-    }));
+    cards = cards.map((card) => ({ ...card, parentFitChips: parentFitScore(fitListing(card), fit).chips }));
   }
   cards = collapseAdjacentDuplicates(cards);
   const rankingV2 = rankingV2Enabled();
@@ -844,57 +715,43 @@ async function runSearch(data: SearchInput): Promise<SearchCandidates> {
       }),
     );
   } else if (useBest) {
-    cards.sort(
-      withJunkLast((a, b) =>
-        rankingV2TieBreak(
-          a,
-          b,
-          (left, right) => compareSmartMatchOrNearest(left, right, matchQuery),
-          { enabled: rankingV2, now: Date.now(), ageGroup },
-        ),
-      ),
-    );
+    cards.sort(withJunkLast((a, b) => rankingV2TieBreak(a, b, (left, right) => compareSmartMatchOrNearest(left, right, matchQuery), { enabled: rankingV2, now: Date.now(), ageGroup })));
   } else {
     cards.sort(
       withJunkLast((a, b) =>
-        compareWithPaidPins(
-          a,
-          b,
-          (left, right) => {
-            if (data.sort === "match") return compareParentMatch(left, right, rankPrefs);
-            if (data.sort === "urgency") return compareParentUrgency(left, right, rankPrefs);
-            if (data.sort === "recommended") {
-              const delta = recommendedRank(right) - recommendedRank(left);
-              if (Math.abs(delta) > 1e-6) return delta;
-              const fresh = compareFreshOpenSpots(left, right);
-              if (fresh !== 0) return fresh;
-              return left.distanceKm - right.distanceKm;
-            }
-            if (data.sort === "price") {
-              const price = (left.fromPrice || 9e6) - (right.fromPrice || 9e6);
-              if (price !== 0) return price;
-              const fresh = compareFreshOpenSpots(left, right);
-              if (fresh !== 0) return fresh;
-              return left.distanceKm - right.distanceKm;
-            }
-            if (data.sort === "rating") {
-              const rating = right.ratingX10 - left.ratingX10;
-              if (rating !== 0) return rating;
-              const fresh = compareFreshOpenSpots(left, right);
-              if (fresh !== 0) return fresh;
-              return left.distanceKm - right.distanceKm;
-            }
-            if (data.sort === "availability") {
-              const spots = right.spotsTotal - left.spotsTotal;
-              if (spots !== 0) return spots;
-              const fresh = compareFreshOpenSpots(left, right);
-              if (fresh !== 0) return fresh;
-              return left.distanceKm - right.distanceKm;
-            }
-            return compareProximity(left, right, Date.now(), { paidPinBoost: pinsOn });
-          },
-          { enabled: pinsOn },
-        ),
+        compareWithPaidPins(a, b, (left, right) => {
+          if (data.sort === "match") return compareParentMatch(left, right, rankPrefs);
+          if (data.sort === "urgency") return compareParentUrgency(left, right, rankPrefs);
+          if (data.sort === "recommended") {
+            const delta = recommendedRank(right) - recommendedRank(left);
+            if (Math.abs(delta) > 1e-6) return delta;
+            const fresh = compareFreshOpenSpots(left, right);
+            if (fresh !== 0) return fresh;
+            return left.distanceKm - right.distanceKm;
+          }
+          if (data.sort === "price") {
+            const price = (left.fromPrice || 9e6) - (right.fromPrice || 9e6);
+            if (price !== 0) return price;
+            const fresh = compareFreshOpenSpots(left, right);
+            if (fresh !== 0) return fresh;
+            return left.distanceKm - right.distanceKm;
+          }
+          if (data.sort === "rating") {
+            const rating = right.ratingX10 - left.ratingX10;
+            if (rating !== 0) return rating;
+            const fresh = compareFreshOpenSpots(left, right);
+            if (fresh !== 0) return fresh;
+            return left.distanceKm - right.distanceKm;
+          }
+          if (data.sort === "availability") {
+            const spots = right.spotsTotal - left.spotsTotal;
+            if (spots !== 0) return spots;
+            const fresh = compareFreshOpenSpots(left, right);
+            if (fresh !== 0) return fresh;
+            return left.distanceKm - right.distanceKm;
+          }
+          return compareProximity(left, right, Date.now(), { paidPinBoost: pinsOn });
+        }, { enabled: pinsOn }),
       ),
     );
   }
@@ -995,10 +852,7 @@ async function loadTestFixtureCards(data: SearchInput): Promise<DaycareCard[]> {
   }
 }
 
-async function appendTestAccountFixtures(
-  data: SearchInput,
-  cards: DaycareCard[],
-): Promise<DaycareCard[]> {
+async function appendTestAccountFixtures(data: SearchInput, cards: DaycareCard[]): Promise<DaycareCard[]> {
   if (!(await callerIsTestAccount())) return cards;
   const extra = await loadTestFixtureCards(data);
   if (!extra.length) return cards;
@@ -1006,57 +860,47 @@ async function appendTestAccountFixtures(
 }
 
 function rankedSearchMemoKey(data: SearchInput): string {
-  return `coverage1:${searchMemoKey(data)}:${parentFitCacheKey(data.parentFit ?? null)}:rank=${JSON.stringify(
-    {
-      age: data.rankAge,
-      subsidy: data.wantSubsidy,
-      extended: data.wantExtendedHours,
-      schedules: data.schedules,
-    },
-  )}`;
+  return `coverage1:${searchMemoKey(data)}:${parentFitCacheKey(data.parentFit ?? null)}:rank=${JSON.stringify({
+    age: data.rankAge,
+    subsidy: data.wantSubsidy,
+    extended: data.wantExtendedHours,
+    schedules: data.schedules,
+  })}`;
 }
 
 export const searchDaycares = createServerFn({ method: "GET" })
   .validator((input: SearchInput) => normalizeSearchInput(input))
   .handler(async ({ data }) => {
-    const found = await rememberSearch(rankedSearchMemoKey(data), () => searchIncludingLive(data), {
-      refresh: data.refresh,
-      cacheIf: (batch) => !batch.evidence.retryable,
-    });
+    const found = await rememberSearch(
+      rankedSearchMemoKey(data),
+      () => searchIncludingLive(data),
+      { refresh: data.refresh, cacheIf: (batch) => !batch.evidence.retryable },
+    );
     return sealPublicHomes(await appendTestAccountFixtures(data, found.rows));
   });
 
 /** Shared matched set. Ranking stays in searchIncludingLive; filters never reorder it. */
 async function filteredSearchRows(query: SearchInput): Promise<SearchBatch<DaycareCard>> {
-  const found = await rememberSearch(rankedSearchMemoKey(query), () => searchIncludingLive(query), {
-    refresh: query.refresh,
-    cacheIf: (batch) => !batch.evidence.retryable,
-  });
-  const listed = query.live
-    ? found.rows.filter((card) => isClaimVerified(card) && !card.isTest)
-    : found.rows;
+  const found = await rememberSearch(
+    rankedSearchMemoKey(query),
+    () => searchIncludingLive(query),
+    { refresh: query.refresh, cacheIf: (batch) => !batch.evidence.retryable },
+  );
+  const listed = query.live ? found.rows.filter((card) => isClaimVerified(card) && !card.isTest) : found.rows;
   const all = await appendTestAccountFixtures(query, listed);
   const filters = normalizeSearchResultFilters(query.filters);
   // Preserve the existing feature gate for declared dietary/support predicates.
-  filters.diet = inclusiveFiltersEnabled()
-    ? parseCareKeys([query.diet, filters.diet].filter(Boolean).join(",")).join(",")
-    : "";
+  filters.diet = inclusiveFiltersEnabled() ? parseCareKeys([query.diet, filters.diet].filter(Boolean).join(",")).join(",") : "";
   // The top-level name is authoritative, including loader calls without filters.
   filters.name = query.name || filters.name;
   const aligned = alignedSearchInput(query);
-  return withSearchRows(
-    found,
-    filterSearchResults(all, {
-      origin: { lat: aligned.lat, lng: aligned.lng },
-      secondOrigin:
-        typeof query.lat2 === "number" && typeof query.lng2 === "number"
-          ? { lat: query.lat2, lng: query.lng2 }
-          : null,
-      mode: query.mode,
-      radiusKm: query.radiusKm,
-      filters,
-    }),
-  );
+  return withSearchRows(found, filterSearchResults(all, {
+    origin: { lat: aligned.lat, lng: aligned.lng },
+    secondOrigin: typeof query.lat2 === "number" && typeof query.lng2 === "number" ? { lat: query.lat2, lng: query.lng2 } : null,
+    mode: query.mode,
+    radiusKm: query.radiusKm,
+    filters,
+  }));
 }
 
 /** Same ranking as searchDaycares, filtered before one page of 96 cards. */
@@ -1069,10 +913,7 @@ export const searchDaycarePage = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { page, ...query } = data;
     const narrowed = await filteredSearchRows(query);
-    return sealPublicHomes({
-      ...sliceSearchPage(narrowed.rows, page),
-      evidence: narrowed.evidence,
-    });
+    return sealPublicHomes({ ...sliceSearchPage(narrowed.rows, page), evidence: narrowed.evidence });
   });
 
 /** Full matching map set, with the same predicates and total as every list page. */
@@ -1086,20 +927,11 @@ export const searchDaycareMap = createServerFn({ method: "GET" })
     // Home-only searches: every pin sits inside the search circle.
     const anchors = resolveSearchAnchors({
       home: { lat: data.lat, lng: data.lng },
-      work:
-        typeof data.lat2 === "number" && typeof data.lng2 === "number"
-          ? { lat: data.lat2, lng: data.lng2 }
-          : null,
+      work: typeof data.lat2 === "number" && typeof data.lng2 === "number" ? { lat: data.lat2, lng: data.lng2 } : null,
       mode: data.mode,
     });
     const aligned = alignedSearchInput(data);
-    const bounded = anchors.intersect
-      ? pins
-      : pinsWithinRadius(
-          pins,
-          anchors.mode === "work" ? anchors.primary : { lat: aligned.lat, lng: aligned.lng },
-          data.radiusKm,
-        );
+    const bounded = anchors.intersect ? pins : pinsWithinRadius(pins, anchors.mode === "work" ? anchors.primary : { lat: aligned.lat, lng: aligned.lng }, data.radiusKm);
     return { pins: bounded, total: matched.rows.length, evidence: matched.evidence };
   });
 
@@ -1113,49 +945,36 @@ async function loadFeatured(
   const radius = clampRadiusKm(radiusKm);
   const lock = resolveLocationLock(origin);
   const nearby: DaycareCard[] = [];
-  for (const d of await mergeApprovedCityListings(
-    filterByLocationLock(await nearbyListings(origin, radius), lock),
-    {
-      origin,
-      radiusKm: radius,
-      lock,
-      label: origin.label,
-    },
-  )) {
+  for (const d of await mergeApprovedCityListings(filterByLocationLock(await nearbyListings(origin, radius), lock), {
+    origin,
+    radiusKm: radius,
+    lock,
+    label: origin.label,
+  })) {
     nearby.push(toCard(d, origin));
   }
   const pinned = await mergePinnedCentres(nearby, lock, origin);
   const pinsOn = sponsoredPinsFirst();
   pinned.sort((a, b) => compareProximity(a, b, Date.now(), { paidPinBoost: pinsOn }));
-  const merged = await overlayQuality(
-    await overlayParentReviews(await overlayClaimed(pinned, mergeClaimedCard)),
-  );
-  const scored = await overlayParentRank(merged, {
-    distanceKnown: true,
-    radiusKm: radius,
-    ageGroup: "any",
-  });
+  const merged = await overlayQuality(await overlayParentReviews(await overlayClaimed(pinned, mergeClaimedCard)));
+  const scored = await overlayParentRank(merged, { distanceKnown: true, radiusKm: radius, ageGroup: "any" });
   const withPins = pinsOn
     ? await overlayFeaturedCity(await overlayPriority(scored))
     : await overlayFeaturedCity(scored);
-  const ranked = (sponsoredPinsFirst() ? sortFeaturedCityAfterPriority(withPins) : withPins).filter(
-    (card) => includeCardInRadius(card, origin, radius),
+  const ranked = (sponsoredPinsFirst() ? sortFeaturedCityAfterPriority(withPins) : withPins).filter((card) =>
+    includeCardInRadius(card, origin, radius),
   );
-  return withProvincial(
-    publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, HOME_TYPE_POOL),
-  ).then((rows) => rows.map(slimCard));
+  return withProvincial(publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, HOME_TYPE_POOL)).then((rows) => rows.map(slimCard));
 }
 
 export const featuredDaycares = createServerFn({ method: "GET" })
-  .validator(
-    (input: { lat: number; lng: number; label?: string; radiusKm?: number } | undefined) => {
-      if (!input || typeof input !== "object") throw new ClientInputError();
-      return {
-        ...input,
-        radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
-      };
-    },
-  )
+  .validator((input: { lat: number; lng: number; label?: string; radiusKm?: number } | undefined) => {
+    if (!input || typeof input !== "object") throw new ClientInputError();
+    return {
+      ...input,
+      radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
+    };
+  })
   .handler(async ({ data }) => {
     const radiusKm = data.radiusKm;
     // Keep the parent's coordinates. A city label must not snap the pin to
@@ -1167,16 +986,14 @@ export const featuredDaycares = createServerFn({ method: "GET" })
     };
     const full = await withTimeoutFallback(loadFeatured(origin, radiusKm), LOADER_SETTLE_MS, null);
     if (full && full.length > 0) return sealPublicHomes(full);
-    return sealPublicHomes(
-      await liveCardsForSearch({
-        lat: origin.lat,
-        lng: origin.lng,
-        radiusKm,
-        sort: "best",
-        ageGroup: "any",
-        label: origin.label,
-      }),
-    );
+    return sealPublicHomes(await liveCardsForSearch({
+      lat: origin.lat,
+      lng: origin.lng,
+      radiusKm,
+      sort: "best",
+      ageGroup: "any",
+      label: origin.label,
+    }));
   });
 
 export const getDaycare = createServerFn({ method: "GET" })
@@ -1198,9 +1015,7 @@ export const getDaycare = createServerFn({ method: "GET" })
     );
     const nearby = metroPeers.filter((card) => card.distanceKm <= 15).slice(0, 4);
     const catalogDaycare = toDaycare(found);
-    const stampHidden = <T extends { visibility?: "public" | "admin_only"; isTest?: boolean }>(
-      daycare: T,
-    ): T => ({
+    const stampHidden = <T extends { visibility?: "public" | "admin_only"; isTest?: boolean }>(daycare: T): T => ({
       ...daycare,
       visibility: found.visibility,
       isTest: found.isTest,
@@ -1315,22 +1130,15 @@ export const getDaycare = createServerFn({ method: "GET" })
             lastVacancyUpdatedAt: extra.spots.updatedAt || publicDaycare.lastVacancyUpdatedAt,
             spotsUpdatedAt: extra.spots.updatedAt || publicDaycare.spotsUpdatedAt,
           };
-          if (extra.spots.updatedAt)
-            publicDaycare.availabilityKnown = Boolean(extra.spots.updatedAt);
+          if (extra.spots.updatedAt) publicDaycare.availabilityKnown = Boolean(extra.spots.updatedAt);
           availability = patchAvailabilityMonth(availability, extra.month, extra.spots);
         }
         familyGuide = extra?.familyGuide ?? null;
       }
       const { readPublicListingSpaces } = await import("@/lib/listing-spaces-store");
-      const spaces = await readPublicListingSpaces(
-        sql,
-        publicDaycare.id,
-        publicDaycare.photos,
-      ).catch(() => null);
+      const spaces = await readPublicListingSpaces(sql, publicDaycare.id, publicDaycare.photos).catch(() => null);
       const { publicDocumentsVerified } = await import("@/lib/server/centre-documents");
-      const documentsVerified = await publicDocumentsVerified(sql, publicDaycare.id).catch(
-        () => false,
-      );
+      const documentsVerified = await publicDocumentsVerified(sql, publicDaycare.id).catch(() => false);
       return sealPublicHomes({
         daycare: publicDaycare,
         reviews: mapReviews(reviews),
@@ -1439,12 +1247,6 @@ export const getDaycaresByIds = createServerFn({ method: "GET" })
     }
     const found = [...byId, ...extras].filter(isPublicListing);
     const cards = uniqueById(found.map((d) => toCard(d, origin)));
-    const claimed = await overlayQuality(
-      await overlayParentReviews(await overlayClaimed(cards, mergeClaimedCard)),
-    );
-    return sealPublicHomes(
-      await stampPaidPlacement(
-        await overlayParentRank(claimed, { distanceKnown: false, ageGroup: "any" }),
-      ),
-    );
+    const claimed = await overlayQuality(await overlayParentReviews(await overlayClaimed(cards, mergeClaimedCard)));
+    return sealPublicHomes(await stampPaidPlacement(await overlayParentRank(claimed, { distanceKnown: false, ageGroup: "any" })));
   });

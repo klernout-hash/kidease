@@ -1,8 +1,4 @@
-import {
-  CITY_SEARCH_KEY_EXPR,
-  cityDirectoryMatchSql,
-  citySearchKeyEnabled,
-} from "@/lib/city-search-key";
+import { CITY_SEARCH_KEY_EXPR, cityDirectoryMatchSql, citySearchKeyEnabled } from "@/lib/city-search-key";
 import { displayCityName } from "@/lib/city-display";
 import { dbSource, getSql, type Sql } from "@/lib/db";
 import type { CatalogDaycare } from "@/lib/catalog";
@@ -17,23 +13,10 @@ import { foundingBadgeEnabled } from "@/lib/features";
 import { foundingMemberVisible } from "@/lib/founding-period";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { clampRadiusKm } from "@/lib/proximity";
-import {
-  resolveFoundCatalogRow,
-  suppressedCatalogKey,
-  type SuppressedCatalogKeys,
-} from "@/lib/catalog-fallback";
+import { resolveFoundCatalogRow, suppressedCatalogKey, type SuppressedCatalogKeys } from "@/lib/catalog-fallback";
 import { hiddenReviewPlaceFromRow } from "@/lib/hidden-review";
-import {
-  isPublicListing,
-  listingVisibilityOf,
-  PUBLIC_LISTING_SQL,
-  SUPPRESSED_CATALOG_SQL,
-} from "@/lib/listing-visibility";
-import {
-  correctCentreNameTypos,
-  listingSlugLookupKeys,
-  normalizeListingSlug,
-} from "@/lib/listing-slug";
+import { isPublicListing, listingVisibilityOf, PUBLIC_LISTING_SQL, SUPPRESSED_CATALOG_SQL } from "@/lib/listing-visibility";
+import { correctCentreNameTypos, listingSlugLookupKeys, normalizeListingSlug } from "@/lib/listing-slug";
 import { listingCultureFrom } from "@/lib/listing-culture";
 import { agesKnownFromConfirmedFlag } from "@/lib/standard-age-groups";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
@@ -157,17 +140,13 @@ where ${DIRECTORY_PUBLIC_SQL}
 group by city, province
 `;
 
-export async function queryNeonDirectoryGroups(): Promise<Array<{
-  city: string | null;
-  province: string | null;
-  n: number;
-}> | null> {
+export async function queryNeonDirectoryGroups(): Promise<
+  Array<{ city: string | null; province: string | null; n: number }> | null
+> {
   if (dbSource !== "neon") return null;
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "directory-count-timeout")]);
-    const rows = await sql.query<{ city: string | null; province: string | null; n: number }>(
-      DIRECTORY_GROUP_SQL,
-    );
+    const rows = await sql.query<{ city: string | null; province: string | null; n: number }>(DIRECTORY_GROUP_SQL);
     return rows;
   } catch {
     return null;
@@ -188,8 +167,7 @@ export async function queryNeonCityHubListingsResult(
 ): Promise<SearchBatch<CatalogDaycare> | null> {
   if (dbSource !== "neon") return null;
   const keys = [...new Set(cityKeys.map((key) => key.trim()).filter(Boolean))];
-  if (!keys.length)
-    return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) };
+  if (!keys.length) return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) };
   const cacheKey = `${province.toUpperCase()}:${keys.slice().sort().join("|")}`;
   const cachedHub = opts?.refresh ? undefined : readTimed(cityHubCache, cacheKey, LIST_TTL_MS);
   if (cachedHub) return cachedHub;
@@ -205,14 +183,8 @@ export async function queryNeonCityHubListingsResult(
        limit ${CITY_TYPE_LIST_CAP}`,
       [province.toUpperCase(), keys],
     );
-    const listed = rows
-      .filter(catalogRowRenderable)
-      .map(catalogRowToListing)
-      .filter(isPublicListing);
-    return rememberTimed(cityHubCache, cacheKey, {
-      rows: listed,
-      evidence: candidateEvidence(rows.length, CITY_TYPE_LIST_CAP),
-    });
+    const listed = rows.filter(catalogRowRenderable).map(catalogRowToListing).filter(isPublicListing);
+    return rememberTimed(cityHubCache, cacheKey, { rows: listed, evidence: candidateEvidence(rows.length, CITY_TYPE_LIST_CAP) });
   } catch {
     return null;
   }
@@ -299,12 +271,7 @@ function readTimed<T>(map: Map<string, Timed<T>>, key: string, ttl: number): T |
   return hit.value;
 }
 
-function rememberTimed<T>(
-  map: Map<string, Timed<T>>,
-  key: string,
-  value: T,
-  max = LIST_CACHE_MAX,
-): T {
+function rememberTimed<T>(map: Map<string, Timed<T>>, key: string, value: T, max = LIST_CACHE_MAX): T {
   map.set(key, { at: Date.now(), value });
   if (map.size > max) {
     const oldest = map.keys().next().value;
@@ -337,13 +304,10 @@ export function resetNeonCatalogCache() {
  * Ids and slugs the database has marked hidden, inactive, admin-only, or
  * retired. Null means the database did not answer — callers keep the bundle.
  */
-export async function loadSuppressedCatalogKeys(
-  opts?: SearchReadOptions,
-): Promise<SuppressedCatalogKeys | null> {
+export async function loadSuppressedCatalogKeys(opts?: SearchReadOptions): Promise<SuppressedCatalogKeys | null> {
   if (typeof window !== "undefined") return null;
   const now = Date.now();
-  if (!opts?.refresh && suppressedCache && now - suppressedCache.at < SUPPRESSED_TTL_MS)
-    return suppressedCache.keys;
+  if (!opts?.refresh && suppressedCache && now - suppressedCache.at < SUPPRESSED_TTL_MS) return suppressedCache.keys;
   try {
     const sql = await Promise.race([getSql(), rejectAfter(4000, "suppressed-catalog-timeout")]);
     const rows = await sql.query<{ id: string | null; slug: string | null }>(
@@ -374,8 +338,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
   const id = String(row.id || "").trim();
   const rawSlug = String(row.slug || "").trim();
   const slug = normalizeListingSlug(rawSlug) || rawSlug || id;
-  const name =
-    correctCentreNameTypos(String(row.name || "").trim()) || slug || id || "Licensed centre";
+  const name = correctCentreNameTypos(String(row.name || "").trim()) || slug || id || "Licensed centre";
   const isDemo = row.is_demo === true || row.is_demo === 1 || row.is_demo === "1";
   const visibility = listingVisibilityOf({
     id,
@@ -441,8 +404,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
       badgeEnabled: foundingBadgeEnabled(),
     }),
     claimStatus: row.claim_status ?? null,
-    staffScreeningAttested:
-      row.staff_screening_attested === 1 || row.staff_screening_attested === true,
+    staffScreeningAttested: row.staff_screening_attested === 1 || row.staff_screening_attested === true,
     screeningOnFile: row.screening_on_file === 1 || row.screening_on_file === true,
     listingActive:
       row.listing_active === 0 || row.listing_active === false || String(row.listing_active) === "0"
@@ -482,14 +444,10 @@ export async function countPublicDaycares(sql: Sql, opts?: SearchReadOptions): P
   return n;
 }
 
-export async function isNeonCatalogPreferred(
-  sql?: Sql,
-  opts?: SearchReadOptions,
-): Promise<boolean> {
+export async function isNeonCatalogPreferred(sql?: Sql, opts?: SearchReadOptions): Promise<boolean> {
   if (dbSource !== "neon") return false;
   try {
-    const client =
-      sql ?? (await Promise.race([getSql(), rejectAfter(4000, "catalog-count-timeout")]));
+    const client = sql ?? (await Promise.race([getSql(), rejectAfter(4000, "catalog-count-timeout")]));
     const publicCount = await countPublicDaycares(client, opts);
     return preferNeonCatalog({
       source: catalogSourceFromEnv(),
@@ -506,9 +464,7 @@ export async function loadNeonCatalogIfPreferred(): Promise<CatalogDaycare[] | n
   return (await queryNeonCatalogAllResult())?.rows ?? null;
 }
 
-export async function queryNeonCatalogAllResult(
-  opts?: SearchReadOptions,
-): Promise<SearchBatch<CatalogDaycare> | null> {
+export async function queryNeonCatalogAllResult(opts?: SearchReadOptions): Promise<SearchBatch<CatalogDaycare> | null> {
   if (dbSource !== "neon") return null;
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "catalog-sql-timeout")]);
@@ -518,10 +474,7 @@ export async function queryNeonCatalogAllResult(
     // getPublicCatalog / nearby SQL — never this list unfiltered.
     const rows = await sql.query<CatalogDbRow>(`select ${CATALOG_SELECT} from daycares`);
     neonAllCache = {
-      rows: rows
-        .filter(catalogRowRenderable)
-        .filter((row) => !(row.merged_into || "").trim() && !(row.import_fault || "").trim())
-        .map(catalogRowToListing),
+      rows: rows.filter(catalogRowRenderable).filter((row) => !(row.merged_into || "").trim() && !(row.import_fault || "").trim()).map(catalogRowToListing),
       evidence: searchEvidence({ status: "complete", source: "primary" }),
     };
     return neonAllCache;
@@ -581,9 +534,7 @@ export async function neonCatalogBySlug(slug: string): Promise<CatalogDaycare | 
       hops.set(nextRows[0].id, slugHop(nextRows[0]));
       cursor = nextRows[0];
     }
-    const chosen = resolveFoundCatalogRow(hops.get(exact.id) ?? slugHop(exact), (id) =>
-      hops.get(id),
-    );
+    const chosen = resolveFoundCatalogRow(hops.get(exact.id) ?? slugHop(exact), (id) => hops.get(id));
     const listing = catalogRowToListing(chosen.row);
     for (const key of keys) rememberTimed(slugCache, key, listing, 200);
     return listing;
@@ -596,9 +547,7 @@ export async function neonCatalogBySlug(slug: string): Promise<CatalogDaycare | 
  * Slug of a hidden possible-second-site row. Does not follow merged_into.
  * A PEI name fault and a merged duplicate return null here.
  */
-export async function neonHiddenReviewPlace(
-  slug: string,
-): Promise<{ city: string; province: string } | null> {
+export async function neonHiddenReviewPlace(slug: string): Promise<{ city: string; province: string } | null> {
   const keys = listingSlugLookupKeys(slug);
   if (keys.length === 0) return null;
   try {
@@ -652,24 +601,17 @@ export async function neonCatalogByIds(ids: string[]): Promise<CatalogDaycare[] 
   return (await neonCatalogByIdsResult(ids))?.rows ?? null;
 }
 
-export async function neonCatalogByIdsResult(
-  ids: string[],
-  _opts?: SearchReadOptions,
-): Promise<SearchBatch<CatalogDaycare> | null> {
+export async function neonCatalogByIdsResult(ids: string[], _opts?: SearchReadOptions): Promise<SearchBatch<CatalogDaycare> | null> {
   if (typeof window !== "undefined") return null;
   const wanted = ids.filter(Boolean);
-  if (wanted.length === 0)
-    return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) };
+  if (wanted.length === 0) return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) };
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "catalog-sql-timeout")]);
     const rows = await sql.query<CatalogDbRow>(
       `select ${CATALOG_SELECT} from daycares where id = any($1::text[])`,
       [wanted],
     );
-    return {
-      rows: rows.filter(catalogRowRenderable).map(catalogRowToListing),
-      evidence: searchEvidence({ status: "complete", source: "primary" }),
-    };
+    return { rows: rows.filter(catalogRowRenderable).map(catalogRowToListing), evidence: searchEvidence({ status: "complete", source: "primary" }) };
   } catch {
     return null;
   }
@@ -712,10 +654,7 @@ export async function queryNeonNearbyResult(
         distanceKm: Math.round(Number(row.distance_km) * 10) / 10,
       }))
       .filter(isPublicListing);
-    return rememberTimed(nearbyCache, cacheKey, {
-      rows: listed,
-      evidence: candidateEvidence(rows.length, cap),
-    });
+    return rememberTimed(nearbyCache, cacheKey, { rows: listed, evidence: candidateEvidence(rows.length, cap) });
   } catch {
     return null;
   }
@@ -762,15 +701,7 @@ export async function queryNeonNearbyDualResult(
 ): Promise<SearchBatch<CatalogDaycare & { distanceKm?: number }> | null> {
   if (dbSource !== "neon") return null;
   const radius = clampRadiusKm(radiusKm);
-  const cacheKey = JSON.stringify([
-    "dual",
-    originA.lat,
-    originA.lng,
-    originB.lat,
-    originB.lng,
-    radius,
-    400,
-  ]);
+  const cacheKey = JSON.stringify(["dual", originA.lat, originA.lng, originB.lat, originB.lng, radius, 400]);
   const cached = opts?.refresh ? undefined : readTimed(nearbyCache, cacheKey, LIST_TTL_MS);
   if (cached) return cached;
   try {
@@ -778,13 +709,7 @@ export async function queryNeonNearbyDualResult(
     if (!(await postgisReady(client))) return null;
     const meters = radius * 1000;
     const rows = await Promise.race([
-      client.query<CatalogDbRow>(NEON_DUAL_NEAR_SQL, [
-        originA.lng,
-        originA.lat,
-        meters,
-        originB.lng,
-        originB.lat,
-      ]),
+      client.query<CatalogDbRow>(NEON_DUAL_NEAR_SQL, [originA.lng, originA.lat, meters, originB.lng, originB.lat]),
       rejectAfter(6000, "nearby-dual-dwithin-timeout"),
     ]);
     const listed = rows
@@ -794,10 +719,7 @@ export async function queryNeonNearbyDualResult(
         distanceKm: Math.round(Number(row.distance_km) * 10) / 10,
       }))
       .filter(isPublicListing);
-    return rememberTimed(nearbyCache, cacheKey, {
-      rows: listed,
-      evidence: candidateEvidence(rows.length, 400),
-    });
+    return rememberTimed(nearbyCache, cacheKey, { rows: listed, evidence: candidateEvidence(rows.length, 400) });
   } catch {
     return null;
   }
@@ -808,12 +730,9 @@ export async function queryNeonPublicNameIndex(): Promise<PublicNameIndexRow[] |
   return (await queryNeonPublicNameIndexResult())?.rows ?? null;
 }
 
-export async function queryNeonPublicNameIndexResult(
-  opts?: SearchReadOptions,
-): Promise<SearchBatch<PublicNameIndexRow> | null> {
+export async function queryNeonPublicNameIndexResult(opts?: SearchReadOptions): Promise<SearchBatch<PublicNameIndexRow> | null> {
   if (dbSource !== "neon") return null;
-  if (!opts?.refresh && nameIndexCache && Date.now() - nameIndexCache.at < NAME_TTL_MS)
-    return nameIndexCache.value;
+  if (!opts?.refresh && nameIndexCache && Date.now() - nameIndexCache.at < NAME_TTL_MS) return nameIndexCache.value;
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "name-index-timeout")]);
     const rows = await sql.query<PublicNameIndexRow>(
@@ -834,14 +753,10 @@ export async function queryNeonListingsByIds(ids: string[]): Promise<CatalogDayc
   return (await queryNeonListingsByIdsResult(ids))?.rows ?? null;
 }
 
-export async function queryNeonListingsByIdsResult(
-  ids: string[],
-  _opts?: SearchReadOptions,
-): Promise<SearchBatch<CatalogDaycare> | null> {
+export async function queryNeonListingsByIdsResult(ids: string[], _opts?: SearchReadOptions): Promise<SearchBatch<CatalogDaycare> | null> {
   if (dbSource !== "neon") return null;
   const wanted = [...new Set(ids.map((id) => String(id || "").trim()).filter(Boolean))];
-  if (!wanted.length)
-    return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) };
+  if (!wanted.length) return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) };
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "name-rows-timeout")]);
     const rows = await sql.query<CatalogDbRow>(
@@ -852,9 +767,7 @@ export async function queryNeonListingsByIdsResult(
       rows.filter(catalogRowRenderable).map((row) => [row.id, catalogRowToListing(row)] as const),
     );
     return {
-      rows: wanted
-        .map((id) => byId.get(id))
-        .filter((row): row is CatalogDaycare => Boolean(row) && isPublicListing(row)),
+      rows: wanted.map((id) => byId.get(id)).filter((row): row is CatalogDaycare => Boolean(row) && isPublicListing(row)),
       evidence: searchEvidence({ status: "complete", source: "primary" }),
     };
   } catch {
