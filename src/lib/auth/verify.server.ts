@@ -97,6 +97,7 @@ export async function getVerifiedAuthSession(
     headers = new Headers(headers);
     headers.set("cookie", cookie);
   }
+  const cookieHeaders = headers;
   if (bearerToken) {
     headers = new Headers(headers);
     headers.set("Authorization", `Bearer ${bearerToken}`);
@@ -105,11 +106,22 @@ export async function getVerifiedAuthSession(
   // (role chrome) treat a throw as degraded and stay on the page. Swallowing
   // it as null looks like a real sign-out and beforeLoad sends /account to
   // /login?intent=in&next=/account with no save confirmation.
-  const session = await withTimeout(
+  let session = await withTimeout(
     sharedSessionLookup(`${cookie || ""}\n${bearerToken || ""}`, () => auth.api.getSession({ headers })),
     SQL_SETTLE_MS,
     "get-session-timeout",
   );
+  // EM6: Better Auth's bearer plugin REPLACES the session cookie with the
+  // bearer token. The phone app rotates the session token on every refresh, so
+  // a bearer saved in sessionStorage goes stale while the cookie stays valid.
+  // A stale bearer must never sign out a visitor whose cookie still works.
+  if (!session?.user && bearerToken && cookie) {
+    session = await withTimeout(
+      sharedSessionLookup(`${cookie}\n`, () => auth.api.getSession({ headers: cookieHeaders })),
+      SQL_SETTLE_MS,
+      "get-session-timeout",
+    );
+  }
   if (!session?.user) return null;
   const rawToken = typeof session.session?.token === "string" ? session.session.token : null;
   const token = unsignedSessionToken(rawToken);

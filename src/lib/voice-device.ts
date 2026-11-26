@@ -15,3 +15,13 @@ export function voiceErrorPlan(code: number): "register" | "refresh" | "once" | 
   if (code === 31005 || code === 31000) return "once";
   return "ignore";
 }
+
+/** VC1: a call error is never dropped. Only 31009 re-registers; the rest are shown. */
+export function voiceCallErrorPlan(code: number): "register" | "show" {
+  return code === 31009 ? "register" : "show";
+}
+
+/** VC1: the mic check gives up after `ms` so Start never hangs with no feedback. */
+export function withinMs<T>(work: Promise<T>, ms: number, timedOut: T): Promise<T> {
+  return Promise.race([work, new Promise<T>((done) => setTimeout(() => done(timedOut), ms))]);
+}

@@ -6,7 +6,7 @@ import { useViewAs } from "@/components/view-as-banner";
 import { mintThreadVoiceToken } from "@/lib/server/voice-call";
 import { primeCallMedia } from "@/lib/call-permissions";
 import { createCallRinger, type RingEnd } from "@/lib/call-ring-client";
-import { voiceErrorPlan, voiceTokenRefreshPlan } from "@/lib/voice-device";
+import { voiceCallErrorPlan, voiceErrorPlan, voiceTokenRefreshPlan, withinMs } from "@/lib/voice-device";
 import { publicErrorMessage } from "@/lib/public-error";
 
 /**
@@ -23,6 +23,8 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
   const [note, setNote] = useState("");
   const [muted, setMuted] = useState(false);
   const [busy, setBusy] = useState(true);
+  const [setupTry, setSetupTry] = useState(0);
+  const [checking, setChecking] = useState(false);
 
   // Device setup depends on the conversation only. Resizing must not
   // destroy the Twilio device or drop a connected call.
@@ -114,7 +116,7 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
       deviceRef.current?.destroy();
       deviceRef.current = null;
     };
-  }, [conversationId, t, viewing]);
+  }, [conversationId, t, viewing, setupTry]);
 
   // Background ring (FEATURE_CALL_PUSH, off by default): the server no-ops while the flag is off.
   const ringerRef = useRef<ReturnType<typeof createCallRinger> | null>(null);
@@ -130,12 +132,11 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
   function watch(call: Call) {
     callRef.current = call;
     call.on("error", (error: { code?: number }) => {
-      const plan = voiceErrorPlan(Number(error?.code));
-      if (plan === "register") {
+      if (voiceCallErrorPlan(Number(error?.code)) === "register") {
         void deviceRef.current?.register().catch(() => undefined);
         return;
       }
-      if (plan !== "once" || toldRef.current) return;
+      if (toldRef.current) return;
       toldRef.current = true;
       setPhase("error");
       setNote(t("voiceFailed"));
@@ -166,10 +167,12 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
   }
 
   async function allowMic() {
-    const media = await primeCallMedia("audio");
-    if (media === "denied") {
+    setNote(t("voiceCheckingMic"));
+    setChecking(true);
+    const media = await withinMs(primeCallMedia("audio"), 10_000, "timeout" as const).finally(() => setChecking(false));
+    if (media !== "ok") {
       setPhase("error");
-      setNote(t("mediaPermissionDenied"));
+      setNote(t(media === "denied" ? "mediaPermissionDenied" : media === "unavailable" ? "voiceNoMic" : "voiceFailed"));
       return false;
     }
     return true;
@@ -177,7 +180,12 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
 
   async function start() {
     const device = deviceRef.current;
-    if (!device) return;
+    if (!device) {
+      setPhase("error");
+      setNote(t("voiceFailed"));
+      return;
+    }
+    toldRef.current = false;
     if (!(await allowMic())) return;
     setNote(t("voiceWaiting"));
     setPhase("ringing");
@@ -230,9 +238,13 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
 
   return (
     <div className="mt-6 min-w-0 rounded-xl bg-surface px-5 py-6 ring-1 ring-border" data-ke-live="voice">
-      <p className="text-sm text-muted" aria-live="polite">
-        {busy ? t("loading") : note || t("voiceWaitingHint")}
-      </p>
+      {phase === "error" && !busy ? (
+        <p className="text-sm text-danger" role="alert" data-ke="voice-error">{note || t("voiceFailed")}</p>
+      ) : (
+        <p className="text-sm text-muted" aria-live="polite">
+          {busy ? t("loading") : note || t("voiceWaitingHint")}
+        </p>
+      )}
       <p className="mt-2 text-xs text-muted" data-ke="media-permission-note">{t("mediaPermissionNote")}</p>
       <div className="mt-4 flex flex-wrap gap-2">
         {incoming ? (
@@ -243,8 +255,12 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
           <Button type="button" variant="danger" className="min-w-11" onClick={hangUp}>
             {t("voiceHangUp")}
           </Button>
+        ) : phase === "error" && !busy && !deviceRef.current ? (
+          <Button type="button" className="min-w-11" onClick={() => { setBusy(true); setNote(""); setPhase("ready"); setSetupTry((n) => n + 1); }}>
+            {t("tryAgain")}
+          </Button>
         ) : (
-          <Button type="button" className="min-w-11" disabled={busy || phase === "ringing"} onClick={() => void start()}>
+          <Button type="button" className="min-w-11" disabled={busy || checking || phase === "ringing"} onClick={() => void start()}>
             {phase === "ringing" ? t("loading") : t("voiceStart")}
           </Button>
         )}

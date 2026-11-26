@@ -11,6 +11,13 @@
 export const LOGIN_POST_MS = 15_000;
 export const LOGIN_CONTINUE_MS = 12_000;
 export const ADMIN_IDLE_CHECK_MS = 6_000;
+/**
+ * The sign-in form's "taking too long" banner. It used to fire at 8 s while the
+ * POST itself may take 15 s, so a slow phone (Galaxy S24 emulator, EM7) saw the
+ * Cloudflare banner while the sign-in was still on its way and then succeeded.
+ * Wait out the POST plus the first session check before blaming Cloudflare.
+ */
+export const LOGIN_FORM_STALL_MS = LOGIN_POST_MS + 5_000;
 
 /** The half-finished sign-in (password done, email code pending) expired (#1014 item 7). */
 export const SIGN_IN_TIMED_OUT_MESSAGE = "Your sign-in timed out. Sign in again to get a new code.";

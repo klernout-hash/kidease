@@ -50,6 +50,33 @@ public class MainActivity extends BridgeActivity {
         }
         scheduleOfflineCheck();
         watchNetwork();
+        openColdStartDeepLink(getIntent());
+    }
+
+    /**
+     * EM1: a cold start from kidease:// or ca.kidease.app:// (app not running)
+     * used to open the English home page, because the bridge always loads the
+     * server URL and the page listener is not there yet. Load the link's path
+     * once the bridge is up. onNewIntent covers a running app.
+     */
+    private void openColdStartDeepLink(Intent intent) {
+        if (intent == null || !Intent.ACTION_VIEW.equals(intent.getAction())) return;
+        final String path = deepLinkPath(intent.getData());
+        if (path == null || "/".equals(path)) return;
+        WebView web = webViewOrNull();
+        if (web == null) return;
+        final String target = "https://www.kidease.ca" + path;
+        web.loadUrl(target);
+        // A store User-Agent reload or the Samsung link cleanup may still load
+        // the home page after this. Check once more after they settle.
+        offlineHandler.postDelayed(() -> {
+            WebView again = webViewOrNull();
+            if (again == null) return;
+            String current = again.getUrl();
+            if (current != null && (current.equals(target) || current.startsWith(target + "#") || current.startsWith(target + "?"))) return;
+            OfflinePage.reset();
+            again.loadUrl(target);
+        }, 1500);
     }
 
     /** Admin and Cloudflare Access never leave the WebView for the system browser. */

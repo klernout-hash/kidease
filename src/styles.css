@@ -1829,6 +1829,10 @@ html:not([data-look="clean"]) :is(a, button, [role="button"]).h-11 {
       padding-right: 4.75rem;
       scroll-padding-right: 4.75rem;
     }
+    /* EM8: Account > Children. The row arrow stays left of the Help bubble. */
+    html:has(.ke-help-bot) [data-ke="profile-child"] {
+      padding-right: 5rem;
+    }
   }
   @media (max-width: 767px) {
     .ke-help-bot > button > span {
@@ -4103,6 +4107,38 @@ html:not([data-look="clean"]) .ke-clean-only {
     box-sizing: content-box;
     padding-block: 15px;
     margin-block: -15px;
+  }
+}
+
+/*
+  EM2: Android tablets in landscape (Pixel Tablet, Tab S9, Huawei tablet,
+  Surface Duo) painted a white band and a copy of the home search bar. The
+  WebView compositor re-used stale tiles under the blurred sticky bars. Chrome
+  at the same size paints fine. Wide Android shells drop the blur and use a
+  solid bar colour, so nothing samples the page behind it.
+*/
+@media (min-width: 900px) and (min-aspect-ratio: 6/5) {
+  html[data-runtime="android"] *,
+  html[data-runtime="android"] *::before,
+  html[data-runtime="android"] *::after {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  html[data-runtime="android"] :is(.ke-site-header, [data-ke="app-tab-bar"], .ke-explore-filter-sticky) {
+    background-color: var(--color-bg);
+  }
+}
+
+/* A2: on wider screens the header care row is ~620px but eight 6rem tabs need
+   672px, so the last tab ("Open spots" / "Places libres") was cut off. Tabs
+   now shrink toward their longest word instead of overflowing. */
+@media (min-width: 768px) {
+  [data-ke="header-care-categories"] .ke-airbnb-cat {
+    flex: 0 1 auto;
+    width: auto;
+    min-width: min-content;
+    max-width: 6rem;
+    padding-inline: 0.35rem;
   }
 }
 

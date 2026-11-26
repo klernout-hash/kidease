@@ -229,21 +229,47 @@ export function NativeBoot() {
   useEffect(() => {
     if (!isNative()) return;
     let remove = () => {};
-    void import("@capacitor/app").then(({ App }) =>
-      App.addListener("appUrlOpen", (event) => {
-        void import("@/lib/app-link").then(({ appLinkPath }) => {
-          const path = appLinkPath(event.url);
-          if (!path) return;
-          const here = window.location.hostname;
-          if (here === "www.kidease.ca" || here === "kidease.ca") window.location.assign(path);
-          else window.location.assign(`https://www.kidease.ca${path}`);
-        });
+    const openAppLink = (url: string | null | undefined) => {
+      void import("@/lib/app-link").then(({ appLinkPath }) => {
+        const path = appLinkPath(url);
+        if (!path) return;
+        const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        if (current === path) return;
+        const here = window.location.hostname;
+        if (here === "www.kidease.ca" || here === "kidease.ca") window.location.assign(path);
+        else window.location.assign(`https://www.kidease.ca${path}`);
+      });
+    };
+    void import("@capacitor/app").then(({ App }) => {
+      // EM1: a cold start from a link lands on the home page with no
+      // appUrlOpen event. Open the launch link once per app run (sessionStorage
+      // lives as long as the WebView), never again on later reloads.
+      void App.getLaunchUrl()
+        .then((launch) => {
+          const url = launch?.url;
+          if (!url) return;
+          try {
+            if (sessionStorage.getItem("ke-launch-url") === url) return;
+            sessionStorage.setItem("ke-launch-url", url);
+          } catch {
+            return;
+          }
+          openAppLink(url);
+        })
+        .catch(() => undefined);
+      return App.addListener("appUrlOpen", (event) => {
+        try {
+          sessionStorage.setItem("ke-launch-url", event.url);
+        } catch {
+          /* ignore */
+        }
+        openAppLink(event.url);
       }).then((handle) => {
         remove = () => {
           void handle.remove();
         };
-      }),
-    );
+      });
+    });
     return () => remove();
   }, []);
 

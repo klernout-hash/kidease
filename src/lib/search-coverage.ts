@@ -13,8 +13,10 @@ export function searchCoverageCopy(value: unknown, locale: string) {
       : evidence.totalKind === "at-least"
         ? fr ? `Au moins ${total} ${total === 1 ? "centre permis" : "centres permis"}` : `At least ${total} licensed ${total === 1 ? "centre" : "centres"}`
         : fr ? `${total} ${total === 1 ? "fiche consultable" : "fiches consultables"}` : `${total} ${total === 1 ? "listing" : "listings"} available to view`,
+    // S-N5: "partial" only ever means the list stopped at its row cap. The
+    // closest centres are all there, and a retry returns the same rows.
     detail: evidence.status === "partial"
-      ? fr ? "Certains résultats peuvent manquer. Réessayez ou précisez la zone." : "Some results may be missing. Retry or narrow the area."
+      ? fr ? "Voici les centres les plus proches. Réduisez le rayon pour les voir tous." : "Showing the closest centres. Make the radius smaller to see them all."
       : fr ? "Ces fiches peuvent être incomplètes ou ne plus être à jour. Réessayez ou choisissez une autre zone." : "These listings may be incomplete or out of date. Retry or choose another area.",
     emptyTitle: fr ? "La recherche est incomplète" : "This search is incomplete",
     emptyDetail: fr ? "Aucune fiche à afficher pour le moment. Cela ne veut pas dire qu’il n’y a pas de centres dans cette zone." : "No listings are available to show right now. There may still be centres in this area.",

@@ -298,16 +298,25 @@ export const DaycareCard = memo(function DaycareCard({
         : t(vacancy.labelKey);
   const openSpotsLine = vacancy.kind === "open" || vacancy.kind === "waitlist" ? spotsKnown : "";
   const daily = showFees && (subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max" || subsidy?.subsidy_type === "qc_965");
+  const frCard = locale === "fr";
   const priceAmount = !showFees
     ? ""
     : subsidy?.subsidy_type === "qc_965"
-    ? "$9.65"
+    ? frCard ? "9,65 $" : "$9.65"
     : subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max"
-      ? "$10"
+      ? frCard ? "10 $" : "$10"
       : feeOk
         ? money(item.fromPrice, locale)
         : "";
-  const priceUnit = subsidy?.subsidy_type === "ten_max" ? " / day max" : daily ? " / day" : feeOk ? t("month") : "";
+  // F2: /fr/parent cards said "$10 / day max" in English.
+  const priceUnit =
+    subsidy?.subsidy_type === "ten_max"
+      ? frCard ? " / jour max." : " / day max"
+      : daily
+        ? frCard ? " / jour" : " / day"
+        : feeOk
+          ? t("month")
+          : "";
   const priceOnPhoto = daily && !isOntarioCapMonthly(item.fromPrice);
   const ontarioCap = showFees && String(item.province || "").toUpperCase() === "ON" && isOntarioCapMonthly(item.fromPrice);
   const statusLine = openSpotsLine || (ontarioCap ? t("ontarioCapFee") : priceAmount ? `${priceAmount}${priceUnit}` : freshnessText);
@@ -358,6 +367,7 @@ export const DaycareCard = memo(function DaycareCard({
           <p className="mt-0.5 min-h-5 truncate text-[13px] leading-5 text-muted" data-far={farAway ? "1" : undefined}>
             {placeLine || "\u00a0"}
           </p>
+          <CardMicroPills item={item} detourOnly />
           {ages ? (
             <p className="mt-0.5 line-clamp-2 whitespace-normal text-[13px] font-medium leading-5 text-fg" data-ke="card-age-range" title={ages}>
               {ages}
@@ -436,6 +446,7 @@ export const DaycareCard = memo(function DaycareCard({
               {farAway ? ` · ${item.province}` : ""}
             </p>
           )}
+          {showDistance ? <CardMicroPills item={item} detourOnly /> : null}
           {line3 ? <p className="truncate text-[12px] font-normal leading-4 text-muted">{line3}</p> : null}
           {gaps.length ? (
             <p className="truncate text-[12px] font-normal leading-4 text-muted">

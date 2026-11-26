@@ -40,17 +40,21 @@ export function statusServices(health: PublicStatusInput): StatusService[] {
   ];
 }
 
-/** America/Winnipeg is Central Time, including daylight time. */
+/**
+ * America/Winnipeg wall time. G5: tzdata 2026e keeps Manitoba on UTC-5 all
+ * year from Nov 2026, but ICU still labels it "CDT"/"HAC", which reads as a
+ * wrong summer label in November. Use the plain zone name instead.
+ */
 export function formatStatusCheckedAt(iso: string, locale: "en" | "fr"): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat(locale === "fr" ? "fr-CA" : "en-CA", {
+  const when = new Intl.DateTimeFormat(locale === "fr" ? "fr-CA" : "en-CA", {
     timeZone: "America/Winnipeg",
     year: "numeric",
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZoneName: "short",
   }).format(date);
+  return `${when} ${locale === "fr" ? "heure du Centre" : "Central time"}`;
 }

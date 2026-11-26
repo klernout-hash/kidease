@@ -3813,5 +3813,10 @@
   "videoCallStarted": "视频通话已开始",
   "videoCallJoinShort": "加入",
   "videoCallIncoming": "视频通话来电",
-  "videoCallDecline": "稍后"
+  "videoCallDecline": "稍后",
+  "voiceCheckingMic": "正在检查麦克风…",
+  "voiceNoMic": "未找到麦克风。请接上麦克风或使用手机。",
+  "reportNameRequired": "请输入您的姓名。",
+  "reportEmailInvalid": "请输入电子邮件，例如 name@example.ca。",
+  "reportMessageRequired": "请告诉我们这条信息有什么问题。"
 }

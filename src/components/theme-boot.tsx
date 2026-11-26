@@ -3,7 +3,7 @@ import { paintStatusBar } from "@/lib/native";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getMyTheme, saveMyTheme } from "@/lib/server/account-prefs";
 import { useAppStore } from "@/lib/store";
-import { applyTheme, readThemePreference, setThemePersister, subscribeSystemTheme } from "@/lib/theme";
+import { applyTheme, readStoredThemePreference, readThemePreference, setThemePersister, signInThemePlan, subscribeSystemTheme } from "@/lib/theme";
 import { applyTextScale, readTextScale } from "@/lib/text-scale";
 
 /** Hydrate the stored Appearance preference and keep System in sync with the OS. */
@@ -36,9 +36,11 @@ export function ThemeBoot() {
     }
     let cancel = false;
     void getMyTheme()
-      .then((theme) => {
+      .then((account) => {
         if (cancel) return;
-        useAppStore.getState().setTheme(theme);
+        const plan = signInThemePlan(account, readStoredThemePreference());
+        useAppStore.getState().setTheme(plan.theme);
+        if (plan.save) void saveMyTheme({ data: { theme: plan.theme } }).catch(() => undefined);
         setThemePersister((next) => {
           void saveMyTheme({ data: { theme: next } }).catch(() => undefined);
         });

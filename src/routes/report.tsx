@@ -11,6 +11,7 @@ import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { publicFormErrorMessage } from "@/lib/public-form-error";
 import { submitPublicMessage } from "@/lib/server/notify";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import { reportFormErrors } from "@/lib/report-form";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/report")({
@@ -40,11 +41,19 @@ export function ReportPage() {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ReturnType<typeof reportFormErrors>>({});
   const { onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
     useTurnstileToken();
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
+    const errors = reportFormErrors({ name, email, body });
+    setFieldErrors(errors);
+    const firstBad = (["name", "email", "body"] as const).find((key) => errors[key]);
+    if (firstBad) {
+      document.getElementById(`report-${firstBad}`)?.focus();
+      return;
+    }
     const challenge = takeChallenge();
     if (turnstileRequired && !challenge) {
       setFormError(t("turnstileRequired"));
@@ -157,22 +166,29 @@ export function ReportPage() {
               <p className="text-base font-semibold">{t("contactSent")}</p>
             </div>
           ) : (
-            <form className="mt-6 space-y-3" onSubmit={send}>
+            <form className="mt-6 space-y-3" onSubmit={send} noValidate>
               <label className="block text-sm font-medium">
                 {t("name")}
                 <input
                   required
+                  id="report-name"
+                  aria-invalid={fieldErrors.name ? true : undefined}
+                  aria-describedby={fieldErrors.name ? "report-name-error" : undefined}
                   className="ke-input mt-1"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   onFocus={scrollField}
                   autoComplete="name"
                 />
+                {fieldErrors.name ? <span id="report-name-error" className="mt-1 block text-sm text-danger">{t(fieldErrors.name)}</span> : null}
               </label>
               <label className="block text-sm font-medium">
                 {t("email")}
                 <input
                   required
+                  id="report-email"
+                  aria-invalid={fieldErrors.email ? true : undefined}
+                  aria-describedby={fieldErrors.email ? "report-email-error" : undefined}
                   type="email"
                   className="ke-input mt-1"
                   value={email}
@@ -180,6 +196,7 @@ export function ReportPage() {
                   onFocus={scrollField}
                   autoComplete="email"
                 />
+                {fieldErrors.email ? <span id="report-email-error" className="mt-1 block text-sm text-danger">{t(fieldErrors.email)}</span> : null}
               </label>
               <label className="block text-sm font-medium">
                 {t("reportProvince")}
@@ -216,6 +233,7 @@ export function ReportPage() {
                   onChange={(e) => setBody(e.target.value)}
                   onFocus={scrollField}
                 />
+                {fieldErrors.body ? <span id="report-body-error" className="mt-1 block text-sm text-danger">{t(fieldErrors.body)}</span> : null}
               </label>
               <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
               {formError ? (

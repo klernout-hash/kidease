@@ -3813,5 +3813,10 @@
   "videoCallStarted": "Nagsimula ang video call",
   "videoCallJoinShort": "Sumali",
   "videoCallIncoming": "Papasok na video call",
-  "videoCallDecline": "Hindi ngayon"
+  "videoCallDecline": "Hindi ngayon",
+  "voiceCheckingMic": "Sinusuri ang mikropono…",
+  "voiceNoMic": "Walang nakitang mikropono. Magkabit ng isa o gamitin ang iyong telepono.",
+  "reportNameRequired": "Ilagay ang iyong pangalan.",
+  "reportEmailInvalid": "Maglagay ng email tulad ng name@example.ca.",
+  "reportMessageRequired": "Sabihin sa amin kung ano ang mali sa listing."
 }

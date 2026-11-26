@@ -72,9 +72,20 @@ export {
 
 const BEARER_KEY = "grok-auth.bearer-token";
 
+/**
+ * Only the live preview (partitioned iframe, no cookies) needs a bearer.
+ * On kidease.ca, the Vercel previews and the phone apps, the HttpOnly session
+ * cookie is the source of truth. A saved bearer there goes stale when the app
+ * rotates the session token (EM6: Pixel 8 signed out on the first tap), and
+ * Better Auth lets the bearer override the good cookie. Drop it instead.
+ */
 export function getBearerToken(): string | null {
   if (typeof window === "undefined") return null;
   try {
+    if (!inLivePreview()) {
+      window.sessionStorage.removeItem(BEARER_KEY);
+      return null;
+    }
     return window.sessionStorage.getItem(BEARER_KEY);
   } catch {
     return null;
@@ -90,7 +101,7 @@ export function captureAuthTokenFromResponse(response: Response): void {
 function setBearerToken(token: string | null): void {
   if (typeof window === "undefined") return;
   try {
-    if (token) window.sessionStorage.setItem(BEARER_KEY, token);
+    if (token && inLivePreview()) window.sessionStorage.setItem(BEARER_KEY, token);
     else window.sessionStorage.removeItem(BEARER_KEY);
   } catch {
     /* storage unavailable: ignore */

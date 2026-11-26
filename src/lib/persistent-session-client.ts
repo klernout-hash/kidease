@@ -136,7 +136,22 @@ async function reregisterPush(): Promise<void> {
   }
 }
 
-async function refreshShell(): Promise<void> {
+let refreshing: Promise<void> | null = null;
+
+/**
+ * One refresh at a time. Boot and the resume listener used to rotate in
+ * parallel with the same secret. The loser's secret became previous_hash, and
+ * presenting it again after the 2-minute grace revoked the whole session.
+ */
+function refreshShell(): Promise<void> {
+  if (refreshing) return refreshing;
+  refreshing = refreshShellOnce().finally(() => {
+    refreshing = null;
+  });
+  return refreshing;
+}
+
+async function refreshShellOnce(): Promise<void> {
   const token = await secureGet(REFRESH_KEY);
   const { refreshPersistentSession } = await import("@/lib/server/persistent-session");
   const result = await refreshPersistentSession({ data: { refreshToken: token || "" } });

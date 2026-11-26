@@ -3813,5 +3813,10 @@
   "videoCallStarted": "بدأت مكالمة الفيديو",
   "videoCallJoinShort": "انضمام",
   "videoCallIncoming": "مكالمة فيديو واردة",
-  "videoCallDecline": "ليس الآن"
+  "videoCallDecline": "ليس الآن",
+  "voiceCheckingMic": "جارٍ فحص الميكروفون…",
+  "voiceNoMic": "لم يُعثر على ميكروفون. وصّل واحدًا أو استخدم هاتفك.",
+  "reportNameRequired": "اكتب اسمك.",
+  "reportEmailInvalid": "اكتب بريدًا إلكترونيًا مثل name@example.ca.",
+  "reportMessageRequired": "أخبرنا بما هو خطأ في هذه القائمة."
 }

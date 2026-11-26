@@ -332,7 +332,7 @@ function RootDocument() {
   const huaweiReview = Route.useRouteContext({ select: (s) => s.huaweiReview === true });
   const { locale } = useCopy();
   const lang =
-    pathLocale(pathname) === "fr" || locale === "fr" ? "fr-CA" : locale === "en" ? "en" : localeTag(locale);
+    pathLocale(pathname) === "fr" || locale === "fr" ? "fr-CA" : locale === "en" ? "en-CA" : localeTag(locale);
   return (
     <html
       lang={lang}

@@ -52,7 +52,6 @@ import {
   assignPostAuthDest,
   captureLoginFunnel,
   continueAfterSignIn,
-  LOGIN_STALL_MS,
   loginErrorCallbackUrl,
   twoFactorPageUrl,
   waitForSignedInSession,
@@ -70,6 +69,7 @@ import {
   ADMIN_IDLE_CHECK_MS,
   adminAutoContinueDecision,
   LOGIN_CONTINUE_MS,
+  LOGIN_FORM_STALL_MS,
   LOGIN_POST_MS,
   LOGIN_BOUNCE_KEY,
   PASSWORD_CONTINUE_MESSAGE,
@@ -426,7 +426,7 @@ export function LoginScreen({
       setBusy(released.busy);
       setStalled(true);
       setError(oauthErrorText(search.error) || released.error);
-    }, LOGIN_STALL_MS);
+    }, LOGIN_FORM_STALL_MS);
     return () => window.clearTimeout(id);
   }, [busy, oauthErrorText, search.error]);
 

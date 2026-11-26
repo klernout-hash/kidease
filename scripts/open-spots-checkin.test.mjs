@@ -8,6 +8,8 @@ import {
   applyOpenSpotsBand,
   checkinDispatchPlan,
   checkinEmailText,
+  checkinQaAllows,
+  parseCheckinQaAllowlist,
   checkinSmsText,
   checkinWeekKey,
   viewsWindowStart,
@@ -76,4 +78,24 @@ test("open spots check-in stays off and does not invent an age split", () => {
   assert.match(server, /last_vacancy_updated_at = now\(\)/);
   assert.match(server, /daycare_views/);
   assert.match(readFileSync(join(root, "vercel.json"), "utf8"), /\/api\/open-spots-checkin/);
+});
+
+test("QA allowlist mode sends only to listed emails and phones (PD2)", () => {
+  const off = parseCheckinQaAllowlist("");
+  assert.equal(off.active, false);
+  assert.equal(checkinQaAllows(off, "email", "owner@daycare.ca"), true);
+  assert.equal(parseCheckinQaAllowlist("*").active, false);
+  const qa = parseCheckinQaAllowlist(" QA@KidEase.ca, +1 (204) 555-0100 ;bad");
+  assert.equal(qa.active, true);
+  assert.equal(checkinQaAllows(qa, "email", "qa@kidease.ca"), true);
+  assert.equal(checkinQaAllows(qa, "email", "owner@daycare.ca"), false);
+  assert.equal(checkinQaAllows(qa, "email", null), false);
+  assert.equal(checkinQaAllows(qa, "phone", "204-555-0100"), true);
+  assert.equal(checkinQaAllows(qa, "phone", "12045550100"), true);
+  assert.equal(checkinQaAllows(qa, "phone", "2045550199"), false);
+  const job = readFileSync(join(root, "src/lib/server/open-spots-checkin.ts"), "utf8");
+  assert.match(job, /OPEN_SPOTS_CHECKIN_QA_ALLOWLIST/);
+  assert.match(job, /emailAllowed/);
+  assert.match(job, /phoneAllowed/);
+  assert.match(readFileSync(join(root, ".env.example"), "utf8"), /^OPEN_SPOTS_CHECKIN_QA_ALLOWLIST=$/m);
 });
