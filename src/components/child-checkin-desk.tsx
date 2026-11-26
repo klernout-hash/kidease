@@ -370,7 +370,8 @@ export function ChildCheckHistory() {
               <div className="mt-3 border-t border-border pt-3" data-ke="parent-absence-notice">
                 <h3 className="text-sm font-semibold">{t("careParentNoticeDay").replace("{date}", child.localDay)}</h3>
                 <p className="mt-1 text-sm text-muted">{t("careParentNoticeLead")}</p>
-                {child.parentReport ? (
+                {/* Once the centre checks the child in, the parent's absence report is stale (B-org #44). */}
+                {child.parentReport && !child.events.some((event) => event.action === "check_in") ? (
                   <p className="mt-2 text-sm" data-ke="parent-reported-absence">
                     {t("careParentReported").replace("{status}", t(child.parentReport === "sick" ? "careSick" : child.parentReport === "vacation" ? "careVacation" : "careAbsent"))}
                   </p>

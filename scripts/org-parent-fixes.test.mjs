@@ -76,3 +76,8 @@ test("org #43: the family invite never says both 'they get an email' and 'we do 
   assert.match(copy, /linkEmailed: "We emailed this link to them\. You can also copy it here\."/);
   assert.match(copy, /linkEmailed: "Nous avons envoyé ce lien par courriel/);
 });
+
+test("org #44: a parent absence report is hidden once the child is checked in", () => {
+  const desk = src("src/components/child-checkin-desk.tsx");
+  assert.match(desk, /\{child\.parentReport && !child\.events\.some\(\(event\) => event\.action === "check_in"\) \? \(\s+<p className="mt-2 text-sm" data-ke="parent-reported-absence">/);
+});
