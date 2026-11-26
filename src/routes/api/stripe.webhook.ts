@@ -98,7 +98,7 @@ async function run(request: Request) {
       (type === "invoice.paid" && centreBill)
     ) {
       try {
-        bill = await applyStripeBillEvent({ type, object });
+        bill = await applyStripeBillEvent({ type, object, livemode: (event as { livemode?: boolean }).livemode === true });
       } catch (err) {
         console.error("[kidease-bill] webhook apply failed", err);
         releaseStripeEventClaim(event.id);

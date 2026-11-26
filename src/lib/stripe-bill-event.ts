@@ -11,6 +11,13 @@ export type StripeBillObject = {
   charges?: { data?: Array<{ id?: string; receipt_url?: string | null }> } | null;
   receipt_url?: string | null;
   status?: string | null;
+  livemode?: boolean | null;
+  currency?: string | null;
+  amount?: number | null;
+  amount_total?: number | null;
+  amount_received?: number | null;
+  amount_paid?: number | null;
+  amount_captured?: number | null;
 };
 
 export type StripeBillRef = {
@@ -20,6 +27,10 @@ export type StripeBillRef = {
   chargeId: string | null;
   receiptUrl: string | null;
   paid: boolean;
+  livemode: boolean | null;
+  /** What Stripe says was collected, in cents. Null when the object does not say. */
+  amountCents: number | null;
+  currency: string | null;
 };
 
 function asId(value: string | { id?: string } | null | undefined): string | null {
@@ -31,6 +42,18 @@ function asId(value: string | { id?: string } | null | undefined): string | null
 function pickMeta(obj: StripeBillObject): string | null {
   const meta = obj.metadata || {};
   return (meta.bill_id || meta.invoice_id || obj.client_reference_id || "").trim() || null;
+}
+
+function cents(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isInteger(value) ? value : null;
+}
+
+function collectedCents(data: StripeBillObject, kind: string, type: string): number | null {
+  if (kind === "checkout.session" || type.startsWith("checkout.session")) return cents(data.amount_total);
+  if (kind === "payment_intent" || type.startsWith("payment_intent")) return cents(data.amount_received);
+  if (kind === "invoice" || type.startsWith("invoice")) return cents(data.amount_paid);
+  if (kind === "charge" || type.startsWith("charge")) return cents(data.amount_captured ?? data.amount);
+  return null;
 }
 
 export function extractStripeBillRef(obj: StripeBillObject | null | undefined, type = ""): StripeBillRef {
@@ -66,5 +89,23 @@ export function extractStripeBillRef(obj: StripeBillObject | null | undefined, t
     chargeId,
     receiptUrl,
     paid,
+    livemode: typeof data.livemode === "boolean" ? data.livemode : null,
+    amountCents: collectedCents(data, kind, type),
+    currency: typeof data.currency === "string" && data.currency.trim() ? data.currency.trim().toLowerCase() : null,
   };
+}
+
+/**
+ * A paid Stripe object settles a bill only when it was made in the Stripe mode
+ * that bill routes to, for exactly the bill amount, in the bill currency.
+ * A missing livemode or amount never settles a bill.
+ */
+export function stripePaymentSettlesBill(
+  ref: Pick<StripeBillRef, "livemode" | "amountCents" | "currency">,
+  bill: { mode: "test" | "live"; amountCents: number; currency: string },
+): boolean {
+  if (ref.livemode === null || ref.livemode !== (bill.mode === "live")) return false;
+  if (ref.amountCents === null || ref.amountCents !== bill.amountCents) return false;
+  if (ref.currency !== null && ref.currency !== (bill.currency || "cad").toLowerCase()) return false;
+  return true;
 }
