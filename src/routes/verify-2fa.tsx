@@ -409,7 +409,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
           )}
         </p>
         <form ref={formRef} method="post" action={isFrPath(pathname) ? "/fr/verify-2fa" : "/verify-2fa"} className="mt-6 space-y-3 ph-no-capture" onSubmit={onSubmit}>
-          <OtpCodeField value={code} onChange={onCodeChange} disabled={busy} label={show("Verification code")} />
+          {/* Remember comes before the code: typing the 6th digit submits, so the box must be ticked first (gov #32). */}
           <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
             <input
               type="checkbox"
@@ -433,6 +433,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               </span>
             </span>
           </label>
+          <OtpCodeField value={code} onChange={onCodeChange} disabled={busy} label={show("Verification code")} />
           <TurnstileField
             onToken={onToken}
             resetSignal={resetSignal}

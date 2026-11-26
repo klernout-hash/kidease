@@ -47,3 +47,11 @@ test("gov #31: deliberate aliases match in EN and FR", () => {
     assert.ok(src(`src/routes/fr.gov_.${leaf}.tsx`).includes(`href: "/fr/gov/${target}"`), `fr ${leaf}`);
   }
 });
+
+test("gov #32: Remember this device sits before the code field, so it can be ticked before auto-submit", () => {
+  const page = src("src/routes/verify-2fa.tsx");
+  const remember = page.indexOf('data-ke="remember-device"');
+  const code = page.indexOf("<OtpCodeField value={code}");
+  assert.ok(remember > 0 && code > 0 && remember < code, "checkbox renders first");
+  assert.match(page, /onChange=\{\(e\) => setRemember\(e\.target\.checked\)\}\s+disabled=\{busy\}/);
+});
