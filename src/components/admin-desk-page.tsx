@@ -868,6 +868,11 @@ export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: Admi
             <LeadStatPanel stat={stat} count={leadCounts[ADMIN_LEAD_STAT_META[stat].countKey]} />
           ) : (
             <section className="mt-8">
+              {canUseOperatorTools(session?.email) ? (
+                <h2 className="mb-3 font-display text-xl" id="admin-site-tools" data-ke="admin-site-tools">
+                  Site tools
+                </h2>
+              ) : null}
               {canUseOperatorTools(session?.email) ? <LocationChecker /> : null}
               {catalogHealth && canUseOperatorTools(session?.email) ? (
                 <p

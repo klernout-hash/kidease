@@ -64,6 +64,8 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "ai", label: "AI usage", hint: "Calls, cost, failures", labelKey: "adminNavAi", hintKey: "adminNavAiHint", href: "/admin-ai" },
     { id: "features", label: "Features", hint: "On, off, or a split", labelKey: "adminNavFeatures", hintKey: "adminNavFeaturesHint", href: "/admin/features" },
     { id: "outbound", label: "Outbound safety", hint: "Switches, daily limits, test mode", labelKey: "adminNavOutbound", hintKey: "adminNavOutboundHint", href: "/admin/outbound" },
+    // Admin desk test #35: these three already live on the Daycares tab. Kyle only (admin desk guard).
+    { id: "site-tools", label: "Site tools", hint: "QA listings toggle, site health, location checker", href: "/admin", search: { tab: "daycares", stat: "all" } },
     { id: "email-health", label: "Email health", hint: "Bounces and suppressed addresses", labelKey: "adminNavEmailHealth", href: "/admin-email-health" },
     { id: "connect", label: "Payments and payouts", hint: "Connect accounts, payouts, and charges", labelKey: "adminNavConnect", hintKey: "adminNavConnectHint", href: "/admin", search: { tab: "payouts" } },
     { id: "quickbooks", label: "QuickBooks", hint: "Saved for one centre at a time", labelKey: "adminNavQuickBooks", href: "/provider", search: { desk: "money" } },
@@ -505,7 +507,7 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
     { id: "listings-data", label: "Listings data", labelKey: "navListingsData", itemIds: ["daycares", "incomplete", "winnipeg", "vacancies", "ranking", "qc-home"] },
     { id: "support", label: "Support", labelKey: "support", itemIds: ["support", "support-inbox", "triage"] },
     { id: "people", label: "People and money", labelKey: "navPeopleMoney", itemIds: ["money", "quickbooks", "payroll", "subsidy-tool", "contracts", "government"] },
-    { id: "system", label: "System", labelKey: "navSystem", itemIds: ["activity", "ai", "features", "outbound", "email-health", "chat"] },
+    { id: "system", label: "System", labelKey: "navSystem", itemIds: ["site-tools", "activity", "ai", "features", "outbound", "email-health", "chat"] },
     { id: "account", label: "Account", labelKey: "account", itemIds: ["profile", "appearance", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", itemIds: ["notify-prefs", "security", "email-sms"] },
   ],

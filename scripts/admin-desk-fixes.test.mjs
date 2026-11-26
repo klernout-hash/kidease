@@ -34,3 +34,16 @@ test("admin #34: the queue pages 25 cards at a time and drops large inline photo
   assert.match(src("src/components/admin-review-card.tsx"), /statPage\.shown\.map/);
   assert.match(src("src/components/admin-desk-page.tsx"), /verifyPage\.shown\.map/);
 });
+
+test("admin #35: Site tools in the admin System menu opens the tools on the Daycares tab, Kyle only", async () => {
+  const { visibleDeskNav } = await import("../src/lib/desk-nav.ts");
+  const item = visibleDeskNav("admin").find((row) => row.id === "site-tools");
+  assert.ok(item, "site-tools in admin nav");
+  assert.equal(item.href, "/admin");
+  assert.deepEqual(item.search, { tab: "daycares", stat: "all" });
+  assert.match(src("src/lib/desk-nav.ts"), /itemIds: \["site-tools", "activity"/);
+  const page = src("src/components/admin-desk-page.tsx");
+  assert.match(page, /canUseOperatorTools\(session\?\.email\) \? \(\s+<h2[^>]+data-ke="admin-site-tools"/);
+  assert.match(page, /canUseOperatorTools\(session\?\.email\) \? <LocationChecker \/> : null/);
+  assert.match(page, /Show QA fixtures/);
+});
