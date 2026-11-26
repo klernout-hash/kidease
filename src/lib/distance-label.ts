@@ -1,6 +1,8 @@
 import { approximateDistanceKm } from "./home-address-privacy.ts";
-import { UNMEASURED_DISTANCE_KM } from "./card-distance.ts";
 import { displayDistanceFor } from "./units.ts";
+
+/** Same value as UNMEASURED_DISTANCE_KM in card-distance (kept local so this stays out of a shared chunk). */
+const UNMEASURED_DISTANCE_KM = 1_000_000;
 
 /**
  * Distance text for a listing, or "" when we must not show one.

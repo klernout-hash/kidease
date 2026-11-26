@@ -11,6 +11,7 @@ export const MENU_LEAF_PATHS = [
   "/get-app",
   "/how-it-works",
   "/benefits",
+  "/vacancy-index",
   "/about",
   "/start-a-daycare",
   "/donate",
