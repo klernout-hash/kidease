@@ -24,8 +24,6 @@ import {
   ACTOR_CONFIRM_SUBJECT,
   resolveMailReplyTo,
   sendMailThenPersist,
-  VISITOR_AUTO_REPLY_SUBJECT,
-  VISITOR_AUTO_REPLY_TEXT,
 } from "@/lib/server/notify-mail";
 import { sendSms } from "@/lib/server/sms";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
@@ -547,23 +545,13 @@ async function sendActorConfirmation(kind: string, to: string) {
   });
 }
 
-async function sendVisitorAutoReply(to: string, name: string) {
+async function sendVisitorAutoReply(to: string, name: string, locale: "en" | "fr" = "en") {
   if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return;
-  const who = name.split(" ")[0] || "there";
-  const text = `Hi ${who},\n\n${VISITOR_AUTO_REPLY_TEXT}`;
-  const html = `<!doctype html>
-<html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
-    <tr><td style="padding:28px;font-size:16px;line-height:1.6;">
-      <p style="margin:0;">Hi ${esc(who)},</p>
-      <p>Thanks for sending your request to KidEase. One of our KidEase representatives will get back to you within 24 hours.</p>
-      <p>Thank you</p>
-      <p style="margin:24px 0 0;">Talk soon,<br/>KidEase Support<br/><a href="mailto:${SUPPORT_INBOX_EMAIL}" style="color:#1a3790;">${SUPPORT_INBOX_EMAIL}</a></p>
-    </td></tr>
-  </table>
-</body></html>`;
-  await deliverEmail(VISITOR_AUTO_REPLY_SUBJECT, text, html, to, SUPPORT_INBOX_EMAIL, {
-    branded: brandedNotice({ heading: VISITOR_AUTO_REPLY_SUBJECT, text }),
+  const { contactAutoReplyEmail } = await import("@/lib/notification-templates");
+  const { renderBrandedEmail, renderBrandedText } = await import("@/lib/email-layout");
+  const mail = contactAutoReplyEmail({ locale, name });
+  await deliverEmail(mail.subject, renderBrandedText(mail.branded), renderBrandedEmail(mail.branded), to, SUPPORT_INBOX_EMAIL, {
+    branded: mail.branded,
   });
 }
 

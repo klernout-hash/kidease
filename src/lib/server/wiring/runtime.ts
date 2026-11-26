@@ -56,6 +56,16 @@ export async function smsFacts(userId: string): Promise<{
   return { granted: true, blocked: Number(blocks[0]?.n) > 0, phone };
 }
 
+/** Recipient language for email/SMS: Quebec centres and French profiles get French. */
+export async function accountLocale(userId: string, province?: string | null): Promise<"en" | "fr"> {
+  if (String(province || "").trim().toUpperCase() === "QC") return "fr";
+  const sql = await db();
+  const rows = await sql<{ locale: string | null }>`
+    select locale from profiles where user_id = ${userId} limit 1
+  `.catch(() => [] as { locale: string | null }[]);
+  return String(rows[0]?.locale || "").toLowerCase().startsWith("fr") ? "fr" : "en";
+}
+
 export async function emailSuppressed(email: string): Promise<boolean> {
   const sql = await db();
   const rows = await sql<{ reason: string | null }>`
@@ -142,6 +152,14 @@ export async function deliverNotice(input: {
   wantEmail?: boolean;
   wantSms?: boolean;
   wantPush?: boolean;
+  /**
+   * Polished copy per recipient language. When set, email and text use it
+   * instead of the generic title/body (which still feed the in-app inbox and log).
+   */
+  compose?: (locale: "en" | "fr") => {
+    email?: import("@/lib/notification-templates").NotificationEmail;
+    sms?: string;
+  };
 }): Promise<NoticePlan> {
   const sms = await smsFacts(input.userId);
   const pushOn = evaluateFeatureFlag("FEATURE_PUSH");
@@ -175,26 +193,38 @@ export async function deliverNotice(input: {
       senderUserId: input.senderUserId ?? null,
     });
   }
+  const wantsMessage = plan.channels.includes("email") || plan.channels.includes("sms");
+  const locale = wantsMessage ? await accountLocale(input.userId, input.province) : "en";
+  const composed = wantsMessage && input.compose ? input.compose(locale) : {};
   if (plan.channels.includes("email")) {
     const email = await accountEmail(input.userId);
     if (email && !(await emailSuppressed(email))) {
       try {
         const { sendTransactionalMail } = await import("@/lib/transactional-mail");
-        const { brandedNotice } = await import("@/lib/email-layout");
-        const safe = input.body.replace(/[&<>]/g, (ch) => (ch === "&" ? "&amp;" : ch === "<" ? "&lt;" : "&gt;"));
+        const { brandedNotice, renderBrandedEmail, renderBrandedText } = await import("@/lib/email-layout");
         const origin = (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://www.kidease.ca").replace(/\/$/, "");
         const ctaHref = input.href.startsWith("http") ? input.href : `${origin}${input.href.startsWith("/") ? input.href : `/${input.href}`}`;
+        const fr = locale === "fr";
+        const subject = (composed.email?.subject || input.title).slice(0, 140);
+        const branded =
+          composed.email?.branded ??
+          brandedNotice({
+            locale,
+            heading: input.title.slice(0, 140),
+            text: input.body,
+            greeting: fr ? "Bonjour," : "Hi there,",
+            cta: /^https:\/\//i.test(ctaHref) ? { label: fr ? "Ouvrir dans KidEase" : "Open in KidEase", href: ctaHref } : undefined,
+            reason: fr
+              ? "Vous recevez cet avis de service parce que vous avez un compte KidEase."
+              : "You’re getting this service notice because you have a KidEase account.",
+          });
         await sendTransactionalMail({
           purpose: "customer_alert",
           to: email,
-          subject: input.title.slice(0, 140),
-          text: input.body,
-          html: `<p>${safe}</p>`,
-          branded: brandedNotice({
-            heading: input.title.slice(0, 140),
-            text: input.body,
-            cta: /^https:\/\//i.test(ctaHref) ? { label: "Open", href: ctaHref } : undefined,
-          }),
+          subject,
+          text: renderBrandedText(branded),
+          html: renderBrandedEmail(branded),
+          branded: branded,
         });
       } catch {
         console.error("[kidease-wiring] mail skipped", input.feature);
@@ -204,7 +234,10 @@ export async function deliverNotice(input: {
   if (plan.channels.includes("sms") && sms.phone) {
     try {
       const { sendSms } = await import("@/lib/server/sms");
-      await sendSms({ to: sms.phone, body: input.body, consentGranted: true, audience: "user" });
+      const { withSmsOptOut, gsmSafe } = await import("@/lib/notification-templates");
+      // Every text names KidEase and carries the STOP line (CASL).
+      const body = composed.sms || gsmSafe(withSmsOptOut(input.body, locale));
+      await sendSms({ to: sms.phone, body, consentGranted: true, audience: "user" });
     } catch {
       console.error("[kidease-wiring] text skipped", input.feature);
     }

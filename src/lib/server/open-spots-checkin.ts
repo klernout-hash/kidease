@@ -6,8 +6,6 @@ import {
   ageGroupsInRange,
   applyOpenSpotsBand,
   checkinDispatchPlan,
-  checkinEmailText,
-  checkinSmsText,
   checkinWeekKey,
   isOpenSpotsBand,
   viewsWindowStart,
@@ -17,6 +15,7 @@ import {
 import { openSpotsCheckinMailEnabled, openSpotsCheckinSmsEnabled, pushEnabled, subscriptionsEnabled } from "@/lib/features";
 import {
   openSpotsTokenSecret,
+  signOpenSpotsShortToken,
   signOpenSpotsToken,
   verifyOpenSpotsToken,
 } from "@/lib/open-spots-checkin-token";
@@ -69,9 +68,10 @@ async function loadClaimed(daycareId: string): Promise<DaycareRow | null> {
            coalesce(nullif(trim(d.contact_email), ''), owner.email) as email
     from daycares d
     left join lateral (
-      select p.user_id, u.email
+      select p.user_id, u.email, pr.locale
       from provider_daycares p
       join "user" u on u.id = p.user_id
+      left join profiles pr on pr.user_id = p.user_id
       where p.daycare_id = d.id
       order by u."createdAt" asc
       limit 1
@@ -164,21 +164,22 @@ export async function applyOpenSpotsLink(
   };
 }
 
-type Recipient = DaycareRow & { phone: string | null };
+type Recipient = DaycareRow & { phone: string | null; province?: string | null; owner_locale?: string | null };
 
 async function listRecipients(): Promise<Recipient[]> {
   const sql = await getSql();
   return sql<Recipient>`
     select d.id, d.name, d.phone, d.age_min_months, d.age_max_months,
            d.spots_infant, d.spots_toddler, d.spots_preschool, d.confirmed_open_spots,
-           d.slug, d.visibility, d.is_test,
-           owner.user_id as owner_id,
+           d.slug, d.visibility, d.is_test, d.province,
+           owner.user_id as owner_id, owner.locale as owner_locale,
            coalesce(nullif(trim(d.contact_email), ''), owner.email) as email
     from daycares d
     left join lateral (
-      select p.user_id, u.email
+      select p.user_id, u.email, pr.locale
       from provider_daycares p
       join "user" u on u.id = p.user_id
+      left join profiles pr on pr.user_id = p.user_id
       where p.daycare_id = d.id
       order by u."createdAt" asc
       limit 1
@@ -238,7 +239,8 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
   let pushed = 0;
   const plansOn = subscriptionsEnabled();
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
-  const { brandedNotice } = await import("@/lib/email-layout");
+  const { renderBrandedEmail, renderBrandedText } = await import("@/lib/email-layout");
+  const { noticeLocale, openSpotsCheckinEmail, openSpotsCheckinSms, SMS_ORIGIN } = await import("@/lib/notification-templates");
   const { isAdminOnlyListing } = await import("@/lib/listing-visibility");
   const { sendSms } = await import("@/lib/server/sms");
   const { readConsent } = await import("@/lib/server/casl-consent");
@@ -249,6 +251,7 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
     if (!token && !pushOn) continue;
     const views = await viewsThisWeek(row.id, now);
     const links = token ? pageLinks(token) : null;
+    const locale = String(row.province || "").toUpperCase() === "QC" ? "fr" : noticeLocale(row.owner_locale);
     if (pushOn && row.owner_id && !options.dryRun) {
       const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
       const href = token ? `${ORIGIN}/spots/${token}` : "/provider";
@@ -266,26 +269,22 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
     if (plan.email && row.email && links) {
       const claimed = options.dryRun ? true : await claimSend(row.id, week, "email");
       if (claimed && !options.dryRun) {
-        const mail = checkinEmailText({ name: row.name, views, links, plansOn });
+        const mail = openSpotsCheckinEmail({ locale, centreName: row.name, views, links, plansOn });
         try {
           await sendTransactionalMail({
             purpose: "open_spots_checkin",
             to: row.email,
             subject: mail.subject,
-            text: mail.text,
-            html: `<p>${mail.text.replace(/\n/g, "<br>")}</p>`,
+            text: renderBrandedText(mail.branded),
+            html: renderBrandedEmail(mail.branded),
+            unsubscribeUrl: mail.branded.unsubscribeUrl,
             aboutTestListing: isAdminOnlyListing({
               name: row.name,
               slug: row.slug,
               visibility: row.visibility,
               isTest: row.is_test,
             }),
-            branded: brandedNotice({
-              heading: mail.subject,
-              text: mail.text,
-              cta: { label: "Update open spots", href: links[0] },
-              reason: "You get this because you manage a listing on KidEase.",
-            }),
+            branded: mail.branded,
           });
           emailed += 1;
         } catch {
@@ -303,9 +302,11 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
         if (options.dryRun) sms += 1;
         continue;
       }
+      // Short signed link keeps the text to one segment.
+      const shortToken = signOpenSpotsShortToken({ daycareId: row.id, exp: now + OPEN_SPOTS_TOKEN_TTL_MS }, secret) || token;
       const result = await sendSms({
         to: row.phone,
-        body: checkinSmsText({ name: row.name, views, pageUrl: `${ORIGIN}/spots/${token}` }),
+        body: openSpotsCheckinSms({ locale, centreName: row.name, url: `${SMS_ORIGIN}/spots/${shortToken}` }),
         consentGranted: true,
         audience: "user",
       });

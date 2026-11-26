@@ -7,7 +7,7 @@ import { deskWaitlistVisible, isPublicListing, listingVisibilityInputFromDb } fr
 import { spotOfferMailEnabled, waitlistToolsEnabled } from "@/lib/features";
 import { moveInLine, placeFromRank, type RankRow } from "@/lib/gap-features";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
-import { brandedNotice, renderBrandedEmail, renderBrandedText } from "@/lib/email-layout";
+import { renderBrandedEmail, renderBrandedText } from "@/lib/email-layout";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import {
   auditRowsForOffer,
@@ -230,28 +230,40 @@ async function emailOffer(sql: Sql, offer: SpotOffer) {
     secret,
   );
   if (!token) return false;
-  const users = await sql<{ email: string | null }>`
-    select email from "user" where id = ${offer.userId} limit 1
+  const users = await sql<{ email: string | null; name: string | null; locale: string | null }>`
+    select u.email, u.name, p.locale
+    from "user" u left join profiles p on p.user_id = u.id
+    where u.id = ${offer.userId} limit 1
   `;
   const to = String(users[0]?.email || "").trim();
   if (!to) return false;
-  const centres = await sql<{ name: string; slug: string | null; visibility: string | null; is_test: number | null }>`
-    select name, slug, visibility, is_test from daycares where id = ${offer.daycareId} limit 1
+  const centres = await sql<{ name: string; slug: string | null; visibility: string | null; is_test: number | null; province: string | null }>`
+    select name, slug, visibility, is_test, province from daycares where id = ${offer.daycareId} limit 1
   `;
   const centre = centres[0];
-  const name = centre?.name || "A daycare";
+  const entry = await sql<{ child_label: string | null; start_date: string | null }>`
+    select child_label, start_date::text as start_date from daycare_waitlist where id = ${offer.waitlistId} limit 1
+  `.catch(() => [] as { child_label: string | null; start_date: string | null }[]);
+  const name = centre?.name || "";
+  const { noticeLocale, spotOfferEmail } = await import("@/lib/notification-templates");
+  const locale = String(centre?.province || "").toUpperCase() === "QC" ? "fr" : noticeLocale(users[0]?.locale);
   const href = `${SITEMAP_ORIGIN}/offer/${encodeURIComponent(token)}`;
-  const branded = brandedNotice({
-    heading: `${name} offered you a spot`,
-    text: `${name} offered you a spot on KidEase. You have 48 hours to answer. There is no waitlist fee.`,
-    cta: { label: "Answer now", href },
-    reason: "You get this because you asked KidEase about a spot.",
-    unsubscribeUrl: `${SITEMAP_ORIGIN}/unsubscribe`,
+  const mail = spotOfferEmail({
+    locale,
+    parentName: users[0]?.name,
+    childName: entry[0]?.child_label,
+    centreName: name,
+    ageGroup: offer.ageGroup,
+    startDate: entry[0]?.start_date,
+    expiresAt: offer.expiresAt,
+    province: centre?.province,
+    href,
   });
+  const branded = mail.branded;
   await sendTransactionalMail({
     purpose: "spot_offer",
     to,
-    subject: `${name} offered you a spot`,
+    subject: mail.subject,
     text: renderBrandedText(branded),
     html: renderBrandedEmail(branded),
     unsubscribeUrl: branded.unsubscribeUrl,

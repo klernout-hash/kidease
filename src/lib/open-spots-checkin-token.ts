@@ -23,12 +23,44 @@ export function signOpenSpotsToken(payload: OpenSpotsTokenPayload, secret: strin
   return `${data}.${hmacSha256(secret, data)}`;
 }
 
+const SHORT_ID = /^[A-Za-z0-9_-]{1,64}$/;
+const SHORT_SIG_LEN = 16;
+
+function shortSig(secret: string, id: string, exp36: string): string {
+  return hmacSha256(secret, `os2|${id}|${exp36}`).slice(0, SHORT_SIG_LEN);
+}
+
+/**
+ * Short form for text messages: "<daycareId>.<exp seconds, base36>.<16-char HMAC>".
+ * Same secret and expiry rules as the long token; keeps the SMS to one segment.
+ * Returns null when the id has characters the short form cannot carry.
+ */
+export function signOpenSpotsShortToken(payload: OpenSpotsTokenPayload, secret: string): string | null {
+  const id = String(payload.daycareId || "").trim();
+  if (!secret || !SHORT_ID.test(id) || !Number.isFinite(payload.exp)) return null;
+  const exp36 = Math.ceil(payload.exp / 1000).toString(36);
+  return `${id}.${exp36}.${shortSig(secret, id, exp36)}`;
+}
+
+function verifyShort(token: string, secret: string, nowMs: number): OpenSpotsTokenPayload | null {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  const [id, exp36, sig] = parts;
+  if (!SHORT_ID.test(id) || !/^[0-9a-z]{1,10}$/.test(exp36) || sig.length !== SHORT_SIG_LEN) return null;
+  const expected = shortSig(secret, id, exp36);
+  if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+  const exp = parseInt(exp36, 36) * 1000;
+  if (!Number.isFinite(exp) || exp < nowMs) return null;
+  return { daycareId: id, exp };
+}
+
 export function verifyOpenSpotsToken(
   token: string,
   secret: string,
   nowMs = Date.now(),
 ): OpenSpotsTokenPayload | null {
   const trimmed = String(token || "").trim();
+  if (secret && trimmed.split(".").length === 3) return verifyShort(trimmed, secret, nowMs);
   const dot = trimmed.lastIndexOf(".");
   if (dot < 1 || !secret) return null;
   const data = trimmed.slice(0, dot);

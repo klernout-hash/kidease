@@ -697,8 +697,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
 
 /**
  * BRANDED_EMAILS is env-only. It is not a PostHog product flag and it is not in
- * FEATURE_FLAG_KEYS. Unset or any value other than "1" / "true" keeps today's
- * email bodies. See docs/flags.md. Do not turn this on in production from code.
+ * FEATURE_FLAG_KEYS. Unset means the branded layout (the default); "0" / "false"
+ * is an emergency opt-out to the sender's plain body. See docs/flags.md.
  */
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
