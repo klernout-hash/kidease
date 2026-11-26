@@ -220,3 +220,11 @@ test("Iqaluit listings stored on a regional pin are found by an Iqaluit search",
     null,
   );
 });
+
+test("Wpg is shown as Winnipeg", async () => {
+  const { displayCityName } = await import("../src/lib/city-display.ts");
+  assert.equal(displayCityName("Wpg"), "Winnipeg");
+  assert.equal(displayCityName("WPG."), "Winnipeg");
+  assert.equal(displayCityName(" Brandon "), "Brandon");
+  assert.equal(displayCityName(null), "");
+});
