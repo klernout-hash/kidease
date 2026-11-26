@@ -221,6 +221,7 @@ test("EN footer labels stay in use order", () => {
   assert.deepEqual(labels(FOOTER_PARENTS, "en"), [
     "Search",
     "Browse by city",
+    "Open spots by province",
     "Compare",
     "Tour checklist",
     "Child care benefits program",
@@ -253,6 +254,7 @@ test("FR footer labels stay in the same use order", () => {
   assert.deepEqual(labels(FOOTER_PARENTS, "fr"), [
     "Rechercher",
     "Parcourir par ville",
+    "Places ouvertes par province",
     "Comparer",
     "Liste pour la visite",
     "Programme d’aide à la garde d’enfants",

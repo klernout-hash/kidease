@@ -90,6 +90,7 @@ import { Route as MenuRouteImport } from './routes/menu'
 import { Route as MilieuxFamiliauxRouteImport } from './routes/milieux-familiaux'
 import { Route as NeedCareFastRouteImport } from './routes/need-care-fast'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as OpenSpotsRouteImport } from './routes/open-spots'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as PayRouteImport } from './routes/pay'
 import { Route as PayPlanRouteImport } from './routes/pay-plan'
@@ -194,6 +195,7 @@ import { Route as FrMenuRouteImport } from './routes/fr.menu'
 import { Route as FrMilieuxFamiliauxRouteImport } from './routes/fr.milieux-familiaux'
 import { Route as FrNeedCareFastRouteImport } from './routes/fr.need-care-fast'
 import { Route as FrNotificationsRouteImport } from './routes/fr.notifications'
+import { Route as FrOpenSpotsRouteImport } from './routes/fr.open-spots'
 import { Route as FrParentRouteImport } from './routes/fr.parent'
 import { Route as FrPlansRouteImport } from './routes/fr.plans'
 import { Route as FrPricingRouteImport } from './routes/fr.pricing'
@@ -777,6 +779,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OpenSpotsRoute = OpenSpotsRouteImport.update({
+  id: '/open-spots',
+  path: '/open-spots',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ParentRoute = ParentRouteImport.update({
   id: '/parent',
   path: '/parent',
@@ -1296,6 +1303,11 @@ const FrNeedCareFastRoute = FrNeedCareFastRouteImport.update({
 const FrNotificationsRoute = FrNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrOpenSpotsRoute = FrOpenSpotsRouteImport.update({
+  id: '/open-spots',
+  path: '/open-spots',
   getParentRoute: () => FrRoute,
 } as any)
 const FrParentRoute = FrParentRouteImport.update({
@@ -2264,6 +2276,7 @@ export interface FileRoutesByFullPath {
   '/milieux-familiaux': typeof MilieuxFamiliauxRoute
   '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
+  '/open-spots': typeof OpenSpotsRoute
   '/parent': typeof ParentRouteWithChildren
   '/pay': typeof PayRouteWithChildren
   '/pay-plan': typeof PayPlanRoute
@@ -2367,6 +2380,7 @@ export interface FileRoutesByFullPath {
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/notifications': typeof FrNotificationsRoute
+  '/fr/open-spots': typeof FrOpenSpotsRoute
   '/fr/parent': typeof FrParentRouteWithChildren
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
@@ -2626,6 +2640,7 @@ export interface FileRoutesByTo {
   '/milieux-familiaux': typeof MilieuxFamiliauxRoute
   '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
+  '/open-spots': typeof OpenSpotsRoute
   '/parent': typeof ParentRouteWithChildren
   '/pay-plan': typeof PayPlanRoute
   '/plans': typeof PlansRoute
@@ -2728,6 +2743,7 @@ export interface FileRoutesByTo {
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/notifications': typeof FrNotificationsRoute
+  '/fr/open-spots': typeof FrOpenSpotsRoute
   '/fr/parent': typeof FrParentRouteWithChildren
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
@@ -2989,6 +3005,7 @@ export interface FileRoutesById {
   '/milieux-familiaux': typeof MilieuxFamiliauxRoute
   '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
+  '/open-spots': typeof OpenSpotsRoute
   '/parent': typeof ParentRouteWithChildren
   '/pay': typeof PayRouteWithChildren
   '/pay-plan': typeof PayPlanRoute
@@ -3092,6 +3109,7 @@ export interface FileRoutesById {
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/notifications': typeof FrNotificationsRoute
+  '/fr/open-spots': typeof FrOpenSpotsRoute
   '/fr/parent': typeof FrParentRouteWithChildren
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
@@ -3354,6 +3372,7 @@ export interface FileRouteTypes {
     | '/milieux-familiaux'
     | '/need-care-fast'
     | '/notifications'
+    | '/open-spots'
     | '/parent'
     | '/pay'
     | '/pay-plan'
@@ -3457,6 +3476,7 @@ export interface FileRouteTypes {
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
     | '/fr/notifications'
+    | '/fr/open-spots'
     | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
@@ -3716,6 +3736,7 @@ export interface FileRouteTypes {
     | '/milieux-familiaux'
     | '/need-care-fast'
     | '/notifications'
+    | '/open-spots'
     | '/parent'
     | '/pay-plan'
     | '/plans'
@@ -3818,6 +3839,7 @@ export interface FileRouteTypes {
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
     | '/fr/notifications'
+    | '/fr/open-spots'
     | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
@@ -4078,6 +4100,7 @@ export interface FileRouteTypes {
     | '/milieux-familiaux'
     | '/need-care-fast'
     | '/notifications'
+    | '/open-spots'
     | '/parent'
     | '/pay'
     | '/pay-plan'
@@ -4181,6 +4204,7 @@ export interface FileRouteTypes {
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
     | '/fr/notifications'
+    | '/fr/open-spots'
     | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
@@ -4442,6 +4466,7 @@ export interface RootRouteChildren {
   MilieuxFamiliauxRoute: typeof MilieuxFamiliauxRoute
   NeedCareFastRoute: typeof NeedCareFastRoute
   NotificationsRoute: typeof NotificationsRoute
+  OpenSpotsRoute: typeof OpenSpotsRoute
   ParentRoute: typeof ParentRouteWithChildren
   PayRoute: typeof PayRouteWithChildren
   PayPlanRoute: typeof PayPlanRoute
@@ -5167,6 +5192,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/open-spots': {
+      id: '/open-spots'
+      path: '/open-spots'
+      fullPath: '/open-spots'
+      preLoaderRoute: typeof OpenSpotsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parent': {
@@ -5895,6 +5927,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/fr/notifications'
       preLoaderRoute: typeof FrNotificationsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/open-spots': {
+      id: '/fr/open-spots'
+      path: '/open-spots'
+      fullPath: '/fr/open-spots'
+      preLoaderRoute: typeof FrOpenSpotsRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/parent': {
@@ -7267,6 +7306,7 @@ interface FrRouteChildren {
   FrMilieuxFamiliauxRoute: typeof FrMilieuxFamiliauxRoute
   FrNeedCareFastRoute: typeof FrNeedCareFastRoute
   FrNotificationsRoute: typeof FrNotificationsRoute
+  FrOpenSpotsRoute: typeof FrOpenSpotsRoute
   FrParentRoute: typeof FrParentRouteWithChildren
   FrPlansRoute: typeof FrPlansRoute
   FrPricingRoute: typeof FrPricingRoute
@@ -7366,6 +7406,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrMilieuxFamiliauxRoute: FrMilieuxFamiliauxRoute,
   FrNeedCareFastRoute: FrNeedCareFastRoute,
   FrNotificationsRoute: FrNotificationsRoute,
+  FrOpenSpotsRoute: FrOpenSpotsRoute,
   FrParentRoute: FrParentRouteWithChildren,
   FrPlansRoute: FrPlansRoute,
   FrPricingRoute: FrPricingRoute,
@@ -7656,6 +7697,7 @@ const rootRouteChildren: RootRouteChildren = {
   MilieuxFamiliauxRoute: MilieuxFamiliauxRoute,
   NeedCareFastRoute: NeedCareFastRoute,
   NotificationsRoute: NotificationsRoute,
+  OpenSpotsRoute: OpenSpotsRoute,
   ParentRoute: ParentRouteWithChildren,
   PayRoute: PayRouteWithChildren,
   PayPlanRoute: PayPlanRoute,

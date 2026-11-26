@@ -1774,6 +1774,20 @@ export function SearchScreen({
           secondaryTo: undefined as string | undefined,
           onSecondary: undefined as (() => void) | undefined,
         }
+      : openingsOn || avail === "open" || pioneerFilters.openings === "1"
+        ? {
+            // Open spots only come from centres. When none reported one, say so and offer the waitlist.
+            title: locale === "fr" ? "Aucune place libre signalée ici pour l’instant" : "No open spots reported here right now",
+            body: (locale === "fr"
+              ? "Les centres nous disent quand une place se libère. Aucun centre de ce secteur n’en a signalé récemment. Inscrivez-vous à la liste d’attente et nous vous avertirons."
+              : "Centres tell us when a spot opens. None in this area have reported one lately. Join the waitlist and we’ll let you know when one does.") as string | undefined,
+            action: locale === "fr" ? "Liste d’attente" : "Join the waitlist",
+            actionTo: localePath("/waitlist", locale) as string | undefined,
+            onAction: undefined as (() => void) | undefined,
+            secondary: locale === "fr" ? "Places ouvertes par province" : "Open spots by province",
+            secondaryTo: localePath("/vacancy-index", locale) as string | undefined,
+            onSecondary: undefined as (() => void) | undefined,
+          }
       : declaredFilters.length > 0
         ? {
             // Diet and support only match what a centre told us. Say so instead of "widen your radius".

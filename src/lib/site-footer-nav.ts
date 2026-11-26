@@ -19,6 +19,7 @@ function copyLink(to: string, labelKey: CopyKey, extra: Partial<FooterLinkDef> =
 export const FOOTER_PARENTS: FooterLinkDef[] = [
   copyLink("/search", "search"),
   copyLink("/cities", "browseCities"),
+  { to: "/vacancy-index", localePaired: true, labelEn: "Open spots by province", labelFr: "Places ouvertes par province" },
   copyLink("/compare", "compare"),
   copyLink("/tour-checklist", "tourChecklist"),
   copyLink("/benefits", "benefitsTab"),

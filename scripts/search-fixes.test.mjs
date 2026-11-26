@@ -107,3 +107,14 @@ test("old /daycares/:city links go to the city page in EN and FR", async () => {
     assert.ok(tree.includes(`'${id}'`), id);
   }
 });
+
+test("open spots: honest empty state, /open-spots redirect and footer link", async () => {
+  const { readFileSync } = await import("node:fs");
+  const search = readFileSync(new URL("../src/routes/search.tsx", import.meta.url), "utf8");
+  assert.match(search, /No open spots reported here right now/);
+  assert.match(search, /localePath\("\/vacancy-index", locale\)/);
+  const { FOOTER_PARENTS } = await import("../src/lib/site-footer-nav.ts");
+  assert.ok(FOOTER_PARENTS.some((link) => link.to === "/vacancy-index" && link.localePaired));
+  const tree = readFileSync(new URL("../src/routeTree.gen.ts", import.meta.url), "utf8");
+  assert.ok(tree.includes("'/open-spots'") && tree.includes("'/fr/open-spots'"));
+});
