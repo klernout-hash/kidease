@@ -9,14 +9,14 @@ import { getDaycaresByIds } from "@/lib/server/daycares";
 import { clearCompare, compareKeysFromSearch, readCompare, toggleCompareItem } from "@/lib/compare";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
 import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
-import {
-  canShowMatchScore,
-  honestVacancy,
-  parseCompareSlugs,
-} from "@/lib/now-loops";
+import { canShowMatchScore, honestVacancy, parseCompareSlugs } from "@/lib/now-loops";
 import { hasRealPhoto } from "@/lib/listing-readiness";
 import { parentListingFeesVisible, parentListingMonthlyFee } from "@/lib/public-fees";
-import { compareDistanceKm, compareDistancePoint, compareFeeAfterSubsidy } from "@/lib/compare-parent-fields";
+import {
+  compareDistanceKm,
+  compareDistancePoint,
+  compareFeeAfterSubsidy,
+} from "@/lib/compare-parent-fields";
 import { readDualAnchorPrefs, type AnchorPoint } from "@/lib/dual-anchor";
 import { compareParentFeeFlag } from "@/lib/server/compare-fields";
 import { compareEmptyKey } from "@/lib/copy-keys";
@@ -43,7 +43,12 @@ import { parentDistanceLabel } from "@/lib/distance-label";
 import { TrustSignals } from "@/components/trust-badge";
 import { money } from "@/lib/utils";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
-import { formatParentRating, parentRatingShown, ratingFloor, reviewReportCopy } from "@/lib/review-reports";
+import {
+  formatParentRating,
+  parentRatingShown,
+  ratingFloor,
+  reviewReportCopy,
+} from "@/lib/review-reports";
 import { reviewReportFlag } from "@/lib/server/review-reports";
 import { licenseRecordUrl } from "@/lib/licensing";
 import { calcDetourMinutes, commuteDetourLabel, haversineKm } from "@/lib/commute-isochrone";
@@ -113,19 +118,21 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
       setItems([]);
       return;
     }
-    void getDaycaresByIds({ data: keys }).then((rows) => {
-      setItems(rows);
-      for (const row of rows.slice(0, 4)) {
-        const ctx = rankingContextFor(row.id);
-        captureRankingEvent("compare_opened", {
-          listing_id: row.id,
-          position: ctx.position,
-          sort: ctx.sort,
-          variant: ctx.variant,
-          listing_count: rows.length,
-        });
-      }
-    }).catch(() => setItems([]));
+    void getDaycaresByIds({ data: keys })
+      .then((rows) => {
+        setItems(rows);
+        for (const row of rows.slice(0, 4)) {
+          const ctx = rankingContextFor(row.id);
+          captureRankingEvent("compare_opened", {
+            listing_id: row.id,
+            position: ctx.position,
+            sort: ctx.sort,
+            variant: ctx.variant,
+            listing_count: rows.length,
+          });
+        }
+      })
+      .catch(() => setItems([]));
   }, [compareMax, incoming.slugs]);
 
   return (
@@ -137,7 +144,13 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
             {items.length ? <p className="mt-2 text-muted">{t(compareEmptyKey(plansOn))}</p> : null}
           </div>
           {items.length ? (
-            <Button variant="secondary" onClick={() => { clearCompare(); setItems([]); }}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                clearCompare();
+                setItems([]);
+              }}
+            >
               {t("clearCompare")}
             </Button>
           ) : null}
@@ -151,8 +164,14 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                   <th className="p-2" />
                   {items.map((d) => (
                     <th key={d.id} className="p-2 align-bottom">
-                      <BuildingPhoto src={listingThumb(d.photos)} className="ke-card-photo mb-2 w-full rounded-lg object-cover" />
-                      <Link to={localePath(`/daycare/${d.slug}`, locale)} className="font-semibold hover:underline">
+                      <BuildingPhoto
+                        src={listingThumb(d.photos)}
+                        className="ke-card-photo mb-2 w-full rounded-lg object-cover"
+                      />
+                      <Link
+                        to={localePath(`/daycare/${d.slug}`, locale)}
+                        className="font-semibold hover:underline"
+                      >
                         {locale === "fr" ? d.nameFr : d.name}
                       </Link>
                     </th>
@@ -197,7 +216,11 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                   <th className="p-2 font-medium text-fg">{t("guestFavorite")}</th>
                   {items.map((d) => (
                     <td key={d.id} className="p-2">
-                      {d.guestFavorite ? <GuestFavoriteBadge item={d} compact /> : t("qualityNotFavorite")}
+                      {d.guestFavorite ? (
+                        <GuestFavoriteBadge item={d} compact />
+                      ) : (
+                        t("qualityNotFavorite")
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -205,7 +228,11 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                   <Row
                     label={reviewReportCopy(locale === "fr" ? "fr" : "en").compare}
                     values={items.map((d) =>
-                      parentRatingShown(d.parentReviewCount, d.parentRatingX10, ratingFloor(true, MIN_REVIEW_COUNT))
+                      parentRatingShown(
+                        d.parentReviewCount,
+                        d.parentRatingX10,
+                        ratingFloor(true, MIN_REVIEW_COUNT),
+                      )
                         ? `${formatParentRating(d.parentRatingX10 ?? 0)} (${d.parentReviewCount ?? 0})`
                         : reviewReportCopy(locale === "fr" ? "fr" : "en").few,
                     )}
@@ -239,31 +266,50 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                       ? compareDistanceKm(commutePoint, { lat: d.lat, lng: d.lng })
                       : doorDistanceKm(origin, { lat: d.lat, lng: d.lng });
                     return (
-                      parentDistanceLabel({ km, away: t("kmAway"), show: parentFeeOn ? Boolean(commutePoint) : located }) ||
-                      t("noneListed")
+                      parentDistanceLabel({
+                        km,
+                        away: t("kmAway"),
+                        locale,
+                        show: parentFeeOn ? Boolean(commutePoint) : located,
+                      }) || t("noneListed")
                     );
                   })}
                 />
                 <Row
                   label={t("language")}
-                  values={items.map((d) => formatListingLanguages(d.languages, locale === "fr" ? "fr" : "en") || t("noneListed"))}
+                  values={items.map(
+                    (d) =>
+                      formatListingLanguages(d.languages, locale === "fr" ? "fr" : "en") ||
+                      t("noneListed"),
+                  )}
                 />
                 <Row
                   label={t("compareCulture")}
-                  values={items.map((d) => formatListingCulture(d.amenities, locale === "fr" ? "fr" : "en") || t("noneListed"))}
+                  values={items.map(
+                    (d) =>
+                      formatListingCulture(d.amenities, locale === "fr" ? "fr" : "en") ||
+                      t("noneListed"),
+                  )}
                 />
                 {feesOn ? (
-                <Row
-                  mark="compare-fee-after"
-                  label={parentFeeOn ? (locale === "fr" ? "Tarif après le programme" : "Fee after the program") : t("compareFeesCwelcc")}
-                  values={items.map((d) => {
-                    if (parentFeeOn) return compareFeeAfterSubsidy(d, locale === "fr" ? "fr" : "en");
-                    const subsidy = listingSubsidy(d);
-                    if (subsidy) return subsidyLabel(subsidy, locale);
-                    const monthly = parentListingMonthlyFee(d);
-                    return monthly != null ? money(monthly, locale) : t("cardGapFees");
-                  })}
-                />
+                  <Row
+                    mark="compare-fee-after"
+                    label={
+                      parentFeeOn
+                        ? locale === "fr"
+                          ? "Tarif après le programme"
+                          : "Fee after the program"
+                        : t("compareFeesCwelcc")
+                    }
+                    values={items.map((d) => {
+                      if (parentFeeOn)
+                        return compareFeeAfterSubsidy(d, locale === "fr" ? "fr" : "en");
+                      const subsidy = listingSubsidy(d);
+                      if (subsidy) return subsidyLabel(subsidy, locale);
+                      const monthly = parentListingMonthlyFee(d);
+                      return monthly != null ? money(monthly, locale) : t("cardGapFees");
+                    })}
+                  />
                 ) : null}
                 <Row
                   label={locale === "fr" ? "Détour" : "Commute detour"}
@@ -282,7 +328,9 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                 />
                 <Row
                   label={t("comparePhoto")}
-                  values={items.map((d) => (hasRealPhoto(d) ? t("detailsReady") : t("cardGapPhoto")))}
+                  values={items.map((d) =>
+                    hasRealPhoto(d) ? t("detailsReady") : t("cardGapPhoto"),
+                  )}
                 />
                 <Row
                   label={t("compareVacancy")}
@@ -312,11 +360,23 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                   label={t("detailsIncomplete")}
                   values={items.map((d) => parentIncompleteLabel(d, t) ?? t("detailsReady"))}
                 />
-                <Row label={t("googleReviews")} values={items.map((d) => (d.reviewCount ? `${(d.ratingX10 / 10).toFixed(1)} (${d.reviewCount})` : t("noneListed")))} />
+                <Row
+                  label={t("googleReviews")}
+                  values={items.map((d) =>
+                    d.reviewCount
+                      ? `${(d.ratingX10 / 10).toFixed(1)} (${d.reviewCount})`
+                      : t("noneListed"),
+                  )}
+                />
                 <tr>
                   <th className="p-2 text-fg">{t("license")}</th>
                   {items.map((d) => {
-                    const href = licenseRecordUrl(d.province, d.name, d.licenseNumber, locale === "fr" ? "fr" : "en");
+                    const href = licenseRecordUrl(
+                      d.province,
+                      d.name,
+                      d.licenseNumber,
+                      locale === "fr" ? "fr" : "en",
+                    );
                     return (
                       <td key={d.id} className="p-2">
                         {href ? (
@@ -339,7 +399,14 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                   <th className="p-2" />
                   {items.map((d) => (
                     <td key={d.id} className="p-2">
-                      <button type="button" className="text-sm text-muted hover:text-fg" onClick={() => { toggleCompareItem({ id: d.id, slug: d.slug }); setItems((rows) => rows.filter((r) => r.id !== d.id)); }}>
+                      <button
+                        type="button"
+                        className="text-sm text-muted hover:text-fg"
+                        onClick={() => {
+                          toggleCompareItem({ id: d.id, slug: d.slug });
+                          setItems((rows) => rows.filter((r) => r.id !== d.id));
+                        }}
+                      >
                         {t("clearCompare")}
                       </button>
                     </td>
@@ -350,7 +417,12 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
           </div>
         ) : (
           <div className="mt-10 rounded-xl bg-surface ring-1 ring-border">
-            <EmptyState title={t("noCompare")} body={t(compareEmptyKey(plansOn))} action={t("emptyFindCare")} actionTo={localePath("/search", locale)} />
+            <EmptyState
+              title={t("noCompare")}
+              body={t(compareEmptyKey(plansOn))}
+              action={t("emptyFindCare")}
+              actionTo={localePath("/search", locale)}
+            />
           </div>
         )}
       </main>
@@ -363,7 +435,9 @@ function Row({ label, values, mark }: { label: string; values: string[]; mark?: 
     <tr className="border-t border-border" data-ke={mark}>
       <th className="p-2 font-medium text-fg">{label}</th>
       {values.map((v, i) => (
-        <td key={i} className="p-2">{v}</td>
+        <td key={i} className="p-2">
+          {v}
+        </td>
       ))}
     </tr>
   );

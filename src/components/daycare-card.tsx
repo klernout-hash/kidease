@@ -23,23 +23,20 @@ import { listingAgeChips, parentAgeLabel } from "@/lib/parent-listing";
 import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
-import { isCatalogueMatchedBadge, trustBadgesFor, type TrustBadge as TrustBadgeModel } from "@/lib/trust";
-import { publicApprovalEligible, publicBrowseClaim } from "@/lib/approve-live";
 import {
-  cardPhotoLicenseWarning,
-  showCardLivePill,
-} from "@/lib/card-photo-pills";
+  isCatalogueMatchedBadge,
+  trustBadgesFor,
+  type TrustBadge as TrustBadgeModel,
+} from "@/lib/trust";
+import { publicApprovalEligible, publicBrowseClaim } from "@/lib/approve-live";
+import { cardPhotoLicenseWarning, showCardLivePill } from "@/lib/card-photo-pills";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
 import { TrustBadge, TrustSignals } from "@/components/trust-badge";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { TopRatedBadge } from "@/components/top-rated-badge";
 import { MatchCue, UrgencyCue } from "@/components/rank-cues";
-import {
-  canShowMatchScore,
-  honestVacancy,
-  liveLookingGaps,
-} from "@/lib/now-loops";
+import { canShowMatchScore, honestVacancy, liveLookingGaps } from "@/lib/now-loops";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { parentRatingShown } from "@/lib/review-reports";
@@ -51,10 +48,7 @@ import { SponsoredMark } from "@/components/sponsored-mark";
 import { VerifiedCheck } from "@/components/verified-check";
 import { showVerifiedCheck } from "@/lib/listing-verified";
 
-function whyMatchLine(
-  item: Card,
-  t: (key: CopyKey) => string,
-): string {
+function whyMatchLine(item: Card, t: (key: CopyKey) => string): string {
   const who: Record<string, CopyKey> = {
     infant: "whySpotsWhoInfant",
     toddler: "whySpotsWhoToddler",
@@ -75,7 +69,9 @@ function whyMatchLine(
       const label = t(who[reason.age || "any"] ?? "whySpotsWhoAny");
       if (reason.days === 0) return t("whySpotsToday").replace("{who}", label);
       if (reason.days === 1) return t("whySpotsOne").replace("{who}", label);
-      return t("whySpotsDays").replace("{who}", label).replace("{n}", String(reason.days ?? ""));
+      return t("whySpotsDays")
+        .replace("{who}", label)
+        .replace("{n}", String(reason.days ?? ""));
     }
     if (reason.code === "subsidy") return t("whySubsidy");
     if (reason.code === "hours_days") return t("whyHoursDays");
@@ -259,6 +255,7 @@ export const DaycareCard = memo(function DaycareCard({
   const away = parentDistanceLabel({
     km: distanceKm,
     away: t("kmAway"),
+    locale,
     approximate: Boolean(item.addressProtected),
     about: t("homeAddressAbout"),
     show:
@@ -272,17 +269,23 @@ export const DaycareCard = memo(function DaycareCard({
         labelFar: farAway || labelFar,
       }),
   });
-  const photos = (Array.isArray(item.photos) ? item.photos : []).filter((p) => p && !p.includes("-logo"));
+  const photos = (Array.isArray(item.photos) ? item.photos : []).filter(
+    (p) => p && !p.includes("-logo"),
+  );
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
 
   const license = publicLicenseBadge(item);
   const cardTrust = trustBadgesFor(item, "card");
   const showLivePill = showCardLivePill(live, publicApprovalEligible(item));
   const licenseWarning =
-    license && !isCatalogueMatchedBadge(license) && cardPhotoLicenseWarning(license.id) ? license : null;
+    license && !isCatalogueMatchedBadge(license) && cardPhotoLicenseWarning(license.id)
+      ? license
+      : null;
   const loc = locale === "fr" ? "fr" : "en";
   const ages = standardAgeLabelsForListing(item, loc).join(" · ");
-  const hours = displayListingText(item.hours).replace(/Monday to Friday/i, "Mon–Fri").trim();
+  const hours = displayListingText(item.hours)
+    .replace(/Monday to Friday/i, "Mon–Fri")
+    .trim();
   const facility = classifyFacilityType(item);
   const typeLabel = facilityTypeSeoKind(facility.type, loc);
   const ageChips = listingAgeChips(item);
@@ -296,27 +299,45 @@ export const DaycareCard = memo(function DaycareCard({
         ? t("waitlist")
         : t(vacancy.labelKey);
   const openSpotsLine = vacancy.kind === "open" || vacancy.kind === "waitlist" ? spotsKnown : "";
-  const daily = showFees && (subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max" || subsidy?.subsidy_type === "qc_965");
+  const daily =
+    showFees &&
+    (subsidy?.subsidy_type === "ten" ||
+      subsidy?.subsidy_type === "ten_max" ||
+      subsidy?.subsidy_type === "qc_965");
   const priceAmount = !showFees
     ? ""
     : subsidy?.subsidy_type === "qc_965"
-    ? "$9.65"
-    : subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max"
-      ? "$10"
-      : feeOk
-        ? money(item.fromPrice, locale)
-        : "";
-  const priceUnit = subsidy?.subsidy_type === "ten_max" ? " / day max" : daily ? " / day" : feeOk ? t("month") : "";
+      ? "$9.65"
+      : subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max"
+        ? "$10"
+        : feeOk
+          ? money(item.fromPrice, locale)
+          : "";
+  const priceUnit =
+    subsidy?.subsidy_type === "ten_max" ? " / day max" : daily ? " / day" : feeOk ? t("month") : "";
   const priceOnPhoto = daily && !isOntarioCapMonthly(item.fromPrice);
-  const ontarioCap = showFees && String(item.province || "").toUpperCase() === "ON" && isOntarioCapMonthly(item.fromPrice);
-  const statusLine = openSpotsLine || (ontarioCap ? t("ontarioCapFee") : priceAmount ? `${priceAmount}${priceUnit}` : freshnessText);
-  const showParentAverage = parentRatingShown(item.parentReviewCount, item.parentRatingX10, ratingFloor);
+  const ontarioCap =
+    showFees &&
+    String(item.province || "").toUpperCase() === "ON" &&
+    isOntarioCapMonthly(item.fromPrice);
+  const statusLine =
+    openSpotsLine ||
+    (ontarioCap ? t("ontarioCapFee") : priceAmount ? `${priceAmount}${priceUnit}` : freshnessText);
+  const showParentAverage = parentRatingShown(
+    item.parentReviewCount,
+    item.parentRatingX10,
+    ratingFloor,
+  );
   const verifiedCheck = showVerifiedCheck(item);
 
   if (presentation === "visual") {
     const placeLine = [item.city, away].filter(Boolean).join(" · ");
     return (
-      <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group flex h-full w-full min-w-0 flex-col">
+      <article
+        data-slug={item.slug}
+        data-ke="visual-card"
+        className="ke-visual-card group flex h-full w-full min-w-0 flex-col"
+      >
         <div className="relative">
           <ListingAnchor slug={item.slug} label={name} className="block text-inherit no-underline">
             <PhotoCarousel
@@ -337,7 +358,12 @@ export const DaycareCard = memo(function DaycareCard({
           />
           {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
         </div>
-        <ListingAnchor slug={item.slug} data-ke="card-view-details" label={`${t("viewDetails")} · ${name}`} className="mt-2 flex min-h-11 flex-1 flex-col text-inherit no-underline">
+        <ListingAnchor
+          slug={item.slug}
+          data-ke="card-view-details"
+          label={`${t("viewDetails")} · ${name}`}
+          className="mt-2 flex min-h-11 flex-1 flex-col text-inherit no-underline"
+        >
           <div className="flex min-h-10 items-start gap-1" data-ke="card-name">
             <div className="flex min-w-0 flex-1 items-start gap-0.5">
               <h3 className="line-clamp-2 min-w-0 whitespace-normal text-[15px] min-h-10 font-semibold leading-5 tracking-[-0.02em] text-fg">
@@ -348,28 +374,46 @@ export const DaycareCard = memo(function DaycareCard({
             {showParentAverage ? (
               <span className="mt-0.5 inline-flex shrink-0 items-center gap-0.5 text-[13px] leading-none tabular-nums">
                 <Star className="size-3 fill-fg text-fg" strokeWidth={0} />
-                <span className="font-semibold">{((item.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
+                <span className="font-semibold">
+                  {((item.parentRatingX10 ?? 0) / 10).toFixed(1)}
+                </span>
                 <span className="font-normal text-muted">({item.parentReviewCount})</span>
               </span>
             ) : null}
           </div>
           <FoundingMemberBadge show={item.foundingMember} className="mt-1" />
-          <p className="mt-0.5 min-h-5 truncate text-[13px] leading-5 text-muted" data-far={farAway ? "1" : undefined}>
+          <p
+            className="mt-0.5 min-h-5 truncate text-[13px] leading-5 text-muted"
+            data-far={farAway ? "1" : undefined}
+          >
             {placeLine || "\u00a0"}
           </p>
           {ages ? (
-            <p className="mt-0.5 truncate text-[13px] font-medium leading-5 text-fg" data-ke="card-age-range">
+            <p
+              className="mt-0.5 truncate text-[13px] font-medium leading-5 text-fg"
+              data-ke="card-age-range"
+            >
               {ages}
             </p>
           ) : null}
         </ListingAnchor>
         {statusLine ? (
-          <p className="mt-0.5 truncate text-[13px] leading-5 text-fg" data-ke={openSpotsLine ? "card-open-spots" : "card-status"}>
+          <p
+            className="mt-0.5 truncate text-[13px] leading-5 text-fg"
+            data-ke={openSpotsLine ? "card-open-spots" : "card-status"}
+          >
             {ontarioCap ? (
-              <a href="https://www.ontario.ca/page/child-care-ontario" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline" target="_blank" rel="noreferrer">
+              <a
+                href="https://www.ontario.ca/page/child-care-ontario"
+                className="inline-flex min-h-11 items-center underline-offset-4 hover:underline"
+                target="_blank"
+                rel="noreferrer"
+              >
                 {t("ontarioCapFee")}
               </a>
-            ) : statusLine}
+            ) : (
+              statusLine
+            )}
           </p>
         ) : null}
       </article>
@@ -400,7 +444,12 @@ export const DaycareCard = memo(function DaycareCard({
         {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
       </div>
 
-      <ListingAnchor slug={item.slug} data-ke="card-view-details" label={`${t("viewDetails")} · ${name}`} className="flex min-h-11 flex-1 flex-col text-inherit no-underline">
+      <ListingAnchor
+        slug={item.slug}
+        data-ke="card-view-details"
+        label={`${t("viewDetails")} · ${name}`}
+        className="flex min-h-11 flex-1 flex-col text-inherit no-underline"
+      >
         <div className="mt-1 flex flex-1 flex-col space-y-px text-fg">
           <div className="flex items-start gap-1" data-ke="card-name">
             <div className="flex min-w-0 flex-1 items-start gap-0.5">
@@ -410,16 +459,24 @@ export const DaycareCard = memo(function DaycareCard({
               {verifiedCheck ? <VerifiedCheck className="shrink-0" /> : null}
             </div>
             {showParentAverage ? (
-              <span className="mt-px inline-flex shrink-0 items-center gap-0.5 text-[12px] leading-none tabular-nums" title={t("parentReviews")}>
+              <span
+                className="mt-px inline-flex shrink-0 items-center gap-0.5 text-[12px] leading-none tabular-nums"
+                title={t("parentReviews")}
+              >
                 <Star className="size-2.5 fill-fg text-fg" strokeWidth={0} />
-                <span className="font-semibold">{((item.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
+                <span className="font-semibold">
+                  {((item.parentRatingX10 ?? 0) / 10).toFixed(1)}
+                </span>
                 <span className="font-normal text-muted">({item.parentReviewCount})</span>
               </span>
             ) : null}
           </div>
           {!compact ? <FoundingMemberBadge show={item.foundingMember} className="mt-1" /> : null}
           {!compact && publicApprovalEligible(item) ? (
-            <p className="text-[11px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
+            <p
+              className="text-[11px] font-medium leading-4 text-primary"
+              data-ke="kidease-approved-marker"
+            >
               {t("kideaseApprovedMarker")}
             </p>
           ) : null}
@@ -435,19 +492,27 @@ export const DaycareCard = memo(function DaycareCard({
               {farAway ? ` · ${item.province}` : ""}
             </p>
           )}
-          {line3 ? <p className="truncate text-[12px] font-normal leading-4 text-muted">{line3}</p> : null}
+          {line3 ? (
+            <p className="truncate text-[12px] font-normal leading-4 text-muted">{line3}</p>
+          ) : null}
           {gaps.length ? (
             <p className="truncate text-[12px] font-normal leading-4 text-muted">
               {gaps.map((gap) => t(GAP_COPY[gap])).join(" · ")}
             </p>
           ) : incompleteLabel ? (
-            <p className="truncate text-[12px] font-normal leading-4 text-muted">{incompleteLabel}</p>
+            <p className="truncate text-[12px] font-normal leading-4 text-muted">
+              {incompleteLabel}
+            </p>
           ) : null}
           {spotsKnown ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
               <span className="ke-honesty">{spotsKnown}</span>
-              {!compact && !hollowPhoto && photoText ? <span className="ke-honesty">{photoText}</span> : null}
-              {!compact ? <MatchCue score={canShowMatchScore(item) ? item.matchScore : undefined} compact /> : null}
+              {!compact && !hollowPhoto && photoText ? (
+                <span className="ke-honesty">{photoText}</span>
+              ) : null}
+              {!compact ? (
+                <MatchCue score={canShowMatchScore(item) ? item.matchScore : undefined} compact />
+              ) : null}
               {!compact ? <UrgencyCue score={item.urgencyScore} compact /> : null}
             </div>
           ) : null}
@@ -459,7 +524,11 @@ export const DaycareCard = memo(function DaycareCard({
           <ProvincialOpeningLine item={item} />
           <div className="flex min-h-12 flex-wrap content-start gap-1 pt-1">
             {ageChips.map((band) => (
-              <span key={band} title={parentAgeLabel(band, loc)} className="max-w-full truncate rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium">
+              <span
+                key={band}
+                title={parentAgeLabel(band, loc)}
+                className="max-w-full truncate rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium"
+              >
                 {parentAgeLabel(band, loc)}
               </span>
             ))}

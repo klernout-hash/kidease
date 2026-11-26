@@ -17,7 +17,9 @@ export function qualifiesNeedCareFast(
   return age >= 0 && age <= NEED_CARE_FAST_MS;
 }
 
-export function rankNeedCareFast<T extends { distanceKm: number; confirmedAt: string }>(rows: readonly T[]): T[] {
+export function rankNeedCareFast<T extends { distanceKm: number; confirmedAt: string }>(
+  rows: readonly T[],
+): T[] {
   return rows
     .slice()
     .sort((a, b) => a.distanceKm - b.distanceKm || b.confirmedAt.localeCompare(a.confirmedAt))
@@ -46,6 +48,13 @@ export function streetRadiusNote(fr: boolean, radiusKm = 15): string {
     : `Licensed centres within ${radiusKm} km of this address.`;
 }
 
+/** "1.2 km away" in English, "à 1,2 km" in French (decimal comma). */
+export function fastDistanceLine(label: string, fr: boolean, away: string): string {
+  const text = String(label || "").trim();
+  if (!text) return "";
+  return fr ? `à ${text.replace(".", ",")}` : `${text} ${away}`;
+}
+
 export function formatFastKm(km: number): string {
   if (!Number.isFinite(km) || km < 0) return "";
   if (km < 10) return `${km.toFixed(1)} km`;
@@ -56,7 +65,11 @@ export function formatFastKm(km: number): string {
  * Search object for the public URL. An empty place stays off the query
  * string so /need-care-fast does not bounce to ?q=.
  */
-export function needCareFastRouteSearch(search: unknown): { q?: string; lat?: number; lng?: number } {
+export function needCareFastRouteSearch(search: unknown): {
+  q?: string;
+  lat?: number;
+  lng?: number;
+} {
   const parsed = parseNeedCareFastSearch(search);
   const out: { q?: string; lat?: number; lng?: number } = {};
   if (parsed.q) out.q = parsed.q;
@@ -68,14 +81,30 @@ export function needCareFastRouteSearch(search: unknown): { q?: string; lat?: nu
 }
 
 /** Never throws. /search can hand over an empty city, a number, or extra filters. */
-export function parseNeedCareFastSearch(search: unknown): { q: string; lat?: number; lng?: number } {
+export function parseNeedCareFastSearch(search: unknown): {
+  q: string;
+  lat?: number;
+  lng?: number;
+} {
   const bag = search && typeof search === "object" ? (search as Record<string, unknown>) : {};
-  const raw = typeof bag.q === "string" ? bag.q : Array.isArray(bag.q) && typeof bag.q[0] === "string" ? bag.q[0] : bag.city;
+  const raw =
+    typeof bag.q === "string"
+      ? bag.q
+      : Array.isArray(bag.q) && typeof bag.q[0] === "string"
+        ? bag.q[0]
+        : bag.city;
   const text = typeof raw === "string" ? raw : "";
   const out: { q: string; lat?: number; lng?: number } = { q: text.trim().slice(0, 80) };
   const lat = Number(bag.lat);
   const lng = Number(bag.lng);
-  if (Number.isFinite(lat) && Number.isFinite(lng) && lat >= 41 && lat <= 84 && lng >= -141 && lng <= -52) {
+  if (
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= 41 &&
+    lat <= 84 &&
+    lng >= -141 &&
+    lng <= -52
+  ) {
     out.lat = lat;
     out.lng = lng;
   }
@@ -121,20 +150,23 @@ export function normalizeNeedCareFastPage(data: unknown): NeedCareFastViewData {
   const hits = rawHits.flatMap((row): NeedCareFastHitView[] => {
     if (!row || typeof row !== "object") return [];
     const hit = row as Record<string, unknown>;
-    if (typeof hit.slug !== "string" || !hit.slug || typeof hit.name !== "string" || !hit.name) return [];
+    if (typeof hit.slug !== "string" || !hit.slug || typeof hit.name !== "string" || !hit.name)
+      return [];
     const spots = Number(hit.spots);
     const distanceKm = Number(hit.distanceKm);
-    return [{
-      id: typeof hit.id === "string" && hit.id ? hit.id : hit.slug,
-      slug: hit.slug,
-      name: hit.name,
-      city: typeof hit.city === "string" ? hit.city : "",
-      province: typeof hit.province === "string" ? hit.province : "",
-      spots: Number.isFinite(spots) ? spots : 0,
-      confirmedAt: typeof hit.confirmedAt === "string" ? hit.confirmedAt : "",
-      distanceKm: Number.isFinite(distanceKm) ? distanceKm : 0,
-      distanceLabel: typeof hit.distanceLabel === "string" ? hit.distanceLabel : "",
-    }];
+    return [
+      {
+        id: typeof hit.id === "string" && hit.id ? hit.id : hit.slug,
+        slug: hit.slug,
+        name: hit.name,
+        city: typeof hit.city === "string" ? hit.city : "",
+        province: typeof hit.province === "string" ? hit.province : "",
+        spots: Number.isFinite(spots) ? spots : 0,
+        confirmedAt: typeof hit.confirmedAt === "string" ? hit.confirmedAt : "",
+        distanceKm: Number.isFinite(distanceKm) ? distanceKm : 0,
+        distanceLabel: typeof hit.distanceLabel === "string" ? hit.distanceLabel : "",
+      },
+    ];
   });
   const radiusKm = Number(bag.radiusKm);
   return {

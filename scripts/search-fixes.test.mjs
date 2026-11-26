@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { register } from "node:module";
 import { test } from "node:test";
 import { UNMEASURED_DISTANCE_KM, shownCardKm } from "../src/lib/card-distance.ts";
@@ -227,4 +228,30 @@ test("Wpg is shown as Winnipeg", async () => {
   assert.equal(displayCityName("WPG."), "Winnipeg");
   assert.equal(displayCityName(" Brandon "), "Brandon");
   assert.equal(displayCityName(null), "");
+});
+
+test("French distances use a decimal comma and read 'à … km'", async () => {
+  const { parentDistanceLabel } = await import("../src/lib/distance-label.ts");
+  const { fastDistanceLine } = await import("../src/lib/need-care-fast.ts");
+  assert.equal(
+    parentDistanceLabel({ km: 0.5, away: "à {n} km", show: true, locale: "fr" }),
+    "à 0,5 km",
+  );
+  assert.equal(
+    parentDistanceLabel({ km: 0.5, away: "km away", show: true, locale: "en" }),
+    "0.5 km away",
+  );
+  assert.equal(fastDistanceLine("1.2 km", true, "de distance"), "à 1,2 km");
+  assert.equal(fastDistanceLine("1.2 km", false, "away"), "1.2 km away");
+  const fr = readFileSync(new URL("../src/lib/copy-fr.ts", import.meta.url), "utf8");
+  assert.match(fr, /kmAway: "à \{n\} km"/);
+  for (const file of [
+    "src/components/daycare-card.tsx",
+    "src/components/shortlist-compare.tsx",
+    "src/routes/compare.tsx",
+    "src/components/map-view.tsx",
+  ]) {
+    const src = readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
+    assert.match(src, /parentDistanceLabel\(\{[\s\S]{0,120}locale/, file);
+  }
 });
