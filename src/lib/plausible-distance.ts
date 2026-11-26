@@ -10,6 +10,8 @@ export function plausibleListingKm(
   originLabel?: string | null,
 ) {
   if (typeof km !== "number" || !Number.isFinite(km) || km <= 0) return false;
+  // 1,000,000 km is the unmeasured-pin sort key, never a distance.
+  if (km >= 1_000_000) return false;
   if (Math.round(km * 10) / 10 <= 0) return false;
   const listing = normalizeCityKey(listingCity || "");
   const origin = normalizeCityKey((originLabel || "").split(",")[0] || "");

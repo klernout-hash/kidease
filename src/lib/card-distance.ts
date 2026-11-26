@@ -109,3 +109,13 @@ export function cardSortKm(
   const door = doorDistanceKm(origin, point);
   return door == null ? UNMEASURED_DISTANCE_KM : door;
 }
+
+/**
+ * Kilometres a parent may see, or null. The sort sentinel (1,000,000 km),
+ * 0 km and non-numbers are never shown.
+ */
+export function shownCardKm(km: number | null | undefined): number | null {
+  if (typeof km !== "number" || !Number.isFinite(km)) return null;
+  if (km <= 0 || km >= UNMEASURED_DISTANCE_KM) return null;
+  return km;
+}

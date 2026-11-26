@@ -32,7 +32,10 @@ import {
   type MatchScheduleChoice,
   type MatchStartChoice,
 } from "@/lib/ai/smart-match-chat";
+import { isDoorPin, shownCardKm } from "@/lib/card-distance";
 import { geocode } from "@/lib/geo";
+import { plausibleListingKm } from "@/lib/plausible-distance";
+import { displayDistanceFor } from "@/lib/units";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { searchDaycares } from "@/lib/server/daycares";
 import { saveSearch } from "@/lib/server/saved-searches";
@@ -410,7 +413,12 @@ export function SmartMatchChat({
             <ul className="space-y-2">
               {results.map((item, index) => {
                 const title = locale === "fr" && item.nameFr ? item.nameFr : item.name;
+                const km = shownCardKm(item.distanceKm);
+                const measured =
+                  km != null && isDoorPin(item.lat, item.lng) && plausibleListingKm(km, item.city, searchPlace);
                 const why = whyParts(item.smartMatchWhy)
+                  // "Close to home/work" needs a real measured distance.
+                  .filter((part) => measured || (part.key !== "whyCloseHome" && part.key !== "whyCloseWork"))
                   .map((part) => {
                     let line = t(part.key as CopyKey);
                     if (part.who) line = line.replace("{who}", t(part.who as CopyKey));
@@ -424,8 +432,8 @@ export function SmartMatchChat({
                     <span className="block font-medium">{title}</span>
                     <span className="mt-0.5 block text-sm text-muted">
                       {item.city}
-                      {Number.isFinite(item.distanceKm)
-                        ? ` · ${t("smartMatchKm").replace("{n}", item.distanceKm.toFixed(1))}`
+                      {measured && km != null
+                        ? ` · ${t("smartMatchKm").replace("{n}", displayDistanceFor(km, "km", locale))}`
                         : ""}
                     </span>
                     {why ? <span className="mt-1 block text-sm">{why}</span> : null}
