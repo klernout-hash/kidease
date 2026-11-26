@@ -23,11 +23,11 @@ export const Route = createFileRoute("/api/screening-documents/$id")({
           const { requireUserId } = await import("@/lib/auth/verify.server");
           const userId = await requireUserId();
           const { assertSensitiveFileAccess } = await import("@/lib/server/second-factor");
-          await assertSensitiveFileAccess(userId, "provider");
           const row = await authorizeScreeningDocument({
             userId,
             documentId: params.id,
           });
+          await assertSensitiveFileAccess(userId, "provider");
           const file = await loadPrivateDoc(row.storage_ref, row.storage_mime, row.original_filename);
           return privateDocResponse(file);
         } catch (err) {

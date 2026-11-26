@@ -1232,7 +1232,7 @@ export function ProviderPage() {
           </details>
       ) : null}
 
-      {desk === "employees" && !staffDesk ? <BackgroundCheckDesk /> : null}
+      {desk === "employees" && centreOwner ? <BackgroundCheckDesk /> : null}
       {desk === "employees" && !staffDesk ? (
         <CentreEmployeesPanel canInvite={canInviteStaff} canEditPermissions={centreOwner} />
       ) : null}
@@ -1266,8 +1266,20 @@ export function ProviderPage() {
       {desk === "learning" ? <CurriculumPackDesk /> : null}
       {desk === "sites" ? <OrgOccupancyDesk /> : null}
 
-      {desk === "screening" ? <BackgroundCheckDesk /> : null}
-      {desk === "screening" ? <ProviderScreeningPanel /> : null}
+      {desk === "screening" ? (
+        centreOwner ? (
+          <>
+            <BackgroundCheckDesk />
+            <ProviderScreeningPanel />
+          </>
+        ) : !sessionReady ? (
+          <div role="status" aria-label={t("loading")}><DeskSkeleton /></div>
+        ) : (
+          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="staff-owner-only">
+            {t("employeeStaffForbidden")}
+          </p>
+        )
+      ) : null}
 
       {desk === "licence" && !centreOwner ? <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} /> : null}
 
