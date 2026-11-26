@@ -67,3 +67,12 @@ test("org #42: vault list refetches uncached after upload, and the share toast n
   const api = src("src/routes/api/family-documents.ts");
   assert.equal((api.match(/"Cache-Control": "private, no-store"/g) || []).length, 2);
 });
+
+test("org #43: the family invite never says both 'they get an email' and 'we do not email it'", () => {
+  const desk = src("src/components/coparent-desk.tsx");
+  assert.match(desk, /\{desk\.emailEnabled \? copy\.linkEmailed : copy\.noSend\}/);
+  assert.match(desk, /\{desk\.emailEnabled \? emailCopy\.lead : copy\.noSend\}/);
+  const copy = src("src/lib/coparent-copy.ts");
+  assert.match(copy, /linkEmailed: "We emailed this link to them\. You can also copy it here\."/);
+  assert.match(copy, /linkEmailed: "Nous avons envoyé ce lien par courriel/);
+});

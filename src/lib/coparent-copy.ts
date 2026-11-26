@@ -3,6 +3,8 @@ export type CoparentCopy = {
   lead: string;
   shared: string;
   noSend: string;
+  /** Email invites on: the link was emailed too. noSend must not show then (B-org #43). */
+  linkEmailed: string;
   offTitle: string;
   offBody: string;
   home: string;
@@ -32,6 +34,7 @@ const en: CoparentCopy = {
   lead: "Invite the other parent. They sign in with their own account.",
   shared: "You both see the same children, tours, waitlists, messages, and bills.",
   noSend: "This link stays in KidEase. We do not email or text it.",
+  linkEmailed: "We emailed this link to them. You can also copy it here.",
   offTitle: "Family sharing is off",
   offBody: "You can still add your child and send a request on your own.",
   home: "Go to your children",
@@ -70,6 +73,7 @@ const fr: CoparentCopy = {
   lead: "Invitez l’autre parent. Cette personne se connecte avec son propre compte.",
   shared: "Vous voyez les mêmes enfants, visites, listes d’attente, messages et factures.",
   noSend: "Ce lien reste dans KidEase. Nous ne l’envoyons pas par courriel ni par texto.",
+  linkEmailed: "Nous avons envoyé ce lien par courriel à cette personne. Vous pouvez aussi le copier ici.",
   offTitle: "Le partage familial est désactivé",
   offBody: "Vous pouvez encore ajouter votre enfant et envoyer une demande.",
   home: "Voir vos enfants",
