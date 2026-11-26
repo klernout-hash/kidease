@@ -44,6 +44,8 @@ export type VideoJoinStatus = {
   minutesEnforced: false;
   minutesMessage: string;
   noRecordingMessage: string;
+  /** Thread id for a parent ↔ centre room (ring + "Video call started" note). */
+  conversationId: string | null;
 };
 
 export type VideoJoinResult =
@@ -61,6 +63,7 @@ export type VideoJoinResult =
       minutesEnforced: false;
       minutesMessage: string;
       scaffold: string;
+      conversationId: string | null;
     }
   | {
       ok: false;
@@ -181,6 +184,36 @@ async function allowIfUnblocked(userId: string, parentUserId: string, daycareId:
   }
 }
 
+/**
+ * The parent ↔ centre pair behind a thread or booking room. Claim and admin
+ * rooms have no pair. Used for the matched-pairs rule and the thread note.
+ */
+async function videoPair(
+  kind: VideoSourceKind,
+  sourceId: string,
+  rawId: string,
+): Promise<{ parentUserId: string; daycareId: string; conversationId: string | null } | null> {
+  const sql = await getSql();
+  if (kind === "thread") {
+    const ids = rawId && rawId !== sourceId ? [rawId, sourceId] : [sourceId];
+    for (const cid of ids) {
+      const hit = await sql<{ id: string; user_id: string; daycare_id: string }>`
+        select id, user_id, daycare_id from conversations where id = ${cid} limit 1
+      `.catch(() => []);
+      if (hit[0]) return { parentUserId: hit[0].user_id, daycareId: hit[0].daycare_id, conversationId: hit[0].id };
+    }
+  }
+  if (kind === "thread" || kind === "booking") {
+    const booking = await sql<{ user_id: string; daycare_id: string; conversation_id: string | null }>`
+      select user_id, daycare_id, conversation_id from bookings where id = ${sourceId} limit 1
+    `.catch(() => []);
+    if (booking[0]) {
+      return { parentUserId: booking[0].user_id, daycareId: booking[0].daycare_id, conversationId: booking[0].conversation_id || null };
+    }
+  }
+  return null;
+}
+
 function rawThreadId(roomId: string): string {
   let v = String(roomId || "").trim();
   try {
@@ -200,7 +233,14 @@ async function buildStatus(userId: string, roomId: string): Promise<VideoJoinSta
   const subsOn = subscriptionsEnabled();
   const featureOn = videoArmed();
   const credentialsPresent = videoCredentialsPresent();
-  const gate = videoJoinGate({
+  const pair = allowed && desk !== "admin" ? await videoPair(parsed.kind, parsed.sourceId, rawThreadId(roomId)) : null;
+  // Matched pairs only: an accepted request, tour, booking, or enrolment. Fails closed.
+  let matched = true;
+  if (allowed && desk !== "admin" && pair) {
+    const { pairCallMatched } = await import("@/lib/server/call-match");
+    matched = await pairCallMatched(await getSql(), pair).catch(() => false);
+  }
+  const baseGate = videoJoinGate({
     featureOn,
     credentialsPresent,
     stripeLive,
@@ -213,6 +253,9 @@ async function buildStatus(userId: string, roomId: string): Promise<VideoJoinSta
     sdkWired: VIDEO_SDK_WIRED,
     allowScaffoldMint: desk === "admin",
   });
+  const gate: typeof baseGate = matched
+    ? baseGate
+    : { ok: false, reason: "not_matched", error: plusGateCopy("not_matched") };
   const reason = gate.ok ? null : gate.reason;
   return {
     roomId,
@@ -232,6 +275,7 @@ async function buildStatus(userId: string, roomId: string): Promise<VideoJoinSta
     minutesEnforced: false,
     minutesMessage: VIDEO_MINUTES_NOT_ENFORCED_MESSAGE,
     noRecordingMessage: VIDEO_NO_RECORDING_MESSAGE,
+    conversationId: pair?.conversationId ?? null,
   };
 }
 
@@ -289,6 +333,22 @@ export const joinVideoRoom = createServerFn({ method: "POST" })
       };
     }
 
+    // Reserve the estimate; /api/video/status settles it to real minutes.
+    const { recordMediaReservation } = await import("./media-usage");
+    await recordMediaReservation({
+      kind: "video",
+      twilioSid: room.roomSid,
+      identity: token.identity,
+      conversationId: status.conversationId,
+      userId: context.userId,
+      usageDay: media.day,
+      reservedMinutes: media.units,
+    });
+    if (status.conversationId && status.desk !== "admin") {
+      const { announceVideoCall } = await import("./video-announce");
+      await announceVideoCall({ conversationId: status.conversationId, userId: context.userId, desk: status.desk }).catch(() => null);
+    }
+
     void videoMinutesStatus(0);
     return {
       ok: true,
@@ -304,5 +364,6 @@ export const joinVideoRoom = createServerFn({ method: "POST" })
       minutesEnforced: false,
       minutesMessage: VIDEO_MINUTES_NOT_ENFORCED_MESSAGE,
       scaffold: VIDEO_SDK_SCAFFOLD_MESSAGE,
+      conversationId: status.conversationId,
     };
   });

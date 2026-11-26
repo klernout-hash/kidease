@@ -14,6 +14,7 @@ import {
   controlsFromRows,
   forcedOffFlags,
   normalizeControlEdit,
+  outboundDay,
   type OutboundControls,
 } from "@/lib/outbound-controls";
 import { blockedMessage, createOutboundGate, registerOutboundGates, type OutboundStore } from "@/lib/outbound-gate-core";
@@ -126,18 +127,22 @@ export const gateOutboundEmail = outboundGate.gateEmail;
 export const gateOutboundSms = outboundGate.gateSms;
 
 /**
- * One video join or call start. Twilio does not report call length back yet,
- * so each counts as the admin "minutes per call" setting toward the media cap.
+ * One video join or placed call. The admin "minutes per call" setting is
+ * reserved toward the media cap first; a signed Twilio report later settles
+ * it to real minutes (see src/lib/server/media-usage.ts).
  */
-export async function gateMediaSession(kind: "video" | "voice"): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function gateMediaSession(
+  kind: "video" | "voice",
+): Promise<{ ok: true; units: number; day: string } | { ok: false; error: string }> {
   let c: OutboundControls;
   try {
     c = await outboundGate.controls();
   } catch {
     return { ok: false, error: blockedMessage("controls_unavailable") };
   }
+  const day = outboundDay();
   const r = await gateOutbound({ channel: "media", units: c.mediaMinutesPerSession, label: kind });
-  if (r.allow) return { ok: true };
+  if (r.allow) return { ok: true, units: c.mediaMinutesPerSession, day };
   return { ok: false, error: blockedMessage(r.reason) };
 }
 

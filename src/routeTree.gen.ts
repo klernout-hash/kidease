@@ -126,7 +126,6 @@ import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
 import { Route as ApiAlexaRouteImport } from './routes/api/alexa'
 import { Route as ApiAutomationsRouteImport } from './routes/api/automations'
 import { Route as ApiBackgroundCheckFilesRouteImport } from './routes/api/background-check-files'
-import { Route as ApiStaffResumeRouteImport } from './routes/api/staff-resume'
 import { Route as ApiCentreLeadAlertsRouteImport } from './routes/api/centre-lead-alerts'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
@@ -143,6 +142,7 @@ import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screenin
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiSpotOffersRouteImport } from './routes/api/spot-offers'
+import { Route as ApiStaffResumeRouteImport } from './routes/api/staff-resume'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BackgroundChecksCodeRouteImport } from './routes/background-checks.$code'
@@ -319,9 +319,11 @@ import { Route as ApiScreeningDocumentsIdRouteImport } from './routes/api/screen
 import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
+import { Route as ApiVideoStatusRouteImport } from './routes/api/video.status'
 import { Route as ApiVoiceConnectRouteImport } from './routes/api/voice.connect'
 import { Route as ApiVoiceIncomingRouteImport } from './routes/api/voice.incoming'
 import { Route as ApiVoiceRecordingRouteImport } from './routes/api/voice.recording'
+import { Route as ApiVoiceStatusRouteImport } from './routes/api/voice.status'
 import { Route as ApiWebhooksResendRouteImport } from './routes/api/webhooks.resend'
 import { Route as DaycareCityAgeRouteImport } from './routes/daycare.$city.$age'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
@@ -954,11 +956,6 @@ const ApiBackgroundCheckFilesRoute = ApiBackgroundCheckFilesRouteImport.update({
   path: '/api/background-check-files',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiStaffResumeRoute = ApiStaffResumeRouteImport.update({
-  id: '/api/staff-resume',
-  path: '/api/staff-resume',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiCentreLeadAlertsRoute = ApiCentreLeadAlertsRouteImport.update({
   id: '/api/centre-lead-alerts',
   path: '/api/centre-lead-alerts',
@@ -1037,6 +1034,11 @@ const ApiSeedCatalogRoute = ApiSeedCatalogRouteImport.update({
 const ApiSpotOffersRoute = ApiSpotOffersRouteImport.update({
   id: '/api/spot-offers',
   path: '/api/spot-offers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStaffResumeRoute = ApiStaffResumeRouteImport.update({
+  id: '/api/staff-resume',
+  path: '/api/staff-resume',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
@@ -1923,6 +1925,11 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVideoStatusRoute = ApiVideoStatusRouteImport.update({
+  id: '/api/video/status',
+  path: '/api/video/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiVoiceConnectRoute = ApiVoiceConnectRouteImport.update({
   id: '/api/voice/connect',
   path: '/api/voice/connect',
@@ -1936,6 +1943,11 @@ const ApiVoiceIncomingRoute = ApiVoiceIncomingRouteImport.update({
 const ApiVoiceRecordingRoute = ApiVoiceRecordingRouteImport.update({
   id: '/api/voice/recording',
   path: '/api/voice/recording',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVoiceStatusRoute = ApiVoiceStatusRouteImport.update({
+  id: '/api/voice/status',
+  path: '/api/voice/status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiWebhooksResendRoute = ApiWebhooksResendRouteImport.update({
@@ -2282,7 +2294,6 @@ export interface FileRoutesByFullPath {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2299,6 +2310,7 @@ export interface FileRoutesByFullPath {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -2475,9 +2487,11 @@ export interface FileRoutesByFullPath {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/video/status': typeof ApiVideoStatusRoute
   '/api/voice/connect': typeof ApiVoiceConnectRoute
   '/api/voice/incoming': typeof ApiVoiceIncomingRoute
   '/api/voice/recording': typeof ApiVoiceRecordingRoute
+  '/api/voice/status': typeof ApiVoiceStatusRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
@@ -2640,7 +2654,6 @@ export interface FileRoutesByTo {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2657,6 +2670,7 @@ export interface FileRoutesByTo {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -2833,9 +2847,11 @@ export interface FileRoutesByTo {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/video/status': typeof ApiVideoStatusRoute
   '/api/voice/connect': typeof ApiVoiceConnectRoute
   '/api/voice/incoming': typeof ApiVoiceIncomingRoute
   '/api/voice/recording': typeof ApiVoiceRecordingRoute
+  '/api/voice/status': typeof ApiVoiceStatusRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
@@ -3001,7 +3017,6 @@ export interface FileRoutesById {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -3018,6 +3033,7 @@ export interface FileRoutesById {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -3194,9 +3210,11 @@ export interface FileRoutesById {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/video/status': typeof ApiVideoStatusRoute
   '/api/voice/connect': typeof ApiVoiceConnectRoute
   '/api/voice/incoming': typeof ApiVoiceIncomingRoute
   '/api/voice/recording': typeof ApiVoiceRecordingRoute
+  '/api/voice/status': typeof ApiVoiceStatusRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
@@ -3363,7 +3381,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3380,6 +3397,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -3556,9 +3574,11 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/video/status'
     | '/api/voice/connect'
     | '/api/voice/incoming'
     | '/api/voice/recording'
+    | '/api/voice/status'
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
@@ -3721,7 +3741,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3738,6 +3757,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -3914,9 +3934,11 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/video/status'
     | '/api/voice/connect'
     | '/api/voice/incoming'
     | '/api/voice/recording'
+    | '/api/voice/status'
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
@@ -4081,7 +4103,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -4098,6 +4119,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -4274,9 +4296,11 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/video/status'
     | '/api/voice/connect'
     | '/api/voice/incoming'
     | '/api/voice/recording'
+    | '/api/voice/status'
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
@@ -4439,7 +4463,6 @@ export interface RootRouteChildren {
   ApiAlexaRoute: typeof ApiAlexaRoute
   ApiAutomationsRoute: typeof ApiAutomationsRoute
   ApiBackgroundCheckFilesRoute: typeof ApiBackgroundCheckFilesRouteWithChildren
-  ApiStaffResumeRoute: typeof ApiStaffResumeRoute
   ApiCentreLeadAlertsRoute: typeof ApiCentreLeadAlertsRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
@@ -4456,6 +4479,7 @@ export interface RootRouteChildren {
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   ApiSpotOffersRoute: typeof ApiSpotOffersRoute
+  ApiStaffResumeRoute: typeof ApiStaffResumeRoute
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BlogSlugRoute: typeof BlogSlugRoute
@@ -4552,9 +4576,11 @@ export interface RootRouteChildren {
   ApiSmsInboundRoute: typeof ApiSmsInboundRoute
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  ApiVideoStatusRoute: typeof ApiVideoStatusRoute
   ApiVoiceConnectRoute: typeof ApiVoiceConnectRoute
   ApiVoiceIncomingRoute: typeof ApiVoiceIncomingRoute
   ApiVoiceRecordingRoute: typeof ApiVoiceRecordingRoute
+  ApiVoiceStatusRoute: typeof ApiVoiceStatusRoute
   ApiWebhooksResendRoute: typeof ApiWebhooksResendRoute
   DaycareCityAgeRoute: typeof DaycareCityAgeRoute
   DaycareCityCityRoute: typeof DaycareCityCityRoute
@@ -5384,13 +5410,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBackgroundCheckFilesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/staff-resume': {
-      id: '/api/staff-resume'
-      path: '/api/staff-resume'
-      fullPath: '/api/staff-resume'
-      preLoaderRoute: typeof ApiStaffResumeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/centre-lead-alerts': {
       id: '/api/centre-lead-alerts'
       path: '/api/centre-lead-alerts'
@@ -5501,6 +5520,13 @@ declare module '@tanstack/react-router' {
       path: '/api/spot-offers'
       fullPath: '/api/spot-offers'
       preLoaderRoute: typeof ApiSpotOffersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/staff-resume': {
+      id: '/api/staff-resume'
+      path: '/api/staff-resume'
+      fullPath: '/api/staff-resume'
+      preLoaderRoute: typeof ApiStaffResumeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/tour-holds': {
@@ -6735,6 +6761,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/video/status': {
+      id: '/api/video/status'
+      path: '/api/video/status'
+      fullPath: '/api/video/status'
+      preLoaderRoute: typeof ApiVideoStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/voice/connect': {
       id: '/api/voice/connect'
       path: '/api/voice/connect'
@@ -6754,6 +6787,13 @@ declare module '@tanstack/react-router' {
       path: '/api/voice/recording'
       fullPath: '/api/voice/recording'
       preLoaderRoute: typeof ApiVoiceRecordingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/voice/status': {
+      id: '/api/voice/status'
+      path: '/api/voice/status'
+      fullPath: '/api/voice/status'
+      preLoaderRoute: typeof ApiVoiceStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/webhooks/resend': {
@@ -7627,7 +7667,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAlexaRoute: ApiAlexaRoute,
   ApiAutomationsRoute: ApiAutomationsRoute,
   ApiBackgroundCheckFilesRoute: ApiBackgroundCheckFilesRouteWithChildren,
-  ApiStaffResumeRoute: ApiStaffResumeRoute,
   ApiCentreLeadAlertsRoute: ApiCentreLeadAlertsRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,
@@ -7644,6 +7683,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   ApiSpotOffersRoute: ApiSpotOffersRoute,
+  ApiStaffResumeRoute: ApiStaffResumeRoute,
   ApiTourHoldsRoute: ApiTourHoldsRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BlogSlugRoute: BlogSlugRoute,
@@ -7740,9 +7780,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSmsInboundRoute: ApiSmsInboundRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  ApiVideoStatusRoute: ApiVideoStatusRoute,
   ApiVoiceConnectRoute: ApiVoiceConnectRoute,
   ApiVoiceIncomingRoute: ApiVoiceIncomingRoute,
   ApiVoiceRecordingRoute: ApiVoiceRecordingRoute,
+  ApiVoiceStatusRoute: ApiVoiceStatusRoute,
   ApiWebhooksResendRoute: ApiWebhooksResendRoute,
   DaycareCityAgeRoute: DaycareCityAgeRoute,
   DaycareCityCityRoute: DaycareCityCityRoute,

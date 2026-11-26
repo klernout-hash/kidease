@@ -91,18 +91,25 @@ const CALL_AND_PUSH_PERMISSIONS = [
   "android.permission.MODIFY_AUDIO_SETTINGS",
 ];
 
-function applyCallAndPushPermissions(manifest) {
-  if (HOLD_CALL_AND_PUSH_PERMISSIONS) {
-    for (const name of CALL_AND_PUSH_PERMISSIONS) {
-      manifest = stripAndroidPermission(manifest, name);
-    }
-    manifest = stripAndroidFeature(manifest, "android.hardware.camera");
-    manifest = stripAndroidFeature(manifest, "android.hardware.microphone");
-    return manifest;
-  }
-  for (const name of CALL_AND_PUSH_PERMISSIONS) {
-    manifest = ensureAndroidPermission(manifest, name);
-  }
+/**
+ * PREPARED, NOT RELEASED. Video and voice calls in the Android store app need
+ * camera + microphone, without waiting for push to ship. Only a build run with
+ * KIDEASE_ANDROID_CALL_MEDIA=1 declares these three (features stay optional,
+ * so devices without a camera can still install). Default builds are unchanged.
+ * MainActivity adds the KidEaseCallMedia UA token only when the package really
+ * declares CAMERA + RECORD_AUDIO, so the web shows call buttons only then.
+ */
+export const CALL_MEDIA_PERMISSIONS = [
+  "android.permission.CAMERA",
+  "android.permission.RECORD_AUDIO",
+  "android.permission.MODIFY_AUDIO_SETTINGS",
+];
+
+export function androidCallMediaRequested(env = process.env) {
+  return String(env.KIDEASE_ANDROID_CALL_MEDIA || "").trim() === "1";
+}
+
+function ensureOptionalFeatures(manifest) {
   for (const feature of ["android.hardware.camera", "android.hardware.microphone"]) {
     if (!manifest.includes(`android:name="${feature}"`)) {
       manifest = manifest.replace(
@@ -112,6 +119,25 @@ function applyCallAndPushPermissions(manifest) {
     }
   }
   return manifest;
+}
+
+export function applyCallAndPushPermissions(manifest, { callMedia = androidCallMediaRequested() } = {}) {
+  if (HOLD_CALL_AND_PUSH_PERMISSIONS) {
+    for (const name of CALL_AND_PUSH_PERMISSIONS) {
+      manifest = stripAndroidPermission(manifest, name);
+    }
+    manifest = stripAndroidFeature(manifest, "android.hardware.camera");
+    manifest = stripAndroidFeature(manifest, "android.hardware.microphone");
+    if (!callMedia) return manifest;
+    for (const name of CALL_MEDIA_PERMISSIONS) {
+      manifest = ensureAndroidPermission(manifest, name);
+    }
+    return ensureOptionalFeatures(manifest);
+  }
+  for (const name of CALL_AND_PUSH_PERMISSIONS) {
+    manifest = ensureAndroidPermission(manifest, name);
+  }
+  return ensureOptionalFeatures(manifest);
 }
 
 function upsertXmlString(xml, name, value) {

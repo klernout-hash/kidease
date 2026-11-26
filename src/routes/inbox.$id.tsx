@@ -1,6 +1,6 @@
 import { applyQuickReply, threadQuickReplies } from "@/lib/thread-quick-replies";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ThreadCallActions } from "@/components/thread-call-actions";
+import { ThreadCallActions, ThreadCallLockedNote, ThreadHeaderActions, useCallMediaBlocked } from "@/components/thread-call-actions";
 import { inboxSearch, parseInboxSearch, resolveInboxView } from "@/lib/inbox-view";
 import { privateReturnPath } from "@/lib/role-access";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
@@ -99,6 +99,8 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
   const replyDraftsOn = useAiFeatureFlag(AI_FLAGS.replyDrafts);
   const [videoSurface, setVideoSurface] = useState(false);
   const [voiceReady, setVoiceReady] = useState(false);
+  const [callsMatched, setCallsMatched] = useState(false);
+  const callMediaBlocked = useCallMediaBlocked();
   const [timeZone, setTimeZone] = useState("");
   const [details, setDetails] = useState<ConversationDetails | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -175,6 +177,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
     setCanWrite(res.canWrite !== false);
     setVideoSurface(Boolean(res.videoSurfaceEnabled));
     setVoiceReady(Boolean(res.voiceReady));
+    setCallsMatched(Boolean(res.callsMatched));
     setTimeZone(res.timeZone || "");
     if (res.isParent && next) {
       const billed = await listParentBills().catch(() => ({ bills: [] as Bill[] }));
@@ -385,6 +388,15 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             avatars={avatars}
             onDetails={() => setDetailOpen(true)}
             detailsDocked="900"
+            actions={
+              <ThreadHeaderActions
+                conversationId={id}
+                voiceReady={voiceReady}
+                videoReady={Boolean(videoSurface)}
+                matched={callsMatched}
+                blockSide={isParent ? "daycare" : "family"}
+              />
+            }
           />
         ) : (
           <div className="px-4 pt-4">
@@ -443,6 +455,8 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
               phoneAlerts={details?.phoneAlerts || []}
               peers={details?.participants || []}
               timeZone={timeZone || undefined}
+              conversationId={id}
+              videoJoinable={callsMatched && Boolean(videoSurface) && !callMediaBlocked}
             />
           ) : null}
         </div>
@@ -457,6 +471,10 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
         ) : fromDraft ? (
           <p className="px-4 pb-1 text-sm text-muted">{t("replyDraftLead")}</p>
         ) : null}
+        <ThreadCallLockedNote
+          show={loadState === "ready" && !callsMatched && (voiceReady || Boolean(videoSurface))}
+          viewer={isParent ? "parent" : "centre"}
+        />
         {loadState === "ready" && canWrite ? (
           <ThreadComposer
             inputId="thread-reply"
@@ -546,7 +564,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
                   </p>
                 ) : null}
                 <div className="space-y-2 border-t border-border pt-3" data-ke="inbox-safety">
-                  <ThreadCallActions conversationId={id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} />
+                  <ThreadCallActions conversationId={id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} matched={callsMatched} />
                   <SafetyReportButton target="thread" conversationId={id} />
                   <BlockMessagesButton conversationId={id} side={isParent ? "daycare" : "family"} />
                 </div>

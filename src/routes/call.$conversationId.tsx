@@ -7,12 +7,14 @@ import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getVoiceCallStatus, VOICE_OFF, type VoiceCallStatus } from "@/lib/server/voice-call";
 import { useCopy } from "@/lib/use-copy";
+import { CALL_NOT_MATCHED } from "@/lib/call-match";
+import { useCallMediaBlocked } from "@/components/thread-call-actions";
 
 export const Route = createFileRoute("/call/$conversationId")({
   head: () => ({
     meta: [
       { title: "Call · KidEase" },
-      { name: "description", content: "Call a daycare or a parent through KidEase. Phone numbers stay hidden." },
+      { name: "description", content: "An in-app call between a daycare and a parent in KidEase. No phone number is dialled." },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -25,6 +27,8 @@ function CallPage() {
   const { t } = useCopy();
   const [status, setStatus] = useState<VoiceCallStatus | null>(null);
   const [failed, setFailed] = useState(false);
+  // Android store apps without microphone permission (until the next build).
+  const appBlocked = useCallMediaBlocked();
 
   useEffect(() => {
     if (!user) return;
@@ -70,7 +74,8 @@ function CallPage() {
         <h1 className="mt-2 font-display text-3xl">{t("voiceCallTitle")}</h1>
         {lead ? <p className="mt-3 text-sm text-muted">{lead}</p> : null}
         {status?.peerLabel ? <p className="mt-2 text-sm font-medium">{status.peerLabel}</p> : null}
-        <p className="mt-3 text-sm text-muted" data-ke="media-permission-note">{t("mediaPermissionNote")}</p>
+        <p className="mt-3 text-sm font-medium" data-ke="call-in-app-note">{t("callsInAppNote")}</p>
+        <p className="mt-2 text-sm text-muted" data-ke="media-permission-note">{t("mediaPermissionNote")}</p>
 
         {!status && !failed ? <p className="mt-6 text-sm text-muted">{t("loading")}</p> : null}
 
@@ -85,18 +90,42 @@ function CallPage() {
           </div>
         ) : null}
 
-        {status && !status.allowed ? (
+        {status && appBlocked ? (
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="call-unavailable-app">
+            <p className="font-medium">{t("callsUnavailableTitle")}</p>
+            <p className="mt-2 text-sm text-muted">{t("callsUnavailableApp")}</p>
+            <Button variant="secondary" asChild className="mt-4">
+              <Link to="/inbox/$id" params={{ id: conversationId }}>
+                {t("voiceBackInbox")}
+              </Link>
+            </Button>
+          </div>
+        ) : null}
+
+        {!appBlocked && status && !status.allowed && status.error === CALL_NOT_MATCHED ? (
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="call-not-matched">
+            <p className="text-sm text-muted">{status.desk === "provider" ? t("callsLockedCentre") : t("callsNotMatched")}</p>
+            <Button variant="secondary" asChild className="mt-4">
+              <Link to="/inbox/$id" params={{ id: conversationId }}>
+                {t("voiceBackInbox")}
+              </Link>
+            </Button>
+          </div>
+        ) : null}
+
+        {!appBlocked && status && !status.allowed && status.error !== CALL_NOT_MATCHED && status.error !== VOICE_OFF ? (
           <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
-            <p className="text-sm text-muted">{status.error === VOICE_OFF ? t("voiceNoCredentials") : t("voiceUnavailable")}</p>
+            <p className="text-sm text-muted">{t("voiceUnavailable")}</p>
             <Button asChild className="mt-4">
               <Link to="/">{t("navHome")}</Link>
             </Button>
           </div>
         ) : null}
 
-        {status?.allowed && !status.credentialsPresent ? (
-          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
-            <p className="text-sm text-muted">{t("voiceNoCredentials")}</p>
+        {!appBlocked && status && (status.error === VOICE_OFF || (status.allowed && !status.credentialsPresent)) ? (
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="call-unavailable">
+            <p className="font-medium">{t("callsUnavailableTitle")}</p>
+            <p className="mt-2 text-sm text-muted">{t("callsUnavailable")}</p>
             <Button variant="secondary" asChild className="mt-4">
               <Link to="/inbox/$id" params={{ id: conversationId }}>
                 {t("voiceBackInbox")}
@@ -107,7 +136,7 @@ function CallPage() {
 
         </div>
         <div className="min-w-0">
-        {status?.allowed && status.credentialsPresent ? (
+        {!appBlocked && status?.allowed && status.credentialsPresent ? (
           <VoiceCallPanel conversationId={conversationId} />
         ) : null}
         </div>

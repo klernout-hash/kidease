@@ -38,6 +38,9 @@ const KidEaseToaster = lazy(() =>
 const IncomingCallListener = lazy(() =>
   import("@/components/incoming-call-listener").then((m) => ({ default: m.IncomingCallListener })),
 );
+const IncomingVideoAlert = lazy(() =>
+  import("@/components/incoming-video-alert").then((m) => ({ default: m.IncomingVideoAlert })),
+);
 const SuccessConfirmHost = lazy(() =>
   import("@/components/success-confirm").then((m) => ({ default: m.SuccessConfirmHost })),
 );
@@ -399,6 +402,7 @@ function RootDocument() {
           <LiveChatSlot />
           <AfterFirstPaint>
             <IncomingCallListener />
+            <IncomingVideoAlert />
           </AfterFirstPaint>
           </ViewAsProvider>
           <CookieConsentBanner />

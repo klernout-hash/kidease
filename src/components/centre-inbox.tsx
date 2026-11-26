@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ThreadCallActions } from "@/components/thread-call-actions";
+import { ThreadCallActions, ThreadCallLockedNote, ThreadHeaderActions, useCallMediaBlocked } from "@/components/thread-call-actions";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Inbox, Search, X } from "lucide-react";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import { DeskShell } from "@/components/desk-shell";
 import { InboxDetailRail } from "@/components/inbox-detail-rail";
 import { InboxMessageRow } from "@/components/inbox-row";
 import { PipelineBadge } from "@/components/pipeline-badge";
-import { BlockMessagesButton } from "@/components/safety-actions";
+import { BlockMessagesButton, SafetyReportButton } from "@/components/safety-actions";
 import { SupportDeskBar } from "@/components/support-desk-panel";
 import { ThreadComposer, ThreadHeader, ThreadTranscript } from "@/components/thread-chrome";
 import { Button } from "@/components/ui/button";
@@ -81,6 +81,8 @@ export function CentreInboxDesk({
   const [stateBusy, setStateBusy] = useState(false);
   const [videoSurface, setVideoSurface] = useState(false);
   const [voiceReady, setVoiceReady] = useState(false);
+  const [callsMatched, setCallsMatched] = useState(false);
+  const callMediaBlocked = useCallMediaBlocked();
   const [timeZone, setTimeZone] = useState("");
 
   const visible = useMemo(
@@ -145,6 +147,7 @@ export function CentreInboxDesk({
     setCanWrite(res.canWrite !== false);
     setVideoSurface(Boolean(res.videoSurfaceEnabled));
     setVoiceReady(Boolean(res.voiceReady));
+    setCallsMatched(Boolean(res.callsMatched));
     setTimeZone(res.timeZone || "");
     setThreadReady(true);
     const meta = await getConversationDetails({ data: { conversationId: id } }).catch(() => null);
@@ -418,6 +421,17 @@ export function CentreInboxDesk({
               image: person.image,
             }))}
             showDetails={false}
+            actions={
+              isOrphanInboxId(selected.id) ? null : (
+                <ThreadHeaderActions
+                  conversationId={selected.id}
+                  voiceReady={voiceReady}
+                  videoReady={Boolean(videoSurface)}
+                  matched={callsMatched}
+                  blockSide="family"
+                />
+              )
+            }
           />
           <button
             type="button"
@@ -493,6 +507,8 @@ export function CentreInboxDesk({
                 phoneAlerts={details?.phoneAlerts || []}
                 peers={details?.participants || []}
                 timeZone={timeZone || undefined}
+                conversationId={selected.id}
+                videoJoinable={callsMatched && Boolean(videoSurface) && !callMediaBlocked}
               />
             )}
           </div>
@@ -510,6 +526,8 @@ export function CentreInboxDesk({
               </Button>
             </div>
           ) : canWrite ? (
+            <>
+            <ThreadCallLockedNote show={threadReady && !callsMatched && (voiceReady || Boolean(videoSurface))} viewer="centre" />
             <ThreadComposer
               inputId="centre-thread-reply"
               value={body}
@@ -607,6 +625,7 @@ export function CentreInboxDesk({
                 </div>
               }
             />
+            </>
           ) : (
             <p className="px-4 py-3 text-sm text-muted">{t("threadReadOnly")}</p>
           )}
@@ -643,7 +662,8 @@ export function CentreInboxDesk({
         onToggleArchive={() => void onState("archive")}
       />
       <div className="space-y-3 border-t border-border px-4 py-4" data-ke="inbox-safety">
-        <ThreadCallActions conversationId={selected.id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} />
+        <ThreadCallActions conversationId={selected.id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} matched={callsMatched} />
+        <SafetyReportButton target="thread" conversationId={selected.id} />
         <BlockMessagesButton conversationId={selected.id} side="family" />
       </div>
       </>

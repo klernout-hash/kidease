@@ -120,6 +120,14 @@ The same hold applies to the Android store builds. Play, Samsung, Huawei, and Am
 
 `scripts/patch-native-permissions.mjs` has `HOLD_CALL_AND_PUSH_PERMISSIONS = true`. `npm run cap:permissions` strips those five permissions from `android/app/src/main/AndroidManifest.xml` and from the Huawei overlay, so a later sync cannot put them back by accident.
 
+#### Prepared, not released: calls without push (`KIDEASE_ANDROID_CALL_MEDIA=1`)
+
+Video and voice calls only need the camera and microphone, not push. A build run with `KIDEASE_ANDROID_CALL_MEDIA=1 npm run cap:permissions` keeps the hold for push (`POST_NOTIFICATIONS`, `USE_FULL_SCREEN_INTENT`) and adds back only `CAMERA`, `RECORD_AUDIO`, and `MODIFY_AUDIO_SETTINGS`, with the camera and microphone features `required="false"`. Default runs are unchanged, and the committed manifests do not declare them.
+
+`MainActivity` adds `KidEaseCallMedia` to the WebView User-Agent only when the installed package declares both `CAMERA` and `RECORD_AUDIO`. The site hides Call and Video in any Android store app without that token (`shellBlocksCallMedia` in `src/lib/call-match.ts`), so current store apps never show a dead button. iOS is not affected.
+
+Before a store release with the switch: re-check the Play Data safety and permissions declarations (camera, microphone) and the Samsung, Huawei, and Amazon equivalents. Kyle approves the release.
+
 When push and calling are ready to ship:
 
 1. Set `HOLD_CALL_AND_PUSH_PERMISSIONS` to `false` in `scripts/patch-native-permissions.mjs`.

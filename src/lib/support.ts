@@ -256,7 +256,7 @@ export const SUPPORT_MACROS: SupportMacro[] = [
   {
     id: "parent_plus",
     label: "Parent Plus",
-    body: "Parent Plus is a KidEase subscription (not centre tuition). Billing portal and plan status live on the parent desk. The only Plus gate today is a parent ↔ centre video tour, and video stays off until FEATURE_VIDEO is on. It does not change refund policy.",
+    body: "Parent Plus is a KidEase subscription (not centre tuition). Billing portal and plan status live on the parent desk. The only Plus gate is a parent ↔ centre video call, and it is waived while subscriptions are off. It does not change refund policy.",
   },
   {
     id: "trust_licence",

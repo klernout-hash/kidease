@@ -69,6 +69,9 @@ export async function identitiesForClientCall(input: {
     const parent = voiceIdentityForUser(parentId);
     return [...staff, parent].filter((id) => id && id !== voiceIdentityForUser(parsed.userId, "admin"));
   }
+  // Matched pairs only: an accepted request, tour, booking, or enrolment.
+  const { pairCallMatched } = await import("@/lib/server/call-match");
+  if (!(await pairCallMatched(sql, { parentUserId: parentId, daycareId, conversationId }))) return [];
   if (parsed.userId === parentId) return centreClientIdentities(daycareId);
   const { hasCentreDeskAccess } = await import("@/lib/server/centre-access");
   if (await hasCentreDeskAccess(sql, parsed.userId, daycareId)) {
