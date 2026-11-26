@@ -136,6 +136,9 @@ import { HostListingsDesk } from "@/components/host-listing-desk";
 const AgeOpenSpotsDesk = lazy(() =>
   import("@/components/age-open-spots-desk").then((m) => ({ default: m.AgeOpenSpotsDesk })),
 );
+const CentreWithdrawalNotices = lazy(() =>
+  import("@/components/withdrawal-notices").then((m) => ({ default: m.CentreWithdrawalNotices })),
+);
 const SpotOfferDesk = lazy(() =>
   import("@/components/spot-offer-desk").then((m) => ({ default: m.SpotOfferDesk })),
 );
@@ -832,6 +835,7 @@ export function ProviderPage() {
         )}
         {/* Family documents come after the enquiries. The block hides itself when there are none. */}
         {canWrite ? <CentreFamilyDocs hideWhenEmpty /> : null}
+        {canWrite ? <CentreWithdrawalNotices hideWhenEmpty /> : null}
         </div>
       ) : null}
 

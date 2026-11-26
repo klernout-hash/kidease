@@ -1368,6 +1368,11 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
       await sql`update conversations set last_at = now() where id = ${cid}`;
     }
     if (prev !== data.status) {
+      // Keep the parent's request card and bell in step with the owner's one-tap answer.
+      const { syncBookingLeadStatus } = await import("@/lib/server/pipeline-sync");
+      await syncBookingLeadStatus(sql, b.id, data.status, context.userId).catch(() => undefined);
+    }
+    if (prev !== data.status) {
       const { notifyWaitlistStatusChange } = await import("@/lib/server/waitlist-tracker");
       await notifyWaitlistStatusChange({
         userId: b.user_id,

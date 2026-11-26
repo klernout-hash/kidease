@@ -22,6 +22,7 @@ import {
 } from "@/components/listing-parent-pack";
 import { WaitlistOptIn } from "@/components/waitlist-opt-in";
 import { JoinWaitlist } from "@/components/join-waitlist";
+import { getListingPipelineState } from "@/lib/server/spot-offers";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo";
 import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto, primaryListingPhoto } from "@/lib/listing-photo";
@@ -288,6 +289,25 @@ export function Listing() {
       window.clearTimeout(watchdog);
     };
   }, [slug, reload]);
+
+  // A flagged QA account may request a spot on a hidden test listing (same rule as the server).
+  const [fixtureUsable, setFixtureUsable] = useState(false);
+  useEffect(() => {
+    const listing = data?.daycare;
+    if (!listing || !(listing.isTest || listing.visibility === "admin_only")) {
+      setFixtureUsable(false);
+      return;
+    }
+    let active = true;
+    void getListingPipelineState({ data: { daycareId: listing.id } })
+      .then((state) => {
+        if (active) setFixtureUsable(state.fixtureUsable);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [data]);
 
   useEffect(() => {
     if (!data) return;
@@ -565,7 +585,7 @@ export function Listing() {
     .map((amount) => publicMonthlyFee(amount, d))
     .filter((n): n is number => n != null && n > 0);
   const from = prices.length ? Math.min(...prices) : 0;
-  const live = Boolean(d.live);
+  const live = Boolean(d.live) || fixtureUsable;
   const known = Boolean(d.availabilityKnown);
   const licensed = publicLicenseBadge(d);
   const approved = publicApprovalEligible(d);

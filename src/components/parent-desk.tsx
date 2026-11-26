@@ -14,6 +14,7 @@ import { CareReminderForm } from "@/components/care-reminder-form";
 import { CoparentDesk } from "@/components/coparent-desk";
 import { PortfolioGaps } from "@/components/portfolio-gaps";
 import { ChildAgreementFile } from "@/components/parent-agreement-panel";
+import { pipelineCopy } from "@/lib/pipeline-copy";
 import { EmptyState } from "@/components/empty-state";
 import { FirstRunExample } from "@/components/first-run";
 import { KidNotebook } from "@/components/kid-art";
@@ -1043,6 +1044,17 @@ export function ParentDesk({
                         ) : undefined}
                       />
                       {c.id === activeChild?.id ? <ChildAgreementFile childId={c.id} /> : null}
+                      {c.id === activeChild?.id && familyCanWrite ? (
+                        <div className="px-3 pt-2">
+                          <Link
+                            to="/parent/withdrawal"
+                            className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                            data-ke="parent-give-notice"
+                          >
+                            {pipelineCopy(locale).withdrawalTitle}
+                          </Link>
+                        </div>
+                      ) : null}
                       {c.id === activeChild?.id ? <CareReminderForm childId={c.id} childName={c.name} /> : null}
                       {familyCanWrite ? (
                       <>
