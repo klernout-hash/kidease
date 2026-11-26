@@ -150,11 +150,15 @@ import { noteHappyMoment } from "@/lib/store-review";
 import { saveSearch } from "@/lib/server/saved-searches";
 import {
   defaultSearchName,
+  searchActiveFilters,
   searchSheetFilterCount,
   takeSavedSearchToApply,
+  type ActiveSearchFilter,
   type AgeBand,
   type SavedSearchFilters,
+  type SearchSheetFilterInput,
 } from "@/lib/saved-search";
+import { activeFilterLabel, declaredDetailFilters } from "@/lib/search-active-filters";
 import { CityHubLinks } from "@/components/city-hub-links";
 import { cityHubDefForPlace, cityHubPath } from "@/lib/city-hubs";
 import { normalizeProvinceCode } from "@/lib/location-lock";
@@ -1637,7 +1641,7 @@ export function SearchScreen({
     (openingsOn ? 1 : 0) +
     (resolvedCat && !isRailAge(resolvedCat) ? 1 : 0);
   const pioneerFilters = parsePioneerSearch(incoming as Record<string, unknown>);
-  const sheetFilterCount = searchSheetFilterCount({
+  const sheetFilterInput: SearchSheetFilterInput = {
     filters: {
       avail,
       ten,
@@ -1656,7 +1660,51 @@ export function SearchScreen({
     // Only `?cat=`. A category worked out from the age rail is not a filter.
     urlFacilityCategory: isFacilityExploreCategory(canonicalExploreCategory(incoming.cat)),
     pioneer: pioneerFilters,
-  });
+    careKeys,
+    licence,
+  };
+  // One chip per active filter; the Filters badge always equals the chip count.
+  const activeFilters = searchActiveFilters(sheetFilterInput);
+  const sheetFilterCount = searchSheetFilterCount(sheetFilterInput);
+  const declaredFilters = declaredDetailFilters(activeFilters);
+  function clearActiveFilter(item: ActiveSearchFilter) {
+    const flagSetters = {
+      ten: setTen, meals: setMeals, outdoor: setOutdoor, extended: setExtended,
+      infantOnly: setInfantOnly, catchmentOnly: setCatchmentOnly, confirmedOnly: setConfirmedOnly,
+      readyOnly: setReadyOnly, claimVerifiedOnly: setClaimVerifiedOnly,
+    } as const;
+    if (item.kind === "avail") setAvail("any");
+    else if (item.kind === "flag") flagSetters[item.key](false);
+    else if (item.kind === "favorites") setFavoritesOnly(false);
+    else if (item.kind === "careType") {
+      setCareType("any");
+      void navigate({ search: (prev) => ({ ...prev, care: undefined, page: undefined }) });
+    } else if (item.kind === "facility") {
+      void navigate({ search: (prev) => ({ ...prev, cat: undefined, page: undefined }) });
+    } else if (item.kind === "pioneer") {
+      void navigate({ search: (prev) => ({ ...prev, [item.key]: undefined, page: undefined }) });
+    } else if (item.kind === "spoken") {
+      const rest = String(pioneerFilters.spoken || "").split(",").filter((code) => code && code !== item.code).join(",");
+      void navigate({ search: (prev) => ({ ...prev, spoken: rest || undefined, page: undefined }) });
+    } else if (item.kind === "diet") writeDiet(careKeys.filter((key) => key !== item.key));
+    else if (item.kind === "licence") writeLicence(null);
+    else if (item.kind === "support") clearDeclaredFilters(["support"]);
+  }
+  function clearDeclaredFilters(kinds: Array<"support" | "diet"> = ["support", "diet"]) {
+    const dropSupport = kinds.includes("support");
+    const dropDiet = kinds.includes("diet");
+    if (dropSupport) setInclusive(false);
+    const keep = careKeys.filter((key) => (key === "special-needs" ? !dropSupport : !dropDiet));
+    setCareKeys(keep);
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        inclusive: dropSupport ? undefined : prev.inclusive,
+        diet: careKeysParam(keep) || undefined,
+        page: undefined,
+      }),
+    });
+  }
   // The saved work address is a commute anchor, not a filter: it gets its own chip.
   // Only show the commute chip when this search really uses a work place.
   // A stale stored anchor is never a default commute for a guest.
@@ -1726,6 +1774,22 @@ export function SearchScreen({
           secondaryTo: undefined as string | undefined,
           onSecondary: undefined as (() => void) | undefined,
         }
+      : declaredFilters.length > 0
+        ? {
+            // Diet and support only match what a centre told us. Say so instead of "widen your radius".
+            title:
+              locale === "fr"
+                ? `Aucun centre ici n’indique encore : ${declaredFilters.map((item) => activeFilterLabel(item, "fr", t)).join(", ")}`
+                : `No centres here list ${declaredFilters.map((item) => activeFilterLabel(item, "en", t)).join(" + ")} yet`,
+            body: (locale === "fr"
+              ? "Nous montrons seulement ce qu’un centre nous a dit. Les centres ajoutent ces détails quand ils réclament leur fiche. Retirez ce filtre ou inscrivez-vous à la liste d’attente pour être avisé."
+              : "We only show what a centre has told us. Centres add these details when they claim their listing. Remove this filter, or join the waitlist and we’ll let you know.") as string | undefined,
+            action: locale === "fr" ? "Retirer ce filtre" : "Remove this filter",
+            onAction: () => clearDeclaredFilters(),
+            secondary: locale === "fr" ? "Liste d’attente" : "Join the waitlist",
+            secondaryTo: localePath("/waitlist", locale) as string | undefined,
+            onSecondary: undefined as (() => void) | undefined,
+          }
       : extraFilters && (items?.length ?? 0) > 0 && resolvedExploreCategory(incoming)
         ? {
             title: t("noFacilityTypeResults").replace(
@@ -2270,12 +2334,30 @@ export function SearchScreen({
           </p>
         ) : null}
         {!filters && sheetFilterCount > 0 ? (
-          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" data-ke="filters-applied">
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm" data-ke="filters-applied">
             <span>{locale === "fr" ? `Filtres appliqués · ${sheetFilterCount}` : `Filters applied · ${sheetFilterCount}`}</span>
+            <ul className="contents" aria-label={locale === "fr" ? "Filtres actifs" : "Active filters"}>
+              {activeFilters.map((item) => {
+                const label = activeFilterLabel(item, locale === "fr" ? "fr" : "en", t);
+                return (
+                  <li key={JSON.stringify(item)} data-ke="active-filter-chip">
+                    <button
+                      type="button"
+                      className="inline-flex min-h-11 max-w-full items-center gap-1 rounded-full bg-surface-2 px-3 font-medium ring-1 ring-inset ring-border touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                      aria-label={locale === "fr" ? `Retirer le filtre ${label}` : `Remove filter ${label}`}
+                      onClick={() => clearActiveFilter(item)}
+                    >
+                      <span className="truncate">{label}</span>
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
             <button type="button" className="min-h-11 font-medium text-primary" onClick={clearListingFilters}>
               {locale === "fr" ? "Tout effacer" : "Clear all"}
             </button>
-          </p>
+          </div>
         ) : null}
 
         {askLocation ? (

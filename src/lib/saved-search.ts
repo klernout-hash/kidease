@@ -284,13 +284,21 @@ export function activeFilterCount(filters: SavedSearchFilters, ageBand: AgeBand)
   return n;
 }
 
-/**
- * The "Filters · N" badge on /search. Counts only filters picked for this
- * search (sheet chips and filter params in the URL). A saved work address
- * (commute anchor) and a category worked out from the age rail are not
- * filters: the anchor shows as its own chip.
- */
-export function searchSheetFilterCount(input: {
+/** One removable chip per active filter on /search. */
+export type ActiveSearchFilter =
+  | { kind: "avail"; value: string }
+  | { kind: "flag"; key: Exclude<(typeof PICKED_FLAGS)[number], "inclusive"> }
+  | { kind: "favorites" }
+  | { kind: "careType"; value: string }
+  | { kind: "facility" }
+  | { kind: "pioneer"; key: "cwelcc" | "meals" | "subsidy" }
+  /** "Inclusive / special needs", "Inclusive" and "Extra support" are one need. */
+  | { kind: "support" }
+  | { kind: "spoken"; code: string }
+  | { kind: "diet"; key: string }
+  | { kind: "licence"; value: string };
+
+export type SearchSheetFilterInput = {
   filters: Partial<PickedListingFilters>;
   favoritesOnly?: boolean;
   /** Care type from `?care=`. */
@@ -299,14 +307,43 @@ export function searchSheetFilterCount(input: {
   urlFacilityCategory?: boolean;
   /** Pioneer filter params in the URL. */
   pioneer?: { cwelcc?: unknown; inclusive?: unknown; meals?: unknown; subsidy?: unknown; spoken?: unknown };
-}): number {
-  let n = pickedFilterCount(input.filters);
-  if (input.favoritesOnly) n += 1;
-  if (input.careType && input.careType !== "any") n += 1;
-  if (input.urlFacilityCategory) n += 1;
+  /** Diet / support keys from `?diet=`. */
+  careKeys?: readonly string[];
+  /** Licence bucket from `?licence=`. */
+  licence?: string | null;
+};
+
+/**
+ * Active filters picked for this search (sheet chips and filter params in the
+ * URL). A saved work address (commute anchor) and a category worked out from
+ * the age rail are not filters: the anchor shows as its own chip.
+ */
+export function searchActiveFilters(input: SearchSheetFilterInput): ActiveSearchFilter[] {
+  const out: ActiveSearchFilter[] = [];
+  const f = input.filters;
   const pioneer = input.pioneer ?? {};
-  for (const key of ["cwelcc", "inclusive", "meals", "subsidy", "spoken"] as const) if (pioneer[key]) n += 1;
-  return n;
+  const care = [...new Set(input.careKeys ?? [])];
+  if (f.avail && f.avail !== "any") out.push({ kind: "avail", value: f.avail });
+  for (const key of PICKED_FLAGS) {
+    if (key === "inclusive" || !f[key]) continue;
+    out.push({ kind: "flag", key });
+  }
+  if (input.favoritesOnly) out.push({ kind: "favorites" });
+  if (input.careType && input.careType !== "any") out.push({ kind: "careType", value: input.careType });
+  if (input.urlFacilityCategory) out.push({ kind: "facility" });
+  for (const key of ["cwelcc", "meals", "subsidy"] as const) if (pioneer[key]) out.push({ kind: "pioneer", key });
+  if (f.inclusive || pioneer.inclusive || care.includes("special-needs")) out.push({ kind: "support" });
+  for (const code of String(pioneer.spoken || "").split(",").map((part) => part.trim()).filter(Boolean)) {
+    out.push({ kind: "spoken", code });
+  }
+  for (const key of care) if (key !== "special-needs") out.push({ kind: "diet", key });
+  if (input.licence) out.push({ kind: "licence", value: input.licence });
+  return out;
+}
+
+/** The "Filters · N" badge on /search. Always equals the number of active filter chips. */
+export function searchSheetFilterCount(input: SearchSheetFilterInput): number {
+  return searchActiveFilters(input).length;
 }
 
 export function stashSavedSearchToApply(search: SavedSearch) {

@@ -8,6 +8,7 @@ import { dateAsksForOpenSpot, isIsoDate, matchesDaycareName } from "./explore-se
 import { confirmedFeeProgramBadge } from "./fee-program.ts";
 import { haversineKm, type LatLng } from "./geo.ts";
 import { matchesDeclaredCare, parseCareKeys } from "./inclusive-search.ts";
+import { rowListsExtraSupport } from "./inclusive-filters.ts";
 import { hasAmenity, opensEarly, staysLate } from "./licensing.ts";
 import { vacancyFreshness, vacancyTimestamp } from "./listing-readiness.ts";
 import type { MapPin } from "./map-cluster.ts";
@@ -143,7 +144,7 @@ export function filterSearchResults<T extends DaycareCard>(rows: readonly T[], s
     if ((filters.ten || pioneer.cwelcc) && confirmedFeeProgramBadge(row) == null) return false;
     if (!rowMatchesPioneer(row, { ...pioneer, cwelcc: false, openings: false, inclusive: false, meals: Boolean(filters.meals || pioneer.meals) })) return false;
     if (filters.outdoor && !hasAmenity(row.amenities, "outdoor") && !hasAmenity(row.amenities, "yard")) return false;
-    if ((filters.inclusive || pioneer.inclusive) && !hasAmenity(row.amenities, "inclusive")) return false;
+    if ((filters.inclusive || pioneer.inclusive) && !rowListsExtraSupport(row.amenities)) return false;
     if (care.length && !matchesDeclaredCare(row.amenities, care)) return false;
     if (filters.licence && !licenceMatches((row as T & { licenceType?: string | null }).licenceType, filters.licence, row.facilityType)) return false;
     if (filters.extended && !staysLate(row.hours, row.amenities) && !opensEarly(row.hours)) return false;

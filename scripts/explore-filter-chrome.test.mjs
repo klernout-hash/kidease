@@ -180,9 +180,9 @@ test("Filters badge counts only picked filters, not the commute anchor or age ra
   assert.equal(activeFilterCount(EMPTY_SEARCH_FILTERS, "any"), 0);
 
   const search = src("src/routes/search.tsx");
-  const start = search.indexOf("const sheetFilterCount = searchSheetFilterCount(");
+  const start = search.indexOf("const sheetFilterInput: SearchSheetFilterInput = {");
   assert.ok(start > 0);
-  const block = search.slice(start, search.indexOf("});", start));
+  const block = search.slice(start, search.indexOf("};", start));
   assert.doesNotMatch(block, /workOrigin|anchorMode/);
   assert.doesNotMatch(block, /resolvedExploreCategory/);
   assert.match(block, /urlFacilityCategory: isFacilityExploreCategory\(canonicalExploreCategory\(incoming\.cat\)\)/);

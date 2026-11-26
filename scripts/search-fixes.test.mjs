@@ -71,3 +71,26 @@ test("a tighter radius narrows a city hub search", async () => {
   const search = readFileSync(new URL("../src/routes/search.tsx", import.meta.url), "utf8");
   assert.match(search, /const postal = postalSearchLabel\(label\);/);
 });
+
+test("support filters accept both inclusive and special-needs tags", async () => {
+  const { rowListsExtraSupport, rowHasCareDetail } = await import("../src/lib/inclusive-filters.ts");
+  assert.equal(rowListsExtraSupport("meals,inclusive"), true);
+  assert.equal(rowListsExtraSupport("special-needs"), true);
+  assert.equal(rowListsExtraSupport("meals,halal"), false);
+  assert.equal(rowHasCareDetail("inclusive", "special-needs"), true);
+  assert.equal(rowHasCareDetail("halal,inclusive", "halal"), true);
+});
+
+test("one chip per active filter and the badge matches the chips", async () => {
+  const { searchActiveFilters, searchSheetFilterCount } = await import("../src/lib/saved-search.ts");
+  const input = {
+    filters: { avail: "any", inclusive: true },
+    pioneer: { inclusive: "1", spoken: "fr,pa" },
+    careKeys: ["halal", "special-needs"],
+    licence: "centre",
+  };
+  const chips = searchActiveFilters(input);
+  assert.deepEqual(chips.map((c) => c.kind), ["support", "spoken", "spoken", "diet", "licence"]);
+  assert.equal(searchSheetFilterCount(input), chips.length);
+  assert.equal(searchSheetFilterCount({ filters: {}, careKeys: ["halal"] }), 1);
+});
