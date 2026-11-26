@@ -16,6 +16,7 @@ export const VOICE_ENV_NAMES = [
   "TWILIO_VOICE_INCOMING_URL",
   "TWILIO_VOICE_CONNECT_URL",
   "TWILIO_VOICE_RECORDING_URL",
+  "TWILIO_VOICE_STATUS_URL",
 ] as const;
 
 export const VOICE_TOKEN_TTL_SECONDS = 900;
@@ -118,13 +119,49 @@ function clientNounsWithThread(identities: string[], conversationId: string): st
     .join("");
 }
 
-/** In-app call. Dials Twilio clients only. Never a <Number>. */
-export function clientDialTwiml(identities: string[], conversationId = ""): string {
+/** Hard ceiling for one in-app call: 30 minutes. Keep in step with src/lib/media-minutes.ts. */
+export const VOICE_CALL_TIME_LIMIT_SECONDS = 1800;
+
+export const VOICE_NO_ANSWER = "No one answered this KidEase call.";
+
+export const VOICE_CAP_REACHED = "KidEase calls are paused for today. Please send a message instead.";
+
+/**
+ * In-app call. Dials Twilio clients only. Never a <Number>, so no phone is
+ * ever rung (the 877 inbound line is a separate, opt-in Console setting).
+ * timeLimit caps the call at 30 minutes. With an action URL, Twilio reports
+ * the real call length to /api/voice/status when the dial ends.
+ */
+export function clientDialTwiml(identities: string[], conversationId = "", options: { actionUrl?: string } = {}): string {
   const clients = clientNounsWithThread(identities, conversationId);
   if (!clients) {
     return `<?xml version="1.0" encoding="UTF-8"?><Response>${say(CANNOT_CONNECT)}<Hangup/></Response>`;
   }
-  return `<?xml version="1.0" encoding="UTF-8"?><Response><Dial timeout="25" answerOnBridge="true">${clients}</Dial>${say("No one answered this KidEase call.")}</Response>`;
+  const action = String(options.actionUrl || "").trim();
+  const actionAttr = /^https:\/\//.test(action) ? ` action="${xmlEscape(action)}" method="POST"` : "";
+  const after = actionAttr ? "" : say(VOICE_NO_ANSWER);
+  return `<?xml version="1.0" encoding="UTF-8"?><Response><Dial timeout="25" answerOnBridge="true" timeLimit="${VOICE_CALL_TIME_LIMIT_SECONDS}"${actionAttr}>${clients}</Dial>${after}</Response>`;
+}
+
+/** TwiML returned from the <Dial> action once the call ends. */
+export function dialActionTwiml(dialStatus: string | null | undefined): string {
+  const status = String(dialStatus || "").trim().toLowerCase();
+  if (status === "completed" || status === "answered") {
+    return `<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>`;
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?><Response>${say(VOICE_NO_ANSWER)}<Hangup/></Response>`;
+}
+
+/** Spoken when the daily media cap is reached. No dial happens. */
+export function capReachedTwiml(): string {
+  return `<?xml version="1.0" encoding="UTF-8"?><Response>${say(VOICE_CAP_REACHED)}<Hangup/></Response>`;
+}
+
+/** Action URL for the in-app <Dial>, on the same origin Twilio called. */
+export function voiceStatusCallbackUrl(env: EnvMap = process.env, origin = "https://www.kidease.ca"): string {
+  const pinned = envStr(env, "TWILIO_VOICE_STATUS_URL");
+  if (pinned) return pinned;
+  return `${origin.replace(/\/$/, "")}/api/voice/status`;
 }
 
 /** Toll-free inbound. Greeting names KidEase, then a client dial or voicemail. */

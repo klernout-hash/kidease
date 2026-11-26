@@ -9,6 +9,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { voiceCallsEnabled } from "@/lib/features";
 import { VOICE_CREDENTIALS_MESSAGE, voiceCredentialsPresent, voiceIdentityForUser } from "@/lib/voice";
+import { CALL_NOT_MATCHED } from "@/lib/call-match";
 
 export type VoiceDesk = "parent" | "provider" | "admin";
 
@@ -106,6 +107,18 @@ async function loadThread(userId: string, conversationId: string): Promise<Voice
       error: "This call was not found.",
     };
   }
+  // Matched pairs only: an accepted request, tour, booking, or enrolment.
+  if (desk !== "admin") {
+    const { pairCallMatched } = await import("@/lib/server/call-match");
+    const matched = await pairCallMatched(sql, {
+      parentUserId: rows[0].user_id,
+      daycareId: rows[0].daycare_id,
+      conversationId,
+    }).catch(() => false);
+    if (!matched) {
+      return { conversationId, allowed: false, desk, peerLabel: "", credentialsPresent, error: CALL_NOT_MATCHED };
+    }
+  }
   const parentName = (rows[0].parent_name || "").trim();
   const peerLabel =
     desk === "provider" ? parentName || "Parent" : (rows[0].daycare_name || "").trim() || "Daycare";
@@ -134,11 +147,11 @@ export const mintThreadVoiceToken = createServerFn({ method: "POST" })
     const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
     blockViewAsSideEffect("call");
     const status = await loadThread(context.userId, data.conversationId);
+    if (status.error === CALL_NOT_MATCHED) return { ok: false, error: CALL_NOT_MATCHED };
     if (!status.allowed || !status.desk) return { ok: false, error: "This call was not found." };
     if (!status.credentialsPresent) return { ok: false, error: status.error || VOICE_CREDENTIALS_MESSAGE };
-    const { gateMediaSession } = await import("./outbound-gate");
-    const media = await gateMediaSession("voice");
-    if (!media.ok) return { ok: false, error: media.error };
+    // The daily media cap is reserved once per placed call in /api/voice/connect,
+    // not here: a token mint or refresh is not a call.
     const { createVoiceAccessToken } = await import("./voice");
     const identity = voiceIdentityForUser(context.userId, status.desk === "admin" ? "admin" : "user");
     const token = createVoiceAccessToken({ identity });

@@ -6,7 +6,7 @@ test("Plus and Pro list five real tools on /plans", () => {
   const plus = PARENT_UPGRADE_PLANS.find((plan) => plan.id === "plus").benefits.map((line) => line.en);
   const pro = DAYCARE_UPGRADE_PLANS.find((plan) => plan.id === "pro").benefits.map((line) => line.en);
   assert.deepEqual(plus, [
-    "Parent \u2194 centre video tour, when video is on",
+    "Parent \u2194 centre video call, when video is on",
     "Compare up to 10 centres side by side",
     "Tour checklist saved on each child",
     "Daily care notes on the parent desk",

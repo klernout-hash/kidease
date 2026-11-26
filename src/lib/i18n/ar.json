@@ -3802,5 +3802,16 @@
   "accountAnchorSaveFailed": "تم حفظ بياناتك. تعذر حفظ عنوان عملك. حاول مرة أخرى.",
   "storePlayGet": "احصل عليه من Google Play",
   "storePlayReadyLead": "KidEase متوفر على Google Play. على جهاز Fire اللوحي، استخدم Amazon Appstore.",
-  "searchCommuteChip": "التنقل: {place}"
+  "searchCommuteChip": "التنقل: {place}",
+  "callsLockedParent": "تُفتح المكالمات والفيديو عندما تقبل الحضانة زيارتك أو طلب المقعد.",
+  "callsLockedCentre": "تُفتح المكالمات والفيديو عندما تقبل زيارة هذه العائلة أو طلب المقعد.",
+  "callsUnavailableTitle": "المكالمات غير متاحة بعد",
+  "callsUnavailable": "المكالمات غير متاحة بعد. لا يزال بإمكانك إرسال رسالة.",
+  "callsUnavailableApp": "المكالمات غير متاحة في هذا التطبيق بعد. لا يزال بإمكانك إرسال رسالة.",
+  "callsNotMatched": "تُفتح المكالمات عندما تقبل الحضانة زيارة أو طلب مقعد. لا يزال بإمكانك إرسال رسالة.",
+  "callsInAppNote": "مكالمة داخل التطبيق فقط. لا يتم الاتصال بأي رقم هاتف.",
+  "videoCallStarted": "بدأت مكالمة الفيديو",
+  "videoCallJoinShort": "انضمام",
+  "videoCallIncoming": "مكالمة فيديو واردة",
+  "videoCallDecline": "ليس الآن"
 }

@@ -344,7 +344,7 @@ export type Message = {
   sender: "parent" | "provider" | "system";
   body: string;
   createdAt: string;
-  kind: "chat" | "system" | "notify" | "status";
+  kind: "chat" | "system" | "notify" | "status" | "video_call";
 };
 
 export type Payment = {

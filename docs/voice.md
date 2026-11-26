@@ -32,8 +32,16 @@ Set these on **Production and Preview**. Never prefix `VITE_`. Never commit valu
 3. **Toll-free voice webhook.** Phone Numbers → the approved toll-free → Voice configuration. A call comes in: Webhook, HTTP POST, `https://www.kidease.ca/api/voice/incoming`. This was empty. Set it or phone calls to the toll-free number do nothing.
 4. **Messaging Service** (already set): inbound `https://www.kidease.ca/api/sms/inbound`, status `https://www.kidease.ca/api/sms/status`. Leave those. SMS still needs `FEATURE_SMS=1` plus consent.
 
+## In-app only, never the phone network
+
+`/api/voice/connect` only ever returns `<Dial><Client>` for KidEase app identities (`keu_…` / `kea_…`). It never dials a `<Number>` or SIP address, so no phone rings and no number is shown. The 877 line (`/api/voice/incoming`) only answers when Kyle points the toll-free number's voice webhook at it in Twilio Console; it too rings app identities only, or takes a voicemail.
+
+- Matched pairs only: a call needs an accepted request, tour, booking, or enrolment between that parent and that centre (`src/lib/server/call-match.ts`). Otherwise the buttons are hidden, the server refuses, and the thread says when calls open. Admin can always call (QA).
+- Each call is capped at 30 minutes (`<Dial timeLimit="1800">`).
+- The daily media cap is reserved once per placed call at `/api/voice/connect` (not per token), then `/api/voice/status` (the signed `<Dial action>`) settles it to real minutes: both legs, each started minute. Optional `TWILIO_VOICE_STATUS_URL` pins that URL.
+
 ## What a parent or daycare sees
 
-On a message thread, **Call** opens `/call/{conversation}`. One button starts the call. The other person must open the same thread and tap Call so their browser can ring. Hang up and mute are on the call screen. A daycare never sees the parent’s mobile, and a parent never sees a private staff number.
+On a message thread header (parent and daycare desk alike), **Call**, **Video**, **Report**, and **Block** sit together. **Call** opens `/call/{conversation}`, which says it is an in-app call and that no phone number is dialled. One button starts the call. The other person must open the same thread and tap Call so their browser can ring. Hang up and mute are on the call screen. A daycare never sees the parent’s mobile, and a parent never sees a private staff number.
 
 Admin can open the same call. It rings both sides. Admin does not get the parent’s or the daycare’s other buttons.

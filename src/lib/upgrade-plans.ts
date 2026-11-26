@@ -147,8 +147,8 @@ const PARENT_ALERTS_PITCH: PlanLine = {
 
 const PLUS_CORE_BENEFITS: PlanLine[] = [
   {
-    en: "Parent \u2194 centre video tour, when video is on",
-    fr: "Visite vidéo parent \u2194 centre, quand la vidéo est activée",
+    en: "Parent \u2194 centre video call, when video is on",
+    fr: "Appel vidéo parent \u2194 centre, quand la vidéo est activée",
   },
   {
     en: "Compare up to 10 centres side by side",

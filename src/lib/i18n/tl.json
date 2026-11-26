@@ -3802,5 +3802,16 @@
   "accountAnchorSaveFailed": "Na-save ang iyong mga detalye. Hindi na-save ang address ng iyong trabaho. Subukan ulit.",
   "storePlayGet": "Kunin sa Google Play",
   "storePlayReadyLead": "Nasa Google Play na ang KidEase. Sa Fire tablet, gamitin ang Amazon Appstore.",
-  "searchCommuteChip": "Biyahe: {place}"
+  "searchCommuteChip": "Biyahe: {place}",
+  "callsLockedParent": "Magbubukas ang tawag at video kapag tinanggap ng daycare ang iyong tour o hiling sa puwesto.",
+  "callsLockedCentre": "Magbubukas ang tawag at video kapag tinanggap mo ang tour o hiling sa puwesto ng pamilyang ito.",
+  "callsUnavailableTitle": "Hindi pa available ang mga tawag",
+  "callsUnavailable": "Hindi pa available ang mga tawag. Maaari ka pa ring magpadala ng mensahe.",
+  "callsUnavailableApp": "Hindi pa available ang mga tawag sa app na ito. Maaari ka pa ring magpadala ng mensahe.",
+  "callsNotMatched": "Magbubukas ang tawag kapag tinanggap ng daycare ang isang tour o hiling sa puwesto. Maaari ka pa ring magpadala ng mensahe.",
+  "callsInAppNote": "Tawag sa loob ng app lamang. Walang numero ng telepono na tinatawagan.",
+  "videoCallStarted": "Nagsimula ang video call",
+  "videoCallJoinShort": "Sumali",
+  "videoCallIncoming": "Papasok na video call",
+  "videoCallDecline": "Hindi ngayon"
 }

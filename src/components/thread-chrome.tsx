@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { ArrowUp, Plus } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowUp, Plus, Video } from "lucide-react";
 import { HistoryBack } from "@/components/history-back";
 import { historyHref } from "@/lib/screen-history";
 import { messageReceipt } from "@/lib/engagement";
@@ -102,6 +103,8 @@ export function ThreadTranscript({
   peers = [],
   now = new Date(),
   timeZone,
+  conversationId,
+  videoJoinable = false,
 }: {
   messages: Message[];
   viewerRole: string;
@@ -113,6 +116,10 @@ export function ThreadTranscript({
   peers?: Array<{ id?: string; name: string; image?: string | null; role?: string }>;
   now?: Date;
   timeZone?: string;
+  /** Thread id, for the "Video call started - Join" note. */
+  conversationId?: string;
+  /** Matched pair, video live, and not a held Android store app. */
+  videoJoinable?: boolean;
 }) {
   const { t, locale } = useCopy();
   const visible = messages
@@ -138,7 +145,20 @@ export function ThreadTranscript({
                 {day.today ? t("inboxDayToday") : day.yesterday ? t("inboxDayYesterday") : day.text}
               </p>
             ) : null}
-            {m.kind === "status" ? (
+            {m.kind === "video_call" ? (
+              <p
+                className="mx-auto inline-flex max-w-md items-center gap-2 rounded-full bg-surface-2 px-3 py-1 text-center text-xs text-muted"
+                data-ke="video-call-note"
+              >
+                <Video className="size-3.5" aria-hidden />
+                <span>{t("videoCallStarted")}</span>
+                {videoJoinable && conversationId ? (
+                  <Link to="/video/$roomId" params={{ roomId: conversationId }} className="font-semibold text-fg underline">
+                    {t("videoCallJoinShort")}
+                  </Link>
+                ) : null}
+              </p>
+            ) : m.kind === "status" ? (
               <p className="mx-auto max-w-md rounded-full bg-surface-2 px-3 py-1 text-center text-xs text-muted">{m.body}</p>
             ) : (
               <div className={cn("flex max-w-[85%] items-end gap-2", mine ? "self-end flex-row-reverse" : "self-start")}>
@@ -189,6 +209,7 @@ export function ThreadHeader({
   showDetails = true,
   bare = false,
   detailsDocked = "lg",
+  actions,
 }: {
   backTo: "/inbox";
   backSearch?: Record<string, string>;
@@ -201,6 +222,8 @@ export function ThreadHeader({
   bare?: boolean;
   /** Width from which the details panel sits beside the thread, so the button is not needed. */
   detailsDocked?: "lg" | "900";
+  /** Call / Video / Report / Block. Same slot on the parent and daycare desks. */
+  actions?: ReactNode;
 }) {
   const { t } = useCopy();
   const face = avatars.find((item) => item.image) || avatars[0];
@@ -220,6 +243,7 @@ export function ThreadHeader({
           {subtitle ? <p className="truncate text-xs text-muted">{subtitle}</p> : null}
         </div>
       </div>
+      {actions}
       {showDetails && onDetails ? (
         <button
           type="button"

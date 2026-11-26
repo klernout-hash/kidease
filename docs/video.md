@@ -47,11 +47,14 @@ Do **not** put `sk_live_` or Twilio secrets in git.
 - `/video/$roomId` — Join mints a room + token server-side, then `twilio-video` connects. The JWT is not painted on the page. Leave, mute, and camera controls work on a phone browser. The iPhone and Android app load that same script on this route only. The page does not show a price or a subscribe button in the app. Camera and microphone prompts come from the system when a later build declares them: iOS usage strings, and Android `CAMERA`, `RECORD_AUDIO`, and `MODIFY_AUDIO_SETTINGS`. This store build does not declare those Android permissions. Add them back with the switch in `docs/mobile-builds.md` before turning video on. Capacitor grants the WebView capture request and shows the runtime prompt. Calls stay in the foreground. There is no background audio mode and no VoIP mode.
 - Inbox thread Video icon → `/video/{conversationId}` (paywall CTA when the parent is not Plus).
 - Admin → Chat lab shows FEATURE_VIDEO on/off, source (env / PostHog), env-name presence (no secret values), a coming-soon / flag-off state, and the Twilio Video next-build checklist. Staff can open `/video/lab`. See `docs/chat.md`.
-- `/video/$roomId` shows **coming soon** when `FEATURE_VIDEO` is off, or an honest credentials-missing card. It does not charge Plus. When the flag and API key are on, Join starts the camera.
+- `/video/$roomId` shows **Calls aren't available yet** when `FEATURE_VIDEO` is off or the API key is missing (no internal wording), and the Plus prompt only while subscriptions are on. When the flag and API key are on, Join starts the camera.
+- Matched pairs only (accepted request, tour, booking, or enrolment). Otherwise reason `not_matched` and the page says when video opens.
+- Join posts one **Video call started - Join** note in the thread (kind `video_call`, at most one per 15 minutes) and writes a ring row. The other side gets an in-app **Incoming video call** alert (`IncomingVideoAlert`, polls while visible, stops when video is off). Device push still needs `FEATURE_CALL_PUSH`.
+- Real minutes: Join reserves the admin minutes-per-call estimate in `media_sessions` (migration 0233). The signed `/api/video/status` StatusCallback settles each participant to real minutes (`participant-disconnected`) and leftovers on `room-ended`. Production defaults the StatusCallback to `https://www.kidease.ca/api/video/status`; `TWILIO_VIDEO_STATUS_CALLBACK_URL` overrides.
+- Android store apps hide Video until a build declares camera + mic (see `docs/mobile-builds.md`).
 - `/checkin/$id` stays the local camera preview on a listing. It is not Twilio Video.
 
 ## Later (not this PR)
 
 - Enforce monthly minute limits (hook already returns `enforced: false`).
-- Persist room status-callback rows.
 - Camera / microphone `Permissions-Policy` on `/video` only, if the global policy stays locked down.

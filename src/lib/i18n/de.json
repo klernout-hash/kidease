@@ -3802,5 +3802,16 @@
   "accountAnchorSaveFailed": "Ihre Angaben sind gespeichert. Die Arbeitsadresse wurde nicht gespeichert. Bitte erneut versuchen.",
   "storePlayGet": "Bei Google Play laden",
   "storePlayReadyLead": "KidEase ist bei Google Play. Auf einem Fire-Tablet nutzen Sie den Amazon Appstore.",
-  "searchCommuteChip": "Arbeitsweg: {place}"
+  "searchCommuteChip": "Arbeitsweg: {place}",
+  "callsLockedParent": "Anrufe und Video sind möglich, sobald die Kita deinen Besuch oder deine Platzanfrage annimmt.",
+  "callsLockedCentre": "Anrufe und Video sind möglich, sobald du den Besuch oder die Platzanfrage dieser Familie annimmst.",
+  "callsUnavailableTitle": "Anrufe sind noch nicht verfügbar",
+  "callsUnavailable": "Anrufe sind noch nicht verfügbar. Du kannst trotzdem eine Nachricht senden.",
+  "callsUnavailableApp": "Anrufe sind in dieser App noch nicht verfügbar. Du kannst trotzdem eine Nachricht senden.",
+  "callsNotMatched": "Anrufe sind möglich, sobald die Kita einen Besuch oder eine Platzanfrage annimmt. Du kannst trotzdem eine Nachricht senden.",
+  "callsInAppNote": "Nur Anruf in der App. Es wird keine Telefonnummer gewählt.",
+  "videoCallStarted": "Videoanruf gestartet",
+  "videoCallJoinShort": "Beitreten",
+  "videoCallIncoming": "Eingehender Videoanruf",
+  "videoCallDecline": "Jetzt nicht"
 }

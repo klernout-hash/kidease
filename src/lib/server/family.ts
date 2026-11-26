@@ -1103,7 +1103,7 @@ export const getThread = createServerFn({ method: "GET" })
       sender: "parent" | "provider" | "system";
       body: string;
       created_at: string;
-      kind: "chat" | "system" | "notify" | "status";
+      kind: "chat" | "system" | "notify" | "status" | "video_call";
     }>`
       select id, sender, body, created_at, kind from messages
       where conversation_id = ${conversationId} order by created_at
@@ -1186,6 +1186,15 @@ export const getThread = createServerFn({ method: "GET" })
     const { videoSurfaceEnabled } = await import("@/lib/channel-readiness");
     const { voiceCredentialsPresent } = await import("@/lib/voice");
     const { voiceCallsEnabled } = await import("@/lib/features");
+    const { pairCallMatched } = await import("@/lib/server/call-match");
+    // Matched pairs only (accepted tour / request / enrolment). Admin QA skips the match.
+    const callsMatched =
+      access.role === "admin" ||
+      (await pairCallMatched(sql, {
+        parentUserId: conv[0].user_id,
+        daycareId: conv[0].daycare_id,
+        conversationId,
+      }));
     const zoneRows = await sql<{ timezone: string | null; province: string | null }>`
       select timezone, province from daycares where id = ${conv[0].daycare_id} limit 1
     `.catch(() => []);
@@ -1195,6 +1204,7 @@ export const getThread = createServerFn({ method: "GET" })
       id: conv[0].id,
       videoSurfaceEnabled: videoSurfaceEnabled(),
       voiceReady: voiceCallsEnabled() && voiceCredentialsPresent(),
+      callsMatched,
       viewerRole: access.role,
       daycareId: conv[0].daycare_id,
       daycareName: conv[0].name,

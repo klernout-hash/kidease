@@ -8,6 +8,7 @@ import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { mintInboxVoiceToken } from "@/lib/server/voice-call";
 import { primeCallMedia } from "@/lib/call-permissions";
 import { voiceErrorPlan, voiceTokenRefreshPlan } from "@/lib/voice-device";
+import { useCallMediaBlocked } from "@/components/thread-call-actions";
 
 /**
  * Registers the signed-in user's Twilio Device on every page so the other
@@ -22,13 +23,15 @@ export function IncomingCallListener() {
   const userId = user?.id || "";
   const path = useLocation({ select: (l) => l.pathname });
   const onCallPage = /\/call\//.test(path);
+  // Android store apps without RECORD_AUDIO cannot answer, so do not register there.
+  const mediaBlocked = useCallMediaBlocked();
   const deviceRef = useRef<Device | null>(null);
   const callRef = useRef<Call | null>(null);
   const [phase, setPhase] = useState<"idle" | "incoming" | "connected">("idle");
   const [muted, setMuted] = useState(false);
 
   useEffect(() => {
-    if (!userId || viewing || onCallPage) return;
+    if (!userId || viewing || onCallPage || mediaBlocked) return;
     let cancelled = false;
     const reset = () => {
       callRef.current = null;
@@ -86,7 +89,7 @@ export function IncomingCallListener() {
         deviceRef.current = null;
       }
     };
-  }, [userId, viewing, onCallPage]);
+  }, [userId, viewing, onCallPage, mediaBlocked]);
 
   if (phase === "idle") return null;
   const call = callRef.current;

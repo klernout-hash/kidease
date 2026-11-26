@@ -320,9 +320,11 @@ import { Route as ApiScreeningDocumentsIdRouteImport } from './routes/api/screen
 import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
+import { Route as ApiVideoStatusRouteImport } from './routes/api/video.status'
 import { Route as ApiVoiceConnectRouteImport } from './routes/api/voice.connect'
 import { Route as ApiVoiceIncomingRouteImport } from './routes/api/voice.incoming'
 import { Route as ApiVoiceRecordingRouteImport } from './routes/api/voice.recording'
+import { Route as ApiVoiceStatusRouteImport } from './routes/api/voice.status'
 import { Route as ApiWebhooksResendRouteImport } from './routes/api/webhooks.resend'
 import { Route as DaycareCityAgeRouteImport } from './routes/daycare.$city.$age'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
@@ -1929,6 +1931,11 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVideoStatusRoute = ApiVideoStatusRouteImport.update({
+  id: '/api/video/status',
+  path: '/api/video/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiVoiceConnectRoute = ApiVoiceConnectRouteImport.update({
   id: '/api/voice/connect',
   path: '/api/voice/connect',
@@ -1942,6 +1949,11 @@ const ApiVoiceIncomingRoute = ApiVoiceIncomingRouteImport.update({
 const ApiVoiceRecordingRoute = ApiVoiceRecordingRouteImport.update({
   id: '/api/voice/recording',
   path: '/api/voice/recording',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVoiceStatusRoute = ApiVoiceStatusRouteImport.update({
+  id: '/api/voice/status',
+  path: '/api/voice/status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiWebhooksResendRoute = ApiWebhooksResendRouteImport.update({
@@ -2482,9 +2494,11 @@ export interface FileRoutesByFullPath {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/video/status': typeof ApiVideoStatusRoute
   '/api/voice/connect': typeof ApiVoiceConnectRoute
   '/api/voice/incoming': typeof ApiVoiceIncomingRoute
   '/api/voice/recording': typeof ApiVoiceRecordingRoute
+  '/api/voice/status': typeof ApiVoiceStatusRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
@@ -2841,9 +2855,11 @@ export interface FileRoutesByTo {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/video/status': typeof ApiVideoStatusRoute
   '/api/voice/connect': typeof ApiVoiceConnectRoute
   '/api/voice/incoming': typeof ApiVoiceIncomingRoute
   '/api/voice/recording': typeof ApiVoiceRecordingRoute
+  '/api/voice/status': typeof ApiVoiceStatusRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
@@ -3203,9 +3219,11 @@ export interface FileRoutesById {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/video/status': typeof ApiVideoStatusRoute
   '/api/voice/connect': typeof ApiVoiceConnectRoute
   '/api/voice/incoming': typeof ApiVoiceIncomingRoute
   '/api/voice/recording': typeof ApiVoiceRecordingRoute
+  '/api/voice/status': typeof ApiVoiceStatusRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
@@ -3566,9 +3584,11 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/video/status'
     | '/api/voice/connect'
     | '/api/voice/incoming'
     | '/api/voice/recording'
+    | '/api/voice/status'
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
@@ -3925,9 +3945,11 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/video/status'
     | '/api/voice/connect'
     | '/api/voice/incoming'
     | '/api/voice/recording'
+    | '/api/voice/status'
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
@@ -4286,9 +4308,11 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/video/status'
     | '/api/voice/connect'
     | '/api/voice/incoming'
     | '/api/voice/recording'
+    | '/api/voice/status'
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
@@ -4564,9 +4588,11 @@ export interface RootRouteChildren {
   ApiSmsInboundRoute: typeof ApiSmsInboundRoute
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  ApiVideoStatusRoute: typeof ApiVideoStatusRoute
   ApiVoiceConnectRoute: typeof ApiVoiceConnectRoute
   ApiVoiceIncomingRoute: typeof ApiVoiceIncomingRoute
   ApiVoiceRecordingRoute: typeof ApiVoiceRecordingRoute
+  ApiVoiceStatusRoute: typeof ApiVoiceStatusRoute
   ApiWebhooksResendRoute: typeof ApiWebhooksResendRoute
   DaycareCityAgeRoute: typeof DaycareCityAgeRoute
   DaycareCityCityRoute: typeof DaycareCityCityRoute
@@ -6754,6 +6780,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/video/status': {
+      id: '/api/video/status'
+      path: '/api/video/status'
+      fullPath: '/api/video/status'
+      preLoaderRoute: typeof ApiVideoStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/voice/connect': {
       id: '/api/voice/connect'
       path: '/api/voice/connect'
@@ -6773,6 +6806,13 @@ declare module '@tanstack/react-router' {
       path: '/api/voice/recording'
       fullPath: '/api/voice/recording'
       preLoaderRoute: typeof ApiVoiceRecordingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/voice/status': {
+      id: '/api/voice/status'
+      path: '/api/voice/status'
+      fullPath: '/api/voice/status'
+      preLoaderRoute: typeof ApiVoiceStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/webhooks/resend': {
@@ -7761,9 +7801,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSmsInboundRoute: ApiSmsInboundRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  ApiVideoStatusRoute: ApiVideoStatusRoute,
   ApiVoiceConnectRoute: ApiVoiceConnectRoute,
   ApiVoiceIncomingRoute: ApiVoiceIncomingRoute,
   ApiVoiceRecordingRoute: ApiVoiceRecordingRoute,
+  ApiVoiceStatusRoute: ApiVoiceStatusRoute,
   ApiWebhooksResendRoute: ApiWebhooksResendRoute,
   DaycareCityAgeRoute: DaycareCityAgeRoute,
   DaycareCityCityRoute: DaycareCityCityRoute,

@@ -335,7 +335,8 @@ test("video route is registered, Plus-gated, and not a *.server.* client import"
   assert.match(join, /await import\("\.\/video"\)/);
   assert.match(src("docs/video.md"), /Vercel env checklist/);
   assert.match(route, /data-ke="video-unavailable"/);
-  assert.match(route, /videoNoCredentials/);
+  assert.match(route, /t\("callsUnavailable"\)/);
+  assert.doesNotMatch(route, /videoNoCredentials/);
   assert.doesNotMatch(route, /comingSoon/);
   assert.doesNotMatch((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /FEATURE_VIDEO is off/);
 });
@@ -350,6 +351,7 @@ test("in-app call start triggers the background ring (FEATURE_CALL_PUSH gate is 
   assert.match(voice, /endRing\("answered"\)/);
   assert.match(voice, /endRing\("hangup"\)/);
   const video = src("src/components/video-room-panel.tsx");
-  assert.match(video, /createCallRinger\(roomName, "video"\)/);
+  assert.match(video, /createCallRinger\(conversationId \|\| "", "video"\)/);
+  assert.doesNotMatch(video, /createCallRinger\(roomName/);
   assert.match(video, /ringer\.end\("answered"\)/);
 });

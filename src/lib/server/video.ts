@@ -23,6 +23,13 @@ const VIDEO_CREDENTIALS_MESSAGE =
 
 const VIDEO_TOKEN_TTL_SECONDS = 900;
 
+/** Same rule as videoStatusCallbackUrl in src/lib/video.ts (kept local: this file has no @/ imports). */
+export function videoStatusCallbackUrl(env: Record<string, string | undefined> = process.env): string {
+  const pinned = (env.TWILIO_VIDEO_STATUS_CALLBACK_URL || "").trim();
+  if (pinned) return pinned;
+  return (env.VERCEL_ENV || "").trim() === "production" ? "https://www.kidease.ca/api/video/status" : "";
+}
+
 type EnvMap = Record<string, string | undefined>;
 
 function videoEnabled(env: EnvMap): boolean {
@@ -266,7 +273,7 @@ export async function createVideoRoom(
     MaxParticipants: "6",
     MaxParticipantDuration: "3600",
   });
-  const statusCallback = envStr(env, "TWILIO_VIDEO_STATUS_CALLBACK_URL");
+  const statusCallback = videoStatusCallbackUrl(env);
   if (statusCallback) {
     params.set("StatusCallback", statusCallback);
     params.set("StatusCallbackMethod", "POST");

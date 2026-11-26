@@ -1,6 +1,8 @@
 package ca.kidease.app;
 
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.net.Network;
@@ -70,6 +72,7 @@ public class MainActivity extends BridgeActivity {
             playServicesForFlavor(flavor, PlayServicesStatus.available(this))
         );
         next = withAmazonDeviceToken(next, flavor, Build.MANUFACTURER);
+        next = withCallMediaToken(next, declaresCallMedia());
         boolean changed = current == null || !current.equals(next);
         if (changed) {
             webView.getSettings().setUserAgentString(next);
@@ -276,6 +279,40 @@ public class MainActivity extends BridgeActivity {
         boolean amazonDevice = manufacturer != null && manufacturer.trim().equalsIgnoreCase("Amazon");
         if (amazonFlavor && amazonDevice) return next.isEmpty() ? AMAZON_DEVICE_TOKEN : next + " " + AMAZON_DEVICE_TOKEN;
         return next;
+    }
+
+    /**
+     * KidEaseCallMedia tells the site this build can use the camera and
+     * microphone, so it may show Call and Video. Added only when the package
+     * declares both CAMERA and RECORD_AUDIO (a KIDEASE_ANDROID_CALL_MEDIA=1
+     * build). Current store builds strip them, so they never send it.
+     */
+    static final String CALL_MEDIA_TOKEN = "KidEaseCallMedia";
+
+    static String withCallMediaToken(String agent, boolean declared) {
+        String next = agent == null ? "" : agent.replace(CALL_MEDIA_TOKEN, "").replaceAll("\\s+", " ").trim();
+        if (!declared) return next;
+        return next.isEmpty() ? CALL_MEDIA_TOKEN : next + " " + CALL_MEDIA_TOKEN;
+    }
+
+    static boolean declaresBoth(String[] requested) {
+        if (requested == null) return false;
+        boolean camera = false;
+        boolean mic = false;
+        for (String name : requested) {
+            if ("android.permission.CAMERA".equals(name)) camera = true;
+            if ("android.permission.RECORD_AUDIO".equals(name)) mic = true;
+        }
+        return camera && mic;
+    }
+
+    private boolean declaresCallMedia() {
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS);
+            return declaresBoth(info.requestedPermissions);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void dropSamsungStoreLink() {

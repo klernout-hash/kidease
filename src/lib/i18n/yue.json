@@ -3802,5 +3802,16 @@
   "accountAnchorSaveFailed": "你嘅資料已經儲存。你嘅工作地址儲存唔到。請再試一次。",
   "storePlayGet": "喺 Google Play 下載",
   "storePlayReadyLead": "KidEase 已經喺 Google Play。Fire 平板請用 Amazon Appstore。",
-  "searchCommuteChip": "通勤：{place}"
+  "searchCommuteChip": "通勤：{place}",
+  "callsLockedParent": "托兒所接受你嘅參觀或學位申請之後，就可以通話同視像。",
+  "callsLockedCentre": "你接受呢個家庭嘅參觀或學位申請之後，就可以通話同視像。",
+  "callsUnavailableTitle": "通話暫時未有",
+  "callsUnavailable": "通話暫時未有。你仍然可以傳訊息。",
+  "callsUnavailableApp": "呢個 app 暫時未有通話。你仍然可以傳訊息。",
+  "callsNotMatched": "托兒所接受參觀或學位申請之後就可以通話。你仍然可以傳訊息。",
+  "callsInAppNote": "只係 app 內通話，唔會撥打任何電話號碼。",
+  "videoCallStarted": "視像通話已開始",
+  "videoCallJoinShort": "加入",
+  "videoCallIncoming": "視像通話來電",
+  "videoCallDecline": "遲啲先"
 }
