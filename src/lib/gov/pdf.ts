@@ -3,39 +3,55 @@
  */
 
 const WIN: Record<string, number> = {
-  "é": 0xe9,
-  "è": 0xe8,
-  "ê": 0xea,
-  "ë": 0xeb,
-  "à": 0xe0,
-  "â": 0xe2,
-  "ä": 0xe4,
-  "ù": 0xf9,
-  "û": 0xfb,
-  "ü": 0xfc,
-  "ç": 0xe7,
-  "ô": 0xf4,
-  "ö": 0xf6,
-  "î": 0xee,
-  "ï": 0xef,
-  "É": 0xc9,
-  "È": 0xc8,
-  "Ê": 0xca,
-  "À": 0xc0,
-  "Â": 0xc2,
-  "Ç": 0xc7,
-  "Ô": 0xd4,
-  "Ù": 0xd9,
-  "Î": 0xce,
+  é: 0xe9,
+  è: 0xe8,
+  ê: 0xea,
+  ë: 0xeb,
+  à: 0xe0,
+  â: 0xe2,
+  ä: 0xe4,
+  ù: 0xf9,
+  û: 0xfb,
+  ü: 0xfc,
+  ç: 0xe7,
+  ô: 0xf4,
+  ö: 0xf6,
+  î: 0xee,
+  ï: 0xef,
+  É: 0xc9,
+  È: 0xc8,
+  Ê: 0xca,
+  À: 0xc0,
+  Â: 0xc2,
+  Ç: 0xc7,
+  Ô: 0xd4,
+  Ù: 0xd9,
+  Î: 0xce,
   "’": 0x92,
+  "‘": 0x91,
+  "“": 0x93,
+  "”": 0x94,
+  "…": 0x85,
+  œ: 0x9c,
+  Œ: 0x8c,
+  "€": 0x80,
   "–": 0x96,
   "—": 0x97,
+  // French money and punctuation spacing (Intl fr-CA uses these).
+  "\u202f": 0xa0,
+  "\u2009": 0x20,
 };
 
-function pdfEscape(text: string): string {
+/**
+ * Text for a PDF string literal in a WinAnsiEncoding font: escapes ( ) \
+ * and writes accents as octal codes. Latin-1 letters (é, È, « », nbsp...)
+ * map one to one. Anything else becomes "?".
+ */
+export function pdfEscape(text: string): string {
   let out = "";
   for (const char of text) {
-    const code = WIN[char];
+    const point = char.codePointAt(0) ?? 0;
+    const code = WIN[char] ?? (point >= 0xa0 && point <= 0xff ? point : undefined);
     if (code != null) {
       out += `\\${code.toString(8).padStart(3, "0")}`;
       continue;
@@ -78,7 +94,8 @@ export function renderTextPdf(lines: readonly string[]): Uint8Array {
     nextId += 1;
     pageObjectIds.push(pageId);
     const stream = pageStream(chunk.length ? chunk : [""]);
-    objects[contentId] = `${contentId} 0 obj\n<< /Length ${stream.length} >>\nstream\n${stream}\nendstream\nendobj\n`;
+    objects[contentId] =
+      `${contentId} 0 obj\n<< /Length ${stream.length} >>\nstream\n${stream}\nendstream\nendobj\n`;
     objects[pageId] =
       `${pageId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents ${contentId} 0 R /Resources << /Font << /F1 3 0 R >> >> >>\nendobj\n`;
   }

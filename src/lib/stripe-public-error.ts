@@ -28,12 +28,14 @@ export class StripeApiError extends Error {
   readonly type: string | null;
   /** Stripe's error param (e.g. "controller[losses][payments]"), sanitised. */
   readonly param: string | null;
+  /** Stripe's Request-Id header (req_...), for matching the Stripe dashboard log. */
+  readonly requestId: string | null;
 
   constructor(
     stripeMessage: string,
     status: number,
     code?: string | null,
-    extra?: { type?: string | null; param?: string | null },
+    extra?: { type?: string | null; param?: string | null; requestId?: string | null },
   ) {
     super(stripeMessage);
     this.name = "StripeApiError";
@@ -42,6 +44,8 @@ export class StripeApiError extends Error {
     this.code = code ? String(code) : null;
     this.type = safeStripeToken(extra?.type);
     this.param = safeStripeToken(extra?.param);
+    const req = typeof extra?.requestId === "string" ? extra.requestId.trim() : "";
+    this.requestId = /^req_[A-Za-z0-9]{6,40}$/.test(req) ? req : null;
   }
 }
 
@@ -58,13 +62,20 @@ export function redactStripeDetail(detail: string): string {
     .slice(0, 500);
 }
 
-export function mapCheckoutError(err: unknown, fallback = CHECKOUT_COULD_NOT_START): {
+export function mapCheckoutError(
+  err: unknown,
+  fallback = CHECKOUT_COULD_NOT_START,
+): {
   publicMessage: string;
   detail: string;
   passthrough: boolean;
 } {
   if (err instanceof CheckoutUserError) {
-    return { publicMessage: err.message, detail: redactStripeDetail(err.detail), passthrough: false };
+    return {
+      publicMessage: err.message,
+      detail: redactStripeDetail(err.detail),
+      passthrough: false,
+    };
   }
   if (err instanceof StripeApiError) {
     return {
@@ -77,7 +88,11 @@ export function mapCheckoutError(err: unknown, fallback = CHECKOUT_COULD_NOT_STA
   if (message && STRIPE_LEAK.test(message)) {
     return { publicMessage: fallback, detail: redactStripeDetail(message), passthrough: false };
   }
-  return { publicMessage: message || fallback, detail: redactStripeDetail(message || "unknown"), passthrough: true };
+  return {
+    publicMessage: message || fallback,
+    detail: redactStripeDetail(message || "unknown"),
+    passthrough: true,
+  };
 }
 
 /** Last line of defence in the browser if a server message still looks like Stripe. */

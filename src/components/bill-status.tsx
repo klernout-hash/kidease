@@ -1,8 +1,12 @@
 import type { BillStatus } from "@/lib/bill";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
+import { formatCad } from "@/lib/cad-format";
 
-const KEY: Record<BillStatus, "billDraft" | "billSent" | "billPaid" | "billVoid" | "billRefunded" | "billDisputed"> = {
+const KEY: Record<
+  BillStatus,
+  "billDraft" | "billSent" | "billPaid" | "billVoid" | "billRefunded" | "billDisputed"
+> = {
   draft: "billDraft",
   sent: "billSent",
   paid: "billPaid",
@@ -45,14 +49,23 @@ function tone(status: BillStatus) {
 
 type PaymentState = "processing" | "requires_action" | "failed";
 
-const STATE_KEY: Record<PaymentState, "billStateProcessing" | "billStateAction" | "billStateFailed"> = {
+const STATE_KEY: Record<
+  PaymentState,
+  "billStateProcessing" | "billStateAction" | "billStateFailed"
+> = {
   processing: "billStateProcessing",
   requires_action: "billStateAction",
   failed: "billStateFailed",
 };
 
 /** Stripe payment state on an open bill. Nothing when there is none. */
-export function PaymentStateBadge({ state, className }: { state?: PaymentState | null; className?: string }) {
+export function PaymentStateBadge({
+  state,
+  className,
+}: {
+  state?: PaymentState | null;
+  className?: string;
+}) {
   const { t } = useCopy();
   if (!state) return null;
   return (
@@ -61,7 +74,9 @@ export function PaymentStateBadge({ state, className }: { state?: PaymentState |
       data-state={state}
       className={cn(
         "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 ring-inset",
-        state === "processing" ? "bg-surface-2 text-muted ring-border" : "bg-danger/10 text-danger ring-danger/20",
+        state === "processing"
+          ? "bg-surface-2 text-muted ring-border"
+          : "bg-danger/10 text-danger ring-danger/20",
         className,
       )}
     >
@@ -83,9 +98,16 @@ export function PaymentStateNote({
   const { t } = useCopy();
   if (!state) return null;
   const body =
-    state === "processing" ? t("billProcessingBody") : state === "failed" ? t("billFailedBody") : t("billActionBody");
+    state === "processing"
+      ? t("billProcessingBody")
+      : state === "failed"
+        ? t("billFailedBody")
+        : t("billActionBody");
   return (
-    <p className={cn("text-sm", state === "processing" ? "text-muted" : "text-danger", className)} role="status">
+    <p
+      className={cn("text-sm", state === "processing" ? "text-muted" : "text-danger", className)}
+      role="status"
+    >
       {body}
       {state === "failed" && reason ? ` ${t("billFailedReason").replace("{reason}", reason)}` : ""}
     </p>
@@ -97,18 +119,25 @@ export function RefundNote({
   bill,
   className,
 }: {
-  bill: { refundState?: "partly_refunded" | "refunded" | null; refundedCents?: number | null; refundedAt?: string | null; refundMethodLabel?: string | null };
+  bill: {
+    refundState?: "partly_refunded" | "refunded" | null;
+    refundedCents?: number | null;
+    refundedAt?: string | null;
+    refundMethodLabel?: string | null;
+  };
   className?: string;
 }) {
   const { t, locale } = useCopy();
   if (!bill.refundState || !bill.refundedCents) return null;
   const fr = locale === "fr";
-  const amount = new Intl.NumberFormat(fr ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" }).format(bill.refundedCents / 100);
+  const amount = formatCad(bill.refundedCents / 100, fr ? "fr-CA" : "en-CA");
   const date = bill.refundedAt
     ? new Date(bill.refundedAt).toLocaleDateString(fr ? "fr-CA" : "en-CA", { dateStyle: "medium" })
     : "";
   const line = t("billRefundedOn").replace("{amount}", amount).replace("{date}", date).trim();
-  const to = bill.refundMethodLabel ? ` ${t("billRefundedTo").replace("{method}", bill.refundMethodLabel)}` : "";
+  const to = bill.refundMethodLabel
+    ? ` ${t("billRefundedTo").replace("{method}", bill.refundMethodLabel)}`
+    : "";
   return (
     <p className={cn("text-sm text-muted", className)} data-ke="bill-refund">
       {bill.refundState === "partly_refunded" ? (

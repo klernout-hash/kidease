@@ -3,7 +3,14 @@ import { DEFAULT_PLATFORM_FEE_BPS } from "./stripe-methods.ts";
 /** KidEase bill statuses. User-facing words: Bill / Pay / Paid. */
 export type BillStatus = "draft" | "sent" | "paid" | "void" | "refunded" | "disputed";
 
-export const BILL_STATUSES: readonly BillStatus[] = ["draft", "sent", "paid", "void", "refunded", "disputed"];
+export const BILL_STATUSES: readonly BillStatus[] = [
+  "draft",
+  "sent",
+  "paid",
+  "void",
+  "refunded",
+  "disputed",
+];
 
 export type Bill = {
   id: string;
@@ -126,7 +133,10 @@ export type EarningsSummary = {
 };
 
 /** Totals for the top of the Earnings tab. Only real bill rows count. */
-export function earningsSummary(bills: readonly Pick<Bill, "status" | "amountCents" | "netCents" | "paidAt">[], now = new Date()): EarningsSummary {
+export function earningsSummary(
+  bills: readonly Pick<Bill, "status" | "amountCents" | "netCents" | "paidAt">[],
+  now = new Date(),
+): EarningsSummary {
   const month = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
   let owedCents = 0;
   let owedCount = 0;
@@ -138,9 +148,29 @@ export function earningsSummary(bills: readonly Pick<Bill, "status" | "amountCen
       owedCount += 1;
     } else if (bill.status === "draft") {
       draftCount += 1;
-    } else if (bill.status === "paid" && bill.paidAt && bill.paidAt.slice(0, 7) === month) {
+    } else if (
+      bill.status === "paid" &&
+      bill.paidAt &&
+      (isoOrNull(bill.paidAt) ?? "").slice(0, 7) === month
+    ) {
       paidThisMonthCents += Math.max(0, bill.netCents);
     }
   }
   return { owedCents, owedCount, paidThisMonthCents, draftCount };
+}
+
+/**
+ * Postgres hands timestamptz back as a Date. The client used to get that Date
+ * in paidAt and called paidAt.slice(), which crashed the Earnings desk once a
+ * bill was paid (Nov 25). Bills always carry ISO strings (or a plain
+ * YYYY-MM-DD for a due date).
+ */
+export function isoOrNull(value: unknown, dateOnly = false): string | null {
+  if (value == null || value === "") return null;
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null;
+    return dateOnly ? value.toISOString().slice(0, 10) : value.toISOString();
+  }
+  const text = String(value);
+  return dateOnly && /^\d{4}-\d{2}-\d{2}/.test(text) ? text.slice(0, 10) : text;
 }

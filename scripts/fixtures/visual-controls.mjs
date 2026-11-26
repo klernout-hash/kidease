@@ -125,6 +125,7 @@ export async function buildVisualControlsFixture(root, out, phase) {
   );
   const sourceFiles = [
     "src/lib/utils.ts",
+    "src/lib/cad-format.ts",
     "src/lib/html-text.ts",
     "src/lib/languages.ts",
     "src/lib/units.ts",

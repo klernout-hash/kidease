@@ -78,7 +78,12 @@ export const runEnrolmentStep = createServerFn({ method: "POST" })
     `;
     const offer = offers[0];
     if (!offer) return { ok: false as const, error: "offer" };
-    const existing = await sql<{ id: string; step: string; envelope_id: string | null; contract_id: string | null }>`
+    const existing = await sql<{
+      id: string;
+      step: string;
+      envelope_id: string | null;
+      contract_id: string | null;
+    }>`
       select id, step, envelope_id, contract_id
       from enrolment_handoffs
       where offer_id = ${offer.id}
@@ -97,7 +102,8 @@ export const runEnrolmentStep = createServerFn({ method: "POST" })
       const status = await getEnvelopeStatus(envelopeId);
       envelopeSigned = envelopeIsSigned(status?.status);
     }
-    const step = (existing[0]?.step || null) as "accepted" | "packet" | "signed" | "invoiced" | null;
+    const step = (existing[0]?.step || null) as
+      "accepted" | "packet" | "signed" | "invoiced" | null;
     const next = advanceEnrolment({
       step,
       event,
@@ -150,7 +156,10 @@ export const runEnrolmentStep = createServerFn({ method: "POST" })
     let invoiceId: string | null = null;
     if (event === "invoice" && mode === "live" && next.invoiceCents != null) {
       const amountCad = Math.round(next.invoiceCents / 100);
-      const quote = parentChargeQuote({ invoiceCents: next.invoiceCents, daycareId: offer.daycare_id });
+      const quote = parentChargeQuote({
+        invoiceCents: next.invoiceCents,
+        daycareId: offer.daycare_id,
+      });
       invoiceId = newId("bl");
       const number = `KE-${invoiceId.slice(-8).toUpperCase()}`;
       await sql`
@@ -160,8 +169,8 @@ export const runEnrolmentStep = createServerFn({ method: "POST" })
           issued_by, memo, created_by
         ) values (
           ${invoiceId}, ${number}, ${context.userId}, ${offer.daycare_id}, ${currentPeriod()}, ${"draft"}, ${"cad"},
-          ${amountCad}, ${Math.round(quote.feeCents / 100)}, ${amountCad},
-          ${next.invoiceCents}, ${quote.feeCents}, ${quote.centreReceivesCents},
+          ${amountCad}, ${Math.round(quote.kidEaseFeeCents / 100)}, ${amountCad},
+          ${next.invoiceCents}, ${quote.kidEaseFeeCents}, ${quote.centreReceivesCents},
           ${"provider"}, ${"First invoice after enrolment"}, ${context.userId}
         )
       `;
@@ -197,5 +206,11 @@ export const runEnrolmentStep = createServerFn({ method: "POST" })
       province: offer.province,
       wantSms: true,
     });
-    return { ok: true as const, step: persistedStep, mode, plan, invoiceCents: next.step === "invoiced" ? next.invoiceCents ?? null : null };
+    return {
+      ok: true as const,
+      step: persistedStep,
+      mode,
+      plan,
+      invoiceCents: next.step === "invoiced" ? (next.invoiceCents ?? null) : null,
+    };
   });

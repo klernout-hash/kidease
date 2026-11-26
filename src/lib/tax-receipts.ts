@@ -8,6 +8,7 @@
 
 import { canadaProvinceCode } from "./gap-features.ts";
 import { renderTextPdf } from "./gov/pdf.ts";
+import { frenchCad } from "./cad-format.ts";
 
 export const TAX_RECEIPT_ROW_CAP = 5000;
 
@@ -76,8 +77,11 @@ function cleanId(value: string | null | undefined): string {
   return clean(value, 80);
 }
 
-export function cadFromCents(cents: number): string {
+export type TaxReceiptLocale = "en" | "fr";
+
+export function cadFromCents(cents: number, locale: TaxReceiptLocale = "en"): string {
   const safe = Number.isFinite(cents) ? Math.max(0, Math.round(cents)) : 0;
+  if (locale === "fr") return frenchCad(safe / 100);
   const dollars = Math.floor(safe / 100);
   const rem = safe % 100;
   const grouped = String(dollars).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -171,7 +175,12 @@ export function addressLine(parts: {
     .slice(0, 180);
 }
 
-export function receiptReference(year: number, daycareId: string, childId: string, parentUserId: string): string {
+export function receiptReference(
+  year: number,
+  daycareId: string,
+  childId: string,
+  parentUserId: string,
+): string {
   const raw = `${year}|${daycareId}|${childId}|${parentUserId}`;
   let hash = 0;
   for (let i = 0; i < raw.length; i += 1) hash = (Math.imul(hash, 33) + raw.charCodeAt(i)) >>> 0;
@@ -305,8 +314,41 @@ function wrapLines(lines: readonly string[], width = 88): string[] {
   return out;
 }
 
-export function federalReceiptLines(group: TaxReceiptGroup): string[] {
+export function federalReceiptLines(
+  group: TaxReceiptGroup,
+  locale: TaxReceiptLocale = "en",
+): string[] {
   const ontario = group.province === "ON";
+  const fr = locale === "fr";
+  const money = cadFromCents(group.amountCents, locale);
+  if (fr) {
+    const lines = [
+      "KidEase",
+      ontario
+        ? "Reçu de frais de garde d’enfants (Ontario et fédéral)"
+        : "Reçu de frais de garde d’enfants (fédéral)",
+      `Année d’imposition : ${group.year}`,
+      `Reçu pour : ${group.parentName}`,
+    ];
+    if (group.childName) lines.push(`Enfant : ${group.childName}`);
+    lines.push(`Centre : ${group.daycareName}`);
+    if (group.addressLine) lines.push(`Adresse : ${group.addressLine}`);
+    if (group.licenseNumber) lines.push(`Identification du fournisseur : ${group.licenseNumber}`);
+    lines.push(
+      `Montant : ${money}`,
+      `Période : du ${group.periodStart} au ${group.periodEnd}`,
+      `Factures payées : ${group.invoiceCount}`,
+      `Référence KidEase : ${group.reference}`,
+      "",
+      "Ce reçu liste les factures marquées payées dans KidEase pour cette année.",
+      "Ce n’est pas un formulaire gouvernemental et il n’a pas de code-barres.",
+      ontario
+        ? "Les parents de l’Ontario utilisent ce reçu avec le formulaire fédéral T778."
+        : "Utilisez ce reçu avec le formulaire fédéral T778.",
+      "KidEase ne décide pas du crédit d’impôt.",
+    );
+    return lines;
+  }
   const lines = [
     "KidEase",
     ontario ? "Ontario and federal child care receipt" : "Federal child care receipt",
@@ -318,7 +360,7 @@ export function federalReceiptLines(group: TaxReceiptGroup): string[] {
   if (group.addressLine) lines.push(`Address: ${group.addressLine}`);
   if (group.licenseNumber) lines.push(`Provider identification: ${group.licenseNumber}`);
   lines.push(
-    `Amount: ${cadFromCents(group.amountCents)}`,
+    `Amount: ${money}`,
     `Period: ${group.periodStart} to ${group.periodEnd}`,
     `Paid bills: ${group.invoiceCount}`,
     `KidEase reference: ${group.reference}`,
@@ -334,9 +376,45 @@ export function federalReceiptLines(group: TaxReceiptGroup): string[] {
 }
 
 const NOT_ON_FILE = "(not on file)";
+const NOT_ON_FILE_FR = "(non inscrit au dossier)";
 
-export function rl24ReceiptLines(group: TaxReceiptGroup): string[] | null {
+export function rl24ReceiptLines(
+  group: TaxReceiptGroup,
+  locale: TaxReceiptLocale = "en",
+): string[] | null {
   if (group.province !== "QC") return null;
+  const money = cadFromCents(group.amountCents, locale);
+  if (locale === "fr") {
+    const none = NOT_ON_FILE_FR;
+    const lines = [
+      "KidEase",
+      "Sommaire des frais de garde – Relevé 24 (Québec)",
+      `Année d’imposition : ${group.year}`,
+      `Reçu pour : ${group.parentName}`,
+      `Enfant : ${group.childName || none}`,
+      `Centre : ${group.daycareName}`,
+    ];
+    if (group.addressLine) lines.push(`Adresse : ${group.addressLine}`);
+    lines.push(
+      `Montant : ${money}`,
+      `Période : du ${group.periodStart} au ${group.periodEnd}`,
+      `A Date de naissance : ${group.childBirthdate || none}`,
+      `B.1 Jours de garde : ${group.daysOfCare == null ? none : String(group.daysOfCare)}`,
+      `B.2 Semaines de camp ou de pensionnat : ${none}`,
+      `C Total payé : ${money}`,
+      `D Ne donnant pas droit au crédit : ${none}`,
+      `E Donnant droit au crédit : ${none}`,
+      "G Numéro d’assurance sociale : (non conservé)",
+      `H Identification du fournisseur : ${group.licenseNumber || none}`,
+      `Factures payées : ${group.invoiceCount}`,
+      `Référence KidEase : ${group.reference}`,
+      "",
+      "La case C est le total des factures marquées payées dans KidEase.",
+      "La case E est vide, car KidEase ne décide pas du crédit d’impôt.",
+      "Ce n’est pas un relevé officiel de Revenu Québec et il n’a pas de code-barres.",
+    );
+    return lines;
+  }
   const lines = [
     "KidEase",
     "Quebec RL-24 child care summary",
@@ -347,12 +425,12 @@ export function rl24ReceiptLines(group: TaxReceiptGroup): string[] | null {
   ];
   if (group.addressLine) lines.push(`Address: ${group.addressLine}`);
   lines.push(
-    `Amount: ${cadFromCents(group.amountCents)}`,
+    `Amount: ${money}`,
     `Period: ${group.periodStart} to ${group.periodEnd}`,
     `A Date of birth: ${group.childBirthdate || NOT_ON_FILE}`,
     `B.1 Days of care: ${group.daysOfCare == null ? NOT_ON_FILE : String(group.daysOfCare)}`,
     "B.2 Camp or boarding weeks: (not on file)",
-    `C Total paid: ${cadFromCents(group.amountCents)}`,
+    `C Total paid: ${money}`,
     "D Does not qualify: (not on file)",
     "E Qualifies for the credit: (not on file)",
     "G Social insurance number: (not stored)",
@@ -367,22 +445,31 @@ export function rl24ReceiptLines(group: TaxReceiptGroup): string[] | null {
   return lines;
 }
 
-export function taxReceiptLines(group: TaxReceiptGroup, kind: TaxReceiptKind): string[] | null {
+export function taxReceiptLines(
+  group: TaxReceiptGroup,
+  kind: TaxReceiptKind,
+  locale: TaxReceiptLocale = "en",
+): string[] | null {
   if (group.amountCents <= 0) return null;
-  return kind === "rl24" ? rl24ReceiptLines(group) : federalReceiptLines(group);
+  return kind === "rl24" ? rl24ReceiptLines(group, locale) : federalReceiptLines(group, locale);
 }
 
-export function taxReceiptPdf(group: TaxReceiptGroup, kind: TaxReceiptKind): Uint8Array | null {
-  const lines = taxReceiptLines(group, kind);
+export function taxReceiptPdf(
+  group: TaxReceiptGroup,
+  kind: TaxReceiptKind,
+  locale: TaxReceiptLocale = "en",
+): Uint8Array | null {
+  const lines = taxReceiptLines(group, kind, locale);
   if (!lines) return null;
   return renderTextPdf(wrapLines(lines));
 }
 
 export function taxReceiptFileName(kind: TaxReceiptKind, year: number, centre: string): string {
-  const slug = clean(centre, 40)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "") || "centre";
+  const slug =
+    clean(centre, 40)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "centre";
   const name = kind === "rl24" ? "rl-24" : "child-care";
   return `kidease-${name}-${year}-${slug}.pdf`;
 }

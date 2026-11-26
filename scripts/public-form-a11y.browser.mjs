@@ -11,7 +11,11 @@ import { createServer } from "vite";
 import react from "@vitejs/plugin-react";
 import { chromium } from "playwright";
 import ts from "typescript";
-import { readStaticCopy, readStaticCopyProvenance, readSupportEmail } from "./fixtures/a11y-static-copy.mjs";
+import {
+  readStaticCopy,
+  readStaticCopyProvenance,
+  readSupportEmail,
+} from "./fixtures/a11y-static-copy.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const artifacts = join(root, "artifacts/a11y-en-fr/public-form");
@@ -19,28 +23,75 @@ const fixture = join(artifacts, "fixture");
 const fixtureEntry = join(fixture, "entry.tsx");
 const fixtureFiles = new Set([fixtureEntry, join(fixture, "index.html")]);
 const copyKeys = [
-  "name", "email", "messageLabel", "submit", "contact", "contactTitle", "contactIntro",
-  "parentContactTitle", "parentContactIntro", "roleParentTitle", "daycareEnrollLead", "heroClaimListing",
-  "contactSubject", "subjectCare", "subjectGeneral", "subjectListing", "subjectTech", "subjectPartner", "subjectOther",
-  "contactSent", "contactSendFailed", "contactDirect", "contactResponse", "contactLocation", "contactPrivacy",
-  "turnstileRequired", "turnstileExpired", "turnstileFailed", "turnstileLoadFailed",
+  "name",
+  "email",
+  "messageLabel",
+  "submit",
+  "contact",
+  "contactTitle",
+  "contactIntro",
+  "parentContactTitle",
+  "parentContactIntro",
+  "roleParentTitle",
+  "daycareEnrollLead",
+  "heroClaimListing",
+  "contactSubject",
+  "subjectCare",
+  "subjectGeneral",
+  "subjectListing",
+  "subjectTech",
+  "subjectPartner",
+  "subjectOther",
+  "contactSent",
+  "contactSendFailed",
+  "contactDirect",
+  "contactResponse",
+  "contactLocation",
+  "contactPrivacy",
+  "turnstileRequired",
+  "turnstileExpired",
+  "turnstileFailed",
+  "turnstileLoadFailed",
 ];
 const packs = readStaticCopy(root, copyKeys);
 const { en, fr } = packs;
 const supportEmail = readSupportEmail(root);
 const sourceFiles = [
-  "src/routes/contact.tsx", "src/components/turnstile-field.tsx", "src/components/ui/button.tsx",
-  "src/lib/turnstile-widget.ts", "src/lib/public-form-error.ts", "src/lib/utils.ts",
-  "src/lib/html-text.ts", "src/lib/languages.ts", "src/lib/french-type.ts",
+  "src/routes/contact.tsx",
+  "src/components/turnstile-field.tsx",
+  "src/components/ui/button.tsx",
+  "src/lib/turnstile-widget.ts",
+  "src/lib/public-form-error.ts",
+  "src/lib/utils.ts",
+  "src/lib/cad-format.ts",
+  "src/lib/html-text.ts",
+  "src/lib/languages.ts",
+  "src/lib/french-type.ts",
 ];
 const allowedSources = new Set(sourceFiles.map((path) => join(root, path)));
 const canonicalRoot = realpathSync(root);
-for (const path of allowedSources) assert.equal(realpathSync(path), join(canonicalRoot, relative(root, path)), "Fixture sources must not be symlinks");
-const fontFiles = new Map(["plus-jakarta-sans-latin.woff2", "plus-jakarta-sans-latin-ext.woff2"]
-  .map((name) => [`/fonts/${name}`, join(root, "public/fonts", name)]));
+for (const path of allowedSources)
+  assert.equal(
+    realpathSync(path),
+    join(canonicalRoot, relative(root, path)),
+    "Fixture sources must not be symlinks",
+  );
+const fontFiles = new Map(
+  ["plus-jakarta-sans-latin.woff2", "plus-jakarta-sans-latin-ext.woff2"].map((name) => [
+    `/fonts/${name}`,
+    join(root, "public/fonts", name),
+  ]),
+);
 const allowedPackages = new Set([
-  "react", "react-dom/client", "react/jsx-runtime", "react/jsx-dev-runtime", "@radix-ui/react-slot",
-  "lucide-react", "clsx", "tailwind-merge", "class-variance-authority",
+  "react",
+  "react-dom/client",
+  "react/jsx-runtime",
+  "react/jsx-dev-runtime",
+  "@radix-ui/react-slot",
+  "lucide-react",
+  "clsx",
+  "tailwind-merge",
+  "class-variance-authority",
 ]);
 const metrics = {
   forbiddenImports: [],
@@ -58,12 +109,21 @@ function sha256(path) {
 function compiledCssFile() {
   const dirs = [join(root, ".vercel/output/static/assets"), join(root, ".output/public/assets")];
   const supplied = process.env.A11Y_CSS_FILE;
-  const candidates = supplied ? [resolve(supplied)] : dirs.flatMap((dir) =>
-    existsSync(dir) ? readdirSync(dir).filter((name) => /^styles-.*\.css$/.test(name)).map((name) => join(dir, name)) : [],
-  );
+  const candidates = supplied
+    ? [resolve(supplied)]
+    : dirs.flatMap((dir) =>
+        existsSync(dir)
+          ? readdirSync(dir)
+              .filter((name) => /^styles-.*\.css$/.test(name))
+              .map((name) => join(dir, name))
+          : [],
+      );
   assert.equal(candidates.length, 1, "Provide A11Y_CSS_FILE from a finished local build");
   const file = realpathSync(candidates[0]);
-  assert.ok(dirs.some((dir) => file.startsWith(`${dir}${sep}`)), "CSS must be inside this checkout's build assets");
+  assert.ok(
+    dirs.some((dir) => file.startsWith(`${dir}${sep}`)),
+    "CSS must be inside this checkout's build assets",
+  );
   assert.equal(extname(file), ".css");
   return file;
 }
@@ -71,10 +131,17 @@ function compiledCssFile() {
 const cssFile = compiledCssFile();
 const provenance = {
   copy: readStaticCopyProvenance(root),
-  components: [...sourceFiles, "src/styles.css"].map((path) => ({ path, sha256: sha256(join(root, path)) })),
-  harness: ["scripts/public-form-a11y.browser.mjs", "scripts/fixtures/a11y-static-copy.mjs"]
-    .map((path) => ({ path, sha256: sha256(join(root, path)) })),
-  fonts: [...fontFiles.values()].map((path) => ({ path: relative(root, path), sha256: sha256(path) })),
+  components: [...sourceFiles, "src/styles.css"].map((path) => ({
+    path,
+    sha256: sha256(join(root, path)),
+  })),
+  harness: ["scripts/public-form-a11y.browser.mjs", "scripts/fixtures/a11y-static-copy.mjs"].map(
+    (path) => ({ path, sha256: sha256(join(root, path)) }),
+  ),
+  fonts: [...fontFiles.values()].map((path) => ({
+    path: relative(root, path),
+    sha256: sha256(path),
+  })),
   compiledCss: { path: relative(root, cssFile), sha256: sha256(cssFile) },
   copyKeys,
 };
@@ -137,29 +204,44 @@ function cleanId(id) {
 
 function fileCandidate(id, importer) {
   const clean = cleanId(id);
-  return clean.startsWith("@/") ? join(root, "src", clean.slice(2))
-    : isAbsolute(clean) ? resolve(clean)
-      : clean.startsWith(".") && importer && !importer.startsWith("\0") ? resolve(dirname(cleanId(importer)), clean) : null;
+  return clean.startsWith("@/")
+    ? join(root, "src", clean.slice(2))
+    : isAbsolute(clean)
+      ? resolve(clean)
+      : clean.startsWith(".") && importer && !importer.startsWith("\0")
+        ? resolve(dirname(cleanId(importer)), clean)
+        : null;
 }
 
 function infrastructurePath(path) {
-  return path?.startsWith(`${join(root, "node_modules")}${sep}`) || path?.startsWith(`${join(fixture, ".vite-cache")}${sep}`);
+  return (
+    path?.startsWith(`${join(root, "node_modules")}${sep}`) ||
+    path?.startsWith(`${join(fixture, ".vite-cache")}${sep}`)
+  );
 }
 
 function projectPath(id, importer) {
   const candidate = fileCandidate(id, importer);
   if (!candidate?.startsWith(`${root}${sep}`) || infrastructurePath(candidate)) return null;
-  return [candidate, `${candidate}.ts`, `${candidate}.tsx`].find((path) => allowedSources.has(path)) ?? candidate;
+  return (
+    [candidate, `${candidate}.ts`, `${candidate}.tsx`].find((path) => allowedSources.has(path)) ??
+    candidate
+  );
 }
 
 function allowedFile(path) {
-  return (allowedSources.has(path) || fixtureFiles.has(path)) &&
-    (!existsSync(path) || realpathSync(path) === join(canonicalRoot, relative(root, path)));
+  return (
+    (allowedSources.has(path) || fixtureFiles.has(path)) &&
+    (!existsSync(path) || realpathSync(path) === join(canonicalRoot, relative(root, path)))
+  );
 }
 
 function denyImport(_id, importer) {
   const source = importer ? projectPath(importer) : null;
-  metrics.forbiddenImports.push({ kind: "unlisted-runtime-import", source: source && allowedFile(source) ? relative(root, source) : "fixture-boundary" });
+  metrics.forbiddenImports.push({
+    kind: "unlisted-runtime-import",
+    source: source && allowedFile(source) ? relative(root, source) : "fixture-boundary",
+  });
   throw new Error("Forbidden project dependency in synthetic public-form QA");
 }
 
@@ -168,14 +250,24 @@ function syntheticEdges() {
     name: "public-form-synthetic-edges",
     enforce: "pre",
     resolveId(id, importer) {
-      if (id === "index.html" && importer && cleanId(importer) === join(fixture, "index.html")) return join(fixture, "index.html");
-      if (cleanId(id) === "/entry.tsx" && (!importer || cleanId(importer) === join(fixture, "index.html"))) return fixtureEntry;
+      if (id === "index.html" && importer && cleanId(importer) === join(fixture, "index.html"))
+        return join(fixture, "index.html");
+      if (
+        cleanId(id) === "/entry.tsx" &&
+        (!importer || cleanId(importer) === join(fixture, "index.html"))
+      )
+        return fixtureEntry;
       if (Object.prototype.hasOwnProperty.call(virtual, id)) return `\0public-form-qa:${id}`;
       const path = projectPath(id, importer);
       if (path && !allowedFile(path)) return denyImport(id, importer);
-      if ((importer?.startsWith("\0public-form-qa:") || (importer && projectPath(importer))) &&
-        !path && !infrastructurePath(fileCandidate(id, importer)) &&
-        !["/@react-refresh", "/@vite/client"].includes(id) && !allowedPackages.has(id)) return denyImport(id, importer);
+      if (
+        (importer?.startsWith("\0public-form-qa:") || (importer && projectPath(importer))) &&
+        !path &&
+        !infrastructurePath(fileCandidate(id, importer)) &&
+        !["/@react-refresh", "/@vite/client"].includes(id) &&
+        !allowedPackages.has(id)
+      )
+        return denyImport(id, importer);
     },
     load(id) {
       const prefix = "\0public-form-qa:";
@@ -184,7 +276,8 @@ function syntheticEdges() {
       if (path) {
         if (!allowedFile(path)) return denyImport(id);
         const relativePath = relative(root, path);
-        if (allowedSources.has(path) && !metrics.actualProjectModules.includes(relativePath)) metrics.actualProjectModules.push(relativePath);
+        if (allowedSources.has(path) && !metrics.actualProjectModules.includes(relativePath))
+          metrics.actualProjectModules.push(relativePath);
       }
     },
     transform(code, id) {
@@ -195,20 +288,31 @@ function syntheticEdges() {
       const file = ts.createSourceFile(path, code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
       function assertSourceSpecifier(specifier) {
         const mapped = uiEdges[relativePath]?.[specifier] ?? specifier;
-        if (Object.prototype.hasOwnProperty.call(virtual, mapped) || allowedPackages.has(mapped)) return;
+        if (Object.prototype.hasOwnProperty.call(virtual, mapped) || allowedPackages.has(mapped))
+          return;
         const target = projectPath(mapped, path);
         if (!target || !allowedFile(target)) denyImport(specifier, id);
       }
       function rejectUnboundedImports(node) {
         if (ts.isImportDeclaration(node) && !node.importClause?.isTypeOnly) {
           const bindings = node.importClause?.namedBindings;
-          const onlyTypes = bindings && ts.isNamedImports(bindings) && !node.importClause.name && bindings.elements.length > 0 && bindings.elements.every((element) => element.isTypeOnly);
+          const onlyTypes =
+            bindings &&
+            ts.isNamedImports(bindings) &&
+            !node.importClause.name &&
+            bindings.elements.length > 0 &&
+            bindings.elements.every((element) => element.isTypeOnly);
           if (!onlyTypes) assertSourceSpecifier(node.moduleSpecifier.text);
         }
-        if (ts.isExportDeclaration(node) && !node.isTypeOnly && node.moduleSpecifier) assertSourceSpecifier(node.moduleSpecifier.text);
-        if (ts.isCallExpression(node) && (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
-          (ts.isIdentifier(node.expression) && node.expression.text === "require"))) {
-          if (node.arguments.length !== 1 || !ts.isStringLiteral(node.arguments[0])) denyImport("nonliteral import", id);
+        if (ts.isExportDeclaration(node) && !node.isTypeOnly && node.moduleSpecifier)
+          assertSourceSpecifier(node.moduleSpecifier.text);
+        if (
+          ts.isCallExpression(node) &&
+          (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+            (ts.isIdentifier(node.expression) && node.expression.text === "require"))
+        ) {
+          if (node.arguments.length !== 1 || !ts.isStringLiteral(node.arguments[0]))
+            denyImport("nonliteral import", id);
           assertSourceSpecifier(node.arguments[0].text);
         }
         ts.forEachChild(node, rejectUnboundedImports);
@@ -216,23 +320,43 @@ function syntheticEdges() {
       rejectUnboundedImports(file);
       const replacements = [];
       for (const statement of file.statements) {
-        if (!ts.isImportDeclaration(statement) || statement.importClause?.isTypeOnly || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
+        if (
+          !ts.isImportDeclaration(statement) ||
+          statement.importClause?.isTypeOnly ||
+          !ts.isStringLiteral(statement.moduleSpecifier)
+        )
+          continue;
         const from = statement.moduleSpecifier.text;
         const to = uiEdges[relativePath]?.[from];
         if (to) {
-          replacements.push({ start: statement.moduleSpecifier.getStart(file), end: statement.moduleSpecifier.end, to });
-          if (!metrics.rewrittenEdges.some((edge) => edge.source === relativePath && edge.from === from)) metrics.rewrittenEdges.push({ source: relativePath, from, to });
+          replacements.push({
+            start: statement.moduleSpecifier.getStart(file),
+            end: statement.moduleSpecifier.end,
+            to,
+          });
+          if (
+            !metrics.rewrittenEdges.some(
+              (edge) => edge.source === relativePath && edge.from === from,
+            )
+          )
+            metrics.rewrittenEdges.push({ source: relativePath, from, to });
         }
       }
       for (const replacement of replacements.sort((a, b) => b.start - a.start)) {
-        code = code.slice(0, replacement.start) + JSON.stringify(replacement.to) + code.slice(replacement.end);
+        code =
+          code.slice(0, replacement.start) +
+          JSON.stringify(replacement.to) +
+          code.slice(replacement.end);
       }
       return replacements.length ? { code, map: null } : null;
     },
     configureServer(vite) {
       vite.middlewares.use((request, response, next) => {
         const url = new URL(request.url, "http://127.0.0.1");
-        if (!["GET", "HEAD"].includes(request.method) || /(?:^|\/)(?:api|_server[^/]*|__server[^/]*)(?:\/|$)/.test(url.pathname)) {
+        if (
+          !["GET", "HEAD"].includes(request.method) ||
+          /(?:^|\/)(?:api|_server[^/]*|__server[^/]*)(?:\/|$)/.test(url.pathname)
+        ) {
           metrics.serverTransportAttempts.push({ kind: "service-request", method: request.method });
           response.statusCode = 403;
           response.end("No service transport is allowed in this fixture");
@@ -259,13 +383,25 @@ function syntheticEdges() {
         if (!url.pathname.startsWith("/assets/")) return next();
         const name = decodeURIComponent(url.pathname.slice("/assets/".length));
         const asset = join(dirname(cssFile), name);
-        if (name !== basename(name) || !/\.(?:css|woff2?|ttf|otf|svg|png|webp|avif|jpe?g|ico)$/.test(name) || !existsSync(asset)) {
-          metrics.serverTransportAttempts.push({ kind: "unlisted-built-asset", method: request.method });
+        if (
+          name !== basename(name) ||
+          !/\.(?:css|woff2?|ttf|otf|svg|png|webp|avif|jpe?g|ico)$/.test(name) ||
+          !existsSync(asset)
+        ) {
+          metrics.serverTransportAttempts.push({
+            kind: "unlisted-built-asset",
+            method: request.method,
+          });
           response.statusCode = 403;
           response.end("Only compiled CSS and static assets are allowed");
           return;
         }
-        const mime = { ".css": "text/css", ".woff2": "font/woff2", ".woff": "font/woff", ".svg": "image/svg+xml" }[extname(asset)];
+        const mime = {
+          ".css": "text/css",
+          ".woff2": "font/woff2",
+          ".woff": "font/woff",
+          ".svg": "image/svg+xml",
+        }[extname(asset)];
         if (mime) response.setHeader("Content-Type", mime);
         response.end(readFileSync(asset));
       });
@@ -281,10 +417,19 @@ let failure;
 const previousFetch = globalThis.fetch;
 const processGuard = globalThis[Symbol.for("kidease.private.outbound-guard")];
 function processGuardStatus() {
-  assert.ok(typeof processGuard?.getStatus === "function", "Private process guard status is required");
+  assert.ok(
+    typeof processGuard?.getStatus === "function",
+    "Private process guard status is required",
+  );
   const status = processGuard.getStatus();
-  assert.ok(status.mode === "fixture" && status.violations === 0, "Private process guard must be clean and in fixture mode");
-  assert.ok(status.counts && Object.keys(status.counts).length === 0, "Private process guard must have no blocked operations");
+  assert.ok(
+    status.mode === "fixture" && status.violations === 0,
+    "Private process guard must be clean and in fixture mode",
+  );
+  assert.ok(
+    status.counts && Object.keys(status.counts).length === 0,
+    "Private process guard must have no blocked operations",
+  );
   return { mode: "fixture", violations: 0, counts: {} };
 }
 if (processGuard) metrics.processGuard = processGuardStatus();
@@ -319,7 +464,14 @@ try {
     publicDir: false,
     resolve: { alias: { "@": join(root, "src") } },
     plugins: [syntheticEdges(), react()],
-    server: { middlewareMode: true, host: "127.0.0.1", port: 0, hmr: false, ws: false, fs: { allow: [root] } },
+    server: {
+      middlewareMode: true,
+      host: "127.0.0.1",
+      port: 0,
+      hmr: false,
+      ws: false,
+      fs: { allow: [root] },
+    },
     optimizeDeps: {
       noDiscovery: true,
       include: [
@@ -365,11 +517,20 @@ try {
         const url = new URL(request.url());
         if (request.method() !== "GET") {
           networkMutations.push(request.method());
-          metrics.forbiddenBrowserTransports.push({ kind: "non-read-request", method: request.method() });
+          metrics.forbiddenBrowserTransports.push({
+            kind: "non-read-request",
+            method: request.method(),
+          });
           return route.abort("blockedbyclient");
         }
-        if (url.origin !== origin || /(?:^|\/)(?:api|_server[^/]*|__server[^/]*)(?:\/|$)/.test(url.pathname)) {
-          metrics.forbiddenBrowserTransports.push({ kind: url.origin !== origin ? "external-request" : "application-api", method: request.method() });
+        if (
+          url.origin !== origin ||
+          /(?:^|\/)(?:api|_server[^/]*|__server[^/]*)(?:\/|$)/.test(url.pathname)
+        ) {
+          metrics.forbiddenBrowserTransports.push({
+            kind: url.origin !== origin ? "external-request" : "application-api",
+            method: request.method(),
+          });
           return route.abort("blockedbyclient");
         }
         return route.continue();
@@ -386,7 +547,10 @@ try {
           Object.defineProperty(HTMLScriptElement.prototype, "src", {
             ...descriptor,
             set(value) {
-              if (String(value) === "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit") {
+              if (
+                String(value) ===
+                "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+              ) {
                 window.__publicFormQa.syntheticScriptFailures++;
                 queueMicrotask(() => this.dispatchEvent(new Event("error")));
                 return;
@@ -495,23 +659,49 @@ try {
       await browser?.close();
     } finally {
       try {
-        if (httpServer?.listening) await new Promise((resolve, reject) => httpServer.close((error) => error ? reject(error) : resolve()));
+        if (httpServer?.listening)
+          await new Promise((resolve, reject) =>
+            httpServer.close((error) => (error ? reject(error) : resolve())),
+          );
       } finally {
         await server?.close();
       }
     }
-    for (const source of [...provenance.copy, ...provenance.components, ...provenance.harness, ...provenance.fonts, provenance.compiledCss]) {
-      assert.equal(sha256(join(root, source.path)), source.sha256, `Source changed during public-form QA: ${source.path}`);
+    for (const source of [
+      ...provenance.copy,
+      ...provenance.components,
+      ...provenance.harness,
+      ...provenance.fonts,
+      provenance.compiledCss,
+    ]) {
+      assert.equal(
+        sha256(join(root, source.path)),
+        source.sha256,
+        `Source changed during public-form QA: ${source.path}`,
+      );
     }
-    for (const key of ["forbiddenImports", "forbiddenBrowserTransports", "nodeFetchAttempts", "serverTransportAttempts"]) {
+    for (const key of [
+      "forbiddenImports",
+      "forbiddenBrowserTransports",
+      "nodeFetchAttempts",
+      "serverTransportAttempts",
+    ]) {
       assert.deepEqual(metrics[key], [], `${key} must stay empty`);
     }
-    assert.deepEqual([...metrics.actualProjectModules].sort(), [...sourceFiles].sort(), "Exactly the reviewed project modules must load");
+    assert.deepEqual(
+      [...metrics.actualProjectModules].sort(),
+      [...sourceFiles].sort(),
+      "Exactly the reviewed project modules must load",
+    );
     const edges = Object.entries(uiEdges).flatMap(([source, replacements]) =>
       Object.entries(replacements).map(([from, to]) => ({ source, from, to })),
     );
     const edgeKey = (edge) => `${edge.source}:${edge.from}:${edge.to}`;
-    assert.deepEqual(metrics.rewrittenEdges.map(edgeKey).sort(), edges.map(edgeKey).sort(), "Every expected UI boundary must be rewritten");
+    assert.deepEqual(
+      metrics.rewrittenEdges.map(edgeKey).sort(),
+      edges.map(edgeKey).sort(),
+      "Every expected UI boundary must be rewritten",
+    );
     assert.equal(results.length, 4, "All original public-form cases must run");
     if (processGuard) metrics.processGuard = processGuardStatus();
   } catch (error) {
@@ -523,7 +713,14 @@ try {
       if (!processGuard) globalThis.fetch = previousFetch;
     }
   }
-  const report = { ok: !failure, ...(failure ? { error: String(failure) } : {}), results, artifacts, provenance, metrics };
+  const report = {
+    ok: !failure,
+    ...(failure ? { error: String(failure) } : {}),
+    results,
+    artifacts,
+    provenance,
+    metrics,
+  };
   await writeFile(join(artifacts, "results.json"), JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report, null, 2));
 }

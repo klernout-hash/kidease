@@ -17,7 +17,10 @@ export type InvoiceListRow = {
   daycareName: string | null;
 };
 
-export function invoiceListHtml(invoices: readonly InvoiceListRow[], locale: InvoiceLocale = "en"): string {
+export function invoiceListHtml(
+  invoices: readonly InvoiceListRow[],
+  locale: InvoiceLocale = "en",
+): string {
   const fr = locale === "fr";
   const title = fr ? "Factures" : "Invoices";
   const lead = fr
@@ -36,7 +39,9 @@ export function invoiceListHtml(invoices: readonly InvoiceListRow[], locale: Inv
         invoice.status === "open" && invoice.hostedInvoiceUrl
           ? `<a class="pay" href="${escapeAttr(invoice.hostedInvoiceUrl)}">${fr ? "Payer la facture" : "Pay invoice"}</a>`
           : "";
-      const detail = fr ? `/fr/invoices/${encodeURIComponent(invoice.id)}?print=1` : `/invoices/${encodeURIComponent(invoice.id)}?print=1`;
+      const detail = fr
+        ? `/fr/invoices/${encodeURIComponent(invoice.id)}?print=1`
+        : `/invoices/${encodeURIComponent(invoice.id)}?print=1`;
       return `<li data-ke="invoice-row" data-status="${invoice.status}">
         <div>
           <strong>${escapeHtml(invoice.number)}</strong>
@@ -45,7 +50,7 @@ export function invoiceListHtml(invoices: readonly InvoiceListRow[], locale: Inv
         </div>
         <div class="actions">
           ${pay}
-          <a data-ke="invoice-pdf" data-invoice="${escapeAttr(invoice.id)}" href="/api/invoices/${encodeURIComponent(invoice.id)}/pdf">${fr ? "Télécharger le PDF" : "Download PDF"}</a>
+          <a data-ke="invoice-pdf" data-invoice="${escapeAttr(invoice.id)}" href="/api/invoices/${encodeURIComponent(invoice.id)}/pdf${fr ? "?lang=fr" : ""}">${fr ? "Télécharger le PDF" : "Download PDF"}</a>
           <a data-ke="invoice-print" href="${detail}">${fr ? "Imprimer" : "Print"}</a>
         </div>
       </li>`;

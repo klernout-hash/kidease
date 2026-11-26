@@ -1,13 +1,49 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { minimumVacationBps, minimumWageCents, minimumWageOn, MINIMUM_WAGES, MINIMUM_WAGE_AS_OF, holidayPayCents, PAY_RULES, splitOvertime, unverifiedRules, yearsOfService } from "../src/lib/payroll/pay-rules.ts";
-import { cntCents, employerCosts, yearlyHealthTaxCents } from "../src/lib/payroll/employer-costs.ts";
+import {
+  minimumVacationBps,
+  minimumWageCents,
+  minimumWageOn,
+  MINIMUM_WAGES,
+  MINIMUM_WAGE_AS_OF,
+  holidayPayCents,
+  PAY_RULES,
+  splitOvertime,
+  unverifiedRules,
+  yearsOfService,
+} from "../src/lib/payroll/pay-rules.ts";
+import {
+  cntCents,
+  employerCosts,
+  yearlyHealthTaxCents,
+} from "../src/lib/payroll/employer-costs.ts";
 import { contractorPay, validGstNumber } from "../src/lib/payroll/contractor.ts";
-import { correctionLines, dayRows, parseHours, planAdjust, planFlag, planReset, staffDayView, totalMinutes } from "../src/lib/payroll/hours-adjust.ts";
-import { buildPayCard, canApprove, searchPeople, SEARCHABLE_AFTER } from "../src/lib/payroll/pay-card.ts";
+import {
+  correctionLines,
+  dayRows,
+  parseHours,
+  planAdjust,
+  planFlag,
+  planReset,
+  staffDayView,
+  totalMinutes,
+} from "../src/lib/payroll/hours-adjust.ts";
+import {
+  buildPayCard,
+  canApprove,
+  searchPeople,
+  SEARCHABLE_AFTER,
+} from "../src/lib/payroll/pay-card.ts";
 import { parseStub, stubFromCard } from "../src/lib/payroll/stubs.ts";
 import { rl1Slips, t4aSlips, t4Slips } from "../src/lib/payroll/year-end.ts";
-import { csvCell, packFiles, packJson, packPdfLines, remittanceSummary, xeroJournalCsv } from "../src/lib/payroll/accountant-pack.ts";
+import {
+  csvCell,
+  packFiles,
+  packJson,
+  packPdfLines,
+  remittanceSummary,
+  xeroJournalCsv,
+} from "../src/lib/payroll/accountant-pack.ts";
 import { PROVINCE_CODES } from "../src/lib/payroll/tables.ts";
 
 const NOW = new Date("2026-11-20T20:00:00Z");
@@ -100,11 +136,27 @@ test("payroll health taxes use each province's thresholds", () => {
   assert.equal(yearlyHealthTaxCents({ province: "ON", payrollCents: 90_000_000 }).cents, 0);
   // $1.2M Ontario payroll: 1.95% on $200,000 above the exemption = $3,900.
   assert.equal(yearlyHealthTaxCents({ province: "ON", payrollCents: 120_000_000 }).cents, 390_000);
-  assert.equal(yearlyHealthTaxCents({ province: "ON", payrollCents: 120_000_000, exemptionEligible: false }).cents, 2_340_000);
-  assert.equal(yearlyHealthTaxCents({ province: "BC", payrollCents: 120_000_000 }).cents, 1_170_000);
-  assert.equal(yearlyHealthTaxCents({ province: "BC", payrollCents: 200_000_000 }).cents, 3_900_000);
-  assert.equal(yearlyHealthTaxCents({ province: "MB", payrollCents: 300_000_000 }).cents, 2_150_000);
-  assert.equal(yearlyHealthTaxCents({ province: "NL", payrollCents: 250_000_000 }).cents, 1_000_000);
+  assert.equal(
+    yearlyHealthTaxCents({ province: "ON", payrollCents: 120_000_000, exemptionEligible: false })
+      .cents,
+    2_340_000,
+  );
+  assert.equal(
+    yearlyHealthTaxCents({ province: "BC", payrollCents: 120_000_000 }).cents,
+    1_170_000,
+  );
+  assert.equal(
+    yearlyHealthTaxCents({ province: "BC", payrollCents: 200_000_000 }).cents,
+    3_900_000,
+  );
+  assert.equal(
+    yearlyHealthTaxCents({ province: "MB", payrollCents: 300_000_000 }).cents,
+    2_150_000,
+  );
+  assert.equal(
+    yearlyHealthTaxCents({ province: "NL", payrollCents: 250_000_000 }).cents,
+    1_000_000,
+  );
   assert.equal(yearlyHealthTaxCents({ province: "QC", payrollCents: 50_000_000 }).cents, 825_000);
   assert.equal(yearlyHealthTaxCents({ province: "SK", payrollCents: 500_000_000 }).cents, 0);
   assert.equal(cntCents(500_000, 10_000_000), 180);
@@ -125,20 +177,44 @@ test("employer costs list CPP, EI, the health tax share, and the owner's WCB rat
   assert.ok(codes.includes("on_eht"));
   assert.equal(out.lines.find((line) => line.code === "wcb").cents, 2_500);
   assert.equal(out.lines.find((line) => line.code === "on_eht").estimate, true);
-  const none = employerCosts({ province: "QC", grossCents: 100_000, employerCppCents: 0, employerCpp2Cents: 0, employerEiCents: 0, employerQpipCents: 0 });
+  const none = employerCosts({
+    province: "QC",
+    grossCents: 100_000,
+    employerCppCents: 0,
+    employerCpp2Cents: 0,
+    employerEiCents: 0,
+    employerQpipCents: 0,
+  });
   assert.ok(none.lines.some((line) => line.code === "qc_cnt"));
   assert.ok(none.notes.some((note) => /CNESST/.test(note)));
 });
 
 test("contractors get the agreed amount, no deductions, and GST/HST only if registered", () => {
-  const flat = contractorPay({ basis: "flat", amountCents: 150_000, gstRegistered: false, province: "ON" });
+  const flat = contractorPay({
+    basis: "flat",
+    amountCents: 150_000,
+    gstRegistered: false,
+    province: "ON",
+  });
   assert.equal(flat.totalCents, 150_000);
   assert.equal(flat.deductionsCents, 0);
-  const hst = contractorPay({ basis: "base", amountCents: 100_000, extraCents: 20_000, gstRegistered: true, gstNumber: "123456789RT0001", province: "ON" });
+  const hst = contractorPay({
+    basis: "base",
+    amountCents: 100_000,
+    extraCents: 20_000,
+    gstRegistered: true,
+    gstNumber: "123456789RT0001",
+    province: "ON",
+  });
   assert.equal(hst.feeCents, 120_000);
   assert.equal(hst.salesTaxCents, 15_600);
   assert.equal(hst.salesTaxKind, "HST");
-  const ns = contractorPay({ basis: "flat", amountCents: 100_000, gstRegistered: true, province: "NS" });
+  const ns = contractorPay({
+    basis: "flat",
+    amountCents: 100_000,
+    gstRegistered: true,
+    province: "NS",
+  });
   assert.equal(ns.salesTaxCents, 0);
   assert.equal(ns.salesTaxVerified, false);
   assert.equal(validGstNumber("123456789 RT 0001"), true);
@@ -146,23 +222,85 @@ test("contractors get the agreed amount, no deductions, and GST/HST only if regi
 });
 
 const punches = [
-  { id: "p1", employeeId: "e1", clockIn: "2026-11-16T13:00:00Z", clockOut: "2026-11-16T21:30:00Z", unpaidBreakMinutes: 30 },
-  { id: "p2", employeeId: "e1", clockIn: "2026-11-17T13:00:00Z", clockOut: null, unpaidBreakMinutes: 0 },
-  { id: "p3", employeeId: "e2", clockIn: "2026-11-16T13:00:00Z", clockOut: "2026-11-16T17:00:00Z", unpaidBreakMinutes: 0 },
+  {
+    id: "p1",
+    employeeId: "e1",
+    clockIn: "2026-11-16T13:00:00Z",
+    clockOut: "2026-11-16T21:30:00Z",
+    unpaidBreakMinutes: 30,
+  },
+  {
+    id: "p2",
+    employeeId: "e1",
+    clockIn: "2026-11-17T13:00:00Z",
+    clockOut: null,
+    unpaidBreakMinutes: 0,
+  },
+  {
+    id: "p3",
+    employeeId: "e2",
+    clockIn: "2026-11-16T13:00:00Z",
+    clockOut: "2026-11-16T17:00:00Z",
+    unpaidBreakMinutes: 0,
+  },
 ];
 
 test("days show check-in hours, owner changes need a reason, show Adjusted, and write an audit row", () => {
-  const rows = dayRows({ employeeId: "e1", from: "2026-11-16", to: "2026-11-17", punches, adjustments: [], now: NOW });
+  const rows = dayRows({
+    employeeId: "e1",
+    from: "2026-11-16",
+    to: "2026-11-17",
+    punches,
+    adjustments: [],
+    now: NOW,
+  });
   assert.equal(rows[0].minutes, 480);
   assert.equal(rows[1].missedCheckout, true);
-  const denied = planAdjust({ canEditPay: false, row: rows[1], employeeId: "e1", newMinutes: 480, reason: "Forgot to check out", actorId: "o1", now: NOW, id: "a1" });
+  const denied = planAdjust({
+    canEditPay: false,
+    row: rows[1],
+    employeeId: "e1",
+    newMinutes: 480,
+    reason: "Forgot to check out",
+    actorId: "o1",
+    now: NOW,
+    id: "a1",
+  });
   assert.equal(denied.ok, false);
-  const noReason = planAdjust({ canEditPay: true, row: rows[1], employeeId: "e1", newMinutes: 480, reason: " ", actorId: "o1", now: NOW, id: "a1" });
+  const noReason = planAdjust({
+    canEditPay: true,
+    row: rows[1],
+    employeeId: "e1",
+    newMinutes: 480,
+    reason: " ",
+    actorId: "o1",
+    now: NOW,
+    id: "a1",
+  });
   assert.equal(noReason.ok, false);
-  const plan = planAdjust({ canEditPay: true, row: rows[1], employeeId: "e1", newMinutes: 480, reason: "Forgot to check out", actorId: "o1", now: NOW, id: "a1" });
+  const plan = planAdjust({
+    canEditPay: true,
+    row: rows[1],
+    employeeId: "e1",
+    newMinutes: 480,
+    reason: "Forgot to check out",
+    actorId: "o1",
+    now: NOW,
+    id: "a1",
+  });
   assert.equal(plan.ok, true);
-  assert.deepEqual([plan.audit.oldMinutes, plan.audit.newMinutes, plan.audit.actorId, plan.audit.action], [0, 480, "o1", "adjust"]);
-  const after = dayRows({ employeeId: "e1", from: "2026-11-16", to: "2026-11-17", punches, adjustments: [plan.adjustment], now: NOW });
+  assert.deepEqual(
+    [plan.audit.oldMinutes, plan.audit.newMinutes, plan.audit.actorId, plan.audit.action],
+    [0, 480, "o1", "adjust"],
+  );
+  const after = dayRows({
+    employeeId: "e1",
+    from: "2026-11-16",
+    to: "2026-11-17",
+    punches,
+    adjustments: [plan.adjustment],
+    now: NOW,
+  });
   assert.equal(after[1].adjusted, true);
   assert.equal(after[1].minutes, 480);
   assert.equal(after[1].originalMinutes, 0);
@@ -172,26 +310,94 @@ test("days show check-in hours, owner changes need a reason, show Adjusted, and 
   assert.equal("adjustedBy" in staff, false);
   assert.equal(totalMinutes(after), 960);
   // Reset to check-in times.
-  const reset = planReset({ canEditPay: true, row: after[1], employeeId: "e1", actorId: "o1", now: new Date("2026-11-21T00:00:00Z"), id: "a2" });
+  const reset = planReset({
+    canEditPay: true,
+    row: after[1],
+    employeeId: "e1",
+    actorId: "o1",
+    now: new Date("2026-11-21T00:00:00Z"),
+    id: "a2",
+  });
   assert.equal(reset.ok, true);
   assert.equal(reset.audit.action, "reset");
-  const back = dayRows({ employeeId: "e1", from: "2026-11-16", to: "2026-11-17", punches, adjustments: [plan.adjustment, reset.adjustment], now: NOW });
+  const back = dayRows({
+    employeeId: "e1",
+    from: "2026-11-16",
+    to: "2026-11-17",
+    punches,
+    adjustments: [plan.adjustment, reset.adjustment],
+    now: NOW,
+  });
   assert.equal(back[1].adjusted, false);
   assert.equal(back[1].minutes, 0);
 });
 
 test("staff flag their own day, locked days turn changes into corrections, and hours parse", () => {
-  const rows = dayRows({ employeeId: "e1", from: "2026-11-16", to: "2026-11-16", punches, adjustments: [], lockedThrough: "2026-11-16", now: NOW });
+  const rows = dayRows({
+    employeeId: "e1",
+    from: "2026-11-16",
+    to: "2026-11-16",
+    punches,
+    adjustments: [],
+    lockedThrough: "2026-11-16",
+    now: NOW,
+  });
   assert.equal(rows[0].locked, true);
-  assert.equal(planFlag({ samePerson: false, row: rows[0], employeeId: "e1", note: "Wrong", actorId: "x", now: NOW, id: "f1" }).ok, false);
-  const flag = planFlag({ samePerson: true, row: rows[0], employeeId: "e1", note: "I stayed late", actorId: "u1", now: NOW, id: "f1" });
+  assert.equal(
+    planFlag({
+      samePerson: false,
+      row: rows[0],
+      employeeId: "e1",
+      note: "Wrong",
+      actorId: "x",
+      now: NOW,
+      id: "f1",
+    }).ok,
+    false,
+  );
+  const flag = planFlag({
+    samePerson: true,
+    row: rows[0],
+    employeeId: "e1",
+    note: "I stayed late",
+    actorId: "u1",
+    now: NOW,
+    id: "f1",
+  });
   assert.equal(flag.ok, true);
-  const flagged = dayRows({ employeeId: "e1", from: "2026-11-16", to: "2026-11-16", punches, adjustments: [], flags: [flag.flag], now: NOW });
+  const flagged = dayRows({
+    employeeId: "e1",
+    from: "2026-11-16",
+    to: "2026-11-16",
+    punches,
+    adjustments: [],
+    flags: [flag.flag],
+    now: NOW,
+  });
   assert.equal(flagged[0].flagged, true);
-  const change = planAdjust({ canEditPay: true, row: rows[0], employeeId: "e1", newMinutes: 540, reason: "Stayed late for a parent", actorId: "o1", now: NOW, id: "a3" });
+  const change = planAdjust({
+    canEditPay: true,
+    row: rows[0],
+    employeeId: "e1",
+    newMinutes: 540,
+    reason: "Stayed late for a parent",
+    actorId: "o1",
+    now: NOW,
+    id: "a3",
+  });
   assert.equal(change.correction, true);
-  const now = dayRows({ employeeId: "e1", from: "2026-11-16", to: "2026-11-16", punches, adjustments: [change.adjustment], now: NOW });
-  assert.deepEqual(correctionLines({ paid: [{ date: "2026-11-16", minutes: 480, rateCents: 2_400 }], now }), [{ date: "2026-11-16", deltaMinutes: 60, cents: 2_400 }]);
+  const now = dayRows({
+    employeeId: "e1",
+    from: "2026-11-16",
+    to: "2026-11-16",
+    punches,
+    adjustments: [change.adjustment],
+    now: NOW,
+  });
+  assert.deepEqual(
+    correctionLines({ paid: [{ date: "2026-11-16", minutes: 480, rateCents: 2_400 }], now }),
+    [{ date: "2026-11-16", deltaMinutes: 60, cents: 2_400 }],
+  );
   assert.equal(parseHours("7.5"), 450);
   assert.equal(parseHours("7:30"), 450);
   assert.equal(parseHours("7h30"), 450);
@@ -215,8 +421,34 @@ const period = { start: "2026-11-08", end: "2026-11-21", payDate: "2026-11-27" }
 
 function fullDays(minutesPerDay) {
   const rows = [];
-  for (const date of ["2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20"]) {
-    rows.push({ date, checkIn: null, checkOut: null, autoMinutes: minutesPerDay, minutes: minutesPerDay, adjusted: false, originalMinutes: null, reason: null, adjustedBy: null, adjustedAt: null, missedCheckout: false, flagged: false, flagNote: null, locked: false });
+  for (const date of [
+    "2026-11-09",
+    "2026-11-10",
+    "2026-11-11",
+    "2026-11-12",
+    "2026-11-13",
+    "2026-11-16",
+    "2026-11-17",
+    "2026-11-18",
+    "2026-11-19",
+    "2026-11-20",
+  ]) {
+    rows.push({
+      date,
+      checkIn: null,
+      checkOut: null,
+      autoMinutes: minutesPerDay,
+      minutes: minutesPerDay,
+      adjusted: false,
+      originalMinutes: null,
+      reason: null,
+      adjustedBy: null,
+      adjustedAt: null,
+      missedCheckout: false,
+      flagged: false,
+      flagNote: null,
+      locked: false,
+    });
   }
   return rows;
 }
@@ -227,13 +459,31 @@ test("the pay card uses check-in hours, recalculates when hours, rate, or pay ty
   assert.equal(card.regularCents, 192_000);
   assert.equal(card.vacationCents, 7_680);
   assert.equal(card.grossCents, 199_680);
-  assert.ok(card.employee.lines.every((line) => !line.edition || line.edition.includes("T4127")) || card.employee.province === "QC");
-  const edited = buildPayCard({ person, period, days: fullDays(480), overrides: { regularMinutes: 70 * 60, rateCents: 2_500 } });
+  assert.ok(
+    card.employee.lines.every((line) => !line.edition || line.edition.includes("T4127")) ||
+      card.employee.province === "QC",
+  );
+  const edited = buildPayCard({
+    person,
+    period,
+    days: fullDays(480),
+    overrides: { regularMinutes: 70 * 60, rateCents: 2_500 },
+  });
   assert.equal(edited.regularCents, 175_000);
   assert.ok(edited.netCents < card.netCents);
-  const salary = buildPayCard({ person, period, days: fullDays(480), overrides: { payType: "salary", rateCents: 5_200_000 } });
+  const salary = buildPayCard({
+    person,
+    period,
+    days: fullDays(480),
+    overrides: { payType: "salary", rateCents: 5_200_000 },
+  });
   assert.equal(salary.regularCents, 200_000);
-  const contractor = buildPayCard({ person: { ...person, contractorBasis: "flat" }, period, days: fullDays(480), overrides: { payType: "contractor", rateCents: 150_000 } });
+  const contractor = buildPayCard({
+    person: { ...person, contractorBasis: "flat" },
+    period,
+    days: fullDays(480),
+    overrides: { payType: "contractor", rateCents: 150_000 },
+  });
   assert.equal(contractor.netCents, 150_000);
   assert.equal(contractor.deductionsCents, 0);
   const overtime = buildPayCard({ person, period, days: fullDays(600) });
@@ -244,14 +494,22 @@ test("the pay card uses check-in hours, recalculates when hours, rate, or pay ty
 
 test("pre-flight flags TD1, long weeks, low rate, missed check-out, $0 pay, and start or end mid-period", () => {
   const long = fullDays(13 * 60);
-  const card = buildPayCard({ person: { ...person, td1: "missing", hireDate: "2026-11-12" }, period, days: long });
+  const card = buildPayCard({
+    person: { ...person, td1: "missing", hireDate: "2026-11-12" },
+    period,
+    days: long,
+  });
   const codes = card.checks.map((check) => check.code);
   assert.ok(codes.includes("missing_td1"));
   assert.ok(codes.includes("over_60_hours"));
   assert.ok(codes.includes("mid_period_start"));
   assert.ok(!codes.includes("minimum_wage_unverified"));
   assert.equal(canApprove([card]), true);
-  const bc = buildPayCard({ person: { ...person, province: "BC", rateCents: 1_700, endDate: "2026-11-15" }, period, days: fullDays(480) });
+  const bc = buildPayCard({
+    person: { ...person, province: "BC", rateCents: 1_700, endDate: "2026-11-15" },
+    period,
+    days: fullDays(480),
+  });
   const bcCodes = bc.checks.map((check) => check.code);
   assert.ok(bcCodes.includes("under_minimum_wage"));
   assert.ok(bcCodes.includes("mid_period_end"));
@@ -266,9 +524,18 @@ test("pre-flight flags TD1, long weeks, low rate, missed check-out, $0 pay, and 
 
 test("the staff picker sorts by name, searches without accents, and turns searchable past 8 people", () => {
   const people = [{ name: "Zoë Tremblay" }, { name: "amira Saleh" }, { name: "Léo Chen" }];
-  assert.deepEqual(searchPeople(people, "").map((p) => p.name), ["amira Saleh", "Léo Chen", "Zoë Tremblay"]);
-  assert.deepEqual(searchPeople(people, "zoe").map((p) => p.name), ["Zoë Tremblay"]);
-  assert.deepEqual(searchPeople(people, "LEO").map((p) => p.name), ["Léo Chen"]);
+  assert.deepEqual(
+    searchPeople(people, "").map((p) => p.name),
+    ["amira Saleh", "Léo Chen", "Zoë Tremblay"],
+  );
+  assert.deepEqual(
+    searchPeople(people, "zoe").map((p) => p.name),
+    ["Zoë Tremblay"],
+  );
+  assert.deepEqual(
+    searchPeople(people, "LEO").map((p) => p.name),
+    ["Léo Chen"],
+  );
   assert.equal(SEARCHABLE_AFTER, 8);
 });
 
@@ -276,11 +543,48 @@ function stubs() {
   const on = buildPayCard({ person, period, days: fullDays(480) });
   const qcPerson = { ...person, id: "e3", name: "Chloé Roy", province: "QC" };
   const qc = buildPayCard({ person: qcPerson, period, days: fullDays(480) });
-  const ct = buildPayCard({ person: { ...person, id: "c1", name: "Ben Ortiz", payType: "contractor", rateCents: 150_000, gstRegistered: true, gstNumber: "123456789RT0001" }, period, days: [] });
+  const ct = buildPayCard({
+    person: {
+      ...person,
+      id: "c1",
+      name: "Ben Ortiz",
+      payType: "contractor",
+      rateCents: 150_000,
+      gstRegistered: true,
+      gstNumber: "123456789RT0001",
+    },
+    period,
+    days: [],
+  });
   return [
-    stubFromCard({ id: "s1", periodId: "p1", periodStart: period.start, periodEnd: period.end, payDate: period.payDate, province: "ON", card: on, employerOtherCents: 1_000 }),
-    stubFromCard({ id: "s2", periodId: "p1", periodStart: period.start, periodEnd: period.end, payDate: period.payDate, province: "QC", card: qc }),
-    stubFromCard({ id: "s3", periodId: "p1", periodStart: period.start, periodEnd: period.end, payDate: period.payDate, province: "ON", card: ct }),
+    stubFromCard({
+      id: "s1",
+      periodId: "p1",
+      periodStart: period.start,
+      periodEnd: period.end,
+      payDate: period.payDate,
+      province: "ON",
+      card: on,
+      employerOtherCents: 1_000,
+    }),
+    stubFromCard({
+      id: "s2",
+      periodId: "p1",
+      periodStart: period.start,
+      periodEnd: period.end,
+      payDate: period.payDate,
+      province: "QC",
+      card: qc,
+    }),
+    stubFromCard({
+      id: "s3",
+      periodId: "p1",
+      periodStart: period.start,
+      periodEnd: period.end,
+      payDate: period.payDate,
+      province: "ON",
+      card: ct,
+    }),
   ];
 }
 
@@ -296,7 +600,10 @@ test("year-end boxes: T4 for staff, T4A box 048 for contractors, RL-1 for Quebec
   assert.equal(chloe.box17, rows[1].qppCents);
   assert.equal(chloe.box16, 0);
   assert.equal(chloe.box55, rows[1].qpipCents);
-  assert.deepEqual(t4aSlips(rows, 2026).map((slip) => slip.box048), [150_000]);
+  assert.deepEqual(
+    t4aSlips(rows, 2026).map((slip) => slip.box048),
+    [150_000],
+  );
   const rl1 = rl1Slips(rows, 2026);
   assert.equal(rl1.length, 1);
   assert.equal(rl1[0].E, rows[1].provincialTaxCents);
@@ -317,17 +624,42 @@ test("the accountant pack has every file, a balanced Xero journal, and remittanc
   ]);
   assert.match(files["pay-register.csv"], /T4127 123rd edition/);
   const xero = xeroJournalCsv(rows).trim().split("\r\n");
-  assert.equal(xero[0], "*Narration,*Date,Description,*AccountCode,*TaxRate,*Amount,TrackingName1,TrackingOption1,TrackingName2,TrackingOption2");
-  const total = xero.slice(1).reduce((sum, line) => sum + Math.round(Number(line.split(",")[5]) * 100), 0);
+  assert.equal(
+    xero[0],
+    "*Narration,*Date,Description,*AccountCode,*TaxRate,*Amount,TrackingName1,TrackingOption1,TrackingName2,TrackingOption2",
+  );
+  const total = xero
+    .slice(1)
+    .reduce((sum, line) => sum + Math.round(Number(line.split(",")[5]) * 100), 0);
   assert.equal(total, 0);
   const remit = remittanceSummary(rows, "regular");
-  assert.deepEqual(remit.map((row) => row.payee), ["CRA", "Revenu Québec"]);
+  assert.deepEqual(
+    remit.map((row) => row.payee),
+    ["CRA", "Revenu Québec"],
+  );
   assert.equal(remit[0].dueDate, "2026-12-15");
   assert.equal(remit[1].dueVerified, false);
-  const json = packJson({ daycareId: "d1", from: "2026-11-01", to: "2026-11-30", stubs: rows, remitter: "regular", year: 2026 });
+  const json = packJson({
+    daycareId: "d1",
+    from: "2026-11-01",
+    to: "2026-11-30",
+    stubs: rows,
+    remitter: "regular",
+    year: 2026,
+  });
   assert.equal(json.amountsIn, "cents");
-  assert.doesNotMatch(JSON.stringify(json), /"(bank|bankCipher|bank_cipher|sin|transit|account|accountNumber)"/i);
-  const pdf = packPdfLines({ centreName: "Sunny Kids", from: "2026-11-01", to: "2026-11-30", stubs: rows, remitter: "regular", locale: "fr" });
+  assert.doesNotMatch(
+    JSON.stringify(json),
+    /"(bank|bankCipher|bank_cipher|sin|transit|account|accountNumber)"/i,
+  );
+  const pdf = packPdfLines({
+    centreName: "Sunny Kids",
+    from: "2026-11-01",
+    to: "2026-11-30",
+    stubs: rows,
+    remitter: "regular",
+    locale: "fr",
+  });
   assert.ok(pdf.some((line) => /ne garde jamais/.test(line)));
   assert.equal(csvCell("=HYPERLINK(1)"), "'=HYPERLINK(1)");
   assert.equal(csvCell("-12.50"), "-12.50");
@@ -342,17 +674,26 @@ test("saved stubs parse back with whole cents and nothing extra", () => {
 });
 
 test("unsupported pay is blocked, never shown as a partial number", () => {
-  const qc2027 = buildPayCard({ person: { ...person, province: "QC" }, period: { start: "2027-01-03", end: "2027-01-16", payDate: "2027-01-22" }, days: fullDays(480) });
+  const qc2027 = buildPayCard({
+    person: { ...person, province: "QC" },
+    period: { start: "2027-01-03", end: "2027-01-16", payDate: "2027-01-22" },
+    days: fullDays(480),
+  });
   assert.equal(qc2027.netCents, 0);
   assert.equal(qc2027.employee.blocked !== null, true);
   assert.equal(canApprove([qc2027]), false);
-  const early = buildPayCard({ person, period: { start: "2026-06-07", end: "2026-06-20", payDate: "2026-06-26" }, days: fullDays(480) });
+  const early = buildPayCard({
+    person,
+    period: { start: "2026-06-07", end: "2026-06-20", payDate: "2026-06-26" },
+    days: fullDays(480),
+  });
   assert.equal(canApprove([early]), false);
   assert.match(qc2027.employee.blocked, /hasn't published its 2027 figures/);
 });
 
 test("pay day words exist in English and French, and the default period is two weeks", async () => {
-  const { paydayCopy, PAYDAY_COPY_KEYS, checkWords, defaultPeriod, payErrorWords } = await import("../src/lib/payroll/payday-copy.ts");
+  const { paydayCopy, PAYDAY_COPY_KEYS, checkWords, defaultPeriod, payErrorWords } =
+    await import("../src/lib/payroll/payday-copy.ts");
   const en = paydayCopy("en");
   const fr = paydayCopy("fr");
   for (const key of PAYDAY_COPY_KEYS) {
@@ -360,7 +701,11 @@ test("pay day words exist in English and French, and the default period is two w
   }
   assert.notEqual(en.approve, fr.approve);
   assert.match(checkWords("no_table", "fr"), /KidEase/);
-  assert.deepEqual(defaultPeriod("2026-11-22"), { start: "2026-11-08", end: "2026-11-21", payDate: "2026-11-27" });
+  assert.deepEqual(defaultPeriod("2026-11-22"), {
+    start: "2026-11-08",
+    end: "2026-11-21",
+    payDate: "2026-11-27",
+  });
   assert.equal(payErrorWords("payroll:stale", "en"), en.stale);
 });
 
@@ -375,10 +720,16 @@ test("the pay server checks the flag, never trusts browser amounts, and moves no
   const store = readFileSync(new URL("../src/lib/payroll/pay-store.ts", import.meta.url), "utf8");
   assert.match(store, /supersedes_id/);
   assert.match(store, /clock_out_at is null/);
-  const migration = readFileSync(new URL("../migrations/0228_payroll_pay_runs.sql", import.meta.url), "utf8");
+  const migration = readFileSync(
+    new URL("../migrations/0228_payroll_pay_runs.sql", import.meta.url),
+    "utf8",
+  );
   assert.match(migration, /payroll_punches_one_open_idx/);
   assert.doesNotMatch(migration, /\bdrop\b/i);
-  const down = readFileSync(new URL("../migrations/down/0228_payroll_pay_runs.sql", import.meta.url), "utf8");
+  const down = readFileSync(
+    new URL("../migrations/down/0228_payroll_pay_runs.sql", import.meta.url),
+    "utf8",
+  );
   assert.match(down, /drop table if exists payroll_overrides/);
 });
 
@@ -387,7 +738,22 @@ test("a period that spans a minimum wage change checks each day against the rate
   const spanPeriod = { start: "2026-09-20", end: "2026-10-03", payDate: "2026-10-09" };
   const days = [];
   for (const date of ["2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02"]) {
-    days.push({ date, checkIn: null, checkOut: null, autoMinutes: 480, minutes: 480, adjusted: false, originalMinutes: null, reason: null, adjustedBy: null, adjustedAt: null, missedCheckout: false, flagged: false, flagNote: null, locked: false });
+    days.push({
+      date,
+      checkIn: null,
+      checkOut: null,
+      autoMinutes: 480,
+      minutes: 480,
+      adjusted: false,
+      originalMinutes: null,
+      reason: null,
+      adjustedBy: null,
+      adjustedAt: null,
+      missedCheckout: false,
+      flagged: false,
+      flagNote: null,
+      locked: false,
+    });
   }
   // $17.70 is above Ontario's $17.60 (September) but under $17.95 (from October 1).
   const card = buildPayCard({ person: { ...person, rateCents: 1_770 }, period: spanPeriod, days });
@@ -396,38 +762,86 @@ test("a period that spans a minimum wage change checks each day against the rate
   assert.equal(stops[0].date, "2026-10-01");
   assert.equal(stops[0].amountCents, 1_795);
   assert.equal(canApprove([card]), false);
-  assert.match(checkText(stops[0], "en"), /\$17\.95 an hour minimum wage in force on October 1, 2026/);
-  assert.match(checkText(stops[0], "fr"), /17,95\s\$ l’heure en vigueur le 1er octobre 2026/);
+  assert.match(
+    checkText(stops[0], "en"),
+    /\$17\.95 an hour minimum wage in force on October 1, 2026/,
+  );
+  assert.match(checkText(stops[0], "fr"), /17,95\s\$\sCA l’heure en vigueur le 1er octobre 2026/);
   // Under both rates: one stop per rate.
   const low = buildPayCard({ person: { ...person, rateCents: 1_700 }, period: spanPeriod, days });
-  assert.deepEqual(low.checks.filter((check) => check.code === "under_minimum_wage").map((check) => check.amountCents), [1_760, 1_795]);
+  assert.deepEqual(
+    low.checks
+      .filter((check) => check.code === "under_minimum_wage")
+      .map((check) => check.amountCents),
+    [1_760, 1_795],
+  );
   // A student in Ontario uses the student rate, with a note.
-  const student = buildPayCard({ person: { ...person, rateCents: 1_700, wageClass: "student" }, period: { start: "2026-11-08", end: "2026-11-21", payDate: "2026-11-27" }, days: fullDays(480) });
+  const student = buildPayCard({
+    person: { ...person, rateCents: 1_700, wageClass: "student" },
+    period: { start: "2026-11-08", end: "2026-11-21", payDate: "2026-11-27" },
+    days: fullDays(480),
+  });
   assert.ok(student.checks.some((check) => check.code === "student_rate"));
-  assert.equal(student.checks.some((check) => check.code === "under_minimum_wage"), false);
+  assert.equal(
+    student.checks.some((check) => check.code === "under_minimum_wage"),
+    false,
+  );
   // Salary is checked as pay per hour worked.
-  const salary = buildPayCard({ person: { ...person, payType: "salary", rateCents: 2_600_000 }, period, days: fullDays(600) });
+  const salary = buildPayCard({
+    person: { ...person, payType: "salary", rateCents: 2_600_000 },
+    period,
+    days: fullDays(600),
+  });
   assert.ok(salary.checks.some((check) => check.code === "under_minimum_wage"));
 });
 
 test("a bonus on the pay card is taxed with the bonus method and shows on the stub, register, pack, and slips", () => {
-  const card = buildPayCard({ person, period, days: fullDays(480), overrides: { bonusCents: 100_000 } });
+  const card = buildPayCard({
+    person,
+    period,
+    days: fullDays(480),
+    overrides: { bonusCents: 100_000 },
+  });
   const plain = buildPayCard({ person, period, days: fullDays(480) });
   assert.equal(card.bonusCents, 100_000);
   assert.equal(card.grossCents, plain.grossCents + 100_000);
   assert.ok(card.bonusTaxCents > 0);
-  assert.equal(card.employee.federalTaxCents + card.employee.provincialTaxCents, plain.employee.federalTaxCents + plain.employee.provincialTaxCents + card.bonusTaxCents);
+  assert.equal(
+    card.employee.federalTaxCents + card.employee.provincialTaxCents,
+    plain.employee.federalTaxCents + plain.employee.provincialTaxCents + card.bonusTaxCents,
+  );
   assert.ok(card.employee.employeeCppCents > plain.employee.employeeCppCents);
   assert.ok(card.employee.employeeEiCents > plain.employee.employeeEiCents);
   assert.equal(canApprove([card]), true);
-  const stub = stubFromCard({ id: "sb", periodId: "p", periodStart: period.start, periodEnd: period.end, payDate: period.payDate, province: "ON", card });
+  const stub = stubFromCard({
+    id: "sb",
+    periodId: "p",
+    periodStart: period.start,
+    periodEnd: period.end,
+    payDate: period.payDate,
+    province: "ON",
+    card,
+  });
   assert.equal(stub.bonusCents, 100_000);
   assert.equal(stub.bonusTaxCents, card.bonusTaxCents);
   const files = packFiles({ stubs: [stub], remitter: "regular", year: 2026 });
   assert.match(files["pay-register.csv"].split("\r\n")[0], /,bonus,bonus_tax,/);
   assert.match(files["pay-register.csv"], /,1000\.00,/);
   assert.equal(t4Slips([stub], 2026)[0].box14, stub.grossCents);
-  const qc = buildPayCard({ person: { ...person, province: "QC" }, period, days: fullDays(480), overrides: { bonusCents: 100_000 } });
-  const qcStub = stubFromCard({ id: "sq", periodId: "p", periodStart: period.start, periodEnd: period.end, payDate: period.payDate, province: "QC", card: qc });
+  const qc = buildPayCard({
+    person: { ...person, province: "QC" },
+    period,
+    days: fullDays(480),
+    overrides: { bonusCents: 100_000 },
+  });
+  const qcStub = stubFromCard({
+    id: "sq",
+    periodId: "p",
+    periodStart: period.start,
+    periodEnd: period.end,
+    payDate: period.payDate,
+    province: "QC",
+    card: qc,
+  });
   assert.equal(rl1Slips([qcStub], 2026)[0].A, qcStub.grossCents);
 });

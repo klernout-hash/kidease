@@ -25,6 +25,7 @@ const sourceFiles = [
   "src/lib/gap-features.ts",
   "src/lib/gov/filtered-export.ts",
   "src/lib/utils.ts",
+  "src/lib/cad-format.ts",
   "src/lib/html-text.ts",
   "src/lib/languages.ts",
 ];
@@ -173,7 +174,11 @@ test(
         .join("\n");
       let css = cssBytes.toString("utf8");
       assert(script.length > 0 && css.length > 0);
-      assert.doesNotMatch(script, /process\.env\.NODE_ENV/, "The static browser fixture must resolve its production runtime");
+      assert.doesNotMatch(
+        script,
+        /process\.env\.NODE_ENV/,
+        "The static browser fixture must resolve its production runtime",
+      );
       css = css.replace(
         /url\((['"]?)(\/fonts\/[^)'"\s]+)\1\)/g,
         (_, _quote, font) =>

@@ -80,6 +80,7 @@ const allowedAppModules = new Set(
     "src/lib/story-corner/open-books.ts",
     "src/lib/node-builtin.ts",
     "src/lib/utils.ts",
+    "src/lib/cad-format.ts",
     "src/lib/html-text.ts",
     "src/lib/languages.ts",
   ].map((file) => join(root, file)),

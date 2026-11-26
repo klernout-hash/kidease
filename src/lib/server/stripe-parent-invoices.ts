@@ -38,6 +38,8 @@ export type StripeInvoiceView = {
   hostedInvoiceUrl: string | null;
   invoicePdf: string | null;
   daycareName: string | null;
+  /** Centre address for the invoice PDF (city and province only when the centre hides its street). */
+  daycareAddress?: string | null;
   viewer: "parent" | "daycare";
   payPath?: string | null;
 };
@@ -55,6 +57,11 @@ type InvoiceRow = {
   daycare_id: string | null;
   customer_email: string | null;
   daycare_name?: string | null;
+  daycare_address?: string | null;
+  daycare_city?: string | null;
+  daycare_province?: string | null;
+  daycare_postal?: string | null;
+  daycare_show_address?: boolean | number | null;
 };
 
 export async function applyParentStripeInvoice(input: {
@@ -83,7 +90,13 @@ export async function applyParentStripeInvoice(input: {
     featureSms: false,
   });
   if (peek.outcome === "ignore") {
-    return { ok: true, ignored: peek.reason || type, invoiceId: null, parentUserId: null, unlinked: null };
+    return {
+      ok: true,
+      ignored: peek.reason || type,
+      invoiceId: null,
+      parentUserId: null,
+      unlinked: null,
+    };
   }
   const invoiceId = peek.invoice?.stripeInvoiceId || "";
   const customerEmail = peek.invoice?.customerEmail || invoiceCustomerEmail(input.object);
@@ -103,7 +116,12 @@ export async function applyParentStripeInvoice(input: {
     if (!claimed) {
       const existing = invoiceId ? await loadRow(sql, invoiceId) : null;
       if (existing) {
-        const relinked = await relinkStoredInvoice(sql, invoiceId, links.parentUserId, customerEmail);
+        const relinked = await relinkStoredInvoice(
+          sql,
+          invoiceId,
+          links.parentUserId,
+          customerEmail,
+        );
         if (relinked.newlyLinked) {
           const parent = await parentParty(sql, links.parentUserId, customerEmail);
           const daycare = await daycareParty(sql, links.daycareId);
@@ -151,7 +169,13 @@ export async function applyParentStripeInvoice(input: {
       daycare,
     });
     if (plan.outcome === "ignore" || !plan.invoice) {
-      return { ok: true, ignored: plan.reason || type, invoiceId: invoiceId || null, parentUserId: null, unlinked: null };
+      return {
+        ok: true,
+        ignored: plan.reason || type,
+        invoiceId: invoiceId || null,
+        parentUserId: null,
+        unlinked: null,
+      };
     }
     await upsertInvoice(sql, plan.invoice, input.livemode === true);
     const unlinked = unlinkedInvoiceReason({
@@ -186,7 +210,9 @@ export async function flushHeldInvoiceSms(opts?: { now?: Date }): Promise<{ sent
   for (const row of rows) {
     const party = await loadParty(sql, row.user_id);
     if (!party) {
-      await sql`update stripe_invoice_sms_holds set status = ${"skipped"} where id = ${row.id}`.catch(() => undefined);
+      await sql`update stripe_invoice_sms_holds set status = ${"skipped"} where id = ${row.id}`.catch(
+        () => undefined,
+      );
       continue;
     }
     const decision = invoiceSmsDecision({
@@ -198,13 +224,22 @@ export async function flushHeldInvoiceSms(opts?: { now?: Date }): Promise<{ sent
     });
     if (decision.action !== "send") {
       if (decision.action === "hold") continue;
-      await sql`update stripe_invoice_sms_holds set status = ${"skipped"} where id = ${row.id}`.catch(() => undefined);
+      await sql`update stripe_invoice_sms_holds set status = ${"skipped"} where id = ${row.id}`.catch(
+        () => undefined,
+      );
       continue;
     }
     const phone = party.phone || "";
-    const result = await sendSms({ to: phone, body: row.body, audience: "user", consentGranted: true });
+    const result = await sendSms({
+      to: phone,
+      body: row.body,
+      audience: "user",
+      consentGranted: true,
+    });
     if (!result.ok && result.skipped === false) continue;
-    await sql`update stripe_invoice_sms_holds set status = ${"sent"} where id = ${row.id}`.catch(() => undefined);
+    await sql`update stripe_invoice_sms_holds set status = ${"sent"} where id = ${row.id}`.catch(
+      () => undefined,
+    );
     if (result.ok) sent += 1;
   }
   return { sent };
@@ -213,7 +248,10 @@ export async function flushHeldInvoiceSms(opts?: { now?: Date }): Promise<{ sent
 export async function loadInvoiceForDownload(
   userId: string,
   invoiceId: string,
-): Promise<{ authorized: boolean; invoice: (StripeInvoiceView & { invoicePdf: string | null }) | null }> {
+): Promise<{
+  authorized: boolean;
+  invoice: (StripeInvoiceView & { invoicePdf: string | null }) | null;
+}> {
   const sql = await getSql();
   const row = await loadRow(sql, invoiceId);
   if (!row) return { authorized: true, invoice: null };
@@ -243,7 +281,7 @@ export const listMyStripeInvoices = createServerFn({ method: "GET" })
       .query<InvoiceRow>(
         `select i.stripe_invoice_id, i.number, i.amount_cents, i.currency, i.status, i.paid_at,
                 i.hosted_invoice_url, i.invoice_pdf, i.parent_user_id, i.daycare_id, i.customer_email,
-                d.name as daycare_name
+                d.name as daycare_name, d.address as daycare_address, d.city as daycare_city, d.province as daycare_province, d.postal_code as daycare_postal, d.show_public_address as daycare_show_address
          from stripe_parent_invoices i
          left join daycares d on d.id = i.daycare_id
          where i.parent_user_id = $1 or ${daycareClause}
@@ -256,7 +294,11 @@ export const listMyStripeInvoices = createServerFn({ method: "GET" })
     return { invoices: [...centreBills, ...rows.map((row) => toView(row, context.userId))] };
   });
 
-async function listCentreBillsForDesk(sql: Sql, homeId: string, daycareIds: string[]): Promise<StripeInvoiceView[]> {
+async function listCentreBillsForDesk(
+  sql: Sql,
+  homeId: string,
+  daycareIds: string[],
+): Promise<StripeInvoiceView[]> {
   const params: unknown[] = [homeId];
   let daycareClause = "false";
   if (daycareIds.length) {
@@ -277,8 +319,13 @@ async function listCentreBillsForDesk(sql: Sql, homeId: string, daycareIds: stri
       parent_user_id: string | null;
       daycare_id: string | null;
       daycare_name: string | null;
+      daycare_address?: string | null;
+      daycare_city?: string | null;
+      daycare_province?: string | null;
+      daycare_postal?: string | null;
+      daycare_show_address?: boolean | number | null;
     }>(
-      `select i.id, i.number, i.amount_cents, i.currency, i.status, i.paid_at, i.parent_user_id, i.daycare_id, d.name as daycare_name
+      `select i.id, i.number, i.amount_cents, i.currency, i.status, i.paid_at, i.parent_user_id, i.daycare_id, d.name as daycare_name, d.address as daycare_address, d.city as daycare_city, d.province as daycare_province, d.postal_code as daycare_postal, d.show_public_address as daycare_show_address
        from invoices i
        join daycares d on d.id = i.daycare_id
        where i.status in ('sent', 'paid', 'void', 'refunded')
@@ -290,7 +337,8 @@ async function listCentreBillsForDesk(sql: Sql, homeId: string, daycareIds: stri
     .catch(() => []);
   const views: StripeInvoiceView[] = [];
   for (const row of rows) {
-    const status: ParentInvoiceStatus = row.status === "paid" ? "paid" : row.status === "sent" ? "open" : "failed";
+    const status: ParentInvoiceStatus =
+      row.status === "paid" ? "paid" : row.status === "sent" ? "open" : "failed";
     const paidAt = row.paid_at instanceof Date ? row.paid_at.toISOString() : row.paid_at;
     const base = {
       number: row.number,
@@ -301,6 +349,7 @@ async function listCentreBillsForDesk(sql: Sql, homeId: string, daycareIds: stri
       hostedInvoiceUrl: null,
       invoicePdf: null,
       daycareName: row.daycare_name || null,
+      daycareAddress: centreAddressLine(row),
       payPath: `/pay/bill/${row.id}`,
     };
     if (row.parent_user_id === homeId) views.push({ ...base, id: row.id, viewer: "parent" });
@@ -335,7 +384,11 @@ async function releaseEvent(sql: Sql, id: string): Promise<void> {
 }
 
 /** Database claim shared across server instances. True when this call owns the event. */
-export async function claimStripeWebhookEvent(id: string, type: string, livemode: boolean): Promise<boolean> {
+export async function claimStripeWebhookEvent(
+  id: string,
+  type: string,
+  livemode: boolean,
+): Promise<boolean> {
   const sql = await getSql();
   return claimEvent(sql, id, type, livemode);
 }
@@ -354,7 +407,11 @@ async function previousStatus(sql: Sql, id: string): Promise<ParentInvoiceStatus
   return null;
 }
 
-async function upsertInvoice(sql: Sql, invoice: ParentInvoiceDraft, livemode: boolean): Promise<void> {
+async function upsertInvoice(
+  sql: Sql,
+  invoice: ParentInvoiceDraft,
+  livemode: boolean,
+): Promise<void> {
   await sql`
     insert into stripe_parent_invoices (
       stripe_invoice_id, number, amount_cents, currency, status, paid_at,
@@ -398,8 +455,12 @@ async function deliverNotices(
 ): Promise<void> {
   const owners = await extraDaycare;
   const notices = [...plan.notices];
-  const daycareEmail = plan.notices.find((notice) => notice.audience === "daycare" && notice.channel === "email");
-  const daycareSms = plan.notices.find((notice) => notice.audience === "daycare" && notice.channel === "sms");
+  const daycareEmail = plan.notices.find(
+    (notice) => notice.audience === "daycare" && notice.channel === "email",
+  );
+  const daycareSms = plan.notices.find(
+    (notice) => notice.audience === "daycare" && notice.channel === "sms",
+  );
   if (daycareEmail && owners.length > 1) {
     for (const owner of owners.slice(1)) {
       if (!owner.email || owner.email === daycareEmail.to) continue;
@@ -414,7 +475,13 @@ async function deliverNotices(
   for (const notice of notices) {
     if (notice.channel !== "sms" || !notice.userId || !notice.smsBody) continue;
     if (notice.smsAction === "hold") {
-      await holdSms(sql, eventId, notice.userId, notice.smsBody, notice.sendAfter || new Date().toISOString());
+      await holdSms(
+        sql,
+        eventId,
+        notice.userId,
+        notice.smsBody,
+        notice.sendAfter || new Date().toISOString(),
+      );
       continue;
     }
     if (notice.smsAction !== "send") continue;
@@ -453,7 +520,12 @@ async function sendEmailOnce(
   daycareId?: string | null,
 ): Promise<void> {
   const address = notice.to || "";
-  const key = invoiceNoticeKey(eventId || notice.subject || "mail", notice.audience, "email", address);
+  const key = invoiceNoticeKey(
+    eventId || notice.subject || "mail",
+    notice.audience,
+    "email",
+    address,
+  );
   if (eventId && !(await takeNotice(sql, key, eventId))) return;
   try {
     const { brandedNotice, emailLocaleFor } = await import("@/lib/email-layout");
@@ -497,7 +569,8 @@ async function sendEmailOnce(
       }),
     });
   } catch (err) {
-    if (eventId) await sql`delete from stripe_invoice_notices where id = ${key}`.catch(() => undefined);
+    if (eventId)
+      await sql`delete from stripe_invoice_notices where id = ${key}`.catch(() => undefined);
     throw err;
   }
 }
@@ -514,12 +587,19 @@ async function sendSmsOnce(sql: Sql, eventId: string, notice: PlannedInvoiceNoti
     consentGranted: true,
   });
   if (!result.ok && result.skipped === false) {
-    if (eventId) await sql`delete from stripe_invoice_notices where id = ${key}`.catch(() => undefined);
+    if (eventId)
+      await sql`delete from stripe_invoice_notices where id = ${key}`.catch(() => undefined);
     throw new Error("invoice sms failed");
   }
 }
 
-async function holdSms(sql: Sql, eventId: string, userId: string, body: string, sendAfter: string): Promise<void> {
+async function holdSms(
+  sql: Sql,
+  eventId: string,
+  userId: string,
+  body: string,
+  sendAfter: string,
+): Promise<void> {
   const id = `${eventId}:${userId}`.slice(0, 200);
   await sql`
     insert into stripe_invoice_sms_holds (id, event_id, user_id, body, send_after, status)
@@ -538,7 +618,10 @@ async function takeNotice(sql: Sql, id: string, eventId: string): Promise<boolea
   return rows.length > 0;
 }
 
-async function daycareOwners(sql: Sql, daycareId: string | null): Promise<Array<{ userId: string; email: string }>> {
+async function daycareOwners(
+  sql: Sql,
+  daycareId: string | null,
+): Promise<Array<{ userId: string; email: string }>> {
   if (!daycareId) return [];
   const owners = await listCentreOwnerEmails(sql, daycareId);
   return owners
@@ -546,7 +629,11 @@ async function daycareOwners(sql: Sql, daycareId: string | null): Promise<Array<
     .map((owner) => ({ userId: owner.userId || "", email: owner.email.toLowerCase() }));
 }
 
-async function parentParty(sql: Sql, userId: string | null, customerEmail: string | null): Promise<InvoiceParty | null> {
+async function parentParty(
+  sql: Sql,
+  userId: string | null,
+  customerEmail: string | null,
+): Promise<InvoiceParty | null> {
   if (userId) return loadParty(sql, userId);
   if (!customerEmail) return null;
   return {
@@ -658,7 +745,7 @@ async function loadRow(sql: Sql, invoiceId: string): Promise<InvoiceRow | null> 
   const rows = await sql<InvoiceRow>`
     select i.stripe_invoice_id, i.number, i.amount_cents, i.currency, i.status, i.paid_at,
            i.hosted_invoice_url, i.invoice_pdf, i.parent_user_id, i.daycare_id, i.customer_email,
-           d.name as daycare_name
+           d.name as daycare_name, d.address as daycare_address, d.city as daycare_city, d.province as daycare_province, d.postal_code as daycare_postal, d.show_public_address as daycare_show_address
     from stripe_parent_invoices i
     left join daycares d on d.id = i.daycare_id
     where i.stripe_invoice_id = ${invoiceId}
@@ -685,7 +772,8 @@ async function canRead(sql: Sql, userId: string, row: InvoiceRow): Promise<boole
 }
 
 function toView(row: InvoiceRow, userId: string): StripeInvoiceView {
-  const status: ParentInvoiceStatus = row.status === "paid" || row.status === "failed" ? row.status : "open";
+  const status: ParentInvoiceStatus =
+    row.status === "paid" || row.status === "failed" ? row.status : "open";
   const paidAt = row.paid_at instanceof Date ? row.paid_at.toISOString() : row.paid_at;
   return {
     id: row.stripe_invoice_id,
@@ -697,12 +785,35 @@ function toView(row: InvoiceRow, userId: string): StripeInvoiceView {
     hostedInvoiceUrl: row.hosted_invoice_url,
     invoicePdf: row.invoice_pdf,
     daycareName: row.daycare_name || null,
+    daycareAddress: centreAddressLine(row),
     viewer: row.parent_user_id === userId ? "parent" : "daycare",
   };
 }
 
+/** Address for the invoice. A centre that hides its street (home daycares) shows city and province only. */
+export function centreAddressLine(row: {
+  daycare_address?: string | null;
+  daycare_city?: string | null;
+  daycare_province?: string | null;
+  daycare_postal?: string | null;
+  daycare_show_address?: boolean | number | null;
+}): string | null {
+  const hideStreet = row.daycare_show_address === false || row.daycare_show_address === 0;
+  const parts = [
+    hideStreet ? "" : clean(row.daycare_address),
+    clean(row.daycare_city),
+    [clean(row.daycare_province), hideStreet ? "" : clean(row.daycare_postal)]
+      .filter(Boolean)
+      .join(" "),
+  ].filter(Boolean);
+  return parts.length ? parts.join(", ") : null;
+}
+
 function appOrigin(): string {
-  return (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://www.kidease.ca").replace(/\/$/, "");
+  return (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://www.kidease.ca").replace(
+    /\/$/,
+    "",
+  );
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -743,7 +854,10 @@ async function relinkStoredInvoice(
     `.catch(() => undefined);
     return { parentUserId, unlinked: null, newlyLinked: true };
   }
-  const unlinked = unlinkedInvoiceReason({ parentUserId: null, customerEmail: existing?.customer_email || customerEmail });
+  const unlinked = unlinkedInvoiceReason({
+    parentUserId: null,
+    customerEmail: existing?.customer_email || customerEmail,
+  });
   if (unlinked) logUnlinked(invoiceId, unlinked);
   return { parentUserId: null, unlinked, newlyLinked: false };
 }

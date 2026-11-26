@@ -30,8 +30,8 @@ test("French province phrases and abbreviations", () => {
 });
 
 test("French money, counts, and vacancy path", () => {
-  assert.equal(formatPlanCad(0, "fr"), "0\u00a0$");
-  assert.equal(formatPlanCad(7.99, "fr"), "7,99\u00a0$");
+  assert.equal(formatPlanCad(0, "fr"), "0,00\u00a0$\u00a0CA");
+  assert.equal(formatPlanCad(7.99, "fr"), "7,99\u00a0$\u00a0CA");
   assert.match(formatCount(5805, "fr"), /5\s805/);
   assert.equal(localePath("/vacancy-index", "fr"), "/fr/vacancy-index");
   assert.equal(localePath("/claim", "fr"), "/fr/claim");
@@ -71,6 +71,9 @@ test("blocked analytics files do not reload the page", () => {
   assert.match(recover, /preventDefault/);
   const boundary = readFileSync(join(root, "src/lib/safe-error.ts"), "utf8");
   assert.match(boundary, /if \(\/posthog\/i\.test\(msg\)\) return false/);
-  assert.match(readFileSync(join(root, "public/asset-recover.js"), "utf8"), /isBlockedAnalytics\(url\) \|\| isBlockedAnalytics\(message\)/);
+  assert.match(
+    readFileSync(join(root, "public/asset-recover.js"), "utf8"),
+    /isBlockedAnalytics\(url\) \|\| isBlockedAnalytics\(message\)/,
+  );
   assert.match(readFileSync(join(root, "public/asset-recover.js"), "utf8"), /cache:\s*"reload"/);
 });

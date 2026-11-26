@@ -5,6 +5,7 @@
  * from household income, and a daily cap is never turned into a month.
  */
 
+import { formatCad } from "./cad-format.ts";
 import { doorDistanceKm } from "./card-distance.ts";
 import { dailyCapDollars, knownListingMonthlyFee, type ListingFeeInput } from "./listing-fee.ts";
 import { listingSubsidy, subsidyLabel } from "./fee-program.ts";
@@ -31,7 +32,9 @@ export function compareFeeAfterSubsidy(
   return locale === "fr" ? "Demandez au centre" : "Ask the centre";
 }
 
-function confirmedParentMonthly(listing: ListingFeeInput & { fromPrice?: number | null }): number | null {
+function confirmedParentMonthly(
+  listing: ListingFeeInput & { fromPrice?: number | null },
+): number | null {
   const fromCard = parentListingMonthlyFee(listing);
   if (fromCard != null) return fromCard;
   if (!listing.feeConfirmed && listing.feeConfidence !== "centre") return null;
@@ -39,12 +42,10 @@ function confirmedParentMonthly(listing: ListingFeeInput & { fromPrice?: number 
 }
 
 function cad(amount: number, locale: "en" | "fr"): string {
-  return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", {
-    style: "currency",
-    currency: "CAD",
+  return formatCad(amount, locale === "fr" ? "fr-CA" : "en-CA", {
     minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
     maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
-  }).format(amount);
+  });
 }
 
 function dailyParentFee(daily: number, locale: "en" | "fr"): string {

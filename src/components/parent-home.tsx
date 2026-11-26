@@ -21,7 +21,11 @@ import {
 import { billDollars, billIsOpen, type Bill } from "@/lib/bill";
 import { PaymentStateBadge, PaymentStateNote } from "@/components/bill-status";
 import { failureReasonText } from "@/lib/payment-state";
-import { parentRequestRows, parentRequestStatusLabelKey, selectParentTours } from "@/lib/parent-request-rows";
+import {
+  parentRequestRows,
+  parentRequestStatusLabelKey,
+  selectParentTours,
+} from "@/lib/parent-request-rows";
 import { money } from "@/lib/utils";
 import type { Booking, DaycareCard, TourRequest } from "@/lib/types";
 
@@ -45,7 +49,10 @@ export function ParentHome({
   matches,
   onRetry,
   onDismiss,
+  onOpenPayments,
 }: {
+  /** Opens the Payments tab in place (the desk's own tab switch). */
+  onOpenPayments?: () => void;
   saved: DaycareCard[];
   bookings: Booking[];
   tours: TourRequest[];
@@ -105,16 +112,34 @@ export function ParentHome({
       ) : null}
     </p>
   );
+  const openPayments = (event: { preventDefault: () => void }) => {
+    if (!onOpenPayments) return;
+    event.preventDefault();
+    onOpenPayments();
+  };
   const sections: Record<ParentHomeSection, ReactNode> = {
     care,
     attention,
     bills: (
       <section data-ke="parent-home-bills">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-display text-xl">{t("openBills")}</h2>
+          {/* The "Open bills" heading reads as a link, so it opens Payments too. */}
+          <h2 className="font-display text-xl">
+            <Link
+              to={parentPath}
+              search={{ tab: "payments" }}
+              onClick={openPayments}
+              data-ke="parent-home-bills-heading"
+              className="hover:underline"
+            >
+              {t("openBills")}
+            </Link>
+          </h2>
           <Link
             to={parentPath}
             search={{ tab: "payments" }}
+            onClick={openPayments}
+            data-ke="parent-home-bills-all"
             className="inline-flex min-h-11 min-w-11 items-center rounded-md px-2 text-sm font-medium text-primary"
           >
             {t("parentHomeSeeAll")}
@@ -132,6 +157,7 @@ export function ParentHome({
                   <Link
                     to={parentPath}
                     search={{ tab: "payments" }}
+                    onClick={openPayments}
                     data-ke="parent-home-bill-row"
                     aria-label={
                       fr
@@ -164,7 +190,9 @@ export function ParentHome({
                         search={{}}
                         className="inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium text-primary"
                       >
-                        {bill.paymentState === "requires_action" ? t("billConfirmPayment") : t("billPayAgain")}
+                        {bill.paymentState === "requires_action"
+                          ? t("billConfirmPayment")
+                          : t("billPayAgain")}
                       </Link>
                     </span>
                   ) : bill.paymentState === "processing" ? (
@@ -255,8 +283,14 @@ export function ParentHome({
                 key={`${row.kind}-${row.id}`}
                 className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border"
               >
-                <span className="min-w-0 truncate text-sm">{row.daycareName || t("parentHomeRequests")}</span>
-                <span className="shrink-0 text-xs text-muted" data-ke="home-request-status" data-state={row.status}>
+                <span className="min-w-0 truncate text-sm">
+                  {row.daycareName || t("parentHomeRequests")}
+                </span>
+                <span
+                  className="shrink-0 text-xs text-muted"
+                  data-ke="home-request-status"
+                  data-state={row.status}
+                >
                   {t(parentRequestStatusLabelKey(row))}
                 </span>
               </li>
@@ -302,15 +336,16 @@ export function ParentHome({
       </form>
     ),
     area: <AreaWaitlistForm returnTo={parentPath} />,
-    plan: card && !nativeShell ? (
-      <RoleUpgradeCard
-        role="parent"
-        paid={card === "plan"}
-        planLabel={planLabel}
-        renewsOn={renewsOn}
-        onDismiss={card === "upgrade" ? onDismiss : undefined}
-      />
-    ) : null,
+    plan:
+      card && !nativeShell ? (
+        <RoleUpgradeCard
+          role="parent"
+          paid={card === "plan"}
+          planLabel={planLabel}
+          renewsOn={renewsOn}
+          onDismiss={card === "upgrade" ? onDismiss : undefined}
+        />
+      ) : null,
   };
 
   return (

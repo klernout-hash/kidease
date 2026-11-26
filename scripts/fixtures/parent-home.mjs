@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { en } from "../../src/lib/copy-en.ts";
 import { fr } from "../../src/lib/copy-fr.ts";
 import { cn, money } from "../../src/lib/utils.ts";
+import { formatCad } from "../../src/lib/cad-format.ts";
 import { parentDeskPath } from "../../src/lib/desk-nav.ts";
 import { localePath } from "../../src/lib/locale-path.ts";
 import { showsParentBrowseActions } from "../../src/lib/role-access.ts";
@@ -81,6 +82,7 @@ export function renderParentHomeFixture({
     "@/lib/use-parent-request-scope": { useParentRequestScope },
   };
   const billStatus = component("src/components/bill-status.tsx", {
+    "@/lib/cad-format": { formatCad },
     "@/lib/use-copy": common["@/lib/use-copy"],
     "@/lib/utils": { cn },
   });

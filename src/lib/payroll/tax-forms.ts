@@ -7,6 +7,7 @@
  */
 
 import { formsForProvince, type EmployeeFormCard, type FormKind } from "./employee-forms.ts";
+import { formatCad } from "../cad-format.ts";
 
 export const TAX_FORM_KINDS = ["td1_federal", "td1_provincial", "tp1015"] as const;
 export type TaxFormKind = (typeof TAX_FORM_KINDS)[number];
@@ -50,18 +51,30 @@ function dollarsToCents(text: string): number | null {
   return Math.round(Number(clean) * 100);
 }
 
-export type TaxParse = { ok: true; answers: TaxAnswers } | { ok: false; error: "mode" | "amount" | "signature" | "certify" };
+export type TaxParse =
+  | { ok: true; answers: TaxAnswers }
+  | { ok: false; error: "mode" | "amount" | "signature" | "certify" };
 
 /** Check what the person typed. Nothing is saved unless this passes. */
-export function parseTaxAnswers(raw: { mode?: string; claimDollars?: string; signedName?: string; certified?: boolean }): TaxParse {
-  const mode = raw.mode === "basic" || raw.mode === "claim" || raw.mode === "zero" ? raw.mode : null;
+export function parseTaxAnswers(raw: {
+  mode?: string;
+  claimDollars?: string;
+  signedName?: string;
+  certified?: boolean;
+}): TaxParse {
+  const mode =
+    raw.mode === "basic" || raw.mode === "claim" || raw.mode === "zero" ? raw.mode : null;
   if (!mode) return { ok: false, error: "mode" };
   let claimCents: number | null = null;
   if (mode === "claim") {
     claimCents = dollarsToCents(String(raw.claimDollars ?? ""));
-    if (claimCents == null || claimCents <= 0 || claimCents > MAX_CLAIM_CENTS) return { ok: false, error: "amount" };
+    if (claimCents == null || claimCents <= 0 || claimCents > MAX_CLAIM_CENTS)
+      return { ok: false, error: "amount" };
   }
-  const signedName = String(raw.signedName ?? "").trim().replace(/\s+/g, " ").slice(0, 120);
+  const signedName = String(raw.signedName ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 120);
   if (signedName.length < 2) return { ok: false, error: "signature" };
   if (raw.certified !== true) return { ok: false, error: "certify" };
   return { ok: true, answers: { mode, claimCents, signedName, certified: true } };
@@ -98,7 +111,10 @@ export function engineClaim(state: string | null | undefined, cents: number): nu
 }
 
 /** "approved" once both the federal and the provincial (or Quebec) forms are approved. */
-export function td1Status(federal: string | null | undefined, provincial: string | null | undefined): "approved" | "pending" | "missing" {
+export function td1Status(
+  federal: string | null | undefined,
+  provincial: string | null | undefined,
+): "approved" | "pending" | "missing" {
   const f = federal && federal !== "missing";
   const p = provincial && provincial !== "missing";
   if (f && p) return "approved";
@@ -106,25 +122,41 @@ export function td1Status(federal: string | null | undefined, provincial: string
   return "missing";
 }
 
-export function parseContact(raw: { contactName?: string; contactPhone?: string; relation?: string }): { ok: true; answers: ContactAnswers } | { ok: false; error: "contact" } {
-  const contactName = String(raw.contactName ?? "").trim().slice(0, 120);
-  const contactPhone = String(raw.contactPhone ?? "").replace(/[^\d+()\-\s]/g, "").trim().slice(0, 30);
-  const relation = String(raw.relation ?? "").trim().slice(0, 60);
-  if (contactName.length < 2 || contactPhone.replace(/\D/g, "").length < 10) return { ok: false, error: "contact" };
+export function parseContact(raw: {
+  contactName?: string;
+  contactPhone?: string;
+  relation?: string;
+}): { ok: true; answers: ContactAnswers } | { ok: false; error: "contact" } {
+  const contactName = String(raw.contactName ?? "")
+    .trim()
+    .slice(0, 120);
+  const contactPhone = String(raw.contactPhone ?? "")
+    .replace(/[^\d+()\-\s]/g, "")
+    .trim()
+    .slice(0, 30);
+  const relation = String(raw.relation ?? "")
+    .trim()
+    .slice(0, 60);
+  if (contactName.length < 2 || contactPhone.replace(/\D/g, "").length < 10)
+    return { ok: false, error: "contact" };
   return { ok: true, answers: { contactName, contactPhone, relation } };
 }
 
 function cad(cents: number, locale: "en" | "fr"): string {
-  return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" }).format(cents / 100);
+  return formatCad(cents / 100, locale === "fr" ? "fr-CA" : "en-CA");
 }
 
 /** One plain line about a tax form answer, for the owner and the PDF. */
 export function claimSummary(answers: TaxAnswers, locale: "en" | "fr"): string {
   if (answers.mode === "claim") {
-    return locale === "fr" ? `Montant total demandé : ${cad(answers.claimCents ?? 0, locale)}` : `Total claim: ${cad(answers.claimCents ?? 0, locale)}`;
+    return locale === "fr"
+      ? `Montant total demandé : ${cad(answers.claimCents ?? 0, locale)}`
+      : `Total claim: ${cad(answers.claimCents ?? 0, locale)}`;
   }
   if (answers.mode === "zero") {
-    return locale === "fr" ? "Demande 0 $ ici (un autre emploi utilise les montants)" : "Claims $0 here (another job uses the amounts)";
+    return locale === "fr"
+      ? "Demande 0 $ ici (un autre emploi utilise les montants)"
+      : "Claims $0 here (another job uses the amounts)";
   }
   return locale === "fr" ? "Montant personnel de base seulement" : "Basic personal amount only";
 }

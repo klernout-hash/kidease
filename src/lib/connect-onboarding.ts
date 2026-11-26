@@ -48,7 +48,9 @@ export type ConnectOnboardingMessageKey =
   | "connectErrStripe";
 
 /** Copy key for each reason. connectErrStripe has a {code} slot. */
-export function connectOnboardingMessageKey(reason: ConnectOnboardingReason | string | null | undefined): ConnectOnboardingMessageKey {
+export function connectOnboardingMessageKey(
+  reason: ConnectOnboardingReason | string | null | undefined,
+): ConnectOnboardingMessageKey {
   switch (reason) {
     case "off":
       return "connectErrOff";
@@ -70,7 +72,13 @@ export function connectOnboardingMessageKey(reason: ConnectOnboardingReason | st
  */
 export function stripeErrorCode(err: unknown): string {
   if (err && typeof err === "object") {
-    const bag = err as { code?: unknown; stripeCode?: unknown; param?: unknown; type?: unknown; status?: unknown };
+    const bag = err as {
+      code?: unknown;
+      stripeCode?: unknown;
+      param?: unknown;
+      type?: unknown;
+      status?: unknown;
+    };
     for (const raw of [bag.stripeCode, bag.code, bag.param, bag.type]) {
       const code = typeof raw === "string" ? raw.trim().toLowerCase() : "";
       const token = /^[a-z0-9_.[\]]{1,60}$/.test(code) ? normaliseStripeToken(code) : "";
@@ -103,18 +111,87 @@ export type ConnectOnboardingDeps = {
   existingAccountId: () => Promise<string | null>;
   saveAccount: (accountId: string) => Promise<void>;
   /** POST to Stripe with the routed secret. */
-  stripePost: <T>(path: string, body: Record<string, unknown>, opts: { idempotencyKey: string; secret: string }) => Promise<T>;
+  stripePost: <T>(
+    path: string,
+    body: Record<string, unknown>,
+    opts: { idempotencyKey: string; secret: string },
+  ) => Promise<T>;
   accountBody: () => Record<string, unknown>;
   sessionBody: (accountId: string) => Record<string, unknown>;
-  record: (input: { userId: string; surface: string; publicMessage: string; detail: string }) => Promise<void>;
+  record: (input: {
+    userId: string;
+    surface: string;
+    publicMessage: string;
+    detail: string;
+  }) => Promise<void>;
   nonce: () => string;
+  /**
+   * Find a connected account Stripe already made for this centre (matched on
+   * metadata.kidease_daycare_id) that we never saved. Optional; used before a
+   * fresh-key retry so a retry can never create a second account.
+   */
+  findAccountForCentre?: () => Promise<string | null>;
 };
 
-function fail(reason: ConnectOnboardingReason, mode: PaymentStripeMode | null, code: string | null = null): ConnectOnboardingResult {
+/** Small, stable, dependency-free hash (FNV-1a 32-bit) of a request body. */
+export function stableBodyHash(body: unknown): string {
+  const text = stableJson(body);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i += 1) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(36);
+}
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    const entries = Object.keys(value as Record<string, unknown>)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stableJson((value as Record<string, unknown>)[k])}`);
+    return `{${entries.join(",")}}`;
+  }
+  return JSON.stringify(value ?? null);
+}
+
+/**
+ * Idempotency key for creating a centre's connected account. It includes a
+ * hash of the request body, so a body change (as on Nov 25, when the
+ * controller settings changed) gets a new key instead of Stripe's
+ * idempotency_error, while a double click with the same body still reuses
+ * the same key and cannot make two accounts.
+ */
+export function connectAccountIdempotencyKey(
+  mode: string,
+  daycareId: string,
+  body: Record<string, unknown>,
+): string {
+  return `connect-acct-${mode}-${daycareId}-${stableBodyHash(body)}`;
+}
+
+export function isIdempotencyError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const bag = err as { code?: unknown; type?: unknown };
+  return bag.code === "idempotency_error" || bag.type === "idempotency_error";
+}
+
+function stripeRequestIdOf(err: unknown): string {
+  const id = err && typeof err === "object" ? (err as { requestId?: unknown }).requestId : null;
+  return typeof id === "string" && id ? ` [${id}]` : "";
+}
+
+function fail(
+  reason: ConnectOnboardingReason,
+  mode: PaymentStripeMode | null,
+  code: string | null = null,
+): ConnectOnboardingResult {
   return { ok: false, reason, clientSecret: null, publishableKey: null, mode, code };
 }
 
-export async function runConnectOnboarding(deps: ConnectOnboardingDeps): Promise<ConnectOnboardingResult> {
+export async function runConnectOnboarding(
+  deps: ConnectOnboardingDeps,
+): Promise<ConnectOnboardingResult> {
   const log = async (reason: ConnectOnboardingReason, detail: string) => {
     await deps
       .record({
@@ -138,11 +215,41 @@ export async function runConnectOnboarding(deps: ConnectOnboardingDeps): Promise
 
   try {
     let accountId = String((await deps.existingAccountId()) || "");
+    if (!accountId.startsWith("acct_") && deps.findAccountForCentre) {
+      // Stripe made one earlier but the save failed: reuse it.
+      accountId = String((await deps.findAccountForCentre().catch(() => null)) || "");
+      if (accountId.startsWith("acct_")) await deps.saveAccount(accountId);
+    }
     if (!accountId.startsWith("acct_")) {
-      const created = await deps.stripePost<{ id?: string }>("/accounts", deps.accountBody(), {
-        idempotencyKey: `connect-acct-${routed.mode}-${deps.daycareId}`,
-        secret: routed.secret,
-      });
+      const body = deps.accountBody();
+      const key = connectAccountIdempotencyKey(routed.mode, deps.daycareId, body);
+      let created: { id?: string } | null = null;
+      try {
+        created = await deps.stripePost<{ id?: string }>("/accounts", body, {
+          idempotencyKey: key,
+          secret: routed.secret,
+        });
+      } catch (err) {
+        // The key was used before with other params (or Stripe cached an
+        // earlier failure). Reuse an account if one exists, else retry once
+        // with a fresh key. Never loop.
+        if (!isIdempotencyError(err)) throw err;
+        await log(
+          "stripe_error",
+          `idempotency_error on ${key}; retrying with a fresh key${stripeRequestIdOf(err)}`,
+        );
+        const found = deps.findAccountForCentre
+          ? String((await deps.findAccountForCentre().catch(() => null)) || "")
+          : "";
+        if (found.startsWith("acct_")) {
+          created = { id: found };
+        } else {
+          created = await deps.stripePost<{ id?: string }>("/accounts", body, {
+            idempotencyKey: `${key}-r${deps.nonce()}`,
+            secret: routed.secret,
+          });
+        }
+      }
       accountId = String(created?.id || "");
       if (!accountId.startsWith("acct_")) {
         await log("stripe_error", "account create returned no id");
@@ -150,19 +257,30 @@ export async function runConnectOnboarding(deps: ConnectOnboardingDeps): Promise
       }
       await deps.saveAccount(accountId);
     }
-    const session = await deps.stripePost<{ client_secret?: string }>("/account_sessions", deps.sessionBody(accountId), {
-      idempotencyKey: `connect-session-${routed.mode}-${accountId}-${deps.nonce()}`,
-      secret: routed.secret,
-    });
+    const session = await deps.stripePost<{ client_secret?: string }>(
+      "/account_sessions",
+      deps.sessionBody(accountId),
+      {
+        idempotencyKey: `connect-session-${routed.mode}-${accountId}-${deps.nonce()}`,
+        secret: routed.secret,
+      },
+    );
     const clientSecret = String(session?.client_secret || "");
     if (!clientSecret) {
       await log("stripe_error", "account session returned no client secret");
       return fail("stripe_error", routed.mode, "no_client_secret");
     }
-    return { ok: true, reason: null, clientSecret, publishableKey: routed.publishable, mode: routed.mode, code: null };
+    return {
+      ok: true,
+      reason: null,
+      clientSecret,
+      publishableKey: routed.publishable,
+      mode: routed.mode,
+      code: null,
+    };
   } catch (err) {
     const code = stripeErrorCode(err);
-    await log("stripe_error", `${code}: ${errorDetail(err)}`);
+    await log("stripe_error", `${code}: ${errorDetail(err)}${stripeRequestIdOf(err)}`);
     return fail("stripe_error", routed.mode, code);
   }
 }
@@ -171,7 +289,10 @@ export async function runConnectOnboarding(deps: ConnectOnboardingDeps): Promise
  * Connect.js asks for a client secret at start and again when a session
  * expires. Hand out the first secret once, then fetch a fresh one.
  */
-export function firstSecretOnce(first: string, fetchFresh: () => Promise<string>): () => Promise<string> {
+export function firstSecretOnce(
+  first: string,
+  fetchFresh: () => Promise<string>,
+): () => Promise<string> {
   let pending: string | null = first || null;
   return async () => {
     if (pending) {

@@ -5,6 +5,8 @@
  * Network yearly ($390/site) is a proposal until STRIPE_PRICE_NETWORK_YEARLY is set.
  */
 
+import { formatCad, frenchCad } from "./cad-format.ts";
+
 export type PlanLocale = "en" | "fr";
 
 export type PlanLine = { en: string; fr: string };
@@ -36,10 +38,28 @@ export type PaidPlanPrice = {
  * Parent Alerts ($14.99 / $149) and Network yearly ($390/site) are proposals for Kyle.
  */
 export const PAID_PLAN_PRICES: PaidPlanPrice[] = [
-  { id: "plus", monthlyCad: 7.99, yearlyCad: 59, hideUntilBothPrices: false, yearlyProposal: false },
-  { id: "alerts", monthlyCad: 14.99, yearlyCad: 149, hideUntilBothPrices: true, yearlyProposal: true },
+  {
+    id: "plus",
+    monthlyCad: 7.99,
+    yearlyCad: 59,
+    hideUntilBothPrices: false,
+    yearlyProposal: false,
+  },
+  {
+    id: "alerts",
+    monthlyCad: 14.99,
+    yearlyCad: 149,
+    hideUntilBothPrices: true,
+    yearlyProposal: true,
+  },
   { id: "pro", monthlyCad: 49, yearlyCad: 490, hideUntilBothPrices: false, yearlyProposal: false },
-  { id: "network", monthlyCad: 39, yearlyCad: 390, hideUntilBothPrices: false, yearlyProposal: true },
+  {
+    id: "network",
+    monthlyCad: 39,
+    yearlyCad: 390,
+    hideUntilBothPrices: false,
+    yearlyProposal: true,
+  },
 ];
 
 /** Catalog keys. Client-safe strings; the server maps them to STRIPE_PRICE_* env names. */
@@ -107,7 +127,10 @@ export function daycareAddon(id: string): DaycareAddon {
   return DAYCARE_ADDONS.find((addon) => addon.id === id) ?? DAYCARE_ADDONS[0]!;
 }
 
-export function daycareAddonVisible(id: string, flags: Partial<Record<string, boolean>> | null | undefined): boolean {
+export function daycareAddonVisible(
+  id: string,
+  flags: Partial<Record<string, boolean>> | null | undefined,
+): boolean {
   return Boolean(flags?.[id]);
 }
 
@@ -260,7 +283,10 @@ export function daycareUpgradePlan(id: string): UpgradePlanCopy {
 }
 
 /** Positive dollars saved by paying yearly instead of twelve months. */
-export function yearlySavingsCad(monthly: number, yearly: number | null | undefined): number | null {
+export function yearlySavingsCad(
+  monthly: number,
+  yearly: number | null | undefined,
+): number | null {
   if (yearly == null) return null;
   const save = Math.round((monthly * 12 - yearly) * 100) / 100;
   return save > 0 ? save : null;
@@ -274,24 +300,36 @@ function cents(amountCad: number): number {
  * Floor of (monthly × 12 − yearly) / (monthly × 12), as a percent.
  * Rounded down so the saving is never overstated. Null when yearly is not cheaper.
  */
-export function yearlySavingsPercentFromCents(monthlyCents: number, yearlyCents: number): number | null {
+export function yearlySavingsPercentFromCents(
+  monthlyCents: number,
+  yearlyCents: number,
+): number | null {
   if (!Number.isFinite(monthlyCents) || !Number.isFinite(yearlyCents)) return null;
   const full = monthlyCents * 12;
   if (full <= 0 || yearlyCents >= full) return null;
   return Math.floor(((full - yearlyCents) * 100) / full);
 }
 
-export function yearlySavingsPercent(monthlyCad: number, yearlyCad: number | null | undefined): number | null {
+export function yearlySavingsPercent(
+  monthlyCad: number,
+  yearlyCad: number | null | undefined,
+): number | null {
   if (yearlyCad == null) return null;
   return yearlySavingsPercentFromCents(cents(monthlyCad), cents(yearlyCad));
 }
 
 /** One pill for the yearly side of a toggle. A range uses each plan's floored percent. */
-export function yearlySavingsToggleLabel(percents: Array<number | null | undefined>, locale: PlanLocale): string | null {
-  const unique = [...new Set(percents.filter((n): n is number => typeof n === "number" && n > 0))].sort((a, b) => a - b);
+export function yearlySavingsToggleLabel(
+  percents: Array<number | null | undefined>,
+  locale: PlanLocale,
+): string | null {
+  const unique = [
+    ...new Set(percents.filter((n): n is number => typeof n === "number" && n > 0)),
+  ].sort((a, b) => a - b);
   if (!unique.length) return null;
   if (locale === "fr") {
-    const span = unique.length === 1 ? `${unique[0]} %` : `${unique[0]}–${unique[unique.length - 1]} %`;
+    const span =
+      unique.length === 1 ? `${unique[0]} %` : `${unique[0]}–${unique[unique.length - 1]} %`;
     return `Économisez ${span}`;
   }
   const span = unique.length === 1 ? `${unique[0]}%` : `${unique[0]}–${unique[unique.length - 1]}%`;
@@ -339,7 +377,9 @@ export function checkoutCtaLabel(input: {
   }
   const percent = yearlySavingsPercent(input.monthly, input.yearly);
   if (percent == null) {
-    return input.locale === "fr" ? `Choisir ${input.planName} à l’année` : `Choose ${input.planName} yearly`;
+    return input.locale === "fr"
+      ? `Choisir ${input.planName} à l’année`
+      : `Choose ${input.planName} yearly`;
   }
   return input.locale === "fr"
     ? `Choisir ${input.planName} à l’année · économisez ${percent} %`
@@ -374,29 +414,32 @@ export function upgradeUnlockedBenefits(input: {
 
 /**
  * Plan prices. English keeps a `CA$` prefix so `$` is not read as US dollars.
- * French uses fr-CA: the amount, a non-breaking space, then `$` (`0 $`, `7,99 $`).
+ * French uses the app's CAD format with the country marker (`0,00 $ CA`, `7,99 $ CA`).
  */
 export function formatPlanCad(amount: number, locale: PlanLocale): string {
   const fr = locale === "fr";
   const safe = Number.isFinite(amount) ? amount : 0;
+  if (fr) return frenchCad(safe);
   const digits = Number.isInteger(safe) ? 0 : 2;
-  const formatted = new Intl.NumberFormat(fr ? "fr-CA" : "en-CA", {
-    style: "currency",
-    currency: "CAD",
-    currencyDisplay: "symbol",
+  const formatted = formatCad(safe, "en-CA", {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
-  }).format(safe);
+  });
   const negative = formatted.includes("-");
   const numeric = formatted.replace(/[^\d,.]/g, "");
-  if (fr) return `${negative ? "-" : ""}${numeric}\u00a0$`;
   return `${negative ? "-" : ""}CA$${numeric}`;
 }
 
-export function yearlySavingsLine(monthly: number, yearly: number | null | undefined, locale: PlanLocale): string | null {
+export function yearlySavingsLine(
+  monthly: number,
+  yearly: number | null | undefined,
+  locale: PlanLocale,
+): string | null {
   const save = yearlySavingsCad(monthly, yearly);
   if (save == null || yearly == null) return null;
   const year = formatPlanCad(yearly, locale);
   const saved = formatPlanCad(save, locale);
-  return locale === "fr" ? `ou ${year}/an · économisez ${saved}` : `or ${year}/year · save ${saved}`;
+  return locale === "fr"
+    ? `ou ${year}/an · économisez ${saved}`
+    : `or ${year}/year · save ${saved}`;
 }

@@ -55,11 +55,11 @@ export function stripeCustomerAddressIsSet(address: StripeAddress | null | undef
   if (!address) return false;
   return Boolean(
     addressText(address.line1) ||
-      addressText(address.line2) ||
-      addressText(address.city) ||
-      addressText(address.state) ||
-      addressText(address.postal_code) ||
-      addressText(address.country),
+    addressText(address.line2) ||
+    addressText(address.city) ||
+    addressText(address.state) ||
+    addressText(address.postal_code) ||
+    addressText(address.country),
   );
 }
 
@@ -104,18 +104,33 @@ export async function ensureCanadaStripeCustomer(input: {
   const existing = String(input.customerId || "").trim();
   if (existing) {
     try {
-      const customer = await stripeRequest<StripeCustomer>(`/customers/${encodeURIComponent(existing)}`, {}, "GET", { secret });
+      const customer = await stripeRequest<StripeCustomer>(
+        `/customers/${encodeURIComponent(existing)}`,
+        {},
+        "GET",
+        { secret },
+      );
       if (!stripeCustomerAddressIsSet(customer.address)) {
-        await stripeRequest(`/customers/${encodeURIComponent(existing)}`, {
-          address: { country: CHECKOUT_BILLING_COUNTRY },
-        }, "POST", { secret });
+        await stripeRequest(
+          `/customers/${encodeURIComponent(existing)}`,
+          {
+            address: { country: CHECKOUT_BILLING_COUNTRY },
+          },
+          "POST",
+          { secret },
+        );
       }
       return existing;
     } catch {
       // Stale id: create a Canada customer rather than failing the charge.
     }
   }
-  const created = await stripeRequest<StripeCustomer>("/customers", canadaCustomerParams({ email: input.email }), "POST", { secret });
+  const created = await stripeRequest<StripeCustomer>(
+    "/customers",
+    canadaCustomerParams({ email: input.email }),
+    "POST",
+    { secret },
+  );
   const id = String(created.id || "").trim();
   if (!id) throw new Error("Stripe did not return a customer");
   if (input.persist !== false) await persistNewStripeCustomer(input.userId, id);
@@ -123,7 +138,10 @@ export async function ensureCanadaStripeCustomer(input: {
 }
 
 export function appOrigin(): string {
-  return (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca").replace(/\/$/, "");
+  return (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca").replace(
+    /\/$/,
+    "",
+  );
 }
 
 export type StripeCheckoutInput = {
@@ -142,8 +160,10 @@ export type StripeCheckoutInput = {
   locale?: string | null;
   /** Connect account id when the centre can receive funds. Parent never sees this. */
   destinationAccount?: string | null;
-  /** KidEase service fee in cents. Equals application_fee_amount. Not tax. */
+  /** KidEase fee in cents, paid by the centre via application_fee_amount. Not tax. Not added to the parent total. */
   applicationFeeCents?: number;
+  /** Parent-paid fee line. Leave unset: parents pay exactly the bill. */
+  parentFeeCents?: number;
   serviceFeeLabel?: string | null;
   /** Test secret for a QA account or is_test centre. Live payments omit it. */
   secret?: string;
@@ -229,7 +249,9 @@ export function flattenStripeBody(obj: unknown, prefix = ""): Array<[string, str
 }
 
 function allowPromotionCodes(env: NodeJS.ProcessEnv = process.env): boolean {
-  const raw = String(env.STRIPE_ALLOW_PROMOTION_CODES ?? "1").trim().toLowerCase();
+  const raw = String(env.STRIPE_ALLOW_PROMOTION_CODES ?? "1")
+    .trim()
+    .toLowerCase();
   return raw !== "0" && raw !== "false" && raw !== "off";
 }
 
@@ -239,10 +261,17 @@ export function checkoutSessionBody(input: StripeCheckoutInput): Record<string, 
     metadata: { bill_id: input.billId, kidease: "bill" },
     statement_descriptor_suffix: STRIPE_STATEMENT_SUFFIX,
   };
-  const serviceFeeCents =
-    input.destinationAccount && (input.applicationFeeCents ?? 0) > 0 ? Math.round(input.applicationFeeCents ?? 0) : 0;
-  if (input.destinationAccount && serviceFeeCents >= 0) {
-    paymentIntent.application_fee_amount = serviceFeeCents;
+  // KidEase fee, charged to the centre: Stripe deducts it from the transfer.
+  const applicationFee =
+    input.destinationAccount && (input.applicationFeeCents ?? 0) > 0
+      ? Math.round(input.applicationFeeCents ?? 0)
+      : 0;
+  // A parent-paid fee line. Parents pay exactly the bill since Nov 25 2026,
+  // so callers leave this unset; kept only so the line can never reappear by
+  // accident from applicationFeeCents.
+  const serviceFeeCents = Math.max(0, Math.round(input.parentFeeCents ?? 0));
+  if (input.destinationAccount && applicationFee >= 0) {
+    paymentIntent.application_fee_amount = applicationFee;
     paymentIntent.transfer_data = { destination: input.destinationAccount };
   }
   const lineItems: Array<Record<string, unknown>> = [
@@ -302,7 +331,8 @@ export function catalogCheckoutBody(input: CatalogCheckoutInput): Record<string,
     line_items: [{ price: input.priceId, quantity: Math.max(1, input.quantity ?? 1) }],
     currency: "cad",
     metadata,
-    allow_promotion_codes: (input.allowPromotionCodes ?? allowPromotionCodes()) ? "true" : undefined,
+    allow_promotion_codes:
+      (input.allowPromotionCodes ?? allowPromotionCodes()) ? "true" : undefined,
     billing_address_collection: "auto",
   };
   if (input.customerId) {
@@ -338,9 +368,15 @@ export async function stripeRequest<T>(
   if (method !== "GET") {
     // No @/ import: node tests load this file without the Vite alias.
     // The view-as frame installs this hook before a signed-in request runs.
-    (globalThis as { __kideaseViewAsSideEffect__?: (action: "payment") => void }).__kideaseViewAsSideEffect__?.("payment");
+    (
+      globalThis as { __kideaseViewAsSideEffect__?: (action: "payment") => void }
+    ).__kideaseViewAsSideEffect__?.("payment");
   }
-  const key = (opts?.secret || (opts?.qa ? process.env.STRIPE_SECRET_KEY_TEST : process.env.STRIPE_SECRET_KEY) || "").trim();
+  const key = (
+    opts?.secret ||
+    (opts?.qa ? process.env.STRIPE_SECRET_KEY_TEST : process.env.STRIPE_SECRET_KEY) ||
+    ""
+  ).trim();
   if (!key) throw new Error("Stripe is not configured");
   if (opts?.qa && key.startsWith("sk_live_")) throw new Error("QA charges cannot use live Stripe");
   const url = path.startsWith("http") ? path : `https://api.stripe.com/v1${path}`;
@@ -354,12 +390,20 @@ export async function stripeRequest<T>(
     const joined = params.toString();
     const getUrl = joined ? `${url}${url.includes("?") ? "&" : "?"}${joined}` : url;
     const res = await stripeFetchImpl(getUrl, { method: "GET", headers });
-    const json = (await res.json()) as T & { error?: { message?: string; code?: string; type?: string; param?: string } };
+    const json = (await res.json()) as T & {
+      error?: { message?: string; code?: string; type?: string; param?: string };
+    };
     if (!res.ok) {
-      throw new StripeApiError(json.error?.message || `Stripe ${path} failed (${res.status})`, res.status, json.error?.code, {
-        type: json.error?.type,
-        param: json.error?.param,
-      });
+      throw new StripeApiError(
+        json.error?.message || `Stripe ${path} failed (${res.status})`,
+        res.status,
+        json.error?.code,
+        {
+          type: json.error?.type,
+          param: json.error?.param,
+          requestId: res.headers?.get?.("request-id") ?? null,
+        },
+      );
     }
     return json;
   }
@@ -368,12 +412,20 @@ export async function stripeRequest<T>(
   for (const [k, v] of flattenStripeBody(body)) params.append(k, v);
   const payload = params.toString();
   const res = await stripeFetchImpl(url, { method: "POST", headers, body: payload });
-  const json = (await res.json()) as T & { error?: { message?: string; code?: string; type?: string; param?: string } };
+  const json = (await res.json()) as T & {
+    error?: { message?: string; code?: string; type?: string; param?: string };
+  };
   if (!res.ok) {
-    throw new StripeApiError(json.error?.message || `Stripe ${path} failed (${res.status})`, res.status, json.error?.code, {
-      type: json.error?.type,
-      param: json.error?.param,
-    });
+    throw new StripeApiError(
+      json.error?.message || `Stripe ${path} failed (${res.status})`,
+      res.status,
+      json.error?.code,
+      {
+        type: json.error?.type,
+        param: json.error?.param,
+        requestId: res.headers?.get?.("request-id") ?? null,
+      },
+    );
   }
   return json;
 }
@@ -393,7 +445,9 @@ export async function retrieveStripeCheckoutSession(
   return stripeRequest(`/checkout/sessions/${encodeURIComponent(id)}`, {}, "GET", opts);
 }
 
-export async function createStripeCheckoutSession(input: StripeCheckoutInput): Promise<StripeCheckoutSession> {
+export async function createStripeCheckoutSession(
+  input: StripeCheckoutInput,
+): Promise<StripeCheckoutSession> {
   const customerId = await ensureCanadaStripeCustomer({
     customerId: input.customerId,
     email: input.customerEmail,
@@ -416,7 +470,9 @@ export async function createStripeCheckoutSession(input: StripeCheckoutInput): P
   };
 }
 
-export async function createCatalogCheckoutSession(input: CatalogCheckoutInput): Promise<StripeCheckoutSession> {
+export async function createCatalogCheckoutSession(
+  input: CatalogCheckoutInput,
+): Promise<StripeCheckoutSession> {
   const customerId = await ensureCanadaStripeCustomer({
     customerId: input.customerId,
     email: input.customerEmail,
@@ -436,8 +492,13 @@ export async function createCatalogCheckoutSession(input: CatalogCheckoutInput):
   };
 }
 
-export async function createBillingPortalSession(input: BillingPortalInput): Promise<{ url: string }> {
-  const json = await stripeRequest<{ url?: string | null }>("/billing_portal/sessions", billingPortalBody(input));
+export async function createBillingPortalSession(
+  input: BillingPortalInput,
+): Promise<{ url: string }> {
+  const json = await stripeRequest<{ url?: string | null }>(
+    "/billing_portal/sessions",
+    billingPortalBody(input),
+  );
   if (!json.url) throw new Error("Stripe did not return a billing portal link");
   return { url: json.url };
 }
@@ -488,13 +549,15 @@ export type StripeRefundResult = {
 export async function createStripeRefund(input: StripeRefundInput): Promise<StripeRefundResult> {
   const paymentIntent = String(input.paymentIntentId || "").trim();
   const charge = String(input.chargeId || "").trim();
-  if (!paymentIntent && !charge) throw new Error("Stripe refund needs a payment intent or charge id");
+  if (!paymentIntent && !charge)
+    throw new Error("Stripe refund needs a payment intent or charge id");
   const body: Record<string, unknown> = {
     metadata: { kidease: "support_refund", ...(input.metadata || {}) },
   };
   if (paymentIntent) body.payment_intent = paymentIntent;
   else body.charge = charge;
-  if (input.amountCents != null && input.amountCents > 0) body.amount = Math.floor(input.amountCents);
+  if (input.amountCents != null && input.amountCents > 0)
+    body.amount = Math.floor(input.amountCents);
   const json = await stripeRequest<{ id?: string; status?: string; amount?: number }>(
     "/refunds",
     body,

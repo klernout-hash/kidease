@@ -58,7 +58,11 @@ export function qboKeyBytes(raw: string): boolean {
   }
 }
 
-export function qboAuthorizeUrl(input: { clientId: string; redirectUri: string; state: string }): string {
+export function qboAuthorizeUrl(input: {
+  clientId: string;
+  redirectUri: string;
+  state: string;
+}): string {
   const url = new URL(QBO_AUTHORIZE_URL);
   url.searchParams.set("client_id", input.clientId);
   url.searchParams.set("redirect_uri", input.redirectUri);
@@ -68,7 +72,12 @@ export function qboAuthorizeUrl(input: { clientId: string; redirectUri: string; 
   return url.toString();
 }
 
-export function qboTokenRequest(input: { clientId: string; clientSecret: string; code: string; redirectUri: string }) {
+export function qboTokenRequest(input: {
+  clientId: string;
+  clientSecret: string;
+  code: string;
+  redirectUri: string;
+}) {
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code: input.code,
@@ -109,9 +118,11 @@ export function gstHstForFee(province: string): { bps: number; tax: "gst" | "hst
 }
 
 /**
- * Centre journal for one paid parent bill. The parent pays the KidEase fee,
- * so the centre's Stripe deposit is the full invoice. Tax on that fee is a
- * separate KidEase invoice and is not posted here. Parent childcare stays exempt.
+ * Centre journal for one paid parent bill. Since Nov 25 2026 the parent pays
+ * exactly the bill and the centre pays the KidEase fee out of the payout, so
+ * the Stripe deposit is the bill minus the fee and the fee is an expense.
+ * Tax on that fee is a separate KidEase invoice and is not posted here.
+ * Parent childcare stays exempt.
  */
 export function qboJournal(input: {
   invoiceCents: number;
@@ -119,26 +130,37 @@ export function qboJournal(input: {
   province: string;
 }): QboJournalLine[] {
   const invoice = Math.max(0, Math.round(input.invoiceCents));
-  const parentPaidFee = Math.max(0, Math.round(input.feeCents));
+  const fee = Math.min(invoice, Math.max(0, Math.round(input.feeCents)));
   void input.province;
-  return [
+  const lines: QboJournalLine[] = [
     {
       account: "stripe_clearing",
-      debitCents: invoice,
+      debitCents: invoice - fee,
       creditCents: 0,
       tax: "exempt",
-      memo: parentPaidFee > 0
-        ? "Stripe deposit of the full centre bill. The parent paid the KidEase service fee."
-        : "Stripe deposit of the full centre bill.",
-    },
-    {
-      account: "parent_fees",
-      debitCents: 0,
-      creditCents: invoice,
-      tax: "exempt",
-      memo: "Parent childcare fee. Exempt from GST/HST in this export.",
+      memo:
+        fee > 0
+          ? "Stripe deposit of the centre bill, after the KidEase fee."
+          : "Stripe deposit of the full centre bill.",
     },
   ];
+  if (fee > 0) {
+    lines.push({
+      account: "platform_fee",
+      debitCents: fee,
+      creditCents: 0,
+      tax: "exempt",
+      memo: "KidEase fee, deducted from the Stripe payout. Tax on it is billed separately.",
+    });
+  }
+  lines.push({
+    account: "parent_fees",
+    debitCents: 0,
+    creditCents: invoice,
+    tax: "exempt",
+    memo: "Parent childcare fee. Exempt from GST/HST in this export.",
+  });
+  return lines;
 }
 
 export function qboJournalBalances(lines: QboJournalLine[]): boolean {
@@ -155,7 +177,11 @@ export function qboJournalBody(input: {
   txnDate: string;
   docNumber: string;
 }): { ok: true; body: Record<string, unknown> } | { ok: false; missing: QboAccount[] } {
-  const needed = [...new Set(input.lines.filter((line) => line.debitCents || line.creditCents).map((line) => line.account))];
+  const needed = [
+    ...new Set(
+      input.lines.filter((line) => line.debitCents || line.creditCents).map((line) => line.account),
+    ),
+  ];
   const missing = needed.filter((account) => !String(input.accounts[account] || "").trim());
   if (missing.length) return { ok: false, missing };
   return {
@@ -163,7 +189,8 @@ export function qboJournalBody(input: {
     body: {
       TxnDate: input.txnDate,
       DocNumber: input.docNumber.slice(0, 21),
-      PrivateNote: "KidEase export. Confirm GST/HST with your accountant. KidEase does not file this return.",
+      PrivateNote:
+        "KidEase export. Confirm GST/HST with your accountant. KidEase does not file this return.",
       Line: input.lines
         .filter((line) => line.debitCents || line.creditCents)
         .map((line) => ({

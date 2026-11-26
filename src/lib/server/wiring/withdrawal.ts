@@ -39,12 +39,14 @@ export const saveNoticePeriod = createServerFn({ method: "POST" })
 
 export const requestWithdrawal = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { daycareId?: string; ageGroup?: string; requestedOn?: string; lastDay?: string }) => ({
-    daycareId: String(input?.daycareId || "").slice(0, 80),
-    ageGroup: String(input?.ageGroup || "").slice(0, 20),
-    requestedOn: String(input?.requestedOn || "").slice(0, 10),
-    lastDay: String(input?.lastDay || "").slice(0, 10),
-  }))
+  .validator(
+    (input: { daycareId?: string; ageGroup?: string; requestedOn?: string; lastDay?: string }) => ({
+      daycareId: String(input?.daycareId || "").slice(0, 80),
+      ageGroup: String(input?.ageGroup || "").slice(0, 20),
+      requestedOn: String(input?.requestedOn || "").slice(0, 10),
+      lastDay: String(input?.lastDay || "").slice(0, 10),
+    }),
+  )
   .handler(async ({ context, data }) => {
     if (!withdrawalEnabled()) return { ok: false as const, error: "off" };
     const sql = await getSql();
@@ -84,7 +86,10 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
     let invoiceId: string | null = null;
     if (mode === "live" && plan.invoiceCents != null) {
       const amountCad = Math.round(plan.invoiceCents / 100);
-      const quote = parentChargeQuote({ invoiceCents: plan.invoiceCents, daycareId: data.daycareId });
+      const quote = parentChargeQuote({
+        invoiceCents: plan.invoiceCents,
+        daycareId: data.daycareId,
+      });
       invoiceId = newId("bl");
       await sql`
         insert into invoices (
@@ -93,14 +98,20 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
           issued_by, memo, created_by
         ) values (
           ${invoiceId}, ${`KE-${invoiceId.slice(-8).toUpperCase()}`}, ${context.userId}, ${data.daycareId},
-          ${currentPeriod()}, ${"draft"}, ${"cad"}, ${amountCad}, ${Math.round(quote.feeCents / 100)}, ${amountCad},
-          ${plan.invoiceCents}, ${quote.feeCents}, ${quote.centreReceivesCents}, ${"provider"}, ${"Final invoice"}, ${context.userId}
+          ${currentPeriod()}, ${"draft"}, ${"cad"}, ${amountCad}, ${Math.round(quote.kidEaseFeeCents / 100)}, ${amountCad},
+          ${plan.invoiceCents}, ${quote.kidEaseFeeCents}, ${quote.centreReceivesCents}, ${"provider"}, ${"Final invoice"}, ${context.userId}
         )
       `;
     }
     if (mode === "live" && plan.freeSpace) {
       const column =
-        data.ageGroup === "infant" ? "spots_infant" : data.ageGroup === "toddler" ? "spots_toddler" : data.ageGroup === "preschool" ? "spots_preschool" : "";
+        data.ageGroup === "infant"
+          ? "spots_infant"
+          : data.ageGroup === "toddler"
+            ? "spots_toddler"
+            : data.ageGroup === "preschool"
+              ? "spots_preschool"
+              : "";
       if (column === "spots_infant") {
         await sql`update daycares set spots_infant = spots_infant + 1, spots_updated_at = now() where id = ${data.daycareId}`;
       } else if (column === "spots_toddler") {
