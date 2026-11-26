@@ -93,8 +93,8 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
           issued_by, memo, created_by
         ) values (
           ${invoiceId}, ${`KE-${invoiceId.slice(-8).toUpperCase()}`}, ${context.userId}, ${data.daycareId},
-          ${currentPeriod()}, ${"draft"}, ${"cad"}, ${amountCad}, ${Math.round(quote.feeCents / 100)}, ${amountCad},
-          ${plan.invoiceCents}, ${quote.feeCents}, ${quote.centreReceivesCents}, ${"provider"}, ${"Final invoice"}, ${context.userId}
+          ${currentPeriod()}, ${"draft"}, ${"cad"}, ${amountCad}, ${Math.round(quote.kidEaseFeeCents / 100)}, ${amountCad},
+          ${plan.invoiceCents}, ${quote.kidEaseFeeCents}, ${quote.centreReceivesCents}, ${"provider"}, ${"Final invoice"}, ${context.userId}
         )
       `;
     }

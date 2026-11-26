@@ -4,9 +4,10 @@
  * Off unless KIDEASE_CONNECT_PAYMENTS is on. This is an env gate, not a
  * PostHog flag, so a remote toggle cannot turn charges on.
  *
- * The parent pays the invoice plus a KidEase service fee. The rate is
- * KIDEASE_PLATFORM_FEE_BPS (300 = 3% when unset). application_fee_amount
- * equals that fee line, so the daycare receives the full invoice.
+ * The parent pays exactly the invoice (Kyle, Nov 25 2026: free for parents).
+ * The KidEase fee is charged to the daycare: application_fee_amount on the
+ * destination charge, deducted from the payout. The rate is
+ * KIDEASE_PLATFORM_FEE_BPS (300 = 3% when unset), the same as before.
  * GST/HST/PST/QST is never added to that fee. Tax on the fee stays a
  * separate monthly invoice.
  *
@@ -18,8 +19,9 @@
  *   carries losses and fees).
  * - No Stripe dashboard (stripe_dashboard.type = none): daycares use the
  *   embedded components only.
- * The parent fee is on unless KIDEASE_PARENT_SERVICE_FEE is 0, or the
- * centre or province is listed in an exclude env. Live keys still need
+ * The KidEase fee is on unless KIDEASE_PARENT_SERVICE_FEE is 0 (legacy
+ * name: it now switches the centre-paid fee), or the centre or province is
+ * listed in an exclude env. Live keys still need
  * KIDEASE_CONNECT_LIVE=1.
  *
  * Test keys work when KIDEASE_CONNECT_PAYMENTS is on. sk_live_ / pk_live_
@@ -149,8 +151,9 @@ function feeList(raw: string | undefined): string[] {
 }
 
 /**
- * Parent-paid service fee. On everywhere unless the env is 0, or this
- * centre or province is listed for a later counsel exclusion.
+ * Whether a KidEase fee applies to this bill. Since Nov 25 2026 the centre
+ * pays it out of the payout; parents never pay it. Env names are unchanged.
+ * On everywhere unless the env is 0, or this centre or province is listed.
  */
 export function parentServiceFeeApplies(input: {
   province?: string | null;
@@ -180,18 +183,37 @@ export function parentServiceFeeLabel(bps: number): string {
   return `KidEase service fee (${en}%) / Frais de service KidEase (${en.replace(".", ",")} %)`;
 }
 
+/** Bilingual daycare-side line. 300 bps reads "KidEase fee (3%) / Frais KidEase (3 %)". */
+export function kidEaseFeeLabel(bps: number): string {
+  const pct = Math.round((Number(bps) / 100) * 1000) / 1000;
+  const en = String(pct);
+  return `KidEase fee (${en}%) / Frais KidEase (${en.replace(".", ",")} %)`;
+}
+
 export type ParentChargeQuote = {
   invoiceCents: number;
+  /** Fee the PARENT pays on top of the bill. Always 0 since Nov 25 2026. */
   feeCents: number;
+  /** KidEase fee the centre pays (deducted from the payout). */
+  kidEaseFeeCents: number;
+  /** Always equals invoiceCents: parents pay exactly the bill. */
   parentPaysCents: number;
+  /** application_fee_amount on the destination charge (= kidEaseFeeCents). */
   applicationFeeCents: number;
+  /** invoiceCents minus the KidEase fee. */
   centreReceivesCents: number;
+  /** Always false: the fee is never passed to the parent. */
   passedToParent: boolean;
+  feePaidBy: "centre";
+  /** Daycare-side fee label (earnings, payout lines, centre invoices). */
   label: string;
   bps: number;
 };
 
-/** Parent total is the invoice plus the fee line. The centre keeps the invoice. */
+/**
+ * Parent total is exactly the invoice. The KidEase fee is the Connect
+ * application fee, so Stripe deducts it from the centre's transfer.
+ */
 export function parentChargeQuote(input: {
   invoiceCents: number;
   bps?: number;
@@ -201,33 +223,30 @@ export function parentChargeQuote(input: {
 }): ParentChargeQuote {
   const invoiceCents = Math.max(0, Math.round(Number(input.invoiceCents)) || 0);
   const bps = input.bps ?? connectFeeBps(input.env?.KIDEASE_PLATFORM_FEE_BPS);
-  const passed = parentServiceFeeApplies(input);
-  const feeCents = passed ? applicationFeeCents(invoiceCents, bps) : 0;
+  const applies = parentServiceFeeApplies(input);
+  const kidEaseFeeCents = applies ? Math.min(applicationFeeCents(invoiceCents, bps), invoiceCents) : 0;
   return {
     invoiceCents,
-    feeCents,
-    parentPaysCents: invoiceCents + feeCents,
-    applicationFeeCents: feeCents,
-    centreReceivesCents: invoiceCents,
-    passedToParent: feeCents > 0,
-    label: parentServiceFeeLabel(bps),
+    feeCents: 0,
+    kidEaseFeeCents,
+    parentPaysCents: invoiceCents,
+    applicationFeeCents: kidEaseFeeCents,
+    centreReceivesCents: invoiceCents - kidEaseFeeCents,
+    passedToParent: false,
+    feePaidBy: "centre",
+    label: kidEaseFeeLabel(bps),
     bps,
   };
 }
 
 /**
- * The pay page must show the amount Checkout will charge.
- * The fee line is added only when a Connect destination will receive the bill.
+ * The pay page shows the amount Checkout will charge: always the bill.
+ * Without a Connect destination there is no application fee to deduct.
  */
 export function quoteShownOnPayPage(quote: ParentChargeQuote, hasDestination: boolean): ParentChargeQuote {
-  if (hasDestination && quote.feeCents > 0) return quote;
-  return {
-    ...quote,
-    feeCents: 0,
-    parentPaysCents: quote.invoiceCents,
-    applicationFeeCents: 0,
-    passedToParent: false,
-  };
+  const base = { ...quote, feeCents: 0, parentPaysCents: quote.invoiceCents, passedToParent: false };
+  if (hasDestination) return base;
+  return { ...base, kidEaseFeeCents: 0, applicationFeeCents: 0, centreReceivesCents: quote.invoiceCents };
 }
 
 export function destinationChargeFields(input: {
@@ -560,7 +579,10 @@ export function parentInvoiceLine(invoiceCents: number, description: string): Re
   return { amount, currency: "cad", description: description.slice(0, 250) || "Daycare bill" };
 }
 
-/** The parent-paid fee. Omitted when the fee is zero. Tax is not this line. */
+/**
+ * A parent-paid fee line. Parents no longer pay a KidEase fee, so callers
+ * pass quote.feeCents (0) and get null. Kept for old drafts. Tax is not this line.
+ */
 export function parentServiceFeeLine(feeCents: number, label: string): Record<string, unknown> | null {
   const amount = Math.round(Number(feeCents));
   if (!Number.isFinite(amount) || amount <= 0) return null;
@@ -605,9 +627,11 @@ export function withoutHostedInvoice<T extends Record<string, unknown>>(invoice:
   return next;
 }
 
-export function connectedAccountBody(): Record<string, unknown> {
+export function connectedAccountBody(daycareId?: string): Record<string, unknown> {
+  const centre = clean(daycareId || "");
   return {
     country: "CA",
+    ...(centre ? { metadata: { kidease_daycare_id: centre } } : {}),
     controller: {
       stripe_dashboard: { type: "none" },
       fees: { payer: "account" },

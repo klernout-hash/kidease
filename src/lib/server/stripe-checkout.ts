@@ -142,8 +142,10 @@ export type StripeCheckoutInput = {
   locale?: string | null;
   /** Connect account id when the centre can receive funds. Parent never sees this. */
   destinationAccount?: string | null;
-  /** KidEase service fee in cents. Equals application_fee_amount. Not tax. */
+  /** KidEase fee in cents, paid by the centre via application_fee_amount. Not tax. Not added to the parent total. */
   applicationFeeCents?: number;
+  /** Parent-paid fee line. Leave unset: parents pay exactly the bill. */
+  parentFeeCents?: number;
   serviceFeeLabel?: string | null;
   /** Test secret for a QA account or is_test centre. Live payments omit it. */
   secret?: string;
@@ -239,10 +241,15 @@ export function checkoutSessionBody(input: StripeCheckoutInput): Record<string, 
     metadata: { bill_id: input.billId, kidease: "bill" },
     statement_descriptor_suffix: STRIPE_STATEMENT_SUFFIX,
   };
-  const serviceFeeCents =
+  // KidEase fee, charged to the centre: Stripe deducts it from the transfer.
+  const applicationFee =
     input.destinationAccount && (input.applicationFeeCents ?? 0) > 0 ? Math.round(input.applicationFeeCents ?? 0) : 0;
-  if (input.destinationAccount && serviceFeeCents >= 0) {
-    paymentIntent.application_fee_amount = serviceFeeCents;
+  // A parent-paid fee line. Parents pay exactly the bill since Nov 25 2026,
+  // so callers leave this unset; kept only so the line can never reappear by
+  // accident from applicationFeeCents.
+  const serviceFeeCents = Math.max(0, Math.round(input.parentFeeCents ?? 0));
+  if (input.destinationAccount && applicationFee >= 0) {
+    paymentIntent.application_fee_amount = applicationFee;
     paymentIntent.transfer_data = { destination: input.destinationAccount };
   }
   const lineItems: Array<Record<string, unknown>> = [
@@ -362,6 +369,7 @@ export async function stripeRequest<T>(
       throw new StripeApiError(json.error?.message || `Stripe ${path} failed (${res.status})`, res.status, json.error?.code, {
         type: json.error?.type,
         param: json.error?.param,
+        requestId: res.headers?.get?.("request-id") ?? null,
       });
     }
     return json;
@@ -376,6 +384,7 @@ export async function stripeRequest<T>(
     throw new StripeApiError(json.error?.message || `Stripe ${path} failed (${res.status})`, res.status, json.error?.code, {
       type: json.error?.type,
       param: json.error?.param,
+      requestId: res.headers?.get?.("request-id") ?? null,
     });
   }
   return json;

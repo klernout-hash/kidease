@@ -160,8 +160,8 @@ export const runEnrolmentStep = createServerFn({ method: "POST" })
           issued_by, memo, created_by
         ) values (
           ${invoiceId}, ${number}, ${context.userId}, ${offer.daycare_id}, ${currentPeriod()}, ${"draft"}, ${"cad"},
-          ${amountCad}, ${Math.round(quote.feeCents / 100)}, ${amountCad},
-          ${next.invoiceCents}, ${quote.feeCents}, ${quote.centreReceivesCents},
+          ${amountCad}, ${Math.round(quote.kidEaseFeeCents / 100)}, ${amountCad},
+          ${next.invoiceCents}, ${quote.kidEaseFeeCents}, ${quote.centreReceivesCents},
           ${"provider"}, ${"First invoice after enrolment"}, ${context.userId}
         )
       `;

@@ -45,7 +45,7 @@ export function invoiceListHtml(invoices: readonly InvoiceListRow[], locale: Inv
         </div>
         <div class="actions">
           ${pay}
-          <a data-ke="invoice-pdf" data-invoice="${escapeAttr(invoice.id)}" href="/api/invoices/${encodeURIComponent(invoice.id)}/pdf">${fr ? "Télécharger le PDF" : "Download PDF"}</a>
+          <a data-ke="invoice-pdf" data-invoice="${escapeAttr(invoice.id)}" href="/api/invoices/${encodeURIComponent(invoice.id)}/pdf${fr ? "?lang=fr" : ""}">${fr ? "Télécharger le PDF" : "Download PDF"}</a>
           <a data-ke="invoice-print" href="${detail}">${fr ? "Imprimer" : "Print"}</a>
         </div>
       </li>`;

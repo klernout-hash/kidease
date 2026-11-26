@@ -39,6 +39,7 @@ import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 import { useViewAs } from "@/components/view-as-banner";
 import type { CopyKey } from "@/lib/copy";
+import { formatCad } from "@/lib/cad-format";
 
 const PRESENCE_COPY: Record<ReturnType<typeof presenceFromAttendance>, CopyKey> = {
   here: "careHere",
@@ -344,7 +345,7 @@ export function DailyCareDesk({
   }
 
   function money(cents: number) {
-    return (cents / 100).toLocaleString(locale === "fr" ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" });
+    return formatCad(cents / 100, locale === "fr" ? "fr-CA" : "en-CA");
   }
 
   return (

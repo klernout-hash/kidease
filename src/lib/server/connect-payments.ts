@@ -486,10 +486,23 @@ export const createConnectAccountSession = createServerFn({ method: "POST" })
       },
       stripePost: <T>(path: string, body: Record<string, unknown>, opts: { idempotencyKey: string; secret: string }) =>
         stripeRequest<T>(path, body, "POST", opts),
-      accountBody: () => connectedAccountBody(),
+      accountBody: () => connectedAccountBody(daycareId),
       sessionBody: (accountId) => accountSessionBody(accountId),
       record: recordStripeCheckoutError,
       nonce: () => nid("as"),
+      findAccountForCentre: async () => {
+        // Only used when we have no saved acct_ for this centre.
+        const routed = await stripeCallFor(sql, context.userId, daycareId);
+        if (!("secret" in routed)) return null;
+        const list = await stripeRequest<{ data?: { id?: string; metadata?: Record<string, string> }[] }>(
+          "/accounts",
+          { limit: 100 },
+          "GET",
+          { secret: routed.secret },
+        );
+        const hit = (list.data || []).find((acct) => acct?.metadata?.kidease_daycare_id === daycareId);
+        return hit?.id ?? null;
+      },
     });
   });
 
@@ -677,7 +690,8 @@ export async function attachConnectBill(billId: string): Promise<{ ok: boolean; 
     province: place[0]?.province,
     daycareId: bill.daycare_id,
   });
-  const fee = quote.feeCents;
+  // Parent-paid line is always 0 now; the KidEase fee is the application fee.
+  const fee = quote.kidEaseFeeCents;
   destinationChargeFields({
     invoiceCents,
     destination,
@@ -722,7 +736,7 @@ export async function attachConnectBill(billId: string): Promise<{ ok: boolean; 
         customer: customerId,
         invoice: invoiceId,
       }, "POST", { idempotencyKey: `bill-item-${routed.mode}-${bill.id}`, secret: routed.secret });
-      const feeLine = parentServiceFeeLine(fee, quote.label);
+      const feeLine = parentServiceFeeLine(quote.feeCents, quote.label);
       if (feeLine) {
         await stripeRequest("/invoiceitems", {
           ...feeLine,

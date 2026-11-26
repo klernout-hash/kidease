@@ -430,7 +430,7 @@ function invoiceHarness(overrides = {}) {
     return state.invoice ? [state.invoice] : [];
   };
   const invoices = productionDeclarations("src/lib/server/stripe-parent-invoices.ts", [
-    "loadInvoiceForDownload", "loadRow", "canRead", "toView",
+    "loadInvoiceForDownload", "loadRow", "canRead", "toView", "centreAddressLine", "clean",
   ], {
     getSql: async () => sql,
     listAccessibleDaycareIds: async (connection, userId) => {
@@ -448,7 +448,7 @@ function invoiceHarness(overrides = {}) {
       };
     },
   });
-  const handlers = productionDeclarations("src/routes/api/invoices.$id.pdf.ts", ["run", "Route"], {
+  const handlers = productionDeclarations("src/routes/api/invoices.$id.pdf.ts", ["pdfLocale", "run", "Route"], {
     createFileRoute, loadInvoiceForDownload: invoices.loadInvoiceForDownload,
     invoicePdfHttpResponse: (input) => {
       state.pdfResponses.push(input);

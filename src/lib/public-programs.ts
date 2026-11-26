@@ -9,6 +9,7 @@ import { confirmedStoredFeeProgram, hasListedMonthlyFees } from "./fee-program.t
 import { localeTag } from "./languages.ts";
 import { STANDARD_YOUNGER_MAX, standardAgeGroup } from "./standard-age-groups.ts";
 import type { Locale } from "./types.ts";
+import { formatCad } from "./cad-format.ts";
 
 export const PUBLIC_AGE_BANDS = ["infant", "toddler", "preschool", "school-age"] as const;
 export type PublicAgeBand = (typeof PUBLIC_AGE_BANDS)[number];
@@ -115,12 +116,10 @@ export function monthlyFeeVisible(
 /** CAD monthly amount with an explicit unit. */
 export function formatMonthlyFee(cad: number, locale: Locale = "en"): string {
   const cents = Math.round(Math.abs(Number(cad)) * 100) % 100 !== 0;
-  const formatted = new Intl.NumberFormat(localeTag(locale), {
-    style: "currency",
-    currency: "CAD",
+  const formatted = formatCad(cad, localeTag(locale), {
     minimumFractionDigits: cents ? 2 : 0,
     maximumFractionDigits: cents ? 2 : 0,
-  }).format(cad);
+  });
   return `${formatted}${locale === "fr" ? "/mois" : "/month"}`;
 }
 

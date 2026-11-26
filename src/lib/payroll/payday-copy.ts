@@ -1,3 +1,4 @@
+import { formatCad } from "../cad-format.ts";
 /** Pay day screen words, English and French. Grade 6, short. French runs longer; layouts wrap. */
 
 const EN = {
@@ -430,7 +431,7 @@ export function checkWords(code: CheckCode, locale: "en" | "fr"): string {
 }
 
 function cad(cents: number, locale: "en" | "fr"): string {
-  return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" }).format(cents / 100);
+  return formatCad(cents / 100, locale === "fr" ? "fr-CA" : "en-CA");
 }
 
 function longDate(date: string, locale: "en" | "fr"): string {

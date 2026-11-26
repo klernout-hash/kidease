@@ -97,8 +97,8 @@ test("checkout metadata carries bill_id and Connect fee only when destinated", (
   assert.equal(cflat["payment_intent_data[application_fee_amount]"], "3600");
   assert.equal(cflat["payment_intent_data[transfer_data][destination]"], "acct_123");
   assert.equal(cflat["line_items[0][price_data][unit_amount]"], "120000");
-  assert.equal(cflat["line_items[1][price_data][unit_amount]"], "3600");
-  assert.equal(cflat["line_items[1][price_data][product_data][name]"], "KidEase service fee (3%) / Frais de service KidEase (3 %)");
+  // The centre pays the KidEase fee from its payout: no extra line for the parent.
+  assert.equal(cflat["line_items[1][price_data][unit_amount]"], undefined);
 });
 
 test("webhook objects resolve the shared bill id", () => {

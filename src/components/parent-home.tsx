@@ -45,7 +45,10 @@ export function ParentHome({
   matches,
   onRetry,
   onDismiss,
+  onOpenPayments,
 }: {
+  /** Opens the Payments tab in place (the desk's own tab switch). */
+  onOpenPayments?: () => void;
   saved: DaycareCard[];
   bookings: Booking[];
   tours: TourRequest[];
@@ -105,16 +108,34 @@ export function ParentHome({
       ) : null}
     </p>
   );
+  const openPayments = (event: { preventDefault: () => void }) => {
+    if (!onOpenPayments) return;
+    event.preventDefault();
+    onOpenPayments();
+  };
   const sections: Record<ParentHomeSection, ReactNode> = {
     care,
     attention,
     bills: (
       <section data-ke="parent-home-bills">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-display text-xl">{t("openBills")}</h2>
+          {/* The "Open bills" heading reads as a link, so it opens Payments too. */}
+          <h2 className="font-display text-xl">
+            <Link
+              to={parentPath}
+              search={{ tab: "payments" }}
+              onClick={openPayments}
+              data-ke="parent-home-bills-heading"
+              className="hover:underline"
+            >
+              {t("openBills")}
+            </Link>
+          </h2>
           <Link
             to={parentPath}
             search={{ tab: "payments" }}
+            onClick={openPayments}
+            data-ke="parent-home-bills-all"
             className="inline-flex min-h-11 min-w-11 items-center rounded-md px-2 text-sm font-medium text-primary"
           >
             {t("parentHomeSeeAll")}
@@ -132,6 +153,7 @@ export function ParentHome({
                   <Link
                     to={parentPath}
                     search={{ tab: "payments" }}
+                    onClick={openPayments}
                     data-ke="parent-home-bill-row"
                     aria-label={
                       fr

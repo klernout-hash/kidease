@@ -11,6 +11,7 @@ import {
   type BillParty,
   type BillStatus,
   dollarsToCents,
+  isoOrNull,
   parentCanSeeBill,
   parseBillStatus,
 } from "@/lib/bill";
@@ -104,16 +105,16 @@ function mapBill(row: InvoiceRow): Bill {
     platformFeeCents,
     netCents,
     period: row.period,
-    dueAt: row.due_at,
+    dueAt: isoOrNull(row.due_at, true),
     status: parseBillStatus(row.status),
     memo: row.memo,
     receiptUrl: row.receipt_url,
     stripeCheckoutSessionId: row.stripe_checkout_session_id,
     stripePaymentIntentId: row.stripe_payment_intent_id,
     createdBy: row.created_by,
-    sentAt: row.sent_at,
-    paidAt: row.paid_at,
-    createdAt: String(row.created_at),
+    sentAt: isoOrNull(row.sent_at),
+    paidAt: isoOrNull(row.paid_at),
+    createdAt: isoOrNull(row.created_at) ?? "",
   };
 }
 
@@ -516,7 +517,10 @@ export const listProviderBills = createServerFn({ method: "GET" })
         ).catch(() => [])
       : [];
     const moneyDesk = editable.size > 0;
+    const { invoiceRemindersEnabled } = await import("@/lib/features");
     return {
+      /** FEATURE_INVOICE_REMINDERS. Off: no Send reminder button. */
+      remindersOn: moneyDesk && invoiceRemindersEnabled(),
       stripeLive: moneyDesk ? parentBillCardLive() : false,
       platformFeeBps: moneyDesk ? platformFeeBps() : null,
       bills: await withPaymentState(
@@ -666,7 +670,7 @@ export const createBill = createServerFn({ method: "POST" })
       province: provinceRows[0]?.province,
       daycareId: data.daycareId,
     });
-    const feeDollars = Math.round(quote.feeCents / 100);
+    const feeDollars = Math.round(quote.kidEaseFeeCents / 100);
     const period = (data.period || currentPeriod()).trim() || currentPeriod();
     const dueAt = data.dueAt?.trim() || null;
     const memo = data.memo?.trim() || null;
@@ -688,7 +692,7 @@ export const createBill = createServerFn({ method: "POST" })
       ) values (
         ${id}, ${number}, ${bookingId}, ${data.parentUserId}, ${data.daycareId}, ${childId},
         ${period}, ${"draft"}, ${"cad"}, ${amountCad}, ${feeDollars}, ${amountCad},
-        ${amountCents}, ${quote.feeCents}, ${quote.centreReceivesCents}, ${dueAt}, ${"provider"}, ${memo}, ${context.userId}
+        ${amountCents}, ${quote.kidEaseFeeCents}, ${quote.centreReceivesCents}, ${dueAt}, ${"provider"}, ${memo}, ${context.userId}
       )
     `;
     const row = await loadInvoice(sql, id);
@@ -746,6 +750,54 @@ export const sendBill = createServerFn({ method: "POST" })
     return fresh;
   });
 
+/**
+ * "Send reminder" on an unpaid (sent) bill. Behind FEATURE_INVOICE_REMINDERS,
+ * same mail path and rules as the daily reminder job: without
+ * FEATURE_INVOICE_REMINDERS_LIVE it is a dry run (logged, nothing sent), and
+ * AUTOMATION_TEST_EMAILS limits who can receive it. One per bill per day.
+ */
+export const sendBillReminder = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((billId: string) => String(billId || "").trim().slice(0, 80))
+  .handler(async ({ context, data: billId }) => {
+    const { invoiceRemindersEnabled } = await import("@/lib/features");
+    if (!invoiceRemindersEnabled()) return { ok: false as const, reason: "off" as const };
+    const sql = await getSql();
+    const row = await loadInvoice(sql, billId);
+    if (!row) throw new Error("Bill not found");
+    const { assertStaffArea } = await import("@/lib/server/centre-access");
+    await assertStaffArea(sql, context.userId, row.daycare_id, "bills", "edit");
+    const bill = mapBill(row);
+    if (bill.status !== "sent" || bill.paidAt) return { ok: false as const, reason: "not_open" as const };
+    if (!bill.parentEmail) return { ok: false as const, reason: "no_email" as const };
+    const { automationModeFromEnv, automationLocale, automationQuietNow, manualInvoiceReminderLetter, parseAllowlist, AUTOMATION_FALLBACK_TZ } =
+      await import("@/lib/automations");
+    const { dayKeyInTimeZone } = await import("@/lib/family-time");
+    const { dispatchAutomationMail } = await import("@/lib/server/automation-mail");
+    const prefs = await sql<{ locale: string | null; time_zone: string | null }>`
+      select locale, time_zone from profiles where user_id = ${bill.parentUserId} limit 1
+    `.catch(() => [] as { locale: string | null; time_zone: string | null }[]);
+    const now = new Date();
+    const letter = manualInvoiceReminderLetter({
+      locale: automationLocale(prefs[0]?.locale),
+      centreName: bill.daycareName || "your centre",
+      number: bill.number,
+    });
+    const result = await dispatchAutomationMail({
+      automation: "invoice_reminder",
+      dedupeKey: `manual:${bill.id}:${dayKeyInTimeZone(now, AUTOMATION_FALLBACK_TZ)}`,
+      recipient: bill.parentEmail,
+      subject: letter.subject,
+      text: letter.text,
+      html: letter.html,
+      branded: letter.branded,
+      mode: automationModeFromEnv("FEATURE_INVOICE_REMINDERS", process.env),
+      quiet: automationQuietNow(now, prefs[0]?.time_zone ?? null, row.province ?? null),
+      allowlist: parseAllowlist(process.env.AUTOMATION_TEST_EMAILS),
+    });
+    return { ok: true as const, result };
+  });
+
 export const voidBill = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((billId: string) => billId)
@@ -771,6 +823,19 @@ export const getBill = createServerFn({ method: "GET" })
     const row = await loadInvoice(sql, billId);
     if (!row) throw new Error("Bill not found");
     const bill = mapBill(row);
+    // Centre flags and the Connect row only need the daycare id: fetch them
+    // alongside the access check instead of one after another (Pay page speed).
+    const centrePromise = sql<{
+      slug: string | null;
+      visibility: string | null;
+      is_test: number | boolean | null;
+      is_demo: number | boolean | null;
+    }>`
+      select slug, visibility, is_test, is_demo from daycares where id = ${bill.daycareId} limit 1
+    `.catch(() => []);
+    const connectPromise = sql<{ stripe_account_id: string | null; charges_enabled: number }>`
+      select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${bill.daycareId} limit 1
+    `.catch(() => []);
     const { explainStaffArea, staffAreaError } = await import("@/lib/server/centre-access");
     const billAccess = await explainStaffArea(sql, context.userId, bill.daycareId, "bills", "view");
     if (!billAccess.ok && billAccess.reason !== "absent" && row.parent_user_id !== context.userId) throw staffAreaError(billAccess);
@@ -783,15 +848,7 @@ export const getBill = createServerFn({ method: "GET" })
       status: bill.status,
     });
     if (!access.ok) throw new Error("Bill not found");
-    const centreRows = await sql<{
-      slug: string | null;
-      visibility: string | null;
-      is_test: number | boolean | null;
-      is_demo: number | boolean | null;
-    }>`
-      select slug, visibility, is_test, is_demo from daycares where id = ${bill.daycareId} limit 1
-    `.catch(() => []);
-    const centre = centreRows[0];
+    const centre = (await centrePromise)[0];
     const settled = await reconcilePaidCheckout(sql, bill, {
       qa:
         payerUsesTestStripe({ email: bill.parentEmail }) ||
@@ -804,9 +861,7 @@ export const getBill = createServerFn({ method: "GET" })
         }),
     });
     const current = (await withPaymentState(sql, [settled ?? bill]))[0]!;
-    const connect = await sql<{ stripe_account_id: string | null; charges_enabled: number }>`
-      select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${current.daycareId} limit 1
-    `.catch(() => []);
+    const connect = await connectPromise;
     const destination = resolveConnectDestination({
       stripeAccountId: connect[0]?.stripe_account_id,
       chargesEnabled: connect[0]?.charges_enabled,
@@ -902,12 +957,19 @@ export const createBillCheckout = createServerFn({ method: "POST" })
     if (!gate.ok) throw new Error(gate.error);
     if (gate.alreadyPaid) return { url: null as string | null, alreadyPaid: true as const };
     if (!bill) throw new Error("Bill not found");
-    const settled = await reconcilePaidCheckout(sql, bill, { qa });
+    // The old-session check (a Stripe round trip), the Connect row and the
+    // payer profile are independent: run them together (Pay now speed).
+    const [settled, connect, profile] = await Promise.all([
+      reconcilePaidCheckout(sql, bill, { qa }),
+      sql<{ stripe_account_id: string | null; charges_enabled: number }>`
+        select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${bill.daycareId} limit 1
+      `.catch(() => []),
+      sql<{ stripe_customer_id: string | null; locale: string | null }>`
+        select stripe_customer_id, locale from profiles where user_id = ${context.userId} limit 1
+      `.catch(() => []),
+    ]);
     if (settled?.status === "paid") return { url: null as string | null, alreadyPaid: true as const };
     if (!creds.ok) throw new Error(creds.reason);
-    const connect = await sql<{ stripe_account_id: string | null; charges_enabled: number }>`
-      select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${bill.daycareId} limit 1
-    `.catch(() => []);
     const destination = resolveConnectDestination({
       stripeAccountId: connect[0]?.stripe_account_id,
       chargesEnabled: connect[0]?.charges_enabled,
@@ -921,9 +983,6 @@ export const createBillCheckout = createServerFn({ method: "POST" })
       Boolean(destination),
     );
     const origin = appOrigin();
-    const profile = await sql<{ stripe_customer_id: string | null; locale: string | null }>`
-      select stripe_customer_id, locale from profiles where user_id = ${context.userId} limit 1
-    `.catch(() => []);
     const locale = data.locale ?? (normalizeCheckoutLocale(profile[0]?.locale) ?? "en");
     const session = await createStripeCheckoutSession({
       billId: bill.id,
@@ -946,10 +1005,15 @@ export const createBillCheckout = createServerFn({ method: "POST" })
     });
     if (!qa) await rememberStripeCustomer(context.userId, session.customer ?? null);
     const pi = typeof session.payment_intent === "string" ? session.payment_intent : null;
+    // Record what this Checkout actually takes from the payout: the KidEase fee
+    // only applies with a Connect destination (otherwise nothing is deducted).
+    const appliedFee = destination ? quote.applicationFeeCents : 0;
     await sql`
       update invoices set
         stripe_checkout_session_id = ${session.id},
         stripe_payment_intent_id = coalesce(${pi}, stripe_payment_intent_id),
+        platform_fee_cents = ${appliedFee},
+        net_cents = ${bill.amountCents - appliedFee},
         updated_at = now()
       where id = ${bill.id}
     `;

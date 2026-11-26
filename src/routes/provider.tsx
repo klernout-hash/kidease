@@ -308,8 +308,13 @@ export function ProviderPage() {
   const chrome = useRoleChrome();
   const { t, locale } = useCopy();
   const nativeShell = useInNativeShell();
-  const { session } = useSessionDesks();
+  const { session, ready: sessionReady } = useSessionDesks();
   const centreOwner = session?.centreOwner === true;
+  // Until getMyDesks answers, we do not know the role. Showing "This tab is
+  // for the centre owner" then told real owners they were staff (Nov 25,
+  // Contract desk). Show a neutral loading line instead.
+  const ownerPending = !session && !sessionReady;
+  const ownerUnknown = !session;
   const centreRole = session?.centreRole;
   const canBills = centreOwner || (session?.centreGrants != null && session.centreGrants.bills !== "none");
   const canEditBills = centreOwner || session?.centreGrants?.bills === "edit";
@@ -1237,9 +1242,7 @@ export function ProviderPage() {
       {desk === "screening" ? <BackgroundCheckDesk /> : null}
       {desk === "screening" ? <ProviderScreeningPanel /> : null}
 
-      {desk === "licence" && !centreOwner ? (
-        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
-      ) : null}
+      {desk === "licence" && !centreOwner ? <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} /> : null}
 
       {desk === "licence" && centreOwner ? (
         !deskSettled ? null : deskListings.length === 0 ? (
@@ -1300,7 +1303,7 @@ export function ProviderPage() {
             {centreOwner ? <TaxReceiptStudio desk="centre" /> : null}
           </div>
         ) : (
-          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
+          <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} />
         )
       ) : null}
 
@@ -1311,7 +1314,7 @@ export function ProviderPage() {
             <CentreAgreementEditor />
           </>
         ) : (
-          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
+          <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} />
         )
       ) : null}
 
@@ -1322,6 +1325,38 @@ export function ProviderPage() {
     </DeskShell>
     </TwoFactorGate>
   );
+}
+
+/**
+ * Owner-only desks. While the role is still loading, show a neutral line; if
+ * the role lookup failed, offer a reload instead of telling an owner the tab
+ * is not for them.
+ */
+function OwnerOnlyNotice({ pending, unknown }: { pending: boolean; unknown: boolean }) {
+  const { t, locale } = useCopy();
+  const fr = locale === "fr";
+  if (pending) {
+    return (
+      <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="owner-check-pending" aria-busy="true">
+        {fr ? "Vérification de votre accès…" : "Checking your access…"}
+      </p>
+    );
+  }
+  if (unknown) {
+    return (
+      <div className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="owner-check-failed" role="alert">
+        <p>{fr ? "Nous n’avons pas pu confirmer votre accès. Réessayez." : "We couldn't confirm your access. Try again."}</p>
+        <button
+          type="button"
+          className="mt-3 inline-flex min-h-11 items-center font-medium text-primary"
+          onClick={() => window.location.reload()}
+        >
+          {fr ? "Réessayer" : "Try again"}
+        </button>
+      </div>
+    );
+  }
+  return <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>;
 }
 
 function ProviderOnboarding() {

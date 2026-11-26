@@ -634,6 +634,7 @@ export function ParentDesk({
       {contentTab === "explore" ? (
         <>
         <ParentHome
+          onOpenPayments={() => selectParentTab("payments")}
           saved={saved}
           bookings={bookings}
           tours={tours}

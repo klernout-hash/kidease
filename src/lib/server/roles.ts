@@ -301,6 +301,16 @@ export async function resolveSessionDesks(userId: string, options: { readOnly?: 
       viewAs: viewing,
     };
   }
+  // Started now, awaited below: none of these depend on each other.
+  const actorPending = lookupUser(userId);
+  const unreadPending = unreadInboxCounts(sql, userId);
+  const { countUnreadNotifications } = await import("@/lib/server/notifications");
+  const notificationPending = countUnreadNotifications(userId).catch(() => 0);
+  const { purgeAccountIfExpired, readDeletedAt } = await import("@/lib/server/family");
+  const deletedPending = readDeletedAt(userId);
+  // Mark them handled now so a rejection before its await cannot crash the
+  // function (the real await below still sees the error).
+  for (const pending of [actorPending, unreadPending, deletedPending]) pending.catch(() => undefined);
   const owned = await ownsCentre(sql, userId);
   // Do not claim Parent Onboard here. A new profile defaults to parent, and
   // this loader runs for every signed-in page — including a daycare signup
@@ -308,31 +318,34 @@ export async function resolveSessionDesks(userId: string, options: { readOnly?: 
   // Parent intake stays on an explicit parent choice. Provider intake still
   // runs once the stored role or an owned centre says this is a daycare.
   // View-as never files intake or closes an account.
-  if (!options.readOnly && !viewing && (stored === "provider" || owned)) await claimProviderCrmIntake(userId);
-  const member = owned ? false : await isActiveCentreMember(sql, userId);
-  const memberRoles = owned
-    ? []
-    : await sql<{ role: string }>`
-        select role from centre_members where user_id = ${userId} and status = 'active'
-      `.catch(() => [] as Array<{ role: string }>);
+  const intakePending =
+    !options.readOnly && !viewing && (stored === "provider" || owned) ? claimProviderCrmIntake(userId) : Promise.resolve();
+  const { listMemberGrants } = await import("@/lib/server/centre-access");
+  const [member, memberRoles, grantRows] = owned
+    ? [false, [] as Array<{ role: string }>, [] as Awaited<ReturnType<typeof listMemberGrants>>]
+    : await Promise.all([
+        isActiveCentreMember(sql, userId),
+        sql<{ role: string }>`
+          select role from centre_members where user_id = ${userId} and status = 'active'
+        `.catch(() => [] as Array<{ role: string }>),
+        listMemberGrants(sql, userId),
+      ]);
   const { maxCentreRole, parseCentreMemberRole } = await import("@/lib/centre-roles");
   const centreRole = owned ? ("owner" as const) : maxCentreRole(memberRoles.map((row) => parseCentreMemberRole(row.role)));
   const { grantsForMember, mergeGrants } = await import("@/lib/staff-permissions");
-  const { listMemberGrants } = await import("@/lib/server/centre-access");
-  const grantRows = owned ? [] : await listMemberGrants(sql, userId);
   const centreGrants = owned || !grantRows.length ? null : mergeGrants(grantRows.map((row) => grantsForMember(row)));
   const centreCanInvite = owned || grantRows.some((row) => row.role === "manager" || row.preset === "manager");
   const desks = desksFor({ role: stored, ownsCentre: owned || member });
-  const { purgeAccountIfExpired, readDeletedAt } = await import("@/lib/server/family");
-  const deletedAt = await readDeletedAt(userId);
+  const deletedAt = await deletedPending;
   if (!viewing && deletedAt && !withinRestoreWindow(deletedAt)) {
     if (!options.readOnly) await purgeAccountIfExpired(userId);
     throw new Error("Account closed");
   }
   const restoreUntil = deletedAt && withinRestoreWindow(deletedAt) ? restoreDeadline(deletedAt).toISOString() : null;
-  const { all: unread, family: unreadFamily, centre: unreadCentre } = await unreadInboxCounts(sql, userId);
-  const { countUnreadNotifications } = await import("@/lib/server/notifications");
-  const notificationUnread = await countUnreadNotifications(userId).catch(() => 0);
+  const [{ all: unread, family: unreadFamily, centre: unreadCentre }, notificationUnread] = await Promise.all([
+    unreadPending,
+    notificationPending,
+  ]);
   const attention = await loadAttention(
     sql,
     userId,
@@ -340,8 +353,9 @@ export async function resolveSessionDesks(userId: string, options: { readOnly?: 
     { all: unread, family: unreadFamily, centre: unreadCentre },
     notificationUnread,
   ).catch(() => ({ ...EMPTY_ATTENTION, notifications: notificationUnread }));
+  await intakePending;
   const stripeLive = stripeChargesLive();
-  const actor = await lookupUser(userId);
+  const actor = await actorPending;
   return {
     role: stored,
     desks,

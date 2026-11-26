@@ -24,7 +24,7 @@ const sourceFiles = [
   "src/lib/org-occupancy-csv.ts",
   "src/lib/gap-features.ts",
   "src/lib/gov/filtered-export.ts",
-  "src/lib/utils.ts",
+  "src/lib/utils.ts", "src/lib/cad-format.ts",
   "src/lib/html-text.ts",
   "src/lib/languages.ts",
 ];

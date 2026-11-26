@@ -24,10 +24,12 @@ test("parent Pay stays focused on centre bills at either subscription setting", 
     assert.doesNotMatch(tx(locale, parentPayLeadKey(true, true)), PLAN);
     assert.match(tx(locale, parentPayLeadKey(true, true)), /Stripe Checkout/);
   }
-  assert.match(tx("en", "ledgerLiveParentBills"), /KidEase service fee/);
-  assert.match(tx("en", "ledgerLiveParent"), /centre receives the full bill/);
-  assert.match(tx("fr", "ledgerLiveParentBills"), /frais de service KidEase/);
-  assert.match(tx("en", "connectFeeParentPay"), /centre receives the full bill/);
+  // The KidEase fee moved to the centre: parent copy never adds a fee.
+  for (const key of ["ledgerLiveParentBills", "ledgerLiveParent", "connectFeeParentPay", "payBillLead"]) {
+    assert.doesNotMatch(tx("en", key), /plus a KidEase service fee/i);
+    assert.doesNotMatch(tx("fr", key), /plus des frais de service KidEase/i);
+  }
+  assert.match(tx("en", "connectFeeParentPay"), /exactly the centre bill/);
   const desk = src("src/components/parent-desk.tsx");
   assert.match(desk, /const plansOn = !storeShell && desks\?\.subscriptionsEnabled === true/);
   assert.match(desk, /plansOn=\{plansOn\}/);

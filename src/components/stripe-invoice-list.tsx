@@ -23,6 +23,7 @@ function saveInvoicePdf(invoice: StripeInvoiceView, locale: "en" | "fr") {
     status: invoice.status,
     paidAt: invoice.paidAt,
     daycareName: invoice.daycareName,
+    daycareAddress: invoice.daycareAddress ?? null,
     locale,
   });
   const body = new ArrayBuffer(bytes.byteLength);

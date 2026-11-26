@@ -10,6 +10,7 @@
 
 import { nextAlertSendAt } from "./alert-push.ts";
 import { quietHourInZone } from "./family-time.ts";
+import { formatCad } from "./cad-format.ts";
 
 export type InvoiceLocale = "en" | "fr";
 export type ParentInvoiceStatus = "open" | "paid" | "failed";
@@ -107,6 +108,7 @@ export function invoiceStatusLabel(status: ParentInvoiceStatus, locale: InvoiceL
 export function formatInvoiceMoney(cents: number | null, currency: string, locale: InvoiceLocale): string | null {
   if (cents == null || !Number.isFinite(cents)) return null;
   const code = /^[a-z]{3}$/i.test(currency) ? currency.toUpperCase() : "CAD";
+  if (code === "CAD") return formatCad(cents / 100, locale === "fr" ? "fr-CA" : "en-CA");
   return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", {
     style: "currency",
     currency: code,
