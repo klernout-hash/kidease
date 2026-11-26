@@ -4,6 +4,7 @@
  */
 
 import { haversineKm, type LatLng } from "@/lib/geo";
+import { isDoorPin } from "@/lib/card-distance";
 import { confirmedFeeProgramBadge } from "@/lib/fee-program";
 import {
   compareFreshOpenSpots,
@@ -95,6 +96,8 @@ function kmBetween(origin: LatLng | null | undefined, listing: SmartMatchListing
   if (!origin) return null;
   if (!Number.isFinite(origin.lat) || !Number.isFinite(origin.lng)) return null;
   if (!Number.isFinite(listing.lat) || !Number.isFinite(listing.lng)) return null;
+  // A city-list stand-in pin is not a door. It must never read as "Close to home".
+  if (!isDoorPin(listing.lat, listing.lng)) return null;
   return haversineKm(origin, { lat: listing.lat, lng: listing.lng });
 }
 

@@ -61,15 +61,38 @@ export function sanitizeAnchorPoint(value: unknown): AnchorPoint | null {
   return { lat: value.lat, lng: value.lng, label: value.label.trim().slice(0, 160) };
 }
 
+/**
+ * Guest work places live for this tab only (sessionStorage). An old
+ * localStorage value from another visit must not preset a commute on every
+ * search. Signed-in parents get their saved anchors from the server.
+ */
+function anchorStore(): Storage | null {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function dropLegacyAnchor() {
+  try {
+    window.localStorage.removeItem(DUAL_ANCHOR_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function readDualAnchorPrefs(): DualAnchorPrefs {
   if (typeof window === "undefined") return { work: null, mode: "home" };
+  dropLegacyAnchor();
   try {
-    const raw = window.localStorage.getItem(DUAL_ANCHOR_STORAGE_KEY);
+    const raw = anchorStore()?.getItem(DUAL_ANCHOR_STORAGE_KEY);
     if (!raw) return { work: null, mode: "home" };
     const v = JSON.parse(raw) as { work?: unknown; mode?: unknown };
+    const work = sanitizeAnchorPoint(v.work);
     return {
-      work: sanitizeAnchorPoint(v.work),
-      mode: parseAnchorMode(v.mode),
+      work,
+      mode: work ? parseAnchorMode(v.mode) : "home",
     };
   } catch {
     return { work: null, mode: "home" };
@@ -79,7 +102,7 @@ export function readDualAnchorPrefs(): DualAnchorPrefs {
 export function writeDualAnchorPrefs(prefs: DualAnchorPrefs) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(
+    anchorStore()?.setItem(
       DUAL_ANCHOR_STORAGE_KEY,
       JSON.stringify({
         work: prefs.work ? sanitizeAnchorPoint(prefs.work) : null,

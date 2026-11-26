@@ -1,13 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { titleCaseCitySlug } from "@/lib/explore-search";
+import { legacyDaycaresCityTarget } from "@/lib/daycares-legacy-path";
 
-/** Dead `/daycares/:city` hub → working search for that city. */
+/** Old `/daycares/:city` → the city page (`/daycare/city/:slug`), else search for that city. */
 export const Route = createFileRoute("/daycares_/$city")({
   beforeLoad: ({ params }) => {
-    const label = titleCaseCitySlug(String(params.city || ""));
-    throw redirect({
-      to: "/search",
-      search: label ? { q: label } : undefined,
-    });
+    const target = legacyDaycaresCityTarget(String(params.city || ""), "en");
+    if (target.hub) throw redirect({ to: "/daycare/city/$city", params: { city: target.slug }, statusCode: 301 });
+    throw redirect({ to: "/search", search: target.q ? { q: target.q } : undefined });
   },
 });

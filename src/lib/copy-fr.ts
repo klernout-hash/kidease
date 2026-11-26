@@ -2323,7 +2323,7 @@ export const fr = {
       "Centres permis dans votre rayon de recherche. Une mise en vedette payée porte la mention Commandité. Une photo s’affiche seulement lorsque le centre en a une au dossier.",
     viewDetails: "Voir les détails",
     ontarioCapFee: "Jusqu'à 22 $ par jour (plafond de l'Ontario)",
-    kmAway: "km",
+    kmAway: "à {n} km",
     bandWalk: "à pied",
     bandNearby: "à proximité",
     bandCommute: "court trajet",

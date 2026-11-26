@@ -180,13 +180,14 @@ test("Filters badge counts only picked filters, not the commute anchor or age ra
   assert.equal(activeFilterCount(EMPTY_SEARCH_FILTERS, "any"), 0);
 
   const search = src("src/routes/search.tsx");
-  const start = search.indexOf("const sheetFilterCount = searchSheetFilterCount(");
+  const start = search.indexOf("const sheetFilterInput: SearchSheetFilterInput = {");
   assert.ok(start > 0);
-  const block = search.slice(start, search.indexOf("});", start));
+  const block = search.slice(start, search.indexOf("};", start));
   assert.doesNotMatch(block, /workOrigin|anchorMode/);
   assert.doesNotMatch(block, /resolvedExploreCategory/);
   assert.match(block, /urlFacilityCategory: isFacilityExploreCategory\(canonicalExploreCategory\(incoming\.cat\)\)/);
   // The commute anchor is its own chip.
-  assert.match(search, /const commuteAnchorOn = Boolean\(workOrigin && anchorMode !== "home"\)/);
+  // ...and only when the search really uses a work place (no stale default commute).
+  assert.match(search, /const commuteAnchorOn = Boolean\(workForSearch && anchorMode !== "home"\)/);
   assert.match(search, /data-ke="search-commute-chip"/);
 });

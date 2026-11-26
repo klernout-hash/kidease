@@ -17,6 +17,12 @@ export function displayDistance(km: number, unit: DistanceUnit) {
   return Number.isInteger(n) ? String(n) : n.toFixed(1);
 }
 
+/** Same as displayDistance, with a decimal comma in French (0,5 km). */
+export function displayDistanceFor(km: number, unit: DistanceUnit, locale?: string | null) {
+  const shown = displayDistance(km, unit);
+  return String(locale || "").toLowerCase().startsWith("fr") ? shown.replace(".", ",") : shown;
+}
+
 /**
  * KidEase.ca shows kilometres on EN and FR, including en-US browsers.
  * `language` stays in the signature so callers can pass navigator.language.

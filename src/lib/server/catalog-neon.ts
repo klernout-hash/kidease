@@ -1,4 +1,5 @@
 import { CITY_SEARCH_KEY_EXPR, cityDirectoryMatchSql, citySearchKeyEnabled } from "@/lib/city-search-key";
+import { displayCityName } from "@/lib/city-display";
 import { dbSource, getSql, type Sql } from "@/lib/db";
 import type { CatalogDaycare } from "@/lib/catalog";
 import {
@@ -359,7 +360,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     description: row.description || "",
     descriptionFr: row.description_fr || "",
     address: row.address || "",
-    city: row.city || "",
+    city: displayCityName(row.city),
     province: row.province || "",
     postalCode: row.postal_code || "",
     lat: Number(row.lat),

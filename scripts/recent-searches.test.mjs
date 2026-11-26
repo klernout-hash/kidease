@@ -26,6 +26,7 @@ test("recent searches stay on the phone, newest first, and skip blanks", () => {
   assert.match(copy, /recentSearches: "Recherches récentes"/);
   assert.match(search, /data-ke="recent-searches"/);
   assert.match(search, /writeRecentSearches/);
-  assert.match(search, /if \(hit\) \{\s*applyPlace\(hit, label\);\s*return;\s*\}\s*noteSearch\(label\);/s);
+  // A typed postal code keeps its own label before applyPlace.
+  assert.match(search, /if \(hit\) \{[^}]*const postal = postalSearchLabel\(label\);\s*applyPlace\(postal \? \{ \.\.\.hit, label: postal \} : hit, label\);\s*return;\s*\}\s*noteSearch\(label\);/s);
   assert.doesNotMatch(readFileSync(join(root, "src/lib/recent-searches.ts"), "utf8"), /fetch\(|DATABASE_URL/);
 });

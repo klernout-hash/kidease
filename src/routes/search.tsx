@@ -28,12 +28,12 @@ import { SEARCH_PAGE_MAX, pageFromSearch } from "@/lib/search-page";
 import { compactSearchRadius, searchRadiusFromParams, withSearchRadius } from "@/lib/search-radius";
 import { searchDaycareMap, searchDaycarePage } from "@/lib/server/daycares";
 import { normalizeSearchResultFilters, schoolAgeOnlyFromSearch } from "@/lib/search-result-filters";
-import { searchMapState, type SearchMapResult } from "@/lib/search-map-state";
+import { mapRetryDelay, searchMapState, type SearchMapResult } from "@/lib/search-map-state";
 import { readSearchEvidence, searchEvidence } from "@/lib/search-evidence";
 import { createSearchLoaderRead, createSearchRequestGate, searchCoverageCopy, searchMapCount } from "@/lib/search-coverage";
 import type { MapPin } from "@/lib/map-cluster";
 import { matchCentres } from "@/lib/server/ai";
-import { isIqaluitQuery, reverseGeocode } from "@/lib/geo";
+import { isIqaluitQuery, postalSearchLabel, reverseGeocode } from "@/lib/geo";
 import { originFromDeviceFix, productHomeOrigin, readClientTimeZone, searchOriginOrWinnipeg } from "@/lib/default-origin";
 import { BootPending } from "@/components/boot-pending";
 import { CARD_SIZES, CARD_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
@@ -150,11 +150,15 @@ import { noteHappyMoment } from "@/lib/store-review";
 import { saveSearch } from "@/lib/server/saved-searches";
 import {
   defaultSearchName,
+  searchActiveFilters,
   searchSheetFilterCount,
   takeSavedSearchToApply,
+  type ActiveSearchFilter,
   type AgeBand,
   type SavedSearchFilters,
+  type SearchSheetFilterInput,
 } from "@/lib/saved-search";
+import { activeFilterLabel, declaredDetailFilters } from "@/lib/search-active-filters";
 import { CityHubLinks } from "@/components/city-hub-links";
 import { cityHubDefForPlace, cityHubPath } from "@/lib/city-hubs";
 import { normalizeProvinceCode } from "@/lib/location-lock";
@@ -985,6 +989,11 @@ export function SearchScreen({
   const mapState = searchMapState({ canSearch: mapCanSearch, key: searchMapKey, result: mapResult, failedKey: mapFailedKey, pendingKey: mapPendingKey });
   const currentMapResult = mapState.result;
   const searchMapPins = currentMapResult?.pins ?? EMPTY_MAP_PINS;
+  // Until the scoped search pins arrive (or if they fail), draw only the listed
+  // cards. Never fall back to nationwide viewport tiles on a radius search.
+  const mapScope = currentMapResult
+    ? { searchPins: searchMapPins }
+    : { itemsOnly: true as const };
   useEffect(() => {
     if (view !== "map" || !mapCanSearch) return;
     const gate = mapGate.current;
@@ -995,23 +1004,59 @@ export function SearchScreen({
     const current = () => live && gate.accepts(ticket);
     setMapFailedKey(null);
     setMapPendingKey(searchMapKey);
+    let attempt = 0;
+    let attemptAbort = controller;
+    let watchdog = 0;
+    let retryTimer = 0;
     const fail = (error?: unknown) => {
       if (!current()) return;
       captureLoaderFailure("search", error ?? new Error("search-timeout"), error === undefined ? "timeout" : "error");
       gate.invalidate();
       controller.abort();
+      attemptAbort.abort();
       setMapFailedKey(searchMapKey);
       setMapPendingKey(null);
     };
-    // Never leave "Loading centres…" up: settle to the error state with Try again.
-    const watchdog = window.setTimeout(() => fail(), LOADER_WATCHDOG_MS);
-    void searchDaycareMap({ data: { ...requestData.current, countDemand: false, refresh: retryRequest?.mapKey === searchMapKey }, signal: controller.signal })
-      .then((result) => {
-        if (!current()) return;
-        setMapResult({ key: searchMapKey, ...result, evidence: readSearchEvidence(result.evidence) });
-        setMapPendingKey(null);
-      }).catch(fail).finally(() => { window.clearTimeout(watchdog); });
-    return () => { live = false; controller.abort(); window.clearTimeout(watchdog); };
+    // A cold first read can fail. Retry with backoff before showing the error.
+    const read = () => {
+      if (!current()) return;
+      const own = attempt === 0 ? controller : new AbortController();
+      attemptAbort = own;
+      mapAbort.current = own;
+      let settled = false;
+      const miss = (error?: unknown) => {
+        if (settled || !current()) return;
+        settled = true;
+        window.clearTimeout(watchdog);
+        own.abort();
+        const delay = mapRetryDelay(attempt);
+        if (delay == null) {
+          fail(error);
+          return;
+        }
+        attempt += 1;
+        retryTimer = window.setTimeout(read, delay);
+      };
+      // Never leave "Loading centres…" up: settle to the error state with Try again.
+      watchdog = window.setTimeout(() => miss(), LOADER_WATCHDOG_MS);
+      void searchDaycareMap({ data: { ...requestData.current, countDemand: false, refresh: retryRequest?.mapKey === searchMapKey || attempt > 0 }, signal: own.signal })
+        .then((result) => {
+          if (settled || !current()) return;
+          settled = true;
+          window.clearTimeout(watchdog);
+          setMapResult({ key: searchMapKey, ...result, evidence: readSearchEvidence(result.evidence) });
+          setMapPendingKey(null);
+        })
+        .catch(miss);
+    };
+    read();
+    return () => {
+      live = false;
+      controller.abort();
+      attemptAbort.abort();
+      window.clearTimeout(watchdog);
+      window.clearTimeout(retryTimer);
+    };
   }, [view, searchMapKey, retryRequest, mapCanSearch]);
 
   const mapCoverage = searchCoverageCopy(currentMapResult?.evidence, locale);
@@ -1322,7 +1367,10 @@ export function SearchScreen({
     if (label) {
       const hit = await resolveLocationQuery(label);
       if (hit) {
-        applyPlace(hit, label);
+        // Keep "R3C 0A1" in the URL and box. The FSA city label ("Winnipeg, MB")
+        // would turn a radius search into a whole-city search.
+        const postal = postalSearchLabel(label);
+        applyPlace(postal ? { ...hit, label: postal } : hit, label);
         return;
       }
       noteSearch(label);
@@ -1644,7 +1692,7 @@ export function SearchScreen({
     (openingsOn ? 1 : 0) +
     (resolvedCat && !isRailAge(resolvedCat) ? 1 : 0);
   const pioneerFilters = parsePioneerSearch(incoming as Record<string, unknown>);
-  const sheetFilterCount = searchSheetFilterCount({
+  const sheetFilterInput: SearchSheetFilterInput = {
     filters: {
       avail,
       ten,
@@ -1663,9 +1711,55 @@ export function SearchScreen({
     // Only `?cat=`. A category worked out from the age rail is not a filter.
     urlFacilityCategory: isFacilityExploreCategory(canonicalExploreCategory(incoming.cat)),
     pioneer: pioneerFilters,
-  });
+    careKeys,
+    licence,
+  };
+  // One chip per active filter; the Filters badge always equals the chip count.
+  const activeFilters = searchActiveFilters(sheetFilterInput);
+  const sheetFilterCount = searchSheetFilterCount(sheetFilterInput);
+  const declaredFilters = declaredDetailFilters(activeFilters);
+  function clearActiveFilter(item: ActiveSearchFilter) {
+    const flagSetters = {
+      ten: setTen, meals: setMeals, outdoor: setOutdoor, extended: setExtended,
+      infantOnly: setInfantOnly, catchmentOnly: setCatchmentOnly, confirmedOnly: setConfirmedOnly,
+      readyOnly: setReadyOnly, claimVerifiedOnly: setClaimVerifiedOnly,
+    } as const;
+    if (item.kind === "avail") setAvail("any");
+    else if (item.kind === "flag") flagSetters[item.key](false);
+    else if (item.kind === "favorites") setFavoritesOnly(false);
+    else if (item.kind === "careType") {
+      setCareType("any");
+      void navigate({ search: (prev) => ({ ...prev, care: undefined, page: undefined }) });
+    } else if (item.kind === "facility") {
+      void navigate({ search: (prev) => ({ ...prev, cat: undefined, page: undefined }) });
+    } else if (item.kind === "pioneer") {
+      void navigate({ search: (prev) => ({ ...prev, [item.key]: undefined, page: undefined }) });
+    } else if (item.kind === "spoken") {
+      const rest = String(pioneerFilters.spoken || "").split(",").filter((code) => code && code !== item.code).join(",");
+      void navigate({ search: (prev) => ({ ...prev, spoken: rest || undefined, page: undefined }) });
+    } else if (item.kind === "diet") writeDiet(careKeys.filter((key) => key !== item.key));
+    else if (item.kind === "licence") writeLicence(null);
+    else if (item.kind === "support") clearDeclaredFilters(["support"]);
+  }
+  function clearDeclaredFilters(kinds: Array<"support" | "diet"> = ["support", "diet"]) {
+    const dropSupport = kinds.includes("support");
+    const dropDiet = kinds.includes("diet");
+    if (dropSupport) setInclusive(false);
+    const keep = careKeys.filter((key) => (key === "special-needs" ? !dropSupport : !dropDiet));
+    setCareKeys(keep);
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        inclusive: dropSupport ? undefined : prev.inclusive,
+        diet: careKeysParam(keep) || undefined,
+        page: undefined,
+      }),
+    });
+  }
   // The saved work address is a commute anchor, not a filter: it gets its own chip.
-  const commuteAnchorOn = Boolean(workOrigin && anchorMode !== "home");
+  // Only show the commute chip when this search really uses a work place.
+  // A stale stored anchor is never a default commute for a guest.
+  const commuteAnchorOn = Boolean(workForSearch && anchorMode !== "home");
   const anchors = viewAnchors;
   const catalog = items ?? [];
   const fabric = areaPresence(catalog);
@@ -1731,6 +1825,36 @@ export function SearchScreen({
           secondaryTo: undefined as string | undefined,
           onSecondary: undefined as (() => void) | undefined,
         }
+      : openingsOn || avail === "open" || pioneerFilters.openings === "1"
+        ? {
+            // Open spots only come from centres. When none reported one, say so and offer the waitlist.
+            title: locale === "fr" ? "Aucune place libre signalée ici pour l’instant" : "No open spots reported here right now",
+            body: (locale === "fr"
+              ? "Les centres nous disent quand une place se libère. Aucun centre de ce secteur n’en a signalé récemment. Inscrivez-vous à la liste d’attente et nous vous avertirons."
+              : "Centres tell us when a spot opens. None in this area have reported one lately. Join the waitlist and we’ll let you know when one does.") as string | undefined,
+            action: locale === "fr" ? "Liste d’attente" : "Join the waitlist",
+            actionTo: localePath("/waitlist", locale) as string | undefined,
+            onAction: undefined as (() => void) | undefined,
+            secondary: locale === "fr" ? "Places ouvertes par province" : "Open spots by province",
+            secondaryTo: localePath("/vacancy-index", locale) as string | undefined,
+            onSecondary: undefined as (() => void) | undefined,
+          }
+      : declaredFilters.length > 0
+        ? {
+            // Diet and support only match what a centre told us. Say so instead of "widen your radius".
+            title:
+              locale === "fr"
+                ? `Aucun centre ici n’indique encore : ${declaredFilters.map((item) => activeFilterLabel(item, "fr", t)).join(", ")}`
+                : `No centres here list ${declaredFilters.map((item) => activeFilterLabel(item, "en", t)).join(" + ")} yet`,
+            body: (locale === "fr"
+              ? "Nous montrons seulement ce qu’un centre nous a dit. Les centres ajoutent ces détails quand ils réclament leur fiche. Retirez ce filtre ou inscrivez-vous à la liste d’attente pour être avisé."
+              : "We only show what a centre has told us. Centres add these details when they claim their listing. Remove this filter, or join the waitlist and we’ll let you know.") as string | undefined,
+            action: locale === "fr" ? "Retirer ce filtre" : "Remove this filter",
+            onAction: () => clearDeclaredFilters(),
+            secondary: locale === "fr" ? "Liste d’attente" : "Join the waitlist",
+            secondaryTo: localePath("/waitlist", locale) as string | undefined,
+            onSecondary: undefined as (() => void) | undefined,
+          }
       : extraFilters && (items?.length ?? 0) > 0 && resolvedExploreCategory(incoming)
         ? {
             title: t("noFacilityTypeResults").replace(
@@ -2267,20 +2391,38 @@ export function SearchScreen({
           }}
         />
         </div>
-        {!filters && commuteAnchorOn && workOrigin?.label ? (
+        {!filters && commuteAnchorOn && workForSearch?.label ? (
           <p className="mt-2 text-sm" data-ke="search-commute-chip">
             <span className="inline-flex min-h-11 max-w-full items-center truncate rounded-full bg-surface-2 px-3 font-medium ring-1 ring-inset ring-border">
-              {t("searchCommuteChip").replace("{place}", workOrigin.label)}
+              {t("searchCommuteChip").replace("{place}", workForSearch.label)}
             </span>
           </p>
         ) : null}
         {!filters && sheetFilterCount > 0 ? (
-          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" data-ke="filters-applied">
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm" data-ke="filters-applied">
             <span>{locale === "fr" ? `Filtres appliqués · ${sheetFilterCount}` : `Filters applied · ${sheetFilterCount}`}</span>
+            <ul className="contents" aria-label={locale === "fr" ? "Filtres actifs" : "Active filters"}>
+              {activeFilters.map((item) => {
+                const label = activeFilterLabel(item, locale === "fr" ? "fr" : "en", t);
+                return (
+                  <li key={JSON.stringify(item)} data-ke="active-filter-chip">
+                    <button
+                      type="button"
+                      className="inline-flex min-h-11 max-w-full items-center gap-1 rounded-full bg-surface-2 px-3 font-medium ring-1 ring-inset ring-border touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                      aria-label={locale === "fr" ? `Retirer le filtre ${label}` : `Remove filter ${label}`}
+                      onClick={() => clearActiveFilter(item)}
+                    >
+                      <span className="truncate">{label}</span>
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
             <button type="button" className="min-h-11 font-medium text-primary" onClick={clearListingFilters}>
               {locale === "fr" ? "Tout effacer" : "Clear all"}
             </button>
-          </p>
+          </div>
         ) : null}
 
         {askLocation ? (
@@ -2471,7 +2613,7 @@ export function SearchScreen({
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
                       items={mobileRows}
-                      searchPins={searchMapPins.length > 0 ? searchMapPins : undefined}
+                      {...mapScope}
                       origin={mapOrigin}
                       placeLabel={whereLabel || origin.label}
                       secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
@@ -2558,7 +2700,7 @@ export function SearchScreen({
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
                       items={shownList}
-                      searchPins={searchMapPins.length > 0 ? searchMapPins : undefined}
+                      {...mapScope}
                       origin={mapOrigin}
                       placeLabel={whereLabel || origin.label}
                       secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
@@ -2675,6 +2817,7 @@ export function SearchScreen({
             <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
               <MapView
                 items={shownList}
+                itemsOnly
                 origin={mapOrigin}
                 placeLabel={whereLabel || origin.label}
                 secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}

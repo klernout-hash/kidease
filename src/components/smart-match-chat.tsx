@@ -33,6 +33,7 @@ import {
   type MatchStartChoice,
 } from "@/lib/ai/smart-match-chat";
 import { geocode } from "@/lib/geo";
+import { displayDistanceFor } from "@/lib/units";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { searchDaycares } from "@/lib/server/daycares";
 import { saveSearch } from "@/lib/server/saved-searches";
@@ -410,7 +411,13 @@ export function SmartMatchChat({
             <ul className="space-y-2">
               {results.map((item, index) => {
                 const title = locale === "fr" && item.nameFr ? item.nameFr : item.name;
+                // The server sends the 1,000,000 km sort key for a pin that is not a door
+                // (cardSortKm), and drops "Close to home" for it (ranking kmBetween).
+                const km = item.distanceKm;
+                const measured = typeof km === "number" && Number.isFinite(km) && km > 0 && km < 1_000_000;
                 const why = whyParts(item.smartMatchWhy)
+                  // "Close to home/work" needs a real measured distance.
+                  .filter((part) => measured || (part.key !== "whyCloseHome" && part.key !== "whyCloseWork"))
                   .map((part) => {
                     let line = t(part.key as CopyKey);
                     if (part.who) line = line.replace("{who}", t(part.who as CopyKey));
@@ -424,8 +431,8 @@ export function SmartMatchChat({
                     <span className="block font-medium">{title}</span>
                     <span className="mt-0.5 block text-sm text-muted">
                       {item.city}
-                      {Number.isFinite(item.distanceKm)
-                        ? ` · ${t("smartMatchKm").replace("{n}", item.distanceKm.toFixed(1))}`
+                      {measured
+                        ? ` · ${t("smartMatchKm").replace("{n}", displayDistanceFor(km, "km", locale))}`
                         : ""}
                     </span>
                     {why ? <span className="mt-1 block text-sm">{why}</span> : null}

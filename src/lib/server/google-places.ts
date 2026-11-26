@@ -130,6 +130,8 @@ export const geocodePlace = createServerFn({ method: "POST" })
       if (place) break;
     }
     storeGeo(cacheKey, place);
+    // The search page looks up the label it was sent to; answer that from cache too.
+    if (place?.label && place.label.toLowerCase() !== cacheKey) storeGeo(place.label.toLowerCase(), place);
     return place;
   });
 

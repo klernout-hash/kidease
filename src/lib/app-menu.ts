@@ -22,6 +22,7 @@ const GROUP: Record<string, MenuGroupId> = {
   "/compare": "guides",
   "/tour-checklist": "guides",
   "/benefits": "guides",
+  "/vacancy-index": "guides",
   "/help": "help",
   "/faq": "help",
   "/how-it-works": "help",

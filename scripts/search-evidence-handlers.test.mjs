@@ -23,7 +23,8 @@ const [visibility, live, approve, culture, parentListing, standardAges, times, t
   import("../src/lib/sort-time.ts"), import("../src/lib/tour-calendar.ts"), import("../src/lib/search-result-quality.ts"),
   import("../src/lib/provider-entitlements.ts"), import("../src/lib/utils.ts"), import("../src/lib/search-retrieval.ts"),
 ]);
-const { includeCardInRadius } = await import("../src/lib/card-distance.ts");
+const { includeCardInRadius, cityPinForStrayListing } = await import("../src/lib/card-distance.ts");
+const { pinsWithinRadius } = await import("../src/lib/search-map-state.ts");
 
 const ORIGIN = { lat: 49.5, lng: -117.28 };
 const INPUT = { ...ORIGIN, radiusKm: 25, sort: "distance", ageGroup: "any", label: "Nelson, BC" };
@@ -93,6 +94,7 @@ function handlerHarness(initialBatch, overrides = {}) {
     readLiveSearchFlag: explore.readLiveSearchFlag, listedDaycareTypeFromSearch: care.listedDaycareTypeFromSearch,
     alignSearchOrigin: query.alignSearchOrigin, isClaimVerified: trust.isClaimVerified,
     ...predicates, withSearchRows, inclusiveFiltersEnabled: () => true,
+    resolveSearchAnchors: anchors.resolveSearchAnchors, pinsWithinRadius,
     ClientInputError: class extends Error {},
     appendTestAccountFixtures: async (_input, rows) => rows,
     searchIncludingLive: async (input) => { state.builds.push(input); return state.batch; },
@@ -250,7 +252,7 @@ test("actual name mapper restores claimed vacancy proof before list/count/map pr
     applyLocalRegistryTrust: (row) => row, applyMasterCareType: (row) => row,
     isPlatformLive: (_id, isClaimed) => isClaimed, isAdminOnlyListing: () => false,
     hasLicenceEvidence: (row) => Boolean(row.licenseNumber), resolveListingTourTimezone: () => "America/Vancouver",
-    cardSortKm: geo.haversineKm, catchmentMatch: proximity.catchmentMatch, listingThumb: photos.listingThumb,
+    cardSortKm: geo.haversineKm, cityPinForStrayListing, catchmentMatch: proximity.catchmentMatch, listingThumb: photos.listingThumb,
     filterByDaycareName: explore.filterByDaycareName,
     require: (name) => {
       assert.equal(name, "@/lib/server/catalog-neon");
@@ -315,6 +317,7 @@ function claimedPipelineHarness(sourceRows, claimedRows) {
     ...mapperDeps, ...mapper, ...anchors, ...locks, ...fit, ...care, ...quality, ...paid, ...utils,
     compareProximity: proximity.compareProximity, recommendedRank: proximity.recommendedRank,
     catchmentMatch: proximity.catchmentMatch, cardSortKm: geo.haversineKm, includeCardInRadius,
+    DEFAULT_SEARCH_RADIUS_KM: 25, cityPinForStrayListing,
     withSearchRows, mergeSearchEvidence, searchEvidence,
     cityHubDefBySlug: () => null,
     nearbyListingsResult: async () => { state.builds++; return batch(sourceRows); },

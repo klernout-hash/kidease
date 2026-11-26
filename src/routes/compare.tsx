@@ -239,7 +239,7 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                       ? compareDistanceKm(commutePoint, { lat: d.lat, lng: d.lng })
                       : doorDistanceKm(origin, { lat: d.lat, lng: d.lng });
                     return (
-                      parentDistanceLabel({ km, away: t("kmAway"), show: parentFeeOn ? Boolean(commutePoint) : located }) ||
+                      parentDistanceLabel({ km, away: t("kmAway"), locale, show: parentFeeOn ? Boolean(commutePoint) : located }) ||
                       t("noneListed")
                     );
                   })}

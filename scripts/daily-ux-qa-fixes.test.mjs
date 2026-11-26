@@ -47,7 +47,8 @@ test("q=Winnipeg geocodes locally and does not match an Edmonton origin", () => 
   assert.match(search, /originsMatchSearchQuery\(boot\.origin, incoming\.q\)/);
   assert.match(search, /searchQueryFromUnknown\(location\.search\)/);
   assert.match(src("src/components/native-boot.tsx"), /urlHasGeocodableSearchQuery/);
-  assert.match(src("src/lib/search-origin.ts"), /setOrigin\(\{ \.\.\.local, explicit: true \}, "manual"\)/);
+  // A typed postal code keeps its own label ("R3C 0A1"), not the FSA city.
+  assert.match(src("src/lib/search-origin.ts"), /setOrigin\(\{ \.\.\.local, \.\.\.\(postal \? \{ label: postal \} : \{\}\), explicit: true \}, "manual"\)/);
 });
 
 test("Edmonton search keeps the map circle off a Manitoba device pin", () => {

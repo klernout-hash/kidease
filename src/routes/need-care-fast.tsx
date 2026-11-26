@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/empty-state";
 import { UrgentBroadcastPanel } from "@/components/urgent-broadcast-panel";
 import { needCareFastCopy } from "@/lib/need-care-fast-copy";
 import {
+  fastDistanceLine,
   formatConfirmedDay,
   needCareFastRouteSearch,
   normalizeNeedCareFastPage,
@@ -128,7 +129,7 @@ export function NeedCareFastView({ data: raw }: { data: NeedCareFastViewData | n
                 </Link>
                 <p className="mt-1 text-sm text-muted">
                   {hit.city}
-                  {hit.province ? `, ${hit.province}` : ""} · {hit.distanceLabel} {copy.away}
+                  {hit.province ? `, ${hit.province}` : ""} · {fastDistanceLine(hit.distanceLabel, fr, copy.away)}
                 </p>
                 <p className="mt-1 text-sm text-muted">
                   {hit.spots} {copy.spots}

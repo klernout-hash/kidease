@@ -46,6 +46,13 @@ export function streetRadiusNote(fr: boolean, radiusKm = 15): string {
     : `Licensed centres within ${radiusKm} km of this address.`;
 }
 
+/** "1.2 km away" in English, "à 1,2 km" in French (decimal comma). */
+export function fastDistanceLine(label: string, fr: boolean, away: string): string {
+  const text = String(label || "").trim();
+  if (!text) return "";
+  return fr ? `à ${text.replace(".", ",")}` : `${text} ${away}`;
+}
+
 export function formatFastKm(km: number): string {
   if (!Number.isFinite(km) || km < 0) return "";
   if (km < 10) return `${km.toFixed(1)} km`;

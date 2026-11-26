@@ -149,13 +149,13 @@ export async function buildVisualControlsFixture(root, out, phase) {
     import {createRoot} from 'react-dom/client';
     import {LocateFixed,Plus,Minus} from 'lucide-react';
     import {cn} from ${JSON.stringify(join(root, "src/lib/utils.ts"))};
-    import {displayDistance} from ${JSON.stringify(join(root, "src/lib/units.ts"))};
+    import {displayDistance,displayDistanceFor} from ${JSON.stringify(join(root, "src/lib/units.ts"))};
     const packs=${JSON.stringify(packs)};
     function useCopy(){const locale=document.documentElement.lang;return {locale,t:key=>{const text=packs[locale][key];if(typeof text!=='string')throw new Error('Missing static copy');return text;}};}
     ${options.text}
     ${radius.text}
     function Fixture(){
-      const {t}=useCopy();const [value,setValue]=useState(25);const [base,setMapBase]=useState('roadmap');
+      const {t,locale}=useCopy();const [value,setValue]=useState(25);const [base,setMapBase]=useState('roadmap');
       const locating=false,itemsOnly=false,radiusKm=25;
       function setBase(next){window.__visualControls.layers.push(next);setMapBase(next);}
       function locateMe(){window.__visualControls.locates++;}
