@@ -22,6 +22,7 @@ import {
 } from "@/components/listing-parent-pack";
 import { WaitlistOptIn } from "@/components/waitlist-opt-in";
 import { JoinWaitlist } from "@/components/join-waitlist";
+import { getListingPipelineState } from "@/lib/server/spot-offers";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo";
 import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto, primaryListingPhoto } from "@/lib/listing-photo";
@@ -262,16 +263,15 @@ export function Listing() {
     let live = true;
     setGap(null);
     setData(null);
+    let settled = false;
+    // A plain flag, not a state updater with a side effect, so a slow load always lands on Retry.
     const watchdog = window.setTimeout(() => {
-      if (!live) return;
-      setData((cur) => {
-        if (cur) return cur;
-        setGap("retry");
-        return cur;
-      });
+      if (!live || settled) return;
+      setGap("retry");
     }, 12_000);
     void getDaycare({ data: slug })
       .then((res) => {
+        settled = true;
         if (!live) return;
         if (!res) setGap("missing");
         else {
@@ -280,6 +280,7 @@ export function Listing() {
         }
       })
       .catch((error) => {
+        settled = true;
         if (!live) return;
         setGap(isTransientListingError(error) ? "retry" : "missing");
       });
@@ -288,6 +289,25 @@ export function Listing() {
       window.clearTimeout(watchdog);
     };
   }, [slug, reload]);
+
+  // A flagged QA account may request a spot on a hidden test listing (same rule as the server).
+  const [fixtureUsable, setFixtureUsable] = useState(false);
+  useEffect(() => {
+    const listing = data?.daycare;
+    if (!listing || !(listing.isTest || listing.visibility === "admin_only")) {
+      setFixtureUsable(false);
+      return;
+    }
+    let active = true;
+    void getListingPipelineState({ data: { daycareId: listing.id } })
+      .then((state) => {
+        if (active) setFixtureUsable(state.fixtureUsable);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [data]);
 
   useEffect(() => {
     if (!data) return;
@@ -414,7 +434,9 @@ export function Listing() {
       .join(", ");
     return (
       <Shell>
-        <main className="ke-listing-page mx-auto max-w-5xl overflow-x-hidden">
+        {/* min-h keeps the footer below the fold until the full listing paints;
+            on tall tablets the footer flashed in and jumped away (CLS ~0.24). */}
+        <main className="ke-listing-page mx-auto min-h-[100dvh] max-w-5xl overflow-x-hidden">
           <div className="lg:ke-gutter lg:pt-4">
             <div className="ke-listing-hero relative overflow-hidden lg:rounded-[14px]" data-empty={earlyReal ? undefined : "true"}>
               {earlyReal ? (
@@ -456,6 +478,9 @@ export function Listing() {
                 </dd>
               </div>
             </dl>
+            <div className="mt-4 md:hidden">
+              <EarlyListingActions locale={locale} />
+            </div>
             <div id="listing-overview" className="mt-6 space-y-6">
               {earlyDesc ? (
                 <section data-ke="listing-about">
@@ -516,11 +541,7 @@ export function Listing() {
                 ? "Frais non confirmés. Un plafond quotidien n’est pas une facture mensuelle."
                 : "Fees not confirmed. A daily cap is not a monthly bill."}
             </p>
-            <p className="mt-3 text-sm text-muted">
-              {locale === "fr"
-                ? "Les demandes s’affichent quand la fiche a fini de s’ouvrir."
-                : "Requests show once this listing has finished opening."}
-            </p>
+            <EarlyListingActions locale={locale} />
           </aside>
         </main>
       </Shell>
@@ -565,7 +586,7 @@ export function Listing() {
     .map((amount) => publicMonthlyFee(amount, d))
     .filter((n): n is number => n != null && n > 0);
   const from = prices.length ? Math.min(...prices) : 0;
-  const live = Boolean(d.live);
+  const live = Boolean(d.live) || fixtureUsable;
   const known = Boolean(d.availabilityKnown);
   const licensed = publicLicenseBadge(d);
   const approved = publicApprovalEligible(d);
@@ -1511,5 +1532,39 @@ function PriceRow({ label, value, extra }: { label: string; value: string; extra
         {extra ? <span className="ml-2 text-xs text-muted">{extra}</span> : null}
       </span>
     </li>
+  );
+}
+
+/**
+ * B04: while the full listing loads, the old placeholder said requests would
+ * show once the listing "opened", with no button. That only meant the page
+ * was still loading. Keep real buttons here; the ask opens once loaded.
+ */
+function EarlyListingActions({ locale }: { locale: string }) {
+  const fr = locale === "fr";
+  return (
+    <div className="mt-3 space-y-2" data-ke="listing-early-actions">
+      <p className="text-sm text-muted">
+        {fr ? "La fiche se charge. Vous pouvez déjà faire une demande." : "This listing is loading. You can already send a request."}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Link
+          to="."
+          search={{ ask: "spot" }}
+          className="inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg"
+          data-ke="listing-early-spot"
+        >
+          {fr ? "Demander une place" : "Request a spot"}
+        </Link>
+        <Link
+          to="."
+          search={{ ask: "waitlist" }}
+          className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold ring-1 ring-border"
+          data-ke="listing-early-waitlist"
+        >
+          {fr ? "Liste d’attente" : "Join the waitlist"}
+        </Link>
+      </div>
+    </div>
   );
 }

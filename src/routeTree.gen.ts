@@ -90,6 +90,7 @@ import { Route as MenuRouteImport } from './routes/menu'
 import { Route as MilieuxFamiliauxRouteImport } from './routes/milieux-familiaux'
 import { Route as NeedCareFastRouteImport } from './routes/need-care-fast'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as OpenSpotsRouteImport } from './routes/open-spots'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as PayRouteImport } from './routes/pay'
 import { Route as PayPlanRouteImport } from './routes/pay-plan'
@@ -126,7 +127,6 @@ import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
 import { Route as ApiAlexaRouteImport } from './routes/api/alexa'
 import { Route as ApiAutomationsRouteImport } from './routes/api/automations'
 import { Route as ApiBackgroundCheckFilesRouteImport } from './routes/api/background-check-files'
-import { Route as ApiStaffResumeRouteImport } from './routes/api/staff-resume'
 import { Route as ApiCentreLeadAlertsRouteImport } from './routes/api/centre-lead-alerts'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
@@ -143,6 +143,7 @@ import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screenin
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiSpotOffersRouteImport } from './routes/api/spot-offers'
+import { Route as ApiStaffResumeRouteImport } from './routes/api/staff-resume'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BackgroundChecksCodeRouteImport } from './routes/background-checks.$code'
@@ -157,6 +158,7 @@ import { Route as FrIndexRouteImport } from './routes/fr.index'
 import { Route as FrAboutRouteImport } from './routes/fr.about'
 import { Route as FrAccountRouteImport } from './routes/fr.account'
 import { Route as FrAdminRouteImport } from './routes/fr.admin'
+import { Route as FrAppAdminUnavailableRouteImport } from './routes/fr.app-admin-unavailable'
 import { Route as FrBackgroundChecksRouteImport } from './routes/fr.background-checks'
 import { Route as FrBenefitsRouteImport } from './routes/fr.benefits'
 import { Route as FrBlogRouteImport } from './routes/fr.blog'
@@ -194,6 +196,7 @@ import { Route as FrMenuRouteImport } from './routes/fr.menu'
 import { Route as FrMilieuxFamiliauxRouteImport } from './routes/fr.milieux-familiaux'
 import { Route as FrNeedCareFastRouteImport } from './routes/fr.need-care-fast'
 import { Route as FrNotificationsRouteImport } from './routes/fr.notifications'
+import { Route as FrOpenSpotsRouteImport } from './routes/fr.open-spots'
 import { Route as FrParentRouteImport } from './routes/fr.parent'
 import { Route as FrPlansRouteImport } from './routes/fr.plans'
 import { Route as FrPricingRouteImport } from './routes/fr.pricing'
@@ -319,34 +322,46 @@ import { Route as ApiScreeningDocumentsIdRouteImport } from './routes/api/screen
 import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
+import { Route as ApiVideoStatusRouteImport } from './routes/api/video.status'
 import { Route as ApiVoiceConnectRouteImport } from './routes/api/voice.connect'
 import { Route as ApiVoiceIncomingRouteImport } from './routes/api/voice.incoming'
 import { Route as ApiVoiceRecordingRouteImport } from './routes/api/voice.recording'
+import { Route as ApiVoiceStatusRouteImport } from './routes/api/voice.status'
 import { Route as ApiWebhooksResendRouteImport } from './routes/api/webhooks.resend'
 import { Route as DaycareCityAgeRouteImport } from './routes/daycare.$city.$age'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
+import { Route as DaycaresCityAgeRouteImport } from './routes/daycares_.$city_.$age'
 import { Route as FrBackgroundChecksCodeRouteImport } from './routes/fr.background-checks.$code'
 import { Route as FrBlogSlugRouteImport } from './routes/fr.blog_.$slug'
 import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
+import { Route as FrDaycaresCityRouteImport } from './routes/fr.daycares_.$city'
 import { Route as FrGovAnalyticsRouteImport } from './routes/fr.gov_.analytics'
 import { Route as FrGovAuditRouteImport } from './routes/fr.gov_.audit'
 import { Route as FrGovBroadcastsRouteImport } from './routes/fr.gov_.broadcasts'
 import { Route as FrGovCentresRouteImport } from './routes/fr.gov_.centres'
+import { Route as FrGovChangeRequestsRouteImport } from './routes/fr.gov_.change-requests'
+import { Route as FrGovClaimNoticesRouteImport } from './routes/fr.gov_.claim-notices'
+import { Route as FrGovComplaintUpdatesRouteImport } from './routes/fr.gov_.complaint-updates'
 import { Route as FrGovComplaintsRouteImport } from './routes/fr.gov_.complaints'
 import { Route as FrGovComplianceRouteImport } from './routes/fr.gov_.compliance'
 import { Route as FrGovDataRouteImport } from './routes/fr.gov_.data'
+import { Route as FrGovDataRequestsRouteImport } from './routes/fr.gov_.data-requests'
 import { Route as FrGovDemandRouteImport } from './routes/fr.gov_.demand'
+import { Route as FrGovEscalationsRouteImport } from './routes/fr.gov_.escalations'
 import { Route as FrGovExpiriesRouteImport } from './routes/fr.gov_.expiries'
 import { Route as FrGovExportsRouteImport } from './routes/fr.gov_.exports'
 import { Route as FrGovFeeCapsRouteImport } from './routes/fr.gov_.fee-caps'
 import { Route as FrGovFundingRouteImport } from './routes/fr.gov_.funding'
 import { Route as FrGovIncidentsRouteImport } from './routes/fr.gov_.incidents'
+import { Route as FrGovInspectionSyncRouteImport } from './routes/fr.gov_.inspection-sync'
 import { Route as FrGovLoginRouteImport } from './routes/fr.gov_.login'
 import { Route as FrGovMapRouteImport } from './routes/fr.gov_.map'
+import { Route as FrGovNotificationsRouteImport } from './routes/fr.gov_.notifications'
 import { Route as FrGovRatiosRouteImport } from './routes/fr.gov_.ratios'
 import { Route as FrGovReportsRouteImport } from './routes/fr.gov_.reports'
 import { Route as FrGovScreeningRouteImport } from './routes/fr.gov_.screening'
 import { Route as FrGovSettingsRouteImport } from './routes/fr.gov_.settings'
+import { Route as FrGovSubsidyRouteImport } from './routes/fr.gov_.subsidy'
 import { Route as FrGovVacanciesRouteImport } from './routes/fr.gov_.vacancies'
 import { Route as FrGuidesCodeRouteImport } from './routes/fr.guides.$code'
 import { Route as FrHelpArticlesRouteImport } from './routes/fr.help.articles'
@@ -365,6 +380,7 @@ import { Route as ApiInvoicesIdPdfRouteImport } from './routes/api/invoices.$id.
 import { Route as ApiV1CentreLeadsRouteImport } from './routes/api/v1.centre.leads'
 import { Route as FrDaycareCityAgeRouteImport } from './routes/fr.daycare.$city.$age'
 import { Route as FrDaycareCityCityRouteImport } from './routes/fr.daycare.city.$city'
+import { Route as FrDaycaresCityAgeRouteImport } from './routes/fr.daycares_.$city_.$age'
 import { Route as ApiV1CentreLeadsIdRouteImport } from './routes/api/v1.centre.leads.$id'
 import { Route as ApiV1CentreLeadsIdNotesRouteImport } from './routes/api/v1.centre.leads.$id.notes'
 
@@ -774,6 +790,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OpenSpotsRoute = OpenSpotsRouteImport.update({
+  id: '/open-spots',
+  path: '/open-spots',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ParentRoute = ParentRouteImport.update({
   id: '/parent',
   path: '/parent',
@@ -954,11 +975,6 @@ const ApiBackgroundCheckFilesRoute = ApiBackgroundCheckFilesRouteImport.update({
   path: '/api/background-check-files',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiStaffResumeRoute = ApiStaffResumeRouteImport.update({
-  id: '/api/staff-resume',
-  path: '/api/staff-resume',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiCentreLeadAlertsRoute = ApiCentreLeadAlertsRouteImport.update({
   id: '/api/centre-lead-alerts',
   path: '/api/centre-lead-alerts',
@@ -1039,6 +1055,11 @@ const ApiSpotOffersRoute = ApiSpotOffersRouteImport.update({
   path: '/api/spot-offers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiStaffResumeRoute = ApiStaffResumeRouteImport.update({
+  id: '/api/staff-resume',
+  path: '/api/staff-resume',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
   id: '/api/tour-holds',
   path: '/api/tour-holds',
@@ -1107,6 +1128,11 @@ const FrAccountRoute = FrAccountRouteImport.update({
 const FrAdminRoute = FrAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrAppAdminUnavailableRoute = FrAppAdminUnavailableRouteImport.update({
+  id: '/app-admin-unavailable',
+  path: '/app-admin-unavailable',
   getParentRoute: () => FrRoute,
 } as any)
 const FrBackgroundChecksRoute = FrBackgroundChecksRouteImport.update({
@@ -1293,6 +1319,11 @@ const FrNeedCareFastRoute = FrNeedCareFastRouteImport.update({
 const FrNotificationsRoute = FrNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrOpenSpotsRoute = FrOpenSpotsRouteImport.update({
+  id: '/open-spots',
+  path: '/open-spots',
   getParentRoute: () => FrRoute,
 } as any)
 const FrParentRoute = FrParentRouteImport.update({
@@ -1923,6 +1954,11 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVideoStatusRoute = ApiVideoStatusRouteImport.update({
+  id: '/api/video/status',
+  path: '/api/video/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiVoiceConnectRoute = ApiVoiceConnectRouteImport.update({
   id: '/api/voice/connect',
   path: '/api/voice/connect',
@@ -1936,6 +1972,11 @@ const ApiVoiceIncomingRoute = ApiVoiceIncomingRouteImport.update({
 const ApiVoiceRecordingRoute = ApiVoiceRecordingRouteImport.update({
   id: '/api/voice/recording',
   path: '/api/voice/recording',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVoiceStatusRoute = ApiVoiceStatusRouteImport.update({
+  id: '/api/voice/status',
+  path: '/api/voice/status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiWebhooksResendRoute = ApiWebhooksResendRouteImport.update({
@@ -1953,6 +1994,11 @@ const DaycareCityCityRoute = DaycareCityCityRouteImport.update({
   path: '/daycare/city/$city',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DaycaresCityAgeRoute = DaycaresCityAgeRouteImport.update({
+  id: '/daycares_/$city_/$age',
+  path: '/daycares/$city/$age',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FrBackgroundChecksCodeRoute = FrBackgroundChecksCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
@@ -1966,6 +2012,11 @@ const FrBlogSlugRoute = FrBlogSlugRouteImport.update({
 const FrDaycareSlugRoute = FrDaycareSlugRouteImport.update({
   id: '/daycare/$slug',
   path: '/daycare/$slug',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrDaycaresCityRoute = FrDaycaresCityRouteImport.update({
+  id: '/daycares_/$city',
+  path: '/daycares/$city',
   getParentRoute: () => FrRoute,
 } as any)
 const FrGovAnalyticsRoute = FrGovAnalyticsRouteImport.update({
@@ -1988,6 +2039,21 @@ const FrGovCentresRoute = FrGovCentresRouteImport.update({
   path: '/gov/centres',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGovChangeRequestsRoute = FrGovChangeRequestsRouteImport.update({
+  id: '/gov_/change-requests',
+  path: '/gov/change-requests',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovClaimNoticesRoute = FrGovClaimNoticesRouteImport.update({
+  id: '/gov_/claim-notices',
+  path: '/gov/claim-notices',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovComplaintUpdatesRoute = FrGovComplaintUpdatesRouteImport.update({
+  id: '/gov_/complaint-updates',
+  path: '/gov/complaint-updates',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGovComplaintsRoute = FrGovComplaintsRouteImport.update({
   id: '/gov_/complaints',
   path: '/gov/complaints',
@@ -2003,9 +2069,19 @@ const FrGovDataRoute = FrGovDataRouteImport.update({
   path: '/gov/data',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGovDataRequestsRoute = FrGovDataRequestsRouteImport.update({
+  id: '/gov_/data-requests',
+  path: '/gov/data-requests',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGovDemandRoute = FrGovDemandRouteImport.update({
   id: '/gov_/demand',
   path: '/gov/demand',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovEscalationsRoute = FrGovEscalationsRouteImport.update({
+  id: '/gov_/escalations',
+  path: '/gov/escalations',
   getParentRoute: () => FrRoute,
 } as any)
 const FrGovExpiriesRoute = FrGovExpiriesRouteImport.update({
@@ -2033,6 +2109,11 @@ const FrGovIncidentsRoute = FrGovIncidentsRouteImport.update({
   path: '/gov/incidents',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGovInspectionSyncRoute = FrGovInspectionSyncRouteImport.update({
+  id: '/gov_/inspection-sync',
+  path: '/gov/inspection-sync',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGovLoginRoute = FrGovLoginRouteImport.update({
   id: '/gov_/login',
   path: '/gov/login',
@@ -2041,6 +2122,11 @@ const FrGovLoginRoute = FrGovLoginRouteImport.update({
 const FrGovMapRoute = FrGovMapRouteImport.update({
   id: '/gov_/map',
   path: '/gov/map',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovNotificationsRoute = FrGovNotificationsRouteImport.update({
+  id: '/gov_/notifications',
+  path: '/gov/notifications',
   getParentRoute: () => FrRoute,
 } as any)
 const FrGovRatiosRoute = FrGovRatiosRouteImport.update({
@@ -2061,6 +2147,11 @@ const FrGovScreeningRoute = FrGovScreeningRouteImport.update({
 const FrGovSettingsRoute = FrGovSettingsRouteImport.update({
   id: '/gov_/settings',
   path: '/gov/settings',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovSubsidyRoute = FrGovSubsidyRouteImport.update({
+  id: '/gov_/subsidy',
+  path: '/gov/subsidy',
   getParentRoute: () => FrRoute,
 } as any)
 const FrGovVacanciesRoute = FrGovVacanciesRouteImport.update({
@@ -2151,6 +2242,11 @@ const FrDaycareCityAgeRoute = FrDaycareCityAgeRouteImport.update({
 const FrDaycareCityCityRoute = FrDaycareCityCityRouteImport.update({
   id: '/daycare/city/$city',
   path: '/daycare/city/$city',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrDaycaresCityAgeRoute = FrDaycaresCityAgeRouteImport.update({
+  id: '/daycares_/$city_/$age',
+  path: '/daycares/$city/$age',
   getParentRoute: () => FrRoute,
 } as any)
 const ApiV1CentreLeadsIdRoute = ApiV1CentreLeadsIdRouteImport.update({
@@ -2246,6 +2342,7 @@ export interface FileRoutesByFullPath {
   '/milieux-familiaux': typeof MilieuxFamiliauxRoute
   '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
+  '/open-spots': typeof OpenSpotsRoute
   '/parent': typeof ParentRouteWithChildren
   '/pay': typeof PayRouteWithChildren
   '/pay-plan': typeof PayPlanRoute
@@ -2282,7 +2379,6 @@ export interface FileRoutesByFullPath {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2299,6 +2395,7 @@ export interface FileRoutesByFullPath {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -2312,6 +2409,7 @@ export interface FileRoutesByFullPath {
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
   '/fr/admin': typeof FrAdminRoute
+  '/fr/app-admin-unavailable': typeof FrAppAdminUnavailableRoute
   '/fr/background-checks': typeof FrBackgroundChecksRouteWithChildren
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/blog': typeof FrBlogRoute
@@ -2349,6 +2447,7 @@ export interface FileRoutesByFullPath {
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/notifications': typeof FrNotificationsRoute
+  '/fr/open-spots': typeof FrOpenSpotsRoute
   '/fr/parent': typeof FrParentRouteWithChildren
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
@@ -2475,34 +2574,46 @@ export interface FileRoutesByFullPath {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/video/status': typeof ApiVideoStatusRoute
   '/api/voice/connect': typeof ApiVoiceConnectRoute
   '/api/voice/incoming': typeof ApiVoiceIncomingRoute
   '/api/voice/recording': typeof ApiVoiceRecordingRoute
+  '/api/voice/status': typeof ApiVoiceStatusRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/daycares/$city/$age': typeof DaycaresCityAgeRoute
   '/fr/background-checks/$code': typeof FrBackgroundChecksCodeRoute
   '/fr/blog/$slug': typeof FrBlogSlugRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
+  '/fr/daycares/$city': typeof FrDaycaresCityRoute
   '/fr/gov/analytics': typeof FrGovAnalyticsRoute
   '/fr/gov/audit': typeof FrGovAuditRoute
   '/fr/gov/broadcasts': typeof FrGovBroadcastsRoute
   '/fr/gov/centres': typeof FrGovCentresRoute
+  '/fr/gov/change-requests': typeof FrGovChangeRequestsRoute
+  '/fr/gov/claim-notices': typeof FrGovClaimNoticesRoute
+  '/fr/gov/complaint-updates': typeof FrGovComplaintUpdatesRoute
   '/fr/gov/complaints': typeof FrGovComplaintsRoute
   '/fr/gov/compliance': typeof FrGovComplianceRoute
   '/fr/gov/data': typeof FrGovDataRoute
+  '/fr/gov/data-requests': typeof FrGovDataRequestsRoute
   '/fr/gov/demand': typeof FrGovDemandRoute
+  '/fr/gov/escalations': typeof FrGovEscalationsRoute
   '/fr/gov/expiries': typeof FrGovExpiriesRoute
   '/fr/gov/exports': typeof FrGovExportsRoute
   '/fr/gov/fee-caps': typeof FrGovFeeCapsRoute
   '/fr/gov/funding': typeof FrGovFundingRoute
   '/fr/gov/incidents': typeof FrGovIncidentsRoute
+  '/fr/gov/inspection-sync': typeof FrGovInspectionSyncRoute
   '/fr/gov/login': typeof FrGovLoginRoute
   '/fr/gov/map': typeof FrGovMapRoute
+  '/fr/gov/notifications': typeof FrGovNotificationsRoute
   '/fr/gov/ratios': typeof FrGovRatiosRoute
   '/fr/gov/reports': typeof FrGovReportsRoute
   '/fr/gov/screening': typeof FrGovScreeningRoute
   '/fr/gov/settings': typeof FrGovSettingsRoute
+  '/fr/gov/subsidy': typeof FrGovSubsidyRoute
   '/fr/gov/vacancies': typeof FrGovVacanciesRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
@@ -2521,6 +2632,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/centre/leads': typeof ApiV1CentreLeadsRouteWithChildren
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
   '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
+  '/fr/daycares/$city/$age': typeof FrDaycaresCityAgeRoute
   '/api/v1/centre/leads/$id': typeof ApiV1CentreLeadsIdRouteWithChildren
   '/api/v1/centre/leads/$id/notes': typeof ApiV1CentreLeadsIdNotesRoute
 }
@@ -2605,6 +2717,7 @@ export interface FileRoutesByTo {
   '/milieux-familiaux': typeof MilieuxFamiliauxRoute
   '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
+  '/open-spots': typeof OpenSpotsRoute
   '/parent': typeof ParentRouteWithChildren
   '/pay-plan': typeof PayPlanRoute
   '/plans': typeof PlansRoute
@@ -2640,7 +2753,6 @@ export interface FileRoutesByTo {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2657,6 +2769,7 @@ export interface FileRoutesByTo {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -2670,6 +2783,7 @@ export interface FileRoutesByTo {
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
   '/fr/admin': typeof FrAdminRoute
+  '/fr/app-admin-unavailable': typeof FrAppAdminUnavailableRoute
   '/fr/background-checks': typeof FrBackgroundChecksRouteWithChildren
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/blog': typeof FrBlogRoute
@@ -2707,6 +2821,7 @@ export interface FileRoutesByTo {
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/notifications': typeof FrNotificationsRoute
+  '/fr/open-spots': typeof FrOpenSpotsRoute
   '/fr/parent': typeof FrParentRouteWithChildren
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
@@ -2833,34 +2948,46 @@ export interface FileRoutesByTo {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/video/status': typeof ApiVideoStatusRoute
   '/api/voice/connect': typeof ApiVoiceConnectRoute
   '/api/voice/incoming': typeof ApiVoiceIncomingRoute
   '/api/voice/recording': typeof ApiVoiceRecordingRoute
+  '/api/voice/status': typeof ApiVoiceStatusRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/daycares/$city/$age': typeof DaycaresCityAgeRoute
   '/fr/background-checks/$code': typeof FrBackgroundChecksCodeRoute
   '/fr/blog/$slug': typeof FrBlogSlugRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
+  '/fr/daycares/$city': typeof FrDaycaresCityRoute
   '/fr/gov/analytics': typeof FrGovAnalyticsRoute
   '/fr/gov/audit': typeof FrGovAuditRoute
   '/fr/gov/broadcasts': typeof FrGovBroadcastsRoute
   '/fr/gov/centres': typeof FrGovCentresRoute
+  '/fr/gov/change-requests': typeof FrGovChangeRequestsRoute
+  '/fr/gov/claim-notices': typeof FrGovClaimNoticesRoute
+  '/fr/gov/complaint-updates': typeof FrGovComplaintUpdatesRoute
   '/fr/gov/complaints': typeof FrGovComplaintsRoute
   '/fr/gov/compliance': typeof FrGovComplianceRoute
   '/fr/gov/data': typeof FrGovDataRoute
+  '/fr/gov/data-requests': typeof FrGovDataRequestsRoute
   '/fr/gov/demand': typeof FrGovDemandRoute
+  '/fr/gov/escalations': typeof FrGovEscalationsRoute
   '/fr/gov/expiries': typeof FrGovExpiriesRoute
   '/fr/gov/exports': typeof FrGovExportsRoute
   '/fr/gov/fee-caps': typeof FrGovFeeCapsRoute
   '/fr/gov/funding': typeof FrGovFundingRoute
   '/fr/gov/incidents': typeof FrGovIncidentsRoute
+  '/fr/gov/inspection-sync': typeof FrGovInspectionSyncRoute
   '/fr/gov/login': typeof FrGovLoginRoute
   '/fr/gov/map': typeof FrGovMapRoute
+  '/fr/gov/notifications': typeof FrGovNotificationsRoute
   '/fr/gov/ratios': typeof FrGovRatiosRoute
   '/fr/gov/reports': typeof FrGovReportsRoute
   '/fr/gov/screening': typeof FrGovScreeningRoute
   '/fr/gov/settings': typeof FrGovSettingsRoute
+  '/fr/gov/subsidy': typeof FrGovSubsidyRoute
   '/fr/gov/vacancies': typeof FrGovVacanciesRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
@@ -2879,6 +3006,7 @@ export interface FileRoutesByTo {
   '/api/v1/centre/leads': typeof ApiV1CentreLeadsRouteWithChildren
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
   '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
+  '/fr/daycares/$city/$age': typeof FrDaycaresCityAgeRoute
   '/api/v1/centre/leads/$id': typeof ApiV1CentreLeadsIdRouteWithChildren
   '/api/v1/centre/leads/$id/notes': typeof ApiV1CentreLeadsIdNotesRoute
 }
@@ -2965,6 +3093,7 @@ export interface FileRoutesById {
   '/milieux-familiaux': typeof MilieuxFamiliauxRoute
   '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
+  '/open-spots': typeof OpenSpotsRoute
   '/parent': typeof ParentRouteWithChildren
   '/pay': typeof PayRouteWithChildren
   '/pay-plan': typeof PayPlanRoute
@@ -3001,7 +3130,6 @@ export interface FileRoutesById {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -3018,6 +3146,7 @@ export interface FileRoutesById {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -3031,6 +3160,7 @@ export interface FileRoutesById {
   '/fr/about': typeof FrAboutRoute
   '/fr/account': typeof FrAccountRoute
   '/fr/admin': typeof FrAdminRoute
+  '/fr/app-admin-unavailable': typeof FrAppAdminUnavailableRoute
   '/fr/background-checks': typeof FrBackgroundChecksRouteWithChildren
   '/fr/benefits': typeof FrBenefitsRoute
   '/fr/blog': typeof FrBlogRoute
@@ -3068,6 +3198,7 @@ export interface FileRoutesById {
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/notifications': typeof FrNotificationsRoute
+  '/fr/open-spots': typeof FrOpenSpotsRoute
   '/fr/parent': typeof FrParentRouteWithChildren
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
@@ -3194,34 +3325,46 @@ export interface FileRoutesById {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/video/status': typeof ApiVideoStatusRoute
   '/api/voice/connect': typeof ApiVoiceConnectRoute
   '/api/voice/incoming': typeof ApiVoiceIncomingRoute
   '/api/voice/recording': typeof ApiVoiceRecordingRoute
+  '/api/voice/status': typeof ApiVoiceStatusRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
+  '/daycares_/$city_/$age': typeof DaycaresCityAgeRoute
   '/fr/background-checks/$code': typeof FrBackgroundChecksCodeRoute
   '/fr/blog_/$slug': typeof FrBlogSlugRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
+  '/fr/daycares_/$city': typeof FrDaycaresCityRoute
   '/fr/gov_/analytics': typeof FrGovAnalyticsRoute
   '/fr/gov_/audit': typeof FrGovAuditRoute
   '/fr/gov_/broadcasts': typeof FrGovBroadcastsRoute
   '/fr/gov_/centres': typeof FrGovCentresRoute
+  '/fr/gov_/change-requests': typeof FrGovChangeRequestsRoute
+  '/fr/gov_/claim-notices': typeof FrGovClaimNoticesRoute
+  '/fr/gov_/complaint-updates': typeof FrGovComplaintUpdatesRoute
   '/fr/gov_/complaints': typeof FrGovComplaintsRoute
   '/fr/gov_/compliance': typeof FrGovComplianceRoute
   '/fr/gov_/data': typeof FrGovDataRoute
+  '/fr/gov_/data-requests': typeof FrGovDataRequestsRoute
   '/fr/gov_/demand': typeof FrGovDemandRoute
+  '/fr/gov_/escalations': typeof FrGovEscalationsRoute
   '/fr/gov_/expiries': typeof FrGovExpiriesRoute
   '/fr/gov_/exports': typeof FrGovExportsRoute
   '/fr/gov_/fee-caps': typeof FrGovFeeCapsRoute
   '/fr/gov_/funding': typeof FrGovFundingRoute
   '/fr/gov_/incidents': typeof FrGovIncidentsRoute
+  '/fr/gov_/inspection-sync': typeof FrGovInspectionSyncRoute
   '/fr/gov_/login': typeof FrGovLoginRoute
   '/fr/gov_/map': typeof FrGovMapRoute
+  '/fr/gov_/notifications': typeof FrGovNotificationsRoute
   '/fr/gov_/ratios': typeof FrGovRatiosRoute
   '/fr/gov_/reports': typeof FrGovReportsRoute
   '/fr/gov_/screening': typeof FrGovScreeningRoute
   '/fr/gov_/settings': typeof FrGovSettingsRoute
+  '/fr/gov_/subsidy': typeof FrGovSubsidyRoute
   '/fr/gov_/vacancies': typeof FrGovVacanciesRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
@@ -3240,6 +3383,7 @@ export interface FileRoutesById {
   '/api/v1/centre/leads': typeof ApiV1CentreLeadsRouteWithChildren
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
   '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
+  '/fr/daycares_/$city_/$age': typeof FrDaycaresCityAgeRoute
   '/api/v1/centre/leads/$id': typeof ApiV1CentreLeadsIdRouteWithChildren
   '/api/v1/centre/leads/$id/notes': typeof ApiV1CentreLeadsIdNotesRoute
 }
@@ -3327,6 +3471,7 @@ export interface FileRouteTypes {
     | '/milieux-familiaux'
     | '/need-care-fast'
     | '/notifications'
+    | '/open-spots'
     | '/parent'
     | '/pay'
     | '/pay-plan'
@@ -3363,7 +3508,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3380,6 +3524,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -3393,6 +3538,7 @@ export interface FileRouteTypes {
     | '/fr/about'
     | '/fr/account'
     | '/fr/admin'
+    | '/fr/app-admin-unavailable'
     | '/fr/background-checks'
     | '/fr/benefits'
     | '/fr/blog'
@@ -3430,6 +3576,7 @@ export interface FileRouteTypes {
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
     | '/fr/notifications'
+    | '/fr/open-spots'
     | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
@@ -3556,34 +3703,46 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/video/status'
     | '/api/voice/connect'
     | '/api/voice/incoming'
     | '/api/voice/recording'
+    | '/api/voice/status'
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
+    | '/daycares/$city/$age'
     | '/fr/background-checks/$code'
     | '/fr/blog/$slug'
     | '/fr/daycare/$slug'
+    | '/fr/daycares/$city'
     | '/fr/gov/analytics'
     | '/fr/gov/audit'
     | '/fr/gov/broadcasts'
     | '/fr/gov/centres'
+    | '/fr/gov/change-requests'
+    | '/fr/gov/claim-notices'
+    | '/fr/gov/complaint-updates'
     | '/fr/gov/complaints'
     | '/fr/gov/compliance'
     | '/fr/gov/data'
+    | '/fr/gov/data-requests'
     | '/fr/gov/demand'
+    | '/fr/gov/escalations'
     | '/fr/gov/expiries'
     | '/fr/gov/exports'
     | '/fr/gov/fee-caps'
     | '/fr/gov/funding'
     | '/fr/gov/incidents'
+    | '/fr/gov/inspection-sync'
     | '/fr/gov/login'
     | '/fr/gov/map'
+    | '/fr/gov/notifications'
     | '/fr/gov/ratios'
     | '/fr/gov/reports'
     | '/fr/gov/screening'
     | '/fr/gov/settings'
+    | '/fr/gov/subsidy'
     | '/fr/gov/vacancies'
     | '/fr/guides/$code'
     | '/fr/help/articles'
@@ -3602,6 +3761,7 @@ export interface FileRouteTypes {
     | '/api/v1/centre/leads'
     | '/fr/daycare/$city/$age'
     | '/fr/daycare/city/$city'
+    | '/fr/daycares/$city/$age'
     | '/api/v1/centre/leads/$id'
     | '/api/v1/centre/leads/$id/notes'
   fileRoutesByTo: FileRoutesByTo
@@ -3686,6 +3846,7 @@ export interface FileRouteTypes {
     | '/milieux-familiaux'
     | '/need-care-fast'
     | '/notifications'
+    | '/open-spots'
     | '/parent'
     | '/pay-plan'
     | '/plans'
@@ -3721,7 +3882,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3738,6 +3898,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -3751,6 +3912,7 @@ export interface FileRouteTypes {
     | '/fr/about'
     | '/fr/account'
     | '/fr/admin'
+    | '/fr/app-admin-unavailable'
     | '/fr/background-checks'
     | '/fr/benefits'
     | '/fr/blog'
@@ -3788,6 +3950,7 @@ export interface FileRouteTypes {
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
     | '/fr/notifications'
+    | '/fr/open-spots'
     | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
@@ -3914,34 +4077,46 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/video/status'
     | '/api/voice/connect'
     | '/api/voice/incoming'
     | '/api/voice/recording'
+    | '/api/voice/status'
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
+    | '/daycares/$city/$age'
     | '/fr/background-checks/$code'
     | '/fr/blog/$slug'
     | '/fr/daycare/$slug'
+    | '/fr/daycares/$city'
     | '/fr/gov/analytics'
     | '/fr/gov/audit'
     | '/fr/gov/broadcasts'
     | '/fr/gov/centres'
+    | '/fr/gov/change-requests'
+    | '/fr/gov/claim-notices'
+    | '/fr/gov/complaint-updates'
     | '/fr/gov/complaints'
     | '/fr/gov/compliance'
     | '/fr/gov/data'
+    | '/fr/gov/data-requests'
     | '/fr/gov/demand'
+    | '/fr/gov/escalations'
     | '/fr/gov/expiries'
     | '/fr/gov/exports'
     | '/fr/gov/fee-caps'
     | '/fr/gov/funding'
     | '/fr/gov/incidents'
+    | '/fr/gov/inspection-sync'
     | '/fr/gov/login'
     | '/fr/gov/map'
+    | '/fr/gov/notifications'
     | '/fr/gov/ratios'
     | '/fr/gov/reports'
     | '/fr/gov/screening'
     | '/fr/gov/settings'
+    | '/fr/gov/subsidy'
     | '/fr/gov/vacancies'
     | '/fr/guides/$code'
     | '/fr/help/articles'
@@ -3960,6 +4135,7 @@ export interface FileRouteTypes {
     | '/api/v1/centre/leads'
     | '/fr/daycare/$city/$age'
     | '/fr/daycare/city/$city'
+    | '/fr/daycares/$city/$age'
     | '/api/v1/centre/leads/$id'
     | '/api/v1/centre/leads/$id/notes'
   id:
@@ -4045,6 +4221,7 @@ export interface FileRouteTypes {
     | '/milieux-familiaux'
     | '/need-care-fast'
     | '/notifications'
+    | '/open-spots'
     | '/parent'
     | '/pay'
     | '/pay-plan'
@@ -4081,7 +4258,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -4098,6 +4274,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -4111,6 +4288,7 @@ export interface FileRouteTypes {
     | '/fr/about'
     | '/fr/account'
     | '/fr/admin'
+    | '/fr/app-admin-unavailable'
     | '/fr/background-checks'
     | '/fr/benefits'
     | '/fr/blog'
@@ -4148,6 +4326,7 @@ export interface FileRouteTypes {
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
     | '/fr/notifications'
+    | '/fr/open-spots'
     | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
@@ -4274,34 +4453,46 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/video/status'
     | '/api/voice/connect'
     | '/api/voice/incoming'
     | '/api/voice/recording'
+    | '/api/voice/status'
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
+    | '/daycares_/$city_/$age'
     | '/fr/background-checks/$code'
     | '/fr/blog_/$slug'
     | '/fr/daycare/$slug'
+    | '/fr/daycares_/$city'
     | '/fr/gov_/analytics'
     | '/fr/gov_/audit'
     | '/fr/gov_/broadcasts'
     | '/fr/gov_/centres'
+    | '/fr/gov_/change-requests'
+    | '/fr/gov_/claim-notices'
+    | '/fr/gov_/complaint-updates'
     | '/fr/gov_/complaints'
     | '/fr/gov_/compliance'
     | '/fr/gov_/data'
+    | '/fr/gov_/data-requests'
     | '/fr/gov_/demand'
+    | '/fr/gov_/escalations'
     | '/fr/gov_/expiries'
     | '/fr/gov_/exports'
     | '/fr/gov_/fee-caps'
     | '/fr/gov_/funding'
     | '/fr/gov_/incidents'
+    | '/fr/gov_/inspection-sync'
     | '/fr/gov_/login'
     | '/fr/gov_/map'
+    | '/fr/gov_/notifications'
     | '/fr/gov_/ratios'
     | '/fr/gov_/reports'
     | '/fr/gov_/screening'
     | '/fr/gov_/settings'
+    | '/fr/gov_/subsidy'
     | '/fr/gov_/vacancies'
     | '/fr/guides/$code'
     | '/fr/help/articles'
@@ -4320,6 +4511,7 @@ export interface FileRouteTypes {
     | '/api/v1/centre/leads'
     | '/fr/daycare/$city/$age'
     | '/fr/daycare/city/$city'
+    | '/fr/daycares_/$city_/$age'
     | '/api/v1/centre/leads/$id'
     | '/api/v1/centre/leads/$id/notes'
   fileRoutesById: FileRoutesById
@@ -4406,6 +4598,7 @@ export interface RootRouteChildren {
   MilieuxFamiliauxRoute: typeof MilieuxFamiliauxRoute
   NeedCareFastRoute: typeof NeedCareFastRoute
   NotificationsRoute: typeof NotificationsRoute
+  OpenSpotsRoute: typeof OpenSpotsRoute
   ParentRoute: typeof ParentRouteWithChildren
   PayRoute: typeof PayRouteWithChildren
   PayPlanRoute: typeof PayPlanRoute
@@ -4439,7 +4632,6 @@ export interface RootRouteChildren {
   ApiAlexaRoute: typeof ApiAlexaRoute
   ApiAutomationsRoute: typeof ApiAutomationsRoute
   ApiBackgroundCheckFilesRoute: typeof ApiBackgroundCheckFilesRouteWithChildren
-  ApiStaffResumeRoute: typeof ApiStaffResumeRoute
   ApiCentreLeadAlertsRoute: typeof ApiCentreLeadAlertsRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
@@ -4456,6 +4648,7 @@ export interface RootRouteChildren {
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   ApiSpotOffersRoute: typeof ApiSpotOffersRoute
+  ApiStaffResumeRoute: typeof ApiStaffResumeRoute
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BlogSlugRoute: typeof BlogSlugRoute
@@ -4552,12 +4745,15 @@ export interface RootRouteChildren {
   ApiSmsInboundRoute: typeof ApiSmsInboundRoute
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  ApiVideoStatusRoute: typeof ApiVideoStatusRoute
   ApiVoiceConnectRoute: typeof ApiVoiceConnectRoute
   ApiVoiceIncomingRoute: typeof ApiVoiceIncomingRoute
   ApiVoiceRecordingRoute: typeof ApiVoiceRecordingRoute
+  ApiVoiceStatusRoute: typeof ApiVoiceStatusRoute
   ApiWebhooksResendRoute: typeof ApiWebhooksResendRoute
   DaycareCityAgeRoute: typeof DaycareCityAgeRoute
   DaycareCityCityRoute: typeof DaycareCityCityRoute
+  DaycaresCityAgeRoute: typeof DaycaresCityAgeRoute
   ApiContractsIdPdfRoute: typeof ApiContractsIdPdfRoute
   ApiInvoicesIdPdfRoute: typeof ApiInvoicesIdPdfRoute
   ApiV1CentreLeadsRoute: typeof ApiV1CentreLeadsRouteWithChildren
@@ -5132,6 +5328,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/open-spots': {
+      id: '/open-spots'
+      path: '/open-spots'
+      fullPath: '/open-spots'
+      preLoaderRoute: typeof OpenSpotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/parent': {
       id: '/parent'
       path: '/parent'
@@ -5384,13 +5587,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBackgroundCheckFilesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/staff-resume': {
-      id: '/api/staff-resume'
-      path: '/api/staff-resume'
-      fullPath: '/api/staff-resume'
-      preLoaderRoute: typeof ApiStaffResumeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/centre-lead-alerts': {
       id: '/api/centre-lead-alerts'
       path: '/api/centre-lead-alerts'
@@ -5503,6 +5699,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSpotOffersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/staff-resume': {
+      id: '/api/staff-resume'
+      path: '/api/staff-resume'
+      fullPath: '/api/staff-resume'
+      preLoaderRoute: typeof ApiStaffResumeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/tour-holds': {
       id: '/api/tour-holds'
       path: '/api/tour-holds'
@@ -5599,6 +5802,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/fr/admin'
       preLoaderRoute: typeof FrAdminRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/app-admin-unavailable': {
+      id: '/fr/app-admin-unavailable'
+      path: '/app-admin-unavailable'
+      fullPath: '/fr/app-admin-unavailable'
+      preLoaderRoute: typeof FrAppAdminUnavailableRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/background-checks': {
@@ -5858,6 +6068,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/fr/notifications'
       preLoaderRoute: typeof FrNotificationsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/open-spots': {
+      id: '/fr/open-spots'
+      path: '/open-spots'
+      fullPath: '/fr/open-spots'
+      preLoaderRoute: typeof FrOpenSpotsRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/parent': {
@@ -6735,6 +6952,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/video/status': {
+      id: '/api/video/status'
+      path: '/api/video/status'
+      fullPath: '/api/video/status'
+      preLoaderRoute: typeof ApiVideoStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/voice/connect': {
       id: '/api/voice/connect'
       path: '/api/voice/connect'
@@ -6754,6 +6978,13 @@ declare module '@tanstack/react-router' {
       path: '/api/voice/recording'
       fullPath: '/api/voice/recording'
       preLoaderRoute: typeof ApiVoiceRecordingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/voice/status': {
+      id: '/api/voice/status'
+      path: '/api/voice/status'
+      fullPath: '/api/voice/status'
+      preLoaderRoute: typeof ApiVoiceStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/webhooks/resend': {
@@ -6777,6 +7008,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DaycareCityCityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/daycares_/$city_/$age': {
+      id: '/daycares_/$city_/$age'
+      path: '/daycares/$city/$age'
+      fullPath: '/daycares/$city/$age'
+      preLoaderRoute: typeof DaycaresCityAgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/fr/background-checks/$code': {
       id: '/fr/background-checks/$code'
       path: '/$code'
@@ -6796,6 +7034,13 @@ declare module '@tanstack/react-router' {
       path: '/daycare/$slug'
       fullPath: '/fr/daycare/$slug'
       preLoaderRoute: typeof FrDaycareSlugRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/daycares_/$city': {
+      id: '/fr/daycares_/$city'
+      path: '/daycares/$city'
+      fullPath: '/fr/daycares/$city'
+      preLoaderRoute: typeof FrDaycaresCityRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/gov_/analytics': {
@@ -6826,6 +7071,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrGovCentresRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov_/change-requests': {
+      id: '/fr/gov_/change-requests'
+      path: '/gov/change-requests'
+      fullPath: '/fr/gov/change-requests'
+      preLoaderRoute: typeof FrGovChangeRequestsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/claim-notices': {
+      id: '/fr/gov_/claim-notices'
+      path: '/gov/claim-notices'
+      fullPath: '/fr/gov/claim-notices'
+      preLoaderRoute: typeof FrGovClaimNoticesRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/complaint-updates': {
+      id: '/fr/gov_/complaint-updates'
+      path: '/gov/complaint-updates'
+      fullPath: '/fr/gov/complaint-updates'
+      preLoaderRoute: typeof FrGovComplaintUpdatesRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/gov_/complaints': {
       id: '/fr/gov_/complaints'
       path: '/gov/complaints'
@@ -6847,11 +7113,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrGovDataRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov_/data-requests': {
+      id: '/fr/gov_/data-requests'
+      path: '/gov/data-requests'
+      fullPath: '/fr/gov/data-requests'
+      preLoaderRoute: typeof FrGovDataRequestsRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/gov_/demand': {
       id: '/fr/gov_/demand'
       path: '/gov/demand'
       fullPath: '/fr/gov/demand'
       preLoaderRoute: typeof FrGovDemandRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/escalations': {
+      id: '/fr/gov_/escalations'
+      path: '/gov/escalations'
+      fullPath: '/fr/gov/escalations'
+      preLoaderRoute: typeof FrGovEscalationsRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/gov_/expiries': {
@@ -6889,6 +7169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrGovIncidentsRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov_/inspection-sync': {
+      id: '/fr/gov_/inspection-sync'
+      path: '/gov/inspection-sync'
+      fullPath: '/fr/gov/inspection-sync'
+      preLoaderRoute: typeof FrGovInspectionSyncRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/gov_/login': {
       id: '/fr/gov_/login'
       path: '/gov/login'
@@ -6901,6 +7188,13 @@ declare module '@tanstack/react-router' {
       path: '/gov/map'
       fullPath: '/fr/gov/map'
       preLoaderRoute: typeof FrGovMapRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/notifications': {
+      id: '/fr/gov_/notifications'
+      path: '/gov/notifications'
+      fullPath: '/fr/gov/notifications'
+      preLoaderRoute: typeof FrGovNotificationsRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/gov_/ratios': {
@@ -6929,6 +7223,13 @@ declare module '@tanstack/react-router' {
       path: '/gov/settings'
       fullPath: '/fr/gov/settings'
       preLoaderRoute: typeof FrGovSettingsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/subsidy': {
+      id: '/fr/gov_/subsidy'
+      path: '/gov/subsidy'
+      fullPath: '/fr/gov/subsidy'
+      preLoaderRoute: typeof FrGovSubsidyRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/gov_/vacancies': {
@@ -7057,6 +7358,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrDaycareCityCityRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/daycares_/$city_/$age': {
+      id: '/fr/daycares_/$city_/$age'
+      path: '/daycares/$city/$age'
+      fullPath: '/fr/daycares/$city/$age'
+      preLoaderRoute: typeof FrDaycaresCityAgeRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/api/v1/centre/leads/$id': {
       id: '/api/v1/centre/leads/$id'
       path: '/$id'
@@ -7172,6 +7480,7 @@ interface FrRouteChildren {
   FrAboutRoute: typeof FrAboutRoute
   FrAccountRoute: typeof FrAccountRoute
   FrAdminRoute: typeof FrAdminRoute
+  FrAppAdminUnavailableRoute: typeof FrAppAdminUnavailableRoute
   FrBackgroundChecksRoute: typeof FrBackgroundChecksRouteWithChildren
   FrBenefitsRoute: typeof FrBenefitsRoute
   FrBlogRoute: typeof FrBlogRoute
@@ -7209,6 +7518,7 @@ interface FrRouteChildren {
   FrMilieuxFamiliauxRoute: typeof FrMilieuxFamiliauxRoute
   FrNeedCareFastRoute: typeof FrNeedCareFastRoute
   FrNotificationsRoute: typeof FrNotificationsRoute
+  FrOpenSpotsRoute: typeof FrOpenSpotsRoute
   FrParentRoute: typeof FrParentRouteWithChildren
   FrPlansRoute: typeof FrPlansRoute
   FrPricingRoute: typeof FrPricingRoute
@@ -7235,25 +7545,34 @@ interface FrRouteChildren {
   FrIndexRoute: typeof FrIndexRoute
   FrBlogSlugRoute: typeof FrBlogSlugRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
+  FrDaycaresCityRoute: typeof FrDaycaresCityRoute
   FrGovAnalyticsRoute: typeof FrGovAnalyticsRoute
   FrGovAuditRoute: typeof FrGovAuditRoute
   FrGovBroadcastsRoute: typeof FrGovBroadcastsRoute
   FrGovCentresRoute: typeof FrGovCentresRoute
+  FrGovChangeRequestsRoute: typeof FrGovChangeRequestsRoute
+  FrGovClaimNoticesRoute: typeof FrGovClaimNoticesRoute
+  FrGovComplaintUpdatesRoute: typeof FrGovComplaintUpdatesRoute
   FrGovComplaintsRoute: typeof FrGovComplaintsRoute
   FrGovComplianceRoute: typeof FrGovComplianceRoute
   FrGovDataRoute: typeof FrGovDataRoute
+  FrGovDataRequestsRoute: typeof FrGovDataRequestsRoute
   FrGovDemandRoute: typeof FrGovDemandRoute
+  FrGovEscalationsRoute: typeof FrGovEscalationsRoute
   FrGovExpiriesRoute: typeof FrGovExpiriesRoute
   FrGovExportsRoute: typeof FrGovExportsRoute
   FrGovFeeCapsRoute: typeof FrGovFeeCapsRoute
   FrGovFundingRoute: typeof FrGovFundingRoute
   FrGovIncidentsRoute: typeof FrGovIncidentsRoute
+  FrGovInspectionSyncRoute: typeof FrGovInspectionSyncRoute
   FrGovLoginRoute: typeof FrGovLoginRoute
   FrGovMapRoute: typeof FrGovMapRoute
+  FrGovNotificationsRoute: typeof FrGovNotificationsRoute
   FrGovRatiosRoute: typeof FrGovRatiosRoute
   FrGovReportsRoute: typeof FrGovReportsRoute
   FrGovScreeningRoute: typeof FrGovScreeningRoute
   FrGovSettingsRoute: typeof FrGovSettingsRoute
+  FrGovSubsidyRoute: typeof FrGovSubsidyRoute
   FrGovVacanciesRoute: typeof FrGovVacanciesRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
@@ -7263,12 +7582,14 @@ interface FrRouteChildren {
   FrWelcomeCodeRoute: typeof FrWelcomeCodeRoute
   FrDaycareCityAgeRoute: typeof FrDaycareCityAgeRoute
   FrDaycareCityCityRoute: typeof FrDaycareCityCityRoute
+  FrDaycaresCityAgeRoute: typeof FrDaycaresCityAgeRoute
 }
 
 const FrRouteChildren: FrRouteChildren = {
   FrAboutRoute: FrAboutRoute,
   FrAccountRoute: FrAccountRoute,
   FrAdminRoute: FrAdminRoute,
+  FrAppAdminUnavailableRoute: FrAppAdminUnavailableRoute,
   FrBackgroundChecksRoute: FrBackgroundChecksRouteWithChildren,
   FrBenefitsRoute: FrBenefitsRoute,
   FrBlogRoute: FrBlogRoute,
@@ -7306,6 +7627,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrMilieuxFamiliauxRoute: FrMilieuxFamiliauxRoute,
   FrNeedCareFastRoute: FrNeedCareFastRoute,
   FrNotificationsRoute: FrNotificationsRoute,
+  FrOpenSpotsRoute: FrOpenSpotsRoute,
   FrParentRoute: FrParentRouteWithChildren,
   FrPlansRoute: FrPlansRoute,
   FrPricingRoute: FrPricingRoute,
@@ -7332,25 +7654,34 @@ const FrRouteChildren: FrRouteChildren = {
   FrIndexRoute: FrIndexRoute,
   FrBlogSlugRoute: FrBlogSlugRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
+  FrDaycaresCityRoute: FrDaycaresCityRoute,
   FrGovAnalyticsRoute: FrGovAnalyticsRoute,
   FrGovAuditRoute: FrGovAuditRoute,
   FrGovBroadcastsRoute: FrGovBroadcastsRoute,
   FrGovCentresRoute: FrGovCentresRoute,
+  FrGovChangeRequestsRoute: FrGovChangeRequestsRoute,
+  FrGovClaimNoticesRoute: FrGovClaimNoticesRoute,
+  FrGovComplaintUpdatesRoute: FrGovComplaintUpdatesRoute,
   FrGovComplaintsRoute: FrGovComplaintsRoute,
   FrGovComplianceRoute: FrGovComplianceRoute,
   FrGovDataRoute: FrGovDataRoute,
+  FrGovDataRequestsRoute: FrGovDataRequestsRoute,
   FrGovDemandRoute: FrGovDemandRoute,
+  FrGovEscalationsRoute: FrGovEscalationsRoute,
   FrGovExpiriesRoute: FrGovExpiriesRoute,
   FrGovExportsRoute: FrGovExportsRoute,
   FrGovFeeCapsRoute: FrGovFeeCapsRoute,
   FrGovFundingRoute: FrGovFundingRoute,
   FrGovIncidentsRoute: FrGovIncidentsRoute,
+  FrGovInspectionSyncRoute: FrGovInspectionSyncRoute,
   FrGovLoginRoute: FrGovLoginRoute,
   FrGovMapRoute: FrGovMapRoute,
+  FrGovNotificationsRoute: FrGovNotificationsRoute,
   FrGovRatiosRoute: FrGovRatiosRoute,
   FrGovReportsRoute: FrGovReportsRoute,
   FrGovScreeningRoute: FrGovScreeningRoute,
   FrGovSettingsRoute: FrGovSettingsRoute,
+  FrGovSubsidyRoute: FrGovSubsidyRoute,
   FrGovVacanciesRoute: FrGovVacanciesRoute,
   FrJobsPostRoute: FrJobsPostRoute,
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
@@ -7360,6 +7691,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrWelcomeCodeRoute: FrWelcomeCodeRoute,
   FrDaycareCityAgeRoute: FrDaycareCityAgeRoute,
   FrDaycareCityCityRoute: FrDaycareCityCityRoute,
+  FrDaycaresCityAgeRoute: FrDaycaresCityAgeRoute,
 }
 
 const FrRouteWithChildren = FrRoute._addFileChildren(FrRouteChildren)
@@ -7594,6 +7926,7 @@ const rootRouteChildren: RootRouteChildren = {
   MilieuxFamiliauxRoute: MilieuxFamiliauxRoute,
   NeedCareFastRoute: NeedCareFastRoute,
   NotificationsRoute: NotificationsRoute,
+  OpenSpotsRoute: OpenSpotsRoute,
   ParentRoute: ParentRouteWithChildren,
   PayRoute: PayRouteWithChildren,
   PayPlanRoute: PayPlanRoute,
@@ -7627,7 +7960,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAlexaRoute: ApiAlexaRoute,
   ApiAutomationsRoute: ApiAutomationsRoute,
   ApiBackgroundCheckFilesRoute: ApiBackgroundCheckFilesRouteWithChildren,
-  ApiStaffResumeRoute: ApiStaffResumeRoute,
   ApiCentreLeadAlertsRoute: ApiCentreLeadAlertsRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,
@@ -7644,6 +7976,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   ApiSpotOffersRoute: ApiSpotOffersRoute,
+  ApiStaffResumeRoute: ApiStaffResumeRoute,
   ApiTourHoldsRoute: ApiTourHoldsRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BlogSlugRoute: BlogSlugRoute,
@@ -7740,12 +8073,15 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSmsInboundRoute: ApiSmsInboundRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  ApiVideoStatusRoute: ApiVideoStatusRoute,
   ApiVoiceConnectRoute: ApiVoiceConnectRoute,
   ApiVoiceIncomingRoute: ApiVoiceIncomingRoute,
   ApiVoiceRecordingRoute: ApiVoiceRecordingRoute,
+  ApiVoiceStatusRoute: ApiVoiceStatusRoute,
   ApiWebhooksResendRoute: ApiWebhooksResendRoute,
   DaycareCityAgeRoute: DaycareCityAgeRoute,
   DaycareCityCityRoute: DaycareCityCityRoute,
+  DaycaresCityAgeRoute: DaycaresCityAgeRoute,
   ApiContractsIdPdfRoute: ApiContractsIdPdfRoute,
   ApiInvoicesIdPdfRoute: ApiInvoicesIdPdfRoute,
   ApiV1CentreLeadsRoute: ApiV1CentreLeadsRouteWithChildren,

@@ -8,6 +8,7 @@ import { saveNoticePeriod } from "@/lib/server/wiring/withdrawal";
 import { withdrawalEnabled } from "@/lib/wiring/withdrawal";
 import { useCopy } from "@/lib/use-copy";
 import { ToolError, ToolPending } from "@/components/tool-states";
+import { CentreWithdrawalNotices } from "@/components/withdrawal-notices";
 
 export const Route = createFileRoute("/provider_/withdrawal")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
@@ -49,6 +50,9 @@ function NoticePage() {
         {fr ? "Enregistrer le préavis" : "Save notice period"}
       </Button>
       {note ? <p className="mt-3 text-sm" role="status">{note}</p> : null}
+      <div className="mt-8">
+        <CentreWithdrawalNotices />
+      </div>
     </WiringDesk>
   );
 }

@@ -5,7 +5,7 @@ import { KidNotebook } from "@/components/kid-art";
 import { TourCountSummary } from "@/components/tour-count-summary";
 import { Button } from "@/components/ui/button";
 import { inboxThreadTo } from "@/lib/desk-nav";
-import { parentRequestKindKey, parentRequestStatusLabelKey, type ParentRequestRow } from "@/lib/parent-request-rows";
+import { formatVisitSlot, parentRequestKindKey, parentRequestStatusLabelKey, type ParentRequestRow } from "@/lib/parent-request-rows";
 import { summarizeTourCounts, type TourCountSummary as TourCountSummaryValue } from "@/lib/tour-counts";
 import { useCopy } from "@/lib/use-copy";
 
@@ -65,7 +65,7 @@ export function ParentRequestsList({
                 </p>
                 {row.tourDate ? (
                   <p className="text-sm text-subtle">
-                    {t("parentRequestVisitOn")} {requestDate(row.tourDate, locale)}
+                    {t("parentRequestVisitOn")} {formatVisitSlot(row.tourDate, locale)}
                   </p>
                 ) : null}
                 {row.conversationId ? (

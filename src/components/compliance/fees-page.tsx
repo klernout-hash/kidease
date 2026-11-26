@@ -3,6 +3,7 @@ import { releasedRows } from "@/lib/gov/k-anonymity";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
+import { formatCad } from "@/lib/cad-format";
 import { feeCopy, publishedCapsFor } from "@/lib/compliance/fees";
 import type { PackMode } from "@/lib/compliance/mode";
 import { checkDailyFee } from "@/lib/server/compliance-fees";
@@ -65,7 +66,7 @@ export function GovFeesPage({ data, locale, showCentres = false }: { data: GovDa
         <ul className="mt-3 space-y-2 text-sm">
           {caps.map((cap) => (
             <li key={cap.ageKey}>
-              {copy.capLine}: {cap.ageKey} — ${((cap.maxDailyCents ?? 0) / 100).toFixed(2)} / {locale === "fr" ? "jour" : "day"}
+              {copy.capLine}: {cap.ageKey} — {formatCad((cap.maxDailyCents ?? 0) / 100, locale === "fr" ? "fr-CA" : "en-CA")} / {locale === "fr" ? "jour" : "day"}
             </li>
           ))}
         </ul>

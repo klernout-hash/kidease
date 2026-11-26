@@ -12,7 +12,55 @@ import { childCheckinEnabled, centreToolIds } from "@/lib/features";
 import { attendancePreviewEnabled } from "@/lib/attendance-handoff";
 import { parentAbsenceBody } from "@/lib/daily-care";
 import { listAccessibleDaycareIds, loadCentreRole } from "./centre-access";
-import { commitCorrection, commitHandoff, readCentreDay, readParentDay, saveParentAbsenceReport, seedDemoChildren } from "./attendance-handoff";
+import {
+  cancelParentAbsenceReport,
+  commitCorrection,
+  commitHandoff,
+  readCentreDay,
+  readParentAbsenceList,
+  readParentDay,
+  saveParentAbsenceReport,
+  seedDemoChildren,
+} from "./attendance-handoff";
+import {
+  absenceNoticeKey,
+  centreAbsenceCancelledNotice,
+  centreAbsenceNotice,
+  parentAbsenceCancelledBody,
+} from "@/lib/absence-notice";
+import type { ParentAbsenceStatus } from "@/lib/daily-care";
+
+type Sql = Awaited<ReturnType<typeof getSql>>;
+
+/** Bell line for each person on the centre desk, in their own language. */
+async function alertCentreStaff(
+  sql: Sql,
+  input: { daycareId: string; bookingId: string; localDay: string; sourceStatus: string; text: (locale: "en" | "fr") => string },
+) {
+  const staff = await sql<{ user_id: string; locale: string | null }>`
+    select s.user_id, p.locale
+    from (
+      select user_id from provider_daycares where daycare_id = ${input.daycareId}
+      union
+      select user_id from centre_members where daycare_id = ${input.daycareId} and status = 'active'
+    ) s
+    left join profiles p on p.user_id = s.user_id
+    limit 20
+  `.catch(() => [] as { user_id: string; locale: string | null }[]);
+  const { saveParentInAppNotice } = await import("./parent-notice");
+  for (const person of staff) {
+    const locale = person.locale === "fr" ? "fr" : "en";
+    await saveParentInAppNotice(sql, {
+      userId: person.user_id,
+      kind: "inbox",
+      titleKey: "notifCare",
+      href: "/provider?desk=today",
+      sourceKey: absenceNoticeKey({ bookingId: input.bookingId, localDay: input.localDay, status: input.sourceStatus }),
+      daycareName: input.text(locale),
+      status: "absence",
+    }).catch(() => undefined);
+  }
+}
 
 function doorOn() {
   return childCheckinEnabled() || attendancePreviewEnabled();
@@ -30,7 +78,13 @@ function iso(value: string | Date | null | undefined): string {
 export const listDoorRoster = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    if (!doorOn()) return { enabled: false as const, children: [], events: [], headcount: 0, canCorrect: false };
+    if (!doorOn()) {
+      // Door taps are off, but a parent's absence report must still reach Today.
+      const sql = await getSql();
+      const centres = await listAccessibleDaycareIds(sql, context.userId).catch(() => [] as string[]);
+      const absences = await readParentAbsenceList(sql, { centreIds: centres, now: new Date() });
+      return { enabled: false as const, children: [], events: [], headcount: 0, canCorrect: false, absences };
+    }
     const sql = await getSql();
     const centres = await listAccessibleDaycareIds(sql, context.userId);
     if (!centres.length) return { enabled: true as const, children: [], events: [], headcount: 0, canCorrect: false };
@@ -129,7 +183,50 @@ export const reportMyChildAbsence = createServerFn({ method: "POST" })
       parentUserId: context.userId, actorUserId: context.userId,
       body: parentAbsenceBody({ ...report, locale: data.locale }),
     }).catch(() => undefined);
+    // A repeat tap stays one bell row, but a report made again after a cancel is new.
+    // Count the cancels for this booking and day and put that round in the key.
+    const cancelPrefix = absenceNoticeKey({ bookingId: data.bookingId, localDay: report.localDay, status: "cancelled:" });
+    const rounds = await sql<{ n: number }>`
+      select count(distinct source_key)::int as n from user_notifications
+      where source_key like ${`${cancelPrefix.replace(/[\\%_]/g, "\\$&")}%`}
+    `.catch(() => [] as { n: number }[]);
+    const round = Number(rounds[0]?.n) || 0;
+    await alertCentreStaff(sql, {
+      daycareId: report.daycareId,
+      bookingId: data.bookingId,
+      localDay: report.localDay,
+      sourceStatus: round ? `${report.status}:r${round}` : report.status,
+      text: (locale) =>
+        centreAbsenceNotice({ status: report.status as ParentAbsenceStatus, childName: report.childName, localDay: report.localDay, locale }),
+    });
     return { ok: true as const, localDay: report.localDay };
+  });
+
+/** Undo the parent's own report for today, tell the thread and the centre desk. */
+export const cancelMyChildAbsence = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { bookingId?: string; locale?: string }) => ({
+    bookingId: String(input?.bookingId || "").trim().slice(0, 100),
+    locale: input?.locale === "fr" ? "fr" : "en",
+  }))
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const done = await cancelParentAbsenceReport(sql, { userId: context.userId, bookingId: data.bookingId, now: new Date() });
+    if (!done.ok) return done;
+    const { insertCareStatusMessage } = await import("./daily-care");
+    await insertCareStatusMessage({
+      conversationId: done.conversationId, daycareId: done.daycareId, daycareName: done.daycareName,
+      parentUserId: context.userId, actorUserId: context.userId,
+      body: parentAbsenceCancelledBody({ ...done, locale: data.locale }),
+    }).catch(() => undefined);
+    await alertCentreStaff(sql, {
+      daycareId: done.daycareId,
+      bookingId: data.bookingId,
+      localDay: done.localDay,
+      sourceStatus: `cancelled:${Date.now()}`,
+      text: (locale) => centreAbsenceCancelledNotice({ childName: done.childName, localDay: done.localDay, locale }),
+    });
+    return { ok: true as const, localDay: done.localDay };
   });
 
 export const seedDemoAttendance = createServerFn({ method: "POST" })

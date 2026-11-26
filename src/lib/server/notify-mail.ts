@@ -23,6 +23,37 @@ export const VISITOR_AUTO_REPLY_SUBJECT = "We got your message: KidEase";
 export const VISITOR_AUTO_REPLY_TEXT =
   "Thanks for sending your request to KidEase. One of our KidEase representatives will get back to you within 24 hours.\n\nThank you";
 
+export const VISITOR_AUTO_REPLY_SUBJECT_FR = "Nous avons reçu votre message : KidEase";
+
+export const VISITOR_AUTO_REPLY_TEXT_FR =
+  "Merci d’avoir écrit à KidEase. Une personne de l’équipe KidEase vous répondra d’ici 24 heures.\n\nMerci";
+
+/** Contact-form acknowledgement in the visitor's language (B03a: French forms got English mail). */
+export function visitorAutoReplyCopy(locale: string | null | undefined) {
+  if (locale === "fr") {
+    return {
+      subject: VISITOR_AUTO_REPLY_SUBJECT_FR,
+      text: VISITOR_AUTO_REPLY_TEXT_FR,
+      hi: "Bonjour",
+      there: "",
+      thanks: "Merci",
+      signoff: "À bientôt,",
+      team: "L’aide KidEase",
+      lang: "fr",
+    };
+  }
+  return {
+    subject: VISITOR_AUTO_REPLY_SUBJECT,
+    text: VISITOR_AUTO_REPLY_TEXT,
+    hi: "Hi",
+    there: "there",
+    thanks: "Thank you",
+    signoff: "Talk soon,",
+    team: "KidEase Support",
+    lang: "en",
+  };
+}
+
 export const ACTOR_CONFIRM_SUBJECT = "We got your request: KidEase";
 
 /** Enroll Now, new listing, claim, spot / tour / waitlist. Signup uses verify-email + next-steps instead. */

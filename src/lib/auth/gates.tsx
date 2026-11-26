@@ -71,6 +71,23 @@ export function RedirectToSignIn({ to = SIGN_IN_PATH }: { to?: string }) {
   );
 }
 
+/**
+ * Admin desk test #34: every admin page waited on a fresh 2FA status call behind
+ * "Checking admin access…". Remember a verified answer for this tab session and
+ * render the desk at once, then re-check quietly. The server still enforces 2FA
+ * on every admin route and loader, so this only skips the client wait.
+ */
+const TWO_FACTOR_CACHE_MS = 10 * 60 * 1000;
+let twoFactorVerified: { userId: string; at: number } | null = null;
+
+export function twoFactorCachedOk(userId: string | null | undefined, now = Date.now()): boolean {
+  return Boolean(userId && twoFactorVerified?.userId === userId && now - twoFactorVerified.at < TWO_FACTOR_CACHE_MS);
+}
+
+export function rememberTwoFactor(userId: string, verified: boolean, now = Date.now()) {
+  twoFactorVerified = verified ? { userId, at: now } : null;
+}
+
 /** Password/social session plus the email verification code. */
 export function TwoFactorGate({
   next,
@@ -84,7 +101,7 @@ export function TwoFactorGate({
 }) {
   const { user, isPending } = useCurrentUserState();
   const staff = staffTwoFactorRequired(next);
-  const [state, setState] = useState<"load" | "ok" | "need">(staff ? "load" : "ok");
+  const [state, setState] = useState<"load" | "ok" | "need">(staff && !twoFactorCachedOk(user?.id) ? "load" : "ok");
 
   // Re-check only when the user or the staff requirement changes. Switching admin tabs
   // (/admin?tab=…) changes `next` but not the answer; re-checking on every tab unmounted the
@@ -97,15 +114,19 @@ export function TwoFactorGate({
       return;
     }
     let cancelled = false;
-    setState("load");
+    const userId = user.id;
+    // A cached yes renders now; the check below still runs and can send the user to /verify-2fa.
+    setState(twoFactorCachedOk(userId) ? "ok" : "load");
     void yieldToMain()
       .then(() => getTwoFactorStatus())
       .then((s) => {
+        rememberTwoFactor(userId, s.verified === true);
         if (!cancelled) setState(twoFactorGateState(s.verified, gateNext));
       })
       .catch(() => {
         // Admin / support fail closed. Parent / provider never reach here
         // (optional 2FA) so a flaky status check cannot loop /verify-2fa.
+        rememberTwoFactor(userId, false);
         if (!cancelled) setState(twoFactorGateState(false, gateNext));
       });
     return () => {
@@ -125,7 +146,7 @@ export function TwoFactorGate({
   if (!user) return <RedirectToSignIn />;
   if (state === "need") {
     const safeNext = sanitizePostLoginNext(next) ?? (staffTwoFactorRequired(next) ? "/admin" : isFrPath(next) ? "/fr/parent" : "/parent");
-    return <Navigate to="/verify-2fa" search={{ next: safeNext }} />;
+    return <Navigate to={isFrPath(safeNext) ? "/fr/verify-2fa" : "/verify-2fa"} search={{ next: safeNext }} />;
   }
   return <>{children}</>;
 }

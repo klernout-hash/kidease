@@ -75,7 +75,7 @@ export function ShortlistCompareTable({
             label={t("compareDistance")}
             values={items.map((d) => {
               return (
-                parentDistanceLabel({ km: distancesKm[d.id], away: t("kmAway"), show: located }) ||
+                parentDistanceLabel({ km: distancesKm[d.id], away: t("kmAway"), locale, show: located }) ||
                 t("noneListed")
               );
             })}

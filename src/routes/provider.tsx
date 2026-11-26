@@ -23,6 +23,7 @@ import { HealthSecondFactorBanner } from "@/components/email-code-setting";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useLocallySignedOut, useSettledUser } from "@/lib/auth/use-current-user";
 import { createListing, getProvider } from "@/lib/server/family";
+import { setOrgCentre } from "@/lib/server/org-occupancy";
 import { dismissUpgradeCard } from "@/lib/server/upgrade-card";
 import {
   DUPLICATE_LISTING_MESSAGE,
@@ -115,6 +116,10 @@ const SafeArrivalPanel = lazy(() =>
 const ChildHealthLog = lazy(() =>
   import("@/components/child-health-log").then((m) => ({ default: m.ChildHealthLog })),
 );
+const CentreEceCerts = lazy(() =>
+  import("@/components/staff-certs").then((m) => ({ default: m.CentreEceCerts })),
+);
+const MyEceCerts = lazy(() => import("@/components/staff-certs").then((m) => ({ default: m.MyEceCerts })));
 const CertExpiryPanel = lazy(() =>
   import("@/components/cert-expiry-panel").then((m) => ({ default: m.CertExpiryPanel })),
 );
@@ -122,7 +127,7 @@ const FamilyInviteGap = lazy(() =>
   import("@/components/family-invite-gap").then((m) => ({ default: m.FamilyInviteGap })),
 );
 import { orgDeskStatus } from "@/lib/server/org-occupancy";
-import { gapCopy, moneyCentreChoice, pickCentre } from "@/lib/gap-features";
+import { gapCopy, moneyCentreChoice, pickCareCentre, pickCentre } from "@/lib/gap-features";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
@@ -135,6 +140,9 @@ import { syncHostActionNotices } from "@/lib/server/host-action";
 import { HostListingsDesk } from "@/components/host-listing-desk";
 const AgeOpenSpotsDesk = lazy(() =>
   import("@/components/age-open-spots-desk").then((m) => ({ default: m.AgeOpenSpotsDesk })),
+);
+const CentreWithdrawalNotices = lazy(() =>
+  import("@/components/withdrawal-notices").then((m) => ({ default: m.CentreWithdrawalNotices })),
 );
 const SpotOfferDesk = lazy(() =>
   import("@/components/spot-offer-desk").then((m) => ({ default: m.SpotOfferDesk })),
@@ -308,8 +316,13 @@ export function ProviderPage() {
   const chrome = useRoleChrome();
   const { t, locale } = useCopy();
   const nativeShell = useInNativeShell();
-  const { session } = useSessionDesks();
+  const { session, ready: sessionReady } = useSessionDesks();
   const centreOwner = session?.centreOwner === true;
+  // Until getMyDesks answers, we do not know the role. Showing "This tab is
+  // for the centre owner" then told real owners they were staff (Nov 25,
+  // Contract desk). Show a neutral loading line instead.
+  const ownerPending = !session && !sessionReady;
+  const ownerUnknown = !session;
   const centreRole = session?.centreRole;
   const canBills = centreOwner || (session?.centreGrants != null && session.centreGrants.bills !== "none");
   const canEditBills = centreOwner || session?.centreGrants?.bills === "edit";
@@ -633,8 +646,12 @@ export function ProviderPage() {
           </p>
         )
       ) : null}
-      {desk === "insights" ? <ProviderInsightsDesk /> : null}
-      {desk === "top-rated" ? <TopRatedDesk on={topRated} /> : null}
+      {/* B05: staff logins do not see owner numbers. The server refuses them too. */}
+      {staffDesk && (desk === "insights" || desk === "top-rated" || desk === "employees") ? (
+        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="staff-owner-only">{t("employeeStaffForbidden")}</p>
+      ) : null}
+      {desk === "insights" && !staffDesk ? <ProviderInsightsDesk /> : null}
+      {desk === "top-rated" && !staffDesk ? <TopRatedDesk on={topRated} /> : null}
       {desk === "today" && !deskSettled ? (
         <div role="status" aria-live="polite" aria-label={t("loading")} data-ke="provider-today-loading">
           <DeskSkeleton />
@@ -700,10 +717,23 @@ export function ProviderPage() {
               {locale === "fr" ? "Vos heures" : "Your hours"}
             </Link>
           </p>
+          <Suspense fallback={null}>
+            <MyEceCerts />
+          </Suspense>
         </div>
       ) : null}
       {desk === "today" && hostListing && deskListings.length > 0 && !staffDesk ? (
-        <HostTodayHome listings={deskListings} stats={stats} onChanged={() => void load()} />
+        <HostTodayHome
+          listings={deskListings}
+          stats={stats}
+          onChanged={() => void load()}
+          centreFromUrl={search.centre}
+          onCentre={(id) => {
+            // Same as "Work in this centre": remember it and put it in the URL.
+            void setOrgCentre({ data: { daycareId: id } }).catch(() => undefined);
+            void navigate({ to: deskPath, search: { ...search, desk, centre: id } });
+          }}
+        />
       ) : null}
       {desk === "today" && !hostListing && deskListings.length > 0 && !staffDesk ? (
         <>
@@ -753,6 +783,7 @@ export function ProviderPage() {
           <Suspense fallback={<div className="min-h-44" aria-hidden="true" />}>
             {centreOwner ? <SafeArrivalPanel /> : null}
             {centreOwner ? <CertExpiryPanel /> : null}
+            {centreOwner ? <CentreEceCerts /> : null}
             {centreOwner ? <ChildHealthLog /> : null}
             {centreOwner ? <FamilyInviteGap /> : null}
           </Suspense>
@@ -832,6 +863,7 @@ export function ProviderPage() {
         )}
         {/* Family documents come after the enquiries. The block hides itself when there are none. */}
         {canWrite ? <CentreFamilyDocs hideWhenEmpty /> : null}
+        {canWrite ? <CentreWithdrawalNotices hideWhenEmpty /> : null}
         </div>
       ) : null}
 
@@ -1200,11 +1232,11 @@ export function ProviderPage() {
           </details>
       ) : null}
 
-      {desk === "employees" ? <BackgroundCheckDesk /> : null}
-      {desk === "employees" ? (
+      {desk === "employees" && !staffDesk ? <BackgroundCheckDesk /> : null}
+      {desk === "employees" && !staffDesk ? (
         <CentreEmployeesPanel canInvite={canInviteStaff} canEditPermissions={centreOwner} />
       ) : null}
-      {desk === "employees" ? <EceJobDesk mode="staff" /> : null}
+      {desk === "employees" && !staffDesk ? <EceJobDesk mode="staff" /> : null}
       {desk === "staff" ? <StaffSchedulingDesk /> : null}
       {desk === "hours" ? <StaffTimesheetDesk /> : null}
       {desk === "pay" && session?.providerPayroll && centreOwner ? (
@@ -1228,7 +1260,7 @@ export function ProviderPage() {
         <MyTaxForms key={`forms-${listings[0].id}`} locale={locale === "fr" ? "fr" : "en"} daycareId={listings[0].id} />
       ) : null}
       {desk === "tools" ? <CentreToolsDesk /> : null}
-      {desk === "care" ? <ProviderCareDesk daycareId={listings[0]?.id} owner={centreOwner} /> : null}
+      {desk === "care" ? <ProviderCareDesk daycareId={pickCareCentre(listings.map((row) => row.id), search.centre, requests)} owner={centreOwner} /> : null}
       {desk === "staff" ? <EceJobDesk mode="staff" /> : null}
       {desk === "stories" ? <LearningStoriesDesk /> : null}
       {desk === "learning" ? <CurriculumPackDesk /> : null}
@@ -1237,9 +1269,7 @@ export function ProviderPage() {
       {desk === "screening" ? <BackgroundCheckDesk /> : null}
       {desk === "screening" ? <ProviderScreeningPanel /> : null}
 
-      {desk === "licence" && !centreOwner ? (
-        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
-      ) : null}
+      {desk === "licence" && !centreOwner ? <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} /> : null}
 
       {desk === "licence" && centreOwner ? (
         !deskSettled ? null : deskListings.length === 0 ? (
@@ -1265,7 +1295,7 @@ export function ProviderPage() {
       ) : null}
 
       {desk === "money" ? (
-        canBills ? (
+        canBills && !staffDesk ? (
           <div className="space-y-6">
             <ProviderMoneyPanel showPayouts={centreOwner} canEdit={canEditBills} />
             {centreOwner && moneyChoice.needsPick ? (
@@ -1300,7 +1330,7 @@ export function ProviderPage() {
             {centreOwner ? <TaxReceiptStudio desk="centre" /> : null}
           </div>
         ) : (
-          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
+          <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} />
         )
       ) : null}
 
@@ -1311,7 +1341,7 @@ export function ProviderPage() {
             <CentreAgreementEditor />
           </>
         ) : (
-          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
+          <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} />
         )
       ) : null}
 
@@ -1322,6 +1352,38 @@ export function ProviderPage() {
     </DeskShell>
     </TwoFactorGate>
   );
+}
+
+/**
+ * Owner-only desks. While the role is still loading, show a neutral line; if
+ * the role lookup failed, offer a reload instead of telling an owner the tab
+ * is not for them.
+ */
+function OwnerOnlyNotice({ pending, unknown }: { pending: boolean; unknown: boolean }) {
+  const { t, locale } = useCopy();
+  const fr = locale === "fr";
+  if (pending) {
+    return (
+      <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="owner-check-pending" aria-busy="true">
+        {fr ? "Vérification de votre accès…" : "Checking your access…"}
+      </p>
+    );
+  }
+  if (unknown) {
+    return (
+      <div className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="owner-check-failed" role="alert">
+        <p>{fr ? "Nous n’avons pas pu confirmer votre accès. Réessayez." : "We couldn't confirm your access. Try again."}</p>
+        <button
+          type="button"
+          className="mt-3 inline-flex min-h-11 items-center font-medium text-primary"
+          onClick={() => window.location.reload()}
+        >
+          {fr ? "Réessayer" : "Try again"}
+        </button>
+      </div>
+    );
+  }
+  return <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>;
 }
 
 function ProviderOnboarding() {

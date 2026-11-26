@@ -24,8 +24,8 @@ test("routeTree.gen.ts registers /verify-2fa so Production does not 404", () => 
 
 test("operator sign-in still sends users through /verify-2fa", () => {
   assert.match(login, /twoFactorPageUrl/);
-  assert.match(readFileSync(join(root, "src/lib/desks.ts"), "utf8"), /\/verify-2fa\?next=/);
-  assert.match(gates, /to="\/verify-2fa"/);
+  assert.match(readFileSync(join(root, "src/lib/desks.ts"), "utf8"), /verify2faPagePath\(locale, next\)\}\?next=/);
+  assert.match(gates, /"\/fr\/verify-2fa" : "\/verify-2fa"/);
   assert.match(login, /continueAfterSignIn/);
   assert.match(gates, /DeskSkeleton/);
 });

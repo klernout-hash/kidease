@@ -397,7 +397,7 @@ test("a period that spans a minimum wage change checks each day against the rate
   assert.equal(stops[0].amountCents, 1_795);
   assert.equal(canApprove([card]), false);
   assert.match(checkText(stops[0], "en"), /\$17\.95 an hour minimum wage in force on October 1, 2026/);
-  assert.match(checkText(stops[0], "fr"), /17,95\s\$ l’heure en vigueur le 1er octobre 2026/);
+  assert.match(checkText(stops[0], "fr"), /17,95\s\$\sCA l’heure en vigueur le 1er octobre 2026/);
   // Under both rates: one stop per rate.
   const low = buildPayCard({ person: { ...person, rateCents: 1_700 }, period: spanPeriod, days });
   assert.deepEqual(low.checks.filter((check) => check.code === "under_minimum_wage").map((check) => check.amountCents), [1_760, 1_795]);

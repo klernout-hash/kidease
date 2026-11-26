@@ -67,7 +67,8 @@ test("Connect fee is exactly 3% and tax stays off the application fee", () => {
   assert.equal(charge.application_fee_amount, 200);
   assert.equal(charge.on_behalf_of, "acct_day");
   assert.equal(charge.transfer_data.destination, "acct_day");
-  assert.equal(charge.amount, 10_200);
+  // The parent pays the bill; the fee comes out of the centre's payout.
+  assert.equal(charge.amount, 10_000);
   const flat = Object.fromEntries(flattenStripeBody(charge));
   assert.equal(flat.application_fee_amount, "200");
   assert.equal(flat.on_behalf_of, "acct_day");
@@ -75,26 +76,26 @@ test("Connect fee is exactly 3% and tax stays off the application fee", () => {
   assert.equal(JSON.stringify(charge).includes("tax"), false);
 });
 
-test("the parent pays the 3% fee and the centre keeps the invoice", () => {
+test("the parent pays exactly the bill and the centre pays the 3% KidEase fee", () => {
   const quote = parentChargeQuote({ invoiceCents: 10_000, bps: 300, env: {} });
   assert.equal(parentServiceFeeApplies({ env: {} }), true);
-  assert.equal(quote.passedToParent, true);
-  assert.equal(quote.feeCents, 300);
-  assert.equal(quote.parentPaysCents, 10_300);
+  assert.equal(quote.passedToParent, false);
+  assert.equal(quote.feePaidBy, "centre");
+  assert.equal(quote.feeCents, 0);
+  assert.equal(quote.kidEaseFeeCents, 300);
+  assert.equal(quote.parentPaysCents, 10_000);
   assert.equal(quote.applicationFeeCents, 300);
-  assert.equal(quote.centreReceivesCents, 10_000);
-  assert.equal(quote.label, "KidEase service fee (3%) / Frais de service KidEase (3 %)");
-  assert.equal(parentServiceFeeLabel(300), quote.label);
-  const line = parentServiceFeeLine(quote.feeCents, quote.label);
-  assert.equal(line?.amount, 300);
-  assert.equal(line?.description, quote.label);
+  assert.equal(quote.centreReceivesCents, 9_700);
+  assert.equal(quote.label, "KidEase fee (3%) / Frais KidEase (3 %)");
+  assert.equal(parentServiceFeeLine(quote.feeCents, quote.label), null);
+  assert.equal(typeof parentServiceFeeLabel(300), "string");
+  // Tax on the KidEase fee is the centre's line, never the parent's.
   const taxed = monthlyFeeTaxLine({
     plan: { kind: "manual", rateId: null, taxBps: 1300 },
-    feeCents: quote.feeCents,
+    feeCents: quote.kidEaseFeeCents,
   });
   assert.equal(taxed?.amount, 39);
   assert.equal(taxed?.description, FEE_TAX_DESCRIPTION);
-  assert.notEqual(quote.applicationFeeCents, quote.feeCents + (taxed?.amount ?? 0));
   const held = parentChargeQuote({
     invoiceCents: 10_000,
     bps: 300,
@@ -106,6 +107,7 @@ test("the parent pays the 3% fee and the centre keeps the invoice", () => {
   assert.equal(held.parentPaysCents, 10_000);
   assert.equal(held.applicationFeeCents, 0);
   assert.equal(held.centreReceivesCents, 10_000);
+  assert.equal(held.kidEaseFeeCents, 0);
   const centreOff = parentChargeQuote({
     invoiceCents: 10_000,
     daycareId: "qa-preview-hidden-centre",
@@ -119,9 +121,9 @@ test("the parent pays the 3% fee and the centre keeps the invoice", () => {
     bps: 300,
     env: {},
   });
-  assert.equal(charge.amount, 10_300);
+  assert.equal(charge.amount, 10_000);
   assert.equal(charge.application_fee_amount, 300);
-  assert.equal(charge.amount - charge.application_fee_amount, 10_000);
+  assert.equal(charge.amount - charge.application_fee_amount, 9_700);
 });
 
 test("a month collects tax from every paid bill, once each", () => {
@@ -370,7 +372,7 @@ test("wallet save and invoices do not use a hosted page", () => {
   assert.equal(setup.payment_method_options.acss_debit.currency, "cad");
   assert.equal(setup.payment_method_options.acss_debit.mandate_options.transaction_type, "personal");
   const settings = connectInvoicePaymentSettings();
-  assert.deepEqual(settings.payment_method_types, ["card", "acss_debit"]);
+  assert.deepEqual(settings.payment_method_types, ["card", "acss_debit", "link"]);
   const invoice = parentInvoiceBody({
     mode: "manual",
     customerId: "cus_parent",
@@ -393,7 +395,7 @@ test("wallet save and invoices do not use a hosted page", () => {
   });
   assert.equal(automatic.collection_method, "charge_automatically");
   assert.equal(automatic.default_payment_method, "pm_card");
-  assert.deepEqual(automatic.payment_settings.payment_method_types, ["card", "acss_debit"]);
+  assert.deepEqual(automatic.payment_settings.payment_method_types, ["card", "acss_debit", "link"]);
   const stripped = withoutHostedInvoice({ id: "in_1", hosted_invoice_url: "https://invoice.stripe.com/i/secret", invoice_pdf: "https://files.stripe.com/secret" });
   assert.equal("hosted_invoice_url" in stripped, false);
   assert.equal("invoice_pdf" in stripped, false);

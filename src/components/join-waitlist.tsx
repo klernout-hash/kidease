@@ -5,8 +5,15 @@ import { Button } from "@/components/ui/button";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { spotOfferCopy } from "@/lib/spot-offer-copy";
-import { joinDaycareWaitlist, listMySpotOffers, withdrawDaycareWaitlist } from "@/lib/server/spot-offers";
+import {
+  getListingPipelineState,
+  joinDaycareWaitlist,
+  listMySpotOffers,
+  withdrawDaycareWaitlist,
+} from "@/lib/server/spot-offers";
+import { pipelineCopy } from "@/lib/pipeline-copy";
 import { useCopy } from "@/lib/use-copy";
+import { apiErrorMessage, localizeApiError } from "@/lib/api-error-copy";
 import { RuntimePaused } from "@/components/runtime-paused";
 import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -27,6 +34,20 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
   const [mineId, setMineId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [listOpen, setListOpen] = useState(true);
+  const pc = pipelineCopy(locale);
+
+  useEffect(() => {
+    let live = true;
+    void getListingPipelineState({ data: { daycareId } })
+      .then((state) => {
+        if (live) setListOpen(state.waitlistOpen);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [daycareId]);
 
   useEffect(() => {
     if (typeof window === "undefined" || window.location.hash !== "#join-waitlist") return;
@@ -72,15 +93,16 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
     void joinDaycareWaitlist({ data: { daycareId, ageGroup, childLabel, note } })
       .then((row) => {
         if (!row.ok) {
-          setError(row.error);
-          toast.error(row.error);
+          const message = localizeApiError(row.error, locale);
+          setError(message);
+          toast.error(message);
           return;
         }
         setMineId(row.id);
         toast.success(copy.joined);
       })
       .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : copy.feeBlocked;
+        const message = apiErrorMessage(err, locale, copy.feeBlocked);
         setError(message);
         toast.error(message);
       })
@@ -97,7 +119,7 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
         toast.success(copy.withdraw);
       })
       .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : copy.feeBlocked;
+        const message = apiErrorMessage(err, locale, copy.feeBlocked);
         setError(message);
       })
       .finally(() => setBusy(false));
@@ -115,7 +137,11 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
           {error}
         </p>
       ) : null}
-      {mineId ? (
+      {!mineId && !listOpen ? (
+        <p className="mt-3 text-sm" role="status" data-ke="waitlist-closed">
+          {pc.waitlistClosedParent}
+        </p>
+      ) : mineId ? (
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <Button asChild>
             <Link to="/parent/spot-offers">{copy.seeMine}</Link>

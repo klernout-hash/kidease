@@ -661,7 +661,8 @@ export const markMatchReviewAnswered = createServerFn({ method: "POST" })
 // Provider side
 // ---------------------------------------------------------------------------
 
-export type HiringJob = StaffJob & { applicants: number };
+/** boardPublic: false while the centre listing is unpublished, a test, or a demo. The guest board hides those (B05). */
+export type HiringJob = StaffJob & { applicants: number; boardPublic: boolean };
 export type ApplicantCard = {
   applicationId: string;
   stage: ApplicationStage;
@@ -685,9 +686,12 @@ export const getHiringDesk = createServerFn({ method: "GET" })
         )
         .catch(() => []),
       sql
-        .query<JobRow & { applicants: number }>(
+        .query<JobRow & { applicants: number; board_public: boolean | null }>(
           `select ${JOB_COLUMNS},
-             (select count(*)::int from job_applications a where a.job_id = j.id) as applicants
+             (select count(*)::int from job_applications a where a.job_id = j.id) as applicants,
+             (coalesce(d.visibility, 'public') = 'public'
+               and coalesce(d.is_test, 0) = 0
+               and coalesce(d.is_demo, 0) = 0) as board_public
            from centre_job_posts j
            join daycares d on d.id = j.daycare_id
            where j.daycare_id = any($1::text[]) and coalesce(j.board, 0) = 1
@@ -700,7 +704,9 @@ export const getHiringDesk = createServerFn({ method: "GET" })
     return {
       enabled: true as const,
       centres: centres.map((c) => ({ id: c.id, name: c.name, province: provinceFromDaycare(c.province) })),
-      jobs: posts.map((row): HiringJob => ({ ...toJob(row), applicants: Number(row.applicants) || 0 })),
+      jobs: posts.map(
+        (row): HiringJob => ({ ...toJob(row), applicants: Number(row.applicants) || 0, boardPublic: row.board_public !== false }),
+      ),
     };
   });
 

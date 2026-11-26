@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { confirmAction } from "@/lib/success-confirm";
 import { Mail } from "lucide-react";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { submitPublicMessage } from "@/lib/server/notify";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import type { CopyKey } from "@/lib/copy";
@@ -33,7 +33,8 @@ const SUBJECTS: CopyKey[] = [
 ];
 
 export function Contact() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
+  const { user } = useCurrentUserState();
   const search = useSearch({ strict: false }) as { intent?: string };
   const isParent = search.intent === "parent";
   const [name, setName] = useState("");
@@ -42,6 +43,13 @@ export function Contact() {
   const [body, setBody] = useState("");
   const [sent, setSent] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Signed in: start with the account name and email. Never overwrite typing.
+  useEffect(() => {
+    if (!user) return;
+    setName((cur) => cur || user.displayName || "");
+    setEmail((cur) => cur || user.primaryEmail || "");
+  }, [user]);
 
   const [busy, setBusy] = useState(false);
   const { token, onToken, reset: resetTurnstile, resetSignal, required: turnstileRequired, onRequired } =
@@ -66,6 +74,7 @@ export function Contact() {
       subject: isParent ? `${t("roleParentTitle")}: ${label}` : label,
       body,
       turnstileToken: challenge,
+      locale: locale === "fr" ? "fr" : "en",
     };
     try {
       try {
@@ -74,8 +83,8 @@ export function Contact() {
         await submitPublicMessage({ data: payload });
       }
       resetTurnstile();
+      // One success message: the inline thanks below (no modal on top of it).
       setSent(true);
-      confirmAction(t, "contactSent");
       setBody("");
     } catch (err) {
       console.error("[kidease-contact]", err);

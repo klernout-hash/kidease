@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { keepLangParam, type LangSearch } from "@/lib/locale-search";
 import {
   createRootRoute,
   HeadContent,
@@ -38,6 +39,9 @@ const KidEaseToaster = lazy(() =>
 const IncomingCallListener = lazy(() =>
   import("@/components/incoming-call-listener").then((m) => ({ default: m.IncomingCallListener })),
 );
+const IncomingVideoAlert = lazy(() =>
+  import("@/components/incoming-video-alert").then((m) => ({ default: m.IncomingVideoAlert })),
+);
 const SuccessConfirmHost = lazy(() =>
   import("@/components/success-confirm").then((m) => ({ default: m.SuccessConfirmHost })),
 );
@@ -54,7 +58,7 @@ import { ensureFrenchCopy } from "@/lib/copy-runtime";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import {
   isAccessProtectedPath,
-  NATIVE_ADMIN_NOTE_PATH,
+  nativeAdminNotePathFor,
   nativeShellHidesAdminNow,
 } from "@/lib/native-admin";
 import {
@@ -147,7 +151,7 @@ export const Route = createRootRoute({
     const nativeShell = shellBlocksCommerce(storeChannel);
     const hideAdmin = storeRead.hideAdmin;
     if (hideAdmin && isAccessProtectedPath(location.pathname)) {
-      throw redirect({ href: NATIVE_ADMIN_NOTE_PATH, statusCode: 302 });
+      throw redirect({ href: nativeAdminNotePathFor(location.pathname), statusCode: 302 });
     }
     return {
       roleChrome,
@@ -206,6 +210,10 @@ export const Route = createRootRoute({
     const setCookie = match.context.microsoftSetCookie;
     if (!setCookie) return undefined;
     return { "set-cookie": setCookie };
+  },
+  // Keep ?lang=fr on every in-app link (inbox threads, sidebar, menu).
+  search: {
+    middlewares: [({ search, next }) => keepLangParam(search as LangSearch, next(search) as LangSearch) as typeof search],
   },
   head: ({ match }) => ({
     meta: [
@@ -340,6 +348,8 @@ function RootDocument() {
       suppressHydrationWarning
     >
       <head>
+        {/* First: shims for old engines (Fire OS / Chrome 91 WebView). */}
+        <script src="/legacy-boot.js?v=1" />
         <script
           data-ke-style-nonce=""
           dangerouslySetInnerHTML={{ __html: STYLE_NONCE_BOOT }}
@@ -399,6 +409,7 @@ function RootDocument() {
           <LiveChatSlot />
           <AfterFirstPaint>
             <IncomingCallListener />
+            <IncomingVideoAlert />
           </AfterFirstPaint>
           </ViewAsProvider>
           <CookieConsentBanner />

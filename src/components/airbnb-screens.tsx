@@ -259,6 +259,16 @@ export function AirbnbAccount() {
     return (
       <AirbnbSubpage title={copy.security} onBack={() => setPane("hub")}>
         <AccountSecurity email={user?.primaryEmail || ""} />
+        {user ? (
+          <button
+            type="button"
+            className="ke-airbnb-row mt-4"
+            data-ke="airbnb-security-sign-out"
+            onClick={() => void signOut(locale === "fr" ? "/fr" : "/")}
+          >
+            <span>{copy.signOut}</span>
+          </button>
+        ) : null}
       </AirbnbSubpage>
     );
   }

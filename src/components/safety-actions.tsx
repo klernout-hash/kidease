@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { Ban, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -10,6 +11,8 @@ import {
   type SafetyTarget,
 } from "@/lib/safety";
 import { reportSafety, safetyThreadState, setMessageBlock } from "@/lib/server/safety";
+import { blockDialogText } from "@/lib/safety";
+import { setThreadBlocked, subscribeThreadBlocks, threadBlocked } from "@/lib/thread-block-state";
 import { useCopy } from "@/lib/use-copy";
 
 export function SafetyReportButton({
@@ -17,11 +20,14 @@ export function SafetyReportButton({
   daycareId,
   conversationId,
   reviewId,
+  variant = "link",
 }: {
   target: SafetyTarget;
   daycareId?: string;
   conversationId?: string;
   reviewId?: string;
+  /** "icon" is the 44px header control; the form opens in a dialog. */
+  variant?: "link" | "icon";
 }) {
   const { locale } = useCopy();
   const { user } = useCurrentUserState();
@@ -40,6 +46,7 @@ export function SafetyReportButton({
           : text.reportThread;
 
   if (!user) {
+    if (variant === "icon") return null;
     return (
       <a
         href="/login?intent=in"
@@ -47,6 +54,21 @@ export function SafetyReportButton({
       >
         {text.signIn}
       </a>
+    );
+  }
+
+  if (!open && variant === "icon") {
+    return (
+      <button
+        type="button"
+        data-ke={`safety-report-${target}`}
+        aria-label={label}
+        title={label}
+        className={ICON_BUTTON}
+        onClick={() => setOpen(true)}
+      >
+        <Flag className="size-5" aria-hidden />
+      </button>
     );
   }
 
@@ -63,9 +85,17 @@ export function SafetyReportButton({
     );
   }
 
-  return (
+  const form = (
     <form
-      className="mt-3 space-y-3 rounded-lg bg-surface p-4 text-sm ring-1 ring-border"
+      className={
+        variant === "icon"
+          ? "w-full max-w-md space-y-3 rounded-2xl bg-surface p-5 text-sm shadow-lift ring-1 ring-border"
+          : "mt-3 space-y-3 rounded-lg bg-surface p-4 text-sm ring-1 ring-border"
+      }
+      role={variant === "icon" ? "dialog" : undefined}
+      aria-modal={variant === "icon" ? true : undefined}
+      aria-label={variant === "icon" ? label : undefined}
+      onClick={variant === "icon" ? (event) => event.stopPropagation() : undefined}
       data-ke={`safety-report-form-${target}`}
       onSubmit={(event) => {
         event.preventDefault();
@@ -116,22 +146,38 @@ export function SafetyReportButton({
       </div>
     </form>
   );
+  if (variant !== "icon") return form;
+  return (
+    <div
+      className="ke-safe-x fixed inset-0 z-[90] grid place-items-end bg-black/40 py-4 [--ke-pad-x:1rem] sm:place-items-center"
+      role="presentation"
+      onClick={() => setOpen(false)}
+    >
+      {form}
+    </div>
+  );
 }
+
+const ICON_BUTTON =
+  "grid size-11 shrink-0 place-items-center rounded-full text-fg hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50 touch-manipulation";
 
 export function BlockMessagesButton({
   conversationId,
   side = "daycare",
+  variant = "link",
 }: {
   conversationId: string;
   side?: "daycare" | "family";
+  variant?: "link" | "icon";
 }) {
   const { locale } = useCopy();
   const { user } = useCurrentUserState();
   const text = safetyText(locale);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [blocked, setBlocked] = useState(false);
-  const label = blocked ? text.unblockPerson : side === "family" ? text.blockFamily : text.blockDaycare;
+  const [blocked, setBlocked] = useThreadBlocked(conversationId);
+  const words = blockDialogText(locale, side);
+  const label = blocked ? text.unblockPerson : words.trigger;
 
   useEffect(() => {
     if (!user) return;
@@ -148,7 +194,13 @@ export function BlockMessagesButton({
         type="button"
         data-ke="safety-block"
         disabled={busy}
-        className="inline-flex min-h-11 items-center text-sm font-medium text-fg underline-offset-4 hover:underline disabled:opacity-50"
+        aria-label={variant === "icon" ? label : undefined}
+        title={variant === "icon" ? label : undefined}
+        className={
+          variant === "icon"
+            ? ICON_BUTTON
+            : "inline-flex min-h-11 items-center text-sm font-medium text-fg underline-offset-4 hover:underline disabled:opacity-50"
+        }
         onClick={() => {
           if (blocked) {
             setBusy(true);
@@ -164,7 +216,7 @@ export function BlockMessagesButton({
           setOpen(true);
         }}
       >
-        {label}
+        {variant === "icon" ? <Ban className={blocked ? "size-5 text-danger" : "size-5"} aria-hidden /> : label}
       </button>
       {open ? (
         <div className="ke-safe-x fixed inset-0 z-[90] grid place-items-end bg-black/40 py-4 [--ke-pad-x:1rem] sm:place-items-center" role="presentation" onClick={() => setOpen(false)}>
@@ -176,7 +228,7 @@ export function BlockMessagesButton({
             data-ke="block-confirm"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 id="block-thread-title" className="font-display text-xl">{text.blockConfirmTitle}</h2>
+            <h2 id="block-thread-title" className="font-display text-xl">{words.title}</h2>
             <p className="mt-2 text-sm leading-6 text-muted">{text.blockConfirmBody}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button
@@ -195,7 +247,7 @@ export function BlockMessagesButton({
                     .finally(() => setBusy(false));
                 }}
               >
-                {text.blockConfirm}
+                {words.confirm}
               </Button>
               <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
                 {text.cancel}
@@ -206,4 +258,35 @@ export function BlockMessagesButton({
       ) : null}
     </>
   );
+}
+
+/**
+ * Whether the viewer blocked this conversation. Every block control and the
+ * composer on the page share one value, so blocking from the header locks
+ * sending at once and unblocking opens it again.
+ */
+export function useThreadBlocked(
+  conversationId: string,
+  opts?: { load?: boolean },
+): [boolean, (next: boolean) => void] {
+  const load = Boolean(opts?.load && conversationId);
+  useEffect(() => {
+    if (!load) return;
+    let live = true;
+    void safetyThreadState({ data: { conversationId } })
+      .then((row) => {
+        if (live) setThreadBlocked(conversationId, Boolean(row.blocked));
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [conversationId, load]);
+  const blocked = useSyncExternalStore(
+    subscribeThreadBlocks,
+    () => threadBlocked(conversationId),
+    () => false,
+  );
+  const set = useCallback((next: boolean) => setThreadBlocked(conversationId, next), [conversationId]);
+  return [blocked, set];
 }

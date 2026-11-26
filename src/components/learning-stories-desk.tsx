@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { storiesCopy } from "@/lib/learning-stories-copy";
-import { LEARNING_FRAMEWORKS, type LearningFramework } from "@/lib/learning-stories";
+import { FRAMEWORK_DOMAINS, frameworkForProvince, frameworksForProvince, type LearningFramework } from "@/lib/learning-stories";
 import { listCentreStories, listParentStories, saveLearningStory } from "@/lib/server/learning-stories";
 import { useCopy } from "@/lib/use-copy";
 
@@ -20,6 +20,13 @@ export function LearningStoriesDesk() {
     void listCentreStories({ data: { daycareId: id } }).then((row) => {
       setDesk(row);
       if (row.enabled && row.daycareId) setDaycareId(row.daycareId);
+      // Start on the centre's own provincial framework (Manitoba: Early Returns).
+      if (row.enabled) {
+        const province = row.centres.find((c) => c.id === row.daycareId)?.province;
+        const next = frameworkForProvince(province);
+        setFramework(next);
+        setForm((f) => ({ ...f, domain: FRAMEWORK_DOMAINS[next][0] || f.domain }));
+      }
     }).catch(() => setDesk({ enabled: false, centres: [], children: [], stories: [] }));
   }
 
@@ -33,6 +40,7 @@ export function LearningStoriesDesk() {
 
   const domains = copy.domains[framework];
   const activeId = daycareId || desk.daycareId || "";
+  const frameworkOrder = frameworksForProvince(desk.centres.find((c) => c.id === activeId)?.province);
 
   return (
     <section className="space-y-8">
@@ -42,8 +50,8 @@ export function LearningStoriesDesk() {
         <p className="mt-1 text-sm text-muted">{copy.privateNote}</p>
       </div>
       {desk.centres.length > 1 ? (
-        <label className="block text-sm">
-          {copy.child}
+        <label className="block text-sm" data-ke="learning-centre-select">
+          {copy.centre}
           <select className="ke-input mt-1 min-h-11 w-full" value={activeId} onChange={(e) => { setDaycareId(e.target.value); load(e.target.value); }}>
             {desk.centres.map((centre) => <option key={centre.id} value={centre.id}>{centre.name}</option>)}
           </select>
@@ -80,7 +88,7 @@ export function LearningStoriesDesk() {
                 setFramework(next);
                 setForm({ ...form, domain: copy.domains[next][0]?.id || "" });
               }}>
-                {LEARNING_FRAMEWORKS.map((id) => <option key={id} value={id}>{copy.frameworks[id]}</option>)}
+                {frameworkOrder.map((id) => <option key={id} value={id}>{copy.frameworks[id]}</option>)}
               </select>
             </label>
             <label className="block text-sm">

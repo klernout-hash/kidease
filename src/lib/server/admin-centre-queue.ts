@@ -10,15 +10,58 @@ import { mapAdminCentreSqlRow, type AdminCentreSqlRow } from "@/lib/admin-centre
 import { incompleteMissing } from "@/lib/listing-incomplete";
 import type { AdminCentreRow } from "@/lib/server/admin-centres";
 
+/**
+ * Admin desk test #34: inline data: photos were sent for every card (up to 4 each,
+ * ~290 cards), which made /admin's first payload huge and crashed the tab.
+ * Keep small inline images; drop large ones from the queue payload. Hosted photo URLs are unchanged,
+ * and photoCount still counts every real photo.
+ */
+export const QUEUE_INLINE_PHOTO_MAX = 60_000;
+
+export function queuePhotoOk(p: string): boolean {
+  if (p.startsWith("data:image")) return p.length <= QUEUE_INLINE_PHOTO_MAX;
+  return isRealListingPhoto(p);
+}
+
 /** Licence + storefront photos for Admin verify — daycare photos, not the raw CSV. */
 function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) {
-  const storefront = splitPhotoList(photos).find(
-    (p) => isRealListingPhoto(p) || p.startsWith("data:image"),
-  );
+  const storefront = splitPhotoList(photos).find(queuePhotoOk);
   return {
     licensePhoto: licenseReviewMarker(licensePhoto),
     storefrontPhoto: storefront || null,
   };
+}
+
+type FraudFlag = { score: number | null; reasons: string; createdAt: string };
+
+/**
+ * Claim and spam flags per centre, newest first, three at most. A missing table or a
+ * failed read gives no flags; it must not empty the queue.
+ */
+async function readClaimFraudFlags(sql: Awaited<ReturnType<typeof getSql>>, ids: string[]): Promise<Map<string, FraudFlag[]>> {
+  const out = new Map<string, FraudFlag[]>();
+  if (!ids.length) return out;
+  const rows = await sql
+    .query<{ daycare_id: string; score: number | null; reasons: string | null; created_at: string | Date }>(
+      `select daycare_id, score, reasons, created_at
+       from fraud_flags
+       where daycare_id = any($1::text[])
+       order by created_at desc
+       limit 2000`,
+      [ids],
+    )
+    .catch(() => [] as { daycare_id: string; score: number | null; reasons: string | null; created_at: string | Date }[]);
+  for (const row of rows) {
+    const list = out.get(row.daycare_id) ?? [];
+    if (list.length >= 3) continue;
+    list.push({
+      score: row.score == null ? null : Number(row.score),
+      reasons: String(row.reasons || "").slice(0, 200),
+      createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    });
+    out.set(row.daycare_id, list);
+  }
+  return out;
 }
 
 /** Server-only queue read. Caller must authorize before invoking; no subscription enrichment. */
@@ -120,7 +163,10 @@ export async function readAdminCentreQueueRows(): Promise<AdminCentreRow[]> {
     throw first instanceof Error ? first : new Error("Could not load the admin queue.");
   }
 
-  const withFiles = await overlayStoredLicensePhotos(sql, rows);
+  const [withFiles, fraudByCentre] = await Promise.all([
+    overlayStoredLicensePhotos(sql, rows),
+    readClaimFraudFlags(sql, rows.map((r) => r.daycare_id)),
+  ]);
   const mapped: AdminCentreRow[] = withFiles.map((r) => {
     const row = mapAdminCentreSqlRow(r);
     const live =
@@ -164,7 +210,8 @@ export async function readAdminCentreQueueRows(): Promise<AdminCentreRow[]> {
       live,
       ...photos,
       photoCount: realPhotos.length,
-      photoThumbs: realPhotos.slice(0, 4),
+      photoThumbs: realPhotos.filter(queuePhotoOk).slice(0, 4),
+      fraudFlags: fraudByCentre.get(r.daycare_id) ?? [],
       health,
       missing: incompleteMissing({
         claimStatus: row.claimStatus,

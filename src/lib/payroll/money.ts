@@ -1,3 +1,5 @@
+import { formatCad as formatCadText } from "../cad-format.ts";
+
 /** Integer cents. Payroll never does money math in floating dollars at the boundary. */
 
 export function cents(dollars: number): number {
@@ -15,10 +17,7 @@ export function roundDollars(amount: number): number {
 
 export function formatCad(cents: number, locale: "en" | "fr"): string {
   const value = dollars(cents);
-  return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", {
-    style: "currency",
-    currency: "CAD",
-  }).format(value);
+  return formatCadText(value, locale === "fr" ? "fr-CA" : "en-CA");
 }
 
 export function sameCents(a: number, b: number): boolean {

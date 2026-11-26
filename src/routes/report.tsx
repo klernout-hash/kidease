@@ -67,6 +67,7 @@ export function ReportPage() {
           body: [place && `Province: ${place}`, listing && `Listing: ${listing}`, body].filter(Boolean).join("\n"),
           centre: listing,
           turnstileToken: challenge,
+          locale: fr ? "fr" : "en",
         },
       });
       setSent(true);

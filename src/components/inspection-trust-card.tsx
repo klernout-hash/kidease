@@ -7,7 +7,6 @@ export function InspectionTrustCard({
   name,
   licenseNumber,
   listingId,
-  licenseStatus,
   licenseExpiry,
   claimed,
   checklist,
@@ -18,6 +17,11 @@ export function InspectionTrustCard({
   name: string;
   licenseNumber?: string | null;
   listingId?: string | null;
+  /**
+   * Internal stored value (`matched`, `active`…). Not shown: the public licence
+   * line comes from publicLicenseBadge on the listing page, so the card never
+   * contradicts it with registry wording.
+   */
   licenseStatus?: string | null;
   licenseExpiry?: string | null;
   claimed?: boolean;
@@ -35,7 +39,7 @@ export function InspectionTrustCard({
 
   if (compact) {
     return (
-      <section className="mt-4 text-sm leading-6" data-ke="inspection-trust" data-licence-status={licenseStatus || ""} data-compact="1">
+      <section className="mt-4 text-sm leading-6" data-ke="inspection-trust" data-compact="1">
         <h2 className="text-[16px] font-semibold leading-[22px]">{t("licenceAndInspection")}</h2>
         <p className="mt-1 text-muted">
           {licence ? (
@@ -46,14 +50,9 @@ export function InspectionTrustCard({
           ) : null}
           {t("licenceNotLiveGov")}
         </p>
-        {licenseStatus && licenseStatus !== "unverified" && licenseStatus !== "unknown" ? (
-          <p className="mt-1" data-ke="stored-licence-status">
-            {fr ? "Statut enregistré" : "Stored status"}: {licenseStatus}
-          </p>
-        ) : null}
         {licenseExpiry ? (
           <p className="mt-1" data-ke="stored-licence-expiry">
-            {fr ? "Échéance enregistrée" : "Stored expiry"}: {licenseExpiry}
+            {fr ? "Échéance du permis au dossier" : "Licence expiry on file"}: {licenseExpiry}
           </p>
         ) : null}
         <details className="mt-1">
@@ -93,7 +92,6 @@ export function InspectionTrustCard({
     <section
       className="mt-4 rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border"
       data-ke="inspection-trust"
-      data-licence-status={licenseStatus || ""}
     >
       <h2 className="font-display text-2xl">{t("licenceAndInspection")}</h2>
       {licence ? (
@@ -105,14 +103,9 @@ export function InspectionTrustCard({
         <p className="mt-2 text-sm text-muted">{t("licenceNotPublished")}</p>
       )}
       <p className="mt-2 text-sm text-muted">{t("licenceNotLiveGov")}</p>
-      {licenseStatus && licenseStatus !== "unverified" && licenseStatus !== "unknown" ? (
-        <p className="mt-2 text-sm" data-ke="stored-licence-status">
-          {fr ? "Statut enregistré" : "Stored status"}: {licenseStatus}
-        </p>
-      ) : null}
       {licenseExpiry ? (
         <p className="mt-1 text-sm" data-ke="stored-licence-expiry">
-          {fr ? "Échéance enregistrée" : "Stored expiry"}: {licenseExpiry}
+          {fr ? "Échéance du permis au dossier" : "Licence expiry on file"}: {licenseExpiry}
         </p>
       ) : null}
       {badge.show ? (

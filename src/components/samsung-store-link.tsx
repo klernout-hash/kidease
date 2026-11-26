@@ -1,4 +1,5 @@
 import { useRouterState } from "@tanstack/react-router";
+import { storeLinkAllowed } from "@/lib/app-stores";
 import { galaxyStoreDeepLink, galaxyStoreHttps } from "@/lib/samsung/platform";
 import { useCopy } from "@/lib/use-copy";
 
@@ -11,7 +12,9 @@ export function SamsungStoreLink() {
     select: (state) => state.matches.some((match) => (match.context as { samsungStore?: boolean }).samsungStore === true),
   });
   const { t } = useCopy();
-  if (!on) return null;
+  // The flag alone is not enough: the Galaxy listing must be live in APP_STORES,
+  // or the link opens a Galaxy Store 404.
+  if (!on || !storeLinkAllowed("samsung")) return null;
   const https = galaxyStoreHttps();
   return (
     <p className="mt-3">

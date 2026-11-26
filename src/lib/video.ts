@@ -109,7 +109,8 @@ export type VideoJoinGateReason =
   | "no_credentials"
   | "sdk_not_wired"
   | "plus_required"
-  | "plus_required_billing_not_live";
+  | "plus_required_billing_not_live"
+  | "not_matched";
 
 export type VideoJoinGate =
   | { ok: true }
@@ -242,7 +243,22 @@ export function videoMinutesStatus(usedThisMonth = 0): VideoMinutesStatus {
   };
 }
 
+export const VIDEO_NOT_MATCHED_MESSAGE =
+  "Video calls open once this family and centre have an accepted request, tour, booking, or enrolment. You can still send a message.";
+
+/**
+ * Room StatusCallback for real participant minutes. A pinned
+ * TWILIO_VIDEO_STATUS_CALLBACK_URL wins; production defaults to the signed
+ * /api/video/status route on www.kidease.ca. Preview and dev send none.
+ */
+export function videoStatusCallbackUrl(env: EnvMap = process.env): string {
+  const pinned = envStr(env, "TWILIO_VIDEO_STATUS_CALLBACK_URL");
+  if (pinned) return pinned;
+  return envStr(env, "VERCEL_ENV") === "production" ? "https://www.kidease.ca/api/video/status" : "";
+}
+
 export function plusGateCopy(reason: VideoJoinGateReason | null | undefined): string {
+  if (reason === "not_matched") return VIDEO_NOT_MATCHED_MESSAGE;
   if (reason === "plus_required_billing_not_live") return VIDEO_PLUS_BILLING_NOT_LIVE_MESSAGE;
   if (reason === "plus_required") return VIDEO_PLUS_REQUIRED_MESSAGE;
   if (reason === "no_credentials") return VIDEO_CREDENTIALS_MESSAGE;

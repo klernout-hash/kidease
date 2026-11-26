@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { PasswordField } from "@/components/password-field";
 import {
@@ -77,6 +78,9 @@ export function ReauthDialog({
 
   async function onPassword(e: React.FormEvent) {
     e.preventDefault();
+    // The dialog often sits inside the form it protects (child profile, B-org #37).
+    // Do not let this submit reach that form.
+    e.stopPropagation();
     setBusy(true);
     setError(null);
     try {
@@ -120,6 +124,7 @@ export function ReauthDialog({
 
   async function onOtp(e: React.FormEvent) {
     e.preventDefault();
+    e.stopPropagation();
     setBusy(true);
     setError(null);
     try {
@@ -138,7 +143,9 @@ export function ReauthDialog({
     }
   }
 
-  return (
+  // Portal to <body> so the dialog's own <form> is never nested in the page form.
+  // Nested, a password submit fell through to a native POST /login (?error=script) and lost the edit.
+  const body = (
     <div className="ke-safe-x fixed inset-0 z-50 grid place-items-center bg-fg/40 py-4 [--ke-pad-x:1rem]" role="dialog" aria-modal="true" data-ke="reauth-dialog">
       <div className="w-full max-w-md rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
         <h2 className="font-display text-xl tracking-[-0.02em]">{t("reauthTitle")}</h2>
@@ -220,6 +227,7 @@ export function ReauthDialog({
       </div>
     </div>
   );
+  return typeof document === "undefined" ? body : createPortal(body, document.body);
 }
 
 export function useReauthPrompt() {

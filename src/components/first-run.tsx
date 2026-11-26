@@ -592,6 +592,10 @@ function useReadyFlag() {
   return { enabled, ready };
 }
 
+/** First path this tab showed. Search tips skip the page a visitor landed on. */
+let sessionLandingPath: string | null = null;
+let movedSinceLanding = false;
+
 export function FirstRunHost() {
   const { enabled, ready } = useReadyFlag();
   const progress = useOnboardingState();
@@ -604,6 +608,12 @@ export function FirstRunHost() {
   const locale = localeOf(raw);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const searchStr = useRouterState({ select: (s) => s.location.searchStr });
+  // The page a visitor lands on (often from an ad) shows its results clean.
+  // The search tips wait until they move around inside KidEase.
+  // Module scope: Shell remounts on every route, a ref would reset.
+  if (typeof window !== "undefined" && sessionLandingPath == null) sessionLandingPath = pathname;
+  if (sessionLandingPath != null && sessionLandingPath !== pathname) movedSinceLanding = true;
+  const onLandingPage = !movedSinceLanding;
   const [forced, setForced] = useState<OnboardingKey | null>(null);
   const [anchorTick, setAnchorTick] = useState(0);
   const [providerFacts, setProviderFacts] = useState<ChecklistResult | null>(null);
@@ -718,6 +728,7 @@ export function FirstRunHost() {
       : autoCoach &&
         !blocked &&
         screenTourReady.current === true &&
+        !(tourKey === "tour:parent:search" && onLandingPage) &&
         replayOpens(tourKey, false, progress) &&
         !shouldAutoShow(progress, place.welcome));
 

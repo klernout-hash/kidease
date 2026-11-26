@@ -45,9 +45,12 @@ function showRemote(participant: RemoteParticipant, host: HTMLElement) {
 export function VideoRoomPanel({
   token,
   roomName,
+  conversationId,
   onLeft,
 }: {
   token: string;
+  /** Thread id to ring. The room name (ke-thread-…) is not a thread id. */
+  conversationId?: string | null;
   roomName: string;
   onLeft: () => void;
 }) {
@@ -78,8 +81,9 @@ export function VideoRoomPanel({
     let cancelled = false;
     const localHost = localRef.current;
     const remoteHost = remoteRef.current;
-    // Background ring (FEATURE_CALL_PUSH, off): ring the other side if no one is here yet.
-    const ringer = createCallRinger(roomName, "video");
+    // Ring the other side if no one is here yet: an in-app alert always,
+    // device push only with FEATURE_CALL_PUSH. Needs the thread id, not the room name.
+    const ringer = createCallRinger(conversationId || "", "video");
     ringerRef.current = ringer;
     void (async () => {
       try {
@@ -148,7 +152,7 @@ export function VideoRoomPanel({
       clearHost(localHost);
       clearHost(remoteHost);
     };
-  }, [roomName, t, token]);
+  }, [conversationId, roomName, t, token]);
 
   function toggleMute() {
     const room = roomRef.current;

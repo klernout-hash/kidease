@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { TourCountSummary } from "@/components/tour-count-summary";
 import { pipelineByStage, PIPELINE_STAGES, type PipelineCard, type PipelineStage } from "@/lib/crm-pipeline";
 import { summarizeTourCounts } from "@/lib/tour-counts";
+import { pipelineCopy } from "@/lib/pipeline-copy";
+import { tourOutcomeCounts } from "@/lib/pipeline-features";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 
@@ -29,6 +31,7 @@ export function CentrePipeline({ cards }: { cards: PipelineCard[] }) {
         <p className="mt-1 text-sm text-muted">{t("pipelineLead")}</p>
       </div>
       <TourCountSummary counts={counts} locale={locale} />
+      <TourOutcomeSummary statuses={cards.filter((card) => card.kind === "tour").map((card) => card.tourStatus)} />
       <div className="grid gap-3 md:grid-cols-5">
         {PIPELINE_STAGES.map((stage) => (
           <div key={stage} className="rounded-xl bg-surface p-3 ring-1 ring-border">
@@ -47,6 +50,31 @@ export function CentrePipeline({ cards }: { cards: PipelineCard[] }) {
         ))}
       </div>
     </section>
+  );
+}
+
+function TourOutcomeSummary({ statuses }: { statuses: (string | null | undefined)[] }) {
+  const { locale } = useCopy();
+  const pc = pipelineCopy(locale);
+  const outcome = tourOutcomeCounts(statuses);
+  const rows = [
+    ["attended", pc.attended, String(outcome.attended)],
+    ["no-show", pc.noShow, String(outcome.noShow)],
+    ["rate", pc.noShowRate, outcome.noShowRate == null ? "–" : `${outcome.noShowRate} %`],
+  ] as const;
+  return (
+    <div data-ke="tour-outcomes">
+      <p className="text-sm font-medium">{pc.tourOutcomesTitle}</p>
+      <dl className="mt-1 grid gap-2 sm:grid-cols-3">
+        {rows.map(([key, label, value]) => (
+          <div key={key} className="rounded-lg bg-surface px-3 py-2 ring-1 ring-border">
+            <dt className="text-xs text-muted">{label}</dt>
+            <dd className="text-lg font-semibold tabular-nums text-fg">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-2 text-xs text-muted">{pc.tourOutcomesLead}</p>
+    </div>
   );
 }
 

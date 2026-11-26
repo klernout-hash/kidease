@@ -12,6 +12,8 @@ import {
 } from "@/lib/server/stripe-parent-invoices";
 import { runClaimedEvent } from "@/lib/payment-state";
 import { webhookProductEvent } from "@/lib/webhook-product-events";
+import { CONNECT_NOTICE_TYPES, STRIPE_NOTICE_TYPES } from "@/lib/stripe-notices";
+import { applyStripeNoticeEvent } from "@/lib/server/stripe-notices";
 
 const BILL_TYPES = new Set([
   "payment_intent.succeeded",
@@ -131,6 +133,29 @@ async function run(request: Request) {
     }
   }
 
+  // Connect: failed payout, capability change, daycare disconnected KidEase.
+  const eventAccount =
+    typeof (event as { account?: unknown }).account === "string" ? String((event as { account?: string }).account) : null;
+  if (CONNECT_NOTICE_TYPES.has(type)) {
+    try {
+      await applyConnectSideEffect(type, object as Record<string, unknown>, eventAccount);
+    } catch (err) {
+      console.error("[kidease-connect] webhook side effect skipped", err);
+    }
+  }
+
+  // Audit-only notices, plus a won dispute putting the bill back to paid.
+  if (STRIPE_NOTICE_TYPES.has(type) || CONNECT_NOTICE_TYPES.has(type)) {
+    try {
+      const notice = await applyStripeNoticeEvent({ type, object, account: eventAccount });
+      if (notice.billId) bill = { billId: notice.billId };
+    } catch (err) {
+      console.error("[kidease-stripe] notice apply failed", err);
+      releaseStripeEventClaim(event.id);
+      return Response.json({ ok: false, error: "notice apply failed" }, { status: 500 });
+    }
+  }
+
   if (type === "charge.dispute.created") {
     try {
       bill = await applyStripeDisputeEvent({ type, object });
@@ -220,6 +245,8 @@ async function run(request: Request) {
     PAYMENT_STATE_TYPES.has(type) ||
     MANDATE_TYPES.has(type) ||
     NO_OP_TYPES.has(type) ||
+    STRIPE_NOTICE_TYPES.has(type) ||
+    CONNECT_NOTICE_TYPES.has(type) ||
     type === "charge.dispute.created"
   ) {
     return Response.json({

@@ -17,8 +17,13 @@ export function HostTodayHome({
   listings,
   stats,
   onChanged,
+  centreFromUrl,
+  onCentre,
 }: {
   listings: Daycare[];
+  /** ?centre= on /provider. The picker and "Work in this centre" share it (B-org #39). */
+  centreFromUrl?: string;
+  onCentre?: (id: string) => void;
   stats: Array<{ daycareId: string; views: number; inquiries: number; requests: number }>;
   onChanged: () => void;
 }) {
@@ -26,7 +31,10 @@ export function HostTodayHome({
   const canChange = useCentreWrite("vacancy");
   const canNotify = useCentreWrite("waitlist_notify");
   const copy = hostCopy(locale);
-  const [centreId, setCentreId] = useState(listings[0]?.id ?? "");
+  const [centreId, setCentreId] = useState(centreFromUrl || listings[0]?.id || "");
+  useEffect(() => {
+    if (centreFromUrl) setCentreId(centreFromUrl);
+  }, [centreFromUrl]);
   const centre = listings.find((row) => row.id === centreId) ?? listings[0];
   const [busy, setBusy] = useState(false);
   const [waiting, setWaiting] = useState<number | null>(null);
@@ -73,7 +81,10 @@ export function HostTodayHome({
             <select
               className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
               value={centre.id}
-              onChange={(event) => setCentreId(event.target.value)}
+              onChange={(event) => {
+                setCentreId(event.target.value);
+                onCentre?.(event.target.value);
+              }}
             >
               {listings.map((row) => (
                 <option key={row.id} value={row.id}>

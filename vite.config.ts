@@ -280,6 +280,11 @@ export default defineConfig(({ command, isPreview, mode }) => {
     ? { define: { "import.meta.env.VITE_GOOGLE_MAPS_API_KEY": JSON.stringify(mapsBrowserKey) } }
     : {}),
   build: {
+    // Fire OS tablets ship WebView/Silk 91. Lower JS syntax so the app boots
+    // there (APIs are shimmed by public/legacy-boot.js). CSS keeps the old
+    // default target so modern browsers get the same stylesheet.
+    target: ["es2020", "chrome91", "edge91", "firefox91", "safari15"],
+    cssTarget: ["chrome107", "edge107", "firefox104", "safari16"],
     sourcemap: Boolean(
       process.env.POSTHOG_CLI_API_KEY ||
         process.env.POSTHOG_PERSONAL_API_KEY ||
@@ -321,6 +326,41 @@ export default defineConfig(({ command, isPreview, mode }) => {
               test: /src\/lib\/search-start\.ts$/,
               minSize: 0,
               minShareCount: 1,
+            },
+            {
+              // Client JS budget: the small parent_/provider_ desk pages (route
+              // split pieces only, never the eager route tree) share one chunk.
+              name: "desk-wiring-pages",
+              test: /src[\\/]routes[\\/](?:fr\.)?(?:parent|provider)_\.[\w-]+\.tsx\?tsr-split/,
+              minSize: 0,
+              minShareCount: 1,
+              // Only the route pieces themselves; shared helpers keep their own chunks.
+              includeDependenciesRecursively: false,
+            },
+            {
+              // Client JS budget: government desk route split pieces share one chunk.
+              name: "gov-desk-pages",
+              test: /src[\\/]routes[\\/](?:fr\.)?gov(?:_\.[\w-]+)?\.tsx\?tsr-split/,
+              minSize: 0,
+              minShareCount: 1,
+              includeDependenciesRecursively: false,
+            },
+            {
+              // Client JS budget: the government desk screens (only officials load them).
+              // gov-help and gov-section-strip are shared with centre pages and stay apart.
+              name: "gov-desk-screens",
+              test: /src[\\/](?:components[\\/]gov[\\/](?!gov-help|gov-section-strip)[\w-]+\.tsx|lib[\\/]gov[\\/]as-of\.ts)$/,
+              minSize: 0,
+              minShareCount: 1,
+              includeDependenciesRecursively: false,
+            },
+            {
+              // Client JS budget: admin desk route pieces and the admin government tabs.
+              name: "admin-desk-pages",
+              test: /src[\\/](?:routes[\\/](?:fr\.)?admin[\w.-]*\.tsx\?tsr-split|components[\\/]admin-gov-[\w-]+\.tsx$)/,
+              minSize: 0,
+              minShareCount: 1,
+              includeDependenciesRecursively: false,
             },
             ...(["zh", "yue", "pa", "es", "ar", "tl", "it", "de"] as const).map((code) => ({
             name: `locale-${code}`,

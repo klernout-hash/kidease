@@ -37,7 +37,9 @@ function navClass(on: boolean) {
     // inline-flex so <a> deep-links (Messages, Find care) match <button> pills.
     // Anchors are display:inline by default: min-height/ring then collapse into
     // a vertical sliver beside the label.
-    "inline-flex box-border h-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 text-sm leading-none no-underline hover:no-underline",
+    // max-md:h-11, not h-11: an unlayered `.h-11 { height: 44px }` rule in styles.css
+    // beat md:h-auto, so a two-line French hint spilled onto the next item.
+    "inline-flex box-border max-md:h-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 text-sm leading-none no-underline hover:no-underline",
     "md:h-auto md:min-h-[44px] md:flex-col md:items-stretch md:justify-start md:whitespace-normal md:rounded-lg md:px-2.5 md:py-1.5 md:leading-snug",
     on
       ? "bg-primary text-primary-fg ring-1 ring-primary"
@@ -191,6 +193,7 @@ export function DeskShell({
     centreLinked: session?.centreLinked,
     centreGrants: session?.centreGrants,
     centreCanInvite: session?.centreCanInvite,
+    centreRole: session?.centreRole,
     curriculumPack: session?.curriculumPack,
     coparentLink: session?.coparentLink,
     coparentEmail: session?.coparentEmail,

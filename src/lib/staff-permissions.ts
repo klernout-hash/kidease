@@ -42,7 +42,7 @@ const RANK: Record<StaffLevel, number> = { none: 0, view: 1, edit: 2 };
  * Bills are view-only: status for families at this centre. Not earnings or payouts.
  */
 export const STAFF_GRANTS: StaffGrants = {
-  bills: "view",
+  bills: "none", // B05: staff do not see open bills or paid status. Owners and managers do.
   messages: "edit",
   children: "none",
   listing: "view",
@@ -240,6 +240,8 @@ export function staffPhoneMarkerAllowed(
 ): boolean {
   if (STAFF_PHONE_HIDDEN.has(marker)) return false;
   if (marker === "employees") return canInvite;
+  // Grants are set for staff and managers. Without invite rights this is a staff login (B05).
+  if (grants && !canInvite && (STAFF_OWNER_ONLY_DESKS as readonly string[]).includes(marker)) return false;
   return navGrantAllows(grants, marker);
 }
 
@@ -308,4 +310,29 @@ export function decidePermissionUpdate(input: {
   if (!preset) return { ok: false, error: "Pick Staff, Lead, Manager, or a custom mix." };
   const grants = preset === "custom" ? sanitizeGrants(input.grants) : presetGrants(preset);
   return { ok: true, preset, grants, role: roleForPreset(preset, input.targetRole || "staff") };
+}
+
+/**
+ * B05: a staff login (not the owner, not a manager) saw Earnings, Insights,
+ * Families and Top Rated, and could open Money and Employees. These stay with
+ * the owner. Managers keep what their grants allow.
+ */
+export const STAFF_OWNER_ONLY_DESKS = ["money", "insights", "top-rated", "leads", "employees", "delete"] as const;
+
+export function isStaffOnlyLogin(input: {
+  centreOwner?: boolean | null;
+  centreRole?: string | null;
+  centreCanInvite?: boolean | null;
+}): boolean {
+  if (input.centreOwner === true) return false;
+  if (input.centreCanInvite === true) return false;
+  const role = String(input.centreRole || "");
+  return role === "staff" || role === "read_only";
+}
+
+export function staffDeskBlocked(
+  id: string,
+  input: { centreOwner?: boolean | null; centreRole?: string | null; centreCanInvite?: boolean | null },
+): boolean {
+  return isStaffOnlyLogin(input) && (STAFF_OWNER_ONLY_DESKS as readonly string[]).includes(id);
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { otpMailOrderLabel } from "@/lib/otp-mail-order";
 import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import {
@@ -151,13 +152,9 @@ export function AdminMailPanel() {
           </p>
           {status?.otpMail ? (
             <p className="mt-2 text-xs text-subtle" data-ke="otp-mail-health">
-              OTP mail: {status.otpMail.resendConfigured ? "Resend on" : "Resend off"}
-              {" · "}
-              {status.otpMail.sendgridConfigured ? "SendGrid on" : "SendGrid off"}
-              {" · "}
-              {status.otpMail.titanConfigured ? "Titan fallback ready" : "Titan fallback unset"}
+              {otpMailOrderLabel(status.otpMail)}
               {status.otpMail.lastEvent
-                ? ` · last ${status.otpMail.lastEvent}${status.otpMail.lastReason ? ` (${status.otpMail.lastReason})` : ""}${status.otpMail.lastVia ? ` via ${status.otpMail.lastVia}` : ""}`
+                ? ` · last ${status.otpMail.lastEvent}${status.otpMail.lastReason ? ` (${status.otpMail.lastReason}${status.otpMail.lastDetail ? ` ${status.otpMail.lastDetail}` : ""})` : ""}${status.otpMail.lastVia ? ` via ${status.otpMail.lastVia}` : ""}`
                 : ""}
             </p>
           ) : null}

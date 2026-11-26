@@ -87,14 +87,34 @@ export const centreMiniSite = createServerFn({ method: "GET" })
     if (!miniSiteOpen({ claimed: true, slug: data.slug })) return { open: false as const };
     try {
       const sql = await getSql();
-      const rows = await sql<{ name: string; city: string | null; hours: string | null }>`
-        select name, city, hours from daycares
+      const rows = await sql<{
+        name: string;
+        name_fr: string | null;
+        city: string | null;
+        province: string | null;
+        hours: string | null;
+        hours_fr: string | null;
+        description: string | null;
+        description_fr: string | null;
+      }>`
+        select name, name_fr, city, province, hours, hours_fr, description, description_fr from daycares
         where slug = ${data.slug} and claimed_at is not null
         limit 1
       `;
       const row = rows[0];
       if (!row) return { open: false as const, unclaimed: true as const };
-      return { open: true as const, name: row.name, city: row.city || "", hours: row.hours || "", slug: data.slug };
+      return {
+        open: true as const,
+        name: row.name,
+        nameFr: row.name_fr || "",
+        city: row.city || "",
+        province: row.province || "",
+        hours: row.hours || "",
+        hoursFr: row.hours_fr || "",
+        description: (row.description || "").slice(0, 1200),
+        descriptionFr: (row.description_fr || "").slice(0, 1200),
+        slug: data.slug,
+      };
     } catch {
       return { open: false as const };
     }

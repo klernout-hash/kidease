@@ -146,7 +146,7 @@ describe("Canada-wide Explore never falls back to Winnipeg", () => {
     assert.equal(saved.label, WINNIPEG.label);
   });
 
-  it("requests browser geolocation on Explore when consent is unset and nothing is saved", () => {
+  it("never asks for geolocation on Explore load until the parent taps Near me", () => {
     assert.equal(trustedSavedOrigin(SAVED_TORONTO, { timeZone: "America/Winnipeg" })?.label, "Toronto, ON");
     assert.equal(
       shouldRequestExploreGeolocation({
@@ -160,7 +160,7 @@ describe("Canada-wide Explore never falls back to Winnipeg", () => {
         consent: "unset",
         savedTrusted: false,
       }),
-      true,
+      false,
     );
     assert.equal(
       shouldRequestExploreGeolocation({

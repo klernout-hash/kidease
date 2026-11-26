@@ -28,11 +28,11 @@ export const Route = createFileRoute("/api/family-documents")({
           if (view === "centre") {
             const { listCentreFamilyDocs } = await import("@/lib/server/family-vault");
             const documents = await listCentreFamilyDocs(userId);
-            return Response.json({ ok: true, documents });
+            return Response.json({ ok: true, documents }, { headers: { "Cache-Control": "private, no-store" } });
           }
           const { listParentVault } = await import("@/lib/server/family-vault");
           const vault = await listParentVault(userId);
-          return Response.json({ ok: true, ...vault });
+          return Response.json({ ok: true, ...vault }, { headers: { "Cache-Control": "private, no-store" } });
         } catch (err) {
           return fail(err);
         }

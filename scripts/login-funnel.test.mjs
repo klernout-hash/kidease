@@ -64,7 +64,7 @@ test("login and 2FA use the shared continue helper", () => {
   assert.match(login, /loginErrorCallbackUrl/);
   assert.match(src("src/lib/auth/login-funnel.ts"), /statusPromise/);
   assert.match(src("src/lib/auth/login-funnel.ts"), /hinted/);
-  assert.match(src("src/lib/desks.ts"), /\/verify-2fa\?next=/);
+  assert.match(src("src/lib/desks.ts"), /verify2faPagePath\(locale, next\)\}\?next=/);
   assert.match(login, /openingDesk/);
   assert.match(twoFa, /assignPostAuthDest/);
   assert.match(twoFa, /pageStalled/);
@@ -80,7 +80,7 @@ test("login and 2FA use the shared continue helper", () => {
   assert.match(twoFa, /startTwoFactor\(\{\s*data:\s*\{\s*force:\s*false(?:,\s*locale:\s*mailLocale)?\s*\}\s*\}\)/);
   assert.match(gates, /DeskSkeleton/);
   assert.match(gates, /sanitizePostLoginNext/);
-  assert.match(gates, /to="\/verify-2fa"/);
+  assert.match(gates, /"\/fr\/verify-2fa" : "\/verify-2fa"/);
   assert.match(src("src/routes/parent.tsx"), /LoginFunnelDeskLand/);
   assert.match(src("src/routes/provider.tsx"), /LoginFunnelDeskLand/);
   assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /LoginFunnelDeskLand/);

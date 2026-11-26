@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { decodeHtml } from "./html-text.ts";
 import type { AgeGroup, Locale } from "./types";
 import { localeTag } from "./languages.ts";
+import { formatCad } from "./cad-format.ts";
 
 export { decodeHtml };
 
@@ -123,12 +124,10 @@ function titleCaseScrapedName(value: string) {
 
 export function money(cad: number, locale: Locale = "en") {
   const cents = Math.round(Math.abs(Number(cad)) * 100) % 100 !== 0;
-  return new Intl.NumberFormat(localeTag(locale), {
-    style: "currency",
-    currency: "CAD",
+  return formatCad(cad, localeTag(locale), {
     minimumFractionDigits: cents ? 2 : 0,
     maximumFractionDigits: cents ? 2 : 0,
-  }).format(cad);
+  });
 }
 
 export function nid(prefix = "id") {

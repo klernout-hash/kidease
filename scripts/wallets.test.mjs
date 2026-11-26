@@ -27,9 +27,11 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("Checkout asks for card so Apple Pay / Google Pay can render — never those types", () => {
-  assert.deepEqual(CHECKOUT_WALLET_PAYMENT_METHOD_TYPES, ["card"]);
-  assert.deepEqual(checkoutPaymentMethodTypes(), ["card"]);
+test("Checkout asks for card (Apple Pay / Google Pay ride on it) plus Link — never wallet types", () => {
+  assert.deepEqual(CHECKOUT_WALLET_PAYMENT_METHOD_TYPES, ["card", "link"]);
+  assert.deepEqual(checkoutPaymentMethodTypes(), ["card", "link"]);
+  assert.equal(checkoutPaymentMethodTypes().includes("apple_pay"), false);
+  assert.equal(checkoutPaymentMethodTypes().includes("google_pay"), false);
   assert.equal(PAYMENT_ELEMENT_WALLET_OPTIONS.applePay, "auto");
   assert.equal(PAYMENT_ELEMENT_WALLET_OPTIONS.googlePay, "auto");
   assert.equal(checkoutCurrency(""), "cad");
@@ -54,7 +56,8 @@ test("bill and catalog Checkout sessions are CAD card wallets with locale", () =
   assert.equal(flat["payment_method_types[0]"], "card");
   assert.equal(flat["line_items[0][price_data][currency]"], "cad");
   assert.equal(flat.locale, "fr-CA");
-  assert.equal(flat["payment_method_types[1]"], undefined);
+  assert.equal(flat["payment_method_types[1]"], "link");
+  assert.equal(flat["payment_method_types[2]"], undefined);
 
   const catalog = catalogCheckoutBody({
     mode: "subscription",

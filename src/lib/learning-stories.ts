@@ -3,7 +3,7 @@
  * No photos. A story is never a public listing.
  */
 
-export const LEARNING_FRAMEWORKS = ["hdlh", "flight", "elf", "accueillir"] as const;
+export const LEARNING_FRAMEWORKS = ["hdlh", "flight", "elf", "accueillir", "early-returns"] as const;
 export type LearningFramework = (typeof LEARNING_FRAMEWORKS)[number];
 
 export const FRAMEWORK_DOMAINS: Record<LearningFramework, readonly string[]> = {
@@ -11,7 +11,44 @@ export const FRAMEWORK_DOMAINS: Record<LearningFramework, readonly string[]> = {
   flight: ["well-being", "play", "communication", "diversity"],
   elf: ["belonging", "engagement", "communication", "identities"],
   accueillir: ["well-being", "belonging", "communication", "exploration"],
+  // Manitoba's Early Returns framework: social, emotional, physical and cognitive development.
+  "early-returns": ["social", "emotional", "physical", "cognitive"],
 };
+
+const PROVINCE_FRAMEWORK: Record<string, LearningFramework> = {
+  ON: "hdlh",
+  AB: "flight",
+  BC: "elf",
+  QC: "accueillir",
+  MB: "early-returns",
+};
+
+const PROVINCE_NAMES: Record<string, string> = {
+  ontario: "ON",
+  alberta: "AB",
+  "british columbia": "BC",
+  "colombie-britannique": "BC",
+  quebec: "QC",
+  québec: "QC",
+  manitoba: "MB",
+};
+
+function provinceKey(raw: string | null | undefined): string {
+  const value = String(raw || "").trim();
+  if (/^[A-Za-z]{2}$/.test(value)) return value.toUpperCase();
+  return PROVINCE_NAMES[value.toLowerCase()] || "";
+}
+
+/** The centre's own provincial framework, or HDLH when the province has none on the list. */
+export function frameworkForProvince(raw: string | null | undefined): LearningFramework {
+  return PROVINCE_FRAMEWORK[provinceKey(raw)] || "hdlh";
+}
+
+/** Every framework, with the centre's province first (B05: a Manitoba centre sees Early Returns first). */
+export function frameworksForProvince(raw: string | null | undefined): LearningFramework[] {
+  const first = PROVINCE_FRAMEWORK[provinceKey(raw)];
+  return first ? [first, ...LEARNING_FRAMEWORKS.filter((id) => id !== first)] : [...LEARNING_FRAMEWORKS];
+}
 
 export type StoryInput = {
   childId?: unknown;

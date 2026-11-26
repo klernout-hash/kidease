@@ -37,7 +37,7 @@ export type SetupIntentResult = {
 type StripeFactory = (key: string) => StripeClient;
 
 type ConnectInstance = {
-  create: (component: "account-onboarding" | "payouts") => HTMLElement;
+  create: (component: "account-onboarding" | "payouts" | "notification-banner" | "payments" | "documents") => HTMLElement;
 };
 
 type ConnectFactory = {

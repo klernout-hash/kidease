@@ -64,6 +64,8 @@ export type AdminCentreRow = {
   photoThumbs?: string[];
   /** Same score the daycare sees on its own desk. */
   health?: ProfileHealth;
+  /** Spam / fraud flags on this centre's claims (fraud_flags). Admin desk test #36. */
+  fraudFlags?: Array<{ score: number | null; reasons: string; createdAt: string }>;
   updatedAt: string | null;
   addonLine?: string | null;
   mergedInto: string | null;

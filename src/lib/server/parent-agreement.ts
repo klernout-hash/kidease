@@ -41,6 +41,8 @@ export type ParentAgreementChip = {
   feeFr: string;
   feePeriod: AgreementTerms["feePeriod"];
   hasSignedPdf: boolean;
+  /** Signed inside KidEase (no DocuSign envelope). */
+  inApp: boolean;
 };
 
 export type CentreAgreementDesk = {
@@ -52,6 +54,13 @@ export type CentreAgreementDesk = {
     agreements: ParentAgreementChip[];
   }[];
 };
+
+export const IN_APP_SENT_EVENT = "in_app_sent";
+
+/** In-app agreements keep the document they were sent with, so both sides sign the same text. */
+function withInAppDocument(terms: AgreementTerms, bodyHtml: string) {
+  return { ...terms, inAppSigning: { bodyHtml, signatures: [] as unknown[] } };
+}
 
 function deny(code: AgreementErrorCode): never {
   throw new Error(`agreement:${code}`);
@@ -81,6 +90,7 @@ type AgreementRow = {
   start_date: string;
   terms: unknown;
   signed_pdf_key: string | null;
+  envelope_id?: string | null;
 };
 
 function toChip(row: AgreementRow): ParentAgreementChip {
@@ -99,6 +109,7 @@ function toChip(row: AgreementRow): ParentAgreementChip {
     feeFr: terms.feeFr,
     feePeriod: terms.feePeriod,
     hasSignedPdf: Boolean(row.signed_pdf_key) || row.status === "completed",
+    inApp: !row.envelope_id,
   };
 }
 
@@ -158,7 +169,8 @@ async function viewerCanRead(sql: Sql, viewerId: string, row: { parent_user_id: 
 
 const AGREEMENT_SELECT = `
   select a.id, a.contract_id, a.daycare_id, d.name as daycare_name, a.booking_id, a.child_id,
-         a.parent_user_id, a.child_name, a.status, a.start_date, a.terms, c.signed_pdf_key
+         a.parent_user_id, a.child_name, a.status, a.start_date, a.terms, c.signed_pdf_key,
+         c.envelope_id
     from parent_enrolment_agreements a
     join daycares d on d.id = a.daycare_id
     join daycare_contracts c on c.id = a.contract_id
@@ -298,7 +310,8 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
   .validator((input: { bookingId: string }) => input)
   .handler(async ({ context, data }) => {
     if (!parentAgreementEnabled()) deny("signing_off");
-    if (!docusignConfig()) deny("docusign_off");
+    // Without DocuSign keys the parent reviews and signs inside KidEase (typed name), then the centre countersigns.
+    const inApp = !docusignConfig();
     const sql = await getSql();
     const bookings = await sql<{
       id: string;
@@ -416,7 +429,7 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
 
     const contractId = nid("ct");
     const agreementId = nid("pa");
-    const envelope = await createCentreEnvelope({
+    const envelope = inApp ? null : await createCentreEnvelope({
       contractId,
       packKind: PARENT_AGREEMENT_PACK,
       documentName: "Enrolment agreement",
@@ -462,9 +475,9 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
           context.userId,
           parentName,
           parentEmail,
-          envelope.envelopeId,
+          envelope?.envelopeId ?? null,
           "Enrolment agreement",
-          "docusign",
+          inApp ? IN_APP_SENT_EVENT : "docusign",
           PARENT_AGREEMENT_PACK,
         ],
       );
@@ -489,15 +502,17 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
           directorName,
           directorEmail,
           start,
-          JSON.stringify(terms),
+          JSON.stringify(inApp ? withInAppDocument(terms, body) : terms),
         ],
       );
     } catch (err) {
-      await voidCentreEnvelope(envelope.envelopeId, "KidEase could not store the agreement").catch(() => undefined);
+      if (envelope) {
+        await voidCentreEnvelope(envelope.envelopeId, "KidEase could not store the agreement").catch(() => undefined);
+      }
       throw err;
     }
 
-    return { ok: true as const, agreementId, contractId, status: "sent" as const };
+    return { ok: true as const, agreementId, contractId, status: "sent" as const, inApp };
   });
 
 export async function parentAgreementReadable(sql: Sql, viewerId: string, contractId: string) {

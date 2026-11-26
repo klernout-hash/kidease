@@ -5,6 +5,8 @@
  * Network yearly ($390/site) is a proposal until STRIPE_PRICE_NETWORK_YEARLY is set.
  */
 
+import { formatCad, frenchCad } from "./cad-format.ts";
+
 export type PlanLocale = "en" | "fr";
 
 export type PlanLine = { en: string; fr: string };
@@ -145,8 +147,8 @@ const PARENT_ALERTS_PITCH: PlanLine = {
 
 const PLUS_CORE_BENEFITS: PlanLine[] = [
   {
-    en: "Parent \u2194 centre video tour, when video is on",
-    fr: "Visite vidéo parent \u2194 centre, quand la vidéo est activée",
+    en: "Parent \u2194 centre video call, when video is on",
+    fr: "Appel vidéo parent \u2194 centre, quand la vidéo est activée",
   },
   {
     en: "Compare up to 10 centres side by side",
@@ -374,22 +376,19 @@ export function upgradeUnlockedBenefits(input: {
 
 /**
  * Plan prices. English keeps a `CA$` prefix so `$` is not read as US dollars.
- * French uses fr-CA: the amount, a non-breaking space, then `$` (`0 $`, `7,99 $`).
+ * French uses the app's CAD format with the country marker (`0,00 $ CA`, `7,99 $ CA`).
  */
 export function formatPlanCad(amount: number, locale: PlanLocale): string {
   const fr = locale === "fr";
   const safe = Number.isFinite(amount) ? amount : 0;
+  if (fr) return frenchCad(safe);
   const digits = Number.isInteger(safe) ? 0 : 2;
-  const formatted = new Intl.NumberFormat(fr ? "fr-CA" : "en-CA", {
-    style: "currency",
-    currency: "CAD",
-    currencyDisplay: "symbol",
+  const formatted = formatCad(safe, "en-CA", {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
-  }).format(safe);
+  });
   const negative = formatted.includes("-");
   const numeric = formatted.replace(/[^\d,.]/g, "");
-  if (fr) return `${negative ? "-" : ""}${numeric}\u00a0$`;
   return `${negative ? "-" : ""}CA$${numeric}`;
 }
 

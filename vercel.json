@@ -122,6 +122,26 @@
   ],
   "redirects": [
     {
+      "source": "/provider/earnings",
+      "destination": "/provider?desk=money",
+      "permanent": false
+    },
+    {
+      "source": "/fr/provider/earnings",
+      "destination": "/fr/provider?desk=money",
+      "permanent": false
+    },
+    {
+      "source": "/parent/bills",
+      "destination": "/parent?tab=payments",
+      "permanent": false
+    },
+    {
+      "source": "/fr/parent/bills",
+      "destination": "/fr/parent?tab=payments",
+      "permanent": false
+    },
+    {
       "source": "/provider/desk/requests",
       "destination": "/provider?desk=requests",
       "permanent": false

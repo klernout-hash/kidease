@@ -12,6 +12,7 @@ import { captureRankingEvent } from "@/lib/ranking/events";
 import { rankingContextFor } from "@/lib/ranking/context";
 import { safetyText } from "@/lib/safety";
 import { useCopy } from "@/lib/use-copy";
+import { apiErrorMessage } from "@/lib/api-error-copy";
 import { useViewAs } from "@/components/view-as-banner";
 import type { Daycare } from "@/lib/types";
 
@@ -108,7 +109,7 @@ export function RequestMessageSheet({ daycare, open, onClose }: Props) {
       setDone({ conversationId: thread.id });
     } catch (err) {
       if (!send.live(token)) return;
-      const message = err instanceof Error ? err.message : t("requestSentFailed");
+      const message = apiErrorMessage(err, locale, t("requestSentFailed"));
       setError(message);
       toast.error(message);
     } finally {

@@ -43,9 +43,22 @@ export function languageChipMatches(blob: string, code: string): boolean {
   return names.some((name) => text.includes(name));
 }
 
-export function rowHasCareDetail(amenities: string | null | undefined, key: CareDetailKey): boolean {
+function amenityParts(amenities: string | null | undefined): string[] {
   return (amenities || "")
     .split(",")
-    .map((part) => part.trim().toLowerCase())
-    .includes(key);
+    .map((part) => part.trim().toLowerCase());
+}
+
+/**
+ * A centre lists extra support as the older "inclusive" amenity or the
+ * structured "special-needs" key. Both mean the same thing to a parent.
+ */
+export function rowListsExtraSupport(amenities: string | null | undefined): boolean {
+  const parts = amenityParts(amenities);
+  return parts.includes("inclusive") || parts.includes("special-needs");
+}
+
+export function rowHasCareDetail(amenities: string | null | undefined, key: CareDetailKey): boolean {
+  if (key === "special-needs") return rowListsExtraSupport(amenities);
+  return amenityParts(amenities).includes(key);
 }

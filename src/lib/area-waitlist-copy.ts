@@ -161,3 +161,13 @@ export function centreWaitlistStatus(status: string, locale: string | null | und
   const table = locale === "fr" ? CENTRE_STATUS_FR : CENTRE_STATUS_EN;
   return table[status] || status;
 }
+
+/** Stored age group (infant | toddler | preschool | any) as words. Lists showed the raw "any" in FR (B-org #45). */
+export function areaAgeLabel(copy: AreaWaitlistCopy, value: string | null | undefined): string {
+  const key = String(value || "").trim().toLowerCase();
+  if (key === "infant") return copy.infantShort;
+  if (key === "toddler") return copy.toddlerShort;
+  if (key === "preschool") return copy.preschoolShort;
+  if (key === "any" || !key) return copy.any;
+  return String(value);
+}

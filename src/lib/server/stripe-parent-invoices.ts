@@ -38,6 +38,8 @@ export type StripeInvoiceView = {
   hostedInvoiceUrl: string | null;
   invoicePdf: string | null;
   daycareName: string | null;
+  /** Centre address for the invoice PDF (city and province only when the centre hides its street). */
+  daycareAddress?: string | null;
   viewer: "parent" | "daycare";
   payPath?: string | null;
 };
@@ -55,6 +57,11 @@ type InvoiceRow = {
   daycare_id: string | null;
   customer_email: string | null;
   daycare_name?: string | null;
+  daycare_address?: string | null;
+  daycare_city?: string | null;
+  daycare_province?: string | null;
+  daycare_postal?: string | null;
+  daycare_show_address?: boolean | number | null;
 };
 
 export async function applyParentStripeInvoice(input: {
@@ -243,7 +250,7 @@ export const listMyStripeInvoices = createServerFn({ method: "GET" })
       .query<InvoiceRow>(
         `select i.stripe_invoice_id, i.number, i.amount_cents, i.currency, i.status, i.paid_at,
                 i.hosted_invoice_url, i.invoice_pdf, i.parent_user_id, i.daycare_id, i.customer_email,
-                d.name as daycare_name
+                d.name as daycare_name, d.address as daycare_address, d.city as daycare_city, d.province as daycare_province, d.postal_code as daycare_postal, d.show_public_address as daycare_show_address
          from stripe_parent_invoices i
          left join daycares d on d.id = i.daycare_id
          where i.parent_user_id = $1 or ${daycareClause}
@@ -277,8 +284,13 @@ async function listCentreBillsForDesk(sql: Sql, homeId: string, daycareIds: stri
       parent_user_id: string | null;
       daycare_id: string | null;
       daycare_name: string | null;
+      daycare_address?: string | null;
+      daycare_city?: string | null;
+      daycare_province?: string | null;
+      daycare_postal?: string | null;
+      daycare_show_address?: boolean | number | null;
     }>(
-      `select i.id, i.number, i.amount_cents, i.currency, i.status, i.paid_at, i.parent_user_id, i.daycare_id, d.name as daycare_name
+      `select i.id, i.number, i.amount_cents, i.currency, i.status, i.paid_at, i.parent_user_id, i.daycare_id, d.name as daycare_name, d.address as daycare_address, d.city as daycare_city, d.province as daycare_province, d.postal_code as daycare_postal, d.show_public_address as daycare_show_address
        from invoices i
        join daycares d on d.id = i.daycare_id
        where i.status in ('sent', 'paid', 'void', 'refunded')
@@ -301,6 +313,7 @@ async function listCentreBillsForDesk(sql: Sql, homeId: string, daycareIds: stri
       hostedInvoiceUrl: null,
       invoicePdf: null,
       daycareName: row.daycare_name || null,
+      daycareAddress: centreAddressLine(row),
       payPath: `/pay/bill/${row.id}`,
     };
     if (row.parent_user_id === homeId) views.push({ ...base, id: row.id, viewer: "parent" });
@@ -658,7 +671,7 @@ async function loadRow(sql: Sql, invoiceId: string): Promise<InvoiceRow | null> 
   const rows = await sql<InvoiceRow>`
     select i.stripe_invoice_id, i.number, i.amount_cents, i.currency, i.status, i.paid_at,
            i.hosted_invoice_url, i.invoice_pdf, i.parent_user_id, i.daycare_id, i.customer_email,
-           d.name as daycare_name
+           d.name as daycare_name, d.address as daycare_address, d.city as daycare_city, d.province as daycare_province, d.postal_code as daycare_postal, d.show_public_address as daycare_show_address
     from stripe_parent_invoices i
     left join daycares d on d.id = i.daycare_id
     where i.stripe_invoice_id = ${invoiceId}
@@ -697,8 +710,26 @@ function toView(row: InvoiceRow, userId: string): StripeInvoiceView {
     hostedInvoiceUrl: row.hosted_invoice_url,
     invoicePdf: row.invoice_pdf,
     daycareName: row.daycare_name || null,
+    daycareAddress: centreAddressLine(row),
     viewer: row.parent_user_id === userId ? "parent" : "daycare",
   };
+}
+
+/** Address for the invoice. A centre that hides its street (home daycares) shows city and province only. */
+export function centreAddressLine(row: {
+  daycare_address?: string | null;
+  daycare_city?: string | null;
+  daycare_province?: string | null;
+  daycare_postal?: string | null;
+  daycare_show_address?: boolean | number | null;
+}): string | null {
+  const hideStreet = row.daycare_show_address === false || row.daycare_show_address === 0;
+  const parts = [
+    hideStreet ? "" : clean(row.daycare_address),
+    clean(row.daycare_city),
+    [clean(row.daycare_province), hideStreet ? "" : clean(row.daycare_postal)].filter(Boolean).join(" "),
+  ].filter(Boolean);
+  return parts.length ? parts.join(", ") : null;
 }
 
 function appOrigin(): string {

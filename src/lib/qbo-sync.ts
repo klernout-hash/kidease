@@ -109,9 +109,11 @@ export function gstHstForFee(province: string): { bps: number; tax: "gst" | "hst
 }
 
 /**
- * Centre journal for one paid parent bill. The parent pays the KidEase fee,
- * so the centre's Stripe deposit is the full invoice. Tax on that fee is a
- * separate KidEase invoice and is not posted here. Parent childcare stays exempt.
+ * Centre journal for one paid parent bill. Since Nov 25 2026 the parent pays
+ * exactly the bill and the centre pays the KidEase fee out of the payout, so
+ * the Stripe deposit is the bill minus the fee and the fee is an expense.
+ * Tax on that fee is a separate KidEase invoice and is not posted here.
+ * Parent childcare stays exempt.
  */
 export function qboJournal(input: {
   invoiceCents: number;
@@ -119,26 +121,34 @@ export function qboJournal(input: {
   province: string;
 }): QboJournalLine[] {
   const invoice = Math.max(0, Math.round(input.invoiceCents));
-  const parentPaidFee = Math.max(0, Math.round(input.feeCents));
+  const fee = Math.min(invoice, Math.max(0, Math.round(input.feeCents)));
   void input.province;
-  return [
+  const lines: QboJournalLine[] = [
     {
       account: "stripe_clearing",
-      debitCents: invoice,
+      debitCents: invoice - fee,
       creditCents: 0,
       tax: "exempt",
-      memo: parentPaidFee > 0
-        ? "Stripe deposit of the full centre bill. The parent paid the KidEase service fee."
-        : "Stripe deposit of the full centre bill.",
-    },
-    {
-      account: "parent_fees",
-      debitCents: 0,
-      creditCents: invoice,
-      tax: "exempt",
-      memo: "Parent childcare fee. Exempt from GST/HST in this export.",
+      memo: fee > 0 ? "Stripe deposit of the centre bill, after the KidEase fee." : "Stripe deposit of the full centre bill.",
     },
   ];
+  if (fee > 0) {
+    lines.push({
+      account: "platform_fee",
+      debitCents: fee,
+      creditCents: 0,
+      tax: "exempt",
+      memo: "KidEase fee, deducted from the Stripe payout. Tax on it is billed separately.",
+    });
+  }
+  lines.push({
+    account: "parent_fees",
+    debitCents: 0,
+    creditCents: invoice,
+    tax: "exempt",
+    memo: "Parent childcare fee. Exempt from GST/HST in this export.",
+  });
+  return lines;
 }
 
 export function qboJournalBalances(lines: QboJournalLine[]): boolean {

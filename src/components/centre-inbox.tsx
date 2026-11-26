@@ -1,20 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ThreadCallActions } from "@/components/thread-call-actions";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { ThreadCallActions, ThreadCallLockedNote, ThreadHeaderActions, useCallMediaBlocked } from "@/components/thread-call-actions";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Inbox, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { DeskShell } from "@/components/desk-shell";
 import { InboxDetailRail } from "@/components/inbox-detail-rail";
 import { InboxMessageRow } from "@/components/inbox-row";
 import { PipelineBadge } from "@/components/pipeline-badge";
-import { BlockMessagesButton } from "@/components/safety-actions";
-import { SupportDeskBar } from "@/components/support-desk-panel";
+import { BlockMessagesButton, SafetyReportButton, useThreadBlocked } from "@/components/safety-actions";
+import { SupportDeskBar, SupportDeskChat } from "@/components/support-desk-panel";
 import { ThreadComposer, ThreadHeader, ThreadTranscript } from "@/components/thread-chrome";
 import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { providerNavSearch } from "@/lib/desk-nav";
 import { inboxSearch } from "@/lib/inbox-view";
+import { localeFromSearch } from "@/lib/locale-geo";
 import { isOrphanInboxId, mergeUnifiedInbox } from "@/lib/desk-features";
 import { featureCopy } from "@/lib/flagged-feature-copy";
 import type { CentreInboxThread } from "@/lib/inbox-stages";
@@ -36,12 +37,13 @@ import { nextInboxAction } from "@/lib/engagement";
 import { assignInboxThread, searchInboxList, searchInboxText } from "@/lib/server/engagement";
 import { listInbox, sendConnectedMessage } from "@/lib/server/inbox";
 import { useViewAs } from "@/components/view-as-banner";
+import { refreshSessionDesks } from "@/components/session-desks";
 import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
 import { getConversationDetails, setConversationUserState } from "@/lib/server/conversation-state";
 import { getThread } from "@/lib/server/family";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import { listTourRequests } from "@/lib/server/tours";
-import { safetyText } from "@/lib/safety";
+import { blockDialogText, safetyText } from "@/lib/safety";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
 import { cn } from "@/lib/utils";
@@ -81,7 +83,11 @@ export function CentreInboxDesk({
   const [stateBusy, setStateBusy] = useState(false);
   const [videoSurface, setVideoSurface] = useState(false);
   const [voiceReady, setVoiceReady] = useState(false);
+  const [callsMatched, setCallsMatched] = useState(false);
+  const callMediaBlocked = useCallMediaBlocked();
   const [timeZone, setTimeZone] = useState("");
+  const langQuery = useRouterState({ select: (s) => localeFromSearch(s.location.searchStr) });
+  const [blockedByMe] = useThreadBlocked(selectedId && !isOrphanInboxId(selectedId) ? selectedId : "", { load: true });
 
   const visible = useMemo(
     () => (items ? filterInboxList(items, { filter, query, bodyMatchIds: new Set(bodyMatchIds) }) : []),
@@ -139,12 +145,15 @@ export function CentreInboxDesk({
       setThreadReady(true);
       return;
     }
+    // Opening marked it read: the unread badge updates now, not on reload.
+    if (!items || items.some((row) => row.id === id && row.unread)) refreshSessionDesks();
     setCentreName(res.daycareName);
     setMessages(res.messages);
     setTours(res.tours ?? []);
     setCanWrite(res.canWrite !== false);
     setVideoSurface(Boolean(res.videoSurfaceEnabled));
     setVoiceReady(Boolean(res.voiceReady));
+    setCallsMatched(Boolean(res.callsMatched));
     setTimeZone(res.timeZone || "");
     setThreadReady(true);
     const meta = await getConversationDetails({ data: { conversationId: id } }).catch(() => null);
@@ -211,6 +220,10 @@ export function CentreInboxDesk({
   useEffect(() => {
     setDetailOpen(openDetail);
   }, [openDetail, selectedId]);
+
+  useEffect(() => {
+    if (selectedId) setSupportOpen(false);
+  }, [selectedId]);
 
   function refresh() {
     void loadList().catch(() => undefined);
@@ -296,7 +309,7 @@ export function CentreInboxDesk({
       <div className="shrink-0 space-y-3 p-3">
         <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]" data-tour="inbox-heading">{t("messages")}</h2>
         <p className="text-sm text-muted">{t("inboxCentreTitle")}</p>
-        <SupportDeskBar open={supportOpen} onOpen={setSupportOpen} />
+        <SupportDeskBar open={supportOpen} onOpen={setSupportOpen} inlineChat={false} />
         <label className="relative block">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle" />
           <input
@@ -345,7 +358,7 @@ export function CentreInboxDesk({
                 <p className="font-medium">{t("inboxEmptyNeedYou")}</p>
                 <p className="mt-1 text-sm text-muted">{t("inboxEmptyNeedYouLead")}</p>
                 <Button size="sm" className="mt-3" asChild>
-                  <Link to="/inbox" search={inboxSearch("centre")} data-ke="inbox-empty-cta">
+                  <Link to="/inbox" search={inboxSearch("centre", langQuery)} data-ke="inbox-empty-cta">
                     {t("inboxEmptyNeedYouCta")}
                   </Link>
                 </Button>
@@ -401,7 +414,21 @@ export function CentreInboxDesk({
             ? "inboxNextWaitlist"
             : null;
 
-  const threadPane = (
+  const supportPane = (
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-4" data-ke="centre-support-pane">
+      <button
+        type="button"
+        className="mt-2 inline-flex min-h-11 items-center self-start rounded-full px-3 text-sm font-semibold touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:hidden"
+        onClick={() => setSupportOpen(false)}
+      >
+        {t("inboxBackCentre")}
+      </button>
+      <SupportDeskChat />
+    </div>
+  );
+
+  // Support wins while open, even over an open thread. Picking a thread closes it (effect above).
+  const threadPane = supportOpen ? supportPane : (
     <div className="flex h-full min-h-0 flex-1 flex-col">
       {selected ? (
         <>
@@ -409,7 +436,7 @@ export function CentreInboxDesk({
           <ThreadHeader
             bare
             backTo="/inbox"
-            backSearch={inboxSearch("centre")}
+            backSearch={inboxSearch("centre", langQuery)}
             backLabel={t("inboxBackCentre")}
             title={threadTitle || selected.parentName}
             subtitle={[threadSub, details?.assignedUserId ? t("inboxAssignedYou") : ""].filter(Boolean).join(" · ")}
@@ -418,6 +445,17 @@ export function CentreInboxDesk({
               image: person.image,
             }))}
             showDetails={false}
+            actions={
+              isOrphanInboxId(selected.id) ? null : (
+                <ThreadHeaderActions
+                  conversationId={selected.id}
+                  voiceReady={voiceReady}
+                  videoReady={Boolean(videoSurface)}
+                  matched={callsMatched}
+                  blockSide="family"
+                />
+              )
+            }
           />
           <button
             type="button"
@@ -493,6 +531,8 @@ export function CentreInboxDesk({
                 phoneAlerts={details?.phoneAlerts || []}
                 peers={details?.participants || []}
                 timeZone={timeZone || undefined}
+                conversationId={selected.id}
+                videoJoinable={callsMatched && Boolean(videoSurface) && !callMediaBlocked}
               />
             )}
           </div>
@@ -510,8 +550,11 @@ export function CentreInboxDesk({
               </Button>
             </div>
           ) : canWrite ? (
+            <>
+            <ThreadCallLockedNote show={threadReady && !callsMatched && (voiceReady || Boolean(videoSurface))} viewer="centre" />
             <ThreadComposer
               inputId="centre-thread-reply"
+              lockedNote={blockedByMe ? blockDialogText(locale, "family").composer : undefined}
               value={body}
               onChange={setBody}
               onSubmit={onSend}
@@ -607,6 +650,7 @@ export function CentreInboxDesk({
                 </div>
               }
             />
+            </>
           ) : (
             <p className="px-4 py-3 text-sm text-muted">{t("threadReadOnly")}</p>
           )}
@@ -643,7 +687,8 @@ export function CentreInboxDesk({
         onToggleArchive={() => void onState("archive")}
       />
       <div className="space-y-3 border-t border-border px-4 py-4" data-ke="inbox-safety">
-        <ThreadCallActions conversationId={selected.id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} />
+        <ThreadCallActions conversationId={selected.id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} matched={callsMatched} />
+        <SafetyReportButton target="thread" conversationId={selected.id} />
         <BlockMessagesButton conversationId={selected.id} side="family" />
       </div>
       </>
@@ -665,8 +710,8 @@ export function CentreInboxDesk({
         data-ke="centre-inbox"
         className="grid min-h-0 flex-1 overflow-hidden md:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)] xl:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)_minmax(15rem,18rem)]"
       >
-        <div className={cn("min-h-0", selectedId ? "hidden md:flex md:flex-col" : "flex flex-col")}>{listPane}</div>
-        <div className={cn("min-h-0", !selectedId ? "hidden md:flex md:flex-col" : "flex flex-col")}>{threadPane}</div>
+        <div className={cn("min-h-0", selectedId || supportOpen ? "hidden md:flex md:flex-col" : "flex flex-col")}>{listPane}</div>
+        <div className={cn("min-h-0", !selectedId && !supportOpen ? "hidden md:flex md:flex-col" : "flex flex-col")}>{threadPane}</div>
         <div className="hidden min-h-0 overflow-y-auto border-l border-border xl:block">{detailPane()}</div>
       </div>
       {detailOpen && selected ? (

@@ -184,7 +184,8 @@ export const listTaxReceipts = createServerFn({ method: "GET" })
 
 export const downloadTaxReceipt = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { desk?: string; year?: number; daycareId?: string; childId?: string; parentUserId?: string; kind?: string }) => ({
+  .validator((input: { desk?: string; year?: number; daycareId?: string; childId?: string; parentUserId?: string; kind?: string; locale?: string }) => ({
+    locale: input?.locale === "fr" ? ("fr" as const) : ("en" as const),
     desk: input?.desk === "centre" ? ("centre" as const) : ("parent" as const),
     year: input?.year,
     daycareId: input?.daycareId,
@@ -212,7 +213,7 @@ export const downloadTaxReceipt = createServerFn({ method: "POST" })
         (data.desk === "parent" || group.parentUserId === wantedParent),
     );
     if (!match) return { ok: false as const, reason: "none" as const };
-    const pdf = taxReceiptPdf(match, kind);
+    const pdf = taxReceiptPdf(match, kind, data.locale);
     if (!pdf) return { ok: false as const, reason: "none" as const };
     return {
       ok: true as const,

@@ -89,6 +89,7 @@ export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centr
         childId: group.childId,
         parentUserId: group.parentUserId,
         kind,
+        locale: locale === "fr" ? "fr" : "en",
       },
     })
       .then((result) => {
@@ -142,7 +143,7 @@ export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centr
                   {copy.taxChild}: {group.childName || copy.taxChildMissing}
                 </p>
                 <p className="mt-2 text-sm">
-                  {copy.taxAmount}: {cadFromCents(group.amountCents)}
+                  {copy.taxAmount}{locale === "fr" ? " : " : ": "}{cadFromCents(group.amountCents, locale === "fr" ? "fr" : "en")}
                 </p>
                 <p className="text-sm text-muted">
                   {copy.taxPeriod}: {group.periodStart} - {group.periodEnd}

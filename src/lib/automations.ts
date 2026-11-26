@@ -923,6 +923,32 @@ export function invoiceLetter(input: {
   );
 }
 
+/** A reminder the centre sends by hand from an unpaid bill ("Send reminder"). */
+export function manualInvoiceReminderLetter(input: {
+  locale: AutomationLocale;
+  centreName: string;
+  number: string;
+}): AutomationLetter {
+  const fr = input.locale === "fr";
+  const subject = fr
+    ? `Rappel : facture ${input.number} de ${input.centreName}`
+    : `Reminder: bill ${input.number} from ${input.centreName}`;
+  return automationLetter(
+    subject,
+    brandedNotice({
+      locale: input.locale,
+      heading: subject,
+      text: fr
+        ? `${input.centreName} vous rappelle que la facture ${input.number} n’est pas encore payée. Payez-la dans votre compte KidEase.`
+        : `${input.centreName} is reminding you that bill ${input.number} is not paid yet. Pay it in your KidEase account.`,
+      cta: { label: fr ? "Voir la facture" : "View the bill", href: payHref(input.locale) },
+      reason: fr
+        ? "Vous recevez ce courriel parce que vous avez une facture ouverte sur KidEase."
+        : "You get this because you have an open bill on KidEase.",
+    }),
+  );
+}
+
 export function tourFollowupLetter(input: {
   locale: AutomationLocale;
   centreName: string;

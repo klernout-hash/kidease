@@ -28,14 +28,30 @@ const WIN: Record<string, number> = {
   "Ù": 0xd9,
   "Î": 0xce,
   "’": 0x92,
+  "‘": 0x91,
+  "“": 0x93,
+  "”": 0x94,
+  "…": 0x85,
+  "œ": 0x9c,
+  "Œ": 0x8c,
+  "€": 0x80,
   "–": 0x96,
   "—": 0x97,
+  // French money and punctuation spacing (Intl fr-CA uses these).
+  "\u202f": 0xa0,
+  "\u2009": 0x20,
 };
 
-function pdfEscape(text: string): string {
+/**
+ * Text for a PDF string literal in a WinAnsiEncoding font: escapes ( ) \
+ * and writes accents as octal codes. Latin-1 letters (é, È, « », nbsp...)
+ * map one to one. Anything else becomes "?".
+ */
+export function pdfEscape(text: string): string {
   let out = "";
   for (const char of text) {
-    const code = WIN[char];
+    const point = char.codePointAt(0) ?? 0;
+    const code = WIN[char] ?? (point >= 0xa0 && point <= 0xff ? point : undefined);
     if (code != null) {
       out += `\\${code.toString(8).padStart(3, "0")}`;
       continue;

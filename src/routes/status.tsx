@@ -43,22 +43,44 @@ const STATE_LABEL: Record<StatusServiceState, CopyKey> = {
   unknown: "statusUnknown",
 };
 
+/**
+ * Format "Checked …" where the loader runs (the server on first load) and ship
+ * the string. Re-formatting in the browser caused React hydration error #418:
+ * devices with older time-zone data print a different Winnipeg time/zone
+ * than the server, so the text did not match.
+ */
+export async function loadPublicStatusWithLabels() {
+  const data = await loadPublicStatus();
+  return {
+    ...data,
+    checkedLabel: { en: formatStatusCheckedAt(data.checkedAt, "en"), fr: formatStatusCheckedAt(data.checkedAt, "fr") },
+  };
+}
+
 export const Route = createFileRoute("/status")({
-  loader: () => loadPublicStatus(),
+  loader: () => loadPublicStatusWithLabels(),
   head: () => statusHead("en"),
   component: EnglishStatusPage,
 });
 
 function EnglishStatusPage() {
   const data = Route.useLoaderData();
-  return <StatusPage health={data.health} checkedAt={data.checkedAt} />;
+  return <StatusPage health={data.health} checkedAt={data.checkedAt} checkedLabel={data.checkedLabel} />;
 }
 
-export function StatusPage({ health, checkedAt }: { health: HealthPayload | null; checkedAt: string }) {
+export function StatusPage({
+  health,
+  checkedAt,
+  checkedLabel,
+}: {
+  health: HealthPayload | null;
+  checkedAt: string;
+  checkedLabel?: { en: string; fr: string };
+}) {
   const { t, locale } = useCopy();
   const lang = locale === "fr" ? "fr" : "en";
   const rows = statusServices(health);
-  const when = formatStatusCheckedAt(checkedAt, lang);
+  const when = checkedLabel?.[lang] || formatStatusCheckedAt(checkedAt, lang);
   const paymentsOn = rows.some((row) => row.id === "payments" && row.state === "ok");
 
   return (

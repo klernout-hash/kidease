@@ -17,7 +17,7 @@ const allowed = new Set([
   ...ui, "src/components/ui/button.tsx", "src/lib/help-launcher.ts", "src/lib/gov/access.ts",
   "src/lib/locale-path.ts", "src/lib/ai/help-bubble.ts", "src/lib/ai/flags.ts", "src/lib/ai/flag-gate.ts",
   "src/lib/ai/pii.ts", "src/lib/ai/event-props.ts", "src/lib/ranking/weights.ts", "src/lib/turnstile-widget.ts",
-  "src/lib/utils.ts", "src/lib/html-text.ts", "src/lib/languages.ts", "src/lib/french-type.ts",
+  "src/lib/utils.ts", "src/lib/cad-format.ts", "src/lib/html-text.ts", "src/lib/languages.ts", "src/lib/french-type.ts",
 ]);
 const allowedPackages = new Set(["react", "react-dom/client", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-router", "@radix-ui/react-dialog", "@radix-ui/react-slot", "lucide-react", "clsx", "tailwind-merge", "class-variance-authority"]);
 for (const path of allowed) assert.equal(realpathSync(join(root, path)), join(canonicalRoot, path), "Fixture sources must not be symlinks");

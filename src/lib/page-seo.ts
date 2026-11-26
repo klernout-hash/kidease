@@ -9,7 +9,7 @@ import { SUPPORT_INBOX_EMAIL } from "./support.ts";
 import { FACEBOOK_PROFILE_URL, INSTAGRAM_PROFILE_URL } from "./social.ts";
 import { SITEMAP_ORIGIN } from "./public-url.ts";
 import { hreflangLinks, pathLocale } from "./locale-path.ts";
-import { appAvailabilitySentence, liveAppStores } from "./app-stores.ts";
+import { appAvailabilitySentence, appPlatformsLabel, liveAppStores } from "./app-stores.ts";
 
 export const HOME_SEO_TITLE = "KidEase · Licensed daycare near you";
 export const HOME_SEO_DESCRIPTION =
@@ -283,7 +283,7 @@ export const MARKETING_PAGE_SEO = {
     path: "/faq",
   },
   getApp: {
-    title: "Get the KidEase app · iPhone, Android, Mac",
+    title: `Get the KidEase app · ${appPlatformsLabel("en")}`,
     description:
       appAvailabilitySentence("en"),
     path: "/get-app",
@@ -418,7 +418,7 @@ export const MARKETING_PAGE_SEO_FR = {
     path: "/fr/search",
   },
   getApp: {
-    title: "Télécharger l’appli KidEase · iPhone, Android, Mac",
+    title: `Télécharger l’appli KidEase · ${appPlatformsLabel("fr")}`,
     description:
       appAvailabilitySentence("fr"),
     path: "/fr/get-app",

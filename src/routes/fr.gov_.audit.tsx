@@ -1,9 +1,17 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { guardGovDesk } from "@/lib/gov/desk-guard";
+import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
+import { guardGovDesk, govRobotsHead, govRobotsHeaders } from "@/lib/gov/desk-guard";
+import { loadGovDeskPage } from "@/lib/server/gov-desk";
 
 export const Route = createFileRoute("/fr/gov_/audit")({
-  beforeLoad: async ({ context }) => {
-    await guardGovDesk("fr", Boolean((context as { nativeShell?: boolean }).nativeShell));
-    throw redirect({ href: "/fr/gov/data" });
+  // All desk pages share one lazy screen chunk (client JS file budget).
+  codeSplitGroupings: [],
+  beforeLoad: ({ context }) => guardGovDesk("fr", Boolean((context as { nativeShell?: boolean }).nativeShell)),
+  loader: async ({ context }) => {
+    const gate = context as { nativeOnly?: boolean };
+    if (gate.nativeOnly) return null;
+    return loadGovDeskPage({ data: { leaf: "audit", locale: "fr" } });
   },
+  head: () => govRobotsHead("Journal d’audit"),
+  headers: govRobotsHeaders,
+  component: lazyRouteComponent(() => import("@/components/gov/gov-desk-route"), "GovDeskRouteView"),
 });

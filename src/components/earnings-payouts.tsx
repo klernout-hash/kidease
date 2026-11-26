@@ -49,6 +49,18 @@ export function EarningsPayoutsScreen({
 
 type PayoutCentre = { id: string; name: string; ready?: boolean };
 
+/** One titled block around a Stripe embedded screen. */
+function connectSection(title: string, child: HTMLElement): HTMLElement {
+  const section = document.createElement("section");
+  section.className = "mt-6";
+  section.dataset.ke = "connect-section";
+  const heading = document.createElement("h3");
+  heading.className = "font-display text-lg";
+  heading.textContent = title;
+  section.append(heading, child);
+  return section;
+}
+
 function ConnectPayouts({
   connect,
   centres: initialCentres,
@@ -116,7 +128,15 @@ function ConnectPayouts({
         setError(t("connectErrMissing"));
         return;
       }
-      node.replaceChildren(instance.create("account-onboarding"), instance.create("payouts"));
+      // Banner first: Stripe's "we need a document" notices. Daycares have no
+      // Stripe dashboard, so this is where they see them.
+      node.replaceChildren(
+        instance.create("notification-banner"),
+        connectSection(t("connectSetupTitle"), instance.create("account-onboarding")),
+        connectSection(t("connectPayoutsTitle"), instance.create("payouts")),
+        connectSection(t("connectPaymentsTitle"), instance.create("payments")),
+        connectSection(t("connectDocumentsTitle"), instance.create("documents")),
+      );
       setStarted(true);
     } catch {
       setError(t("actionFailed"));

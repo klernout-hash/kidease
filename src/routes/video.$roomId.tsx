@@ -7,6 +7,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { useViewAs } from "@/components/view-as-banner";
 import { useInNativeShell } from "@/lib/use-native-shell";
+import { useCallMediaBlocked } from "@/components/thread-call-actions";
 import { VideoRoomPanel } from "@/components/video-room-panel";
 import { PayCtas } from "@/components/pay-chrome";
 import {
@@ -21,7 +22,7 @@ import { publicErrorMessage } from "@/lib/public-error";
 export const Route = createFileRoute("/video/$roomId")({
   head: () => ({
     meta: [
-      { title: "Video tour · KidEase" },
+      { title: "Video call · KidEase" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -34,6 +35,8 @@ function VideoRoomPage() {
   const { t } = useCopy();
   const viewing = useViewAs();
   const nativeShell = useInNativeShell();
+  // Android store apps without camera/mic permission (until the next build).
+  const appBlocked = useCallMediaBlocked();
   const [status, setStatus] = useState<VideoJoinStatus | null>(null);
   const [statusFailed, setStatusFailed] = useState(false);
   const [joined, setJoined] = useState<Extract<VideoJoinResult, { ok: true }> | null>(null);
@@ -65,12 +68,20 @@ function VideoRoomPage() {
   }
   if (!user) return <RedirectToSignIn />;
 
-  const paywall = status?.reason === "plus_required" || status?.reason === "plus_required_billing_not_live";
+  // No Plus wording at all while subscriptions are off.
+  const paywall =
+    Boolean(status?.subscriptionsOn) &&
+    (status?.reason === "plus_required" || status?.reason === "plus_required_billing_not_live");
   const featureOff = status?.reason === "feature_off";
   const noCredentials = status?.reason === "no_credentials";
   const sdkOff = status?.reason === "sdk_not_wired";
-  const blockedScaffold = Boolean(featureOff || noCredentials || sdkOff);
-  const canMint = Boolean(status?.gateOk);
+  const notMatched = status?.reason === "not_matched";
+  // Calls aren't available yet: flag off, Twilio not set up, SDK off, or a
+  // Plus gate while subscriptions are off. No internal wording is shown.
+  const blockedScaffold = Boolean(
+    featureOff || noCredentials || sdkOff || (!status?.subscriptionsOn && status?.reason?.startsWith("plus_required")),
+  );
+  const canMint = Boolean(status?.gateOk) && !appBlocked;
 
   async function onJoin() {
     if (viewing) {
@@ -120,7 +131,17 @@ function VideoRoomPage() {
 
         <div className="ke-call-stage mt-6" data-ke="call-stage">
         <div className="min-w-0">
-        {nativeShell && paywall && !canMint ? (
+        {appBlocked && status ? (
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="native-video-unavailable">
+            <p className="font-medium">{t("callsUnavailableTitle")}</p>
+            <p className="mt-2 text-sm text-muted">{t("callsUnavailableApp")}</p>
+            <Button variant="secondary" asChild className="mt-4">
+              <Link to="/inbox">{t("inbox")}</Link>
+            </Button>
+          </div>
+        ) : null}
+
+        {!appBlocked && nativeShell && paywall && !canMint ? (
           <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="native-video-entitlement">
             <p className="text-sm text-muted">{t("nativeVideoNeedsPlus")}</p>
             <Button variant="secondary" asChild className="mt-4">
@@ -129,28 +150,29 @@ function VideoRoomPage() {
           </div>
         ) : null}
 
-        {nativeShell && blockedScaffold && !joined ? (
-          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="native-video-unavailable">
-            <p className="text-sm text-muted">{t("videoNoCredentials")}</p>
+        {!appBlocked && notMatched && !joined ? (
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="video-not-matched">
+            <p className="text-sm text-muted">{status?.desk === "provider" ? t("callsLockedCentre") : t("callsNotMatched")}</p>
             <Button variant="secondary" asChild className="mt-4">
               <Link to="/inbox">{t("inbox")}</Link>
             </Button>
           </div>
         ) : null}
 
-        {!nativeShell && blockedScaffold && !joined ? (
+        {!appBlocked && blockedScaffold && !joined ? (
           <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="video-unavailable">
-            <p className="text-sm text-muted">{t("videoNoCredentials")}</p>
+            <p className="font-medium">{t("callsUnavailableTitle")}</p>
+            <p className="mt-2 text-sm text-muted">{t("callsUnavailable")}</p>
             <Button variant="secondary" asChild className="mt-4">
               <Link to="/inbox">{t("inbox")}</Link>
             </Button>
           </div>
         ) : null}
 
-        {!nativeShell && status?.error && !paywall && !blockedScaffold && !joined ? (
+        {!appBlocked && !nativeShell && status && !status.allowed && !joined ? (
           <p className="mt-4 text-sm text-danger">{publicErrorMessage(status.error, t("videoTourFailed"))}</p>
         ) : null}
-        {error && !blockedScaffold ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
+        {error && !blockedScaffold && !appBlocked ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
 
         {!nativeShell && paywall ? (
           <div className="ke-digital-plan mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="parent-plus-prompt">
@@ -198,7 +220,12 @@ function VideoRoomPage() {
         </div>
 
         {joined ? (
-          <VideoRoomPanel token={joined.token} roomName={joined.roomName} onLeft={() => setJoined(null)} />
+          <VideoRoomPanel
+            token={joined.token}
+            roomName={joined.roomName}
+            conversationId={joined.conversationId}
+            onLeft={() => setJoined(null)}
+          />
         ) : null}
       </main>
     </Shell>

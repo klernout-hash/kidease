@@ -183,9 +183,27 @@ function kindFromLead(kind: string): ParentRequestKind {
   return "tour";
 }
 
+/** The booked slot as the centre's wall clock: "2026-11-26T10:00" (or just the date). */
 function tourDateOf(tour: TourInput): string | null {
-  const date = tour.preferredTimes?.find((slot) => (slot.date || "").trim())?.date?.trim() || "";
-  return date || null;
+  const slot = tour.preferredTimes?.find((row) => (row.date || "").trim());
+  const date = slot?.date?.trim() || "";
+  if (!date) return null;
+  const time = String(slot?.time || "").trim().slice(0, 5);
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(time) ? `${date}T${time}` : date;
+}
+
+/**
+ * Show a visit slot exactly as booked. `new Date("2026-11-26")` is UTC
+ * midnight, which read as Nov 25 in Manitoba (B04). Format the wall clock.
+ */
+export function formatVisitSlot(value: string, locale: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:T([01]\d|2[0-3]):([0-5]\d))?/.exec(String(value || "").trim());
+  if (!m) return value;
+  const at = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4] || 0), Number(m[5] || 0)));
+  const loc = locale === "fr" ? "fr-CA" : "en-CA";
+  return m[4]
+    ? at.toLocaleString(loc, { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })
+    : at.toLocaleDateString(loc, { dateStyle: "medium", timeZone: "UTC" });
 }
 
 function byNewest(a: ParentRequestRow, b: ParentRequestRow): number {

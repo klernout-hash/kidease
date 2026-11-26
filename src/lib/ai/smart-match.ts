@@ -172,7 +172,7 @@ export function listingMatchesMusts(
     const frenchListed = listed(listing.amenities, "french") || /\b(french|français|francais)\b/i.test(languages);
     if (!frenchListed) return false;
   }
-  if (filters.extraSupport && !listed(listing.amenities, "inclusive")) return false;
+  if (filters.extraSupport && !listed(listing.amenities, "inclusive") && !listed(listing.amenities, "special-needs")) return false;
   return true;
 }
 

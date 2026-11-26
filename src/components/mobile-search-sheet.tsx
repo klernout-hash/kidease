@@ -263,7 +263,7 @@ export function MobileSearchResults({
         <button
           type="button"
           data-ke="msv2-back"
-          className="grid size-12 shrink-0 place-items-center rounded-full text-fg"
+          className="grid size-12 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full text-fg"
           aria-label={t("back")}
           onClick={() => {
             if (window.history.length > 1) window.history.back();

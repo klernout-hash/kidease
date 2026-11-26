@@ -102,15 +102,15 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
         ))}
 
         <nav className="mt-6 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted" aria-label={t("privacy")}>
-          <Link to={localePath("/privacy", locale)} className="underline-offset-4 hover:underline">
+          <Link to={localePath("/privacy", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
             {t("privacy")}
           </Link>
           <span aria-hidden>·</span>
-          <Link to={localePath("/terms", locale)} className="underline-offset-4 hover:underline">
+          <Link to={localePath("/terms", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
             {t("terms")}
           </Link>
           <span aria-hidden>·</span>
-          <Link to={localePath("/cookies", locale)} className="underline-offset-4 hover:underline">
+          <Link to={localePath("/cookies", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
             {t("cookies")}
           </Link>
         </nav>
@@ -170,7 +170,7 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
             {t("deleteAccount")}
           </Link>
           {" · "}
-          <Link to={localePath("/help", locale)} className="underline-offset-4 hover:underline">
+          <Link to={localePath("/help", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
             {t("support")}
           </Link>
         </p>

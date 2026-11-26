@@ -88,8 +88,11 @@ function PayBillPage() {
     };
   }, [user, billId]);
 
+  const billStatus = bill?.status ?? null;
   useEffect(() => {
-    if (!search.paid || !user) return;
+    if (!search.paid || !user || !billStatus || billStatus === "paid") return;
+    // The first load already asked Stripe for the session (reconcile), so the
+    // receipt usually shows at once. Re-check once only if it is still unpaid.
     const tmr = window.setTimeout(() => {
       void getBill({ data: billId })
         .then((res) => {
@@ -101,7 +104,7 @@ function PayBillPage() {
         .catch(() => undefined);
     }, 1200);
     return () => window.clearTimeout(tmr);
-  }, [search.paid, user, billId]);
+  }, [search.paid, user, billId, billStatus]);
 
   if (isPending) {
     return (
@@ -167,12 +170,15 @@ function PayBillPage() {
     if (!canPay || !bill) return;
     setBusy(true);
     try {
-      await saveMyCaslConsents({
-        data: { ...consents, locale: locale === "fr" ? "fr" : "en", method: "checkout_checkbox" },
-      }).catch(() => undefined);
-      const res = await createBillCheckout({
-        data: { billId: bill.id, locale: locale === "fr" ? "fr" : "en" },
-      });
+      // Consent save and the Checkout session are independent: run together.
+      const [, res] = await Promise.all([
+        saveMyCaslConsents({
+          data: { ...consents, locale: locale === "fr" ? "fr" : "en", method: "checkout_checkbox" },
+        }).catch(() => undefined),
+        createBillCheckout({
+          data: { billId: bill.id, locale: locale === "fr" ? "fr" : "en" },
+        }),
+      ]);
       if (res.alreadyPaid) {
         toast.success(t("paid"));
         const latest = await getBill({ data: bill.id });

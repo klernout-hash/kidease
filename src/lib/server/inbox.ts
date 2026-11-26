@@ -57,6 +57,14 @@ export const listInbox = createServerFn({ method: "GET" })
     const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
     assertRuntimeSwitch("FEATURE_INBOX");
     const sql = await getSql();
+    // B05 #29: the centre message scope does not depend on the thread rows. Start it now.
+    const messageCentresLoad: Promise<Set<string> | null> =
+      data.view === "family"
+        ? Promise.resolve(null)
+        : import("@/lib/server/centre-access")
+            .then((m) => m.daycareIdsForArea(sql, context.userId, "messages", "view"))
+            .then((ids) => new Set(ids));
+    messageCentresLoad.catch(() => undefined);
     const { familyScopeFor } = await import("@/lib/server/coparent");
     const parentId = (await familyScopeFor(context.userId)).dataUserId;
     const view = data.view ?? "all";
@@ -97,6 +105,7 @@ export const listInbox = createServerFn({ method: "GET" })
       start_date: string | null;
       last_body: string | null;
       last_sender: string | null;
+      last_message_at?: string | Date | null;
     }>`
       select c.id, c.daycare_id, c.user_id as parent_user_id,
              d.name, d.slug, d.photos, c.last_at, d.phone,
@@ -215,14 +224,15 @@ export const listInbox = createServerFn({ method: "GET" })
                ) members
              ) as member_names,
              lm.body as last_body,
-             lm.sender as last_sender
+             lm.sender as last_sender,
+             lm.created_at as last_message_at
       from conversations c
       join daycares d on d.id = c.daycare_id
       left join "user" u on u.id = c.user_id
       left join conversation_user_state s
         on s.conversation_id = c.id and s.user_id = ${context.userId}
       left join lateral (
-        select m.body, m.sender
+        select m.body, m.sender, m.created_at
         from messages m
         where m.conversation_id = c.id
           and m.sender <> 'system'
@@ -265,12 +275,7 @@ export const listInbox = createServerFn({ method: "GET" })
       limit 50
     `;
 
-    const messageCentres =
-      data.view === "family"
-        ? null
-        : new Set(
-            await (await import("@/lib/server/centre-access")).daycareIdsForArea(sql, context.userId, "messages", "view"),
-          );
+    const messageCentres = await messageCentresLoad;
     const out: Conversation[] = [];
     const now = Date.now();
     for (const r of rows) {
@@ -308,7 +313,8 @@ export const listInbox = createServerFn({ method: "GET" })
         daycareName: isParent ? r.name : (r.parent_name || "").trim() || "Parent",
         daycareSlug: r.slug,
         photo: splitPhotoList(r.photos)[0] || "/photos/cottage.jpg",
-        lastAt: String(r.last_at),
+        // The row time is the last chat message, not a tour or state change on the thread (B03a).
+        lastAt: isoTime(r.last_message_at ?? r.last_at),
         lastBody,
         preview: maskInboxPreview(lastBody),
         status: r.status,
@@ -602,3 +608,9 @@ export const saveInboxStaffNote = createServerFn({ method: "POST" })
     `;
     return { ok: true as const, note: data.note || null };
   });
+
+function isoTime(value: unknown): string {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? "" : value.toISOString();
+  // Keep a driver's string as-is; only a Date needs converting.
+  return String(value ?? "");
+}

@@ -71,6 +71,9 @@ async function fixture({ status = "requested", concurrentReads = 0, approvalErro
         effects.lead += 1;
       },
     },
+    "@/lib/server/pipeline-sync": {
+      syncBookingLeadStatus: async () => undefined,
+    },
     "@/lib/server/tours": {
       syncToursFromBooking: async () => {
         effects.tours += 1;

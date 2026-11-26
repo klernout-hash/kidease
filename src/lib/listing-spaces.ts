@@ -1,5 +1,5 @@
 import { facilityLabel, ROOM_ACCESS_IDS, ROOM_AMENITY_IDS } from "./daycare-facilities.ts";
-import { managedListingPhotos } from "./listing-photo.ts";
+import { realManagedListingPhotos } from "./listing-photo.ts";
 
 /** Childcare spaces. Not bedrooms, bathrooms, or floor plans. */
 export const LISTING_SPACE_TYPES = ["play", "nap", "meals", "outdoor", "entry", "care", "other"] as const;
@@ -99,7 +99,7 @@ export function normalizeSpaceInput(input: {
 
 /** Cover stays the first stored photo. A room only shows photos that are still on the listing. */
 export function groupListingSpaces(rawPhotos: string | string[] | null | undefined, spaces: ListingSpace[]): SpaceGroup {
-  const photos = managedListingPhotos(rawPhotos);
+  const photos = realManagedListingPhotos(rawPhotos);
   const known = new Set(photos);
   const used = new Set<string>();
   const next = spaces

@@ -39,6 +39,18 @@ const SESSION_DESK_RETRY_MS = 1500;
 
 const SessionDesksContext = createContext<SessionDesksState>(EMPTY);
 
+const REFRESH_EVENT = "ke:session-desks-refresh";
+
+/**
+ * Badges (bell, unread messages, menu) come from getMyDesks. Call this after a
+ * read changes a count (Mark all read, opening a thread) so they update now,
+ * not on the next reload (B03a).
+ */
+export function refreshSessionDesks(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(REFRESH_EVENT));
+}
+
 /** Desk routes need the full session. Public pages use the lighter role chrome. */
 export function needsSessionDesks(pathname: string): boolean {
   const path = stripLocalePrefix(pathname).replace(/\/+$/, "") || "/";
@@ -78,10 +90,18 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState(false);
   const [sticky, setStickyState] = useState<DeskKey | null>(null);
   const loadedFor = useRef<string | null>(null);
+  const lastBump = useRef(0);
   // A timed-out or failed getMyDesks used to stick until the next pathname
   // change: /provider then had no session (no owner flag, no hostListing), so
   // Today could stay empty and the Calendar tab pointed at ?desk=tours.
   const [retry, setRetry] = useState(0);
+  const [bump, setBump] = useState(0);
+
+  useEffect(() => {
+    const onRefresh = () => setBump((n) => n + 1);
+    window.addEventListener(REFRESH_EVENT, onRefresh);
+    return () => window.removeEventListener(REFRESH_EVENT, onRefresh);
+  }, []);
 
   function setSticky(desk: DeskKey) {
     writeStickyDesk(desk);
@@ -114,10 +134,15 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
       return;
     }
     let cancelled = false;
+    const wantFresh = bump > lastBump.current;
+    lastBump.current = bump;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     setError(false);
-    void dedupedQuery(`get-my-desks:${user.id}`, QUERY_STALE_MS, () =>
-      withTimeout(getMyDesks(), SESSION_SETTLE_MS, "get-desks-timeout"),
+    void dedupedQuery(
+      `get-my-desks:${user.id}`,
+      QUERY_STALE_MS,
+      () => withTimeout(getMyDesks(), SESSION_SETTLE_MS, "get-desks-timeout"),
+      wantFresh ? { fresh: true } : undefined,
     )
       .then((s) => {
         if (cancelled) return;
@@ -146,7 +171,7 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [user?.id, isPending, pathname, retry]);
+  }, [user?.id, isPending, pathname, retry, bump]);
 
   useEffect(() => {
     const fromPath = deskFromPathname(pathname);

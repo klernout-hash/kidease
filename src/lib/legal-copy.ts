@@ -71,7 +71,7 @@ export const PRIVACY_EN: LegalDoc = {
             "Child profile, only if you add one: the child’s name and birthdate, plus allergies, an epi-pen flag, medical notes, medications, a doctor’s name and phone, and emergency contacts. Immunization records are optional uploads. You can leave health fields blank. Health text is encrypted at rest when the server has a health key. PostHog, Sentry, and Help chat do not receive those fields. Guests never see them.",
             "Search location you choose: a GPS fix while you search, or a typed address, city, or postal code. We ask before using precise location.",
             "Requests and messages: inquire, book-a-tour, and request-a-spot fields, plus in-app chat with that centre.",
-            "Calls: live audio on a KidEase voice call, and live audio and video on a video tour. Twilio carries the call. KidEase does not record it. Your phone number stays hidden.",
+            "Calls: live audio on a KidEase voice call, and live audio and video on a video call. Twilio carries the call. KidEase does not record it. Your phone number stays hidden.",
             "Claim and enrol (directors): centre identity, licence photo, verification code, and the enrol form (name, email, centre, city, phone, message).",
             "Payments: amount, method, status, and a KidEase reference: only if a deposit is recorded in-app. We do not store full card numbers.",
             "Technical: session cookies, device/browser needed to run the site, and first-party search telemetry (a coarse geohash, not a street address).",
@@ -88,7 +88,7 @@ export const PRIVACY_EN: LegalDoc = {
           items: [
             "Show licensed centres near the place you chose and let you filter by distance.",
             "Send your inquiry, tour, or enrolment request to that centre and keep the conversation.",
-            "Connect a voice call or video tour between you and that centre. The camera and microphone are used only while that call is open.",
+            "Connect a voice call or video call between you and that centre. The camera and microphone are used only while that call is open.",
             "Let a claimed director manage spots, fees, photos, and family messages.",
             "Notify KidEase support at support@kidease.ca of new accounts, claims, and requests so we can run the service.",
             "Send transactional email (sign-in codes, password reset, claim codes, request notices).",
@@ -204,7 +204,7 @@ export const PRIVACY_EN: LegalDoc = {
             {
               name: "Twilio, for voice and video calls",
               purpose:
-                "Live audio on a voice call, and live audio plus video on a video tour, between a parent and a daycare. Twilio receives that call media so the two people can hear and see each other. KidEase does not record the call. Phone numbers stay hidden. The Twilio scripts load only on the call page and the video page.",
+                "Live audio on a voice call, and live audio plus video on a video call, between a parent and a daycare. Twilio receives that call media so the two people can hear and see each other. KidEase does not record the call. Phone numbers stay hidden. The Twilio scripts load only on the call page and the video page.",
               href: "https://www.twilio.com/en-us/legal/privacy",
               hrefLabel: "Twilio Privacy Policy",
             },
@@ -511,7 +511,7 @@ export const PRIVACY_FR: LegalDoc = {
             "Profil d’enfant, seulement si vous l’ajoutez : nom et date de naissance, plus allergies, épinéphrine, notes médicales, médicaments, nom et téléphone du médecin, et contacts d’urgence. Le carnet de vaccination est un téléversement facultatif. Vous pouvez laisser les champs de santé vides. Le texte de santé est chiffré au repos quand le serveur a une clé. PostHog, Sentry et le clavardage d’aide ne reçoivent pas ces champs. Les visiteurs ne les voient pas.",
             "Lieu de recherche : position GPS pendant la recherche, ou une adresse, une ville ou un code postal saisi.",
             "Demandes et messages : inquiry, visite et demande de place, plus le clavardage avec ce centre.",
-            "Appels : audio en direct pour un appel KidEase, et audio et vidéo en direct pour une visite vidéo. Twilio transporte l’appel. KidEase ne l’enregistre pas. Votre numéro de téléphone reste caché.",
+            "Appels : audio en direct pour un appel KidEase, et audio et vidéo en direct pour un appel vidéo. Twilio transporte l’appel. KidEase ne l’enregistre pas. Votre numéro de téléphone reste caché.",
             "Revendication et inscription (directions) : identité du centre, photo du permis, code de vérification, et le formulaire (nom, courriel, centre, ville, téléphone, message).",
             "Paiements : montant, mode, statut et une référence KidEase: seulement si un dépôt est inscrit. Nous ne conservons pas les numéros de carte complets.",
             "Technique : témoins de session, données du navigateur nécessaires au site, et télémétrie de recherche (géohachage grossier, pas une adresse municipale).",
@@ -528,7 +528,7 @@ export const PRIVACY_FR: LegalDoc = {
           items: [
             "Afficher les centres permis près du lieu choisi et filtrer par distance.",
             "Transmettre la demande de renseignement, de visite ou d’inscription à ce centre.",
-            "Relier un appel vocal ou une visite vidéo entre vous et ce centre. La caméra et le microphone servent seulement pendant cet appel.",
+            "Relier un appel vocal ou un appel vidéo entre vous et ce centre. La caméra et le microphone servent seulement pendant cet appel.",
             "Laisser une direction réclamée gérer places, tarifs, photos et messages.",
             "Aviser le soutien KidEase à support@kidease.ca des nouveaux comptes, revendications et demandes.",
             "Envoyer des courriels transactionnels (codes, réinitialisation, avis de demande).",
@@ -644,7 +644,7 @@ export const PRIVACY_FR: LegalDoc = {
             {
               name: "Twilio, pour les appels vocaux et vidéo",
               purpose:
-                "Audio en direct pour un appel vocal, et audio plus vidéo en direct pour une visite vidéo, entre un parent et une garderie. Twilio reçoit ce média pour que les deux personnes s’entendent et se voient. KidEase n’enregistre pas l’appel. Les numéros restent cachés. Les scripts Twilio se chargent seulement sur la page d’appel et la page vidéo.",
+                "Audio en direct pour un appel vocal, et audio plus vidéo en direct pour un appel vidéo, entre un parent et une garderie. Twilio reçoit ce média pour que les deux personnes s’entendent et se voient. KidEase n’enregistre pas l’appel. Les numéros restent cachés. Les scripts Twilio se chargent seulement sur la page d’appel et la page vidéo.",
               href: "https://www.twilio.com/en-us/legal/privacy",
               hrefLabel: "Politique de confidentialité Twilio",
             },

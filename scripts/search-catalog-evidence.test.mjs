@@ -24,7 +24,7 @@ async function moduleUnderTest(file, overrides = {}) {
     CITY_SEARCH_KEY_EXPR: "city", cityDirectoryMatchSql: () => "city", citySearchKeyEnabled: () => false,
     PUBLIC_LISTING_SQL: "public", SUPPRESSED_CATALOG_SQL: "suppressed",
     LISTING_DISTANCE_KM_SQL: "distance", LISTING_WITHIN_RADIUS_SQL: "radius", LISTING_WITHIN_RADIUS_B_SQL: "radius_b",
-    splitPhotoList: () => [], normalizeListingSlug: (v) => v, correctCentreNameTypos: (v) => v,
+    splitPhotoList: () => [], normalizeListingSlug: (v) => v, correctCentreNameTypos: (v) => v, displayCityName: (v) => v || "",
     listingVisibilityOf: (v) => v.visibility || "public", agesKnownFromConfirmedFlag: () => true,
     normalizeLicenseStatus: () => "active", normalizeMatchState: () => "matched", listingCultureFrom: () => ({}),
     foundingBadgeEnabled: () => false, foundingMemberVisible: () => false,

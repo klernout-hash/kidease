@@ -1,3 +1,4 @@
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { getSql, type Sql } from "@/lib/db";
 import {
   canShareWithCentre,
@@ -311,15 +312,23 @@ export async function loadFamilyDocumentFor(input: {
   throw Object.assign(new Error("not_found"), { status: 404 });
 }
 
+/**
+ * R2 delete, server-only. A runtime-built "@/lib/..." path threw
+ * ERR_MODULE_NOT_FOUND on Vercel, so R2 objects were never deleted.
+ * createServerOnlyFn keeps a literal, bundled import out of the client graph.
+ */
+const deleteR2FamilyObject = createServerOnlyFn(async (key: string) => {
+  const { deleteFamilyDocObject } = await import("@/lib/server/r2.server");
+  await deleteFamilyDocObject(key);
+});
+
 async function forgetStorage(ref: string) {
   const value = ref.trim();
   if (!value.startsWith(`${R2_FAMILY_PREFIX}/`)) return;
   try {
     const { resolveR2Config } = await import("@/lib/server/r2");
     if (!resolveR2Config().ok) return;
-    const r2File = "@/lib/server/" + "r2.server";
-    const { deleteFamilyDocObject } = await import(/* @vite-ignore */ r2File);
-    await deleteFamilyDocObject(value);
+    await deleteR2FamilyObject(value);
   } catch {
     /* The row delete still removes access. */
   }

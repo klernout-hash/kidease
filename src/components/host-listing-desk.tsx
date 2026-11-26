@@ -7,7 +7,7 @@ import { CapacityForm } from "@/components/provider-listing-forms";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { ProviderTrustChecklist } from "@/components/provider-trust";
 import { publicApprovalEligible } from "@/lib/approve-live";
-import { managedListingPhotos } from "@/lib/listing-photo";
+import { managedListingPhotos, realManagedListingPhotos } from "@/lib/listing-photo";
 import { centrePublication, filterOwnedCentres } from "@/lib/host-listings-overview";
 import {
   CENTRE_SECTIONS,
@@ -550,7 +550,7 @@ function HostEditor({
     );
   }
 
-  const photos = managedListingPhotos(daycare.photos);
+  const photos = realManagedListingPhotos(daycare.photos);
   const cover = photos[0] ?? "";
   const stack = photos.slice(0, 3);
 

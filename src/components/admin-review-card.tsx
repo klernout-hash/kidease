@@ -40,6 +40,7 @@ import { queueStorefrontSrc } from "@/lib/queue-photo";
 import { LISTING_PLACEHOLDER } from "@/lib/listing-photo";
 import { HealthChecklist, HealthRing } from "@/components/profile-health-card";
 import { compareHealth, profileHealth, type ProfileHealth } from "@/lib/profile-health";
+import { ADMIN_QUEUE_PAGE, usePagedList } from "@/lib/use-paged-list";
 
 const FACT_TONE: Record<ReviewFactTone, string> = {
   ready: "font-medium text-fg",
@@ -464,6 +465,17 @@ export function AdminReviewCard({
         <div className="min-w-0">
           <h3 className="font-display text-lg leading-tight tracking-tight">{displayCentreName(centre.name)}</h3>
           <p className="mt-0.5 text-sm text-muted">{place || "Location not on file"}</p>
+          {centre.fraudFlags?.length ? (
+            <p
+              className="mt-1 inline-flex flex-wrap items-center gap-1 rounded-full bg-danger/10 px-3 py-1 text-xs font-medium text-danger ring-1 ring-danger/30"
+              data-ke="admin-claim-fraud"
+            >
+              Spam or fraud flag
+              {centre.fraudFlags[0]?.score != null ? ` · score ${centre.fraudFlags[0].score}` : ""}
+              {centre.fraudFlags[0]?.reasons ? ` · ${centre.fraudFlags[0].reasons.replace(/_/g, " ")}` : ""}
+              {centre.fraudFlags.length > 1 ? ` · +${centre.fraudFlags.length - 1} more` : ""}
+            </p>
+          ) : null}
           {centre.addonLine ? (
             <p className="mt-1 text-sm text-fg" data-ke="admin-centre-addons">
               {centre.addonLine}
@@ -749,6 +761,7 @@ export function AdminCentreStatList({
           .sort((a, b) => compareHealth(a.health, b.health))
           .map((item) => item.row)
       : rows;
+  const statPage = usePagedList(shown, ADMIN_QUEUE_PAGE, `${stat}:${band}`);
   const countLabel = loading || unavailable
     ? "—"
     : rows.length === 0
@@ -806,8 +819,9 @@ export function AdminCentreStatList({
         ) : shown.length === 0 ? (
           <AdminReviewNotice title="Nothing in this group" body="Pick another filter to see the rest of the queue." marker="empty" />
         ) : (
+          <>
           <ul className="space-y-3">
-            {shown.map((centre) => (
+            {statPage.shown.map((centre) => (
               <li key={centre.daycareId}>
                 <AdminReviewCard
                   centre={centre}
@@ -824,6 +838,17 @@ export function AdminCentreStatList({
               </li>
             ))}
           </ul>
+          {statPage.more > 0 ? (
+            <button
+              type="button"
+              onClick={statPage.showMore}
+              className="mt-3 inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium ring-1 ring-border hover:ring-fg/40"
+              data-ke="admin-queue-more"
+            >
+              Show {Math.min(ADMIN_QUEUE_PAGE, statPage.more)} more ({statPage.more} left)
+            </button>
+          ) : null}
+          </>
         )}
       </div>
     </section>

@@ -1,6 +1,7 @@
 import type { BillStatus } from "@/lib/bill";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
+import { formatCad } from "@/lib/cad-format";
 
 const KEY: Record<BillStatus, "billDraft" | "billSent" | "billPaid" | "billVoid" | "billRefunded" | "billDisputed"> = {
   draft: "billDraft",
@@ -103,7 +104,7 @@ export function RefundNote({
   const { t, locale } = useCopy();
   if (!bill.refundState || !bill.refundedCents) return null;
   const fr = locale === "fr";
-  const amount = new Intl.NumberFormat(fr ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" }).format(bill.refundedCents / 100);
+  const amount = formatCad(bill.refundedCents / 100, fr ? "fr-CA" : "en-CA");
   const date = bill.refundedAt
     ? new Date(bill.refundedAt).toLocaleDateString(fr ? "fr-CA" : "en-CA", { dateStyle: "medium" })
     : "";

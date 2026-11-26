@@ -4,7 +4,9 @@ import { sealPublicHomes } from "@/lib/server/home-address-privacy";
 import { eceJobsEnabled, hostListingEnabled, inclusiveFiltersEnabled, reviewReportsEnabled } from "@/lib/features";
 import { patchAvailabilityMonth } from "@/lib/host-calendar";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
-import { cardSortKm, includeCardInRadius } from "@/lib/card-distance";
+import { cardSortKm, cityPinForStrayListing, includeCardInRadius } from "@/lib/card-distance";
+import { DEFAULT_SEARCH_RADIUS_KM } from "@/lib/search-radius";
+import { pinsWithinRadius } from "@/lib/search-map-state";
 import { catchmentMatch, clampRadiusKm, compareProximity, recommendedRank } from "@/lib/proximity";
 import { resolveListingTourTimezone } from "@/lib/tour-calendar";
 import {
@@ -280,9 +282,12 @@ function toDaycare(d: CatalogDaycare): Daycare {
 }
 
 function toCard(d: NearbyListing, origin: { lat: number; lng: number }, originFsa?: string): DaycareCard {
-  const daycare = toDaycare(d);
-  const km = cardSortKm(origin, { lat: d.lat, lng: d.lng });
-  const catchm = catchmentMatch(origin, { lat: d.lat, lng: d.lng, postalCode: d.postalCode }, km, originFsa);
+  // A regional stand-in pin far from the listing's own city moves to that city's centre.
+  const stray = cityPinForStrayListing(d);
+  const point = stray ?? { lat: d.lat, lng: d.lng };
+  const daycare = stray ? { ...toDaycare(d), lat: stray.lat, lng: stray.lng } : toDaycare(d);
+  const km = cardSortKm(origin, point);
+  const catchm = catchmentMatch(origin, { lat: point.lat, lng: point.lng, postalCode: d.postalCode }, km, originFsa);
   return {
     ...daycare,
     distanceKm: km,
@@ -641,6 +646,11 @@ async function runSearch(data: SearchInput): Promise<SearchCandidates> {
     cards.push(toCard(d, origin, data.fsa));
   }
   if (!directory) cards = filterByLocationLock(cards, lock);
+  // A city hub lists the whole city. A tighter radius ("Within 5 km") must
+  // still narrow it, or the radius chips never change the count.
+  else if (data.radiusKm < DEFAULT_SEARCH_RADIUS_KM) {
+    cards = cards.filter((card) => includeCardInRadius(card, origin, data.radiusKm));
+  }
   if (corridor?.rows.length) {
     const kept = new Set(cards.map((card) => card.id));
     for (const row of corridor.rows) {
@@ -913,7 +923,16 @@ export const searchDaycareMap = createServerFn({ method: "GET" })
     const matched = await filteredSearchRows({ ...data, countDemand: false });
     // Seal homes while full privacy signals still exist, before the slim pin projection.
     const sealed = await sealPublicHomes(matched.rows.filter(hasSearchCoordinates));
-    return { pins: projectSearchMapPins(sealed), total: matched.rows.length, evidence: matched.evidence };
+    const pins = projectSearchMapPins(sealed);
+    // Home-only searches: every pin sits inside the search circle.
+    const anchors = resolveSearchAnchors({
+      home: { lat: data.lat, lng: data.lng },
+      work: typeof data.lat2 === "number" && typeof data.lng2 === "number" ? { lat: data.lat2, lng: data.lng2 } : null,
+      mode: data.mode,
+    });
+    const aligned = alignedSearchInput(data);
+    const bounded = anchors.intersect ? pins : pinsWithinRadius(pins, anchors.mode === "work" ? anchors.primary : { lat: aligned.lat, lng: aligned.lng }, data.radiusKm);
+    return { pins: bounded, total: matched.rows.length, evidence: matched.evidence };
   });
 
 /** Home type rows page 12 at a time. Keep a few pages of each nearby type. */

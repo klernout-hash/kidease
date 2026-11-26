@@ -13,6 +13,7 @@ import {
   type CwelccProvince,
 } from "@/lib/cwelcc";
 import { useCopy } from "@/lib/use-copy";
+import { formatCad } from "@/lib/cad-format";
 
 function dollarsToCents(value: string): number {
   const amount = Number(value);
@@ -139,8 +140,10 @@ export function CwelccPanel() {
         <input inputMode="decimal" className="mt-1 min-h-11 w-full rounded-md border border-border bg-background px-3" value={municipal} onChange={(event) => setMunicipal(event.target.value)} />
       </label>
       <p className="mt-4 text-sm" data-ke="cwelcc-result">
-        {fr ? "Frais parent" : "Parent fee"}: ${(fee.parentCents / 100).toFixed(2)}. {fr ? "Réduction" : "Reduction"}: $
-        {(fee.reductionCents / 100).toFixed(2)}. {fr ? "À payer" : "Owing"}: ${(subsidies.parentOwingCents / 100).toFixed(2)}.
+        {fr ? "Frais parent : " : "Parent fee: "}
+        {formatCad(fee.parentCents / 100, fr ? "fr-CA" : "en-CA")}. {fr ? "Réduction : " : "Reduction: "}
+        {formatCad(fee.reductionCents / 100, fr ? "fr-CA" : "en-CA")}. {fr ? "À payer : " : "Owing: "}
+        {formatCad(subsidies.parentOwingCents / 100, fr ? "fr-CA" : "en-CA")}.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="block text-sm">
@@ -154,7 +157,7 @@ export function CwelccPanel() {
       </div>
       <p className="mt-2 text-sm">
         {split.ok
-          ? split.parts.map((part) => `${part.key === "a" ? (fr ? "Premier" : "First") : fr ? "Second" : "Second"} $${(part.cents / 100).toFixed(2)}`).join(". ")
+          ? split.parts.map((part) => `${part.key === "a" ? (fr ? "Premier" : "First") : fr ? "Second" : "Second"} ${formatCad(part.cents / 100, fr ? "fr-CA" : "en-CA")}`).join(". ")
           : fr
             ? "Les deux parts doivent faire 100 %."
             : "The two shares must add up to 100%."}

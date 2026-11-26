@@ -10,6 +10,7 @@ export const NOTIFICATION_KINDS = [
   "admin_queue",
   "admin_signup",
   "customer_alert",
+  "pipeline",
 ] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
@@ -32,6 +33,15 @@ export const NOTIFICATION_TITLE_KEYS = [
   "notifAdminListing",
   "notifFamily",
   "notifCare",
+  "notifSpotOffer",
+  "notifSpotOfferEnded",
+  "notifSpotOfferAnswered",
+  "notifAgreementSent",
+  "notifAgreementSigned",
+  "notifAgreementDone",
+  "notifWithdrawal",
+  "notifCertExpiring",
+  "notifCertExpired",
 ] as const;
 export type NotificationTitleKey = (typeof NOTIFICATION_TITLE_KEYS)[number];
 

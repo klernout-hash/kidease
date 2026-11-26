@@ -56,6 +56,27 @@ export type VerifiedAuthSession = VerifiedUser & {
   createdAtMs: number;
 };
 
+type SessionLookup = Awaited<ReturnType<typeof auth.api.getSession>>;
+const inflightSessionLookups = new Map<string, Promise<SessionLookup>>();
+
+/**
+ * One desk page fires 10+ server functions at once, and each one used to run
+ * its own Better Auth session query. On Nov 25 they queued on the auth pool
+ * and timed out together (get-session-timeout). Concurrent calls with the
+ * same cookie now share one in-flight lookup. Nothing is cached after it
+ * settles, so sign-out and revocation behave exactly as before.
+ */
+export function sharedSessionLookup<T>(key: string, run: () => Promise<T>): Promise<T> {
+  const map = inflightSessionLookups as unknown as Map<string, Promise<T>>;
+  const existing = map.get(key);
+  if (existing) return existing;
+  const pending = run().finally(() => {
+    if (map.get(key) === pending) map.delete(key);
+  });
+  map.set(key, pending);
+  return pending;
+}
+
 /**
  * Better Auth already verified the signed session cookie. Prefer this token /
  * createdAt over re-parsing `__Host-grok-auth.session_token` for DB lookups.
@@ -85,7 +106,7 @@ export async function getVerifiedAuthSession(
   // it as null looks like a real sign-out and beforeLoad sends /account to
   // /login?intent=in&next=/account with no save confirmation.
   const session = await withTimeout(
-    auth.api.getSession({ headers }),
+    sharedSessionLookup(`${cookie || ""}\n${bearerToken || ""}`, () => auth.api.getSession({ headers })),
     SQL_SETTLE_MS,
     "get-session-timeout",
   );

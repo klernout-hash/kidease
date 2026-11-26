@@ -98,7 +98,7 @@ import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import { UNMEASURED_DISTANCE_KM, isDoorPin } from "@/lib/card-distance";
 import { parentDistanceLabel } from "@/lib/distance-label";
 import { originIsParentLocation } from "@/lib/presence";
-import { displayDistance } from "@/lib/units";
+import { displayDistanceFor } from "@/lib/units";
 import { plausibleListingKm } from "@/lib/plausible-distance";
 import { honestVacancy } from "@/lib/now-loops";
 import { publicApprovalEligible, publicBrowseClaim } from "@/lib/approve-live";
@@ -1108,7 +1108,7 @@ function OsmMapView({
           {itemsOnly
             ? t("mapSavedOnly")
             : t("mapSearchRadius")
-                .replace("{n}", displayDistance(radiusKm, "km"))
+                .replace("{n}", displayDistanceFor(radiusKm, "km", locale))
                 .replace("{u}", t("km"))}
         </span>
       </div>
@@ -1219,6 +1219,7 @@ function MapPinPopup({
   const away = parentDistanceLabel({
     km: item.distanceKm,
     away: t("km"),
+    locale,
     approximate: Boolean(item.addressProtected) || ("radiusM" in item && Number(item.radiusM) >= 500),
     about: t("homeAddressAbout"),
     show:

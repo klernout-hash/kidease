@@ -123,6 +123,22 @@ async function handleAuth(request: Request) {
     if (request.method === "POST") {
       const url = new URL(request.url);
       const path = url.pathname.replace(/\/+$/, "");
+      // Speed (gov sign-in took 8-10 s): start the Turnstile siteverify call now so it
+      // runs alongside the view-as session lookup instead of after it. Both still
+      // have to pass before Better Auth sees the request.
+      const turnstileCheck: Promise<string | null> | null = authPathNeedsTurnstile(url.pathname)
+        ? (async () => {
+            if (await signInEmailSkipsTurnstile(request)) return null;
+            try {
+              await assertTurnstileToken(await turnstileTokenFromAuthRequest(request), {
+                headers: request.headers,
+              });
+              return null;
+            } catch (err) {
+              return err instanceof Error ? err.message : "Security check failed";
+            }
+          })()
+        : null;
       if (authMutationAction("POST", path)) {
         const { viewAsBlocksThisRequest } = await import("@/lib/server/view-as");
         if (await viewAsBlocksThisRequest()) {
@@ -155,15 +171,9 @@ async function handleAuth(request: Request) {
           return Response.json({ message, code: "PASSWORD_REJECTED" }, { status: 400 });
         }
       }
-      if (authPathNeedsTurnstile(url.pathname) && !(await signInEmailSkipsTurnstile(request))) {
-        try {
-          await assertTurnstileToken(await turnstileTokenFromAuthRequest(request), {
-            headers: request.headers,
-          });
-        } catch (err) {
-          const message = err instanceof Error ? err.message : "Security check failed";
-          return Response.json({ message, code: "SECURITY_CHECK" }, { status: 400 });
-        }
+      if (turnstileCheck) {
+        const message = await turnstileCheck;
+        if (message) return Response.json({ message, code: "SECURITY_CHECK" }, { status: 400 });
       }
     }
     const prepared = await prepareFacebookSignIn(request);

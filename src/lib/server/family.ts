@@ -1,4 +1,4 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { parseTrackStatus } from "@/lib/parent-tracker";
@@ -114,6 +114,18 @@ function logCrmSkip(role: "parent" | "provider", reason: string) {
 }
 
 /**
+ * Signup user mail (verify-email backup, daycare next-steps). Server-only:
+ * family.ts is also in the client graph, so a plain import of a *.server file
+ * is denied by import-protection. The old workaround joined the path at
+ * runtime, which Vercel could not resolve (ERR_MODULE_NOT_FOUND), so this mail
+ * never sent. createServerOnlyFn keeps a literal, bundled import on the server.
+ */
+const afterNewAccountUserMailServerOnly = createServerOnlyFn(async (userId: string, role: "parent" | "provider") => {
+  const { afterNewAccountUserMail } = await import("@/lib/server/signup-user-mail.server");
+  await afterNewAccountUserMail(userId, role);
+});
+
+/**
  * Admin notice, GoHighLevel filing, then user mail. The admin notice and user
  * mail go out once per account and role (actor_mail_sends), and only while the
  * account is fresh. GoHighLevel filing runs every time the slot is still open.
@@ -169,9 +181,7 @@ async function pingNewAccount(
   }
   if (noticeClaimed) {
     try {
-      const mailFile = "@/lib/server/" + "signup-user-mail.server";
-      const { afterNewAccountUserMail } = await import(/* @vite-ignore */ mailFile);
-      await afterNewAccountUserMail(userId, role);
+      await afterNewAccountUserMailServerOnly(userId, role);
     } catch (err) {
       console.error("[kidease-mail] signup user mail failed", err);
     }
@@ -1093,7 +1103,7 @@ export const getThread = createServerFn({ method: "GET" })
       sender: "parent" | "provider" | "system";
       body: string;
       created_at: string;
-      kind: "chat" | "system" | "notify" | "status";
+      kind: "chat" | "system" | "notify" | "status" | "video_call";
     }>`
       select id, sender, body, created_at, kind from messages
       where conversation_id = ${conversationId} order by created_at
@@ -1176,6 +1186,15 @@ export const getThread = createServerFn({ method: "GET" })
     const { videoSurfaceEnabled } = await import("@/lib/channel-readiness");
     const { voiceCredentialsPresent } = await import("@/lib/voice");
     const { voiceCallsEnabled } = await import("@/lib/features");
+    const { pairCallMatched } = await import("@/lib/server/call-match");
+    // Matched pairs only (accepted tour / request / enrolment). Admin QA skips the match.
+    const callsMatched =
+      access.role === "admin" ||
+      (await pairCallMatched(sql, {
+        parentUserId: conv[0].user_id,
+        daycareId: conv[0].daycare_id,
+        conversationId,
+      }));
     const zoneRows = await sql<{ timezone: string | null; province: string | null }>`
       select timezone, province from daycares where id = ${conv[0].daycare_id} limit 1
     `.catch(() => []);
@@ -1185,6 +1204,7 @@ export const getThread = createServerFn({ method: "GET" })
       id: conv[0].id,
       videoSurfaceEnabled: videoSurfaceEnabled(),
       voiceReady: voiceCallsEnabled() && voiceCredentialsPresent(),
+      callsMatched,
       viewerRole: access.role,
       daycareId: conv[0].daycare_id,
       daycareName: conv[0].name,
@@ -1366,6 +1386,11 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
         values (${nid("msg")}, ${cid}, ${"system"}, ${body}, ${"status"})
       `;
       await sql`update conversations set last_at = now() where id = ${cid}`;
+    }
+    if (prev !== data.status) {
+      // Keep the parent's request card and bell in step with the owner's one-tap answer.
+      const { syncBookingLeadStatus } = await import("@/lib/server/pipeline-sync");
+      await syncBookingLeadStatus(sql, b.id, data.status, context.userId).catch(() => undefined);
     }
     if (prev !== data.status) {
       const { notifyWaitlistStatusChange } = await import("@/lib/server/waitlist-tracker");

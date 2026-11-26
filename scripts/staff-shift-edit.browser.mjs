@@ -21,7 +21,7 @@ const sourceFiles = [
   "src/lib/provincial-ratios.ts",
   "src/components/ui/button.tsx",
   "src/components/empty-state.tsx",
-  "src/lib/utils.ts",
+  "src/lib/utils.ts", "src/lib/cad-format.ts",
   "src/lib/html-text.ts",
   "src/lib/languages.ts",
 ];

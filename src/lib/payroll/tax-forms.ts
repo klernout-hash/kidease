@@ -7,6 +7,7 @@
  */
 
 import { formsForProvince, type EmployeeFormCard, type FormKind } from "./employee-forms.ts";
+import { formatCad } from "../cad-format.ts";
 
 export const TAX_FORM_KINDS = ["td1_federal", "td1_provincial", "tp1015"] as const;
 export type TaxFormKind = (typeof TAX_FORM_KINDS)[number];
@@ -115,7 +116,7 @@ export function parseContact(raw: { contactName?: string; contactPhone?: string;
 }
 
 function cad(cents: number, locale: "en" | "fr"): string {
-  return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" }).format(cents / 100);
+  return formatCad(cents / 100, locale === "fr" ? "fr-CA" : "en-CA");
 }
 
 /** One plain line about a tax form answer, for the owner and the PDF. */

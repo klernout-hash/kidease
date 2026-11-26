@@ -28,12 +28,14 @@ export class StripeApiError extends Error {
   readonly type: string | null;
   /** Stripe's error param (e.g. "controller[losses][payments]"), sanitised. */
   readonly param: string | null;
+  /** Stripe's Request-Id header (req_...), for matching the Stripe dashboard log. */
+  readonly requestId: string | null;
 
   constructor(
     stripeMessage: string,
     status: number,
     code?: string | null,
-    extra?: { type?: string | null; param?: string | null },
+    extra?: { type?: string | null; param?: string | null; requestId?: string | null },
   ) {
     super(stripeMessage);
     this.name = "StripeApiError";
@@ -42,6 +44,8 @@ export class StripeApiError extends Error {
     this.code = code ? String(code) : null;
     this.type = safeStripeToken(extra?.type);
     this.param = safeStripeToken(extra?.param);
+    const req = typeof extra?.requestId === "string" ? extra.requestId.trim() : "";
+    this.requestId = /^req_[A-Za-z0-9]{6,40}$/.test(req) ? req : null;
   }
 }
 

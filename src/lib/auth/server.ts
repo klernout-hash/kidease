@@ -460,6 +460,9 @@ export const auth = betterAuth({
     window: 60,
     max: 120,
     customRules: {
+      // Every page polls get-session. Phones on carrier NAT share one IP, so the
+      // 120/min default can 429 real visitors (they look signed out). Read-only.
+      "/get-session": { window: 60, max: 600 },
       "/sign-in/email": { window: 60, max: AUTH_LOGIN_MAX },
       "/sign-up/email": { window: 60, max: AUTH_SIGNUP_MAX },
       "/email-status": { window: EMAIL_STATUS_WINDOW_S, max: EMAIL_STATUS_MAX },

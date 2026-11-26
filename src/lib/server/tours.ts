@@ -768,8 +768,10 @@ export const advanceTourRequest = createServerFn({ method: "POST" })
       daycare_id: string;
       daycare_name: string;
       slug: string;
+      preferred_times: unknown;
     }>`
-      select t.id, t.status, t.conversation_id, t.user_id, t.daycare_id, d.name as daycare_name, d.slug
+      select t.id, t.status, t.conversation_id, t.user_id, t.daycare_id, d.name as daycare_name, d.slug,
+             t.preferred_times
       from tour_requests t
       join daycares d on d.id = t.daycare_id
       where t.id = ${data.tourId}
@@ -784,8 +786,12 @@ export const advanceTourRequest = createServerFn({ method: "POST" })
     if (!owned && !(isParent && data.status === "completed")) throw new Error("Not authorized");
 
     if (data.status === "no_show") {
+      // Owners can always record a no-show once the visit day has passed.
       const { tourPipelineEnabled } = await import("@/lib/features");
-      if (!tourPipelineEnabled()) throw new Error("No-show is not open yet");
+      const { tourVisitPast } = await import("@/lib/pipeline-features");
+      if (!tourPipelineEnabled() && !tourVisitPast(tour.preferred_times, Date.now())) {
+        throw new Error("No-show is not open yet");
+      }
     }
     const next = nextTourPipeline(tour.status, data.status);
     if (!next || next === "pending") throw new Error("This tour cannot move to that status");

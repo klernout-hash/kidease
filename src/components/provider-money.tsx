@@ -10,8 +10,8 @@ import { useCopy } from "@/lib/use-copy";
 import { money } from "@/lib/utils";
 import type { Locale } from "@/lib/types";
 import { currentPeriod, periodLabel, platformFeePercentLabel } from "@/lib/stripe-methods";
-import { type Bill, type BillParty, billDollars, earningsSummary } from "@/lib/bill";
-import { createBill, listBillParties, listProviderBills, sendBill, voidBill } from "@/lib/server/billing";
+import { type Bill, type BillParty, billDollars, earningsSummary, receiveCents } from "@/lib/bill";
+import { createBill, listBillParties, listProviderBills, sendBill, sendBillReminder, voidBill } from "@/lib/server/billing";
 import { StripeInvoiceList } from "@/components/stripe-invoice-list";
 import { PayoutStatusCard } from "@/components/payout-status-card";
 import { loadEarningsDesk } from "@/lib/server/earnings-desk";
@@ -22,6 +22,7 @@ export function ProviderMoneyPanel({ showPayouts = true, canEdit = true }: { sho
   const [bills, setBills] = useState<Bill[]>([]);
   const [parties, setParties] = useState<BillParty[]>([]);
   const [stripeLive, setStripeLive] = useState(false);
+  const [remindersOn, setRemindersOn] = useState(false);
   const [feeBps, setFeeBps] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
   const [payouts, setPayouts] = useState<"on" | "off" | "unknown" | null>(null);
@@ -40,6 +41,7 @@ export function ProviderMoneyPanel({ showPayouts = true, canEdit = true }: { sho
     const [list, people] = await Promise.all([listProviderBills(), listBillParties()]);
     setBills(list.bills);
     setStripeLive(list.stripeLive);
+    setRemindersOn(list.remindersOn === true);
     setFeeBps(typeof list.platformFeeBps === "number" ? list.platformFeeBps : null);
     setParties(people);
     setReady(true);
@@ -222,9 +224,11 @@ export function ProviderMoneyPanel({ showPayouts = true, canEdit = true }: { sho
             {stripeLive ? (
               <>
                 {t("youReceive")}{" "}
-                <span className="font-medium text-fg">{money(amountCad, locale)}</span>{" "}
+                <span className="font-medium text-fg">
+                  {money(receiveCents(Math.round(amountCad * 100), undefined, feeBps ?? undefined) / 100, locale)}
+                </span>{" "}
                 {t("afterKidEaseFee")}
-                {platformFeePercentLabel(feeBps) ? ` (${platformFeePercentLabel(feeBps)})` : ""}.
+                {platformFeePercentLabel(feeBps) ? ` (${platformFeePercentLabel(feeBps)})` : ""}
               </>
             ) : (
               <>
@@ -257,6 +261,22 @@ export function ProviderMoneyPanel({ showPayouts = true, canEdit = true }: { sho
             .then(() => {
               confirmSuccess({ variant: "toast", title: t("billSentToast") });
               return load();
+            })
+            .catch((err) => toast.error(err instanceof Error ? err.message : t("sendFailed")))
+            .finally(() => setBusy(null));
+        } : undefined}
+        onRemind={canEdit && remindersOn ? (id) => {
+          setBusy(id);
+          void sendBillReminder({ data: id })
+            .then((res) => {
+              if (!res.ok) {
+                toast.error(fr ? "Le rappel n’a pas été envoyé." : "The reminder was not sent.");
+                return;
+              }
+              if (res.result === "sent") toast.success(fr ? "Rappel envoyé au parent." : "Reminder sent to the parent.");
+              else if (res.result === "duplicate") toast.message(fr ? "Un rappel a déjà été envoyé aujourd’hui." : "A reminder already went out today.");
+              else if (res.result === "dry_run") toast.message(fr ? "Rappel enregistré en mode test. Aucun courriel envoyé." : "Reminder logged in test mode. No email went out.");
+              else toast.message(fr ? "Rappel retenu (règles d’envoi)." : "Reminder held by the sending rules.");
             })
             .catch((err) => toast.error(err instanceof Error ? err.message : t("sendFailed")))
             .finally(() => setBusy(null));
@@ -296,6 +316,7 @@ function BillList({
   busy,
   onSend,
   onVoid,
+  onRemind,
 }: {
   title: string;
   empty: string;
@@ -305,8 +326,10 @@ function BillList({
   busy: string | null;
   onSend?: (id: string) => void;
   onVoid?: (id: string) => void;
+  onRemind?: (id: string) => void;
 }) {
-  const { t } = useCopy();
+  const { t, locale: copyLocale } = useCopy();
+  const fr = copyLocale === "fr";
   if (!items.length) {
     return (
       <div>
@@ -337,9 +360,10 @@ function BillList({
                   {b.dueAt ? ` · ${t("billDue")} ${b.dueAt}` : ""}
                 </p>
                 {b.memo ? <p className="mt-1 text-sm text-subtle">{b.memo}</p> : null}
-                {stripeLive && onSend && b.status !== "void" ? (
-                  <p className="mt-1 text-sm text-muted">
-                    {t("youReceive")} {money(billDollars(b), locale)} {t("afterKidEaseFee")}
+                {b.status !== "void" && b.platformFeeCents > 0 ? (
+                  <p className="mt-1 text-sm text-muted" data-ke="bill-centre-fee">
+                    {t("earningsServiceFee")}: {money(b.platformFeeCents / 100, locale)} ·{" "}
+                    {t("youReceive")} {money(receiveCents(b.amountCents, b.platformFeeCents) / 100, locale)} {t("afterKidEaseFee")}
                   </p>
                 ) : null}
               </div>
@@ -350,6 +374,11 @@ function BillList({
                 {b.status === "draft" && onSend ? (
                   <Button size="sm" disabled={busy !== null} onClick={() => onSend(b.id)}>
                     {t("sendBill")}
+                  </Button>
+                ) : null}
+                {b.status === "sent" && !b.paidAt && onRemind ? (
+                  <Button size="sm" variant="secondary" disabled={busy !== null} onClick={() => onRemind(b.id)} data-ke="bill-send-reminder">
+                    {fr ? "Envoyer un rappel" : "Send reminder"}
                   </Button>
                 ) : null}
                 {onVoid ? (

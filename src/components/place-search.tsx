@@ -1,7 +1,7 @@
 import { LocateFixed, MapPin } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
-import { geocode } from "@/lib/geo";
+import { geocode, postalSearchLabel } from "@/lib/geo";
 import {
   geocodePlace,
   resolvePlaceId,
@@ -36,6 +36,42 @@ export type WhereEmptyMenu = {
   cities: WhereDestination[];
 };
 
+/**
+ * Address lookups already made in this tab, keyed by the typed text and by the
+ * label the lookup returned. The search page re-resolves the label it was sent
+ * to ("200 Main Street, Winnipeg, Manitoba"); that hit no longer costs a second
+ * round trip. Same-text lookups in flight share one request.
+ */
+const REMOTE_PLACE_MEMO = new Map<string, ResolvedPlace>();
+const REMOTE_PLACE_INFLIGHT = new Map<string, Promise<ResolvedPlace | null>>();
+const REMOTE_PLACE_MEMO_MAX = 50;
+
+function placeMemoKey(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function rememberRemotePlace(q: string, place: ResolvedPlace) {
+  if (REMOTE_PLACE_MEMO.size >= REMOTE_PLACE_MEMO_MAX) REMOTE_PLACE_MEMO.clear();
+  REMOTE_PLACE_MEMO.set(placeMemoKey(q), place);
+  if (place.label) REMOTE_PLACE_MEMO.set(placeMemoKey(place.label), place);
+}
+
+async function remotePlace(q: string): Promise<ResolvedPlace | null> {
+  const key = placeMemoKey(q);
+  const saved = REMOTE_PLACE_MEMO.get(key);
+  if (saved) return saved;
+  const pending = REMOTE_PLACE_INFLIGHT.get(key);
+  if (pending) return pending;
+  const run = geocodePlace({ data: q })
+    .then((place) => {
+      if (place) rememberRemotePlace(q, place);
+      return place;
+    })
+    .finally(() => REMOTE_PLACE_INFLIGHT.delete(key));
+  REMOTE_PLACE_INFLIGHT.set(key, run);
+  return run;
+}
+
 export async function resolveLocationQuery(query: string): Promise<ResolvedPlace | null> {
   const q = query.trim();
   if (!q) return null;
@@ -44,7 +80,7 @@ export async function resolveLocationQuery(query: string): Promise<ResolvedPlace
   const local = geocode(q);
   if (local) return local;
   try {
-    const remote = await geocodePlace({ data: q });
+    const remote = await remotePlace(q);
     if (remote) return remote;
   } catch {
     /* address lookup can be empty or denied */
@@ -244,8 +280,11 @@ export function PlaceSearch({
     setOpen(false);
     setHits([]);
     if (resolved) {
-      onChange(resolved.label);
-      onResolved(resolved);
+      // A typed postal code stays the label; the FSA's city would drop it.
+      const postal = postalSearchLabel(value);
+      const place = postal ? { ...resolved, label: postal } : resolved;
+      onChange(place.label);
+      onResolved(place);
       return;
     }
     onChange(hit.label);

@@ -1,4 +1,5 @@
-import { createFileRoute, Navigate, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Navigate, Outlet, redirect, useNavigate, useRouterState } from "@tanstack/react-router";
+import { frParentAliasHref } from "@/lib/locale-search";
 import { ParentCentreToolsPanel } from "@/components/parent-centre-tools";
 import { useEffect, type ReactNode } from "react";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
@@ -62,6 +63,8 @@ export function parentBeforeLoad({
   location: { pathname: string; href?: string; searchStr?: string };
 }) {
   if (isParentSignupPath(location.pathname)) return;
+  const frAlias = frParentAliasHref(location.pathname, location.searchStr);
+  if (frAlias) throw redirect({ href: frAlias, replace: true });
   return beforeLoadPrivate(privateReturnPath(location), context.roleChrome);
 }
 

@@ -1005,7 +1005,7 @@ export function unifiedUiCopy(locale: AlertLocale) {
       findCare: "Chercher une place",
       openCentre: "Ouvrir votre centre",
       hidden: "Certaines alertes attendent le partage familial, la garde, ou une liste de contrôles de salle. Elles ne sont pas envoyées.",
-      critical: "Urgent",
+      critical: "Important",
       groups: { parent: "Parents", daycare: "Garderies", staff: "Personnel", admin: "Bureau" },
     };
   }

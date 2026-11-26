@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Shell } from "@/components/shell";
@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { openSpotsCopy } from "@/lib/open-spots-checkin-copy";
 import { bandLabel, isOpenSpotsBand, type OpenSpotsBand } from "@/lib/open-spots-checkin";
-import { previewOpenSpotsCheckin, saveOpenSpotsCheckin } from "@/lib/server/open-spots-checkin";
+import { previewOpenSpotsCheckin, saveOpenSpotsByAge, saveOpenSpotsCheckin } from "@/lib/server/open-spots-checkin";
+import { spotsByAgeCopy } from "@/lib/open-spots-by-age";
 import { useCopy } from "@/lib/use-copy";
 
 function parseSearch(search: Record<string, unknown>) {
@@ -41,6 +42,14 @@ function OpenSpotsPage() {
   const [busy, setBusy] = useState<OpenSpotsBand | null>(null);
   const [saved, setSaved] = useState<null | { band: OpenSpotsBand; splitKnown: boolean; age: string | null }>(null);
   const [fees, setFees] = useState({ infantMonthly: "", toddlerMonthly: "", preschoolMonthly: "" });
+  const ageCopy = spotsByAgeCopy(locale);
+  const [byAge, setByAge] = useState<Record<"infant" | "toddler" | "preschool", string>>(() => ({
+    infant: preview.ok ? String(preview.spots.infant) : "0",
+    toddler: preview.ok ? String(preview.spots.toddler) : "0",
+    preschool: preview.ok ? String(preview.spots.preschool) : "0",
+  }));
+  const [ageBusy, setAgeBusy] = useState(false);
+  const [ageSaved, setAgeSaved] = useState(false);
 
   if (!preview.ok) {
     return (
@@ -67,6 +76,26 @@ function OpenSpotsPage() {
       .finally(() => setBusy(null));
   }
 
+  function onSaveByAge(event: FormEvent) {
+    event.preventDefault();
+    setAgeBusy(true);
+    setAgeSaved(false);
+    void saveOpenSpotsByAge({ data: { token, ...byAge } })
+      .then((result) => {
+        if (!result.ok) {
+          toast.error(result.reason === "bad_count" ? ageCopy.bad : copy.invalid);
+          return;
+        }
+        setAgeSaved(true);
+        celebrate();
+      })
+      .catch(() => toast.error(copy.invalid))
+      .finally(() => setAgeBusy(false));
+  }
+
+  const ageRows = (preview.ages.length ? preview.ages : (["infant", "toddler", "preschool"] as const)).map(
+    (age) => [age, ageCopy[age]] as const,
+  );
   const primary = band ?? null;
 
   return (
@@ -118,6 +147,35 @@ function OpenSpotsPage() {
             );
           })}
         </div>
+        <form className="mt-8 rounded-xl bg-surface p-4 ring-1 ring-border" onSubmit={onSaveByAge} data-ke="spots-by-age">
+          <h2 className="font-display text-xl">{ageCopy.title}</h2>
+          <p className="mt-1 text-sm text-muted">{ageCopy.lead}</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            {ageRows.map(([age, label]) => (
+              <label key={age} className="block text-sm">
+                {label}
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={99}
+                  step={1}
+                  value={byAge[age]}
+                  onChange={(e) => setByAge((s) => ({ ...s, [age]: e.target.value }))}
+                  className="ke-input mt-1 min-h-11 w-full"
+                />
+              </label>
+            ))}
+          </div>
+          <Button type="submit" className="mt-3" disabled={ageBusy}>
+            {ageCopy.save}
+          </Button>
+          {ageSaved ? (
+            <p className="mt-2 text-sm font-medium" role="status">
+              {ageCopy.saved}
+            </p>
+          ) : null}
+        </form>
         {saved ? (
           <div className="mt-6" role="status">
             <p className="font-medium">{copy.saved}</p>

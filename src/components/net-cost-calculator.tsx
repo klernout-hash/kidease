@@ -11,6 +11,7 @@ import {
 import { FeeEstimateNote } from "@/components/fee-estimate-note";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
+import { formatCad } from "@/lib/cad-format";
 
 const AGES: CostAgeBand[] = ["infant", "toddler", "preschool", "school-age"];
 
@@ -22,7 +23,7 @@ const AGE_LABEL: Record<CostAgeBand, { en: string; fr: string }> = {
 };
 
 function cad(n: number, fr: boolean): string {
-  return n.toLocaleString(fr ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" });
+  return formatCad(n, fr ? "fr-CA" : "en-CA");
 }
 
 export function NetCostCalculator({

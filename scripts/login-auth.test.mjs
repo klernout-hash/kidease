@@ -158,7 +158,10 @@ describe("password sign-in errors", () => {
     assert.doesNotMatch(login, /explainEmailSignInFailure/);
     assert.match(login, /resetTurnstile/);
     assert.match(login, /turnstileRequired && !challenge && !reviewerBypass/);
-    assert.match(login, /disabled=\{busy \|\| \(!askEmailOnly && turnstileRequired && !token\.trim\(\)\)\}/);
+    // Submit is disabled only while busy: autofill without input events and a late
+    // Turnstile token must not leave Sign in / Connexion greyed out.
+    assert.match(login, /data-ke="email-primary"\s+disabled=\{busy\}/);
+    assert.doesNotMatch(login, /turnstileRequired && !token\.trim\(\)/);
     assert.doesNotMatch(login, /data-ke="turnstile-status"/);
     assert.match(read("src/lib/auth/login-stall.ts"), /www\.kidease\.ca\/login/);
     assert.match(login, /releaseStuckLogin\("open-failed"\)/);

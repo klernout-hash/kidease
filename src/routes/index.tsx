@@ -24,7 +24,7 @@ import { featuredDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { BootPending } from "@/components/boot-pending";
 import { HOME_PAINT_BUDGET_MS, ORIGIN_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
-import { geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
+import { geocode, postalSearchLabel, readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import {
   coerceDirectoryOrigin,
   originFromDeviceFix,
@@ -286,7 +286,9 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
   }
 
   async function applyPlace(raw: string) {
-    const hit = (await resolveLocationQuery(raw)) ?? geocode(raw);
+    const found = (await resolveLocationQuery(raw)) ?? geocode(raw);
+    const postal = postalSearchLabel(raw);
+    const hit = found && postal ? { ...found, label: postal } : found;
     if (hit) {
       setOrigin({ ...hit, explicit: true }, "manual");
       setPlace(hit.label);
@@ -467,7 +469,9 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
   return (
     <Shell
       headerCategories={boot.airbnbUi ? (
-        <Suspense fallback={null}>
+        // Sized fallback: a null fallback collapsed the 102px category row for a frame
+        // after hydration and pushed the whole page (CLS ~0.28 on phones).
+        <Suspense fallback={<div className="ke-header-cats-fallback" aria-hidden="true" />}>
           <AirbnbCareCategories />
         </Suspense>
       ) : (
