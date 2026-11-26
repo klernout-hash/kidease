@@ -42,3 +42,10 @@ export function useCopy() {
   const t = useCallback((key: CopyKey) => tx(copyLocale, key), [copyLocale]);
   return { locale, t };
 }
+
+// Small shared helpers ride in this always-loaded module instead of adding their own
+// client chunks (client JS file budget in scripts/check-client-budget.mjs).
+export { apiErrorMessage, localizeApiError } from "./api-error-copy";
+export { tourCalendarPack } from "./tour-add-to-calendar";
+export { setThreadBlocked, subscribeThreadBlocks, threadBlocked } from "./thread-block-state";
+export { ADMIN_QUEUE_PAGE, usePagedList } from "./use-paged-list";
