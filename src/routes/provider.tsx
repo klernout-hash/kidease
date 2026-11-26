@@ -716,7 +716,7 @@ export function ProviderPage() {
           onCentre={(id) => {
             // Same as "Work in this centre": remember it and put it in the URL.
             void setOrgCentre({ data: { daycareId: id } }).catch(() => undefined);
-            void navigate({ to: deskPath, search: { ...search, desk: "today", centre: id } });
+            void navigate({ to: deskPath, search: { ...search, desk, centre: id } });
           }}
         />
       ) : null}

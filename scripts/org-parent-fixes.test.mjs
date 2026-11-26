@@ -37,7 +37,7 @@ test("org #39: the Today centre picker drives the URL and the remembered centre,
   assert.match(home, /onCentre\?\.\(event\.target\.value\)/);
   assert.match(home, /useState\(centreFromUrl \|\| listings\[0\]\?\.id \|\| ""\)/);
   const provider = src("src/routes/provider.tsx");
-  assert.match(provider, /centreFromUrl=\{search\.centre\}\s+onCentre=\{\(id\) => \{[\s\S]{0,200}setOrgCentre\(\{ data: \{ daycareId: id \} \}\)[\s\S]{0,120}desk: "today", centre: id/);
+  assert.match(provider, /centreFromUrl=\{search\.centre\}\s+onCentre=\{\(id\) => \{[\s\S]{0,200}setOrgCentre\(\{ data: \{ daycareId: id \} \}\)[\s\S]{0,120}search: \{ \.\.\.search, desk, centre: id \}/);
 });
 
 test("org #40: /fr/parent/subsidy opens the subsidy page in French, not parent home", async () => {
