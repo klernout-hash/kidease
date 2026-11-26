@@ -15,9 +15,14 @@ import {
   resolveSocialSignInRedirect,
 } from "./login-errors";
 import { isNativeSocialProvider } from "./providers";
+import { createSessionFetch } from "./session-fetch";
+
+// Dedupe + 2 s cache + gentle 429 retry for GET /get-session only.
+const sessionFetch = createSessionFetch((input, init) => fetch(input, init));
 
 export const authClient = createAuthClient({
   fetchOptions: {
+    customFetchImpl: sessionFetch.fetch,
     onRequest(ctx) {
       const token = getBearerToken();
       if (token) ctx.headers.set("Authorization", `Bearer ${token}`);

@@ -24,14 +24,14 @@ import {
   ACTOR_CONFIRM_SUBJECT,
   resolveMailReplyTo,
   sendMailThenPersist,
-  VISITOR_AUTO_REPLY_SUBJECT,
-  VISITOR_AUTO_REPLY_TEXT,
+  visitorAutoReplyCopy,
 } from "@/lib/server/notify-mail";
 import { sendSms } from "@/lib/server/sms";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { transactionalMailFrom } from "@/lib/mail-from";
 import { brandedNotice } from "@/lib/email-layout";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { testListingMailAllowed } from "@/lib/test-listing-mail";
 import { mailPreheaderHtml } from "@/lib/mail-copy";
 import { dayKeyInTimeZone, formatInTimeZone } from "@/lib/family-time";
 import { gateOutboundEmail } from "@/lib/server/outbound-gate";
@@ -449,7 +449,7 @@ async function deliverEmail(
     unsubscribeUrl?: string;
   },
 ) {
-  if (opts?.aboutTestListing) {
+  if (opts?.aboutTestListing && !testListingMailAllowed(to, process.env.QA_SEND_ALLOWLIST)) {
     console.info("[kidease-mail] skipped test listing", subject);
     return "logged";
   }
@@ -547,23 +547,26 @@ async function sendActorConfirmation(kind: string, to: string) {
   });
 }
 
-async function sendVisitorAutoReply(to: string, name: string) {
+async function sendVisitorAutoReply(to: string, name: string, locale: "en" | "fr" = "en") {
   if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return;
-  const who = name.split(" ")[0] || "there";
-  const text = `Hi ${who},\n\n${VISITOR_AUTO_REPLY_TEXT}`;
+  const copy = visitorAutoReplyCopy(locale);
+  const who = name.split(" ")[0] || copy.there;
+  const greet = who ? `${copy.hi} ${who},` : `${copy.hi},`;
+  const lead = copy.text.split("\n\n")[0];
+  const text = `${greet}\n\n${copy.text}`;
   const html = `<!doctype html>
-<html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
+<html lang="${copy.lang}"><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
     <tr><td style="padding:28px;font-size:16px;line-height:1.6;">
-      <p style="margin:0;">Hi ${esc(who)},</p>
-      <p>Thanks for sending your request to KidEase. One of our KidEase representatives will get back to you within 24 hours.</p>
-      <p>Thank you</p>
-      <p style="margin:24px 0 0;">Talk soon,<br/>KidEase Support<br/><a href="mailto:${SUPPORT_INBOX_EMAIL}" style="color:#1a3790;">${SUPPORT_INBOX_EMAIL}</a></p>
+      <p style="margin:0;">${esc(greet)}</p>
+      <p>${esc(lead)}</p>
+      <p>${esc(copy.thanks)}</p>
+      <p style="margin:24px 0 0;">${esc(copy.signoff)}<br/>${esc(copy.team)}<br/><a href="mailto:${SUPPORT_INBOX_EMAIL}" style="color:#1a3790;">${SUPPORT_INBOX_EMAIL}</a></p>
     </td></tr>
   </table>
 </body></html>`;
-  await deliverEmail(VISITOR_AUTO_REPLY_SUBJECT, text, html, to, SUPPORT_INBOX_EMAIL, {
-    branded: brandedNotice({ heading: VISITOR_AUTO_REPLY_SUBJECT, text }),
+  await deliverEmail(copy.subject, text, html, to, SUPPORT_INBOX_EMAIL, {
+    branded: brandedNotice({ heading: copy.subject, text }),
   });
 }
 
@@ -901,6 +904,8 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
     intent?: string;
     /** Which page sent it, for the GoHighLevel form tag. */
     form?: "contact" | "help" | "report";
+    /** Page language, for the visitor's acknowledgement email. */
+    locale?: string;
   }) => {
     const name = input.name.trim();
     const email = input.email.trim();
@@ -919,6 +924,7 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
       turnstileToken: String(input.turnstileToken || ""),
       intent: input.intent === "job-interest" ? ("job-interest" as const) : undefined,
       form: input.form === "report" || input.form === "help" || input.form === "contact" ? input.form : undefined,
+      locale: input.locale === "fr" ? ("fr" as const) : ("en" as const),
     };
   })
   .handler(async ({ data }) => {
@@ -964,7 +970,7 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
       adminError: result.error,
       sendAutoReply: async () => {
         if (data.kind === "contact" || data.kind === "support") {
-          await sendVisitorAutoReply(data.email, data.name);
+          await sendVisitorAutoReply(data.email, data.name, data.locale);
         }
       },
       onAutoReplyError: (err) =>

@@ -162,14 +162,33 @@ export function withYouPrefix(fromYou: boolean, body: string, prefix: string): s
   return `${prefix}${text}`;
 }
 
-export function inboxTimeLabel(iso: string, now = new Date(), locale = "en"): string {
+/**
+ * Thread list time. Today shows the clock; anything older shows the date.
+ * Days are counted in the centre's zone (America/Winnipeg by default), so a
+ * Nov 23 message never reads as a time today (B03a).
+ */
+export function inboxTimeLabel(iso: string, now = new Date(), locale = "en", timeZone = "America/Winnipeg"): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   const loc = locale === "fr" ? "fr-CA" : "en-CA";
-  const sameDay = d.toDateString() === now.toDateString();
-  if (sameDay) return d.toLocaleTimeString(loc, { hour: "numeric", minute: "2-digit" });
-  const sameYear = d.getFullYear() === now.getFullYear();
-  return d.toLocaleDateString(loc, sameYear ? { month: "short", day: "numeric" } : { month: "short", day: "numeric", year: "numeric" });
+  const zone = safeZone(timeZone);
+  const day = zoneDay(d.toISOString(), zone);
+  const today = zoneDay(now.toISOString(), zone);
+  if (day && day === today) return d.toLocaleTimeString(loc, { hour: "numeric", minute: "2-digit", timeZone: zone });
+  const sameYear = day.slice(0, 4) === today.slice(0, 4);
+  return d.toLocaleDateString(
+    loc,
+    sameYear ? { month: "short", day: "numeric", timeZone: zone } : { month: "short", day: "numeric", year: "numeric", timeZone: zone },
+  );
+}
+
+function safeZone(timeZone: string): string {
+  try {
+    new Intl.DateTimeFormat("en-CA", { timeZone });
+    return timeZone;
+  } catch {
+    return "America/Winnipeg";
+  }
 }
 
 export function messageClock(iso: string, locale = "en", timeZone?: string): string {

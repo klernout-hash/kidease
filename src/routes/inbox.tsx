@@ -11,6 +11,7 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { useCopy } from "@/lib/use-copy";
 import { RuntimePaused } from "@/components/runtime-paused";
 import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
+import { cn } from "@/lib/utils";
 
 export const inboxBeforeLoad = ({
   context,
@@ -85,16 +86,24 @@ export function InboxDesk({
     <DeskShell
       desk="parent"
       active="messages"
+      // An open thread owns the viewport like the daycare inbox: no site footer
+      // (its links and store badges sat on top of the bubbles, B03a).
+      fitViewport={onThread}
       onSelect={(id) => {
         if (id === "messages") return;
         onParent(id);
       }}
     >
-      <div className="ke-split" data-ke="inbox-split" data-selected={onThread ? "true" : "false"}>
-        <div className="ke-split-list min-w-0">
+      <div
+        className={cn("ke-split", onThread && "min-h-0 flex-1 [[data-channel=app]_&]:grid-rows-[minmax(0,1fr)] [[data-channel=app]_&]:items-stretch")}
+        data-ke="inbox-split"
+        data-selected={onThread ? "true" : "false"}
+      >
+        {/* On the website an open thread is the whole pane at every width; below 1280px the list used to stack above it. */}
+        <div className={cn("ke-split-list min-w-0", onThread && "max-h-full overflow-y-auto [[data-channel=website]_&]:hidden")}>
           <InboxList bare />
         </div>
-        <div className="ke-split-detail min-w-0" data-ke="inbox-detail">
+        <div className={cn("ke-split-detail min-w-0", onThread && "flex h-full min-h-0 flex-col")} data-ke="inbox-detail">
           {onThread ? (
             <Outlet />
           ) : (

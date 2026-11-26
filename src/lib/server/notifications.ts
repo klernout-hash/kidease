@@ -44,9 +44,10 @@ async function projectFromLeads(sql: Sql, userId: string): Promise<ProjectedNoti
     daycare_name: string | null;
     created_at: string;
     updated_at: string;
+    source_kind: string | null;
   }>`
     select l.id, l.kind, l.status, l.user_id, l.conversation_id, d.name as daycare_name,
-           l.created_at, l.updated_at
+           l.created_at, l.updated_at, l.source_kind
     from lead_requests l
     join daycares d on d.id = l.daycare_id
     where l.user_id = ${userId}
@@ -61,6 +62,8 @@ async function projectFromLeads(sql: Sql, userId: string): Promise<ProjectedNoti
   return rows.flatMap((row) => {
     const audience = row.user_id === userId ? ("parent" as const) : ("provider" as const);
     if (audience === "parent" && (row.status === "requested" || row.status === "received")) return [];
+    // projectFromTours covers the parent's own tour answers (accepted, declined, moved).
+    if (audience === "parent" && row.source_kind === "tour_request") return [];
     const kind: NotificationKind = row.kind === "tour" ? "tour" : "lead";
     return [{
       kind,
@@ -76,6 +79,47 @@ async function projectFromLeads(sql: Sql, userId: string): Promise<ProjectedNoti
       status: row.status,
     }];
   });
+}
+
+/**
+ * B04: the parent saw no alert when a centre accepted, declined, or moved a
+ * tour. Read tour_requests directly so the bell does not depend on a lead row,
+ * and key each answer by status and slot so a reschedule is a new alert.
+ */
+async function projectFromTours(sql: Sql, userId: string): Promise<ProjectedNotification[]> {
+  const rows = await sql<{
+    id: string;
+    status: string;
+    conversation_id: string | null;
+    daycare_name: string | null;
+    preferred_times: string | null;
+    responded_at: string | null;
+    created_at: string;
+  }>`
+    select t.id, t.status, t.conversation_id, d.name as daycare_name, t.preferred_times,
+           t.responded_at, t.created_at
+    from tour_requests t
+    join daycares d on d.id = t.daycare_id
+    where t.user_id = ${userId}
+      and t.responded_at is not null
+      and (t.responded_by is null or t.responded_by <> ${userId})
+      and t.status in ('accepted', 'declined', 'pending')
+    order by t.responded_at desc
+    limit 20
+  `.catch(() => []);
+  return rows.map((row) => ({
+    kind: "tour" as const,
+    titleKey: "notifTourUpdated" as const,
+    href: leadNotificationHref({ audience: "parent", conversationId: row.conversation_id }),
+    sourceKey: notificationSourceKey("tour", row.id, `parent:${row.status}:${tourSlotKey(row.preferred_times)}`),
+    createdAt: String(row.responded_at || row.created_at),
+    daycareName: row.daycare_name,
+    status: row.status === "accepted" ? "confirmed" : row.status === "pending" ? "rescheduled" : row.status,
+  }));
+}
+
+function tourSlotKey(raw: string | null): string {
+  return String(raw || "").replace(/[^0-9:-]/g, "").slice(0, 40);
 }
 
 async function projectFromClaims(
@@ -294,6 +338,7 @@ export async function projectUserNotifications(sql: Sql, userId: string): Promis
 
   const batches = await Promise.all([
     projectFromLeads(sql, userId),
+    projectFromTours(sql, userId),
     projectFromClaims(sql, userId, isAdmin),
     projectFromInbox(sql, userId),
     projectFromSearchAlerts(sql, userId),

@@ -12,8 +12,8 @@ import { Button } from "@/components/ui/button";
 import { PipelineBadge } from "@/components/pipeline-badge";
 import { ConversationDetailsBody } from "@/components/conversation-details";
 import { ThreadComposer, ThreadHeader, ThreadTranscript } from "@/components/thread-chrome";
-import { BlockMessagesButton, SafetyReportButton } from "@/components/safety-actions";
-import { safetyText } from "@/lib/safety";
+import { BlockMessagesButton, SafetyReportButton, useThreadBlocked } from "@/components/safety-actions";
+import { blockDialogText, safetyText } from "@/lib/safety";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { ChildCareCard } from "@/components/child-care-card";
@@ -35,6 +35,7 @@ import { formatAgeLabel, formatStart, pushNewRequest, scheduleLabel } from "@/li
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { refreshSessionDesks } from "@/components/session-desks";
 import { TourCard } from "@/components/tour-card";
 import { nextInboxAction } from "@/lib/engagement";
 import { money } from "@/lib/utils";
@@ -102,6 +103,8 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
   const [timeZone, setTimeZone] = useState("");
   const [details, setDetails] = useState<ConversationDetails | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [blockedByMe] = useThreadBlocked(id, { load: true });
+  const badgeFor = useRef("");
   useEffect(() => {
     if (!detailOpen) return;
     document.querySelector<HTMLButtonElement>('[data-ke="inbox-detail-close"]')?.focus();
@@ -132,6 +135,11 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
       return;
     }
     setLoadState("ready");
+    // First open marks the thread read: refresh the unread badge once, not on every poll.
+    if (badgeFor.current !== id) {
+      badgeFor.current = id;
+      refreshSessionDesks();
+    }
     setName(res.daycareName);
     setSlug(res.daycareSlug);
     setHomePlace(res.homePlace);
@@ -373,12 +381,12 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             : null;
 
   return (
-      <main className="mx-auto flex h-[calc(100dvh-12.5rem)] min-h-0 w-full max-w-5xl flex-col lg:h-[calc(100dvh-8rem)] app-wide:h-[calc(100dvh-8rem)] min-[900px]:grid min-[900px]:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
+      <main data-ke="thread-page" className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-1 flex-col overflow-hidden min-[900px]:grid min-[900px]:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)] min-[900px]:grid-rows-[minmax(0,1fr)]">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {loadState === "ready" ? (
           <ThreadHeader
             backTo="/inbox"
-            backSearch={inboxSearch(inboxView)}
+            backSearch={inboxSearch(inboxView, search.lang)}
             backLabel={inboxView === "centre" ? t("inboxBackCentre") : t("inboxBackFamily")}
             title={headerTitle}
             subtitle={headerSub}
@@ -388,7 +396,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
           />
         ) : (
           <div className="px-4 pt-4">
-            <Link to="/inbox" search={inboxSearch(inboxView)} className="text-sm text-muted">
+            <Link to="/inbox" search={inboxSearch(inboxView, search.lang)} className="text-sm text-muted">
               {inboxView === "centre" ? t("inboxBackCentre") : t("inboxBackFamily")}
             </Link>
           </div>
@@ -411,7 +419,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
               <p className="mt-2 text-sm text-muted">{t("threadMissingLead")}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button asChild>
-                  <Link to="/inbox" search={inboxSearch(inboxView)}>
+                  <Link to="/inbox" search={inboxSearch(inboxView, search.lang)}>
                     {t("inbox")}
                   </Link>
                 </Button>
@@ -460,6 +468,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
         {loadState === "ready" && canWrite ? (
           <ThreadComposer
             inputId="thread-reply"
+            lockedNote={blockedByMe ? blockDialogText(locale, isParent ? "daycare" : "family").composer : undefined}
             value={body}
             onChange={setBody}
             onSubmit={onSend}
@@ -600,7 +609,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
                   </div>
                 ) : null}
                 {tours.map((tour) => (
-                  <TourCard key={tour.id} tour={tour} canRespond={canWrite && viewerRole === "centre"} onChanged={() => void load()} />
+                  <TourCard key={tour.id} tour={tour} canRespond={canWrite && viewerRole === "centre"} onChanged={() => void load()} timeZone={timeZone || undefined} />
                 ))}
               </div>
             </div>

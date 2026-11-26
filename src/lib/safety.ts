@@ -69,8 +69,14 @@ const COPY = {
     block: "Block messages",
     unblock: "Unblock messages",
     blockDaycare: "Block this daycare",
-    blockFamily: "Block family",
+    blockFamily: "Block this family",
     blockConfirmTitle: "Block this person?",
+    blockDaycareTitle: "Block this daycare?",
+    blockFamilyTitle: "Block this family?",
+    blockDaycareGo: "Block daycare",
+    blockFamilyGo: "Block family",
+    composerBlockedDaycare: "You blocked this daycare. Unblock to send.",
+    composerBlockedFamily: "You blocked this family. Unblock to send.",
     blockConfirmBody:
       "Blocking works both ways. It stops messages, voice and video calls, tour requests, enrolment requests, and reviews. The family is hidden from that daycare's request list. You can unblock later in Menu, under Privacy and safety.",
     blockConfirm: "Block",
@@ -110,8 +116,14 @@ const COPY = {
     block: "Bloquer les messages",
     unblock: "Débloquer les messages",
     blockDaycare: "Bloquer cette garderie",
-    blockFamily: "Bloquer la famille",
+    blockFamily: "Bloquer cette famille",
     blockConfirmTitle: "Bloquer cette personne?",
+    blockDaycareTitle: "Bloquer cette garderie?",
+    blockFamilyTitle: "Bloquer cette famille?",
+    blockDaycareGo: "Bloquer la garderie",
+    blockFamilyGo: "Bloquer la famille",
+    composerBlockedDaycare: "Vous avez bloqué cette garderie. Débloquez-la pour envoyer un message.",
+    composerBlockedFamily: "Vous avez bloqué cette famille. Débloquez-la pour envoyer un message.",
     blockConfirmBody:
       "Le blocage marche dans les deux sens. Il arrête les messages, les appels vocaux et vidéo, les demandes de visite, les demandes d’inscription et les avis. La famille est cachée de la liste de demandes de cette garderie. Vous pouvez débloquer plus tard dans Menu, sous Confidentialité et sécurité.",
     blockConfirm: "Bloquer",
@@ -228,4 +240,16 @@ export function viewerHasBlocked(input: {
     }
     return others.some((other) => other && block.blockedUserId === other);
   });
+}
+
+/**
+ * Trigger, dialog title and confirm button name the same thing (B03a):
+ * "Block this daycare" opens "Block this daycare?" with "Block daycare".
+ * `daycare` blocks a centre (the parent's side); `family` blocks a family.
+ */
+export function blockDialogText(locale: string, side: "daycare" | "family") {
+  const text = safetyText(locale);
+  return side === "family"
+    ? { trigger: text.blockFamily, title: text.blockFamilyTitle, confirm: text.blockFamilyGo, composer: text.composerBlockedFamily }
+    : { trigger: text.blockDaycare, title: text.blockDaycareTitle, confirm: text.blockDaycareGo, composer: text.composerBlockedDaycare };
 }

@@ -9,7 +9,12 @@ import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { withTimeout } from "@/lib/timeout";
+import { apiErrorMessage } from "@/lib/api-error-copy";
 import type { Daycare } from "@/lib/types";
+
+/** Long enough for a slow mail send, short enough that the sheet never hangs. */
+const INFO_REQUEST_TIMEOUT_MS = 20_000;
 
 type Props = {
   daycare: Daycare;
@@ -97,7 +102,8 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
     setBusy(true);
     setFormError(null);
     try {
-      const saved = await createInfoRequest({
+      // B04: a stuck request held the button on "…". Stop waiting and show an error.
+      const saved = await withTimeout(createInfoRequest({
         data: {
           daycareId: daycare.id,
           firstName: contact.firstName,
@@ -107,7 +113,7 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
           message: contact.message ?? undefined,
           userId: user?.id,
         },
-      });
+      }), INFO_REQUEST_TIMEOUT_MS, "The request took too long. Try again.");
       capturePostHogEvent("listing_request_submitted", { intent: "info" });
       await holdSendBeat();
       if (!send.live(token)) return;
@@ -115,7 +121,7 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
       setDone(true);
     } catch (err) {
       if (!send.live(token)) return;
-      const message = err instanceof Error ? err.message : t("requestInfoNeedFields");
+      const message = apiErrorMessage(err, locale, t("requestInfoNeedFields"));
       setFormError(message);
       toast.error(message);
     } finally {
@@ -170,9 +176,13 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
                 />
               </label>
               <label className="text-sm">
-                {t("requestInfoPhone")}
+                {t("requestInfoPhone")}{" "}
+                <span className="text-muted" data-ke="request-info-phone-required">
+                  {locale === "fr" ? "(obligatoire)" : "(required)"}
+                </span>
                 <input
                   required
+                  aria-required="true"
                   type="tel"
                   className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
                   value={phone}

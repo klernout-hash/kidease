@@ -215,14 +215,15 @@ export const listInbox = createServerFn({ method: "GET" })
                ) members
              ) as member_names,
              lm.body as last_body,
-             lm.sender as last_sender
+             lm.sender as last_sender,
+             lm.created_at as last_message_at
       from conversations c
       join daycares d on d.id = c.daycare_id
       left join "user" u on u.id = c.user_id
       left join conversation_user_state s
         on s.conversation_id = c.id and s.user_id = ${context.userId}
       left join lateral (
-        select m.body, m.sender
+        select m.body, m.sender, m.created_at
         from messages m
         where m.conversation_id = c.id
           and m.sender <> 'system'
@@ -308,7 +309,8 @@ export const listInbox = createServerFn({ method: "GET" })
         daycareName: isParent ? r.name : (r.parent_name || "").trim() || "Parent",
         daycareSlug: r.slug,
         photo: splitPhotoList(r.photos)[0] || "/photos/cottage.jpg",
-        lastAt: String(r.last_at),
+        // The row time is the last chat message, not a tour or state change on the thread (B03a).
+        lastAt: isoTime(r.last_message_at ?? r.last_at),
         lastBody,
         preview: maskInboxPreview(lastBody),
         status: r.status,
@@ -602,3 +604,9 @@ export const saveInboxStaffNote = createServerFn({ method: "POST" })
     `;
     return { ok: true as const, note: data.note || null };
   });
+
+function isoTime(value: unknown): string {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? "" : value.toISOString();
+  const d = new Date(String(value ?? ""));
+  return Number.isNaN(d.getTime()) ? String(value ?? "") : d.toISOString();
+}

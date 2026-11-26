@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { safetyText } from "@/lib/safety";
+import { blockDialogText, safetyText } from "@/lib/safety";
+import { setThreadBlocked } from "@/lib/thread-block-state";
 import { clearMyBlock, setDaycareBlock, setFamilyBlock, setMessageBlock } from "@/lib/server/safety";
 import { useCopy } from "@/lib/use-copy";
 
@@ -64,9 +65,9 @@ export function BlockDaycareButton({ daycareId, appearance = "menu" }: { daycare
       </button>
       {open ? (
         <BlockDialog
-          title={text.blockConfirmTitle}
+          title={blockDialogText(locale, "daycare").title}
           body={text.blockConfirmBody}
-          confirm={text.blockConfirm}
+          confirm={blockDialogText(locale, "daycare").confirm}
           cancel={text.cancel}
           busy={busy}
           onClose={() => setOpen(false)}
@@ -112,9 +113,9 @@ export function BlockFamilyButton({
       </button>
       {open ? (
         <BlockDialog
-          title={text.blockConfirmTitle}
+          title={blockDialogText(locale, "family").title}
           body={text.blockConfirmBody}
-          confirm={text.blockConfirm}
+          confirm={blockDialogText(locale, "family").confirm}
           cancel={text.cancel}
           busy={busy}
           onClose={() => setOpen(false)}
@@ -160,9 +161,9 @@ export function BlockThreadButton({
       </button>
       {open ? (
         <BlockDialog
-          title={text.blockConfirmTitle}
+          title={blockDialogText(locale, side).title}
           body={text.blockConfirmBody}
-          confirm={text.blockConfirm}
+          confirm={blockDialogText(locale, side).confirm}
           cancel={text.cancel}
           busy={busy}
           onClose={() => setOpen(false)}
@@ -170,6 +171,7 @@ export function BlockThreadButton({
             setBusy(true);
             void setMessageBlock({ data: { conversationId, blocked: true } })
               .then(() => {
+                setThreadBlocked(conversationId, true);
                 toast.success(text.blockedNow);
                 setOpen(false);
               })

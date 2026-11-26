@@ -173,7 +173,7 @@ export function LiveSupportChat({
   const failed = outbox.filter((item) => item.state === "failed");
 
   return (
-    <section className="mt-3 rounded-xl bg-surface ring-1 ring-border" data-ke="live-support" aria-label={copy.title}>
+    <section className="@container mt-3 rounded-xl bg-surface ring-1 ring-border" data-ke="live-support" aria-label={copy.title}>
       <div className="flex items-start justify-between gap-3 px-4 pt-4">
         <div className="min-w-0">
           <h3 className="font-display text-xl">{copy.title}</h3>
@@ -181,14 +181,15 @@ export function LiveSupportChat({
         </div>
         <button
           type="button"
-          className="min-h-11 shrink-0 rounded-full px-3 text-sm font-semibold touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 lg:hidden"
+          className="min-h-11 shrink-0 rounded-full px-3 text-sm font-semibold touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 @3xl:hidden"
           aria-expanded={detailsOpen}
           onClick={() => setDetailsOpen((open) => !open)}
         >
           {copy.details}
         </button>
       </div>
-      <div className="grid gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_16rem]">
+      {/* Container width, not viewport: in a narrow column the 16rem aside left the chat 0px wide. */}
+      <div className="grid gap-3 p-3 @3xl:grid-cols-[minmax(0,1fr)_16rem]">
         <div className="min-w-0">
           <div className="max-h-[min(32rem,60dvh)] overflow-y-auto px-1">
             {transcript.length === 0 ? <p className="px-1 text-sm text-muted">{copy.empty}</p> : null}
@@ -245,7 +246,7 @@ export function LiveSupportChat({
             onPlus={() => setDetailsOpen((open) => !open)}
           />
         </div>
-        <aside className={cn("rounded-xl bg-bg p-3 ring-1 ring-border", detailsOpen ? "block" : "hidden lg:block")} data-ke="live-support-details">
+        <aside className={cn("rounded-xl bg-bg p-3 ring-1 ring-border", detailsOpen ? "block" : "hidden @3xl:block")} data-ke="live-support-details">
           <h4 className="text-sm font-semibold">{copy.details}</h4>
           <dl className="mt-3 space-y-2 text-sm">
             <div>

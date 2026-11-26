@@ -34,7 +34,7 @@ export function ListingTourTimes({
   const [timezone, setTimezone] = useState(daycare.timezone || "America/Winnipeg");
 
   useEffect(() => {
-    if (!canBook) return;
+    // Read posted times even when this viewer cannot book, so the copy matches real slots (B04).
     let live = true;
     void listPublicTourSlots({ data: { daycareId: daycare.id } })
       .then((res) => {
@@ -53,16 +53,31 @@ export function ListingTourTimes({
     return () => {
       live = false;
     };
-  }, [daycare.id, canBook]);
+  }, [daycare.id]);
 
   if (!canBook) {
+    const open = slots.filter((slot) => slot.remaining > 0);
     return (
-      <section id="listing-tours" className="scroll-mt-24" data-listing-tour-times data-tour-unclaimed>
+      <section id="listing-tours" className="scroll-mt-24" data-listing-tour-times data-tour-unclaimed={open.length ? undefined : ""}>
         <h2 className="font-display text-2xl">{t("tourTimesPublicHint")}</h2>
+        {open.length ? (
+          <ul className="mt-3 divide-y divide-border" data-ke="listing-tour-times-readonly">
+            {open.map((slot) => (
+              <li key={slot.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                <span>{formatTourSlotRange(slot, loc)}</span>
+                <span className="shrink-0 text-xs text-muted">
+                  {slot.remaining === 1 ? `1 ${t("tourTimesSpotLeft")}` : `${slot.remaining} ${t("tourTimesSpotsLeft")}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <p className="mt-3 max-w-prose text-sm text-muted">
-          {daycare.live
+          {open.length || daycare.live
             ? loc === "fr" ? "Les demandes de visite se font depuis un compte parent." : "Tour requests are available from a parent account."
-            : t("tourTimesUnclaimed")}
+            : ready
+              ? t("tourTimesUnclaimed")
+              : null}
         </p>
       </section>
     );
@@ -89,7 +104,7 @@ export function ListingTourTimes({
         </p>
       ) : (
         <ul className="mt-3 divide-y divide-border">
-          {slots.slice(0, 6).map((slot) => (
+          {slots.map((slot) => (
             <li key={slot.id} className="flex items-center justify-between gap-3 py-3 text-sm">
               <span>{formatTourSlotRange(slot, loc)}</span>
               <span className="shrink-0 text-xs text-muted">

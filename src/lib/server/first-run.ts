@@ -159,7 +159,8 @@ export const getProviderSetupFacts = createServerFn({ method: "GET" })
             or d.last_vacancy_updated_at is not null
             or exists (select 1 from availability a where a.daycare_id = d.id)
           ) as openings_known,
-          exists (select 1 from tour_windows w where w.daycare_id = d.id) as tour_times,
+          -- Only a posted, upcoming slot counts (B04: ticked with 0 slots).
+          exists (select 1 from tour_windows w where w.daycare_id = d.id and w.start_at > now()) as tour_times,
           exists (
             select 1 from stripe_accounts s
             where s.daycare_id = d.id and s.charges_enabled = 1

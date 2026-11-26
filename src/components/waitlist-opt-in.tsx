@@ -12,6 +12,7 @@ import { trackProductEvent } from "@/lib/track-product-event";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/lib/signup-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { apiErrorMessage } from "@/lib/api-error-copy";
 import { RuntimePaused } from "@/components/runtime-paused";
 import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { subsidyEstimatorUrl } from "@/lib/licensing";
@@ -28,7 +29,7 @@ export function WaitlistOptIn({
   next?: string;
   province?: string;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const waitlistOn = useRuntimeSwitches().waitlistSpots;
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
@@ -71,7 +72,7 @@ export function WaitlistOptIn({
         confirmAction(t, row ? "waitlistJoined" : "waitlistLeft");
       })
       .catch((err) => {
-        const message = err instanceof Error ? err.message : t("needSignIn");
+        const message = apiErrorMessage(err, locale, t("needSignIn"));
         toast.error(message);
         if (message === "Unauthorized") {
           void navigate({ to: "/login", search: parentSignupSearch(next ?? "/search", "waitlist") });

@@ -11,21 +11,26 @@ export type InboxSearch = {
   view?: InboxView;
   detail?: true;
   tour?: string;
+  /** `?lang=fr` on an unprefixed inbox URL. Kept on every inbox and thread link. */
+  lang?: "fr" | "en";
 };
 
 export function parseInboxSearch(s: Record<string, unknown>): InboxSearch {
   const view = parseInboxView(s.view);
   const detail = s.detail === true || s.detail === "1" || s.detail === 1;
   const tour = typeof s.tour === "string" && s.tour.trim() ? s.tour.trim() : undefined;
+  const lang = s.lang === "fr" || s.lang === "en" ? s.lang : undefined;
   return {
     ...(view ? { view } : {}),
     ...(detail ? { detail: true as const } : {}),
     ...(tour ? { tour } : {}),
+    ...(lang ? { lang } : {}),
   };
 }
 
-export function inboxSearch(view: InboxView | undefined): { view?: InboxView } {
-  return view === "centre" ? { view: "centre" } : view === "family" ? { view: "family" } : {};
+export function inboxSearch(view: InboxView | undefined, lang?: string | null): { view?: InboxView; lang?: "fr" | "en" } {
+  const base: { view?: InboxView } = view === "centre" ? { view: "centre" } : view === "family" ? { view: "family" } : {};
+  return lang === "fr" || lang === "en" ? { ...base, lang } : base;
 }
 
 /** Provider / Daycare desk only — parent inbox stays family. */

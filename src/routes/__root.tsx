@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { keepLangParam, type LangSearch } from "@/lib/locale-search";
 import {
   createRootRoute,
   HeadContent,
@@ -206,6 +207,10 @@ export const Route = createRootRoute({
     const setCookie = match.context.microsoftSetCookie;
     if (!setCookie) return undefined;
     return { "set-cookie": setCookie };
+  },
+  // Keep ?lang=fr on every in-app link (inbox threads, sidebar, menu).
+  search: {
+    middlewares: [({ search, next }) => keepLangParam(search as LangSearch, next(search) as LangSearch) as typeof search],
   },
   head: ({ match }) => ({
     meta: [
