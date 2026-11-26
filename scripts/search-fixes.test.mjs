@@ -94,3 +94,16 @@ test("one chip per active filter and the badge matches the chips", async () => {
   assert.equal(searchSheetFilterCount(input), chips.length);
   assert.equal(searchSheetFilterCount({ filters: {}, careKeys: ["halal"] }), 1);
 });
+
+test("old /daycares/:city links go to the city page in EN and FR", async () => {
+  const { legacyDaycaresCityTarget } = await import("../src/lib/daycares-legacy-path.ts");
+  assert.deepEqual(legacyDaycaresCityTarget("winnipeg", "en"), { href: "/daycare/city/winnipeg", slug: "winnipeg", hub: true });
+  assert.deepEqual(legacyDaycaresCityTarget("Winnipeg", "fr"), { href: "/fr/daycare/city/winnipeg", slug: "winnipeg", hub: true });
+  assert.deepEqual(legacyDaycaresCityTarget("brandon", "en"), { href: "/search", q: "Brandon, MB", hub: false });
+  assert.deepEqual(legacyDaycaresCityTarget("brandon", "fr"), { href: "/fr/search", q: "Brandon, MB", hub: false });
+  const { readFileSync } = await import("node:fs");
+  const tree = readFileSync(new URL("../src/routeTree.gen.ts", import.meta.url), "utf8");
+  for (const id of ["/daycares_/$city", "/fr/daycares_/$city", "/daycares_/$city_/$age", "/fr/daycares_/$city_/$age"]) {
+    assert.ok(tree.includes(`'${id}'`), id);
+  }
+});
