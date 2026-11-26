@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import { frenchGovPath, localizeAuthDest, verify2faPagePath } from "../src/lib/locale-path.ts";
 import { twoFactorPageUrl } from "../src/lib/desks.ts";
 import { loginSubmittedText } from "../src/lib/login-fields.ts";
+import { realManagedListingPhotos } from "../src/lib/listing-photo.ts";
+import { groupListingSpaces, photoRemovalNeedsConfirm } from "../src/lib/listing-spaces.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const src = (rel) => readFileSync(join(root, rel), "utf8");
@@ -216,4 +218,47 @@ test("small landscape, help launcher and search tip stay out of the way", () => 
   assert.match(css, /\[data-ke="listing-sticky-bar"\] :is\(\[data-ke="listing-sticky-cta"\]/);
   assert.match(src("src/components/first-run.tsx"), /tourKey === "tour:parent:search" && onLandingPage/);
   assert.match(src("src/components/mobile-search-sheet.tsx"), /size-12 min-h-\[44px\] min-w-\[44px\]/);
+});
+
+// ---- Live daycare test (8:30 PM): photos, health, licence, sign out ----
+test("photo counts ignore placeholders and stock, and match everywhere", () => {
+  const raw = "/photos/wpg/stock-1.jpg,data:image/jpeg;base64,AAAA,/img/placeholder.svg";
+  assert.deepEqual(realManagedListingPhotos(raw), ["data:image/jpeg;base64,AAAA"]);
+  assert.equal(groupListingSpaces(raw, []).photos.length, 1);
+  assert.match(src("src/lib/profile-health-row.ts"), /realManagedListingPhotos\(photos\)/);
+  assert.match(src("src/components/host-listing-desk.tsx"), /const photos = realManagedListingPhotos\(daycare\.photos\)/);
+});
+
+test("adding a photo is not a removal; only new uploads get enhanced", () => {
+  const before = realManagedListingPhotos("data:image/jpeg;base64,AAAA");
+  assert.deepEqual(photoRemovalNeedsConfirm(before, ["data:image/jpeg;base64,AAAA", "data:image/jpeg;base64,BBBB"]), []);
+  const store = src("src/lib/listing-spaces-store.ts");
+  assert.match(store, /const before = realManagedListingPhotos\(previous\)/);
+  assert.match(store, /existing\.has\(\(src \|\| ""\)\.trim\(\)\) \? src : await prepareListingUploadPhoto\(src\)/);
+});
+
+test("photo manager has a visible Add photos control tied to the file input", () => {
+  const editor = src("src/components/listing-spaces-editor.tsx");
+  assert.match(editor, /data-ke="listing-photo-add"/);
+  assert.match(editor, /<label\s+htmlFor=\{inputId\}/);
+  assert.match(editor, /id=\{fileId\}/);
+  assert.match(editor, /multiple/);
+  assert.match(editor, /data-ke="photo-enhancing"/);
+});
+
+test("listing health follows the selected centre and never shows a stale one", () => {
+  const health = src("src/components/my-listing-health.tsx");
+  assert.match(health, /state\.location\.search/);
+  assert.match(health, /health\.id === current\.id/);
+});
+
+test("licence screen has one licence number field", () => {
+  const forms = src("src/components/provider-listing-forms.tsx");
+  const licence = forms.slice(forms.indexOf('{mode === "licence" ? ('), forms.indexOf('{mode === "licence" ? (') + 900);
+  assert.doesNotMatch(licence, /<Field label=\{t\("licenceNo"\)\}/);
+  assert.match(forms, /licenseNumber: mode === "licence" \? \(daycare\.licenseNumber \?\? ""\) : state\.licenseNumber/);
+});
+
+test("Login & security has Sign out", () => {
+  assert.match(src("src/components/airbnb-screens.tsx"), /data-ke="airbnb-security-sign-out"/);
 });
