@@ -28,10 +28,15 @@ test("every desk page is behind the government sign-in in English and French", (
       const src = read(file);
       assert.match(src, /beforeLoad: \(\{ context \}\) => guardGovDesk\("(en|fr)"/, file);
       assert.match(src, /govRobotsHeaders/, file);
-      assert.match(src, /GovNativeNote/, file);
+      assert.match(src, /lazyRouteComponent\(\(\) => import\("@\/components\/gov\/(gov-desk-route|gov-exports)"\)|GovExportsPage/, file);
       assert.doesNotMatch(src, /redirect\(/, `${file} is a real page, not a redirect`);
     }
   }
+});
+
+test("the shared desk screen shows the app note in the native shell", () => {
+  const view = read("src/components/gov/gov-desk-route.tsx");
+  assert.match(view, /gate\.nativeOnly \|\| !data\) return <GovNativeNote/);
 });
 
 test("every desk server call needs the government middleware (parents and daycares are refused)", () => {

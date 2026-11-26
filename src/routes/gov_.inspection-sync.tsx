@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { GovDeskPage } from "@/components/gov/gov-desk-page";
-import { GovNativeNote } from "@/components/gov/gov-login";
+import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { guardGovDesk, govRobotsHead, govRobotsHeaders } from "@/lib/gov/desk-guard";
 import { loadGovDeskPage } from "@/lib/server/gov-desk";
 
 export const Route = createFileRoute("/gov_/inspection-sync")({
+  // All desk pages share one lazy screen chunk (client JS file budget).
+  codeSplitGroupings: [],
   beforeLoad: ({ context }) => guardGovDesk("en", Boolean((context as { nativeShell?: boolean }).nativeShell)),
   loader: async ({ context }) => {
     const gate = context as { nativeOnly?: boolean };
@@ -13,12 +13,5 @@ export const Route = createFileRoute("/gov_/inspection-sync")({
   },
   head: () => govRobotsHead("Inspection sync"),
   headers: govRobotsHeaders,
-  component: Page,
+  component: lazyRouteComponent(() => import("@/components/gov/gov-desk-route"), "GovDeskRouteView"),
 });
-
-function Page() {
-  const gate = Route.useRouteContext() as { nativeOnly?: boolean };
-  const data = Route.useLoaderData();
-  if (gate.nativeOnly || !data) return <GovNativeNote locale="en" />;
-  return <GovDeskPage data={data} />;
-}
