@@ -80,15 +80,23 @@ export function DefaultNotFound() {
   const path = useRouterState({ select: (state) => state.location.pathname });
   if (path === "/admissions" || path === "/fr/admissions") return <AdmissionsForward />;
   if (path === "/gov" || path.startsWith("/gov/") || path === "/fr/gov" || path.startsWith("/fr/gov/")) {
-    const french = path.startsWith("/fr/");
-    return (
-      <PageNotFound
-        title={french ? "Cette page du bureau n’est pas là" : "That desk page is not here"}
-        body={french ? "Retournez à l’aperçu du bureau gouvernemental." : "Go back to the government overview."}
-        action={french ? "Ouvrir l’aperçu" : "Open the overview"}
-        actionTo={french ? "/fr/gov" : "/gov"}
-      />
-    );
+    return <GovDeskUnavailable locale={path.startsWith("/fr/") ? "fr" : "en"} />;
   }
   return <PageNotFound />;
+}
+
+/**
+ * One screen for every unknown or unbuilt /gov/* page, in EN and FR (gov desk test #31).
+ * No silent redirect: the official sees the page is not ready and has one way back.
+ */
+export function GovDeskUnavailable({ locale }: { locale: "en" | "fr" }) {
+  const french = locale === "fr";
+  return (
+    <PageNotFound
+      title={french ? "Cette page du bureau n’est pas encore offerte" : "This desk page isn’t available yet"}
+      body={french ? "Retournez à l’aperçu du bureau gouvernemental." : "Go back to the government overview."}
+      action={french ? "Retour au bureau" : "Back to the desk"}
+      actionTo={french ? "/fr/gov" : "/gov"}
+    />
+  );
 }

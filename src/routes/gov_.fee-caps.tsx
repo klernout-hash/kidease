@@ -1,9 +1,15 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { guardGovDesk } from "@/lib/gov/desk-guard";
+import { createFileRoute } from "@tanstack/react-router";
+import { GovDeskUnavailable } from "@/components/page-not-found";
 
+/**
+ * Not built yet. Same screen as any unknown /gov page, signed in or not, in EN and FR,
+ * with no redirect (gov desk test #31). The screen shows no desk data, so no guard.
+ */
 export const Route = createFileRoute("/gov_/fee-caps")({
-  beforeLoad: async ({ context }) => {
-    await guardGovDesk("en", Boolean((context as { nativeShell?: boolean }).nativeShell));
-    throw redirect({ href: "/gov/analytics" });
-  },
+  head: () => ({ meta: [{ name: "robots", content: "noindex" }] }),
+  component: GovUnbuilt,
 });
+
+function GovUnbuilt() {
+  return <GovDeskUnavailable locale="en" />;
+}
