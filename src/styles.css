@@ -4007,6 +4007,20 @@ html:not([data-look="clean"]) .ke-clean-only {
 [data-ke="header-care-categories"] .ke-airbnb-cat-label {
   font-size: 12px;
 }
+/* At 12px "Home daycares" / "Milieu familial" wrapped to two lines and made the header taller
+   than production. Keep one line: the tile grows to its label and the row already scrolls. */
+@media (max-width: 767px) {
+  [data-ke="header-care-categories"] .ke-airbnb-cat {
+    width: auto;
+    min-width: 6rem;
+  }
+  [data-ke="header-care-categories"] .ke-airbnb-cat-label {
+    max-width: none;
+    /* Same box as production's 0.7rem label (2.3em of 0.7rem), so the row height does not change. */
+    min-height: calc(0.7rem * 2.3);
+    white-space: nowrap;
+  }
+}
 [data-ke="app-tab"] {
   font-size: max(0.72rem, 11px);
 }

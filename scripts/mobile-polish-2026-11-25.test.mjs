@@ -271,3 +271,12 @@ test("640x360: category labels show in full and the strip scrolls", () => {
   assert.match(block, /\.ke-airbnb-cat-label \{[^}]*white-space: nowrap;/);
   assert.doesNotMatch(block, /line-clamp|text-overflow/);
 });
+
+test("phone header: 12px category labels stay on one line in production's row height", () => {
+  const css = src("src/styles.css");
+  const at = css.indexOf('/* At 12px "Home daycares"');
+  assert.ok(at > 0);
+  const block = css.slice(at, css.indexOf("\n}\n", at) + 2);
+  assert.match(block, /white-space: nowrap;/);
+  assert.match(block, /min-height: calc\(0\.7rem \* 2\.3\);/);
+});
