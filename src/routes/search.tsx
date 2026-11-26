@@ -28,7 +28,7 @@ import { SEARCH_PAGE_MAX, pageFromSearch } from "@/lib/search-page";
 import { compactSearchRadius, searchRadiusFromParams, withSearchRadius } from "@/lib/search-radius";
 import { searchDaycareMap, searchDaycarePage } from "@/lib/server/daycares";
 import { normalizeSearchResultFilters, schoolAgeOnlyFromSearch } from "@/lib/search-result-filters";
-import { searchMapState, type SearchMapResult } from "@/lib/search-map-state";
+import { mapRetryDelay, searchMapState, type SearchMapResult } from "@/lib/search-map-state";
 import { readSearchEvidence, searchEvidence } from "@/lib/search-evidence";
 import { createSearchLoaderRead, createSearchRequestGate, searchCoverageCopy, searchMapCount } from "@/lib/search-coverage";
 import type { MapPin } from "@/lib/map-cluster";
@@ -979,6 +979,11 @@ export function SearchScreen({
   const mapState = searchMapState({ canSearch: mapCanSearch, key: searchMapKey, result: mapResult, failedKey: mapFailedKey, pendingKey: mapPendingKey });
   const currentMapResult = mapState.result;
   const searchMapPins = currentMapResult?.pins ?? EMPTY_MAP_PINS;
+  // Until the scoped search pins arrive (or if they fail), draw only the listed
+  // cards. Never fall back to nationwide viewport tiles on a radius search.
+  const mapScope = currentMapResult
+    ? { searchPins: searchMapPins }
+    : { itemsOnly: true as const };
   useEffect(() => {
     if (view !== "map" || !mapCanSearch) return;
     const gate = mapGate.current;
@@ -989,23 +994,59 @@ export function SearchScreen({
     const current = () => live && gate.accepts(ticket);
     setMapFailedKey(null);
     setMapPendingKey(searchMapKey);
+    let attempt = 0;
+    let attemptAbort = controller;
+    let watchdog = 0;
+    let retryTimer = 0;
     const fail = (error?: unknown) => {
       if (!current()) return;
       captureLoaderFailure("search", error ?? new Error("search-timeout"), error === undefined ? "timeout" : "error");
       gate.invalidate();
       controller.abort();
+      attemptAbort.abort();
       setMapFailedKey(searchMapKey);
       setMapPendingKey(null);
     };
-    // Never leave "Loading centres…" up: settle to the error state with Try again.
-    const watchdog = window.setTimeout(() => fail(), LOADER_WATCHDOG_MS);
-    void searchDaycareMap({ data: { ...requestData.current, countDemand: false, refresh: retryRequest?.mapKey === searchMapKey }, signal: controller.signal })
-      .then((result) => {
-        if (!current()) return;
-        setMapResult({ key: searchMapKey, ...result, evidence: readSearchEvidence(result.evidence) });
-        setMapPendingKey(null);
-      }).catch(fail).finally(() => { window.clearTimeout(watchdog); });
-    return () => { live = false; controller.abort(); window.clearTimeout(watchdog); };
+    // A cold first read can fail. Retry with backoff before showing the error.
+    const read = () => {
+      if (!current()) return;
+      const own = attempt === 0 ? controller : new AbortController();
+      attemptAbort = own;
+      mapAbort.current = own;
+      let settled = false;
+      const miss = (error?: unknown) => {
+        if (settled || !current()) return;
+        settled = true;
+        window.clearTimeout(watchdog);
+        own.abort();
+        const delay = mapRetryDelay(attempt);
+        if (delay == null) {
+          fail(error);
+          return;
+        }
+        attempt += 1;
+        retryTimer = window.setTimeout(read, delay);
+      };
+      // Never leave "Loading centres…" up: settle to the error state with Try again.
+      watchdog = window.setTimeout(() => miss(), LOADER_WATCHDOG_MS);
+      void searchDaycareMap({ data: { ...requestData.current, countDemand: false, refresh: retryRequest?.mapKey === searchMapKey || attempt > 0 }, signal: own.signal })
+        .then((result) => {
+          if (settled || !current()) return;
+          settled = true;
+          window.clearTimeout(watchdog);
+          setMapResult({ key: searchMapKey, ...result, evidence: readSearchEvidence(result.evidence) });
+          setMapPendingKey(null);
+        })
+        .catch(miss);
+    };
+    read();
+    return () => {
+      live = false;
+      controller.abort();
+      attemptAbort.abort();
+      window.clearTimeout(watchdog);
+      window.clearTimeout(retryTimer);
+    };
   }, [view, searchMapKey, retryRequest, mapCanSearch]);
 
   const mapCoverage = searchCoverageCopy(currentMapResult?.evidence, locale);
@@ -2562,7 +2603,7 @@ export function SearchScreen({
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
                       items={mobileRows}
-                      searchPins={searchMapPins.length > 0 ? searchMapPins : undefined}
+                      {...mapScope}
                       origin={mapOrigin}
                       placeLabel={whereLabel || origin.label}
                       secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
@@ -2649,7 +2690,7 @@ export function SearchScreen({
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
                     <MapView
                       items={shownList}
-                      searchPins={searchMapPins.length > 0 ? searchMapPins : undefined}
+                      {...mapScope}
                       origin={mapOrigin}
                       placeLabel={whereLabel || origin.label}
                       secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
@@ -2766,6 +2807,7 @@ export function SearchScreen({
             <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
               <MapView
                 items={shownList}
+                itemsOnly
                 origin={mapOrigin}
                 placeLabel={whereLabel || origin.label}
                 secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}

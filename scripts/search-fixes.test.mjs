@@ -118,3 +118,17 @@ test("open spots: honest empty state, /open-spots redirect and footer link", asy
   const tree = readFileSync(new URL("../src/routeTree.gen.ts", import.meta.url), "utf8");
   assert.ok(tree.includes("'/open-spots'") && tree.includes("'/fr/open-spots'"));
 });
+
+test("map retries with backoff and keeps pins inside the radius", async () => {
+  const { mapRetryDelay, pinsWithinRadius, MAP_RETRY_DELAYS_MS } = await import("../src/lib/search-map-state.ts");
+  assert.equal(mapRetryDelay(0), MAP_RETRY_DELAYS_MS[0]);
+  assert.ok(mapRetryDelay(1) > mapRetryDelay(0));
+  assert.equal(mapRetryDelay(MAP_RETRY_DELAYS_MS.length), null);
+  const wpg = { lat: 49.8951, lng: -97.1384 };
+  const pins = [{ id: "near", lat: 49.9, lng: -97.14 }, { id: "brandon", lat: 49.848, lng: -99.95 }];
+  assert.deepEqual(pinsWithinRadius(pins, wpg, 25).map((p) => p.id), ["near"]);
+  const { readFileSync } = await import("node:fs");
+  const search = readFileSync(new URL("../src/routes/search.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(search, /searchPins=\{searchMapPins\.length > 0 \? searchMapPins : undefined\}/);
+  assert.match(search, /const delay = mapRetryDelay\(attempt\);/);
+});

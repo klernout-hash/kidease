@@ -6,6 +6,7 @@ import { patchAvailabilityMonth } from "@/lib/host-calendar";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { cardSortKm, includeCardInRadius } from "@/lib/card-distance";
 import { DEFAULT_SEARCH_RADIUS_KM } from "@/lib/search-radius";
+import { pinsWithinRadius } from "@/lib/search-map-state";
 import { catchmentMatch, clampRadiusKm, compareProximity, recommendedRank } from "@/lib/proximity";
 import { resolveListingTourTimezone } from "@/lib/tour-calendar";
 import {
@@ -919,7 +920,16 @@ export const searchDaycareMap = createServerFn({ method: "GET" })
     const matched = await filteredSearchRows({ ...data, countDemand: false });
     // Seal homes while full privacy signals still exist, before the slim pin projection.
     const sealed = await sealPublicHomes(matched.rows.filter(hasSearchCoordinates));
-    return { pins: projectSearchMapPins(sealed), total: matched.rows.length, evidence: matched.evidence };
+    const pins = projectSearchMapPins(sealed);
+    // Home-only searches: every pin sits inside the search circle.
+    const anchors = resolveSearchAnchors({
+      home: { lat: data.lat, lng: data.lng },
+      work: typeof data.lat2 === "number" && typeof data.lng2 === "number" ? { lat: data.lat2, lng: data.lng2 } : null,
+      mode: data.mode,
+    });
+    const aligned = alignedSearchInput(data);
+    const bounded = anchors.intersect ? pins : pinsWithinRadius(pins, anchors.mode === "work" ? anchors.primary : { lat: aligned.lat, lng: aligned.lng }, data.radiusKm);
+    return { pins: bounded, total: matched.rows.length, evidence: matched.evidence };
   });
 
 /** Home type rows page 12 at a time. Keep a few pages of each nearby type. */
