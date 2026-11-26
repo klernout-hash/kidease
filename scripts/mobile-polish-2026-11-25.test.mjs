@@ -262,3 +262,12 @@ test("licence screen has one licence number field", () => {
 test("Login & security has Sign out", () => {
   assert.match(src("src/components/airbnb-screens.tsx"), /data-ke="airbnb-security-sign-out"/);
 });
+
+test("640x360: category labels show in full and the strip scrolls", () => {
+  const css = src("src/styles.css");
+  const land = css.slice(css.indexOf("@media (max-height: 430px) and (min-width: 560px) {"));
+  const block = land.slice(0, land.indexOf("\n}\n"));
+  assert.match(block, /\.ke-airbnb-cat \{[^}]*width: auto;/);
+  assert.match(block, /\.ke-airbnb-cat-label \{[^}]*white-space: nowrap;/);
+  assert.doesNotMatch(block, /line-clamp|text-overflow/);
+});
