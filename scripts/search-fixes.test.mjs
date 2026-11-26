@@ -255,3 +255,12 @@ test("French distances use a decimal comma and read 'à … km'", async () => {
     assert.match(src, /parentDistanceLabel\(\{[\s\S]{0,120}locale/, file);
   }
 });
+
+test("listing licence card never prints the internal stored status", () => {
+  const card = readFileSync(
+    new URL("../src/components/inspection-trust-card.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(card, /Stored status|Statut enregistré|Stored expiry|data-licence-status/);
+  assert.match(card, /Licence expiry on file/);
+});

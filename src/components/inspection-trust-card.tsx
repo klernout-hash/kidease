@@ -1,5 +1,10 @@
 import type { PublicInspection } from "@/lib/inspection-history";
-import { inspectionChecklistBadge, inspectionPortal, publicLicenceLine, type ChecklistItem } from "@/lib/provincial-inspections";
+import {
+  inspectionChecklistBadge,
+  inspectionPortal,
+  publicLicenceLine,
+  type ChecklistItem,
+} from "@/lib/provincial-inspections";
 import { useCopy } from "@/lib/use-copy";
 
 export function InspectionTrustCard({
@@ -7,7 +12,6 @@ export function InspectionTrustCard({
   name,
   licenseNumber,
   listingId,
-  licenseStatus,
   licenseExpiry,
   claimed,
   checklist,
@@ -18,6 +22,11 @@ export function InspectionTrustCard({
   name: string;
   licenseNumber?: string | null;
   listingId?: string | null;
+  /**
+   * Internal stored value (`matched`, `active`…). Not shown: the public licence
+   * line comes from publicLicenseBadge on the listing page, so the card never
+   * contradicts it with registry wording.
+   */
   licenseStatus?: string | null;
   licenseExpiry?: string | null;
   claimed?: boolean;
@@ -35,25 +44,21 @@ export function InspectionTrustCard({
 
   if (compact) {
     return (
-      <section className="mt-4 text-sm leading-6" data-ke="inspection-trust" data-licence-status={licenseStatus || ""} data-compact="1">
+      <section className="mt-4 text-sm leading-6" data-ke="inspection-trust" data-compact="1">
         <h2 className="text-[16px] font-semibold leading-[22px]">{t("licenceAndInspection")}</h2>
         <p className="mt-1 text-muted">
           {licence ? (
             <>
-              {t("licenceOnRecord")} <span className="font-medium text-fg tabular-nums">{licence}</span>
+              {t("licenceOnRecord")}{" "}
+              <span className="font-medium text-fg tabular-nums">{licence}</span>
               {" · "}
             </>
           ) : null}
           {t("licenceNotLiveGov")}
         </p>
-        {licenseStatus && licenseStatus !== "unverified" && licenseStatus !== "unknown" ? (
-          <p className="mt-1" data-ke="stored-licence-status">
-            {fr ? "Statut enregistré" : "Stored status"}: {licenseStatus}
-          </p>
-        ) : null}
         {licenseExpiry ? (
           <p className="mt-1" data-ke="stored-licence-expiry">
-            {fr ? "Échéance enregistrée" : "Stored expiry"}: {licenseExpiry}
+            {fr ? "Échéance du permis au dossier" : "Licence expiry on file"}: {licenseExpiry}
           </p>
         ) : null}
         <details className="mt-1">
@@ -62,7 +67,9 @@ export function InspectionTrustCard({
           </summary>
           {badge.show ? (
             <p className="mt-2 text-muted">
-              {t("kideaseChecklist").replace("{passed}", String(badge.passed)).replace("{total}", String(badge.total))}
+              {t("kideaseChecklist")
+                .replace("{passed}", String(badge.passed))
+                .replace("{total}", String(badge.total))}
             </p>
           ) : null}
           {inspections?.length ? (
@@ -72,7 +79,12 @@ export function InspectionTrustCard({
                   <p className="font-medium">
                     {row.inspectedOn} · {row.outcome}
                   </p>
-                  <a href={row.sourceUrl} target="_blank" rel="noreferrer" className="text-primary underline-offset-4 hover:underline">
+                  <a
+                    href={row.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary underline-offset-4 hover:underline"
+                  >
                     {t("publicRecord")}
                   </a>
                 </li>
@@ -80,7 +92,12 @@ export function InspectionTrustCard({
             </ul>
           ) : null}
           {portal ? (
-            <a href={portal.url} target="_blank" rel="noreferrer" className="mt-1 inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline">
+            <a
+              href={portal.url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline"
+            >
               {fr ? portal.labelFr : portal.labelEn || t("openPublicRegistry")}
             </a>
           ) : null}
@@ -93,7 +110,6 @@ export function InspectionTrustCard({
     <section
       className="mt-4 rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border"
       data-ke="inspection-trust"
-      data-licence-status={licenseStatus || ""}
     >
       <h2 className="font-display text-2xl">{t("licenceAndInspection")}</h2>
       {licence ? (
@@ -105,19 +121,16 @@ export function InspectionTrustCard({
         <p className="mt-2 text-sm text-muted">{t("licenceNotPublished")}</p>
       )}
       <p className="mt-2 text-sm text-muted">{t("licenceNotLiveGov")}</p>
-      {licenseStatus && licenseStatus !== "unverified" && licenseStatus !== "unknown" ? (
-        <p className="mt-2 text-sm" data-ke="stored-licence-status">
-          {fr ? "Statut enregistré" : "Stored status"}: {licenseStatus}
-        </p>
-      ) : null}
       {licenseExpiry ? (
         <p className="mt-1 text-sm" data-ke="stored-licence-expiry">
-          {fr ? "Échéance enregistrée" : "Stored expiry"}: {licenseExpiry}
+          {fr ? "Échéance du permis au dossier" : "Licence expiry on file"}: {licenseExpiry}
         </p>
       ) : null}
       {badge.show ? (
         <p className="mt-2 text-sm text-muted">
-          {t("kideaseChecklist").replace("{passed}", String(badge.passed)).replace("{total}", String(badge.total))}
+          {t("kideaseChecklist")
+            .replace("{passed}", String(badge.passed))
+            .replace("{total}", String(badge.total))}
         </p>
       ) : null}
       {inspections?.length ? (
@@ -147,7 +160,11 @@ export function InspectionTrustCard({
           rel="noreferrer"
           className="mt-3 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg touch-manipulation"
         >
-          {locale === "fr" ? portal.labelFr : locale === "en" ? portal.labelEn : t("openPublicRegistry")}
+          {locale === "fr"
+            ? portal.labelFr
+            : locale === "en"
+              ? portal.labelEn
+              : t("openPublicRegistry")}
         </a>
       ) : null}
     </section>
