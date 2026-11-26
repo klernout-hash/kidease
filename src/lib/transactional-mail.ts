@@ -103,7 +103,7 @@ export type TransactionalMailInput = {
   replyTo?: string;
   /** One-click unsubscribe URL (RFC 8058). Adds List-Unsubscribe headers. */
   unsubscribeUrl?: string;
-  /** Structured branded content. Used instead of `html`/`text` when BRANDED_EMAILS=1. */
+  /** Structured branded content. Used instead of `html`/`text` unless BRANDED_EMAILS=0. */
   branded?: import("./email-layout.ts").BrandedEmailInput;
   /** Set true when the email is about a test/QA listing. It is sent only when every recipient is on QA_SEND_ALLOWLIST. */
   aboutTestListing?: boolean;
@@ -167,11 +167,16 @@ export function transactionalReplyTo(input: string | null | undefined, env: EnvM
   return KIDEASE_OPERATOR_EMAIL;
 }
 
+/**
+ * The branded layout is the default. BRANDED_EMAILS=0 (or "false"/"off") is an
+ * emergency opt-out only; unset means branded, so a plain fallback never ships.
+ */
 export function brandedEmailsEnabled(env: EnvMap = process.env): boolean {
-  return env.BRANDED_EMAILS === "1" || env.BRANDED_EMAILS === "true";
+  const raw = String(env.BRANDED_EMAILS ?? "").trim().toLowerCase();
+  return !(raw === "0" || raw === "false" || raw === "off");
 }
 
-/** Branded body + List-Unsubscribe headers when the flag is on; otherwise unchanged. */
+/** Branded body + List-Unsubscribe headers (default); BRANDED_EMAILS=0 keeps the sender's body. */
 export async function prepareMailBody(
   input: TransactionalMailInput,
   env: EnvMap = process.env,

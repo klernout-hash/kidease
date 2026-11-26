@@ -19,7 +19,7 @@ export function ListingContact({
   city?: string;
   className?: string;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", body: "" });
@@ -39,6 +39,7 @@ export function ListingContact({
           subject: `Listing inquiry: ${name}`,
           body: `${form.body}\n\nListing: https://kidease.ca/daycare/${slug}`,
           turnstileToken: token,
+          locale: locale === "fr" ? "fr" : "en",
         },
       });
       confirmAction(t, "contactSent", { body: t("listingContactSent") });

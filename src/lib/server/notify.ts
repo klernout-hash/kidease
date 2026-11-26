@@ -24,7 +24,6 @@ import {
   ACTOR_CONFIRM_SUBJECT,
   resolveMailReplyTo,
   sendMailThenPersist,
-  visitorAutoReplyCopy,
 } from "@/lib/server/notify-mail";
 import { sendSms } from "@/lib/server/sms";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
@@ -549,24 +548,11 @@ async function sendActorConfirmation(kind: string, to: string) {
 
 async function sendVisitorAutoReply(to: string, name: string, locale: "en" | "fr" = "en") {
   if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return;
-  const copy = visitorAutoReplyCopy(locale);
-  const who = name.split(" ")[0] || copy.there;
-  const greet = who ? `${copy.hi} ${who},` : `${copy.hi},`;
-  const lead = copy.text.split("\n\n")[0];
-  const text = `${greet}\n\n${copy.text}`;
-  const html = `<!doctype html>
-<html lang="${copy.lang}"><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
-    <tr><td style="padding:28px;font-size:16px;line-height:1.6;">
-      <p style="margin:0;">${esc(greet)}</p>
-      <p>${esc(lead)}</p>
-      <p>${esc(copy.thanks)}</p>
-      <p style="margin:24px 0 0;">${esc(copy.signoff)}<br/>${esc(copy.team)}<br/><a href="mailto:${SUPPORT_INBOX_EMAIL}" style="color:#1a3790;">${SUPPORT_INBOX_EMAIL}</a></p>
-    </td></tr>
-  </table>
-</body></html>`;
-  await deliverEmail(copy.subject, text, html, to, SUPPORT_INBOX_EMAIL, {
-    branded: brandedNotice({ heading: copy.subject, text }),
+  const { contactAutoReplyEmail } = await import("@/lib/notification-templates");
+  const { renderBrandedEmail, renderBrandedText } = await import("@/lib/email-layout");
+  const mail = contactAutoReplyEmail({ locale, name });
+  await deliverEmail(mail.subject, renderBrandedText(mail.branded), renderBrandedEmail(mail.branded), to, SUPPORT_INBOX_EMAIL, {
+    branded: mail.branded,
   });
 }
 

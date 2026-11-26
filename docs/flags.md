@@ -256,7 +256,7 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_HUAWEI_IN_APP_REVIEW` | AppGallery review page. Default off. Play in-app review stays blocked on Huawei. |
 | `FEATURE_HUAWEI_APPGALLERY_LINK` | Listing link on Get the app. Default off. The URL is the public AppGallery page. |
 | `FEATURE_AMAZON_STORE_DEEP_LINK` | Package page and `amzn://` link when no https listing is set. Default off. A verified listing still wins. ADM stays on `FEATURE_AMAZON_ADM`. |
-| `BRANDED_EMAILS` | Env only, not a PostHog flag. Default off. When `1`, notification email uses the KidEase layout (logo, button, plain-text part, one-click unsubscribe). Unset keeps today's bodies. Do not turn on until `send.kidease.ca` mail DNS is confirmed. |
+| `BRANDED_EMAILS` | Env only, not a PostHog flag. Default on: notification email always uses the KidEase layout (logo, one button, sign-off, plain-text part, one-click unsubscribe). Set `0` only as an emergency opt-out; that sends the sender's plain body. Confirm `send.kidease.ca` mail DNS before relying on one-click unsubscribe headers. |
 
 ## What is wired
 

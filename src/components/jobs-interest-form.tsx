@@ -13,7 +13,7 @@ import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 type JobsInterestVariant = "caregiver" | "centre";
 
 export function JobsInterestForm({ variant }: { variant: JobsInterestVariant }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const jobInterest = useRuntimeSwitches().jobInterest;
   const centreMode = variant === "centre";
   const [name, setName] = useState("");
@@ -58,6 +58,7 @@ export function JobsInterestForm({ variant }: { variant: JobsInterestVariant }) 
           centre: centreMode ? centre : undefined,
           city,
           turnstileToken: challenge,
+          locale: locale === "fr" ? "fr" : "en",
         },
       });
       setSent(true);

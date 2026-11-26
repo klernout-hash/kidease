@@ -15,7 +15,7 @@ const input = { purpose: "host_action", to: "a@b.ca", subject: "s", text: "plain
 
 test("layout: 600px, CTA, unsubscribe, dark mode, escaped, copy guardrails", () => {
   const h = renderBrandedEmail(base);
-  for (const s of ['width="600"', "prefers-color-scheme: dark", "Finish my listing", "api/unsubscribe?token=t", "&lt;b&gt;x&lt;/b&gt;", "Search and messages at no charge"]) assert.ok(h.includes(s), s);
+  for (const s of ['width="600"', "prefers-color-scheme: dark", "Finish my listing", "api/unsubscribe?token=t", "&lt;b&gt;x&lt;/b&gt;", "Licensed child care, made simpler for families and centres", "The KidEase team", "Winnipeg, Manitoba, Canada"]) assert.ok(h.includes(s), s);
   assert.doesNotMatch(h, /free forever|founding period|GST|\d{7} Ontario|endorsed by/i);
 });
 test("layout: non-https CTA is neutralised", () => {
@@ -32,10 +32,17 @@ test("plain-text fallback keeps CTA + unsubscribe", () => {
   assert.ok(t.includes("https://www.kidease.ca/provider"));
   assert.ok(t.includes("Unsubscribe: " + base.unsubscribeUrl));
 });
-test("BRANDED_EMAILS off by default: body unchanged, no headers", async () => {
+test("BRANDED_EMAILS on by default: unset env still sends the branded layout", async () => {
   const r = await prepareMailBody(input, {});
-  assert.equal(r.html, "<p>plain</p>");
-  assert.deepEqual(r.headers, {});
+  assert.ok(r.html.includes('width="600"'));
+  assert.notEqual(r.html, "<p>plain</p>");
+});
+test("BRANDED_EMAILS=0 is the only opt-out: body unchanged, no headers", async () => {
+  for (const value of ["0", "false", "off"]) {
+    const r = await prepareMailBody(input, { BRANDED_EMAILS: value });
+    assert.equal(r.html, "<p>plain</p>");
+    assert.deepEqual(r.headers, {});
+  }
 });
 test("BRANDED_EMAILS on: branded html + one-click List-Unsubscribe", async () => {
   const r = await prepareMailBody(input, { BRANDED_EMAILS: "1" });

@@ -9,6 +9,26 @@ import { planWithdrawal, withdrawalEnabled, withdrawalMode } from "@/lib/wiring/
 import { daycareUserIds, deliverNotice, newId } from "@/lib/server/wiring/runtime";
 import { cleanReason, withdrawalCancelable } from "@/lib/pipeline-features";
 import type { Sql } from "@/lib/db";
+import { withdrawalCancelledEmail, withdrawalNoticeEmail, withdrawalNoticeSms } from "@/lib/notification-templates";
+
+/** Names for the centre's notice: parent, the enrolled child at this centre, and the centre. */
+async function withdrawalPeople(sql: Sql, parentUserId: string, daycareId: string) {
+  const rows = await sql<{ parent_name: string | null; child_name: string | null; centre_name: string | null }>`
+    select u.name as parent_name, d.name as centre_name,
+           (select ch.name from bookings b left join children ch on ch.id = b.child_id
+             where b.user_id = ${parentUserId} and b.daycare_id = ${daycareId}
+               and b.status in ('accepted', 'active')
+             order by b.created_at desc limit 1) as child_name
+    from "user" u cross join daycares d
+    where u.id = ${parentUserId} and d.id = ${daycareId}
+    limit 1
+  `.catch(() => [] as { parent_name: string | null; child_name: string | null; centre_name: string | null }[]);
+  return {
+    parentName: rows[0]?.parent_name ?? null,
+    childName: rows[0]?.child_name ?? null,
+    centreName: rows[0]?.centre_name ?? "",
+  };
+}
 
 const WITHDRAWAL_REASON_FEATURE = "withdrawal_reason";
 
@@ -136,6 +156,8 @@ export const cancelWithdrawal = createServerFn({ method: "POST" })
     await sql`delete from withdrawals where id = ${row.id}`;
     const centre = await sql<{ province: string | null }>`select province from daycares where id = ${row.daycare_id} limit 1`.catch(() => []);
     const mode = withdrawalMode();
+    const people = await withdrawalPeople(sql, context.userId, row.daycare_id);
+    const lastDay = isoDay(row.last_day);
     for (const userId of await daycareUserIds(row.daycare_id)) {
       await deliverNotice({
         feature: "withdrawal",
@@ -148,6 +170,7 @@ export const cancelWithdrawal = createServerFn({ method: "POST" })
         href: "/provider/withdrawal",
         senderUserId: context.userId,
         province: centre[0]?.province ?? null,
+        compose: (locale) => ({ email: withdrawalCancelledEmail({ locale, ...people, lastDay }) }),
       });
     }
     return { ok: true as const };
@@ -318,6 +341,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
                 ${JSON.stringify({ withdrawalId, reason: data.reason })})
       `.catch(() => undefined);
     }
+    const people = await withdrawalPeople(sql, context.userId, data.daycareId);
     for (const userId of await daycareUserIds(data.daycareId)) {
       await deliverNotice({
         feature: "withdrawal",
@@ -331,6 +355,10 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         senderUserId: context.userId,
         province: centre[0].province,
         wantSms: true,
+        compose: (locale) => {
+          const facts = { locale, ...people, lastDay: plan.lastDay, reason: data.reason || null };
+          return { email: withdrawalNoticeEmail(facts), sms: withdrawalNoticeSms(facts) };
+        },
       });
     }
     return { ok: true as const, plan, mode };
