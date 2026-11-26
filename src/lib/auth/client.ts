@@ -202,14 +202,16 @@ export async function signIn(
     if (shell) {
       const provider = providerId as "apple" | "google" | "facebook" | "huawei" | "amazon";
       const { nativeOAuthStartPath } = await import("./native-oauth");
+      const { openNativeOAuthSheet, prepareNativeHandoff } = await import("./native-oauth-client");
+      const hv = await prepareNativeHandoff();
       const startPath = nativeOAuthStartPath({
         provider,
         next: callbackURL,
         errorNext: errorCallbackURL,
         newUserNext: newUserCallbackURL,
+        hv,
       });
       const startUrl = new URL(startPath, window.location.origin).toString();
-      const { openNativeOAuthSheet } = await import("./native-oauth-client");
       await openNativeOAuthSheet(startUrl);
       return;
     }
