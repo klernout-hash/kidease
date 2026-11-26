@@ -126,7 +126,6 @@ import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
 import { Route as ApiAlexaRouteImport } from './routes/api/alexa'
 import { Route as ApiAutomationsRouteImport } from './routes/api/automations'
 import { Route as ApiBackgroundCheckFilesRouteImport } from './routes/api/background-check-files'
-import { Route as ApiStaffResumeRouteImport } from './routes/api/staff-resume'
 import { Route as ApiCentreLeadAlertsRouteImport } from './routes/api/centre-lead-alerts'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
@@ -143,6 +142,7 @@ import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screenin
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiSpotOffersRouteImport } from './routes/api/spot-offers'
+import { Route as ApiStaffResumeRouteImport } from './routes/api/staff-resume'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BackgroundChecksCodeRouteImport } from './routes/background-checks.$code'
@@ -332,21 +332,29 @@ import { Route as FrGovAnalyticsRouteImport } from './routes/fr.gov_.analytics'
 import { Route as FrGovAuditRouteImport } from './routes/fr.gov_.audit'
 import { Route as FrGovBroadcastsRouteImport } from './routes/fr.gov_.broadcasts'
 import { Route as FrGovCentresRouteImport } from './routes/fr.gov_.centres'
+import { Route as FrGovChangeRequestsRouteImport } from './routes/fr.gov_.change-requests'
+import { Route as FrGovClaimNoticesRouteImport } from './routes/fr.gov_.claim-notices'
+import { Route as FrGovComplaintUpdatesRouteImport } from './routes/fr.gov_.complaint-updates'
 import { Route as FrGovComplaintsRouteImport } from './routes/fr.gov_.complaints'
 import { Route as FrGovComplianceRouteImport } from './routes/fr.gov_.compliance'
 import { Route as FrGovDataRouteImport } from './routes/fr.gov_.data'
+import { Route as FrGovDataRequestsRouteImport } from './routes/fr.gov_.data-requests'
 import { Route as FrGovDemandRouteImport } from './routes/fr.gov_.demand'
+import { Route as FrGovEscalationsRouteImport } from './routes/fr.gov_.escalations'
 import { Route as FrGovExpiriesRouteImport } from './routes/fr.gov_.expiries'
 import { Route as FrGovExportsRouteImport } from './routes/fr.gov_.exports'
 import { Route as FrGovFeeCapsRouteImport } from './routes/fr.gov_.fee-caps'
 import { Route as FrGovFundingRouteImport } from './routes/fr.gov_.funding'
 import { Route as FrGovIncidentsRouteImport } from './routes/fr.gov_.incidents'
+import { Route as FrGovInspectionSyncRouteImport } from './routes/fr.gov_.inspection-sync'
 import { Route as FrGovLoginRouteImport } from './routes/fr.gov_.login'
 import { Route as FrGovMapRouteImport } from './routes/fr.gov_.map'
+import { Route as FrGovNotificationsRouteImport } from './routes/fr.gov_.notifications'
 import { Route as FrGovRatiosRouteImport } from './routes/fr.gov_.ratios'
 import { Route as FrGovReportsRouteImport } from './routes/fr.gov_.reports'
 import { Route as FrGovScreeningRouteImport } from './routes/fr.gov_.screening'
 import { Route as FrGovSettingsRouteImport } from './routes/fr.gov_.settings'
+import { Route as FrGovSubsidyRouteImport } from './routes/fr.gov_.subsidy'
 import { Route as FrGovVacanciesRouteImport } from './routes/fr.gov_.vacancies'
 import { Route as FrGuidesCodeRouteImport } from './routes/fr.guides.$code'
 import { Route as FrHelpArticlesRouteImport } from './routes/fr.help.articles'
@@ -954,11 +962,6 @@ const ApiBackgroundCheckFilesRoute = ApiBackgroundCheckFilesRouteImport.update({
   path: '/api/background-check-files',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiStaffResumeRoute = ApiStaffResumeRouteImport.update({
-  id: '/api/staff-resume',
-  path: '/api/staff-resume',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiCentreLeadAlertsRoute = ApiCentreLeadAlertsRouteImport.update({
   id: '/api/centre-lead-alerts',
   path: '/api/centre-lead-alerts',
@@ -1037,6 +1040,11 @@ const ApiSeedCatalogRoute = ApiSeedCatalogRouteImport.update({
 const ApiSpotOffersRoute = ApiSpotOffersRouteImport.update({
   id: '/api/spot-offers',
   path: '/api/spot-offers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStaffResumeRoute = ApiStaffResumeRouteImport.update({
+  id: '/api/staff-resume',
+  path: '/api/staff-resume',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
@@ -1988,6 +1996,21 @@ const FrGovCentresRoute = FrGovCentresRouteImport.update({
   path: '/gov/centres',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGovChangeRequestsRoute = FrGovChangeRequestsRouteImport.update({
+  id: '/gov_/change-requests',
+  path: '/gov/change-requests',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovClaimNoticesRoute = FrGovClaimNoticesRouteImport.update({
+  id: '/gov_/claim-notices',
+  path: '/gov/claim-notices',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovComplaintUpdatesRoute = FrGovComplaintUpdatesRouteImport.update({
+  id: '/gov_/complaint-updates',
+  path: '/gov/complaint-updates',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGovComplaintsRoute = FrGovComplaintsRouteImport.update({
   id: '/gov_/complaints',
   path: '/gov/complaints',
@@ -2003,9 +2026,19 @@ const FrGovDataRoute = FrGovDataRouteImport.update({
   path: '/gov/data',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGovDataRequestsRoute = FrGovDataRequestsRouteImport.update({
+  id: '/gov_/data-requests',
+  path: '/gov/data-requests',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGovDemandRoute = FrGovDemandRouteImport.update({
   id: '/gov_/demand',
   path: '/gov/demand',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovEscalationsRoute = FrGovEscalationsRouteImport.update({
+  id: '/gov_/escalations',
+  path: '/gov/escalations',
   getParentRoute: () => FrRoute,
 } as any)
 const FrGovExpiriesRoute = FrGovExpiriesRouteImport.update({
@@ -2033,6 +2066,11 @@ const FrGovIncidentsRoute = FrGovIncidentsRouteImport.update({
   path: '/gov/incidents',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGovInspectionSyncRoute = FrGovInspectionSyncRouteImport.update({
+  id: '/gov_/inspection-sync',
+  path: '/gov/inspection-sync',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGovLoginRoute = FrGovLoginRouteImport.update({
   id: '/gov_/login',
   path: '/gov/login',
@@ -2041,6 +2079,11 @@ const FrGovLoginRoute = FrGovLoginRouteImport.update({
 const FrGovMapRoute = FrGovMapRouteImport.update({
   id: '/gov_/map',
   path: '/gov/map',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovNotificationsRoute = FrGovNotificationsRouteImport.update({
+  id: '/gov_/notifications',
+  path: '/gov/notifications',
   getParentRoute: () => FrRoute,
 } as any)
 const FrGovRatiosRoute = FrGovRatiosRouteImport.update({
@@ -2061,6 +2104,11 @@ const FrGovScreeningRoute = FrGovScreeningRouteImport.update({
 const FrGovSettingsRoute = FrGovSettingsRouteImport.update({
   id: '/gov_/settings',
   path: '/gov/settings',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovSubsidyRoute = FrGovSubsidyRouteImport.update({
+  id: '/gov_/subsidy',
+  path: '/gov/subsidy',
   getParentRoute: () => FrRoute,
 } as any)
 const FrGovVacanciesRoute = FrGovVacanciesRouteImport.update({
@@ -2282,7 +2330,6 @@ export interface FileRoutesByFullPath {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2299,6 +2346,7 @@ export interface FileRoutesByFullPath {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -2488,21 +2536,29 @@ export interface FileRoutesByFullPath {
   '/fr/gov/audit': typeof FrGovAuditRoute
   '/fr/gov/broadcasts': typeof FrGovBroadcastsRoute
   '/fr/gov/centres': typeof FrGovCentresRoute
+  '/fr/gov/change-requests': typeof FrGovChangeRequestsRoute
+  '/fr/gov/claim-notices': typeof FrGovClaimNoticesRoute
+  '/fr/gov/complaint-updates': typeof FrGovComplaintUpdatesRoute
   '/fr/gov/complaints': typeof FrGovComplaintsRoute
   '/fr/gov/compliance': typeof FrGovComplianceRoute
   '/fr/gov/data': typeof FrGovDataRoute
+  '/fr/gov/data-requests': typeof FrGovDataRequestsRoute
   '/fr/gov/demand': typeof FrGovDemandRoute
+  '/fr/gov/escalations': typeof FrGovEscalationsRoute
   '/fr/gov/expiries': typeof FrGovExpiriesRoute
   '/fr/gov/exports': typeof FrGovExportsRoute
   '/fr/gov/fee-caps': typeof FrGovFeeCapsRoute
   '/fr/gov/funding': typeof FrGovFundingRoute
   '/fr/gov/incidents': typeof FrGovIncidentsRoute
+  '/fr/gov/inspection-sync': typeof FrGovInspectionSyncRoute
   '/fr/gov/login': typeof FrGovLoginRoute
   '/fr/gov/map': typeof FrGovMapRoute
+  '/fr/gov/notifications': typeof FrGovNotificationsRoute
   '/fr/gov/ratios': typeof FrGovRatiosRoute
   '/fr/gov/reports': typeof FrGovReportsRoute
   '/fr/gov/screening': typeof FrGovScreeningRoute
   '/fr/gov/settings': typeof FrGovSettingsRoute
+  '/fr/gov/subsidy': typeof FrGovSubsidyRoute
   '/fr/gov/vacancies': typeof FrGovVacanciesRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
@@ -2640,7 +2696,6 @@ export interface FileRoutesByTo {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2657,6 +2712,7 @@ export interface FileRoutesByTo {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -2846,21 +2902,29 @@ export interface FileRoutesByTo {
   '/fr/gov/audit': typeof FrGovAuditRoute
   '/fr/gov/broadcasts': typeof FrGovBroadcastsRoute
   '/fr/gov/centres': typeof FrGovCentresRoute
+  '/fr/gov/change-requests': typeof FrGovChangeRequestsRoute
+  '/fr/gov/claim-notices': typeof FrGovClaimNoticesRoute
+  '/fr/gov/complaint-updates': typeof FrGovComplaintUpdatesRoute
   '/fr/gov/complaints': typeof FrGovComplaintsRoute
   '/fr/gov/compliance': typeof FrGovComplianceRoute
   '/fr/gov/data': typeof FrGovDataRoute
+  '/fr/gov/data-requests': typeof FrGovDataRequestsRoute
   '/fr/gov/demand': typeof FrGovDemandRoute
+  '/fr/gov/escalations': typeof FrGovEscalationsRoute
   '/fr/gov/expiries': typeof FrGovExpiriesRoute
   '/fr/gov/exports': typeof FrGovExportsRoute
   '/fr/gov/fee-caps': typeof FrGovFeeCapsRoute
   '/fr/gov/funding': typeof FrGovFundingRoute
   '/fr/gov/incidents': typeof FrGovIncidentsRoute
+  '/fr/gov/inspection-sync': typeof FrGovInspectionSyncRoute
   '/fr/gov/login': typeof FrGovLoginRoute
   '/fr/gov/map': typeof FrGovMapRoute
+  '/fr/gov/notifications': typeof FrGovNotificationsRoute
   '/fr/gov/ratios': typeof FrGovRatiosRoute
   '/fr/gov/reports': typeof FrGovReportsRoute
   '/fr/gov/screening': typeof FrGovScreeningRoute
   '/fr/gov/settings': typeof FrGovSettingsRoute
+  '/fr/gov/subsidy': typeof FrGovSubsidyRoute
   '/fr/gov/vacancies': typeof FrGovVacanciesRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
@@ -3001,7 +3065,6 @@ export interface FileRoutesById {
   '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/background-check-files': typeof ApiBackgroundCheckFilesRouteWithChildren
-  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/centre-lead-alerts': typeof ApiCentreLeadAlertsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -3018,6 +3081,7 @@ export interface FileRoutesById {
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
+  '/api/staff-resume': typeof ApiStaffResumeRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/background-checks/$code': typeof BackgroundChecksCodeRoute
@@ -3207,21 +3271,29 @@ export interface FileRoutesById {
   '/fr/gov_/audit': typeof FrGovAuditRoute
   '/fr/gov_/broadcasts': typeof FrGovBroadcastsRoute
   '/fr/gov_/centres': typeof FrGovCentresRoute
+  '/fr/gov_/change-requests': typeof FrGovChangeRequestsRoute
+  '/fr/gov_/claim-notices': typeof FrGovClaimNoticesRoute
+  '/fr/gov_/complaint-updates': typeof FrGovComplaintUpdatesRoute
   '/fr/gov_/complaints': typeof FrGovComplaintsRoute
   '/fr/gov_/compliance': typeof FrGovComplianceRoute
   '/fr/gov_/data': typeof FrGovDataRoute
+  '/fr/gov_/data-requests': typeof FrGovDataRequestsRoute
   '/fr/gov_/demand': typeof FrGovDemandRoute
+  '/fr/gov_/escalations': typeof FrGovEscalationsRoute
   '/fr/gov_/expiries': typeof FrGovExpiriesRoute
   '/fr/gov_/exports': typeof FrGovExportsRoute
   '/fr/gov_/fee-caps': typeof FrGovFeeCapsRoute
   '/fr/gov_/funding': typeof FrGovFundingRoute
   '/fr/gov_/incidents': typeof FrGovIncidentsRoute
+  '/fr/gov_/inspection-sync': typeof FrGovInspectionSyncRoute
   '/fr/gov_/login': typeof FrGovLoginRoute
   '/fr/gov_/map': typeof FrGovMapRoute
+  '/fr/gov_/notifications': typeof FrGovNotificationsRoute
   '/fr/gov_/ratios': typeof FrGovRatiosRoute
   '/fr/gov_/reports': typeof FrGovReportsRoute
   '/fr/gov_/screening': typeof FrGovScreeningRoute
   '/fr/gov_/settings': typeof FrGovSettingsRoute
+  '/fr/gov_/subsidy': typeof FrGovSubsidyRoute
   '/fr/gov_/vacancies': typeof FrGovVacanciesRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
@@ -3363,7 +3435,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3380,6 +3451,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -3569,21 +3641,29 @@ export interface FileRouteTypes {
     | '/fr/gov/audit'
     | '/fr/gov/broadcasts'
     | '/fr/gov/centres'
+    | '/fr/gov/change-requests'
+    | '/fr/gov/claim-notices'
+    | '/fr/gov/complaint-updates'
     | '/fr/gov/complaints'
     | '/fr/gov/compliance'
     | '/fr/gov/data'
+    | '/fr/gov/data-requests'
     | '/fr/gov/demand'
+    | '/fr/gov/escalations'
     | '/fr/gov/expiries'
     | '/fr/gov/exports'
     | '/fr/gov/fee-caps'
     | '/fr/gov/funding'
     | '/fr/gov/incidents'
+    | '/fr/gov/inspection-sync'
     | '/fr/gov/login'
     | '/fr/gov/map'
+    | '/fr/gov/notifications'
     | '/fr/gov/ratios'
     | '/fr/gov/reports'
     | '/fr/gov/screening'
     | '/fr/gov/settings'
+    | '/fr/gov/subsidy'
     | '/fr/gov/vacancies'
     | '/fr/guides/$code'
     | '/fr/help/articles'
@@ -3721,7 +3801,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3738,6 +3817,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -3927,21 +4007,29 @@ export interface FileRouteTypes {
     | '/fr/gov/audit'
     | '/fr/gov/broadcasts'
     | '/fr/gov/centres'
+    | '/fr/gov/change-requests'
+    | '/fr/gov/claim-notices'
+    | '/fr/gov/complaint-updates'
     | '/fr/gov/complaints'
     | '/fr/gov/compliance'
     | '/fr/gov/data'
+    | '/fr/gov/data-requests'
     | '/fr/gov/demand'
+    | '/fr/gov/escalations'
     | '/fr/gov/expiries'
     | '/fr/gov/exports'
     | '/fr/gov/fee-caps'
     | '/fr/gov/funding'
     | '/fr/gov/incidents'
+    | '/fr/gov/inspection-sync'
     | '/fr/gov/login'
     | '/fr/gov/map'
+    | '/fr/gov/notifications'
     | '/fr/gov/ratios'
     | '/fr/gov/reports'
     | '/fr/gov/screening'
     | '/fr/gov/settings'
+    | '/fr/gov/subsidy'
     | '/fr/gov/vacancies'
     | '/fr/guides/$code'
     | '/fr/help/articles'
@@ -4081,7 +4169,6 @@ export interface FileRouteTypes {
     | '/api/alexa'
     | '/api/automations'
     | '/api/background-check-files'
-    | '/api/staff-resume'
     | '/api/centre-lead-alerts'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -4098,6 +4185,7 @@ export interface FileRouteTypes {
     | '/api/search-alerts'
     | '/api/seed-catalog'
     | '/api/spot-offers'
+    | '/api/staff-resume'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/background-checks/$code'
@@ -4287,21 +4375,29 @@ export interface FileRouteTypes {
     | '/fr/gov_/audit'
     | '/fr/gov_/broadcasts'
     | '/fr/gov_/centres'
+    | '/fr/gov_/change-requests'
+    | '/fr/gov_/claim-notices'
+    | '/fr/gov_/complaint-updates'
     | '/fr/gov_/complaints'
     | '/fr/gov_/compliance'
     | '/fr/gov_/data'
+    | '/fr/gov_/data-requests'
     | '/fr/gov_/demand'
+    | '/fr/gov_/escalations'
     | '/fr/gov_/expiries'
     | '/fr/gov_/exports'
     | '/fr/gov_/fee-caps'
     | '/fr/gov_/funding'
     | '/fr/gov_/incidents'
+    | '/fr/gov_/inspection-sync'
     | '/fr/gov_/login'
     | '/fr/gov_/map'
+    | '/fr/gov_/notifications'
     | '/fr/gov_/ratios'
     | '/fr/gov_/reports'
     | '/fr/gov_/screening'
     | '/fr/gov_/settings'
+    | '/fr/gov_/subsidy'
     | '/fr/gov_/vacancies'
     | '/fr/guides/$code'
     | '/fr/help/articles'
@@ -4439,7 +4535,6 @@ export interface RootRouteChildren {
   ApiAlexaRoute: typeof ApiAlexaRoute
   ApiAutomationsRoute: typeof ApiAutomationsRoute
   ApiBackgroundCheckFilesRoute: typeof ApiBackgroundCheckFilesRouteWithChildren
-  ApiStaffResumeRoute: typeof ApiStaffResumeRoute
   ApiCentreLeadAlertsRoute: typeof ApiCentreLeadAlertsRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
@@ -4456,6 +4551,7 @@ export interface RootRouteChildren {
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   ApiSpotOffersRoute: typeof ApiSpotOffersRoute
+  ApiStaffResumeRoute: typeof ApiStaffResumeRoute
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BlogSlugRoute: typeof BlogSlugRoute
@@ -5384,13 +5480,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBackgroundCheckFilesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/staff-resume': {
-      id: '/api/staff-resume'
-      path: '/api/staff-resume'
-      fullPath: '/api/staff-resume'
-      preLoaderRoute: typeof ApiStaffResumeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/centre-lead-alerts': {
       id: '/api/centre-lead-alerts'
       path: '/api/centre-lead-alerts'
@@ -5501,6 +5590,13 @@ declare module '@tanstack/react-router' {
       path: '/api/spot-offers'
       fullPath: '/api/spot-offers'
       preLoaderRoute: typeof ApiSpotOffersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/staff-resume': {
+      id: '/api/staff-resume'
+      path: '/api/staff-resume'
+      fullPath: '/api/staff-resume'
+      preLoaderRoute: typeof ApiStaffResumeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/tour-holds': {
@@ -6826,6 +6922,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrGovCentresRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov_/change-requests': {
+      id: '/fr/gov_/change-requests'
+      path: '/gov/change-requests'
+      fullPath: '/fr/gov/change-requests'
+      preLoaderRoute: typeof FrGovChangeRequestsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/claim-notices': {
+      id: '/fr/gov_/claim-notices'
+      path: '/gov/claim-notices'
+      fullPath: '/fr/gov/claim-notices'
+      preLoaderRoute: typeof FrGovClaimNoticesRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/complaint-updates': {
+      id: '/fr/gov_/complaint-updates'
+      path: '/gov/complaint-updates'
+      fullPath: '/fr/gov/complaint-updates'
+      preLoaderRoute: typeof FrGovComplaintUpdatesRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/gov_/complaints': {
       id: '/fr/gov_/complaints'
       path: '/gov/complaints'
@@ -6847,11 +6964,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrGovDataRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov_/data-requests': {
+      id: '/fr/gov_/data-requests'
+      path: '/gov/data-requests'
+      fullPath: '/fr/gov/data-requests'
+      preLoaderRoute: typeof FrGovDataRequestsRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/gov_/demand': {
       id: '/fr/gov_/demand'
       path: '/gov/demand'
       fullPath: '/fr/gov/demand'
       preLoaderRoute: typeof FrGovDemandRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/escalations': {
+      id: '/fr/gov_/escalations'
+      path: '/gov/escalations'
+      fullPath: '/fr/gov/escalations'
+      preLoaderRoute: typeof FrGovEscalationsRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/gov_/expiries': {
@@ -6889,6 +7020,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrGovIncidentsRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov_/inspection-sync': {
+      id: '/fr/gov_/inspection-sync'
+      path: '/gov/inspection-sync'
+      fullPath: '/fr/gov/inspection-sync'
+      preLoaderRoute: typeof FrGovInspectionSyncRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/gov_/login': {
       id: '/fr/gov_/login'
       path: '/gov/login'
@@ -6901,6 +7039,13 @@ declare module '@tanstack/react-router' {
       path: '/gov/map'
       fullPath: '/fr/gov/map'
       preLoaderRoute: typeof FrGovMapRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/notifications': {
+      id: '/fr/gov_/notifications'
+      path: '/gov/notifications'
+      fullPath: '/fr/gov/notifications'
+      preLoaderRoute: typeof FrGovNotificationsRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/gov_/ratios': {
@@ -6929,6 +7074,13 @@ declare module '@tanstack/react-router' {
       path: '/gov/settings'
       fullPath: '/fr/gov/settings'
       preLoaderRoute: typeof FrGovSettingsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/subsidy': {
+      id: '/fr/gov_/subsidy'
+      path: '/gov/subsidy'
+      fullPath: '/fr/gov/subsidy'
+      preLoaderRoute: typeof FrGovSubsidyRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/gov_/vacancies': {
@@ -7239,21 +7391,29 @@ interface FrRouteChildren {
   FrGovAuditRoute: typeof FrGovAuditRoute
   FrGovBroadcastsRoute: typeof FrGovBroadcastsRoute
   FrGovCentresRoute: typeof FrGovCentresRoute
+  FrGovChangeRequestsRoute: typeof FrGovChangeRequestsRoute
+  FrGovClaimNoticesRoute: typeof FrGovClaimNoticesRoute
+  FrGovComplaintUpdatesRoute: typeof FrGovComplaintUpdatesRoute
   FrGovComplaintsRoute: typeof FrGovComplaintsRoute
   FrGovComplianceRoute: typeof FrGovComplianceRoute
   FrGovDataRoute: typeof FrGovDataRoute
+  FrGovDataRequestsRoute: typeof FrGovDataRequestsRoute
   FrGovDemandRoute: typeof FrGovDemandRoute
+  FrGovEscalationsRoute: typeof FrGovEscalationsRoute
   FrGovExpiriesRoute: typeof FrGovExpiriesRoute
   FrGovExportsRoute: typeof FrGovExportsRoute
   FrGovFeeCapsRoute: typeof FrGovFeeCapsRoute
   FrGovFundingRoute: typeof FrGovFundingRoute
   FrGovIncidentsRoute: typeof FrGovIncidentsRoute
+  FrGovInspectionSyncRoute: typeof FrGovInspectionSyncRoute
   FrGovLoginRoute: typeof FrGovLoginRoute
   FrGovMapRoute: typeof FrGovMapRoute
+  FrGovNotificationsRoute: typeof FrGovNotificationsRoute
   FrGovRatiosRoute: typeof FrGovRatiosRoute
   FrGovReportsRoute: typeof FrGovReportsRoute
   FrGovScreeningRoute: typeof FrGovScreeningRoute
   FrGovSettingsRoute: typeof FrGovSettingsRoute
+  FrGovSubsidyRoute: typeof FrGovSubsidyRoute
   FrGovVacanciesRoute: typeof FrGovVacanciesRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
@@ -7336,21 +7496,29 @@ const FrRouteChildren: FrRouteChildren = {
   FrGovAuditRoute: FrGovAuditRoute,
   FrGovBroadcastsRoute: FrGovBroadcastsRoute,
   FrGovCentresRoute: FrGovCentresRoute,
+  FrGovChangeRequestsRoute: FrGovChangeRequestsRoute,
+  FrGovClaimNoticesRoute: FrGovClaimNoticesRoute,
+  FrGovComplaintUpdatesRoute: FrGovComplaintUpdatesRoute,
   FrGovComplaintsRoute: FrGovComplaintsRoute,
   FrGovComplianceRoute: FrGovComplianceRoute,
   FrGovDataRoute: FrGovDataRoute,
+  FrGovDataRequestsRoute: FrGovDataRequestsRoute,
   FrGovDemandRoute: FrGovDemandRoute,
+  FrGovEscalationsRoute: FrGovEscalationsRoute,
   FrGovExpiriesRoute: FrGovExpiriesRoute,
   FrGovExportsRoute: FrGovExportsRoute,
   FrGovFeeCapsRoute: FrGovFeeCapsRoute,
   FrGovFundingRoute: FrGovFundingRoute,
   FrGovIncidentsRoute: FrGovIncidentsRoute,
+  FrGovInspectionSyncRoute: FrGovInspectionSyncRoute,
   FrGovLoginRoute: FrGovLoginRoute,
   FrGovMapRoute: FrGovMapRoute,
+  FrGovNotificationsRoute: FrGovNotificationsRoute,
   FrGovRatiosRoute: FrGovRatiosRoute,
   FrGovReportsRoute: FrGovReportsRoute,
   FrGovScreeningRoute: FrGovScreeningRoute,
   FrGovSettingsRoute: FrGovSettingsRoute,
+  FrGovSubsidyRoute: FrGovSubsidyRoute,
   FrGovVacanciesRoute: FrGovVacanciesRoute,
   FrJobsPostRoute: FrJobsPostRoute,
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
@@ -7627,7 +7795,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAlexaRoute: ApiAlexaRoute,
   ApiAutomationsRoute: ApiAutomationsRoute,
   ApiBackgroundCheckFilesRoute: ApiBackgroundCheckFilesRouteWithChildren,
-  ApiStaffResumeRoute: ApiStaffResumeRoute,
   ApiCentreLeadAlertsRoute: ApiCentreLeadAlertsRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,
@@ -7644,6 +7811,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   ApiSpotOffersRoute: ApiSpotOffersRoute,
+  ApiStaffResumeRoute: ApiStaffResumeRoute,
   ApiTourHoldsRoute: ApiTourHoldsRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BlogSlugRoute: BlogSlugRoute,
