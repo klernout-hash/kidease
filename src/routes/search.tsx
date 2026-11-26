@@ -33,7 +33,7 @@ import { readSearchEvidence, searchEvidence } from "@/lib/search-evidence";
 import { createSearchLoaderRead, createSearchRequestGate, searchCoverageCopy, searchMapCount } from "@/lib/search-coverage";
 import type { MapPin } from "@/lib/map-cluster";
 import { matchCentres } from "@/lib/server/ai";
-import { isIqaluitQuery, reverseGeocode } from "@/lib/geo";
+import { isIqaluitQuery, postalSearchLabel, reverseGeocode } from "@/lib/geo";
 import { originFromDeviceFix, productHomeOrigin, readClientTimeZone, searchOriginOrWinnipeg } from "@/lib/default-origin";
 import { BootPending } from "@/components/boot-pending";
 import { CARD_SIZES, CARD_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
@@ -1312,7 +1312,10 @@ export function SearchScreen({
     if (label) {
       const hit = await resolveLocationQuery(label);
       if (hit) {
-        applyPlace(hit, label);
+        // Keep "R3C 0A1" in the URL and box. The FSA city label ("Winnipeg, MB")
+        // would turn a radius search into a whole-city search.
+        const postal = postalSearchLabel(label);
+        applyPlace(postal ? { ...hit, label: postal } : hit, label);
         return;
       }
       noteSearch(label);

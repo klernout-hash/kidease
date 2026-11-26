@@ -5,6 +5,7 @@ import { eceJobsEnabled, hostListingEnabled, inclusiveFiltersEnabled, reviewRepo
 import { patchAvailabilityMonth } from "@/lib/host-calendar";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { cardSortKm, includeCardInRadius } from "@/lib/card-distance";
+import { DEFAULT_SEARCH_RADIUS_KM } from "@/lib/search-radius";
 import { catchmentMatch, clampRadiusKm, compareProximity, recommendedRank } from "@/lib/proximity";
 import { resolveListingTourTimezone } from "@/lib/tour-calendar";
 import {
@@ -641,6 +642,11 @@ async function runSearch(data: SearchInput): Promise<SearchCandidates> {
     cards.push(toCard(d, origin, data.fsa));
   }
   if (!directory) cards = filterByLocationLock(cards, lock);
+  // A city hub lists the whole city. A tighter radius ("Within 5 km") must
+  // still narrow it, or the radius chips never change the count.
+  else if (data.radiusKm < DEFAULT_SEARCH_RADIUS_KM) {
+    cards = cards.filter((card) => includeCardInRadius(card, origin, data.radiusKm));
+  }
   if (corridor?.rows.length) {
     const kept = new Set(cards.map((card) => card.id));
     for (const row of corridor.rows) {

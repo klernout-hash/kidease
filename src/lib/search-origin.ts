@@ -11,7 +11,7 @@ import {
   type SearchOrigin,
 } from "@/lib/default-origin";
 import { isGenericCareQuery } from "@/lib/generic-care-query";
-import { clearSavedOrigin, geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
+import { clearSavedOrigin, geocode, postalSearchLabel, readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { getDeviceLocation } from "@/lib/native";
 import { useAppStore } from "@/lib/store";
 
@@ -46,14 +46,15 @@ export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOri
 
   if (incomingQ && !isGenericCareQuery(incomingQ)) {
     setQuery(incomingQ);
+    const postal = postalSearchLabel(incomingQ);
     const local = geocode(incomingQ);
     if (local) {
-      if (!stale()) setOrigin({ ...local, explicit: true }, "manual");
+      if (!stale()) setOrigin({ ...local, ...(postal ? { label: postal } : {}), explicit: true }, "manual");
       return;
     }
     const hit = await resolveLocationQuery(incomingQ);
     if (stale()) return;
-    if (hit) setOrigin({ ...hit, explicit: true }, "manual");
+    if (hit) setOrigin({ ...hit, ...(postal ? { label: postal } : {}), explicit: true }, "manual");
     return;
   }
 

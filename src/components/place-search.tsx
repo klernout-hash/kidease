@@ -1,7 +1,7 @@
 import { LocateFixed, MapPin } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
-import { geocode } from "@/lib/geo";
+import { geocode, postalSearchLabel } from "@/lib/geo";
 import {
   geocodePlace,
   resolvePlaceId,
@@ -244,8 +244,11 @@ export function PlaceSearch({
     setOpen(false);
     setHits([]);
     if (resolved) {
-      onChange(resolved.label);
-      onResolved(resolved);
+      // A typed postal code stays the label; the FSA's city would drop it.
+      const postal = postalSearchLabel(value);
+      const place = postal ? { ...resolved, label: postal } : resolved;
+      onChange(place.label);
+      onResolved(place);
       return;
     }
     onChange(hit.label);

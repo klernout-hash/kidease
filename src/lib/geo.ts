@@ -220,6 +220,16 @@ function looksLikePostalQuery(query: string) {
   return /^[a-z]\d[a-z](?:\d[a-z]\d)?$/i.test(compact);
 }
 
+/**
+ * "r3c0a1" → "R3C 0A1", "r3c" → "R3C". Null when the text is not a postal code.
+ * Search keeps the parent's postal code in the URL instead of the FSA's city.
+ */
+export function postalSearchLabel(query: string | null | undefined): string | null {
+  const compact = String(query || "").replace(/[^a-z0-9]/gi, "").toUpperCase();
+  if (!/^[A-Z]\d[A-Z](?:\d[A-Z]\d)?$/.test(compact)) return null;
+  return compact.length === 6 ? `${compact.slice(0, 3)} ${compact.slice(3)}` : compact;
+}
+
 function foldPlace(value: string) {
   return value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
 }

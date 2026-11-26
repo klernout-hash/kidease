@@ -54,3 +54,20 @@ test("guests get no default commute from an old stored work place", async () => 
   assert.equal(readDualAnchorPrefs().work?.label, "Winnipeg, MB");
   delete globalThis.window;
 });
+
+test("postal searches keep the postal code in the URL", async () => {
+  const { postalSearchLabel } = await import("../src/lib/geo.ts");
+  assert.equal(postalSearchLabel("r3c0a1"), "R3C 0A1");
+  assert.equal(postalSearchLabel("R3C 0A1"), "R3C 0A1");
+  assert.equal(postalSearchLabel("r3c"), "R3C");
+  assert.equal(postalSearchLabel("Winnipeg, MB"), null);
+  assert.equal(postalSearchLabel("Halifax"), null);
+});
+
+test("a tighter radius narrows a city hub search", async () => {
+  const { readFileSync } = await import("node:fs");
+  const src = readFileSync(new URL("../src/lib/server/daycares.ts", import.meta.url), "utf8");
+  assert.match(src, /else if \(data\.radiusKm < DEFAULT_SEARCH_RADIUS_KM\) \{\n\s+cards = cards\.filter\(\(card\) => includeCardInRadius\(card, origin, data\.radiusKm\)\);/);
+  const search = readFileSync(new URL("../src/routes/search.tsx", import.meta.url), "utf8");
+  assert.match(search, /const postal = postalSearchLabel\(label\);/);
+});
