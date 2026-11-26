@@ -112,6 +112,7 @@
         KidEase needs a connection to search licensed daycares. Centres you saved on this phone are still here.
       </p>
       <button type="button" class="retry" id="retry">Try again</button>
+      <p id="status" role="status" aria-live="polite"></p>
       <h2 id="saved-title">Saved on this phone</h2>
       <ul id="saved"></ul>
       <p id="saved-empty">Nothing saved on this phone yet.</p>
@@ -124,6 +125,8 @@
             title: "You're offline",
             lead: "KidEase needs a connection to search licensed daycares. Centres you saved on this phone are still here.",
             retry: "Try again",
+            checking: "Checking your connection…",
+            still: "Still offline. KidEase reopens by itself when you are back online.",
             saved: "Saved on this phone",
             empty: "Nothing saved on this phone yet."
           },
@@ -131,6 +134,8 @@
             title: "Vous êtes hors ligne",
             lead: "KidEase a besoin d'une connexion pour chercher des garderies autorisées. Les centres enregistrés sur ce téléphone sont encore ici.",
             retry: "Réessayer",
+            checking: "Vérification de la connexion…",
+            still: "Toujours hors ligne. KidEase se rouvre tout seul quand la connexion revient.",
             saved: "Enregistré sur ce téléphone",
             empty: "Rien d'enregistré sur ce téléphone pour le moment."
           }
@@ -177,9 +182,58 @@
 
         document.getElementById("lang-en").addEventListener("click", function () { paint("en"); });
         document.getElementById("lang-fr").addEventListener("click", function () { paint("fr"); });
-        document.getElementById("retry").addEventListener("click", function () {
-          location.replace("https://www.kidease.ca/");
+        // navigator.onLine can be wrong right after a relaunch. Ask the site
+        // itself: any answer (even opaque) means the network is back.
+        var HOME = "https://www.kidease.ca/";
+        var probing = false;
+        var leaving = false;
+        var waitMs = 3000;
+        var timer = null;
+        function setStatus(key) {
+          var el = document.getElementById("status");
+          if (el) el.textContent = key ? copy[lang][key] : "";
+        }
+        function leave() {
+          if (leaving) return;
+          leaving = true;
+          location.replace(HOME);
+        }
+        function probe(manual) {
+          if (probing || leaving) return;
+          probing = true;
+          if (manual) setStatus("checking");
+          var done = false;
+          var guard = setTimeout(function () { finish(false); }, 6000);
+          function finish(ok) {
+            if (done) return;
+            done = true;
+            probing = false;
+            clearTimeout(guard);
+            if (ok) return leave();
+            if (manual) setStatus("still");
+            schedule();
+          }
+          try {
+            fetch(HOME + "robots.txt?ke-probe=" + Date.now(), { mode: "no-cors", cache: "no-store", credentials: "omit" })
+              .then(function () { finish(true); }, function () { finish(false); });
+          } catch (e) {
+            finish(false);
+          }
+        }
+        function schedule() {
+          clearTimeout(timer);
+          timer = setTimeout(function () { probe(false); }, waitMs);
+          waitMs = Math.min(waitMs * 2, 30000);
+        }
+        window.addEventListener("online", function () { waitMs = 3000; probe(false); });
+        document.addEventListener("visibilitychange", function () {
+          if (document.visibilityState === "visible") probe(false);
         });
+        document.getElementById("retry").addEventListener("click", function () {
+          waitMs = 3000;
+          probe(true);
+        });
+        schedule();
         paint(lang);
 
         try {

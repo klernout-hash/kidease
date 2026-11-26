@@ -47,6 +47,8 @@ public final class AdminWebOnly {
         String scheme = from != null && "http".equals(from.getScheme()) ? "http" : "https";
         String host = "www.kidease.ca";
         if (from != null && from.getHost() != null && isKidEaseHost(from.getHost())) host = from.getHost();
-        return scheme + "://" + host + NOTE_PATH;
+        String path = from == null ? null : from.getPath();
+        boolean french = path != null && ("/fr".equals(path) || path.startsWith("/fr/"));
+        return scheme + "://" + host + (french ? "/fr" : "") + NOTE_PATH;
     }
 }

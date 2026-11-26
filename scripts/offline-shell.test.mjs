@@ -25,11 +25,11 @@ test("the native shell has a bundled EN/FR offline page and a splash timeout", (
   assert.match(src("ios/App/App/capacitor.config.json"), /"errorPath": "index.html"/);
   assert.match(src("android/app/src/main/assets/capacitor.config.json"), /"errorPath": "index.html"/);
   const ios = src("ios/App/App/KidEaseBridgeViewController.swift");
-  assert.match(ios, /scheduleOfflineCheck\(after: 12\)/);
+  assert.match(ios, /scheduleOfflineCheck\(after: 20\)/);
   assert.match(ios, /NWPathMonitor/);
   assert.match(ios, /CapacitorStorage\.ke-offline-shortlist/);
   const java = src("android/app/src/main/java/ca/kidease/app/MainActivity.java");
-  assert.match(java, /postDelayed\(this::offlineTimedOut, 12000\)/);
+  assert.match(java, /postDelayed\(this::offlineTimedOut, 20000\)/);
   assert.match(java, /onLost/);
   assert.match(src("android/app/src/main/java/ca/kidease/app/OfflinePage.java"), /offline\/index\.html/);
   assert.match(src("android/app/src/main/java/ca/kidease/app/AdminWebOnlyClient.java"), /OfflinePage\.show/);
