@@ -3,7 +3,9 @@ import { Browser } from "@capacitor/browser";
 import { registerPlugin } from "@capacitor/core";
 import {
   isNativeOAuthCancel,
+  NATIVE_AUTH_PREPARE_PATH,
   nativeHandoffPath,
+  nativeHandoffVerifierHash,
   parseNativeAuthFinish,
   type NativeAuthFinish,
 } from "./native-oauth";
@@ -15,6 +17,22 @@ type AuthSessionPlugin = {
 const AuthSession = registerPlugin<AuthSessionPlugin>("AuthSession");
 
 let finishing = false;
+
+/**
+ * Ask the server for a handoff verifier. It is stored in this webview as an
+ * HttpOnly cookie; only its hash comes back, to send through the sheet.
+ */
+export async function prepareNativeHandoff(): Promise<string> {
+  const res = await fetch(NATIVE_AUTH_PREPARE_PATH, {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  const body = (await res.json().catch(() => null)) as { hv?: string } | null;
+  const hv = res.ok ? nativeHandoffVerifierHash(body?.hv) : null;
+  if (!hv) throw new Error("Could not open sign-in");
+  return hv;
+}
 
 /** Load the handoff (or the next page) inside this webview and close the sheet. */
 export async function finishNativeAuthInWebView(parsed: NativeAuthFinish): Promise<void> {

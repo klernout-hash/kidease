@@ -10,8 +10,24 @@ export const NATIVE_AUTH_RETURN_PATH = "/auth/app-return";
 export const NATIVE_AUTH_HANDOFF_PATH = "/auth/native-handoff";
 /** Starts OAuth inside the system auth sheet so the state cookie is set there. */
 export const NATIVE_AUTH_START_PATH = "/auth/native-start";
+/**
+ * POST from the webview before it opens the sheet. Sets the handoff verifier
+ * cookie in the webview and returns only its hash (`hv`).
+ */
+export const NATIVE_AUTH_PREPARE_PATH = "/auth/native-prepare";
+/**
+ * HttpOnly, host-only. Only the webview that called /auth/native-prepare holds
+ * it, so only that webview can redeem the handoff code minted for its `hv`.
+ */
+export const NATIVE_AUTH_VERIFIER_COOKIE = "__Host-kidease.native_handoff";
 
 const FINISH_HOSTS = new Set(["auth"]);
+
+/** Lowercase hex SHA-256 of the handoff verifier, or null. */
+export function nativeHandoffVerifierHash(raw: string | null | undefined): string | null {
+  const value = String(raw || "").trim();
+  return /^[0-9a-f]{64}$/.test(value) ? value : null;
+}
 
 export function safeInAppPath(raw: string | null | undefined): string {
   const value = String(raw || "").trim();
@@ -20,8 +36,10 @@ export function safeInAppPath(raw: string | null | undefined): string {
 }
 
 /** callbackURL Better Auth should use so the system browser can hand the app back. */
-export function nativeOAuthReturnPath(next: string | null | undefined): string {
-  return `${NATIVE_AUTH_RETURN_PATH}?next=${encodeURIComponent(safeInAppPath(next))}`;
+export function nativeOAuthReturnPath(next: string | null | undefined, hv?: string | null): string {
+  const path = `${NATIVE_AUTH_RETURN_PATH}?next=${encodeURIComponent(safeInAppPath(next))}`;
+  const hash = nativeHandoffVerifierHash(hv);
+  return hash ? `${path}&hv=${hash}` : path;
 }
 
 export function nativeOAuthProvider(
@@ -50,6 +68,7 @@ export function nativeOAuthStartPath(input: {
   next?: string | null;
   errorNext?: string | null;
   newUserNext?: string | null;
+  hv?: string | null;
 }): string {
   const provider = nativeOAuthProvider(input.provider) ?? "google";
   const params = new URLSearchParams();
@@ -57,6 +76,8 @@ export function nativeOAuthStartPath(input: {
   params.set("next", safeInAppPath(input.next));
   params.set("errorNext", safeInAppPath(input.errorNext || input.next));
   if (input.newUserNext) params.set("newUser", safeInAppPath(input.newUserNext));
+  const hv = nativeHandoffVerifierHash(input.hv);
+  if (hv) params.set("hv", hv);
   return `${NATIVE_AUTH_START_PATH}?${params.toString()}`;
 }
 
