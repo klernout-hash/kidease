@@ -1655,7 +1655,9 @@ export function SearchScreen({
     pioneer: pioneerFilters,
   });
   // The saved work address is a commute anchor, not a filter: it gets its own chip.
-  const commuteAnchorOn = Boolean(workOrigin && anchorMode !== "home");
+  // Only show the commute chip when this search really uses a work place.
+  // A stale stored anchor is never a default commute for a guest.
+  const commuteAnchorOn = Boolean(workForSearch && anchorMode !== "home");
   const anchors = viewAnchors;
   const catalog = items ?? [];
   const fabric = areaPresence(catalog);
@@ -2257,10 +2259,10 @@ export function SearchScreen({
           }}
         />
         </div>
-        {!filters && commuteAnchorOn && workOrigin?.label ? (
+        {!filters && commuteAnchorOn && workForSearch?.label ? (
           <p className="mt-2 text-sm" data-ke="search-commute-chip">
             <span className="inline-flex min-h-11 max-w-full items-center truncate rounded-full bg-surface-2 px-3 font-medium ring-1 ring-inset ring-border">
-              {t("searchCommuteChip").replace("{place}", workOrigin.label)}
+              {t("searchCommuteChip").replace("{place}", workForSearch.label)}
             </span>
           </p>
         ) : null}

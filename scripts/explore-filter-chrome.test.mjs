@@ -187,6 +187,7 @@ test("Filters badge counts only picked filters, not the commute anchor or age ra
   assert.doesNotMatch(block, /resolvedExploreCategory/);
   assert.match(block, /urlFacilityCategory: isFacilityExploreCategory\(canonicalExploreCategory\(incoming\.cat\)\)/);
   // The commute anchor is its own chip.
-  assert.match(search, /const commuteAnchorOn = Boolean\(workOrigin && anchorMode !== "home"\)/);
+  // ...and only when the search really uses a work place (no stale default commute).
+  assert.match(search, /const commuteAnchorOn = Boolean\(workForSearch && anchorMode !== "home"\)/);
   assert.match(search, /data-ke="search-commute-chip"/);
 });

@@ -34,3 +34,23 @@ test("French distances use a decimal comma and an FR template", () => {
   assert.equal(parentDistanceLabel({ km: 0.5, away: "à {n} km", show: true, locale: "fr" }), "à 0,5 km");
   assert.equal(parentDistanceLabel({ km: 0.5, away: "km away", show: true, locale: "en" }), "0.5 km away");
 });
+
+test("guests get no default commute from an old stored work place", async () => {
+  const mem = () => {
+    const m = new Map();
+    return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), m };
+  };
+  const local = mem();
+  const session = mem();
+  globalThis.window = { localStorage: local, sessionStorage: session };
+  const { readDualAnchorPrefs, writeDualAnchorPrefs, DUAL_ANCHOR_STORAGE_KEY } = await import("../src/lib/dual-anchor.ts");
+  local.setItem(
+    DUAL_ANCHOR_STORAGE_KEY,
+    JSON.stringify({ work: { lat: 50.57, lng: -96.2, label: "Powerview-Pine Falls, MB, Canada" }, mode: "both" }),
+  );
+  assert.deepEqual(readDualAnchorPrefs(), { work: null, mode: "home" });
+  assert.equal(local.getItem(DUAL_ANCHOR_STORAGE_KEY), null);
+  writeDualAnchorPrefs({ work: { lat: 49.9, lng: -97.1, label: "Winnipeg, MB" }, mode: "both" });
+  assert.equal(readDualAnchorPrefs().work?.label, "Winnipeg, MB");
+  delete globalThis.window;
+});
