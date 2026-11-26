@@ -6,14 +6,15 @@ import { guardPrivatePath } from "../src/lib/role-access.ts";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("the government desk has five matching pages", () => {
+test("the government desk has five groups", () => {
   assert.deepEqual(GOV_MENU.map((item) => item.en), [
     "Overview",
-    "Expiries and alerts",
-    "Analytics",
+    "Compliance",
     "Reports",
+    "Centres and notices",
     "Data and exports",
   ]);
+  assert.ok(GOV_MENU.every((item) => item.fr && item.fr !== item.en));
   const frame = read("src/components/gov/gov-frame.tsx");
   assert.match(frame, /data-ke="gov-menu"/);
   assert.match(frame, /data-ke="gov-search"/);
@@ -26,7 +27,8 @@ test("the government desk has five matching pages", () => {
   assert.match(read("src/components/gov/gov-dashboard.tsx"), /data-ke="gov-not-connected"/);
   assert.match(read("src/components/gov/gov-dashboard.tsx"), /data-ke="gov-not-tracked"/);
   assert.match(read("src/components/gov/gov-dashboard.tsx"), /data-ke="gov-reports"/);
-  assert.match(read("src/routes/gov_.change-requests.tsx"), /href: "\/gov"/);
+  assert.match(read("src/routes/gov_.change-requests.tsx"), /leaf: "change-requests"/);
+  assert.match(frame, /data-ke="gov-subnav"/);
   assert.match(read("scripts/e2e-smoke.mjs"), /gov-width-1280|width of \[1280, 820, 390\]/);
 });
 

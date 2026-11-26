@@ -78,8 +78,12 @@ test("the shared utility pads each side from its own inset", () => {
   assert.doesNotMatch(css, /padding:\s*0 env\(safe-area-inset-left\)/);
   // The help button follows the same inset variable the shell uses.
   assert.doesNotMatch(css, /\.ke-help-bot \{[^}]*right: max\([^,;]+, env\(safe-area-inset-right/);
-  for (const file of ["gov/gov-frame.tsx", "gov/gov-login.tsx", "gov/gov-exports.tsx", "compliance/frame.tsx"]) {
+  for (const file of ["gov/gov-frame.tsx", "gov/gov-login.tsx", "compliance/frame.tsx"]) {
     assert.match(readFileSync(join(root, "src/components", file), "utf8"), /pl-\[var\(--ke-safe-left/);
+  }
+  // Desk pages render inside GovFrame, which carries the inset.
+  for (const file of ["gov/gov-exports.tsx", "gov/gov-desk-page.tsx"]) {
+    assert.match(readFileSync(join(root, "src/components", file), "utf8"), /<GovFrame\b/);
   }
 });
 
