@@ -24,7 +24,8 @@ import {
   transactionalMailFrom,
 } from "./mail-from.ts";
 import { SUPPORT_INBOX_EMAIL } from "./support.ts";
-import { mailboxAddress, titanAppPassword } from "./server/titan-mail.ts";
+import { createServerOnlyFn } from "@tanstack/react-start";
+import { mailboxAddress, titanAppPassword, titanFailureDetail } from "./server/titan-mail.ts";
 import { parseQaAllowlist } from "./qa-send.ts";
 import { outboundGates } from "./outbound-gate-core.ts";
 
@@ -82,6 +83,8 @@ export type OtpMailHealth = {
   lastPurpose: TransactionalMailPurpose | null;
   lastReason: TransactionalMailReason | null;
   lastVia: TransactionalMailProvider | null;
+  /** Log-safe Titan failure codes (titanFailureDetail), e.g. "code=EAUTH response=535 command=AUTH". */
+  lastDetail?: string | null;
 };
 
 export type TransactionalMailResult = {
@@ -334,11 +337,14 @@ export function formatTransactionalMailLog(input: {
   reason?: TransactionalMailReason | null;
   via?: TransactionalMailProvider | null;
   status?: number | null;
+  /** Log-safe Titan detail from titanFailureDetail (codes only). */
+  detail?: string | null;
 }): string {
   const parts = [`[kidease-mail] purpose=${input.purpose}`, `event=${input.event}`];
   if (input.via) parts.push(`via=${input.via}`);
   if (input.reason) parts.push(`reason=${input.reason}`);
   if (typeof input.status === "number" && input.status > 0) parts.push(`status=${input.status}`);
+  if (input.detail && /^[a-z]+=[A-Za-z0-9_]+( [a-z]+=[A-Za-z0-9_]+){0,3}$/.test(input.detail)) parts.push(input.detail);
   return parts.join(" ");
 }
 
@@ -381,7 +387,7 @@ function emit(
   deps: TransactionalMailDeps,
   purpose: TransactionalMailPurpose,
   event: TransactionalMailEvent,
-  extra: { reason?: TransactionalMailReason; via?: TransactionalMailProvider; status?: number } = {},
+  extra: { reason?: TransactionalMailReason; via?: TransactionalMailProvider; status?: number; detail?: string } = {},
 ) {
   const providers = otpProvidersFromEnv(deps.env);
   recordOtpMailHealth({
@@ -390,6 +396,7 @@ function emit(
     lastPurpose: purpose,
     lastReason: extra.reason ?? null,
     lastVia: extra.via ?? null,
+    lastDetail: extra.detail ?? null,
   });
   const line = formatTransactionalMailLog({ purpose, event, ...extra });
   (deps.log ?? console.info)(line);
@@ -420,17 +427,18 @@ async function postJson(
   }
 }
 
-async function defaultSendTitan(input: {
-  to: string;
-  subject: string;
-  text: string;
-  html?: string;
-}): Promise<{ ok: true; via: "titan" }> {
-  const titanFile = "./server/" + "titan-mail.server.ts";
-  const { sendTitanMail } = await import(/* @vite-ignore */ titanFile);
-  const sent = await sendTitanMail(input);
-  return { ok: true, via: sent.via };
-}
+// Literal path so Vite bundles it. The old runtime-built path (folder + file
+// name joined at runtime) did not exist on Vercel, so every Titan send threw
+// ERR_MODULE_NOT_FOUND and logged titan_fail reason=rejected. This module is
+// also in the client graph, so createServerOnlyFn keeps the *.server import
+// server-side (import-protection denies it on the client).
+const defaultSendTitan = createServerOnlyFn(
+  async (input: { to: string; subject: string; text: string; html?: string }): Promise<{ ok: true; via: "titan" }> => {
+    const { sendTitanMail } = await import("./server/titan-mail.server.ts");
+    const sent = await sendTitanMail(input);
+    return { ok: true, via: sent.via };
+  },
+);
 
 /**
  * Sign-in and account codes go Titan SMTP first, From kyle@kidease.ca,
@@ -503,9 +511,9 @@ export async function sendTransactionalMail(
         fallbackFrom: codeFirst ? undefined : providers.resendConfigured ? "resend" : providers.sendgridConfigured ? "sendgrid" : undefined,
         reason: sentReason(reason),
       };
-    } catch {
+    } catch (err) {
       lastReason = lastReason ?? "rejected";
-      emit(deps, input.purpose, "titan_fail", { reason: lastReason, via: "titan" });
+      emit(deps, input.purpose, "titan_fail", { reason: lastReason, via: "titan", detail: titanFailureDetail(err) });
       return null;
     }
   }

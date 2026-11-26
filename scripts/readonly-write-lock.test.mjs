@@ -159,7 +159,7 @@ function modulesFor(sql, privateDocsServer, centreAccess) {
     return api;
   };
   return {
-    "@tanstack/react-start": { createServerFn: chain },
+    "@tanstack/react-start": { createServerFn: chain, createServerOnlyFn: (fn) => fn },
     "@/lib/db": { getSql: async () => sql, getSqlWithin: async () => sql },
     "@/lib/auth/middleware": { authMiddleware: {} },
     "@/lib/centre-roles": centreRoles,

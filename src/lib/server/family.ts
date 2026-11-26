@@ -1,4 +1,4 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { parseTrackStatus } from "@/lib/parent-tracker";
@@ -114,6 +114,18 @@ function logCrmSkip(role: "parent" | "provider", reason: string) {
 }
 
 /**
+ * Signup user mail (verify-email backup, daycare next-steps). Server-only:
+ * family.ts is also in the client graph, so a plain import of a *.server file
+ * is denied by import-protection. The old workaround joined the path at
+ * runtime, which Vercel could not resolve (ERR_MODULE_NOT_FOUND), so this mail
+ * never sent. createServerOnlyFn keeps a literal, bundled import on the server.
+ */
+const afterNewAccountUserMailServerOnly = createServerOnlyFn(async (userId: string, role: "parent" | "provider") => {
+  const { afterNewAccountUserMail } = await import("@/lib/server/signup-user-mail.server");
+  await afterNewAccountUserMail(userId, role);
+});
+
+/**
  * Admin notice, GoHighLevel filing, then user mail. The admin notice and user
  * mail go out once per account and role (actor_mail_sends), and only while the
  * account is fresh. GoHighLevel filing runs every time the slot is still open.
@@ -169,9 +181,7 @@ async function pingNewAccount(
   }
   if (noticeClaimed) {
     try {
-      const mailFile = "@/lib/server/" + "signup-user-mail.server";
-      const { afterNewAccountUserMail } = await import(/* @vite-ignore */ mailFile);
-      await afterNewAccountUserMail(userId, role);
+      await afterNewAccountUserMailServerOnly(userId, role);
     } catch (err) {
       console.error("[kidease-mail] signup user mail failed", err);
     }

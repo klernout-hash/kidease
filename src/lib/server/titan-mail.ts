@@ -51,6 +51,7 @@ export type OtpMailStatus = {
   lastPurpose: string | null;
   lastReason: string | null;
   lastVia: string | null;
+  lastDetail?: string | null;
 };
 
 export type AdminMailStatus = {
@@ -84,10 +85,17 @@ export function mailboxAddress(env: EnvMap = process.env): string {
 
 export function mailFromHeader(env: EnvMap = process.env): string {
   const from = envStr(env, "MAIL_FROM");
-  // Production MAIL_FROM is the Resend send subdomain. Titan SMTP must stay
-  // on the kyle@ mailbox — do not send as noreply@send.kidease.ca via Titan.
-  if (from && !isResendSendFrom(from)) return from;
-  return `KidEase <${mailboxAddress(env)}>`;
+  const mailbox = mailboxAddress(env);
+  // Titan only accepts MAIL FROM / From for the signed-in mailbox. Any other
+  // address (noreply@send.kidease.ca, support@, noreply@kidease.ca) gets a
+  // 5xx at MAIL FROM. Keep MAIL_FROM's display name, never its address.
+  if (from && !isResendSendFrom(from)) {
+    const parsed = parseFromHeader(from);
+    if (parsed.email.toLowerCase() === mailbox.toLowerCase()) return from;
+    const name = parsed.name && parsed.name !== parsed.email ? parsed.name : "KidEase";
+    return `${name} <${mailbox}>`;
+  }
+  return `KidEase <${mailbox}>`;
 }
 
 export function parseFromHeader(from: string): { name: string; email: string } {
@@ -115,7 +123,8 @@ export function resolveTitanConfig(env: EnvMap = process.env): { ok: true; confi
       password,
       mailbox,
       fromHeader,
-      fromEmail: parsed.email || mailbox,
+      // Envelope sender must be the authenticated mailbox (Titan rejects others).
+      fromEmail: mailbox,
       fromName: parsed.name,
       imapHost: envStr(env, "TITAN_IMAP_HOST", "IMAP_HOST") || TITAN_DEFAULT_IMAP_HOST,
       imapPort: Number.isFinite(imapPort) ? imapPort : TITAN_DEFAULT_IMAP_PORT,
@@ -697,15 +706,77 @@ export async function imapAppendSent(io: ImapIo, raw: string): Promise<void> {
   }
 }
 
+/** SMTP failure with the reply code and the command that failed. No reply text. */
+export class TitanSmtpError extends Error {
+  code: string;
+  responseCode: number;
+  command: string;
+  constructor(message: string, responseCode: number, command: string) {
+    super(message);
+    this.name = "TitanSmtpError";
+    this.responseCode = responseCode;
+    this.command = command;
+    this.code = responseCode === 535 || command === "AUTH" ? "EAUTH" : "EENVELOPE";
+    if (command === "connect" || command === "EHLO" || command === "STARTTLS") this.code = "EPROTOCOL";
+    if (command === "DATA") this.code = "EMESSAGE";
+  }
+}
+
 export async function smtpExpect(io: SmtpIo, ok: number[], step: string) {
   const reply = await io.readReply();
   if (!ok.includes(reply.code)) {
     if (reply.code === 535 || /auth/i.test(reply.lines.join(" "))) {
-      throw new Error("Titan rejected the mailbox login. Check TITAN_APP_PASSWORD on Vercel (app password) and that the username is the mailbox email.");
+      throw new TitanSmtpError(
+        "Titan rejected the mailbox login. Check TITAN_APP_PASSWORD on Vercel (app password) and that the username is the mailbox email.",
+        reply.code,
+        "AUTH",
+      );
     }
-    throw new Error(`Titan SMTP ${step} failed (${reply.code}).`);
+    throw new TitanSmtpError(`Titan SMTP ${step} failed (${reply.code}).`, reply.code, step);
   }
   return reply;
+}
+
+const SAFE_CODE = /^[A-Z][A-Z0-9_]{1,40}$/;
+const SAFE_COMMAND = /^(connect|EHLO|STARTTLS|AUTH|MAIL|RCPT|DATA|LOGIN|SELECT|FETCH|APPEND)$/;
+
+/**
+ * Short, log-safe reason for a Titan failure: error code, SMTP reply code and
+ * failed command only (e.g. "code=EAUTH response=535 command=AUTH").
+ * Never includes the message text, so no password, username or mail body.
+ */
+export function titanFailureDetail(err: unknown): string {
+  const e = (err ?? {}) as { code?: unknown; responseCode?: unknown; command?: unknown; message?: unknown; cause?: unknown };
+  const src = (e.code === undefined && e.cause && typeof e.cause === "object" ? e.cause : e) as typeof e;
+  const parts: string[] = [];
+  let code = typeof src.code === "string" && SAFE_CODE.test(src.code) ? src.code : "";
+  const msg = typeof src.message === "string" ? src.message : typeof e.message === "string" ? e.message : "";
+  if (!code) {
+    if (/timed out|timeout/i.test(msg)) code = "ETIMEDOUT";
+    else if (/closed the connection|ECONNRESET/i.test(msg)) code = "ECONNECTION";
+    else if (/ECONNREFUSED|ENOTFOUND|EAI_AGAIN/.test(msg)) code = (msg.match(/ECONNREFUSED|ENOTFOUND|EAI_AGAIN/) ?? ["ECONNECTION"])[0];
+    else if (/Cannot find (module|package)/i.test(msg)) code = "ERR_MODULE_NOT_FOUND";
+    else if (/rejected the mailbox login/i.test(msg)) code = "EAUTH";
+    else if (/not configured|TITAN_APP_PASSWORD/i.test(msg)) code = "ENOTCONFIGURED";
+    else if (/certificate|SSL|TLS/i.test(msg)) code = "ETLS";
+    else code = "EUNKNOWN";
+  }
+  parts.push(`code=${code}`);
+  if (typeof src.responseCode === "number" && src.responseCode >= 200 && src.responseCode < 600) {
+    parts.push(`response=${src.responseCode}`);
+  }
+  if (typeof src.command === "string" && SAFE_COMMAND.test(src.command)) parts.push(`command=${src.command}`);
+  return parts.join(" ");
+}
+
+/** Keep code/responseCode/command when a Titan error is rewritten for people. */
+export function withTitanErrorFields(human: string, err: unknown): Error {
+  const out = new Error(human) as Error & { code?: string; responseCode?: number; command?: string };
+  const e = (err ?? {}) as { code?: unknown; responseCode?: unknown; command?: unknown };
+  if (typeof e.code === "string") out.code = e.code;
+  if (typeof e.responseCode === "number") out.responseCode = e.responseCode;
+  if (typeof e.command === "string") out.command = e.command;
+  return out;
 }
 
 export async function smtpTransaction(

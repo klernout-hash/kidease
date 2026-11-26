@@ -15,11 +15,17 @@ export const Route = createFileRoute("/welcome/$code")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
-  component: WelcomePage,
+  component: WelcomeRoute,
 });
 
-export function WelcomePage() {
+function WelcomeRoute() {
   const { code } = Route.useParams();
+  return <WelcomePage code={code} />;
+}
+
+// Shared by /welcome/$code and /fr/welcome/$code. No Route.use* hooks here:
+// under the French match they fail with "Invariant failed" (SSR).
+export function WelcomePage({ code }: { code: string }) {
   const { locale } = useCopy();
   const fr = locale === "fr";
   const [centre, setCentre] = useState<string | null>(null);
