@@ -97,6 +97,7 @@ export const listInbox = createServerFn({ method: "GET" })
       start_date: string | null;
       last_body: string | null;
       last_sender: string | null;
+      last_message_at?: string | Date | null;
     }>`
       select c.id, c.daycare_id, c.user_id as parent_user_id,
              d.name, d.slug, d.photos, c.last_at, d.phone,
@@ -607,6 +608,6 @@ export const saveInboxStaffNote = createServerFn({ method: "POST" })
 
 function isoTime(value: unknown): string {
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? "" : value.toISOString();
-  const d = new Date(String(value ?? ""));
-  return Number.isNaN(d.getTime()) ? String(value ?? "") : d.toISOString();
+  // Keep a driver's string as-is; only a Date needs converting.
+  return String(value ?? "");
 }

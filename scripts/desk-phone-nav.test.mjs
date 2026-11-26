@@ -58,7 +58,8 @@ test("Parent primaries include Search and Messages; Daycare Messages stays a des
 test("phone primary pills share the same chrome for buttons and Messages links", () => {
   const shell = src("src/components/desk-shell.tsx");
   assert.match(shell, /function navClass/);
-  assert.match(shell, /inline-flex box-border h-11 min-h-\[44px\] min-w-\[44px\]/);
+  // Phone keeps h-11; desktop items grow with two-line French hints (B03a).
+  assert.match(shell, /inline-flex box-border max-md:h-11 min-h-\[44px\] min-w-\[44px\]/);
   assert.match(shell, /no-underline/);
   const link = shell.slice(shell.indexOf("function DeskNavLink"), shell.indexOf("function itemIsOn"));
   const button = shell.slice(shell.indexOf("function DeskNavButton"), shell.indexOf("function DeskNavLink"));

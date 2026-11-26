@@ -1514,9 +1514,9 @@ function PriceRow({ label, value, extra }: { label: string; value: string; extra
 }
 
 /**
- * B04: while the full listing loads, the old line said "Requests show once
- * this listing has finished opening" with no button. "Opening" only meant the
- * page was still loading. Keep real buttons here; the ask opens once loaded.
+ * B04: while the full listing loads, the old placeholder said requests would
+ * show once the listing "opened", with no button. That only meant the page
+ * was still loading. Keep real buttons here; the ask opens once loaded.
  */
 function EarlyListingActions({ locale }: { locale: string }) {
   const fr = locale === "fr";

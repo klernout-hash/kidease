@@ -61,7 +61,7 @@ export function ChildCheckinDesk() {
   function load() {
     return listDoorRoster()
       .then(setDesk)
-      .catch(() => setDesk({ enabled: false, children: [], events: [], headcount: 0, canCorrect: false }));
+      .catch(() => setDesk({ enabled: false, children: [], events: [], headcount: 0, canCorrect: false, absences: [] }));
   }
 
   useEffect(() => {
