@@ -82,7 +82,9 @@ async function photonFetch(url: string): Promise<PhotonFeature[] | "busy"> {
 
 export const suggestPlaces = createServerFn({ method: "POST" })
   .validator((input: { q: string; session?: string; lat?: number; lng?: number }) => ({
-    q: String(input?.q ?? "").trim().slice(0, 120),
+    q: String(input?.q ?? "")
+      .trim()
+      .slice(0, 120),
     session: String(input?.session ?? "").slice(0, 64),
     lat: typeof input?.lat === "number" && Number.isFinite(input.lat) ? input.lat : undefined,
     lng: typeof input?.lng === "number" && Number.isFinite(input.lng) ? input.lng : undefined,
@@ -114,7 +116,11 @@ export const resolvePlaceId = createServerFn({ method: "POST" })
   });
 
 export const geocodePlace = createServerFn({ method: "POST" })
-  .validator((q: string) => String(q ?? "").trim().slice(0, 160))
+  .validator((q: string) =>
+    String(q ?? "")
+      .trim()
+      .slice(0, 160),
+  )
   .handler(async ({ data }): Promise<ResolvedPlace | null> => {
     if (!data) return null;
     if (isGenericCareQuery(data)) return null;
@@ -130,6 +136,9 @@ export const geocodePlace = createServerFn({ method: "POST" })
       if (place) break;
     }
     storeGeo(cacheKey, place);
+    // The search page looks up the label it was sent to; answer that from cache too.
+    if (place?.label && place.label.toLowerCase() !== cacheKey)
+      storeGeo(place.label.toLowerCase(), place);
     return place;
   });
 

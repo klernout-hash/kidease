@@ -264,3 +264,18 @@ test("listing licence card never prints the internal stored status", () => {
   assert.doesNotMatch(card, /Stored status|Statut enregistré|Stored expiry|data-licence-status/);
   assert.match(card, /Licence expiry on file/);
 });
+
+test("address search does not geocode the same place twice", () => {
+  const client = readFileSync(
+    new URL("../src/components/place-search.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(client, /REMOTE_PLACE_MEMO\.set\(placeMemoKey\(place\.label\), place\)/);
+  assert.match(client, /REMOTE_PLACE_INFLIGHT\.get\(key\)/);
+  assert.match(client, /const remote = await remotePlace\(q\)/);
+  const server = readFileSync(
+    new URL("../src/lib/server/google-places.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(server, /storeGeo\(place\.label\.toLowerCase\(\), place\)/);
+});
