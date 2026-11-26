@@ -834,7 +834,20 @@ function ProfilePane() {
               years={yearsOnKidEase(joinedAt)}
               childCount={daycareStats ? null : profileDesk?.ok ? profileDesk.childCount : null}
               onEditPhoto={() => inputRef.current?.click()}
+              photoLabel={locale === "fr" ? "Changer la photo" : "Change photo"}
             />
+            {canEditProfile ? (
+              <p className="mt-4 text-center">
+                <Link
+                  to={accountTo}
+                  search={{ ...homeSearch, section: "profile" as const, edit: "1" as const }}
+                  data-ke="profile-edit-details"
+                  className="inline-flex min-h-11 items-center rounded-full border border-fg px-4 text-sm font-semibold touch-manipulation"
+                >
+                  {locale === "fr" ? "Modifier le nom et le téléphone" : "Edit name and phone"}
+                </Link>
+              </p>
+            ) : null}
             {roleId === "parent" ? (
               <ProfileChildren ready={profileDesk?.ok === true} children={profileDesk?.ok ? profileDesk.children : []} />
             ) : null}
@@ -986,9 +999,9 @@ function ProfilePane() {
                       type="button"
                       disabled={busy}
                       onClick={() => inputRef.current?.click()}
-                      className="absolute -bottom-3 left-1/2 inline-flex min-h-11 -translate-x-1/2 items-center rounded-full border border-fg bg-bg px-3 text-sm font-semibold touch-manipulation"
+                      className="absolute -bottom-3 left-1/2 inline-flex min-h-11 -translate-x-1/2 items-center whitespace-nowrap rounded-full border border-fg bg-bg px-3 text-sm font-semibold touch-manipulation"
                     >
-                      {busy ? t("loading") : t("profileEdit")}
+                      {busy ? t("loading") : locale === "fr" ? "Changer la photo" : "Change photo"}
                     </button>
                   </div>
                 </div>
