@@ -72,9 +72,10 @@ export function WaitlistOptIn({
         confirmAction(t, row ? "waitlistJoined" : "waitlistLeft");
       })
       .catch((err) => {
-        const message = apiErrorMessage(err, locale, t("needSignIn"));
-        toast.error(message);
-        if (message === "Unauthorized") {
+        // Check the raw server text before it is translated, so FR pages still go to sign-in.
+        const raw = err instanceof Error ? err.message : String(err ?? "");
+        toast.error(apiErrorMessage(err, locale, t("needSignIn")));
+        if (raw === "Unauthorized") {
           void navigate({ to: "/login", search: parentSignupSearch(next ?? "/search", "waitlist") });
         }
       })

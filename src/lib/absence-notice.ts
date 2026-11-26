@@ -50,6 +50,7 @@ export function absenceNoticeKey(input: { bookingId: string; localDay: string; s
   return `absence:${input.bookingId}:${input.localDay}:${input.status}`.slice(0, 180);
 }
 
-export function absenceReportKey(daycareId: string, childName: string, day: string): string {
-  return `${daycareId}:${childName}:${day}`;
+/** One booking and day. Not the child name: two children can share a name, and rows without a child are all "Child". */
+export function absenceReportKey(bookingId: string, day: string): string {
+  return `${bookingId}:${day}`;
 }

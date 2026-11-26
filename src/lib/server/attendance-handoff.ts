@@ -467,7 +467,7 @@ export async function readCentreDay(
     const last = effectiveDoorAction(events);
     cards.push({
       bookingId: kid.booking_id,
-      parentReport: reports.get(absenceReportKey(kid.daycare_id, kid.child_name, localDay)) ?? null,
+      parentReport: reports.get(absenceReportKey(kid.booking_id, localDay)) ?? null,
       daycareId: kid.daycare_id,
       daycareName: kid.daycare_name,
       childName: kid.child_name,
@@ -633,17 +633,17 @@ export async function readParentAbsenceReports(
   const out = new Map<string, ParentAbsenceStatus>();
   if (!input.centreIds.length || !input.days.length) return out;
   const rows = await sql
-    .query<{ daycare_id: string; child_name: string; day: string; status: string }>(
-      `select a.daycare_id, a.child_name, a.day::text as day, a.status
+    .query<{ booking_id: string | null; day: string; status: string }>(
+      `select a.booking_id, a.day::text as day, a.status
        from attendance a
        where a.daycare_id = any($1::text[]) and a.day::text = any($2::text[])
          and a.status in ('absent', 'sick', 'vacation')
          and a.updated_by is not null and a.updated_by = a.parent_user_id`,
       [input.centreIds, input.days],
     )
-    .catch(() => [] as { daycare_id: string; child_name: string; day: string; status: string }[]);
+    .catch(() => [] as { booking_id: string | null; day: string; status: string }[]);
   for (const row of rows) {
-    if (isParentAbsenceStatus(row.status)) out.set(absenceReportKey(row.daycare_id, row.child_name, String(row.day).slice(0, 10)), row.status);
+    if (row.booking_id && isParentAbsenceStatus(row.status)) out.set(absenceReportKey(row.booking_id, String(row.day).slice(0, 10)), row.status);
   }
   return out;
 }
@@ -670,7 +670,7 @@ export async function readParentAbsenceList(
   const reports = await readParentAbsenceReports(sql, { centreIds: input.centreIds, days });
   return kids.flatMap((kid) => {
     const localDay = centreLocalDay(input.now, kid.timezone || "America/Winnipeg");
-    const status = reports.get(absenceReportKey(kid.daycare_id, kid.child_name, localDay));
+    const status = reports.get(absenceReportKey(kid.booking_id, localDay));
     return status
       ? [{ bookingId: kid.booking_id, childName: kid.child_name, daycareName: kid.daycare_name, localDay, status }]
       : [];

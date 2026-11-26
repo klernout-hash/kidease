@@ -424,7 +424,8 @@ export function CentreInboxDesk({
     </div>
   );
 
-  const threadPane = supportOpen && !selectedId ? supportPane : (
+  // Support wins while open, even over an open thread. Picking a thread closes it (effect above).
+  const threadPane = supportOpen ? supportPane : (
     <div className="flex h-full min-h-0 flex-1 flex-col">
       {selected ? (
         <>

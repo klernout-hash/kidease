@@ -183,11 +183,19 @@ export const reportMyChildAbsence = createServerFn({ method: "POST" })
       parentUserId: context.userId, actorUserId: context.userId,
       body: parentAbsenceBody({ ...report, locale: data.locale }),
     }).catch(() => undefined);
+    // A repeat tap stays one bell row, but a report made again after a cancel is new.
+    // Count the cancels for this booking and day and put that round in the key.
+    const cancelPrefix = absenceNoticeKey({ bookingId: data.bookingId, localDay: report.localDay, status: "cancelled:" });
+    const rounds = await sql<{ n: number }>`
+      select count(distinct source_key)::int as n from user_notifications
+      where source_key like ${`${cancelPrefix.replace(/[\\%_]/g, "\\$&")}%`}
+    `.catch(() => [] as { n: number }[]);
+    const round = Number(rounds[0]?.n) || 0;
     await alertCentreStaff(sql, {
       daycareId: report.daycareId,
       bookingId: data.bookingId,
       localDay: report.localDay,
-      sourceStatus: report.status,
+      sourceStatus: round ? `${report.status}:r${round}` : report.status,
       text: (locale) =>
         centreAbsenceNotice({ status: report.status as ParentAbsenceStatus, childName: report.childName, localDay: report.localDay, locale }),
     });

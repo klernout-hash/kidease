@@ -167,3 +167,18 @@ test("pipeline source guards", () => {
   assert.match(src("src/lib/server/notifications.ts"), /projectFromTours\(sql, userId\)/);
   assert.match(src("src/routes/c.$slug.tsx"), /<Shell>/);
 });
+
+test("review: support chat shows over an open thread; FR waitlist still goes to sign-in", () => {
+  assert.match(src("src/components/centre-inbox.tsx"), /const threadPane = supportOpen \? supportPane : \(/);
+  const optIn = src("src/components/waitlist-opt-in.tsx");
+  assert.match(optIn, /const raw = err instanceof Error \? err\.message : String\(err \?\? ""\);/);
+  assert.match(optIn, /if \(raw === "Unauthorized"\)/);
+});
+
+test("review: absence badges key on the booking; a report after a cancel alerts staff again", async () => {
+  const { absenceReportKey } = await import("../src/lib/absence-notice.ts");
+  assert.equal(absenceReportKey("bk-1", "2026-11-25"), "bk-1:2026-11-25");
+  assert.notEqual(absenceReportKey("bk-1", "2026-11-25"), absenceReportKey("bk-2", "2026-11-25"));
+  assert.match(src("src/lib/server/attendance-handoff.ts"), /absenceReportKey\(kid\.booking_id, localDay\)/);
+  assert.match(src("src/lib/server/child-checkin.ts"), /sourceStatus: round \? `\$\{report\.status\}:r\$\{round\}` : report\.status/);
+});
