@@ -2586,6 +2586,8 @@
   "notifAgreementSigned": "家長已簽協議 · {name}",
   "notifAgreementDone": "雙方已簽協議 · {name}",
   "notifWithdrawal": "退托通知 · {name}",
+  "notifCertExpiring": "員工證書快到期 · {name}",
+  "notifCertExpired": "員工證書已到期 · {name}",
   "notifAdminClaim": "申索等候中 · {name}",
   "notifAdminQueue": "等緊你 · {name}",
   "notifAdminParentSignup": "新家長 · {name}",

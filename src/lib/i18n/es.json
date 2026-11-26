@@ -2586,6 +2586,8 @@
   "notifAgreementSigned": "El padre o la madre firmó el acuerdo · {name}",
   "notifAgreementDone": "Acuerdo firmado por ambas partes · {name}",
   "notifWithdrawal": "Aviso de retiro · {name}",
+  "notifCertExpiring": "Certificado del personal por vencer · {name}",
+  "notifCertExpired": "Certificado del personal vencido · {name}",
   "notifAdminClaim": "Reclamo en espera · {name}",
   "notifAdminQueue": "En espera de ti · {name}",
   "notifAdminParentSignup": "Nuevo padre o madre · {name}",

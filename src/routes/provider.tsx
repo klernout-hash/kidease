@@ -115,6 +115,10 @@ const SafeArrivalPanel = lazy(() =>
 const ChildHealthLog = lazy(() =>
   import("@/components/child-health-log").then((m) => ({ default: m.ChildHealthLog })),
 );
+const CentreEceCerts = lazy(() =>
+  import("@/components/staff-certs").then((m) => ({ default: m.CentreEceCerts })),
+);
+const MyEceCerts = lazy(() => import("@/components/staff-certs").then((m) => ({ default: m.MyEceCerts })));
 const CertExpiryPanel = lazy(() =>
   import("@/components/cert-expiry-panel").then((m) => ({ default: m.CertExpiryPanel })),
 );
@@ -703,6 +707,9 @@ export function ProviderPage() {
               {locale === "fr" ? "Vos heures" : "Your hours"}
             </Link>
           </p>
+          <Suspense fallback={null}>
+            <MyEceCerts />
+          </Suspense>
         </div>
       ) : null}
       {desk === "today" && hostListing && deskListings.length > 0 && !staffDesk ? (
@@ -756,6 +763,7 @@ export function ProviderPage() {
           <Suspense fallback={<div className="min-h-44" aria-hidden="true" />}>
             {centreOwner ? <SafeArrivalPanel /> : null}
             {centreOwner ? <CertExpiryPanel /> : null}
+            {centreOwner ? <CentreEceCerts /> : null}
             {centreOwner ? <ChildHealthLog /> : null}
             {centreOwner ? <FamilyInviteGap /> : null}
           </Suspense>

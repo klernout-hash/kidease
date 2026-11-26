@@ -3236,6 +3236,8 @@ export const en = {
     notifAgreementSigned: "Parent signed the agreement · {name}",
     notifAgreementDone: "Agreement signed by both sides · {name}",
     notifWithdrawal: "Withdrawal notice · {name}",
+    notifCertExpiring: "Staff certificate expires soon · {name}",
+    notifCertExpired: "Staff certificate expired · {name}",
     notifAdminClaim: "Claim waiting · {name}",
     notifAdminQueue: "Waiting on you · {name}",
     notifAdminParentSignup: "New parent · {name}",

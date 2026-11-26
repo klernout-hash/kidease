@@ -8,6 +8,7 @@ import {
   type NotificationTitleKey,
   type ProjectedNotification,
 } from "@/lib/notifications";
+import { ECE_CERT_LINK_FEATURE, certAlert } from "@/lib/staff-certs";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
 
@@ -191,6 +192,42 @@ export async function projectFromPipeline(
         row.created_at,
         row.name,
         "notice",
+      ),
+    );
+  }
+
+  // ECE certificate expiry: owners and managers see their centres; staff see their own.
+  const certs = await sql
+    .query<{ id: string; expires_on: string; staff_name: string; name: string; manage: boolean; mine: boolean }>(
+      `select c.id, c.expires_on::text as expires_on, c.staff_name, d.name,
+              (exists (select 1 from provider_daycares p where p.user_id = $1 and p.daycare_id = c.daycare_id)
+                or exists (select 1 from centre_members m where m.user_id = $1 and m.daycare_id = c.daycare_id
+                             and m.status = 'active' and m.role in ('owner', 'manager'))) as manage,
+              exists (select 1 from wiring_notices w where w.feature = $2 and w.mode = c.id and w.user_id = $1) as mine
+         from ece_certificates c join daycares d on d.id = c.daycare_id
+        where c.expires_on <= current_date + 60
+          and c.expires_on >= current_date - 60
+          and (exists (select 1 from provider_daycares p where p.user_id = $1 and p.daycare_id = c.daycare_id)
+               or exists (select 1 from centre_members m where m.user_id = $1 and m.daycare_id = c.daycare_id
+                            and m.status = 'active' and m.role in ('owner', 'manager'))
+               or exists (select 1 from wiring_notices w where w.feature = $2 and w.mode = c.id and w.user_id = $1))
+        order by c.expires_on asc limit 30`,
+      [userId, ECE_CERT_LINK_FEATURE],
+    )
+    .catch(() => []);
+  const now = new Date();
+  for (const row of certs) {
+    const alert = certAlert(row.expires_on, now);
+    if (!alert) continue;
+    out.push(
+      item(
+        alert.status === "expired" ? "notifCertExpired" : "notifCertExpiring",
+        row.id,
+        `${alert.status}:${String(row.expires_on).slice(0, 10)}`,
+        "/provider?desk=today",
+        alert.at,
+        row.mine && !row.manage ? row.name : `${row.staff_name} · ${row.name}`,
+        alert.status,
       ),
     );
   }

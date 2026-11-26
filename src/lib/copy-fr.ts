@@ -3248,6 +3248,8 @@ export const fr = {
     notifAgreementSigned: "Le parent a signé l’entente · {name}",
     notifAgreementDone: "Entente signée par les deux parties · {name}",
     notifWithdrawal: "Préavis de départ · {name}",
+    notifCertExpiring: "Certificat du personnel bientôt expiré · {name}",
+    notifCertExpired: "Certificat du personnel expiré · {name}",
     notifAdminClaim: "Revendication en attente · {name}",
     notifAdminQueue: "En attente de vous · {name}",
     notifAdminParentSignup: "Nouveau parent · {name}",

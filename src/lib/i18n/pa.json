@@ -2586,6 +2586,8 @@
   "notifAgreementSigned": "ਮਾਪੇ ਨੇ ਸਮਝੌਤੇ 'ਤੇ ਦਸਤਖਤ ਕੀਤੇ · {name}",
   "notifAgreementDone": "ਦੋਵਾਂ ਧਿਰਾਂ ਨੇ ਦਸਤਖਤ ਕੀਤੇ · {name}",
   "notifWithdrawal": "ਛੱਡਣ ਦਾ ਨੋਟਿਸ · {name}",
+  "notifCertExpiring": "ਸਟਾਫ ਸਰਟੀਫਿਕੇਟ ਜਲਦੀ ਖਤਮ ਹੋਵੇਗਾ · {name}",
+  "notifCertExpired": "ਸਟਾਫ ਸਰਟੀਫਿਕੇਟ ਖਤਮ ਹੋ ਗਿਆ · {name}",
   "notifAdminClaim": "ਕਲੇਮ ਉਡੀਕ ਵਿੱਚ · {name}",
   "notifAdminQueue": "ਤੁਹਾਡੀ ਉਡੀਕ ਵਿੱਚ · {name}",
   "notifAdminParentSignup": "ਨਵਾਂ ਮਾਪਾ · {name}",

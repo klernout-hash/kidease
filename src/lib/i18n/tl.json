@@ -2586,6 +2586,8 @@
   "notifAgreementSigned": "Pumirma ang magulang sa kasunduan · {name}",
   "notifAgreementDone": "Pirmado na ng dalawang panig · {name}",
   "notifWithdrawal": "Abiso ng pag-alis · {name}",
+  "notifCertExpiring": "Malapit nang mag-expire ang sertipiko ng staff · {name}",
+  "notifCertExpired": "Nag-expire na ang sertipiko ng staff · {name}",
   "notifAdminClaim": "Claim na naghihintay · {name}",
   "notifAdminQueue": "Naghihintay sa iyo · {name}",
   "notifAdminParentSignup": "Bagong magulang · {name}",

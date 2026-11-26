@@ -2586,6 +2586,8 @@
   "notifAgreementSigned": "وقّع الوالد الاتفاقية · {name}",
   "notifAgreementDone": "وقّع الطرفان الاتفاقية · {name}",
   "notifWithdrawal": "إشعار انسحاب · {name}",
+  "notifCertExpiring": "شهادة موظف تنتهي قريبًا · {name}",
+  "notifCertExpired": "انتهت شهادة موظف · {name}",
   "notifAdminClaim": "مطالبة قيد الانتظار · {name}",
   "notifAdminQueue": "بانتظارك · {name}",
   "notifAdminParentSignup": "ولي أمر جديد · {name}",

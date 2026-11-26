@@ -2586,6 +2586,8 @@
   "notifAgreementSigned": "Elternteil hat die Vereinbarung unterschrieben · {name}",
   "notifAgreementDone": "Vereinbarung von beiden Seiten unterschrieben · {name}",
   "notifWithdrawal": "Abmeldung · {name}",
+  "notifCertExpiring": "Zertifikat einer Fachkraft läuft bald ab · {name}",
+  "notifCertExpired": "Zertifikat einer Fachkraft abgelaufen · {name}",
   "notifAdminClaim": "Beanspruchung wartet · {name}",
   "notifAdminQueue": "Wartet auf Sie · {name}",
   "notifAdminParentSignup": "Neues Elternteil · {name}",

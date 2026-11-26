@@ -2586,6 +2586,8 @@
   "notifAgreementSigned": "Il genitore ha firmato l'accordo · {name}",
   "notifAgreementDone": "Accordo firmato da entrambe le parti · {name}",
   "notifWithdrawal": "Preavviso di ritiro · {name}",
+  "notifCertExpiring": "Certificato del personale in scadenza · {name}",
+  "notifCertExpired": "Certificato del personale scaduto · {name}",
   "notifAdminClaim": "Rivendicazione in attesa · {name}",
   "notifAdminQueue": "In attesa di Lei · {name}",
   "notifAdminParentSignup": "Nuovo genitore · {name}",

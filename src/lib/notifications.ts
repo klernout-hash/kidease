@@ -40,6 +40,8 @@ export const NOTIFICATION_TITLE_KEYS = [
   "notifAgreementSigned",
   "notifAgreementDone",
   "notifWithdrawal",
+  "notifCertExpiring",
+  "notifCertExpired",
 ] as const;
 export type NotificationTitleKey = (typeof NOTIFICATION_TITLE_KEYS)[number];
 
