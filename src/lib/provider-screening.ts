@@ -291,7 +291,7 @@ export function centreCanManageScreening(role: CentreMemberRole | null | undefin
 }
 
 export function centreCanViewScreening(role: CentreMemberRole | null | undefined): boolean {
-  return role === "owner" || role === "manager" || role === "staff" || role === "read_only";
+  return centreCanManageScreening(role);
 }
 
 export function decideScreeningAccess(input: {
@@ -300,24 +300,9 @@ export function decideScreeningAccess(input: {
   targetUserId?: string | null;
   action: ScreeningAction;
 }): { ok: true } | { ok: false; error: string } {
-  if (!centreCanViewScreening(input.actorRole)) {
-    return { ok: false, error: SCREENING_FORBIDDEN };
-  }
-  if (input.actorRole === "read_only" && input.action !== "view_all" && input.action !== "view_own") {
-    return { ok: false, error: SCREENING_FORBIDDEN };
-  }
-  if (input.action === "view_all" || input.action === "manage" || input.action === "add_person") {
-    if (!centreCanManageScreening(input.actorRole)) {
-      return { ok: false, error: SCREENING_NOT_OWNER };
-    }
-    return { ok: true };
-  }
-  if (input.action === "view_own" || input.action === "act_own") {
-    if (centreCanManageScreening(input.actorRole)) return { ok: true };
-    if (input.targetUserId && input.targetUserId === input.actorUserId) return { ok: true };
-    return { ok: false, error: SCREENING_FORBIDDEN };
-  }
-  return { ok: false, error: SCREENING_FORBIDDEN };
+  return centreCanManageScreening(input.actorRole)
+    ? { ok: true }
+    : { ok: false, error: SCREENING_NOT_OWNER };
 }
 
 export function decideAdminScreeningReview(input: {

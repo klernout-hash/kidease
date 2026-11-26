@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { asUploadPart, inferPrivateDocMime, PRIVATE_DOC_BAD_FILE } from "@/lib/private-docs";
 import { readUploadFile } from "@/lib/server/private-docs";
 import { saveScreeningUpload } from "@/lib/server/provider-screening";
+import { getSql } from "@/lib/db";
+import { screeningOwnerCentreIds } from "@/lib/server/screening-owner-access";
 
 function fail(err: unknown, fallback = "Request failed") {
   const message = err instanceof Error ? err.message : fallback;
@@ -21,6 +23,7 @@ export const Route = createFileRoute("/api/screening-documents")({
         try {
           const { requireUserId } = await import("@/lib/auth/verify.server");
           const userId = await requireUserId();
+          await screeningOwnerCentreIds(await getSql(), userId);
           const form = await request.formData();
           const file = asUploadPart(form.get("file"));
           if (!file) throw new Error(PRIVATE_DOC_BAD_FILE);
