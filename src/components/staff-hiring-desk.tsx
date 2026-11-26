@@ -583,6 +583,11 @@ function JobRow({ job, l, onOpen, onToggled }: { job: HiringJob; l: StaffJobsLoc
       </div>
       <JobFacts job={job} l={l} />
       <p className="mt-1 text-sm">{t("applicantsCount", { n: job.applicants })}</p>
+      {job.open && !job.boardPublic ? (
+        <p className="mt-2 rounded-lg bg-surface-2 px-3 py-2 text-sm" data-ke="staff-job-not-public">
+          {t("jobNotPublicYet")}
+        </p>
+      ) : null}
       <div className="mt-3 flex flex-wrap gap-2">
         <Button type="button" variant="secondary" onClick={onOpen}>
           {t("openApplicant")}
