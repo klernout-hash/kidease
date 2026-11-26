@@ -185,7 +185,7 @@ export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | nu
           {desk.memberName ? <p className="font-medium">{desk.memberName}</p> : null}
           {link ? (
             <p className="break-all text-sm">
-              <span className="text-muted">{copy.noSend}</span>
+              <span className="text-muted">{desk.emailEnabled ? copy.linkEmailed : copy.noSend}</span>
               <span className="mt-1 block font-medium">{link}</span>
             </p>
           ) : null}

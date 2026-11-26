@@ -32,7 +32,7 @@ import { isSealedWebhookSecret, openWebhookSecret, sealWebhookSecret } from "@/l
 import { centreApiEnabled, centreLeadTrackerEnabled } from "@/lib/features";
 import { getSql, type Sql } from "@/lib/db";
 import { nid } from "@/lib/utils";
-import { listAccessibleDaycareIds, loadCentreRole } from "@/lib/server/centre-access";
+import { listOwnerOrManagerDaycareIds, loadCentreRole } from "@/lib/server/centre-access";
 import { captureServerProductEvent } from "@/lib/server/product-events";
 
 function iso(value: unknown): string {
@@ -412,7 +412,8 @@ function viewLead(lead: StoredLead, noteText: string) {
 async function pageFor(userId: string, daycareId: string) {
   if (!centreLeadTrackerEnabled()) return { enabled: false as const };
   const sql = await getSql();
-  const accessible = (await listAccessibleDaycareIds(sql, userId)).filter((id) => !isHiddenLeadCentre(id));
+  // Families is owner and manager only. A staff login is refused (B05).
+  const accessible = (await listOwnerOrManagerDaycareIds(sql, userId)).filter((id) => !isHiddenLeadCentre(id));
   const centres = accessible.length
     ? await sql.query<{ id: string; name: string }>(
         `select id, name from daycares where id = any($1::text[]) order by name`,
@@ -556,7 +557,7 @@ async function pageFor(userId: string, daycareId: string) {
 
 async function requireWrite(userId: string, daycareId: string) {
   const sql = await getSql();
-  const accessible = (await listAccessibleDaycareIds(sql, userId)).filter((id) => !isHiddenLeadCentre(id));
+  const accessible = (await listOwnerOrManagerDaycareIds(sql, userId)).filter((id) => !isHiddenLeadCentre(id));
   const resolved = resolveLeadCentre(daycareId, accessible);
   if (!resolved.ok || isHiddenLeadCentre(daycareId)) return null;
   const role = await loadCentreRole(sql, userId, resolved.centreId);
@@ -743,7 +744,7 @@ export const createCentreApiKey = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (!centreLeadTrackerEnabled() || !centreApiEnabled()) return { ok: false as const, error: "off" };
     const sql = await getSql();
-    const accessible = (await listAccessibleDaycareIds(sql, context.userId)).filter((id) => !isHiddenLeadCentre(id));
+    const accessible = (await listOwnerOrManagerDaycareIds(sql, context.userId)).filter((id) => !isHiddenLeadCentre(id));
     const resolved = resolveLeadCentre(data.daycareId, accessible);
     if (!resolved.ok) return { ok: false as const, error: "not_found" };
     const role = await loadCentreRole(sql, context.userId, resolved.centreId);
@@ -776,7 +777,7 @@ export const revokeCentreApiKey = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (!centreApiEnabled()) return { ok: false as const, error: "off" };
     const sql = await getSql();
-    const accessible = (await listAccessibleDaycareIds(sql, context.userId)).filter((id) => !isHiddenLeadCentre(id));
+    const accessible = (await listOwnerOrManagerDaycareIds(sql, context.userId)).filter((id) => !isHiddenLeadCentre(id));
     const resolved = resolveLeadCentre(data.daycareId, accessible);
     if (!resolved.ok) return { ok: false as const, error: "not_found" };
     const role = await loadCentreRole(sql, context.userId, resolved.centreId);
@@ -803,7 +804,7 @@ export const saveCentreWebhook = createServerFn({ method: "POST" })
     if (!centreApiEnabled()) return { ok: false as const, error: "off" };
     if (!webhookUrlAllowed(data.url)) return { ok: false as const, error: "url" };
     const sql = await getSql();
-    const accessible = (await listAccessibleDaycareIds(sql, context.userId)).filter((id) => !isHiddenLeadCentre(id));
+    const accessible = (await listOwnerOrManagerDaycareIds(sql, context.userId)).filter((id) => !isHiddenLeadCentre(id));
     const resolved = resolveLeadCentre(data.daycareId, accessible);
     if (!resolved.ok) return { ok: false as const, error: "not_found" };
     const role = await loadCentreRole(sql, context.userId, resolved.centreId);

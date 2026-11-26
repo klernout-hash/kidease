@@ -32,7 +32,8 @@ test("session desks retry after a failed or timed-out getMyDesks", () => {
   const desks = read("src/components/session-desks.tsx");
   assert.match(desks, /const SESSION_DESK_RETRIES = 2;/);
   assert.match(desks, /setRetry\(\(n\) => n \+ 1\)/);
-  assert.match(desks, /\[user\?\.id, isPending, pathname, retry\]/);
+  // `bump` reloads desks after Mark all read or opening a thread (B03a).
+  assert.match(desks, /\[user\?\.id, isPending, pathname, retry, bump\]/);
 });
 
 test("Calendar tab stays lit on tours and calendar", () => {

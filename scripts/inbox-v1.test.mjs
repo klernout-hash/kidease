@@ -202,7 +202,7 @@ test("centre inbox ships three-pane, empty truth, and ops composer — not CMS",
   assert.match(copy, /inboxEmptyNeedYouCta: "Voir les demandes entrantes"/);
   const emptyCta = desk.slice(desk.indexOf("inboxEmptyNeedYouCta") - 180, desk.indexOf("inboxEmptyNeedYouCta") + 80);
   assert.match(emptyCta, /to="\/inbox"/);
-  assert.match(emptyCta, /inboxSearch\("centre"\)/);
+  assert.match(emptyCta, /inboxSearch\("centre"(, langQuery)?\)/);
   assert.doesNotMatch(emptyCta, /to="\/provider"/);
   assert.match(desk, /data-ke="inbox-stage-filters"/);
   assert.match(desk, /flex-wrap/);

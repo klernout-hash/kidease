@@ -12,12 +12,14 @@ import { formatPreferredTimes } from "@/lib/threads";
 import { PipelineBadge } from "@/components/pipeline-badge";
 import { BlockFamilyButton } from "@/components/block-user";
 import { useCopy } from "@/lib/use-copy";
+import { apiErrorMessage } from "@/lib/api-error-copy";
 import { RuntimePaused } from "@/components/runtime-paused";
 import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { canCancelTour, canProposeTourTime, declineReasonValid } from "@/lib/tour-hold";
 import { formatTourSlotRange, type PublicTourSlot } from "@/lib/tour-calendar";
 import type { TourRequest, TourStatus } from "@/lib/types";
 import { admissionJourney } from "@/lib/admission-journey";
+import { TourAddToCalendar } from "@/components/tour-add-to-calendar";
 
 export function TourStatusPill({ status }: { status: TourStatus }) {
   return <PipelineBadge tourStatus={status} />;
@@ -27,10 +29,13 @@ export function TourCard({
   tour,
   canRespond,
   onChanged,
+  timeZone,
 }: {
   tour: TourRequest;
   canRespond?: boolean;
   onChanged?: () => void;
+  /** Centre time zone for "Add to calendar". */
+  timeZone?: string | null;
 }) {
   const { t, locale } = useCopy();
   const tourBooking = useRuntimeSwitches().tourBooking;
@@ -75,7 +80,7 @@ export function TourCard({
       confirmAction(t, status === "accepted" ? "tourAccepted" : "tourDeclined");
       onChanged?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
+      toast.error(apiErrorMessage(err, locale, t("tourRespondFailed")));
     } finally {
       setBusy(null);
     }
@@ -100,7 +105,7 @@ export function TourCard({
       });
       onChanged?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
+      toast.error(apiErrorMessage(err, locale, t("tourRespondFailed")));
     } finally {
       setBusy(null);
     }
@@ -119,7 +124,7 @@ export function TourCard({
       setWindowId("");
       onChanged?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
+      toast.error(apiErrorMessage(err, locale, t("tourRespondFailed")));
     } finally {
       setBusy(null);
     }
@@ -132,7 +137,7 @@ export function TourCard({
       confirmSuccess({ variant: "toast", title: t("tourCancelled") });
       onChanged?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
+      toast.error(apiErrorMessage(err, locale, t("tourRespondFailed")));
     } finally {
       setBusy(null);
     }
@@ -301,6 +306,7 @@ export function TourCard({
           ) : null}
         </div>
       )}
+      <TourAddToCalendar tour={tour} timeZone={timeZone} />
     </div>
   );
 }

@@ -12,19 +12,9 @@ function pack(locale: string) {
   return locale === "fr" ? supportCopy.fr : supportCopy.en;
 }
 
-export function SupportDeskBar({
-  open,
-  onOpen,
-}: {
-  open: boolean;
-  onOpen: (next: boolean) => void;
-}) {
-  const { locale } = useCopy();
-  const copy = pack(locale as SupportLocale);
+function useSupportDeskStatus() {
   const [enabled, setEnabled] = useState(false);
   const [live, setLive] = useState(false);
-  const [chip, setChip] = useState<"all" | "daycares" | "support">("all");
-
   useEffect(() => {
     let stop = false;
     void Promise.all([
@@ -39,6 +29,38 @@ export function SupportDeskBar({
       stop = true;
     };
   }, []);
+  return { enabled, live };
+}
+
+/**
+ * The support chat body on its own. The daycare inbox renders it in the wide
+ * thread column: inside the narrow list column the input was 0px wide.
+ */
+export function SupportDeskChat() {
+  const { locale } = useCopy();
+  const copy = pack(locale as SupportLocale);
+  const { enabled, live } = useSupportDeskStatus();
+  if (live) return <LiveSupportChat mode="member" />;
+  if (enabled) return <SupportThread copy={copy} />;
+  return null;
+}
+
+export function SupportDeskBar({
+  open,
+  onOpen,
+  inlineChat = true,
+}: {
+  open: boolean;
+  onOpen: (next: boolean) => void;
+  /** False when the page shows <SupportDeskChat /> in its own wide pane. */
+  inlineChat?: boolean;
+}) {
+  const { locale } = useCopy();
+  const copy = pack(locale as SupportLocale);
+  const { enabled, live } = useSupportDeskStatus();
+  const [picked, setChip] = useState<"all" | "daycares" | "support">("all");
+  // Opening a parent thread closes support; the chips follow `open`.
+  const chip = open ? "support" : picked === "support" ? "all" : picked;
 
   if (live) {
     return (
@@ -67,7 +89,7 @@ export function SupportDeskBar({
             </button>
           ))}
         </div>
-        {open ? <LiveSupportChat mode="member" /> : null}
+        {open && inlineChat ? <LiveSupportChat mode="member" /> : null}
       </div>
     );
   }
@@ -113,7 +135,7 @@ export function SupportDeskBar({
           </button>
         ))}
       </div>
-      {open ? <SupportThread copy={copy} /> : null}
+      {open && inlineChat ? <SupportThread copy={copy} /> : null}
     </div>
   );
 }

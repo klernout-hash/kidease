@@ -16,23 +16,15 @@ import { markUnifiedAlertRead } from "@/lib/server/unified-alert-api";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
-
-function timeLabel(iso: string, locale: string) {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString(locale === "fr" ? "fr-CA" : "en-CA", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+import { refreshSessionDesks } from "@/components/session-desks";
+import { groupNotifications, markItemsRead, notificationTimeLabel } from "@/lib/notification-groups";
 
 export function NotificationsInbox() {
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
   const hideAdmin = useNativeHidesAdmin();
   const [items, setItems] = useState<NotificationItem[] | null>(null);
+  const [marking, setMarking] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -59,14 +51,21 @@ export function NotificationsInbox() {
             <Button
               size="sm"
               variant="secondary"
+              disabled={marking}
+              data-ke="notifications-mark-all"
               onClick={() => {
+                setMarking(true);
                 void markNotificationRead({ data: { all: true } })
                   .then(() => markUnifiedAlertRead({ data: { all: true } }).catch(() => undefined))
                   .then(() => {
+                    // Dots and the button clear now; the bell badge refetches now.
+                    setItems((cur) => (cur ? markItemsRead(cur, "all") : cur));
+                    refreshSessionDesks();
                     confirmAction(t, "markedRead");
                     return listMyNotifications().then(setItems);
                   })
-                  .catch(() => undefined);
+                  .catch(() => undefined)
+                  .finally(() => setMarking(false));
               }}
             >
               {t("markAlertsRead")}
@@ -101,7 +100,8 @@ export function NotificationsInbox() {
               />
             </li>
           ) : (
-            items.map((item) => {
+            groupNotifications(items).map((group) => {
+              const item = group.lead;
               const title = fillNotificationCopy(t(notificationCopyKey(item.titleKey)), {
                 name: item.daycareName,
                 kind: item.status,
@@ -111,21 +111,33 @@ export function NotificationsInbox() {
                   <a
                     href={notificationHrefForShell(item.href, hideAdmin)}
                     data-ke="notification-row"
+                    data-count={group.count}
                     className="flex min-h-14 w-full items-start gap-3 px-4 py-3 text-left hover:bg-surface-2"
                     onClick={() => {
-                      void markNotificationRead({ data: { id: item.id } }).catch(() => undefined);
+                      if (!group.unread) return;
+                      setItems((cur) => (cur ? markItemsRead(cur, group.ids) : cur));
+                      void Promise.all(group.ids.map((id) => markNotificationRead({ data: { id } })))
+                        .then(() => refreshSessionDesks())
+                        .catch(() => undefined);
                     }}
                   >
                     <span
-                      className={`mt-2 size-2 shrink-0 rounded-full ${item.readAt ? "bg-border" : "bg-danger"}`}
+                      className={`mt-2 size-2 shrink-0 rounded-full ${group.unread ? "bg-danger" : "bg-border"}`}
                       aria-hidden
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[15px] font-medium text-fg">{title}</span>
+                      <span className="flex items-baseline gap-2">
+                        <span className="text-[15px] font-medium text-fg">{title}</span>
+                        {group.count > 1 ? (
+                          <span className="shrink-0 rounded-full bg-surface-2 px-2 text-xs font-medium text-muted" data-ke="notification-count">
+                            ×{group.count}
+                          </span>
+                        ) : null}
+                      </span>
                       {isCriticalNotification(item) ? (
                         <span className="mt-0.5 block text-xs font-medium text-danger">{t("inboxCriticalNotif")}</span>
                       ) : null}
-                      <span className="mt-0.5 block text-xs text-muted">{timeLabel(item.createdAt, locale)}</span>
+                      <span className="mt-0.5 block text-xs text-muted">{notificationTimeLabel(item.createdAt, locale)}</span>
                     </span>
                   </a>
                 </li>

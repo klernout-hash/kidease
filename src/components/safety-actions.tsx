@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -10,6 +10,8 @@ import {
   type SafetyTarget,
 } from "@/lib/safety";
 import { reportSafety, safetyThreadState, setMessageBlock } from "@/lib/server/safety";
+import { blockDialogText } from "@/lib/safety";
+import { setThreadBlocked, subscribeThreadBlocks, threadBlocked } from "@/lib/thread-block-state";
 import { useCopy } from "@/lib/use-copy";
 
 export function SafetyReportButton({
@@ -130,8 +132,9 @@ export function BlockMessagesButton({
   const text = safetyText(locale);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [blocked, setBlocked] = useState(false);
-  const label = blocked ? text.unblockPerson : side === "family" ? text.blockFamily : text.blockDaycare;
+  const [blocked, setBlocked] = useThreadBlocked(conversationId);
+  const words = blockDialogText(locale, side);
+  const label = blocked ? text.unblockPerson : words.trigger;
 
   useEffect(() => {
     if (!user) return;
@@ -176,7 +179,7 @@ export function BlockMessagesButton({
             data-ke="block-confirm"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 id="block-thread-title" className="font-display text-xl">{text.blockConfirmTitle}</h2>
+            <h2 id="block-thread-title" className="font-display text-xl">{words.title}</h2>
             <p className="mt-2 text-sm leading-6 text-muted">{text.blockConfirmBody}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button
@@ -195,7 +198,7 @@ export function BlockMessagesButton({
                     .finally(() => setBusy(false));
                 }}
               >
-                {text.blockConfirm}
+                {words.confirm}
               </Button>
               <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
                 {text.cancel}
@@ -206,4 +209,35 @@ export function BlockMessagesButton({
       ) : null}
     </>
   );
+}
+
+/**
+ * Whether the viewer blocked this conversation. Every block control and the
+ * composer on the page share one value, so blocking from the header locks
+ * sending at once and unblocking opens it again.
+ */
+export function useThreadBlocked(
+  conversationId: string,
+  opts?: { load?: boolean },
+): [boolean, (next: boolean) => void] {
+  const load = Boolean(opts?.load && conversationId);
+  useEffect(() => {
+    if (!load) return;
+    let live = true;
+    void safetyThreadState({ data: { conversationId } })
+      .then((row) => {
+        if (live) setThreadBlocked(conversationId, Boolean(row.blocked));
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [conversationId, load]);
+  const blocked = useSyncExternalStore(
+    subscribeThreadBlocks,
+    () => threadBlocked(conversationId),
+    () => false,
+  );
+  const set = useCallback((next: boolean) => setThreadBlocked(conversationId, next), [conversationId]);
+  return [blocked, set];
 }

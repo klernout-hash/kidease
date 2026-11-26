@@ -49,8 +49,8 @@ export const listCentreStories = createServerFn({ method: "GET" })
     await ensureStories();
     const ids = await listAccessibleDaycareIds(sql, context.userId);
     const centres = ids.length
-      ? await sql.query<{ id: string; name: string }>(
-          `select id, name from daycares where id = any($1::text[]) order by name`,
+      ? await sql.query<{ id: string; name: string; province: string | null }>(
+          `select id, name, province from daycares where id = any($1::text[]) order by name`,
           [ids],
         ).catch(() => [])
       : [];

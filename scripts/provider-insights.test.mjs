@@ -286,7 +286,7 @@ test("posted zero spots stay zero, and unposted spots stay hidden", () => {
 
 test("the loader is scoped to the account and does not return other centres", () => {
   const server = src("src/lib/server/provider-insights.ts");
-  assert.match(server, /listAccessibleDaycareIds/);
+  assert.match(server, /listOwnerOrManagerDaycareIds/);
   assert.match(server, /providerInsightsEnabled/);
   assert.match(server, /not \(d\.id = any\(\$3::text\[\]\)\)/);
   assert.match(server, /anonymousAreaMedians/);

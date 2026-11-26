@@ -14,7 +14,8 @@ const tools = readFileSync(join(root, "src/lib/server/centre-tools.ts"), "utf8")
 const menu = readFileSync(join(root, "src/routes/menu.tsx"), "utf8");
 
 test("staff bill view does not open billing, payroll, or payout tools", () => {
-  assert.equal(STAFF_GRANTS.bills, "view");
+  // B05: the staff preset has no bills access at all now. A custom "view" grant still hides money tools.
+  assert.equal(STAFF_GRANTS.bills, "none");
   const visible = toolsForBillAccess(
     ["meals", ...MONEY_TOOL_IDS],
     false,

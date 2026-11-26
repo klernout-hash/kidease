@@ -57,7 +57,8 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
 
   const load = useCallback(async () => {
     if (!signedIn) return;
-    const res = await fetch("/api/family-documents", { credentials: "same-origin" });
+    // no-store: a cached GET kept the list stale after an upload (B-org #42).
+    const res = await fetch("/api/family-documents", { credentials: "same-origin", cache: "no-store" });
     const body = (await res.json().catch(() => null)) as { documents?: Doc[]; centres?: Centre[]; error?: string } | null;
     if (!res.ok) {
       toast.error(vaultError(body?.error || "", t));
@@ -100,7 +101,7 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
     }
   }
 
-  async function act(payload: Record<string, string>, okKey: CopyKey) {
+  async function act(payload: Record<string, string>, okKey: CopyKey, okText?: string) {
     setBusy(true);
     try {
       const res = await fetch("/api/family-documents", {
@@ -114,7 +115,7 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
         toast.error(vaultError(body?.error || "", t));
         return;
       }
-      toast.success(t(okKey));
+      toast.success(okText ?? t(okKey));
       await load();
     } finally {
       setBusy(false);
@@ -211,7 +212,12 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
                     onSubmit={(e) => {
                       e.preventDefault();
                       const daycareId = String(new FormData(e.currentTarget).get("daycareId") || "");
-                      void act({ action: "share", documentId: doc.id, daycareId }, "familyDocsShared");
+                      const centreName = centres.find((centre) => centre.id === daycareId)?.name;
+                      void act(
+                        { action: "share", documentId: doc.id, daycareId },
+                        "familyDocsShared",
+                        centreName ? `${t("familyDocsShared")} ${centreName}` : undefined,
+                      );
                     }}
                   >
                     <label className="sr-only" htmlFor={`share-${doc.id}`}>

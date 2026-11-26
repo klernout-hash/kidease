@@ -117,6 +117,8 @@ beforeEach(() => {
       return current.claims;
     if (/^select distinct on \(daycare_id\)[\s\S]+from license_uploads/i.test(text))
       return current.uploads;
+    // Admin desk test #36: spam / fraud flags shown on claim cards.
+    if (/^select daycare_id, score, reasons, created_at\s+from fraud_flags/i.test(text)) return current.fraud ?? [];
     current.unexpectedQueries += 1;
     throw new Error("Unexpected query outside the queue/licence-read allowlist");
   }
@@ -170,7 +172,8 @@ test("shared queue reader maps persisted claims and requires licence evidence fo
     declined: 1,
     all: 5,
   });
-  assert.equal(fixture().calls.length, 1);
+  // The queue read plus the fraud flag read (admin #36).
+  assert.equal(fixture().calls.length, 2);
   assert.equal(fixture().unexpectedQueries, 0);
   assert.ok(result.every((row) => !Object.hasOwn(row, "addonLine")));
 });
@@ -273,7 +276,7 @@ test("reader overlays a stored licence reference without any unrelated enrichmen
   const result = await readAdminCentreQueueRows();
   assert.equal(result.length, 2);
   assert.ok(result.every((row) => row.licensePhoto));
-  assert.equal(fixture().calls.length, 3);
+  assert.equal(fixture().calls.length, 4);
   assert.equal(fixture().unexpectedQueries, 0);
 });
 

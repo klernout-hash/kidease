@@ -23,7 +23,7 @@ test("empty Messages CTA stays on centre inbox, not Today", () => {
   assert.match(desk, /data-ke="inbox-empty-cta"/);
   const emptyCta = desk.slice(desk.indexOf("inboxEmptyNeedYouCta") - 220, desk.indexOf("inboxEmptyNeedYouCta") + 80);
   assert.match(emptyCta, /to="\/inbox"/);
-  assert.match(emptyCta, /inboxSearch\("centre"\)/);
+  assert.match(emptyCta, /inboxSearch\("centre"(, langQuery)?\)/);
   assert.doesNotMatch(emptyCta, /desk:\s*"today"/);
   assert.doesNotMatch(emptyCta, /to="\/provider"/);
   assert.match(list, /actionTo="\/inbox\?view=centre"/);

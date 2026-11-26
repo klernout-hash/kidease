@@ -41,9 +41,9 @@ test("parent Pay stays focused on centre bills at either subscription setting", 
 
 test("unclaimed listings explain tours instead of listing times", () => {
   const tours = src("src/components/listing-tour-times.tsx");
-  const fetchAt = tours.indexOf("void listPublicTourSlots");
-  const guard = tours.slice(tours.lastIndexOf("if (!canBook)", fetchAt), fetchAt);
-  assert.match(guard, /if \(!canBook\) return/);
+  // B04: copy follows real posted slots. The "can't book" line shows only when none are open.
+  assert.match(tours, /open\.length \|\| daycare\.live/);
+  assert.match(tours, /: ready\s*\? t\("tourTimesUnclaimed"\)/);
   assert.match(tours, /data-tour-unclaimed/);
   assert.match(tours, /tourTimesUnclaimed/);
   assert.match(tx("en", "tourTimesUnclaimed"), /can’t book a visit/);

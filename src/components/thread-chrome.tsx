@@ -249,6 +249,7 @@ export function ThreadComposer({
   plusOpen,
   onPlus,
   menu,
+  lockedNote,
 }: {
   inputId: string;
   value: string;
@@ -261,19 +262,28 @@ export function ThreadComposer({
   plusOpen: boolean;
   onPlus: () => void;
   menu?: ReactNode;
+  /** Set while the viewer blocked this thread: the note shows and nothing can be sent. */
+  lockedNote?: string;
 }) {
+  const locked = Boolean(lockedNote);
   return (
-    <form onSubmit={onSubmit} data-ke="thread-composer" className="sticky bottom-0 z-20 border-t border-border/60 bg-bg/95 backdrop-blur px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    <form onSubmit={(event) => { if (locked) { event.preventDefault(); return; } onSubmit(event); }} data-ke="thread-composer" data-locked={locked ? "true" : undefined} className="sticky bottom-0 z-20 border-t border-border/60 bg-bg/95 backdrop-blur px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
       {error ? (
         <p className="mb-2 text-sm text-danger" role="alert">
           {error}
         </p>
       ) : null}
-      {plusOpen ? menu : null}
+      {locked ? (
+        <p className="mb-2 text-sm text-muted" role="status" data-ke="composer-blocked">
+          {lockedNote}
+        </p>
+      ) : null}
+      {plusOpen && !locked ? menu : null}
       <div className="flex items-center gap-1 rounded-full bg-surface px-1.5 py-1 ring-1 ring-border">
         <button
           type="button"
           onClick={onPlus}
+          disabled={locked}
           aria-expanded={plusOpen}
           aria-label={plusLabel}
           className="grid size-11 shrink-0 place-items-center rounded-full text-fg hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
@@ -290,12 +300,13 @@ export function ThreadComposer({
           onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
           placeholder={placeholder}
           autoComplete="off"
-          className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none"
+          disabled={locked}
+          className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none disabled:cursor-not-allowed"
         />
         <button
           type="submit"
           aria-label={sendLabel}
-          disabled={!value.trim()}
+          disabled={locked || !value.trim()}
           className="grid size-11 shrink-0 place-items-center rounded-full bg-fg text-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-40"
         >
           <ArrowUp className="size-5" aria-hidden />

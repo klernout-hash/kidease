@@ -263,16 +263,15 @@ export function Listing() {
     let live = true;
     setGap(null);
     setData(null);
+    let settled = false;
+    // A plain flag, not a state updater with a side effect, so a slow load always lands on Retry.
     const watchdog = window.setTimeout(() => {
-      if (!live) return;
-      setData((cur) => {
-        if (cur) return cur;
-        setGap("retry");
-        return cur;
-      });
+      if (!live || settled) return;
+      setGap("retry");
     }, 12_000);
     void getDaycare({ data: slug })
       .then((res) => {
+        settled = true;
         if (!live) return;
         if (!res) setGap("missing");
         else {
@@ -281,6 +280,7 @@ export function Listing() {
         }
       })
       .catch((error) => {
+        settled = true;
         if (!live) return;
         setGap(isTransientListingError(error) ? "retry" : "missing");
       });
@@ -478,6 +478,9 @@ export function Listing() {
                 </dd>
               </div>
             </dl>
+            <div className="mt-4 md:hidden">
+              <EarlyListingActions locale={locale} />
+            </div>
             <div id="listing-overview" className="mt-6 space-y-6">
               {earlyDesc ? (
                 <section data-ke="listing-about">
@@ -538,11 +541,7 @@ export function Listing() {
                 ? "Frais non confirmés. Un plafond quotidien n’est pas une facture mensuelle."
                 : "Fees not confirmed. A daily cap is not a monthly bill."}
             </p>
-            <p className="mt-3 text-sm text-muted">
-              {locale === "fr"
-                ? "Les demandes s’affichent quand la fiche a fini de s’ouvrir."
-                : "Requests show once this listing has finished opening."}
-            </p>
+            <EarlyListingActions locale={locale} />
           </aside>
         </main>
       </Shell>
@@ -1533,5 +1532,39 @@ function PriceRow({ label, value, extra }: { label: string; value: string; extra
         {extra ? <span className="ml-2 text-xs text-muted">{extra}</span> : null}
       </span>
     </li>
+  );
+}
+
+/**
+ * B04: while the full listing loads, the old placeholder said requests would
+ * show once the listing "opened", with no button. That only meant the page
+ * was still loading. Keep real buttons here; the ask opens once loaded.
+ */
+function EarlyListingActions({ locale }: { locale: string }) {
+  const fr = locale === "fr";
+  return (
+    <div className="mt-3 space-y-2" data-ke="listing-early-actions">
+      <p className="text-sm text-muted">
+        {fr ? "La fiche se charge. Vous pouvez déjà faire une demande." : "This listing is loading. You can already send a request."}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Link
+          to="."
+          search={{ ask: "spot" }}
+          className="inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg"
+          data-ke="listing-early-spot"
+        >
+          {fr ? "Demander une place" : "Request a spot"}
+        </Link>
+        <Link
+          to="."
+          search={{ ask: "waitlist" }}
+          className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold ring-1 ring-border"
+          data-ke="listing-early-waitlist"
+        >
+          {fr ? "Liste d’attente" : "Join the waitlist"}
+        </Link>
+      </div>
+    </div>
   );
 }

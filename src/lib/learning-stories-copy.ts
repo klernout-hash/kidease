@@ -10,6 +10,7 @@ export type StoriesCopy = {
   lead: string;
   parentLead: string;
   child: string;
+  centre: string;
   framework: string;
   domain: string;
   observed: string;
@@ -36,6 +37,10 @@ const domainLabels = {
     diversity: "Diversity and social responsibility",
     identities: "Identities and social responsibility",
     exploration: "Exploration",
+    social: "Social development",
+    emotional: "Emotional development",
+    physical: "Physical development",
+    cognitive: "Cognitive development",
   },
   fr: {
     belonging: "Appartenance",
@@ -47,6 +52,10 @@ const domainLabels = {
     diversity: "Diversité et responsabilité",
     identities: "Identités et responsabilité",
     exploration: "Exploration",
+    social: "Développement social",
+    emotional: "Développement affectif",
+    physical: "Développement physique",
+    cognitive: "Développement cognitif",
   },
 } as const;
 
@@ -68,6 +77,7 @@ const en: Omit<StoriesCopy, "domains"> = {
   lead: "Write one story for one enrolled child. Pick the provincial framework. No photos.",
   parentLead: "Stories from your child's centre. Only you can see them here.",
   child: "Child",
+  centre: "Centre",
   framework: "Framework",
   domain: "Area",
   observed: "Observed on",
@@ -84,6 +94,7 @@ const en: Omit<StoriesCopy, "domains"> = {
     flight: "Flight",
     elf: "ELF",
     accueillir: "Accueillir la petite enfance",
+    "early-returns": "Early Returns (Manitoba)",
   },
 };
 
@@ -95,6 +106,7 @@ const fr: Omit<StoriesCopy, "domains"> = {
   lead: "Écrivez une histoire pour un enfant inscrit. Choisissez le cadre provincial. Pas de photo.",
   parentLead: "Les histoires du centre de votre enfant. Vous seul pouvez les lire ici.",
   child: "Enfant",
+  centre: "Garderie",
   framework: "Cadre",
   domain: "Domaine",
   observed: "Observé le",
@@ -111,6 +123,7 @@ const fr: Omit<StoriesCopy, "domains"> = {
     flight: "Flight",
     elf: "ELF",
     accueillir: "Accueillir la petite enfance",
+    "early-returns": "Early Returns (Manitoba)",
   },
 };
 

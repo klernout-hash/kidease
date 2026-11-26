@@ -49,6 +49,18 @@ export async function listAccessibleDaycareIds(sql: Sql, userId: string): Promis
   return [...new Set([...owned, ...members])];
 }
 
+/**
+ * Owner centres plus centres where this login is a manager. Staff and
+ * read-only memberships are left out: owner numbers (insights, team) are not theirs (B05).
+ */
+export async function listOwnerOrManagerDaycareIds(sql: Sql, userId: string): Promise<string[]> {
+  const [owned, members] = await Promise.all([listOwnedDaycareIds(sql, userId), listMemberGrants(sql, userId)]);
+  const managed = members
+    .filter((row) => row.role === "manager" || row.preset === "manager")
+    .map((row) => row.daycareId);
+  return [...new Set([...owned, ...managed])];
+}
+
 export async function loadCentreRole(
   sql: Sql,
   userId: string,

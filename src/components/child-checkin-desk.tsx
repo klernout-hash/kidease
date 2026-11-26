@@ -10,6 +10,7 @@ import { featureCopy } from "@/lib/flagged-feature-copy";
 import { localePath } from "@/lib/locale-path";
 import { centreClockLabel } from "@/lib/parent-arrival";
 import {
+  cancelMyChildAbsence,
   correctChildCheck,
   listDoorRoster,
   listMyCheckHistory,
@@ -20,6 +21,20 @@ import {
 import type { Locale } from "@/lib/types";
 import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
+
+/** Short labels for the parent absence report on both desks. */
+function absenceWords(locale: Locale) {
+  const fr = locale === "fr";
+  return {
+    title: fr ? "Absences signalées par les parents aujourd’hui" : "Parent absence reports today",
+    badge: (status: string) =>
+      fr
+        ? `Avis du parent : ${status === "sick" ? "malade" : status === "vacation" ? "en vacances" : "absent(e)"}`
+        : `Parent report: ${status === "sick" ? "sick" : status === "vacation" ? "on vacation" : "away"}`,
+    undo: fr ? "Annuler l’absence" : "Cancel absence",
+    undone: fr ? "Absence annulée. Le centre est avisé." : "Absence cancelled. The centre has been told.",
+  };
+}
 
 function when(iso: string, locale: Locale, timeZone?: string | null) {
   return centreClockLabel(iso, locale === "fr" ? "fr" : "en", timeZone || "America/Winnipeg");
@@ -46,12 +61,27 @@ export function ChildCheckinDesk() {
   function load() {
     return listDoorRoster()
       .then(setDesk)
-      .catch(() => setDesk({ enabled: false, children: [], events: [], headcount: 0, canCorrect: false }));
+      .catch(() => setDesk({ enabled: false, children: [], events: [], headcount: 0, canCorrect: false, absences: [] }));
   }
 
   useEffect(() => {
     void load();
   }, []);
+  const absenceCopy = absenceWords(locale);
+  if (desk && !desk.enabled && "absences" in desk && desk.absences.length) {
+    return (
+      <section className="mt-8 w-full max-w-3xl" data-ke="centre-parent-absences">
+        <h2 className="font-display text-2xl">{absenceCopy.title}</h2>
+        <ul className="mt-3 space-y-2">
+          {desk.absences.map((row) => (
+            <li key={row.bookingId} className="rounded-xl bg-surface p-3 ring-1 ring-border text-sm">
+              <span className="font-semibold">{row.childName}</span> · {row.daycareName} · {absenceCopy.badge(row.status)}
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  }
   if (!desk?.enabled) return null;
 
   return (
@@ -84,6 +114,11 @@ export function ChildCheckinDesk() {
                   <p className="mt-1 text-base font-medium" data-ke="attendance-status">
                     {statusWord(child.status, copy)}
                   </p>
+                  {"parentReport" in child && child.parentReport ? (
+                    <p className="mt-1 inline-flex rounded-full bg-surface-2 px-3 py-1 text-sm font-medium ring-1 ring-border" data-ke="centre-parent-absence">
+                      {absenceCopy.badge(child.parentReport)}
+                    </p>
+                  ) : null}
                 </div>
               </div>
               {child.next === "check_out" && child.pickups.length ? (
@@ -335,7 +370,8 @@ export function ChildCheckHistory() {
               <div className="mt-3 border-t border-border pt-3" data-ke="parent-absence-notice">
                 <h3 className="text-sm font-semibold">{t("careParentNoticeDay").replace("{date}", child.localDay)}</h3>
                 <p className="mt-1 text-sm text-muted">{t("careParentNoticeLead")}</p>
-                {child.parentReport ? (
+                {/* Once the centre checks the child in, the parent's absence report is stale (B-org #44). */}
+                {child.parentReport && !child.events.some((event) => event.action === "check_in") ? (
                   <p className="mt-2 text-sm" data-ke="parent-reported-absence">
                     {t("careParentReported").replace("{status}", t(child.parentReport === "sick" ? "careSick" : child.parentReport === "vacation" ? "careVacation" : "careAbsent"))}
                   </p>
@@ -363,6 +399,28 @@ export function ChildCheckHistory() {
                       {t(status === "sick" ? "careReportSick" : status === "vacation" ? "careReportVacation" : "careReportAbsent")}
                     </Button>
                   ))}
+                  {child.parentReport ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      data-ke="parent-absence-undo"
+                      disabled={Boolean(busy)}
+                      onClick={() => {
+                        setBusy(child.bookingId);
+                        setMessage("");
+                        void cancelMyChildAbsence({ data: { bookingId: child.bookingId, locale } })
+                          .then(async (result) => {
+                            setMessage(result.ok ? absenceWords(locale).undone : t("tourRespondFailed"));
+                            if (result.ok) setRows(await listMyChildAttendance());
+                          })
+                          .catch(() => setMessage(t("tourRespondFailed")))
+                          .finally(() => setBusy(""));
+                      }}
+                    >
+                      {absenceWords(locale).undo}
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             </li>

@@ -26,7 +26,8 @@ test("the government desk has five matching pages", () => {
   assert.match(read("src/components/gov/gov-dashboard.tsx"), /data-ke="gov-not-connected"/);
   assert.match(read("src/components/gov/gov-dashboard.tsx"), /data-ke="gov-not-tracked"/);
   assert.match(read("src/components/gov/gov-dashboard.tsx"), /data-ke="gov-reports"/);
-  assert.match(read("src/routes/gov_.change-requests.tsx"), /href: "\/gov"/);
+  // gov #31: unbuilt pages show the unavailable screen instead of a silent redirect.
+  assert.match(read("src/routes/gov_.change-requests.tsx"), /<GovDeskUnavailable locale="en" \/>/);
   assert.match(read("scripts/e2e-smoke.mjs"), /gov-width-1280|width of \[1280, 820, 390\]/);
 });
 

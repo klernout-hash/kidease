@@ -16,6 +16,7 @@ import { captureRankingEvent } from "@/lib/ranking/events";
 import { rankingContextFor } from "@/lib/ranking/context";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { apiErrorMessage } from "@/lib/api-error-copy";
 import {
   formatTourDateChip,
   formatTourSlotRange,
@@ -146,7 +147,8 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
         setSlots(res.slots);
         setEmpty(res.empty);
         setTimezone(res.timezone);
-        const first = draft?.date || res.slots[0]?.date || "";
+        // Start on every future slot (B04: only the first day's slot showed).
+        const first = draft?.date && res.slots.some((slot) => slot.date === draft.date) ? draft.date : "";
         setDate(first);
       })
       .catch(() => {
@@ -194,7 +196,7 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
 
   const name = locale === "fr" ? daycare.nameFr : daycare.name;
   const dates = [...new Set(slots.map((slot) => slot.date))];
-  const daySlots = slots.filter((slot) => slot.date === date);
+  const daySlots = date ? slots.filter((slot) => slot.date === date) : slots;
   const selected = slots.find((slot) => slot.id === windowId) ?? null;
   const guest = !user;
 
@@ -339,7 +341,7 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
       });
     } catch (err) {
       if (!send.live(token)) return;
-      toast.error(err instanceof Error ? err.message : t("tourTimesFailed"));
+      toast.error(apiErrorMessage(err, locale, t("tourTimesFailed")));
     } finally {
       if (send.live(token)) setBusy(false);
     }
@@ -423,6 +425,18 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
                 <fieldset>
                   <legend className="text-sm font-medium">{t("tourTimesPickDate")}</legend>
                   <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto pb-1">
+                    {dates.length > 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => setDate("")}
+                        data-ke="tour-dates-all"
+                        className={`min-h-11 shrink-0 rounded-full px-3 text-sm ring-1 ${
+                          date === "" ? "bg-primary text-primary-fg ring-primary" : "bg-bg ring-border"
+                        }`}
+                      >
+                        {loc === "fr" ? "Toutes les dates" : "All dates"}
+                      </button>
+                    ) : null}
                     {dates.map((day) => (
                       <button
                         key={day}

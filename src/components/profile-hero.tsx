@@ -24,6 +24,7 @@ export function ProfileHeroCard({
   years,
   childCount,
   onEditPhoto,
+  photoLabel,
 }: {
   userId?: string | null;
   photo?: string | null;
@@ -37,6 +38,8 @@ export function ProfileHeroCard({
   childCount?: number | null;
   /** Opens the profile photo picker. The avatar and Edit pill both use it. */
   onEditPhoto?: () => void;
+  /** Pill text. The pill only picks a photo, so say so (B-org #41). */
+  photoLabel?: string;
 }) {
   const { t } = useCopy();
   const daycare = roleId === "daycare";
@@ -84,9 +87,10 @@ export function ProfileHeroCard({
             <button
               type="button"
               onClick={onEditPhoto}
-              className="absolute -bottom-3 left-1/2 inline-flex min-h-11 -translate-x-1/2 items-center rounded-full border border-fg bg-bg px-3 text-sm font-semibold touch-manipulation"
+              data-ke="profile-photo-edit"
+              className="absolute -bottom-3 left-1/2 inline-flex min-h-11 -translate-x-1/2 items-center whitespace-nowrap rounded-full border border-fg bg-bg px-3 text-sm font-semibold touch-manipulation"
             >
-              {t("profileEdit")}
+              {photoLabel ?? t("profileEdit")}
             </button>
           ) : null}
         </div>

@@ -110,6 +110,7 @@ import { paymentSourceLabel } from "@/lib/payment-source";
 import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 import { AdminQueueBootstrapFallback } from "@/components/admin-queue-bootstrap";
 import type { AdminQueueBootstrap } from "@/lib/server/admin-queue-bootstrap";
+import { ADMIN_QUEUE_PAGE, usePagedList } from "@/lib/use-paged-list";
 
 const PROV_ORDER = PROVINCES.map((p) => p.code);
 const PROV_NAME = Object.fromEntries(PROVINCES.map((p) => [p.code, p.name]));
@@ -370,6 +371,7 @@ export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: Admi
     return extras.length ? [...rows, ...extras] : rows;
   }, [filtered, stat, showQaFixtures, q, staffCentres]);
   const verifyListed = stat === "license" || stat === "photo" ? listed : verifyQueue;
+  const verifyPage = usePagedList(verifyListed, ADMIN_QUEUE_PAGE, stat);
   const provinceRows = isAdminCentreListStat(stat) ? listed : filtered;
 
   const byProvince = useMemo(() => {
@@ -734,8 +736,9 @@ export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: Admi
               ) : verifyListed.length === 0 ? (
                 <AdminReviewNotice title="Caught up" body="No claims or licence photos are waiting." marker="empty" />
               ) : (
+                <>
                 <ul className="space-y-4">
-                  {verifyListed.map((c) => (
+                  {verifyPage.shown.map((c) => (
                     <li key={c.daycareId}>
                       <AdminReviewCard
                         centre={c}
@@ -755,6 +758,17 @@ export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: Admi
                     </li>
                   ))}
                 </ul>
+                {verifyPage.more > 0 ? (
+                  <button
+                    type="button"
+                    onClick={verifyPage.showMore}
+                    className="mt-3 inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium ring-1 ring-border hover:ring-fg/40"
+                    data-ke="admin-queue-more"
+                  >
+                    Show {Math.min(ADMIN_QUEUE_PAGE, verifyPage.more)} more ({verifyPage.more} left)
+                  </button>
+                ) : null}
+                </>
               )}
             </div>
           </section>
@@ -854,6 +868,11 @@ export function AdminPage({ initialBootstrap = null }: { initialBootstrap?: Admi
             <LeadStatPanel stat={stat} count={leadCounts[ADMIN_LEAD_STAT_META[stat].countKey]} />
           ) : (
             <section className="mt-8">
+              {canUseOperatorTools(session?.email) ? (
+                <h2 className="mb-3 font-display text-xl" id="admin-site-tools" data-ke="admin-site-tools">
+                  Site tools
+                </h2>
+              ) : null}
               {canUseOperatorTools(session?.email) ? <LocationChecker /> : null}
               {catalogHealth && canUseOperatorTools(session?.email) ? (
                 <p

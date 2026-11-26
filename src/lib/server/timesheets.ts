@@ -35,7 +35,21 @@ function fail(code: string): never {
   throw new Error(`timesheet:${code}`);
 }
 
-async function ensureTimesheetTables() {
+// B05 #29: the two create-if-missing statements ran on every Staff hours load.
+// Run them once per server process; a failed run is retried next time.
+let timesheetTablesReady: Promise<void> | null = null;
+
+function ensureTimesheetTables(): Promise<void> {
+  if (!timesheetTablesReady) {
+    timesheetTablesReady = createTimesheetTables().catch((error) => {
+      timesheetTablesReady = null;
+      throw error;
+    });
+  }
+  return timesheetTablesReady;
+}
+
+async function createTimesheetTables() {
   const sql = await getSql();
   await sql`
     create table if not exists staff_time_entries (
@@ -109,9 +123,11 @@ export const listTimesheets = createServerFn({ method: "GET" })
       };
     }
     const sql = await getSql();
-    await ensureTimesheetTables();
     const { daycareIdsForArea } = await import("@/lib/server/centre-access");
-    const ids = await daycareIdsForArea(sql, context.userId, "schedule", "view");
+    const [, ids] = await Promise.all([
+      ensureTimesheetTables(),
+      daycareIdsForArea(sql, context.userId, "schedule", "view"),
+    ]);
     if (!ids.length) {
       return { enabled: true as const, centres: [], daycareId: "", weekLabel: "", open: [], week: [], totals: [], edits: [] };
     }
@@ -125,7 +141,8 @@ export const listTimesheets = createServerFn({ method: "GET" })
     if (!daycareId) {
       return { enabled: true as const, centres, daycareId: "", weekLabel: week.label, open: [], week: [], totals: [], edits: [] };
     }
-    const rows = await sql<EntryRow>`
+    const [rows, edits] = await Promise.all([
+      sql<EntryRow>`
       select id, staff_name, clock_in_at, clock_out_at
       from staff_time_entries
       where daycare_id = ${daycareId}
@@ -135,21 +152,22 @@ export const listTimesheets = createServerFn({ method: "GET" })
         )
       order by clock_in_at desc
       limit 200
-    `.catch(() => []);
-    const entries = rows.map(toEntry);
-    const open = entries.filter((entry) => !entry.clockOut);
-    const inWeek = entries.filter((entry) => {
-      const start = Date.parse(entry.clockIn);
-      return start >= week.startMs && start < week.endMs;
-    });
-    const edits = await sql<EditRow>`
+    `.catch(() => [] as EntryRow[]),
+      sql<EditRow>`
       select e.id, e.entry_id, e.field_name, e.before_value, e.after_value, e.note, e.created_at, u.name as actor_name
       from staff_time_edits e
       left join "user" u on u.id = e.actor_id
       where e.daycare_id = ${daycareId}
       order by e.created_at desc
       limit 400
-    `.catch(() => []);
+    `.catch(() => [] as EditRow[]),
+    ]);
+    const entries = rows.map(toEntry);
+    const open = entries.filter((entry) => !entry.clockOut);
+    const inWeek = entries.filter((entry) => {
+      const start = Date.parse(entry.clockIn);
+      return start >= week.startMs && start < week.endMs;
+    });
     return {
       enabled: true as const,
       centres: centres.map((row) => ({ id: row.id, name: row.name })),

@@ -33,7 +33,7 @@ test("admin queue shows licence and storefront photos for review", () => {
   assert.match(nav, /id: "verify"/);
   assert.match(queueQuery, /coalesce\(nullif\(btrim\(c\.license_photo\), ''\), nullif\(btrim\(d\.license_photo\), ''\)\) as license_photo/);
   assert.match(queueQuery, /\bd\.photos,/);
-  assert.match(queue, /const withFiles = await overlayStoredLicensePhotos\(sql, rows\)/);
+  assert.match(queue, /overlayStoredLicensePhotos\(sql, rows\),\s+readClaimFraudFlags\(sql,/);
   assert.match(queue, /const photos = firstReviewPhoto\(r\.photos, r\.license_photo\)/);
   assert.match(queue, /licensePhoto: licenseReviewMarker\(licensePhoto\)/);
   assert.match(queue, /storefrontPhoto: storefront \|\| null/);

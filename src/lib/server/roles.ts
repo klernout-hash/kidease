@@ -195,15 +195,22 @@ async function loadAttention(
 export async function resolveAdminAccess(userId: string) {
   const sql = await getSql();
   // Viewing as someone must not create a profile row for them.
-  if (!readViewAsPublic()) {
-    await sql`
-      insert into profiles (user_id, role) values (${userId}, 'parent')
-      on conflict (user_id) do nothing
-    `.catch(() => undefined);
-  }
+  const ensureProfile = readViewAsPublic()
+    ? Promise.resolve()
+    : sql`
+        insert into profiles (user_id, role) values (${userId}, 'parent')
+        on conflict (user_id) do nothing
+      `.then(
+        () => undefined,
+        () => undefined,
+      );
 
-  const stored = parseAppRole(await profileRole(sql, userId));
-  const actor = await lookupUser(userId);
+  // Admin desk test #34: the user row does not wait on the profile insert and role read.
+  const [storedRaw, actor] = await Promise.all([
+    ensureProfile.then(() => profileRole(sql, userId)),
+    lookupUser(userId),
+  ]);
+  const stored = parseAppRole(storedRaw);
   const email = actor.email;
 
   if (!isKidEaseOperatorEmail(email)) {

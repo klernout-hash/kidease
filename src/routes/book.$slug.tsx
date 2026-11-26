@@ -11,6 +11,7 @@ import { getDaycare } from "@/lib/server/daycares";
 import { createSpotRequest } from "@/lib/server/family";
 import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { useCopy } from "@/lib/use-copy";
+import { apiErrorMessage } from "@/lib/api-error-copy";
 import { noteHappyMoment } from "@/lib/store-review";
 import type { Daycare, Schedule } from "@/lib/types";
 
@@ -97,7 +98,7 @@ function BookPage() {
       setSent({ conversationId: res.conversationId });
     } catch (err) {
       if (!send.live(token)) return;
-      toast.error(err instanceof Error ? err.message : t("needSignIn"));
+      toast.error(apiErrorMessage(err, locale, t("needSignIn")));
     } finally {
       if (send.live(token)) setBusy(false);
     }

@@ -12,6 +12,7 @@ import { loadUnifiedAlertDesk, saveUnifiedAlertDesk } from "@/lib/server/unified
 import type { UnifiedAlertType, UnifiedAudience } from "@/lib/unified-alerts";
 import { channelStateLabel, providerChannelState } from "@/lib/channel-state";
 import { useCopy } from "@/lib/use-copy";
+import { confirmSuccess } from "@/lib/success-confirm";
 
 type Group = { id: string; title: string; rows: UnifiedAlertType[] };
 
@@ -260,6 +261,8 @@ export function NotificationPreferences({
       setChannels(next.channels || {});
       setEnabledFlags(next.prefs);
       setNote(copy.saved);
+      // The status line sits above the list; a toast confirms the save where the person is looking.
+      confirmSuccess({ variant: "toast", title: copy.saved });
       close();
     } catch {
       setError(copy.error);

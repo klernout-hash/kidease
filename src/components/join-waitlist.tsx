@@ -13,6 +13,7 @@ import {
 } from "@/lib/server/spot-offers";
 import { pipelineCopy } from "@/lib/pipeline-copy";
 import { useCopy } from "@/lib/use-copy";
+import { apiErrorMessage, localizeApiError } from "@/lib/api-error-copy";
 import { RuntimePaused } from "@/components/runtime-paused";
 import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -92,15 +93,16 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
     void joinDaycareWaitlist({ data: { daycareId, ageGroup, childLabel, note } })
       .then((row) => {
         if (!row.ok) {
-          setError(row.error);
-          toast.error(row.error);
+          const message = localizeApiError(row.error, locale);
+          setError(message);
+          toast.error(message);
           return;
         }
         setMineId(row.id);
         toast.success(copy.joined);
       })
       .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : copy.feeBlocked;
+        const message = apiErrorMessage(err, locale, copy.feeBlocked);
         setError(message);
         toast.error(message);
       })
@@ -117,7 +119,7 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
         toast.success(copy.withdraw);
       })
       .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : copy.feeBlocked;
+        const message = apiErrorMessage(err, locale, copy.feeBlocked);
         setError(message);
       })
       .finally(() => setBusy(false));
