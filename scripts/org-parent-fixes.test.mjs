@@ -58,3 +58,12 @@ test("org #41: the profile page has a name and phone edit, and the photo pill sa
   assert.match(account, /photoLabel=\{locale === "fr" \? "Changer la photo" : "Change photo"\}/);
   assert.match(src("src/components/profile-hero.tsx"), /\{photoLabel \?\? t\("profileEdit"\)\}/);
 });
+
+test("org #42: vault list refetches uncached after upload, and the share toast names the centre", () => {
+  const vault = src("src/components/family-vault.tsx");
+  assert.match(vault, /fetch\("\/api\/family-documents", \{ credentials: "same-origin", cache: "no-store" \}\)/);
+  assert.match(vault, /form\.reset\(\);\s+toast\.success\(t\("familyDocsSaved"\)\);\s+await load\(\);/);
+  assert.match(vault, /centreName \? `\$\{t\("familyDocsShared"\)\} \$\{centreName\}` : undefined/);
+  const api = src("src/routes/api/family-documents.ts");
+  assert.equal((api.match(/"Cache-Control": "private, no-store"/g) || []).length, 2);
+});
