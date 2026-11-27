@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Shell } from "@/components/shell";
+import { useSessionDesks } from "@/components/session-desks";
 import { WiringDesk } from "@/components/wiring-desk";
 import { privateReturnPath } from "@/lib/role-access";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
@@ -17,8 +19,21 @@ export const Route = createFileRoute("/provider_/inspection-sync")({
 
 function Page() {
   const { enabled } = Route.useLoaderData();
-  const { locale } = useCopy();
+  const { locale, t } = useCopy();
+  const { session, ready } = useSessionDesks();
   const fr = locale === "fr";
+  if (!ready) return <ToolPending />;
+  if (!session?.centreOwner) {
+    return (
+      <Shell>
+        <main className="mx-auto max-w-3xl px-4 py-6">
+          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="staff-owner-only">
+            {t("employeeStaffForbidden")}
+          </p>
+        </main>
+      </Shell>
+    );
+  }
   return (
     <WiringDesk
       kicker="KidEase"

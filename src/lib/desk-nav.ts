@@ -418,6 +418,7 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
     if (desk === "daycare" && opts?.centreLinked === false && !BEFORE_CENTRE_NAV.has(item.id)) return false;
+    if (desk === "daycare" && item.id === "screening" && opts?.centreOwner === false) return false;
     if (desk === "daycare" && opts && staffDeskBlocked(item.id, opts)) return false;
     if (item.id === "learning") return opts?.curriculumPack === true;
     if (item.id === "family") return opts?.coparentLink === true || opts?.coparentEmail === true;

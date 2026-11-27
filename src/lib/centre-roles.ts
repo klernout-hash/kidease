@@ -32,6 +32,8 @@ export const CENTRE_INVITE_DUPLICATE = "That email already has access or a pendi
 export const CENTRE_INVITE_NOT_FOUND = "This invite is no longer valid.";
 export const CENTRE_INVITE_EMAIL_MISMATCH =
   "Sign in with the email this invite was sent to.";
+export const CENTRE_INVITE_EMAIL_UNVERIFIED =
+  "Confirm the email this invite was sent to. Use the link in your inbox, then open this invite again.";
 export const CENTRE_STAFF_FORBIDDEN =
   "Staff cannot open Money, contracts, billing, or licence claim.";
 export const CENTRE_REVOKE_OWNER = "The centre owner cannot be revoked from this list.";
@@ -186,7 +188,7 @@ export function centreDeskCaps(role: CentreMemberRole | null | undefined): Centr
     addListing: owner,
     claim: owner,
     employees: owner,
-    screening: centreCanViewDesk(role),
+    screening: role === "owner",
     vacancies: centreCanMutateVacancies(role),
     leadsWrite: centreCanWriteLeads(role),
   };

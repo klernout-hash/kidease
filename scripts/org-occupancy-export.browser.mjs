@@ -71,6 +71,12 @@ const report = {
   },
 };
 const virtual = {
+  "@/components/session-desks": `
+    export function useSessionDesks() {
+      const {state} = window.__orgCsvFixture;
+      return { ready: state !== 'session-loading', session: {centreRole: state === 'staff' ? 'staff' : 'owner'} };
+    }
+  `,
   "@/components/ece-job-desk": "export function EceJobDesk(){return null;}",
   "@/lib/use-copy":
     "export function useCopy(){return {locale:window.__orgCsvFixture.locale,t:key=>key};}",
@@ -223,7 +229,13 @@ test(
           { locale, state, report },
         );
         await page.addScriptTag({ content: script });
-        await page.waitForFunction(() => window.__orgCsvFixture.loads === 1);
+        if (state === "staff") {
+          await page.locator('[data-ke="staff-owner-only"]').waitFor();
+        } else if (state === "session-loading") {
+          await page.getByText(orgCopy(locale).lead, { exact: true }).waitFor();
+        } else {
+          await page.waitForFunction(() => window.__orgCsvFixture.loads === 1);
+        }
         return { context, page, requests };
       }
 
@@ -314,7 +326,7 @@ test(
             await context.close();
           }
         }
-      for (const state of ["loading", "off", "empty"]) {
+      for (const state of ["loading", "off", "empty", "staff", "session-loading"]) {
         const { context, page, requests } = await pageFor("en", 390, state);
         try {
           if (state === "off")
@@ -328,7 +340,12 @@ test(
             0,
           );
           assert.deepEqual(requests, []);
-          results.push({ state, noDownload: "PASS" });
+          const loads = await page.evaluate(() => window.__orgCsvFixture.loads);
+          if (state === "staff" || state === "session-loading") {
+            assert.equal(loads, 0, "do not request owner data without a verified owner session");
+            assert.equal(await page.locator("table").count(), 0);
+          }
+          results.push({ state, noDownload: "PASS", loads });
         } finally {
           await context.close();
         }

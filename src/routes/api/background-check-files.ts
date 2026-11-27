@@ -2,10 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { asUploadPart, inferPrivateDocMime, PRIVATE_DOC_BAD_FILE } from "@/lib/private-docs";
 import { readUploadFile } from "@/lib/server/private-docs";
 import { saveBackgroundCheckFile } from "@/lib/server/background-check-records";
+import { getSql } from "@/lib/db";
+import { screeningOwnerCentreIds } from "@/lib/server/screening-owner-access";
 
 function fail(err: unknown) {
   const message = err instanceof Error ? err.message : "Request failed";
-  const status = message === "Unauthorized" || message === "Not authorized" ? 401 : 400;
+  const status =
+    err instanceof Error && "status" in err && err.status === 403
+      ? 403
+      : message === "Unauthorized" || message === "Not authorized"
+        ? 401
+        : 400;
   return Response.json({ ok: false, error: message }, { status });
 }
 
@@ -16,6 +23,7 @@ export const Route = createFileRoute("/api/background-check-files")({
         try {
           const { requireUserId } = await import("@/lib/auth/verify.server");
           const userId = await requireUserId();
+          await screeningOwnerCentreIds(await getSql(), userId);
           const form = await request.formData();
           const file = asUploadPart(form.get("file"));
           if (!file) throw new Error(PRIVATE_DOC_BAD_FILE);

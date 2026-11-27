@@ -7,7 +7,6 @@ import {
   careStatusBody,
   clampRoomCapacity,
   incidentPostReady,
-  isEnrolledBookingStatus,
   isIncidentKind,
   isMedLogStatus,
   medicationActiveOnDay,
@@ -21,7 +20,7 @@ import {
 import { dailyLogsEnabled } from "@/lib/features";
 import { nid } from "@/lib/utils";
 import { listAccessibleDaycareIds, loadCentreRole } from "./centre-access";
-import { insertCareStatusMessage } from "./daily-care";
+import { insertCareStatusMessage, loadEnrolledBooking } from "./daily-care";
 import {
   canWriteDayNote,
   dayNoteReady,
@@ -167,30 +166,6 @@ async function requireStaffWrite(userId: string, daycareId: string) {
   const sql = await getSql();
   await assertCanWrite(sql, userId, daycareId, "care");
   return sql;
-}
-
-async function loadEnrolledBooking(
-  sql: Awaited<ReturnType<typeof getSql>>,
-  input: { daycareId: string; bookingId?: string | null; parentUserId: string },
-) {
-  const bookingId = String(input.bookingId || "").trim();
-  if (!bookingId) return null;
-  const booking = await sql<{
-    id: string;
-    user_id: string;
-    status: string;
-    conversation_id: string | null;
-    child_id: string | null;
-  }>`
-    select id, user_id, status, conversation_id, child_id
-    from bookings
-    where id = ${bookingId} and daycare_id = ${input.daycareId}
-    limit 1
-  `;
-  if (!booking[0] || !isEnrolledBookingStatus(booking[0].status)) {
-    throw new Error("Daily care is for enrolled children");
-  }
-  return booking[0];
 }
 
 export const listCareOps = createServerFn({ method: "POST" })
@@ -941,7 +916,7 @@ export const assignChildRoom = createServerFn({ method: "POST" })
     await loadEnrolledBooking(sql, {
       daycareId,
       bookingId: data.bookingId,
-      parentUserId: context.userId,
+      parentUserId: null,
     }).catch(() => null);
     const id = nid("cra");
     await sql`
@@ -1043,12 +1018,9 @@ export const saveCareMedication = createServerFn({ method: "POST" })
     const booking = await loadEnrolledBooking(sql, {
       daycareId,
       bookingId: data.bookingId,
-      parentUserId: context.userId,
-    }).catch(() => null);
-    const parentOk = Boolean(
-      (data.parentUserId && data.parentUserId === context.userId) || booking?.user_id === context.userId,
-    );
-    if (!staffOk && !parentOk) throw new Error("Not allowed");
+      parentUserId: staffOk ? null : context.userId,
+    });
+    if (!staffOk && !booking) throw new Error("Not allowed");
     const day = data.startDay && /^\d{4}-\d{2}-\d{2}$/.test(data.startDay) ? data.startDay : todayYmd();
     const endDay = data.endDay && /^\d{4}-\d{2}-\d{2}$/.test(data.endDay) ? data.endDay : null;
     const id = nid("md");
@@ -1058,9 +1030,10 @@ export const saveCareMedication = createServerFn({ method: "POST" })
         name, dosage, instructions, schedule_times, start_day, end_day, created_by
       )
       values (
-        ${id}, ${daycareId}, ${data.bookingId ?? booking?.id ?? null},
-        ${data.conversationId ?? booking?.conversation_id ?? null}, ${childName},
-        ${data.parentUserId ?? booking?.user_id ?? (parentOk ? context.userId : null)},
+        ${id}, ${daycareId}, ${booking ? booking.id : null},
+        ${booking ? booking.conversation_id : (data.conversationId ?? null)},
+        ${booking ? booking.child_name : childName},
+        ${booking ? booking.user_id : (data.parentUserId ?? null)},
         ${name}, ${dosage}, ${String(data.instructions || "").trim().slice(0, 1000)},
         ${serializeScheduleTimes(times)}::jsonb, ${day}, ${endDay}, ${context.userId}
       )
@@ -1177,7 +1150,7 @@ export const submitCareIncident = createServerFn({ method: "POST" })
     await loadEnrolledBooking(sql, {
       daycareId,
       bookingId: data.bookingId,
-      parentUserId: context.userId,
+      parentUserId: null,
     }).catch(() => null);
     const day = data.day && /^\d{4}-\d{2}-\d{2}$/.test(data.day) ? data.day : todayYmd();
     const occurredAt = data.occurredAt && !Number.isNaN(Date.parse(data.occurredAt)) ? data.occurredAt : new Date().toISOString();
