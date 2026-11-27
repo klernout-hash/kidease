@@ -58,6 +58,7 @@ import {
 } from "@/lib/auth/login-funnel";
 import { clearLoginSubmitted, markLoginSubmitted, takeLoginBounce } from "@/lib/auth/login-bounce";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { waitToShowNativeLogin } from "@/lib/auth/native-login-presentation";
 import { canContinueAdminSession } from "@/lib/server/reauth";
 import { isNative, isStandalone } from "@/lib/native";
 import { showKeepMeSignedIn } from "@/lib/persistent-session";
@@ -381,6 +382,7 @@ export function LoginScreen({
   const continued = useRef(false);
   const attempt = useRef(0);
   const [stalled, setStalled] = useState(false);
+  const [nativeResume, setNativeResume] = useState<"idle" | "opening" | "signed-out">("idle");
   const [passkeyOffer, setPasskeyOffer] = useState(false);
 
   const appShell = isNative() || isStandalone() || storeChannel !== "web";
@@ -421,6 +423,7 @@ export function LoginScreen({
     const id = window.setTimeout(() => {
       attempt.current += 1;
       const released = releaseStuckLogin("stall");
+      setNativeResume("idle");
       continued.current = released.keepContinued;
       submitLock.current = false;
       setBusy(released.busy);
@@ -456,7 +459,10 @@ export function LoginScreen({
     if (sessionPending || !user || busy || continued.current) return;
     if (sanitizeNativeOAuthError(search.error)) return;
     if (search.step === "role" && !facebookSignupRole(role)) return;
-    if (consumeJustSignedOut()) return;
+    if (consumeJustSignedOut()) {
+      setNativeResume("signed-out");
+      return;
+    }
     const next = search.next || "";
     let bounceRaw: string | null = null;
     try {
@@ -482,6 +488,7 @@ export function LoginScreen({
     }
     const id = ++attempt.current;
     continued.current = true;
+    setNativeResume("opening");
     setBusy(true);
     setStalled(false);
     setError(null);
@@ -532,6 +539,7 @@ export function LoginScreen({
         return;
       }
       const released = releaseStuckLogin("open-failed");
+      setNativeResume("idle");
       continued.current = released.keepContinued;
       setError(released.error);
       setBusy(released.busy);
@@ -917,6 +925,15 @@ export function LoginScreen({
   }
 
   const pickingRole = search.step === "role" && !facebookSignupRole(role);
+  const waitingForNativeSession = waitToShowNativeLogin({
+    native: hideAdmin,
+    explicitFlow: mode !== "in" || pickingRole || search.expired === "1" || Boolean(sanitizeNativeOAuthError(search.error)),
+    sessionPending,
+    hasUser: Boolean(user),
+    resume: nativeResume,
+    busy,
+    interrupted: stalled || Boolean(error) || passkeyOffer,
+  });
 
   useEffect(() => {
     if (!pickingRole) return;
@@ -967,11 +984,17 @@ export function LoginScreen({
               <BrandMark size="md" />
             </div>
             <h1 className="mt-4 font-display text-2xl sm:mt-6 sm:text-3xl">
-              {pickingRole ? t("facebookRoleTitle") : mode === "up" && !operator && role !== "provider" ? t("createParentAccount") : title}
+              {waitingForNativeSession ? t("openingDesk") : pickingRole ? t("facebookRoleTitle") : mode === "up" && !operator && role !== "provider" ? t("createParentAccount") : title}
             </h1>
-            <p className="mt-2 text-sm text-muted" data-ke="login-lead">
-              {pickingRole ? t("facebookRoleLead") : busy && !error ? t("openingDesk") : lead}
-            </p>
+            {waitingForNativeSession ? (
+              <p className="mt-2 text-sm text-muted" role="status" data-ke="native-session-opening">
+                {locale === "fr" ? "Vérification de votre session…" : "Checking your session…"}
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-muted" data-ke="login-lead">
+                {pickingRole ? t("facebookRoleLead") : busy && !error ? t("openingDesk") : lead}
+              </p>
+            )}
             {search.expired === "1" && !error && !pickingRole ? (
               <p className="mt-3 rounded-xl bg-surface-2 p-3 text-sm" role="status" data-ke="login-expired">
                 {t("authSignInTimedOut")}
@@ -1011,7 +1034,7 @@ export function LoginScreen({
                 Use email and password for this address.
               </p>
             ) : null}
-          {passkeyOffer && !pickingRole ? (
+          {waitingForNativeSession ? null : passkeyOffer && !pickingRole ? (
             <PasskeyOffer
               busy={busy}
               error={error}
