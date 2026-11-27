@@ -1371,19 +1371,12 @@ export function SearchScreen({
         // would turn a radius search into a whole-city search.
         const postal = postalSearchLabel(label);
         applyPlace(postal ? { ...hit, label: postal } : hit, label);
-        return;
+        return true;
       }
-      noteSearch(label);
-      const kept = (incoming.q || origin.label || "").trim();
-      writeExploreSearch({
-        q: kept || undefined,
-        name: label,
-        from: needBy,
-        to: needUntil,
-      });
-      return;
+      return false;
     }
     writeExploreSearch({ q: origin.label, name: nameQuery, from: needBy, to: needUntil });
+    return true;
   }
 
   function followDevice(pos: { lat: number; lng: number; accuracyM?: number }) {
@@ -2231,7 +2224,7 @@ export function SearchScreen({
           }}
           onStartChange={(start) => writeNowLoopSearch({ start })}
           onLocate={() => void geo()}
-          onSubmit={(typed) => void applyQuery(typed)}
+          onSubmit={applyQuery}
         />
         <div className="mt-1 flex flex-wrap items-start gap-x-4">
         {recentSearches.length ? (
@@ -2243,7 +2236,9 @@ export function SearchScreen({
                   key={item.label}
                   type="button"
                   className="inline-flex min-h-11 max-w-full items-center rounded-full bg-surface px-3 text-sm ring-1 ring-border"
-                  onClick={() => void applyQuery(item.label)}
+                  onClick={async () => {
+                    if (!(await applyQuery(item.label))) toast.error(t("searchWhereNotFound"));
+                  }}
                 >
                   <span className="truncate">{item.label}</span>
                 </button>

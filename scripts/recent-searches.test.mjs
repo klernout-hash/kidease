@@ -26,7 +26,11 @@ test("recent searches stay on the phone, newest first, and skip blanks", () => {
   assert.match(copy, /recentSearches: "Recherches récentes"/);
   assert.match(search, /data-ke="recent-searches"/);
   assert.match(search, /writeRecentSearches/);
-  // A typed postal code keeps its own label before applyPlace.
-  assert.match(search, /if \(hit\) \{[^}]*const postal = postalSearchLabel\(label\);\s*applyPlace\(postal \? \{ \.\.\.hit, label: postal \} : hit, label\);\s*return;\s*\}\s*noteSearch\(label\);/s);
+  // A resolved postal code is remembered verbatim; an unresolved location is not recorded.
+  const submit = search.slice(search.indexOf("async function applyQuery"), search.indexOf("function followDevice"));
+  assert.match(submit, /const postal = postalSearchLabel\(label\);\s*applyPlace\(postal \? \{ \.\.\.hit, label: postal \} : hit, label\);\s*return true;\s*\}\s*return false;/);
+  assert.doesNotMatch(submit, /noteSearch\(label\)/);
+  assert.match(search, /noteSearch\(place\.label, replace\)/);
+  assert.match(search, /rememberSearch\(prior, label\)/);
   assert.doesNotMatch(readFileSync(join(root, "src/lib/recent-searches.ts"), "utf8"), /fetch\(|DATABASE_URL/);
 });

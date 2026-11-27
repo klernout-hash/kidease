@@ -542,6 +542,7 @@ export const fr = {
     findChildcare: "Trouver une place",
     searchWhere: "Où",
     searchWhereHint: "Chercher une destination",
+    searchWhereNotFound: "Lieu introuvable. Essayez une ville et une province ou un code postal.",
     whereSuggested: "Destinations suggérées",
     whereNearby: "À proximité",
     whereNearbyHint: "Trouver une garderie près de vous",

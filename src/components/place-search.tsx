@@ -145,6 +145,8 @@ export function PlaceSearch({
   name,
   ariaLabel,
   ariaLabelledBy,
+  ariaDescribedBy,
+  invalid,
   emptyMenu,
   onCentre,
 }: {
@@ -160,6 +162,8 @@ export function PlaceSearch({
   name?: string;
   ariaLabel?: string;
   ariaLabelledBy?: string;
+  ariaDescribedBy?: string;
+  invalid?: boolean;
   /** Shown on focus before a city is typed. Nearby stays first. */
   emptyMenu?: WhereEmptyMenu;
   /** A daycare name in the Where box opens that listing. */
@@ -333,6 +337,8 @@ export function PlaceSearch({
         aria-autocomplete="list"
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={invalid}
         autoComplete="off"
         onBlur={(event) => {
           const next = event.relatedTarget as Node | null;
