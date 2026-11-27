@@ -86,6 +86,49 @@ async function postCareThreadNotice(input: {
   return true;
 }
 
+export type EnrolledBooking = {
+  id: string;
+  user_id: string;
+  conversation_id: string | null;
+  child_id: string | null;
+  child_name: string;
+};
+
+/**
+ * One read binds the booking, its family, thread, and child name so writes use
+ * this row instead of request fields. `parentUserId: null` is for centre staff;
+ * otherwise the booking must belong to that user.
+ */
+export async function loadEnrolledBooking(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  input: { daycareId: string; bookingId?: string | null; parentUserId: string | null },
+): Promise<EnrolledBooking | null> {
+  const bookingId = String(input.bookingId || "").trim();
+  if (!bookingId) return null;
+  const booking = await sql<EnrolledBooking & { status: string }>`
+    select b.id, b.user_id, b.status, b.conversation_id, b.child_id,
+           coalesce(ch.name, b.parent_name, 'Child') as child_name
+    from bookings b
+    left join children ch on ch.id = b.child_id
+    where b.id = ${bookingId} and b.daycare_id = ${input.daycareId}
+    limit 1
+  `;
+  const row = booking[0];
+  if (!row || !isEnrolledBookingStatus(row.status)) {
+    throw new Error("Daily care is for enrolled children");
+  }
+  if (input.parentUserId !== null && row.user_id !== input.parentUserId) {
+    throw new Error("Not allowed");
+  }
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    conversation_id: row.conversation_id,
+    child_id: row.child_id,
+    child_name: row.child_name,
+  };
+}
+
 /** In-app note only. Attendance, medication, and incident lines do not email. */
 export async function insertCareStatusMessage(input: {
   conversationId: string | null;
