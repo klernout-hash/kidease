@@ -5,7 +5,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { shouldShowAnalyticsConsentBanner } from "@/lib/analytics-consent";
 import { isNative } from "@/lib/native";
 import { nativeShellPrompt } from "@/lib/native-prompt";
-import { registerPushDevice } from "@/lib/push-client";
+import { pushPermissionStillPending, registerPushDevice } from "@/lib/push-client";
 import { pushExplainCopy, pushPromptStep } from "@/lib/push-prompt";
 import { useCopy } from "@/lib/use-copy";
 import type { AlertAudience } from "@/lib/alert-push";
@@ -63,6 +63,7 @@ function PushChoice({ audience }: { audience: AlertAudience }) {
   const [consentSettled, setConsentSettled] = useState(false);
   const [opened, setOpened] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!isNative()) return;
@@ -74,26 +75,37 @@ function PushChoice({ audience }: { audience: AlertAudience }) {
     void (async () => {
       const { Preferences } = await import("@capacitor/preferences");
       const choice = await Preferences.get({ key: CHOICE_KEY });
-      if (choice.value === "yes" || choice.value === "no" || cancelled) return;
+      if (choice.value === "no" || cancelled) return;
       const { getPushClientStatus } = await import("@/lib/server/push-api");
       const status = await getPushClientStatus();
-      if (!cancelled) setEligible(status.enabled === true);
+      if (!status.enabled || cancelled) return;
+      const available = choice.value !== "yes" || await pushPermissionStillPending(samsungPush);
+      if (!cancelled) setEligible(available);
     })().catch(() => undefined);
     return () => {
       cancelled = true;
       observer.disconnect();
     };
-  }, []);
+  }, [samsungPush]);
 
   async function choose(value: "yes" | "no") {
     if (busy || !consentSettled || shouldShowAnalyticsConsentBanner() || document.documentElement.dataset.cookieBanner) return;
     setBusy(true);
+    setFailed(false);
     try {
       const { Preferences } = await import("@capacitor/preferences");
+      if (value === "yes") {
+        const result = await registerPushDevice({ enabled: true, samsungFallback: samsungPush });
+        if (!result.ok) {
+          setFailed(true);
+          return;
+        }
+      }
       await Preferences.set({ key: CHOICE_KEY, value });
       setEligible(false);
       setOpened(false);
-      if (value === "yes") await registerPushDevice({ enabled: true, samsungFallback: samsungPush });
+    } catch {
+      setFailed(true);
     } finally {
       setBusy(false);
     }
@@ -105,11 +117,12 @@ function PushChoice({ audience }: { audience: AlertAudience }) {
     <section data-ke="push-explain" aria-labelledby={title} className="mt-4 rounded-xl bg-bg p-3 ring-1 ring-border">
       <h3 id={title} className="text-base font-semibold text-fg">{copy.title}</h3>
       <p className="mt-1 text-sm text-muted">{copy.body}</p>
+      {failed ? <p className="mt-2 text-sm text-fg" role="status">{copy.retry}</p> : null}
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button type="button" className="min-h-11" disabled={busy} onClick={() => void choose("yes").catch(() => undefined)}>
+        <Button type="button" className="min-h-11" disabled={busy} onClick={() => void choose("yes")}>
           {t("pushExplainYes")}
         </Button>
-        <Button type="button" variant="secondary" className="min-h-11" disabled={busy} onClick={() => void choose("no").catch(() => undefined)}>
+        <Button type="button" variant="secondary" className="min-h-11" disabled={busy} onClick={() => void choose("no")}>
           {t("pushExplainNo")}
         </Button>
       </div>

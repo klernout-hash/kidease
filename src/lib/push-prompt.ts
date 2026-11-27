@@ -17,6 +17,9 @@ export function pushExplainCopy(audience: "parent" | "daycare" | "admin", locale
   const fr = locale === "fr";
   return {
     title: fr ? "Notifications sur ce téléphone" : "Notifications on this phone",
+    retry: fr
+      ? "Les notifications ne sont pas activées. Réessayez ou vérifiez les réglages de votre téléphone."
+      : "Notifications are still off. Try again or check your phone settings.",
     body: audience === "daycare"
       ? fr ? "Recevez les nouvelles demandes et les messages des familles de votre centre." : "Get new requests and family messages for your centre."
       : audience === "admin"

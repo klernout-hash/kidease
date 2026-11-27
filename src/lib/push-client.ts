@@ -13,6 +13,20 @@ export type PushRegisterResult =
 
 let registrationListening = false;
 
+/** A prior Yes can predate the grant. Only check the OS here, never ask it. */
+export async function pushPermissionStillPending(samsungFallback: boolean): Promise<boolean> {
+  if (!isNative() || nativePlatform() === "web") return false;
+  const channel = readClientStoreChannel();
+  if (samsungPushFallback(samsungFallback, channel, readClientPlayServices()) === "skip" ||
+      amazonBuildOnAmazonDevice({ userAgent: navigator.userAgent }) || googleServicesHidden(channel)) return false;
+  try {
+    const { PushNotifications } = await import("@capacitor/push-notifications");
+    return pushPermissionDecision((await PushNotifications.checkPermissions()).receive) === "ask";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Native Capacitor registration. No-ops on www and when the caller has not
  * confirmed FEATURE_PUSH is on. Safe to call from NativeBoot.
@@ -49,7 +63,7 @@ export async function registerPushDevice(opts?: { enabled?: boolean; samsungFall
       return { ok: false, reason: "denied", error: "Notifications are off for KidEase." };
     }
     const receive = decision === "ask" ? (await PushNotifications.requestPermissions()).receive : current.receive;
-    if (pushPermissionDecision(receive) === "denied") {
+    if (pushPermissionDecision(receive) !== "register") {
       return { ok: false, reason: "denied", error: "Notifications are off for KidEase." };
     }
     if (!registrationListening) {

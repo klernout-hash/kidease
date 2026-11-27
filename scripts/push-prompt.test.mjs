@@ -37,4 +37,7 @@ test("push boot is non-visual and in-flow explainer requires a tap", async () =>
   assert.doesNotMatch(component, /\bfixed\b|\babsolute\b|dataset\.nativePrompt/);
   assert.match(component, /allowPermissionPrompt: false/);
   assert.match(client, /decision === "ask" && opts.allowPermissionPrompt === false/);
+  assert.match(client, /pushPermissionDecision\(receive\) !== "register"/);
+  assert.match(component, /choice\.value !== "yes" \|\| await pushPermissionStillPending\(samsungPush\)/);
+  assert.match(component, /if \(!result\.ok\) \{\s*setFailed\(true\);\s*return;\s*\}\s*\}\s*await Preferences\.set/);
 });
