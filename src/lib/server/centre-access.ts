@@ -94,6 +94,26 @@ export async function hasCentreDeskAccess(sql: Sql, userId: string, daycareId: s
   return (await loadCentreRole(sql, userId, daycareId)) !== null;
 }
 
+/**
+ * Opening a family file a parent shared with this centre. Owners may. Active
+ * members need the documents view grant; read-only logins never may.
+ * "absent" means no tie to the centre, so the share is not revealed.
+ */
+export async function familyFileAccess(
+  sql: Sql,
+  userId: string,
+  daycareId: string,
+): Promise<"allowed" | "denied" | "absent"> {
+  const owned = await listOwnedDaycareIds(sql, userId);
+  if (owned.includes(daycareId)) return "allowed";
+  const membership = (await listMemberGrants(sql, userId)).find((row) => row.daycareId === daycareId) ?? null;
+  const role = parseCentreMemberRole(membership?.role);
+  if (!membership || !role) return "absent";
+  if (role === "read_only") return "denied";
+  const decision = decideStaffArea({ ownsTarget: false, membership, hasOtherCentre: false, area: "documents", need: "view" });
+  return decision.ok ? "allowed" : "denied";
+}
+
 export async function listMemberGrants(sql: Sql, userId: string): Promise<MemberAccess[]> {
   const rich = await sql<{
     daycare_id: string;
