@@ -17,7 +17,7 @@ let registrationListening = false;
  * Native Capacitor registration. No-ops on www and when the caller has not
  * confirmed FEATURE_PUSH is on. Safe to call from NativeBoot.
  */
-export async function registerPushDevice(opts?: { enabled?: boolean; samsungFallback?: boolean }): Promise<PushRegisterResult> {
+export async function registerPushDevice(opts?: { enabled?: boolean; samsungFallback?: boolean; allowPermissionPrompt?: boolean }): Promise<PushRegisterResult> {
   if (opts?.enabled !== true) {
     return { ok: false, reason: "disabled", error: PUSH_DISABLED_MESSAGE };
   }
@@ -45,6 +45,9 @@ export async function registerPushDevice(opts?: { enabled?: boolean; samsungFall
     const { PushNotifications } = await import("@capacitor/push-notifications");
     const current = await PushNotifications.checkPermissions();
     const decision = pushPermissionDecision(current.receive);
+    if (decision === "ask" && opts.allowPermissionPrompt === false) {
+      return { ok: false, reason: "denied", error: "Notifications are off for KidEase." };
+    }
     const receive = decision === "ask" ? (await PushNotifications.requestPermissions()).receive : current.receive;
     if (pushPermissionDecision(receive) === "denied") {
       return { ok: false, reason: "denied", error: "Notifications are off for KidEase." };
