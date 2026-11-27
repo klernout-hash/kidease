@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseStatus } from "@tanstack/react-start/server";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
@@ -16,8 +17,17 @@ export const listOrgOccupancy = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     if (!orgDashboardEnabled()) return { enabled: false as const, sites: [], totals: orgTotals([]) };
     const sql = await getSql();
-    const ids = await listAccessibleDaycareIds(sql, context.userId);
-    if (!ids.length) return { enabled: true as const, sites: [], totals: orgTotals([]) };
+    const ownerCentres = await sql<{ daycare_id: string }>`
+      select daycare_id from provider_daycares where user_id = ${context.userId}
+      union
+      select daycare_id from centre_members
+      where user_id = ${context.userId} and status = 'active' and role = 'owner'
+    `;
+    const ids = ownerCentres.map(({ daycare_id }) => daycare_id);
+    if (!ids.length) {
+      setResponseStatus(403);
+      return { enabled: true as const, denied: true as const, sites: [], totals: orgTotals([]) };
+    }
     const rows = await sql.query<{
       id: string;
       name: string;
