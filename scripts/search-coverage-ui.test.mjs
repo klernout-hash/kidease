@@ -34,6 +34,15 @@ test("map counts keep mapped pins separate from observed coverage", () => {
   assert.doesNotMatch(searchMapCount(0, 0, fallback, "en"), /matching|at least|all|no centres/i);
 });
 
+test("a ready map with no pins never substitutes the matching listing count", () => {
+  assert.equal(searchMapCount(0, 2, complete, "en"), "0 mapped · 2 licensed centres");
+  assert.equal(searchMapCount(0, 2, complete, "fr"), "0 centres sur la carte · 2 centres permis");
+  const route = readFileSync(new URL("../src/routes/search.tsx", import.meta.url), "utf8");
+  assert.match(route, /searchPins: searchMapPins/);
+  assert.match(route, /searchMapCount\(\s*searchMapPins\.length,/);
+  assert.match(route, /searchMapPins\.length < currentMapResult\.total/);
+});
+
 for (const [pins, mapped] of [
   [0, "0 centres sur la carte"],
   [1, "1 centre sur la carte"],

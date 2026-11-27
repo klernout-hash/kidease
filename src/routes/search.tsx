@@ -1074,7 +1074,7 @@ export function SearchScreen({
   ) : (
     <div className="text-sm text-muted" role="status" data-ke="search-map-count">
       <p>{searchMapCount(
-        currentMapResult.pins.length > 0 ? currentMapResult.pins.length : resultTotal,
+        searchMapPins.length,
         Math.max(currentMapResult.total, resultTotal),
         currentMapResult.evidence,
         locale,
@@ -1085,7 +1085,7 @@ export function SearchScreen({
           <Button type="button" variant="secondary" size="sm" onClick={retrySearch} disabled={refreshing}>{mapCoverage.retry}</Button>
           <Link to={localePath("/", locale)} search={{ change: "1" }} className="inline-flex min-h-11 items-center underline">{mapCoverage.changeArea}</Link>
         </div>
-      ) : currentMapResult.pins.length < currentMapResult.total ? (
+      ) : searchMapPins.length < currentMapResult.total ? (
         <p>{locale === "fr" ? "Certaines fiches ne sont pas affichées sur la carte." : "Some listings are not shown on the map."}</p>
       ) : null}
     </div>
