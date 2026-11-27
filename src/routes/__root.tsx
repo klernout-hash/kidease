@@ -22,7 +22,7 @@ import { NativeBoot } from "@/components/native-boot";
 const NativeCommerceStrip = lazy(() =>
   import("@/components/native-commerce-strip").then((m) => ({ default: m.NativeCommerceStrip })),
 );
-const PushExplain = lazy(() => import("@/components/push-explain").then((m) => ({ default: m.PushExplain })));
+const PushRegistrationBoot = lazy(() => import("@/components/push-explain").then((m) => ({ default: m.PushRegistrationBoot })));
 const GetAlertsPrompt = lazy(() =>
   import("@/components/get-alerts-prompt").then((m) => ({ default: m.GetAlertsPrompt })),
 );
@@ -395,7 +395,7 @@ function RootDocument() {
           <NativeBoot />
           <Suspense fallback={null}>
             <NativeCommerceStrip />
-            <PushExplain />
+            <PushRegistrationBoot />
             {nativeShell ? null : <GetAlertsPrompt />}
           </Suspense>
           <PostHogBoot captureExceptions={posthogErrors} />

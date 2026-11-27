@@ -39,5 +39,8 @@ test("the Galaxy Store link and the no-Play-services fallback turn on separately
   assert.doesNotMatch(SAMSUNG_PUSH_FALLBACK_MESSAGE, /government|state/i);
   assert.deepEqual(samsungPlatformContext({ FEATURE_SAMSUNG_STORE_LINK: "1" }), { samsungStore: true });
   assert.match(src("src/lib/push-client.ts"), /samsungPushFallback/);
-  assert.match(src("src/components/push-explain.tsx"), /samsungFallback: true/);
+  const explainer = src("src/components/push-explain.tsx");
+  assert.match(explainer, /\.samsungPush === true/);
+  assert.match(explainer, /allowPermissionPrompt: false, samsungFallback: samsungPush/);
+  assert.match(explainer, /registerPushDevice\(\{ enabled: true, samsungFallback: samsungPush \}\)/);
 });
