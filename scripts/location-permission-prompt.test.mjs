@@ -71,3 +71,11 @@ test("both boot reads explicitly disallow prompting", () => {
     assert.match(source, /getDeviceLocation\(\{ precise: true, allowPrompt: false \}\)/);
   }
 });
+
+test("an explicit successful read refreshes the watch even with remembered app consent", () => {
+  const search = readFileSync(new URL("../src/routes/search.tsx", import.meta.url), "utf8");
+  const presence = readFileSync(new URL("../src/lib/use-presence.ts", import.meta.url), "utf8");
+  assert.match(search, /useLivePresence\(locationConsent === "granted", locationPermissionRevision\)/);
+  assert.match(search, /async function geo\(\)[\s\S]*?if \(pos\) \{[\s\S]*?refreshLocationPermission\(\(revision\) => revision \+ 1\)/);
+  assert.match(presence, /\[active, permissionRevision\]/);
+});
