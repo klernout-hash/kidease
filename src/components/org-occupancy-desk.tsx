@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { EceJobDesk } from "@/components/ece-job-desk";
+import { useSessionDesks } from "@/components/session-desks";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { gapCopy } from "@/lib/gap-features";
@@ -25,7 +26,24 @@ function downloadCsv(report: OrgOccupancyCsvReport, locale: string) {
   }
 }
 
+function OccupancyOwnerOnly() {
+  const { t } = useCopy();
+  return (
+    <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="staff-owner-only">
+      {t("employeeStaffForbidden")}
+    </p>
+  );
+}
+
 export function OrgOccupancyDesk() {
+  const { locale } = useCopy();
+  const { session, ready } = useSessionDesks();
+  if (!ready) return <p className="text-sm text-muted">{orgCopy(locale).lead}</p>;
+  if (session?.centreRole !== "owner") return <OccupancyOwnerOnly />;
+  return <OwnerOccupancyDesk key={session.email ?? undefined} />;
+}
+
+function OwnerOccupancyDesk() {
   const { locale } = useCopy();
   const copy = orgCopy(locale);
   const gap = gapCopy(locale === "fr" ? "fr" : "en");
@@ -42,6 +60,7 @@ export function OrgOccupancyDesk() {
       );
   }, []);
   if (!desk) return <p className="text-sm text-muted">{copy.lead}</p>;
+  if ("denied" in desk && desk.denied) return <OccupancyOwnerOnly />;
   if (!desk.enabled)
     return (
       <EmptyState

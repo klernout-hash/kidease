@@ -1888,6 +1888,9 @@ async function runSignedInSessions(page, base) {
         try {
           await page.locator('[data-ke="account-save-details"]').click();
           await page.locator('[data-ke="success-toast"]').waitFor({ state: "visible", timeout: timeoutMs });
+          // The toast follows the contact save, before consent/profile work finishes.
+          // Do not reload the edit URL while the successful save is still closing it.
+          await waitUntilEditClosed(page);
           afterSave = page.url();
         } finally {
           page.off("request", watchUpdate);

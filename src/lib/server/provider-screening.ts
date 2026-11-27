@@ -5,10 +5,8 @@ import {
   SCREENING_FORBIDDEN,
   SCREENING_PERSON_NAME,
   centreCanManageScreening,
-  centreCanViewScreening,
   centreEarnsScreeningOnFile,
   decideAdminScreeningReview,
-  decideScreeningAccess,
   deskRoleToScreeningRole,
   visibleScreeningStatus,
   isHomeBasedForScreening,
@@ -21,7 +19,7 @@ import {
   type ScreeningRole,
 } from "@/lib/provider-screening";
 import type { CentreMemberRole } from "@/lib/centre-roles";
-import { loadCentreRole } from "@/lib/server/centre-access";
+import { requireScreeningOwner, screeningOwnerCentreIds, screeningServerFn } from "@/lib/server/screening-owner-access";
 import { requireAdmin, resolveAdminAccess } from "@/lib/server/roles";
 import { writeTrustEvent } from "@/lib/server/trust";
 import { nid } from "@/lib/utils";
@@ -421,45 +419,25 @@ async function loadCentreScreening(
 
 export const listProviderScreening = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }): Promise<ScreeningDeskPayload> => {
+  .handler(async ({ context }): Promise<ScreeningDeskPayload> => screeningServerFn(async () => {
     const sql = await getSql();
-    const centres = await sql<{ id: string; name: string }>`
-      select d.id, d.name
-      from daycares d
-      where exists (
-        select 1 from provider_daycares p
-        where p.daycare_id = d.id and p.user_id = ${context.userId}
-      ) or exists (
-        select 1 from centre_members m
-        where m.daycare_id = d.id and m.user_id = ${context.userId} and m.status = 'active'
-      )
-      order by d.name
-    `.catch(() => []);
+    const centreIds = await screeningOwnerCentreIds(sql, context.userId);
     const views: ScreeningCentreView[] = [];
-    let canManage = false;
-    for (const centre of centres) {
-      const role = await loadCentreRole(sql, context.userId, centre.id);
-      if (!centreCanViewScreening(role)) continue;
-      if (centreCanManageScreening(role)) canManage = true;
-      const view = await loadCentreScreening(sql, centre.id, context.userId, role);
+    for (const centreId of centreIds) {
+      await requireScreeningOwner(sql, context.userId, centreId);
+      const view = await loadCentreScreening(sql, centreId, context.userId, "owner");
       if (view) views.push(view);
     }
-    return { centres: views, canManage };
-  });
+    return { centres: views, canManage: true };
+  }));
 
 export const addScreeningPerson = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { daycareId: string; name: string; role: string }) => input)
-  .handler(async ({ context, data }) => {
+  .handler(async ({ context, data }) => screeningServerFn(async () => {
     const sql = await getSql();
     const daycareId = data.daycareId.trim();
-    const role = await loadCentreRole(sql, context.userId, daycareId);
-    const gate = decideScreeningAccess({
-      actorRole: role,
-      actorUserId: context.userId,
-      action: "add_person",
-    });
-    if (!gate.ok) throw new Error(gate.error);
+    await requireScreeningOwner(sql, context.userId, daycareId);
     const name = data.name.trim().slice(0, 120);
     if (name.length < 2) throw new Error(SCREENING_PERSON_NAME);
     if (!isScreeningRole(data.role) || data.role === "owner" || data.role === "director") {
@@ -478,19 +456,17 @@ export const addScreeningPerson = createServerFn({ method: "POST" })
       note: `Added ${data.role} for private screening checklist.`,
     });
     return { ok: true as const, id };
-  });
+  }));
 
 export const generateScreeningLetter = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { daycareId: string; personId: string; kind: string; locale?: "en" | "fr" }) => input)
-  .handler(async ({ context, data }) => {
+  .handler(async ({ context, data }) => screeningServerFn(async () => {
+    const sql = await getSql();
+    await requireScreeningOwner(sql, context.userId, data.daycareId);
     if (!isScreeningDocKind(data.kind) || data.kind !== "vsc") {
       throw new Error("Letters are only for Vulnerable Sector Check requests.");
     }
-    const sql = await getSql();
-    const role = await loadCentreRole(sql, context.userId, data.daycareId);
-    const { canWrite, centreActionDenied } = await import("@/lib/centre-roles");
-    if (!canWrite(role, "screening")) throw centreActionDenied("write");
     const person = await sql<PersonRow>`
       select id, daycare_id, member_id, user_id, screening_role, display_name, archived_at
       from provider_screening_people
@@ -499,13 +475,6 @@ export const generateScreeningLetter = createServerFn({ method: "POST" })
     `.catch(() => []);
     const row = person[0];
     if (!row || row.archived_at) throw new Error(SCREENING_FORBIDDEN);
-    const gate = decideScreeningAccess({
-      actorRole: role,
-      actorUserId: context.userId,
-      targetUserId: row.user_id,
-      action: centreCanManageScreening(role) ? "manage" : "act_own",
-    });
-    if (!gate.ok) throw new Error(gate.error);
     const centre = await sql<{ name: string; province: string }>`
       select name, province from daycares where id = ${data.daycareId} limit 1
     `;
@@ -534,7 +503,7 @@ export const generateScreeningLetter = createServerFn({ method: "POST" })
         generatedOn,
       }),
     };
-  });
+  }));
 
 export async function saveScreeningUpload(input: {
   userId: string;
@@ -547,6 +516,8 @@ export async function saveScreeningUpload(input: {
   issuedOn?: string;
   expiresOn?: string;
 }) {
+  const sql = await getSql();
+  await requireScreeningOwner(sql, input.userId, input.daycareId);
   if (!isScreeningDocKind(input.kind)) throw new Error(SCREENING_FORBIDDEN);
   const parsed = parsePrivateUpload({
     body: input.body,
@@ -554,10 +525,6 @@ export async function saveScreeningUpload(input: {
     filename: input.filename,
   });
   if (!parsed.ok) throw new Error(parsed.error);
-  const sql = await getSql();
-  const role = await loadCentreRole(sql, input.userId, input.daycareId);
-  const { canWrite, centreActionDenied } = await import("@/lib/centre-roles");
-  if (!canWrite(role, "screening")) throw centreActionDenied("write");
   const person = await sql<PersonRow>`
     select id, daycare_id, member_id, user_id, screening_role, display_name, archived_at
     from provider_screening_people
@@ -566,13 +533,6 @@ export async function saveScreeningUpload(input: {
   `.catch(() => []);
   const row = person[0];
   if (!row || row.archived_at) throw new Error(SCREENING_FORBIDDEN);
-  const gate = decideScreeningAccess({
-    actorRole: role,
-    actorUserId: input.userId,
-    targetUserId: row.user_id,
-    action: centreCanManageScreening(role) ? "manage" : "act_own",
-  });
-  if (!gate.ok) throw new Error(gate.error);
   const stored = await persistPrivateDoc({
     prefix: R2_SCREENING_PREFIX,
     keyTail: screeningObjectTail({
@@ -620,6 +580,8 @@ export async function saveScreeningUpload(input: {
 
 export async function authorizeScreeningDocument(input: { userId: string; documentId: string }) {
   const sql = await getSql();
+  const admin = (await resolveAdminAccess(input.userId)).ok;
+  const ownerCentreIds = admin ? null : await screeningOwnerCentreIds(sql, input.userId);
   const rows = await sql<{
     id: string;
     daycare_id: string;
@@ -633,21 +595,12 @@ export async function authorizeScreeningDocument(input: { userId: string; docume
     from provider_screening_documents d
     join provider_screening_people p on p.id = d.person_id
     where d.id = ${input.documentId}
+      and (${ownerCentreIds}::text[] is null or d.daycare_id = any(${ownerCentreIds}::text[]))
     limit 1
   `.catch(() => []);
   const row = rows[0];
   if (!row?.storage_ref) throw new Error("File not found");
-  const admin = (await resolveAdminAccess(input.userId)).ok;
-  if (!admin) {
-    const role = await loadCentreRole(sql, input.userId, row.daycare_id);
-    const gate = decideScreeningAccess({
-      actorRole: role,
-      actorUserId: input.userId,
-      targetUserId: row.user_id,
-      action: centreCanManageScreening(role) ? "manage" : "act_own",
-    });
-    if (!gate.ok) throw new Error(gate.error);
-  }
+  if (!admin) await requireScreeningOwner(sql, input.userId, row.daycare_id);
   return row;
 }
 
@@ -665,7 +618,8 @@ export const uploadScreeningDocument = createServerFn({ method: "POST" })
       expiresOn?: string;
     }) => input,
   )
-  .handler(async ({ context, data }) => {
+  .handler(async ({ context, data }) => screeningServerFn(async () => {
+    await requireScreeningOwner(await getSql(), context.userId, data.daycareId);
     const parsed = parsePrivateUpload({
       dataUrl: data.dataUrl,
       mime: data.mime,
@@ -683,12 +637,12 @@ export const uploadScreeningDocument = createServerFn({ method: "POST" })
       issuedOn: data.issuedOn,
       expiresOn: data.expiresOn,
     });
-  });
+  }));
 
 export const getScreeningDocumentFile = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { documentId: string }) => input)
-  .handler(async ({ context, data }) => {
+  .handler(async ({ context, data }) => screeningServerFn(async () => {
     const row = await authorizeScreeningDocument({
       userId: context.userId,
       documentId: data.documentId,
@@ -699,7 +653,7 @@ export const getScreeningDocumentFile = createServerFn({ method: "POST" })
       mime: file.mime,
       filename: file.filename,
     };
-  });
+  }));
 
 export const listAdminScreeningQueue = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
