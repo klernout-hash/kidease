@@ -54,17 +54,30 @@ function fromCoords(coords: { latitude: number; longitude: number; accuracy?: nu
   };
 }
 
+async function browserLocationAlreadyGranted(): Promise<boolean> {
+  try {
+    return typeof navigator !== "undefined" &&
+      (await navigator.permissions?.query({ name: "geolocation" }))?.state === "granted";
+  } catch {
+    return false;
+  }
+}
+
 /** Precise location while the app is in use. Never request background location. */
-export async function getDeviceLocation(opts?: { precise?: boolean }): Promise<DeviceLocation | null> {
+export async function getDeviceLocation(opts?: { precise?: boolean; allowPrompt?: boolean }): Promise<DeviceLocation | null> {
   const enableHighAccuracy = opts?.precise !== false;
+  const allowPrompt = opts?.allowPrompt !== false;
   const huawei = googleServicesHidden(readClientStoreChannel());
   if (huawei) {
+    // The HMS bridge does not expose a reliable read-only permission check.
+    if (!allowPrompt) return null;
     const { huaweiDeviceLocation } = await import("./huawei-location");
     return huaweiDeviceLocation(opts);
   }
-  if (isNative() && !huawei) {
+  if (isNative()) {
     try {
       const { Geolocation } = await import("@capacitor/geolocation");
+      if (!allowPrompt && (await Geolocation.checkPermissions()).location !== "granted") return null;
       const pos = await Geolocation.getCurrentPosition({
         enableHighAccuracy,
         timeout: 12000,
@@ -75,6 +88,7 @@ export async function getDeviceLocation(opts?: { precise?: boolean }): Promise<D
     }
   }
   if (typeof navigator === "undefined" || !navigator.geolocation) return null;
+  if (!allowPrompt && !(await browserLocationAlreadyGranted())) return null;
   return new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve(fromCoords(pos.coords)),
@@ -84,36 +98,44 @@ export async function getDeviceLocation(opts?: { precise?: boolean }): Promise<D
   });
 }
 
+/** Automatic updates must never start a permission prompt. */
 export function watchDeviceLocation(onFix: (pos: DeviceLocation) => void): () => void {
   let stopped = false;
-  if (isNative() && !googleServicesHidden(readClientStoreChannel())) {
+  if (googleServicesHidden(readClientStoreChannel())) return () => {};
+  if (isNative()) {
     let watchId: string | undefined;
-    void import("@capacitor/geolocation").then(({ Geolocation }) => {
+    void import("@capacitor/geolocation").then(async ({ Geolocation }) => {
       if (stopped) return;
-      void Geolocation.watchPosition({ enableHighAccuracy: true, timeout: 12000 }, (pos) => {
+      const { location } = await Geolocation.checkPermissions();
+      if (stopped || location !== "granted") return;
+      const id = await Geolocation.watchPosition({ enableHighAccuracy: true, timeout: 12000 }, (pos) => {
         if (stopped || !pos) return;
         onFix(fromCoords(pos.coords));
-      }).then((id) => {
-        watchId = id;
       });
-    });
+      if (stopped) await Geolocation.clearWatch({ id });
+      else watchId = id;
+    }).catch(() => {});
     return () => {
       stopped = true;
       if (!watchId) return;
-      void import("@capacitor/geolocation").then(({ Geolocation }) => {
-        void Geolocation.clearWatch({ id: watchId! });
-      });
+      const id = watchId;
+      void import("@capacitor/geolocation").then(({ Geolocation }) => Geolocation.clearWatch({ id })).catch(() => {});
     };
   }
   if (typeof navigator === "undefined" || !navigator.geolocation) return () => {};
-  const id = navigator.geolocation.watchPosition(
-    (pos) => onFix(fromCoords(pos.coords)),
-    () => {},
-    { enableHighAccuracy: true, timeout: 12000, maximumAge: 8_000 },
-  );
+  const geolocation = navigator.geolocation;
+  let id: number | undefined;
+  void browserLocationAlreadyGranted().then((granted) => {
+    if (!granted || stopped) return;
+    id = geolocation.watchPosition(
+      (pos) => { if (!stopped) onFix(fromCoords(pos.coords)); },
+      () => {},
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 8_000 },
+    );
+  }).catch(() => {});
   return () => {
     stopped = true;
-    navigator.geolocation.clearWatch(id);
+    if (id !== undefined) geolocation.clearWatch(id);
   };
 }
 

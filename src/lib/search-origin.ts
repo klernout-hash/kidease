@@ -69,7 +69,7 @@ export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOri
     consent,
     savedTrusted: Boolean(saved),
   });
-  const pos = askGps ? await getDeviceLocation({ precise: true }) : null;
+  const pos = askGps ? await getDeviceLocation({ precise: true, allowPrompt: false }) : null;
   if (stale()) return;
   if (pos && consent !== "granted") setLocationConsent("granted");
   const gpsAllowed = Boolean(pos) || consent === "granted";
