@@ -354,6 +354,7 @@
   "findChildcare": "Buscar cuidado infantil",
   "searchWhere": "Dónde",
   "searchWhereHint": "Buscar destinos",
+  "searchWhereNotFound": "No se encontró la ubicación. Prueba con una ciudad y provincia o un código postal.",
   "whereSuggested": "Destinos sugeridos",
   "whereNearby": "Cerca",
   "whereNearbyHint": "Buscar cuidado infantil cerca de ti",

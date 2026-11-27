@@ -354,6 +354,7 @@
   "findChildcare": "Kinderbetreuung finden",
   "searchWhere": "Wo",
   "searchWhereHint": "Ziele suchen",
+  "searchWhereNotFound": "Ort nicht gefunden. Gib eine Stadt und Provinz oder eine Postleitzahl ein.",
   "whereSuggested": "Vorgeschlagene Ziele",
   "whereNearby": "In der Nähe",
   "whereNearbyHint": "Kinderbetreuung in Ihrer Nähe finden",

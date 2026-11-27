@@ -37,11 +37,13 @@ test("a real parent at a public centre uses the live keys only when the live swi
 });
 
 test("a QA account uses test keys even at a real centre", () => {
-  assert.equal(payerUsesTestStripe({ email: "klernout45@gmail.com" }), true);
-  assert.equal(payerUsesTestStripe({ email: "reviewer-parent@kidease.ca" }), true);
-  assert.equal(payerUsesTestStripe({ email: "kyle+qa-parent2@kidease.ca" }), true);
+  // Only the server-set profiles.is_test flag counts. Anyone can sign up with any email.
+  assert.equal(payerUsesTestStripe({ email: "klernout45@gmail.com" }), false);
+  assert.equal(payerUsesTestStripe({ email: "reviewer-parent@kidease.ca" }), false);
+  assert.equal(payerUsesTestStripe({ email: "kyle+qa-parent2@kidease.ca" }), false);
   assert.equal(payerUsesTestStripe({ email: "kyle@kidease.ca", isTest: 0 }), false);
   assert.equal(payerUsesTestStripe({ email: "parent@example.com", isTest: 1 }), true);
+  assert.equal(payerUsesTestStripe({ isTest: true }), true);
   const mode = paymentStripeMode({ payerQa: true, centreQa: false, liveEnabled: true });
   assert.equal(mode, "test");
   const keys = stripeCredentialsForMode(mode, env);

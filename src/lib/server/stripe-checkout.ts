@@ -397,7 +397,9 @@ export async function retrieveStripeCheckoutSession(
   id?: string;
   payment_status?: string | null;
   status?: string | null;
+  livemode?: boolean | null;
   amount_total?: number | null;
+  currency?: string | null;
   payment_intent?: string | { id?: string } | null;
 }> {
   const id = sessionId.trim();
