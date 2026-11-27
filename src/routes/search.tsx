@@ -573,6 +573,7 @@ export function SearchScreen({
   const [anchorsHydrated, setAnchorsHydrated] = useState(false);
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
+  const [locationPermissionRevision, refreshLocationPermission] = useState(0);
   const [askLocation, setAskLocation] = useState(false);
   const [mapEnabled, setMapEnabled] = useState(false);
   const publicMap = useRuntimeSwitches().publicMap;
@@ -586,7 +587,7 @@ export function SearchScreen({
   const mapGate = useRef(createSearchRequestGate());
   const pageAbort = useRef<AbortController | null>(null);
   const mapAbort = useRef<AbortController | null>(null);
-  useLivePresence(locationConsent === "granted");
+  useLivePresence(locationConsent === "granted", locationPermissionRevision);
 
   const splitMap = useSplitMap() && storeChannel !== "huawei";
   const showSplitMap = splitMap && view !== "map";
@@ -1398,8 +1399,13 @@ export function SearchScreen({
       return;
     }
     const pos = await getDeviceLocation({ precise: true });
-    if (pos) followDevice(pos);
-    else setLocationConsent("denied");
+    if (pos) {
+      // The OS may have just granted permission while app consent stayed granted.
+      refreshLocationPermission((revision) => revision + 1);
+      followDevice(pos);
+    } else {
+      setLocationConsent("denied");
+    }
   }
 
   async function allowLocation() {

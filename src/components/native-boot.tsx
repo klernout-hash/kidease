@@ -316,14 +316,14 @@ export function NativeBoot() {
     setLocated(true);
     let cancelled = false;
     const consent = readLocationConsent();
-    // Only after an earlier "Near me" tap. The first ask comes from that tap.
+    // Remembered consent permits silent refresh, not a new system prompt.
     const askGps = consent === "granted";
     if (!askGps) {
       return () => {
         cancelled = true;
       };
     }
-    void getDeviceLocation({ precise: true }).then((pos) => {
+    void getDeviceLocation({ precise: true, allowPrompt: false }).then((pos) => {
       if (cancelled) return;
       if (pos) {
         const state = useAppStore.getState();
