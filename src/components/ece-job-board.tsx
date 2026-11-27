@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
-import { useSessionDesks } from "@/components/session-desks";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { Button } from "@/components/ui/button";
 import { eceJobCopy } from "@/lib/ece-jobs";
 import { localePath } from "@/lib/locale-path";
@@ -68,9 +68,9 @@ export function EceJobBoard({
 } = {}) {
   const { locale } = useCopy();
   const { celebrate } = useSuccessConfirm();
-  const { session, ready } = useSessionDesks();
-  const ownerEmail = ready && session?.centreRole === "owner" ? session.email : null;
-  const [loadedOwnerEmail, setLoadedOwnerEmail] = useState<string | null>(null);
+  const { user, isPending } = useCurrentUserState();
+  const accountId = isPending ? null : user?.id ?? null;
+  const [loadedOwnerId, setLoadedOwnerId] = useState<string | null>(null);
   const lang = locale === "fr" ? "fr" : "en";
   const copy = eceJobCopy(lang);
   const [enabled, setEnabled] = useState(initialEnabled);
@@ -88,17 +88,8 @@ export function EceJobBoard({
       if (!live) return;
       setEnabled(on);
       if (!on) return;
-      const [open, mine, people] = await Promise.all([
-        listPublicEceJobs().catch(() => initialJobs),
-        ownerEmail ? listMyCentresForJobs().catch(() => []) : [],
-        ownerEmail ? listMyEceApplicants().catch(() => []) : [],
-      ]);
-      if (!live) return;
-      setJobs(open);
-      setCentres(mine);
-      setDaycareId(mine[0]?.id || "");
-      setApplicants(people);
-      setLoadedOwnerEmail(ownerEmail ?? null);
+      const open = await listPublicEceJobs().catch(() => initialJobs);
+      if (live) setJobs(open);
     };
     if (initialEnabled) {
       void load(true);
@@ -114,10 +105,25 @@ export function EceJobBoard({
     return () => {
       live = false;
     };
-  }, [initialEnabled, ownerEmail]);
+  }, [initialEnabled]);
+
+  useEffect(() => {
+    if (!enabled || !accountId) return;
+    let live = true;
+    void listMyCentresForJobs().catch(() => []).then(async (mine) => {
+      if (!live || mine.length === 0) return;
+      const people = await listMyEceApplicants().catch(() => []);
+      if (!live) return;
+      setCentres(mine);
+      setDaycareId(mine[0].id);
+      setApplicants(people);
+      setLoadedOwnerId(accountId);
+    });
+    return () => { live = false; };
+  }, [enabled, accountId]);
 
   if (!enabled) return null;
-  const showOwnerTools = Boolean(ownerEmail && ownerEmail === loadedOwnerEmail && centres.length);
+  const showOwnerTools = Boolean(accountId && accountId === loadedOwnerId && centres.length);
 
   return (
     <section className="mt-8" data-ke="ece-jobs">
