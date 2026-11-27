@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
+import { useSessionDesks } from "@/components/session-desks";
 import { Button } from "@/components/ui/button";
 import { eceJobCopy } from "@/lib/ece-jobs";
 import { localePath } from "@/lib/locale-path";
@@ -67,6 +68,9 @@ export function EceJobBoard({
 } = {}) {
   const { locale } = useCopy();
   const { celebrate } = useSuccessConfirm();
+  const { session, ready } = useSessionDesks();
+  const ownerEmail = ready && session?.centreRole === "owner" ? session.email : null;
+  const [loadedOwnerEmail, setLoadedOwnerEmail] = useState<string | null>(null);
   const lang = locale === "fr" ? "fr" : "en";
   const copy = eceJobCopy(lang);
   const [enabled, setEnabled] = useState(initialEnabled);
@@ -86,14 +90,15 @@ export function EceJobBoard({
       if (!on) return;
       const [open, mine, people] = await Promise.all([
         listPublicEceJobs().catch(() => initialJobs),
-        listMyCentresForJobs().catch(() => []),
-        listMyEceApplicants().catch(() => []),
+        ownerEmail ? listMyCentresForJobs().catch(() => []) : [],
+        ownerEmail ? listMyEceApplicants().catch(() => []) : [],
       ]);
       if (!live) return;
       setJobs(open);
       setCentres(mine);
       setDaycareId(mine[0]?.id || "");
       setApplicants(people);
+      setLoadedOwnerEmail(ownerEmail ?? null);
     };
     if (initialEnabled) {
       void load(true);
@@ -109,9 +114,10 @@ export function EceJobBoard({
     return () => {
       live = false;
     };
-  }, [initialEnabled]);
+  }, [initialEnabled, ownerEmail]);
 
   if (!enabled) return null;
+  const showOwnerTools = Boolean(ownerEmail && ownerEmail === loadedOwnerEmail && centres.length);
 
   return (
     <section className="mt-8" data-ke="ece-jobs">
@@ -136,7 +142,7 @@ export function EceJobBoard({
       ) : (
         <p className="mt-3 text-sm text-muted" data-ke="ece-jobs-empty">{copy.openEmpty}</p>
       )}
-      {centres.length ? (
+      {showOwnerTools ? (
         <form
           className="mt-6 space-y-3"
           onSubmit={(event) => {
@@ -186,7 +192,7 @@ export function EceJobBoard({
           <Button type="submit">{copy.send}</Button>
         </form>
       ) : null}
-      {centres.length ? (
+      {showOwnerTools ? (
         <div className="mt-6">
           <h3 className="font-medium">{copy.applicants}</h3>
           {applicants.length ? (
