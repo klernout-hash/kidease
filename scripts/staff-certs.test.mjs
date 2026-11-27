@@ -71,7 +71,8 @@ test("owner and staff panels, private file storage, and bell alerts are wired", 
   assert.match(provider, /<MyEceCerts \/>/);
   const server = readFileSync(new URL("../src/lib/server/staff-certs.ts", import.meta.url), "utf8");
   assert.match(server, /persistPrivateDoc/);
-  assert.match(server, /if \(!self && !centre\) throw/);
+  assert.match(server, /if \(link\.staffUserId === userId\) return \{ cert, link \}/);
+  assert.match(server, /if \(!centre\) \{\s*setResponseStatus\(403\)/);
   assert.doesNotMatch(server, /sendTransactionalMail|sendSms/);
   const bell = readFileSync(
     new URL("../src/lib/server/pipeline-notifications.ts", import.meta.url),

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { centreCanWriteCare } from "@/lib/centre-roles";
+import { setResponseStatus } from "@tanstack/react-start/server";
 import { loadCentreRole } from "@/lib/server/centre-access";
 import { staffSchedulingEnabled } from "@/lib/features";
 import {
@@ -56,13 +56,12 @@ async function assertCentre(userId: string, daycareId: string) {
   await assertStaffArea(sql, userId, daycareId, "schedule", "view");
 }
 
-/** A read-only member can look. They cannot add a shift or a certificate. */
+/** The legacy editor accepts a name, not a verified staff assignment. */
 async function assertCentreWrite(userId: string, daycareId: string) {
   const sql = await getSql();
-  const { assertStaffArea } = await import("@/lib/server/centre-access");
-  await assertStaffArea(sql, userId, daycareId, "schedule", "edit");
-  const role = await loadCentreRole(sql, userId, daycareId);
-  if (!centreCanWriteCare(role)) throw new Error("You can view this centre. You cannot change it.");
+  if ((await loadCentreRole(sql, userId, daycareId)) === "owner") return;
+  setResponseStatus(403);
+  throw new Error("Only the centre owner can change staff shifts or certificates.");
 }
 
 export const staffDeskStatus = createServerFn({ method: "GET" })
@@ -74,27 +73,33 @@ export const listStaffDesk = createServerFn({ method: "GET" })
   .validator((input: { daycareId?: string } | undefined) => ({ daycareId: String(input?.daycareId || "").trim() }))
   .handler(async ({ context, data }) => {
     if (!staffSchedulingEnabled()) {
-      return { enabled: false as const, centres: [], shifts: [], certs: [], province: "", daycareId: "" };
+      return { enabled: false as const, centres: [], shifts: [], certs: [], province: "", daycareId: "", canManage: false };
     }
     const sql = await getSql();
     await ensureStaffTables();
     const { daycareIdsForArea } = await import("@/lib/server/centre-access");
     const ids = await daycareIdsForArea(sql, context.userId, "schedule", "view");
-    if (!ids.length) return { enabled: true as const, centres: [], shifts: [], certs: [], province: "", daycareId: "" };
+    if (!ids.length) return { enabled: true as const, centres: [], shifts: [], certs: [], province: "", daycareId: "", canManage: false };
     const centres = await sql.query<{ id: string; name: string; province: string }>(
       `select id, name, province from daycares where id = any($1::text[]) order by name`,
       [ids],
     ).catch(() => []);
     const daycareId = centres.some((row) => row.id === data.daycareId) ? data.daycareId : centres[0]?.id || "";
     const province = centres.find((row) => row.id === daycareId)?.province || "";
-    const shifts = daycareId
-      ? await sql<{ id: string; staff_name: string; role: string; room_band: string; starts_at: string | Date; ends_at: string | Date }>`
+    const canManage = !!daycareId && (await loadCentreRole(sql, context.userId, daycareId)) === "owner";
+    type ShiftRow = { id: string; staff_name: string; role: string; room_band: string; starts_at: string | Date; ends_at: string | Date };
+    const shifts = !daycareId ? [] : canManage
+      ? await sql<ShiftRow>`
           select id, staff_name, role, room_band, starts_at, ends_at
           from staff_shifts where daycare_id = ${daycareId}
           order by starts_at desc limit 40
         `
-      : [];
-    const certs = daycareId
+      : await sql<ShiftRow>`
+          select id, staff_name, role, room_band, starts_at, ends_at
+          from staff_shifts where daycare_id = ${daycareId} and staff_user_id = ${context.userId}
+          order by starts_at desc limit 40
+        `.catch(() => []); // Older schemas and unassigned names have no safe self-view.
+    const certs = canManage
       ? await sql<{
           id: string;
           staff_name: string;
@@ -113,6 +118,7 @@ export const listStaffDesk = createServerFn({ method: "GET" })
       centres: centres.map((row) => ({ id: row.id, name: row.name, province: row.province })),
       province,
       daycareId,
+      canManage,
       shifts: shifts.map((row) => ({
         id: row.id,
         staffName: row.staff_name,
