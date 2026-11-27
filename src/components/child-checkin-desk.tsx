@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { Link } from "@tanstack/react-router";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { CustodyCheckoutAlert } from "@/components/phase6-desk";
@@ -306,6 +307,39 @@ export function ChildCheckHistory() {
   const [past, setPast] = useState<Awaited<ReturnType<typeof listMyCheckHistory>> | null>(null);
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
+  const [draft, setDraft] = useState<{
+    bookingId: string; childName: string; localDay: string; status: "absent" | "sick" | "vacation";
+  } | null>(null);
+  const absenceTrigger = useRef<HTMLButtonElement | null>(null);
+  const submittingAbsence = useRef(false);
+  const fr = locale === "fr";
+
+  async function sendAbsence() {
+    if (!draft || submittingAbsence.current) return;
+    submittingAbsence.current = true;
+    setBusy(draft.bookingId);
+    setMessage("");
+    setDraft(null);
+    try {
+      const result = await reportMyChildAbsence({ data: {
+        bookingId: draft.bookingId, status: draft.status, localDay: draft.localDay, locale,
+      } });
+      if (result.ok) {
+        setMessage(t("careParentReportSaved"));
+        await listMyChildAttendance().then(setRows).catch(() => undefined);
+      } else if ("code" in result && result.code === "date-changed") {
+        setMessage(fr ? "La date du centre a changé. Vérifiez la nouvelle date et réessayez." : "The centre’s date changed. Check the new date and try again.");
+        await listMyChildAttendance().then(setRows).catch(() => undefined);
+      } else {
+        setMessage(t("tourRespondFailed"));
+      }
+    } catch {
+      setMessage(t("tourRespondFailed"));
+    } finally {
+      setBusy("");
+      submittingAbsence.current = false;
+    }
+  }
   useEffect(() => {
     void listMyChildAttendance()
       .then(setRows)
@@ -384,16 +418,9 @@ export function ChildCheckHistory() {
                       size="sm"
                       variant="secondary"
                       disabled={Boolean(busy) || child.parentReport === status}
-                      onClick={() => {
-                        setBusy(child.bookingId);
-                        setMessage("");
-                        void reportMyChildAbsence({ data: { bookingId: child.bookingId, status, locale } })
-                          .then(async (result) => {
-                            setMessage(result.ok ? t("careParentReportSaved") : t("tourRespondFailed"));
-                            if (result.ok) setRows(await listMyChildAttendance());
-                          })
-                          .catch(() => setMessage(t("tourRespondFailed")))
-                          .finally(() => setBusy(""));
+                      onClick={(event) => {
+                        absenceTrigger.current = event.currentTarget;
+                        setDraft({ bookingId: child.bookingId, childName: child.childName, localDay: child.localDay, status });
                       }}
                     >
                       {t(status === "sick" ? "careReportSick" : status === "vacation" ? "careReportVacation" : "careReportAbsent")}
@@ -429,6 +456,42 @@ export function ChildCheckHistory() {
       ) : (
         <p className="mt-3 text-sm text-muted">{legacy.checkNone}</p>
       )}
+      <AlertDialog.Root open={Boolean(draft)} onOpenChange={(open) => { if (!open) setDraft(null); }}>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay className="fixed inset-0 z-50 bg-fg/40" />
+          <AlertDialog.Content
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl bg-surface px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-fg shadow-card sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:w-[min(30rem,calc(100%-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
+            data-ke="parent-absence-confirm"
+            onCloseAutoFocus={(event) => {
+              if (absenceTrigger.current && !absenceTrigger.current.disabled) {
+                event.preventDefault();
+                absenceTrigger.current.focus();
+              }
+            }}
+          >
+            <AlertDialog.Title className="font-display text-xl">
+              {fr ? "Confirmer l’avis d’absence" : "Confirm absence report"}
+            </AlertDialog.Title>
+            <AlertDialog.Description asChild>
+              <div className="mt-2 space-y-2 text-sm text-muted">
+                {draft ? (
+                  <p>
+                    <strong>{draft.childName}</strong> · <time dateTime={draft.localDay}>{draft.localDay}</time> ·{" "}
+                    {t(draft.status === "sick" ? "careSick" : draft.status === "vacation" ? "careVacation" : "careAbsent")}
+                  </p>
+                ) : null}
+                <p>{fr ? "Le centre sera avisé seulement après votre confirmation." : "The centre will be notified only after you confirm."}</p>
+              </div>
+            </AlertDialog.Description>
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <AlertDialog.Cancel asChild><Button type="button" variant="secondary">{t("cancel")}</Button></AlertDialog.Cancel>
+              <Button type="button" disabled={Boolean(busy)} onClick={() => void sendAbsence()}>
+                {fr ? "Envoyer l’avis" : "Send report"}
+              </Button>
+            </div>
+          </AlertDialog.Content>
+        </AlertDialog.Portal>
+      </AlertDialog.Root>
       <section className="mt-6" data-ke="care-past-days">
         <h3 className="text-lg font-semibold">{t("carePastDays")}</h3>
         <p className="mt-1 max-w-prose text-sm text-muted">{t("carePastDaysLead")}</p>
