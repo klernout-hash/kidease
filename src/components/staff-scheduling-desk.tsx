@@ -85,7 +85,7 @@ export function StaffSchedulingDesk() {
         if (request !== loadRequest.current) return;
         const text = err instanceof Error && err.message ? err.message : copy.bad;
         setNotice({ kind: "error", text });
-        setDesk((current) => current ?? { enabled: true, centres: [], shifts: [], certs: [], province: "", daycareId: "" });
+        setDesk((current) => current ?? { enabled: true, centres: [], shifts: [], certs: [], province: "", daycareId: "", canManage: false });
       });
   }
 
@@ -102,6 +102,7 @@ export function StaffSchedulingDesk() {
   }
 
   const activeId = daycareId || desk.daycareId || desk.centres[0]?.id || "";
+  const canManage = desk.canManage && desk.daycareId === activeId;
 
   function editSavedShift(row: SavedShift, button: HTMLButtonElement) {
     editButton.current = button;
@@ -151,7 +152,7 @@ export function StaffSchedulingDesk() {
         </label>
       ) : null}
 
-      <form
+      {canManage ? <form
         className="space-y-3 rounded-xl bg-surface p-4 ring-1 ring-border"
         aria-labelledby="staff-shift-form-title"
         onSubmit={(e) => {
@@ -242,9 +243,9 @@ export function StaffSchedulingDesk() {
             {notice.text}
           </p>
         ) : null}
-      </form>
+      </form> : null}
 
-      {desk.shifts.length === 0 ? <p className="text-sm text-muted">{copy.noShifts}</p> : (
+      {desk.daycareId !== activeId ? null : desk.shifts.length === 0 ? <p className="text-sm text-muted">{copy.noShifts}</p> : (
         <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {desk.shifts.map((row) => (
             <li key={row.id} className="flex flex-wrap items-start justify-between gap-3 px-4 py-3 text-sm" data-ke="staff-shift-row">
@@ -258,12 +259,13 @@ export function StaffSchedulingDesk() {
                   {shiftWhen(row.startsAt, row.endsAt, locale)}
                 </p>
               </div>
-              <Button type="button" variant="secondary" disabled={busy || Boolean(editingShift) || desk.daycareId !== activeId} aria-label={`${copy.editShiftTitle}: ${row.staffName}`} onClick={(event) => editSavedShift(row, event.currentTarget)}>{copy.editShift}</Button>
+              {canManage ? <Button type="button" variant="secondary" disabled={busy || Boolean(editingShift)} aria-label={`${copy.editShiftTitle}: ${row.staffName}`} onClick={(event) => editSavedShift(row, event.currentTarget)}>{copy.editShift}</Button> : null}
             </li>
           ))}
         </ul>
       )}
 
+      {canManage ? <>
       <form
         className="space-y-3 rounded-xl bg-surface p-4 ring-1 ring-border"
         onSubmit={(e) => {
@@ -314,6 +316,7 @@ export function StaffSchedulingDesk() {
         </ul>
       )}
 
+      </> : null}
       <form
         className="space-y-3 rounded-xl bg-surface p-4 ring-1 ring-border"
         onSubmit={(e) => {
