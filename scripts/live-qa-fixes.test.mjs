@@ -83,7 +83,8 @@ test("plan links stay hidden until subscriptions are on, and group labels stay v
   assert.ok(parent.find((row) => row.group.id === "account")?.items.some((item) => item.id === "upgrade"));
   const shell = src("src/components/desk-shell.tsx");
   const drawer = src("src/components/nav-drawer.tsx");
-  assert.match(shell, /<span>\{group\.labelKey \? t\(group\.labelKey\) : group\.label\}<\/span>/);
+  assert.match(shell, /<DeskRailGroup[\s\S]*?label=\{group\.labelKey \? t\(group\.labelKey\) : group\.label\}/);
+  assert.match(shell, /<summary[^>]*>\s*<span[^>]*\bwrap-anywhere\b[^>]*>\{label\}<\/span>/);
   assert.match(drawer, /<span>\{group\.labelKey \? t\(group\.labelKey\) : group\.label\}<\/span>/);
   assert.doesNotMatch(drawer, /plan && "max-md:hidden"/);
 });
