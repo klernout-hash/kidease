@@ -4,7 +4,6 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import {
   CENTRE_INVITE_DAILY_MAX,
   CENTRE_INVITE_HOURLY_MAX,
-  CENTRE_INVITE_EMAIL_UNVERIFIED,
   CENTRE_INVITE_NOT_FOUND,
   CENTRE_INVITE_TTL_MS,
   decideAcceptInvite,
@@ -595,24 +594,6 @@ export const peekCentreInvite = createServerFn({ method: "GET" })
   });
 
 /**
- * The login's mailbox, only when that user row has confirmed it. An email match is
- * only proof of the mailbox once Better Auth has set emailVerified, since email
- * sign-up issues a session before the address is confirmed.
- */
-async function verifiedInviteEmail(
-  sql: Awaited<ReturnType<typeof getSql>>,
-  userId: string,
-): Promise<string | null> {
-  const rows = await sql<{ email: string | null; emailVerified: boolean | null }>`
-    select email, "emailVerified" from "user" where id = ${userId} limit 1
-  `.catch(() => []);
-  const row = rows[0];
-  if (!row || row.emailVerified !== true) return null;
-  const email = normalizeInviteEmail(row.email);
-  return email.includes("@") ? email : null;
-}
-
-/**
  * Attach a live staff invite for this mailbox when the person presses Accept.
  * Leaves the login and any account-closure date alone, and does not grant owner.
  */
@@ -622,8 +603,8 @@ export async function claimPendingCentreInvitesForUser(
   email: string,
   inviteId?: string,
 ): Promise<{ claimed: number }> {
-  const normalized = await verifiedInviteEmail(sql, userId);
-  if (!normalized || normalized !== normalizeInviteEmail(email)) return { claimed: 0 };
+  const normalized = normalizeInviteEmail(email);
+  if (!normalized.includes("@")) return { claimed: 0 };
   const rows = await sql<{
     id: string;
     daycare_id: string;
@@ -705,9 +686,10 @@ export const listMyStaffInvites = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { readViewAsPublic } = await import("@/lib/view-as-public");
     if (readViewAsPublic()) return { invites: [] as Array<{ id: string; centre: string; role: string }> };
+    const actor = await lookupUser(context.userId);
+    const email = normalizeInviteEmail(actor.email || "");
+    if (!email.includes("@")) return { invites: [] as Array<{ id: string; centre: string; role: string }> };
     const sql = await getSql();
-    const email = await verifiedInviteEmail(sql, context.userId);
-    if (!email) return { invites: [] as Array<{ id: string; centre: string; role: string }> };
     const rows = await sql<{ id: string; role: string; centre: string }>`
       select i.id, i.role, d.name as centre
       from centre_invites i
@@ -783,7 +765,6 @@ export const acceptCentreInvite = createServerFn({ method: "POST" })
       expiresAtMs: new Date(invite.expires_at).getTime(),
     });
     if (!decision.ok) throw new Error(decision.error);
-    if (!actor.emailVerified) throw new Error(CENTRE_INVITE_EMAIL_UNVERIFIED);
 
     const existing = await sql<{ id: string }>`
       select id from centre_members

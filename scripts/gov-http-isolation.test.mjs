@@ -227,9 +227,9 @@ function familyHarness(overrides = {}) {
   }
   const centreAccess = {
     listAccessibleDaycareIds: async () => { state.centreAccess++; return state.centreIds; },
-    familyFileAccess: async (_sql, _userId, daycareId) => {
+    hasCentreDeskAccess: async (_sql, _userId, daycareId) => {
       state.centreAccess++;
-      return state.centreIds.includes(daycareId) ? "allowed" : "absent";
+      return state.centreIds.includes(daycareId);
     },
   };
   const vault = productionDeclarations("src/lib/server/family-vault.ts", [

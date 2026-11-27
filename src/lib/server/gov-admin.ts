@@ -95,8 +95,8 @@ export const inviteGovUser = createServerFn({ method: "POST" })
       return { ok: false as const, error: "That mailbox cannot become a government account." };
     }
     const sql = await getSql();
-    const users = await sql<{ id: string; role: string | null; emailVerified: boolean | null }>`
-      select u.id, p.role, u."emailVerified"
+    const users = await sql<{ id: string; role: string | null }>`
+      select u.id, p.role
       from "user" u
       left join profiles p on p.user_id = u.id
       where lower(u.email) = ${data.email}
@@ -104,12 +104,6 @@ export const inviteGovUser = createServerFn({ method: "POST" })
     `;
     const existing = users[0];
     if (existing) {
-      if (existing.emailVerified !== true) {
-        return {
-          ok: false as const,
-          error: "That account has not confirmed its email yet. Ask them to use the link in their inbox, then try again.",
-        };
-      }
       const role = String(existing.role || "");
       if (STAFF.has(role)) {
         return { ok: false as const, error: "That account is already a daycare or staff account." };

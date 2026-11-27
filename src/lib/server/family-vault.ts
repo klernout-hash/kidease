@@ -269,22 +269,10 @@ export async function listCentreFamilyDocs(userId: string): Promise<CentreShared
   });
 }
 
-export type FamilyDocumentAccess = {
-  /** "owner": the parent's own file. "share": opened by centre staff through an open share. */
-  access: "owner" | "share";
-  storageRef: string;
-  mime: string;
-  fileName: string;
-};
-
-/**
- * The document row is read once. The caller must use this storageRef, and pick
- * the second-factor audience from `access` before reading the file.
- */
 export async function loadFamilyDocumentFor(input: {
   userId: string;
   documentId: string;
-}): Promise<FamilyDocumentAccess> {
+}): Promise<{ storageRef: string; mime: string; fileName: string }> {
   const sql = await getSql();
   const owned = await sql<{ storage_ref: string; mime: string; file_name: string }>`
     select storage_ref, mime, file_name from family_documents
@@ -292,7 +280,7 @@ export async function loadFamilyDocumentFor(input: {
     limit 1
   `;
   if (owned[0]) {
-    return { access: "owner", storageRef: owned[0].storage_ref, mime: owned[0].mime, fileName: owned[0].file_name };
+    return { storageRef: owned[0].storage_ref, mime: owned[0].mime, fileName: owned[0].file_name };
   }
   const shared = await sql<{ storage_ref: string; mime: string; file_name: string; daycare_id: string; revoked_at: string | Date | null }>`
     select d.storage_ref, d.mime, d.file_name, s.daycare_id, s.revoked_at
@@ -302,20 +290,24 @@ export async function loadFamilyDocumentFor(input: {
     order by s.shared_at desc
     limit 8
   `;
-  const { familyFileAccess } = await import("@/lib/server/centre-access");
-  let refused = false;
+  const { hasCentreDeskAccess } = await import("@/lib/server/centre-access");
   for (const row of shared) {
     if (!shareIsOpen(iso(row.revoked_at))) continue;
-    const decision = await familyFileAccess(sql, input.userId, row.daycare_id);
-    if (decision === "allowed") {
-      return { access: "share", storageRef: row.storage_ref, mime: row.mime, fileName: row.file_name };
+    if (await hasCentreDeskAccess(sql, input.userId, row.daycare_id)) {
+      try {
+        const { loadCentreRole } = await import("@/lib/server/centre-access");
+        const role = await loadCentreRole(sql, input.userId, row.daycare_id);
+        if (role === "read_only") {
+          const denied = new Error("You can look at this centre. You cannot open family files.") as Error & { status: number };
+          denied.status = 403;
+          throw denied;
+        }
+      } catch (err) {
+        const status = err && typeof err === "object" && "status" in err ? (err as { status?: number }).status : 0;
+        if (status === 403) throw err;
+      }
+      return { storageRef: row.storage_ref, mime: row.mime, fileName: row.file_name };
     }
-    if (decision === "denied") refused = true;
-  }
-  if (refused) {
-    const denied = new Error("You can look at this centre. You cannot open family files.") as Error & { status: number };
-    denied.status = 403;
-    throw denied;
   }
   throw Object.assign(new Error("not_found"), { status: 404 });
 }

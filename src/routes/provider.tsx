@@ -151,7 +151,6 @@ const SpotOfferDesk = lazy(() =>
   import("@/components/spot-offer-desk").then((m) => ({ default: m.SpotOfferDesk })),
 );
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
-import { loadProviderDeskBatch } from "@/lib/provider-desk-read";
 
 // Desk editors and reports load when their selected desk renders. Today keeps
 // its existing content while the navigation stays mounted during other loads.
@@ -433,21 +432,34 @@ export function ProviderPage() {
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const provinceLocked = useRef(false);
 
-  // Cache the read, not any component's state update. Feed requests use
-  // independent keys so a slow inbox, tour or pipeline cannot block Today.
-  const deskReadEpoch = useRef(0);
-
+  // One desk bundle. The fetch is shared (deduped) across mounts; every mounted
+  // copy of this page applies the result to its own state. Before, the deduped
+  // call ran load(), which set state on whichever copy started it: a remount
+  // inside the 30 s window (role chrome settling, a back-and-forth tap) got
+  // the cached `true`, never saw listings, and Today stayed empty.
   async function fetchProviderDesk() {
-    const res = await getProvider();
+    const [res, incoming, tourRows, pipelineRows, leadRows] = await Promise.all([
+      getProvider(),
+      listDaycareIncoming().catch(() => [] as SpotRequest[]),
+      listTourRequests({ data: { desk: "centre" } }).catch(() => [] as TourRequest[]),
+      listCentrePipeline().catch(() => [] as PipelineCard[]),
+      listLeadRequests({ data: { desk: "centre" } }).catch(() => [] as LeadRequest[]),
+    ]);
     if (!res || !Array.isArray(res.listings)) throw new Error("provider-listings-unavailable");
-    return res;
+    return { res, incoming, tourRows, pipelineRows, leadRows };
   }
 
-  function applyProviderDesk(res: Awaited<ReturnType<typeof fetchProviderDesk>>) {
-    setListings(res.listings);
-    setStats(Array.isArray(res.stats) ? res.stats : []);
-    setSubscription(res.subscription ?? null);
-    setUpgradeDismissed(Boolean(res.upgradeCardDismissed));
+  function applyProviderDesk(bundle: Awaited<ReturnType<typeof fetchProviderDesk>>) {
+    const { res, incoming, tourRows, pipelineRows, leadRows } = bundle;
+    const nextListings = Array.isArray(res?.listings) ? res.listings : [];
+    setListings(nextListings);
+    setStats(Array.isArray(res?.stats) ? res.stats : []);
+    setSubscription(res?.subscription ?? null);
+    setUpgradeDismissed(Boolean(res?.upgradeCardDismissed));
+    setRequests(Array.isArray(incoming) ? incoming : []);
+    setTours(Array.isArray(tourRows) ? tourRows : []);
+    setPipeline(Array.isArray(pipelineRows) ? pipelineRows : []);
+    setLeads(Array.isArray(leadRows) ? leadRows : []);
     setDeskLoadFailed(false);
   }
 
@@ -459,29 +471,14 @@ export function ProviderPage() {
     });
   }
 
-  async function load(fresh = true) {
-    if (!user?.id || childRoute) return;
-    const readEpoch = ++deskReadEpoch.current;
-    const current = () => readEpoch === deskReadEpoch.current;
-    const key = `provider-desk:${user.id}`;
-    const feed = <T,>(name: string, read: () => Promise<T[]>, apply: (rows: T[]) => void) =>
-      async () => {
-        const rows = await dedupedQuery(`${key}:${name}`, QUERY_STALE_MS, read, { fresh });
-        if (current() && Array.isArray(rows)) apply(rows);
-      };
-    await loadProviderDeskBatch({
-      core: () => dedupedQuery(key, QUERY_STALE_MS, fetchProviderDesk, { fresh }),
-      feeds: [
-        feed("requests", listDaycareIncoming, setRequests),
-        feed("tours", () => listTourRequests({ data: { desk: "centre" } }), setTours),
-        feed("pipeline", listCentrePipeline, setPipeline),
-        feed("leads", () => listLeadRequests({ data: { desk: "centre" } }), setLeads),
-      ],
-      current,
-      applyCore: applyProviderDesk,
-      onCoreFailed: noteDeskLoadFailed,
-      onCoreSettled: () => setDeskSettled(true),
-    });
+  async function load() {
+    try {
+      applyProviderDesk(await fetchProviderDesk());
+    } catch (err) {
+      noteDeskLoadFailed(err);
+    } finally {
+      setDeskSettled(true);
+    }
   }
 
   useEffect(() => {
@@ -491,10 +488,19 @@ export function ProviderPage() {
 
   useEffect(() => {
     if (!user?.id || childRoute) return;
-    void load(false);
+    let live = true;
+    void dedupedQuery(`provider-desk:${user.id}`, QUERY_STALE_MS, fetchProviderDesk)
+      .then((bundle) => {
+        if (live) applyProviderDesk(bundle);
+      })
+      .catch((err: unknown) => {
+        if (live) noteDeskLoadFailed(err);
+      })
+      .finally(() => {
+        if (live) setDeskSettled(true);
+      });
     return () => {
-      // An older response cannot overwrite a retry or data from a later mount.
-      deskReadEpoch.current += 1;
+      live = false;
     };
   }, [user?.id, childRoute]);
 
