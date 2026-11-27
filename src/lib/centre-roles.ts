@@ -186,7 +186,7 @@ export function centreDeskCaps(role: CentreMemberRole | null | undefined): Centr
     addListing: owner,
     claim: owner,
     employees: owner,
-    screening: centreCanViewDesk(role),
+    screening: role === "owner",
     vacancies: centreCanMutateVacancies(role),
     leadsWrite: centreCanWriteLeads(role),
   };

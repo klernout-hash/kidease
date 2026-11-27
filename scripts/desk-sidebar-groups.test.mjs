@@ -78,7 +78,6 @@ const DAYCARE_STAFF = [
   "/provider?desk=documents",
   "/provider?desk=listings",
   "/provider?desk=requests",
-  "/provider?desk=screening",
   "/provider?desk=today",
   "/provider?desk=tours",
 ];

@@ -13,7 +13,12 @@ export const Route = createFileRoute("/api/background-check-files/$id")({
           return privateDocResponse(doc);
         } catch (err) {
           const message = err instanceof Error ? err.message : "Request failed";
-          const status = message === "Unauthorized" || message === "Not authorized" ? 401 : 404;
+          const status =
+            err instanceof Error && "status" in err && err.status === 403
+              ? 403
+              : message === "Unauthorized" || message === "Not authorized"
+                ? 401
+                : 404;
           return Response.json({ ok: false, error: message }, { status });
         }
       },

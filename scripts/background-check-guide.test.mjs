@@ -8,6 +8,8 @@ import {
   BG_ROLES,
   attestationLine,
   backgroundCheckReminder,
+  canRecordBackgroundCheck,
+  canViewBackgroundCheckRecords,
   checksForRole,
   forbiddenPublicPhrase,
   guidePlainText,
@@ -215,5 +217,13 @@ test("each role is represented or explicitly noted", () => {
       const note = row.roleNotes[role];
       assert.ok(checks.length > 0 || note, `${row.code} ${role}`);
     }
+  }
+});
+
+
+test("only the centre owner can read or modify private background-check records", () => {
+  for (const role of ["staff", "read_only", "manager", null, "owner"]) {
+    assert.equal(canViewBackgroundCheckRecords(role), role === "owner", String(role));
+    assert.equal(canRecordBackgroundCheck(role), role === "owner", String(role));
   }
 });

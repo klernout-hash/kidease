@@ -126,27 +126,16 @@ test("self-attest alone does not earn the new public badge", () => {
   assert.match(trust, /staff\.id === "screening_on_file" \|\| staff\.id === "staff_attested"/);
 });
 
-test("owner manages the team; staff only act on their own items", () => {
-  assert.equal(
-    decideScreeningAccess({ actorRole: "staff", actorUserId: "u1", targetUserId: "u1", action: "act_own" }).ok,
-    true,
-  );
-  assert.equal(
-    decideScreeningAccess({ actorRole: "read_only", actorUserId: "u1", targetUserId: "u1", action: "act_own" }).ok,
-    false,
-  );
-  assert.equal(
-    decideScreeningAccess({ actorRole: "staff", actorUserId: "u1", targetUserId: "u2", action: "act_own" }).ok,
-    false,
-  );
-  assert.equal(
-    decideScreeningAccess({ actorRole: "staff", actorUserId: "u1", action: "manage" }).ok,
-    false,
-  );
-  assert.equal(
-    decideScreeningAccess({ actorRole: "owner", actorUserId: "u1", action: "manage" }).ok,
-    true,
-  );
+test("centre screening is owner-only across read, upload, letter and team actions", () => {
+  for (const actorRole of ["staff", "read_only", "manager", null, "owner"]) {
+    for (const action of ["view_all", "view_own", "act_own", "manage", "add_person"]) {
+      assert.equal(
+        decideScreeningAccess({ actorRole, actorUserId: "u1", targetUserId: "u1", action }).ok,
+        actorRole === "owner",
+        `${actorRole} / ${action}`,
+      );
+    }
+  }
 });
 
 test("Admin reject requires a reason; approve only from the review queue", () => {
@@ -295,7 +284,7 @@ test("public copy and desks stay honest and PIPEDA-tight", () => {
   assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /tab === "screening"/);
   assert.match(src("src/routes/provider.tsx"), /desk === "screening"/);
   assert.match(src("src/lib/desk-nav.ts"), /id: "screening"/);
-  assert.doesNotMatch(src("src/lib/desk-nav.ts"), /OWNER_ONLY_NAV = new Set\(\[[^\]]*screening/);
+  assert.match(src("src/lib/desk-nav.ts"), /desk === "daycare" && item.id === "screening" && opts\?\.centreOwner === false/);
   assert.match(src("src/routes/verify.tsx"), /verifyScreeningTitle/);
   assert.match(src("src/routes/daycare-requirements.tsx"), /reqPoliceBody/);
   assert.match(src("src/components/trust-bar.tsx"), /localePath\("\/verify"/);
