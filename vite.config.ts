@@ -355,9 +355,10 @@ export default defineConfig(({ command, isPreview, mode }) => {
               includeDependenciesRecursively: false,
             },
             {
-              // Client JS budget: admin desk route pieces and the admin government tabs.
+              // Group Admin leaf routes and government tabs. Keep admin.tsx separate:
+              // grouping the root produces an undefined client namespace export.
               name: "admin-desk-pages",
-              test: /src[\\/](?:routes[\\/](?:fr\.)?admin[\w.-]*\.tsx\?tsr-split|components[\\/]admin-gov-[\w-]+\.tsx$)/,
+              test: /src[\\/](?:routes[\\/](?:fr\.)?admin[\w.-]+\.tsx\?tsr-split|components[\\/]admin-gov-[\w-]+\.tsx$)/,
               minSize: 0,
               minShareCount: 1,
               includeDependenciesRecursively: false,
