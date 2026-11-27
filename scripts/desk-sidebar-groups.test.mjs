@@ -6,8 +6,10 @@ import { fileURLToPath } from "node:url";
 import {
   DESK_GROUPS,
   sidebarDestinations,
+  visibleDeskGroups,
   visibleDeskNav,
 } from "../src/lib/desk-nav.ts";
+import { STAFF_GRANTS } from "../src/lib/staff-permissions.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -140,4 +142,17 @@ test("messages, daily care, pay, and search alerts update the URL", () => {
   assert.equal(byId.payments?.search?.tab, "payments");
   assert.equal(byId.alerts?.href, "/parent");
   assert.equal(byId.alerts?.search?.tab, "alerts");
+});
+
+test("staff rail omits groups with no destinations and keeps available groups discoverable", () => {
+  const opts = { centreRole: "staff", centreOwner: false, centreLinked: true, centreGrants: { ...STAFF_GRANTS, documents: "none" }, staffTimesheets: true };
+  const groups = visibleDeskGroups("daycare", visibleDeskNav("daycare", opts));
+  assert.ok(groups.every(({ items }) => items.length > 0));
+  assert.equal(groups.some(({ group }) => group.id === "compliance"), false);
+  assert.deepEqual(groups.find(({ group }) => group.id === "team")?.items.map(({ id }) => id), ["hours"]);
+
+  const rail = src("src/components/desk-shell.tsx");
+  assert.match(rail, /<ChevronDown aria-hidden="true"[^>]*group-open\/desk-rail:rotate-180/);
+  assert.match(rail, /if \(activeItem && details.current\) details.current.open = true/);
+  assert.match(rail, /aria-current=\{on \? "page" : undefined\}/);
 });
