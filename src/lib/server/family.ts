@@ -71,7 +71,8 @@ import {
   listAccessibleDaycareIds,
   loadCentreRole,
 } from "@/lib/server/centre-access";
-import { centreCanCreateListing, centreCanMutateVacancies } from "@/lib/centre-roles";
+import { centreCanMutateVacancies } from "@/lib/centre-roles";
+import { assertListingOperator } from "@/lib/server/listing-owner-access";
 import { enqueueProviderCreatedListing } from "@/lib/server/listing-queue";
 import { assertNewListingAllowed } from "@/lib/server/listing-guard";
 import {
@@ -1754,15 +1755,7 @@ export const createListing = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const ownerCount = (
-      await sql<{ n: number }>`
-        select count(*)::int as n from provider_daycares where user_id = ${context.userId}
-      `.catch(() => [{ n: 0 }])
-    )[0]?.n ?? 0;
-    const staffOnly = ownerCount === 0 && (await listAccessibleDaycareIds(sql, context.userId)).length > 0;
-    if (!centreCanCreateListing({ ownerCount, memberOnly: staffOnly })) {
-      throw Object.assign(new Error("Only the centre owner can add a listing."), { status: 403 });
-    }
+    await assertListingOperator(sql, context.userId, "Only the centre owner can add a listing.");
     try {
       await assertNewListingAllowed({
         userId: context.userId,
