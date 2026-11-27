@@ -1,10 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { WiringDesk } from "@/components/wiring-desk";
 import { privateReturnPath } from "@/lib/role-access";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
-import { completeDsrTask } from "@/lib/server/wiring/dsr-propagation";
 import { dsrPropagationEnabled } from "@/lib/wiring/dsr-propagation";
 import { useCopy } from "@/lib/use-copy";
 import { ToolError, ToolPending } from "@/components/tool-states";
@@ -22,18 +19,17 @@ function Page() {
   const { enabled } = Route.useLoaderData();
   const { locale } = useCopy();
   const fr = locale === "fr";
-  const [id, setId] = useState("");
-  const [note, setNote] = useState("");
   return (
-    <WiringDesk kicker="KidEase" title={fr ? "Demandes de données" : "Data requests"} lead={fr ? "Marquez les dossiers du centre comme traités. Cela ne ferme pas la session du parent." : "Mark the centre’s records handled. This does not sign the parent out."} next={fr ? "Entrez le numéro, puis terminez." : "Enter the number, then finish."} enabled={enabled}>
-      <label className="block text-sm font-medium" htmlFor="pdsr">{fr ? "Numéro" : "Number"}</label>
-      <input id="pdsr" value={id} onChange={(event) => setId(event.target.value)} className="mt-1 w-full min-h-11 rounded-xl border border-border bg-surface px-3" />
-      <Button className="mt-4" type="button" onClick={() => {
-        void completeDsrTask({ data: { requestId: id } })
-          .then((row) => setNote(row.ok ? row.status : row.error))
-          .catch(() => setNote(fr ? "Ouvrez une session pour continuer." : "Sign in to continue."));
-      }}>{fr ? "Marquer fait" : "Mark done"}</Button>
-      {note ? <p className="mt-3 text-sm" role="status">{note}</p> : null}
+    <WiringDesk
+      kicker="KidEase"
+      title={fr ? "Demandes de données" : "Data requests"}
+      lead={fr ? "Seule l’équipe de confidentialité de KidEase peut examiner les demandes de données du centre pour le moment." : "For now, only the KidEase privacy team can review centre data requests."}
+      next={fr ? "Ne marquez pas une demande comme traitée sans confirmation de KidEase." : "Wait for KidEase to confirm before treating a request as complete."}
+      enabled={enabled}
+    >
+      <p className="text-sm">
+        {fr ? "Aucune demande ne peut être clôturée depuis cet espace." : "Requests can’t be closed from this desk."}
+      </p>
     </WiringDesk>
   );
 }
