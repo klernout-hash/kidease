@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { Button } from "@/components/ui/button";
 import { eceJobCopy } from "@/lib/ece-jobs";
 import { localePath } from "@/lib/locale-path";
@@ -67,6 +68,9 @@ export function EceJobBoard({
 } = {}) {
   const { locale } = useCopy();
   const { celebrate } = useSuccessConfirm();
+  const { user, isPending } = useCurrentUserState();
+  const accountId = isPending ? null : user?.id ?? null;
+  const [loadedOwnerId, setLoadedOwnerId] = useState<string | null>(null);
   const lang = locale === "fr" ? "fr" : "en";
   const copy = eceJobCopy(lang);
   const [enabled, setEnabled] = useState(initialEnabled);
@@ -84,16 +88,8 @@ export function EceJobBoard({
       if (!live) return;
       setEnabled(on);
       if (!on) return;
-      const [open, mine, people] = await Promise.all([
-        listPublicEceJobs().catch(() => initialJobs),
-        listMyCentresForJobs().catch(() => []),
-        listMyEceApplicants().catch(() => []),
-      ]);
-      if (!live) return;
-      setJobs(open);
-      setCentres(mine);
-      setDaycareId(mine[0]?.id || "");
-      setApplicants(people);
+      const open = await listPublicEceJobs().catch(() => initialJobs);
+      if (live) setJobs(open);
     };
     if (initialEnabled) {
       void load(true);
@@ -111,7 +107,23 @@ export function EceJobBoard({
     };
   }, [initialEnabled]);
 
+  useEffect(() => {
+    if (!enabled || !accountId) return;
+    let live = true;
+    void listMyCentresForJobs().catch(() => []).then(async (mine) => {
+      if (!live || mine.length === 0) return;
+      const people = await listMyEceApplicants().catch(() => []);
+      if (!live) return;
+      setCentres(mine);
+      setDaycareId(mine[0].id);
+      setApplicants(people);
+      setLoadedOwnerId(accountId);
+    });
+    return () => { live = false; };
+  }, [enabled, accountId]);
+
   if (!enabled) return null;
+  const showOwnerTools = Boolean(accountId && accountId === loadedOwnerId && centres.length);
 
   return (
     <section className="mt-8" data-ke="ece-jobs">
@@ -136,7 +148,7 @@ export function EceJobBoard({
       ) : (
         <p className="mt-3 text-sm text-muted" data-ke="ece-jobs-empty">{copy.openEmpty}</p>
       )}
-      {centres.length ? (
+      {showOwnerTools ? (
         <form
           className="mt-6 space-y-3"
           onSubmit={(event) => {
@@ -186,7 +198,7 @@ export function EceJobBoard({
           <Button type="submit">{copy.send}</Button>
         </form>
       ) : null}
-      {centres.length ? (
+      {showOwnerTools ? (
         <div className="mt-6">
           <h3 className="font-medium">{copy.applicants}</h3>
           {applicants.length ? (
