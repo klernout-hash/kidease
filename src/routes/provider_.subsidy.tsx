@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Shell } from "@/components/shell";
+import { useSessionDesks } from "@/components/session-desks";
 import { WiringDesk } from "@/components/wiring-desk";
 import { privateReturnPath } from "@/lib/role-access";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
@@ -20,11 +22,24 @@ export const Route = createFileRoute("/provider_/subsidy")({
 
 function Page() {
   const { enabled } = Route.useLoaderData();
-  const { locale } = useCopy();
+  const { t, locale } = useCopy();
+  const { session, ready } = useSessionDesks();
   const fr = locale === "fr";
   const [id, setId] = useState("");
   const [status, setStatus] = useState("in_review");
   const [note, setNote] = useState("");
+  if (!ready) return <ToolPending />;
+  if (!session?.centreOwner) {
+    return (
+      <Shell>
+        <main className="mx-auto max-w-3xl px-4 py-6">
+          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="staff-owner-only">
+            {t("employeeStaffForbidden")}
+          </p>
+        </main>
+      </Shell>
+    );
+  }
   return (
     <WiringDesk
       kicker="KidEase"
@@ -43,8 +58,8 @@ function Page() {
       </select>
       <Button className="mt-4" type="button" onClick={() => {
         void updateSubsidy({ data: { id, status } })
-          .then((row) => setNote(row.ok ? row.status : row.error))
-          .catch(() => setNote(fr ? "Ouvrez une session pour continuer." : "Sign in to continue."));
+          .then((row) => setNote(row.ok ? row.status : fr ? "Impossible de mettre à jour cette subvention." : "Could not update this subsidy."))
+          .catch(() => setNote(fr ? "Impossible de mettre à jour cette subvention." : "Could not update this subsidy."));
       }}>{fr ? "Enregistrer" : "Save"}</Button>
       {note ? <p className="mt-3 text-sm" role="status">{note}</p> : null}
     </WiringDesk>

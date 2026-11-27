@@ -23,6 +23,7 @@ import {
   backgroundCheckRecordsEnabled,
 } from "@/lib/features";
 import { loadCentreRole } from "@/lib/server/centre-access";
+import { requireScreeningOwner, screeningOwnerCentreIds, screeningServerFn } from "@/lib/server/screening-owner-access";
 import { nid } from "@/lib/utils";
 import { R2_SCREENING_PREFIX } from "@/lib/private-docs";
 import { START_DAYCARE_PTS } from "@/lib/start-daycare-hub";
@@ -174,34 +175,19 @@ async function loadCentre(sql: Sql, daycareId: string, userId: string): Promise<
 
 export const loadBackgroundCheckDesk = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }): Promise<BackgroundCheckDesk> => {
+  .handler(async ({ context }): Promise<BackgroundCheckDesk> => screeningServerFn(async () => {
+    const sql = await getSql();
+    const centreIds = await screeningOwnerCentreIds(sql, context.userId);
     const guide = backgroundCheckGuideEnabled();
     const recordsOn = backgroundCheckRecordsEnabled();
     if (!guide && !recordsOn) return { enabled: false, guide: false, records: false, centres: [] };
-    try {
-      const sql = await getSql();
-      const centres = await sql<{ id: string }>`
-        select d.id
-        from daycares d
-        where exists (
-          select 1 from provider_daycares p
-          where p.daycare_id = d.id and p.user_id = ${context.userId}
-        ) or exists (
-          select 1 from centre_members m
-          where m.daycare_id = d.id and m.user_id = ${context.userId} and m.status = 'active'
-        )
-        order by d.name
-      `;
-      const views: BackgroundCheckCentreView[] = [];
-      for (const centre of centres) {
-        const view = await loadCentre(sql, centre.id, context.userId);
-        if (view) views.push(view);
-      }
-      return { enabled: true, guide, records: recordsOn, centres: views };
-    } catch {
-      return { enabled: false, guide, records: recordsOn, centres: [] };
+    const views: BackgroundCheckCentreView[] = [];
+    for (const centreId of centreIds) {
+      const view = await loadCentre(sql, centreId, context.userId);
+      if (view) views.push(view);
     }
-  });
+    return { enabled: true, guide, records: recordsOn, centres: views };
+  }));
 
 export const saveBackgroundCheckRecord = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
@@ -215,7 +201,9 @@ export const saveBackgroundCheckRecord = createServerFn({ method: "POST" })
     reviewerName: string;
     sawOfficial: boolean;
   }) => input)
-  .handler(async ({ context, data }) => {
+  .handler(async ({ context, data }) => screeningServerFn(async () => {
+    const sql = await getSql();
+    await requireScreeningOwner(sql, context.userId, data.daycareId.trim());
     if (!backgroundCheckRecordsEnabled()) throw new Error(OFF);
     if (!data.sawOfficial) throw new Error(SEEN);
     const personName = data.personName.trim().slice(0, 120);
@@ -225,9 +213,6 @@ export const saveBackgroundCheckRecord = createServerFn({ method: "POST" })
     if (!isBgRole(data.role) || !isBgCheckKind(data.checkKind)) throw new Error(DENIED);
     const issuedOn = /^\d{4}-\d{2}-\d{2}$/.test(data.issuedOn) ? data.issuedOn : null;
     const expiresOn = /^\d{4}-\d{2}-\d{2}$/.test(data.expiresOn) ? data.expiresOn : null;
-    const sql = await getSql();
-    const role = await loadCentreRole(sql, context.userId, data.daycareId.trim());
-    if (!canRecordBackgroundCheck(role)) throw new Error(DENIED);
     const id = nid("bcr");
     await sql`
       insert into background_check_records
@@ -247,7 +232,7 @@ export const saveBackgroundCheckRecord = createServerFn({ method: "POST" })
       )
     `;
     return { ok: true as const, id, notice: NOT_FILE };
-  });
+  }));
 
 export const saveBackgroundCheckSettings = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
@@ -257,12 +242,11 @@ export const saveBackgroundCheckSettings = createServerFn({ method: "POST" })
     attest: boolean;
     showExpiry: boolean;
   }) => input)
-  .handler(async ({ context, data }) => {
-    if (!backgroundCheckRecordsEnabled() && !backgroundCheckAttestationEnabled()) throw new Error(OFF);
+  .handler(async ({ context, data }) => screeningServerFn(async () => {
     const sql = await getSql();
     const daycareId = data.daycareId.trim();
-    const role = await loadCentreRole(sql, context.userId, daycareId);
-    if (!canRecordBackgroundCheck(role)) throw new Error(DENIED);
+    await requireScreeningOwner(sql, context.userId, daycareId);
+    if (!backgroundCheckRecordsEnabled() && !backgroundCheckAttestationEnabled()) throw new Error(OFF);
     const centre = await sql<{ province: string }>`
       select province from daycares where id = ${daycareId} limit 1
     `;
@@ -279,7 +263,7 @@ export const saveBackgroundCheckSettings = createServerFn({ method: "POST" })
       where id = ${daycareId}
     `;
     return { ok: true as const };
-  });
+  }));
 
 export async function saveBackgroundCheckFile(input: {
   userId: string;
@@ -288,15 +272,15 @@ export async function saveBackgroundCheckFile(input: {
   mime: string;
   filename: string;
 }): Promise<{ id: string }> {
-  if (!backgroundCheckRecordsEnabled()) throw new Error(OFF);
   const sql = await getSql();
+  const centreIds = await screeningOwnerCentreIds(sql, input.userId);
+  if (!backgroundCheckRecordsEnabled()) throw new Error(OFF);
   const rows = await sql<{ id: string; daycare_id: string }>`
-    select id, daycare_id from background_check_records where id = ${input.recordId.trim()} limit 1
+    select id, daycare_id from background_check_records where id = ${input.recordId.trim()} and daycare_id = any(${centreIds}::text[]) limit 1
   `;
   const row = rows[0];
   if (!row) throw new Error("Record not found.");
-  const role = await loadCentreRole(sql, input.userId, row.daycare_id);
-  if (!canRecordBackgroundCheck(role)) throw new Error(DENIED);
+  await requireScreeningOwner(sql, input.userId, row.daycare_id);
   const { persistPrivateDoc } = await import("@/lib/server/private-docs");
   const stored = await persistPrivateDoc({
     prefix: R2_SCREENING_PREFIX,
@@ -316,18 +300,18 @@ export async function readBackgroundCheckFile(input: {
   userId: string;
   recordId: string;
 }): Promise<{ body: Buffer; mime: string; filename: string }> {
-  if (!backgroundCheckRecordsEnabled()) throw new Error(OFF);
   const sql = await getSql();
+  const centreIds = await screeningOwnerCentreIds(sql, input.userId);
+  if (!backgroundCheckRecordsEnabled()) throw new Error(OFF);
   const rows = await sql<{ daycare_id: string; file_ref: string | null; person_name: string }>`
     select daycare_id, file_ref, person_name
     from background_check_records
-    where id = ${input.recordId.trim()}
+    where id = ${input.recordId.trim()} and daycare_id = any(${centreIds}::text[])
     limit 1
   `;
   const row = rows[0];
   if (!row?.file_ref) throw new Error("File not found");
-  const role = await loadCentreRole(sql, input.userId, row.daycare_id);
-  if (!canViewBackgroundCheckRecords(role)) throw new Error(DENIED);
+  await requireScreeningOwner(sql, input.userId, row.daycare_id);
   const { loadPrivateDoc } = await import("@/lib/server/private-docs");
   const doc = await loadPrivateDoc(row.file_ref, null, "background-check-copy");
   return doc;

@@ -59,7 +59,7 @@ test("owner-only surfaces fail closed for staff and read-only", () => {
   assert.equal(CENTRE_STAFF_FORBIDDEN.includes("Money"), true);
 });
 
-test("session staff hide Money / licence / claim; owners keep them", () => {
+test("session staff hide Money / licence / claim / Screening; owners keep them", () => {
   const staff = sessionCentreCaps({ isOwner: false, isMember: true });
   assert.equal(staff.money, false);
   assert.equal(staff.claim, false);
@@ -81,7 +81,7 @@ test("session staff hide Money / licence / claim; owners keep them", () => {
   assert.equal(hidden.includes("subscription"), false);
   assert.equal(hidden.includes("requests"), true);
   assert.equal(hidden.includes("listings"), true);
-  assert.equal(hidden.includes("screening"), true);
+  assert.equal(hidden.includes("screening"), false);
   const shown = visibleDeskNav("daycare", {
     providerSubscriptions: true,
     showPayCtas: true,
@@ -90,6 +90,7 @@ test("session staff hide Money / licence / claim; owners keep them", () => {
   }).map((i) => i.id);
   assert.equal(shown.includes("employees"), true);
   assert.equal(shown.includes("money"), true);
+  assert.equal(shown.includes("screening"), true);
 });
 
 test("invite decision: owner only, rate limit, no self, no duplicate", () => {

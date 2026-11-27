@@ -441,12 +441,11 @@ export function guidePlainText(): string {
 }
 
 export function canRecordBackgroundCheck(role: string | null | undefined): boolean {
-  return role === "owner" || role === "manager";
+  return role === "owner";
 }
 
 export function canViewBackgroundCheckRecords(role: string | null | undefined): boolean {
-  const value = (role || "").trim();
-  return value === "owner" || value === "manager" || value === "staff" || value === "read_only";
+  return canRecordBackgroundCheck(role);
 }
 
 export function policyMonthsAllowed(province: string): boolean {
