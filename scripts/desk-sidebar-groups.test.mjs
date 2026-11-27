@@ -155,4 +155,8 @@ test("staff rail omits groups with no destinations and keeps available groups di
   assert.match(rail, /<ChevronDown aria-hidden="true"[^>]*group-open\/desk-rail:rotate-180/);
   assert.match(rail, /if \(activeItem && details.current\) details.current.open = true/);
   assert.match(rail, /aria-current=\{on \? "page" : undefined\}/);
+  const account = src("src/routes/account.tsx");
+  assert.match(account, /<AccountDeskFrame desk=\{desk\} section=\{section\}>/);
+  assert.match(account, /section === "alerts" \? "notify-prefs"/);
+  assert.doesNotMatch(account, /active="account"/);
 });
