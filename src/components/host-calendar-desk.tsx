@@ -19,8 +19,13 @@ import {
   type SpotCounts,
 } from "@/lib/host-calendar";
 import { fillCount, hostCopy } from "@/lib/host-listing-copy";
-import { calendarCentreId } from "@/lib/qa-fixes";
-import { loadHostCalendar, saveHostCalendarDay, type HostCalendarDay, type HostCalendarPayload } from "@/lib/server/host-calendar";
+import {
+  loadHostCalendar,
+  saveHostCalendarDay,
+  type HostCalendarDay,
+  type HostCalendarPayload,
+} from "@/lib/server/host-calendar";
+import { LOADER_SETTLE_MS, withTimeout } from "@/lib/timeout";
 import { useCentreWrite } from "@/lib/use-centre-write";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -37,54 +42,114 @@ export function HostCalendarDesk({
   listings: Daycare[];
   onSaved: () => void | Promise<void>;
   centreFromUrl?: string;
-  onCentre?: (id: string) => void;
+  onCentre: (id: string | undefined) => void;
 }) {
-  const { locale } = useCopy();
+  const { t, locale } = useCopy();
   const copy = hostCopy(locale);
-  const listingIds = listings.map((row) => row.id);
-  const [centreId, setCentreId] = useState(() => calendarCentreId(centreFromUrl, listingIds));
-  const listingKey = listingIds.join("|");
-  useEffect(() => {
-    const next = calendarCentreId(centreFromUrl, listingKey ? listingKey.split("|") : []);
-    if (next) setCentreId((current) => (current === next ? current : next));
-  }, [centreFromUrl, listingKey]);
-  const centre = listings.find((row) => row.id === centreId) ?? listings[0];
-  const [month, setMonth] = useState(() => monthOf(centreDateISO(centre?.timezone, new Date())));
-  const [payload, setPayload] = useState<HostCalendarPayload | null>(null);
+  const fr = locale === "fr";
+  const centre = centreFromUrl ? listings.find((row) => row.id === centreFromUrl) : listings[0];
+
+  return (
+    <div className="space-y-4" data-ke="host-calendar">
+      {listings.length > 1 ? (
+        <label className="block text-sm">
+          {copy.pickCentre}
+          <select
+            className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+            value={centre?.id ?? ""}
+            onChange={(event) => onCentre(event.target.value)}
+          >
+            {!centre ? (
+              <option value="" disabled>
+                {copy.pickCentre}
+              </option>
+            ) : null}
+            {listings.map((row) => (
+              <option key={row.id} value={row.id}>
+                {row.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : centre ? (
+        <p className="text-sm font-medium">{centre.name}</p>
+      ) : null}
+      {centre ? (
+        <CentreCalendar key={centre.id} centre={centre} onSaved={onSaved} />
+      ) : centreFromUrl ? (
+        <div className="space-y-3" data-ke="host-calendar-centre-unavailable">
+          <p role="status" className="text-sm text-muted">
+            {fr
+              ? "Ce centre n’est pas disponible dans votre bureau."
+              : "This centre isn’t available in your desk."}
+          </p>
+          <Button type="button" onClick={() => onCentre(undefined)}>
+            {t("navCalendar")}
+          </Button>
+        </div>
+      ) : (
+        <p className="text-sm text-muted">{copy.emptyListings}</p>
+      )}
+    </div>
+  );
+}
+
+type CalendarResult =
+  | { month: string; status: "ready"; payload: HostCalendarPayload }
+  | { month: string; status: "failed" };
+
+function CentreCalendar({
+  centre,
+  onSaved,
+}: {
+  centre: Daycare;
+  onSaved: () => void | Promise<void>;
+}) {
+  const { t, locale } = useCopy();
+  const copy = hostCopy(locale);
+  const [month, setMonth] = useState(() => monthOf(centreDateISO(centre.timezone)));
+  const [result, setResult] = useState<CalendarResult | null>(null);
+  const [requestVersion, retry] = useState(0);
   const [gear, setGear] = useState<Gear | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const canEdit = useCentreWrite("calendar");
 
-  const loadedId = centre?.id ?? "";
+  const centreId = centre.id;
   useEffect(() => {
-    if (!loadedId) return;
     let live = true;
-    setError(null);
-    void loadHostCalendar({ data: { daycareId: loadedId, month } })
-      .then((row) => {
+    void withTimeout(
+      loadHostCalendar({ data: { daycareId: centreId, month } }),
+      LOADER_SETTLE_MS,
+      "host-calendar-timeout",
+    ).then(
+      (payload) => {
         if (!live) return;
-        setPayload(row);
-        if (isIsoMonth(row.month) && row.month !== month) setMonth(row.month);
-      })
-      .catch(() => {
-        if (live) setError(copy.loadFailed);
-      });
+        if (isIsoMonth(payload.month) && payload.month !== month) {
+          setResult(null);
+          setMonth(payload.month);
+          return;
+        }
+        setResult({ month, status: "ready", payload });
+      },
+      () => {
+        if (live) setResult({ month, status: "failed" });
+      },
+    );
     return () => {
       live = false;
     };
-  }, [loadedId, month, copy.saveFailed]);
+  }, [centreId, month, requestVersion]);
 
-  if (!centre) {
-    return <p className="text-sm text-muted">{copy.emptyListings}</p>;
+  function selectMonth(next: string) {
+    if (next === month) return;
+    setSelected(null);
+    setResult(null);
+    setMonth(next);
   }
 
+  const current = result?.month === month ? result : null;
+  const payload = current?.status === "ready" && current.payload.enabled ? current.payload : null;
   const today = payload?.today ?? centreDateISO(centre.timezone);
-  const standing = payload?.standing ?? {
-    infant: centre.spotsInfant,
-    toddler: centre.spotsToddler,
-    preschool: centre.spotsPreschool,
-  };
   const byDay = new Map((payload?.days ?? []).map((row) => [row.day, row]));
   const cells = monthGrid(month);
   const labels = weekdayLabels(locale);
@@ -94,64 +159,89 @@ export function HostCalendarDesk({
     timeZone: "UTC",
   }).format(new Date(`${month}-01T00:00:00Z`));
 
-  return (
-    <div className="space-y-4" data-ke="host-calendar">
+  const controls = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-display text-2xl">{title}</h2>
           <p className="mt-1 text-sm text-muted">{copy.calendarLead}</p>
           <p className="mt-1 text-sm text-muted">{copy.parentsSee}</p>
         </div>
-        {canEdit ? (
-        <button
-          type="button"
-          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full ring-1 ring-border touch-manipulation"
-          aria-label={copy.gear}
-          aria-expanded={gear != null}
-          onClick={() => setGear((current) => (current ? null : "spots"))}
-        >
-          <Settings className="size-5" aria-hidden />
-        </button>
+        {canEdit && payload ? (
+          <button
+            type="button"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full ring-1 ring-border touch-manipulation"
+            aria-label={copy.gear}
+            aria-expanded={gear != null}
+            onClick={() => setGear((current) => (current ? null : "spots"))}
+          >
+            <Settings className="size-5" aria-hidden />
+          </button>
         ) : null}
       </div>
-      {listings.length > 1 ? (
-        <label className="block text-sm">
-          {copy.pickCentre}
-          <select
-            className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-            value={centre.id}
-            onChange={(event) => {
-              setCentreId(event.target.value);
-              setSelected(null);
-              onCentre?.(event.target.value);
-            }}
-          >
-            {listings.map((row) => (
-              <option key={row.id} value={row.id}>
-                {row.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : (
-        <p className="text-sm font-medium">{centre.name}</p>
-      )}
       <div className="flex items-center justify-between gap-2">
-        <button type="button" className="inline-flex min-h-11 min-w-11 items-center justify-center touch-manipulation" aria-label={copy.prevMonth} onClick={() => setMonth((value) => shiftMonth(value, -1))}>
+        <button
+          type="button"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center touch-manipulation"
+          aria-label={copy.prevMonth}
+          onClick={() => selectMonth(shiftMonth(month, -1))}
+        >
           <ChevronLeft className="size-5" aria-hidden />
         </button>
-        <button type="button" className="min-h-11 px-3 text-sm font-medium touch-manipulation" onClick={() => setMonth(monthOf(today))}>
+        <button
+          type="button"
+          className="min-h-11 px-3 text-sm font-medium touch-manipulation"
+          onClick={() => selectMonth(monthOf(today))}
+        >
           {copy.thisMonth}
         </button>
-        <button type="button" className="inline-flex min-h-11 min-w-11 items-center justify-center touch-manipulation" aria-label={copy.nextMonth} onClick={() => setMonth((value) => shiftMonth(value, 1))}>
+        <button
+          type="button"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center touch-manipulation"
+          aria-label={copy.nextMonth}
+          onClick={() => selectMonth(shiftMonth(month, 1))}
+        >
           <ChevronRight className="size-5" aria-hidden />
         </button>
       </div>
-      {error ? (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      ) : null}
+    </>
+  );
+
+  if (!payload) {
+    return (
+      <div className="space-y-4">
+        {controls}
+        {!current ? (
+          <p role="status" aria-live="polite" data-ke="host-calendar-loading">
+            {t("loading")}
+          </p>
+        ) : current.status === "failed" ? (
+          <div className="space-y-2" role="alert" data-ke="host-calendar-load-failed">
+            <p className="text-sm text-danger">{copy.loadFailed}</p>
+            <Button
+              type="button"
+              onClick={() => {
+                setResult(null);
+                retry((version) => version + 1);
+              }}
+            >
+              {locale === "fr" ? "Réessayer" : "Try again"}
+            </Button>
+          </div>
+        ) : (
+          <p role="status" className="text-sm text-muted">
+            {locale === "fr"
+              ? "Le calendrier n’est pas disponible pour ce centre."
+              : "The calendar isn’t available for this centre."}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {controls}
       <div role="grid" aria-label={title} className="w-full">
         <div role="row" className="grid grid-cols-7 text-center text-xs text-muted">
           {labels.map((label, index) => (
@@ -167,10 +257,10 @@ export function HostCalendarDesk({
             const closed = Boolean(row?.closed);
             const spots = row
               ? spotTotal(row, closed)
-              : spotTotal(standing);
+              : spotTotal(payload.standing);
             const holiday = holidayOn(cell.date, centre.province);
-            const enrol = payload?.enrolments[cell.date] ?? 0;
-            const tours = payload?.tours[cell.date] ?? 0;
+            const enrol = payload.enrolments[cell.date] ?? 0;
+            const tours = payload.tours[cell.date] ?? 0;
             const detail = [
               closed ? copy.closed : fillCount(copy.spotsCount, spots),
               enrol ? `${enrol} ${copy.enrolments}` : "",
@@ -216,12 +306,11 @@ export function HostCalendarDesk({
           daycareId={centre.id}
           day={selected}
           saved={byDay.get(selected) ?? null}
-          standing={standing}
+          standing={payload.standing}
           province={centre.province}
           onClose={() => setSelected(null)}
           onSaved={async () => {
-            const next = await loadHostCalendar({ data: { daycareId: centre.id, month } });
-            setPayload(next);
+            retry((version) => version + 1);
             await onSaved();
           }}
         />
@@ -253,13 +342,13 @@ export function HostCalendarDesk({
             {gear === "spots" && canEdit ? (
               <>
                 <CapacityForm daycare={centre} mode="listing" focus="ages" onSaved={() => void onSaved()} />
-                <AgeOpenSpotsDesk listings={listings.map((row) => ({ id: row.id, name: row.name }))} />
+                <AgeOpenSpotsDesk listings={[{ id: centre.id, name: centre.name }]} />
               </>
             ) : null}
             {gear === "closures" ? (
               <ul className="space-y-2 text-sm">
-                {(payload?.closures.length ?? 0) === 0 ? <li className="text-muted">{copy.noClosures}</li> : null}
-                {payload?.closures.map((day) => (
+                {payload.closures.length === 0 ? <li className="text-muted">{copy.noClosures}</li> : null}
+                {payload.closures.map((day) => (
                   <li key={day} className="flex items-center justify-between gap-2">
                     <span className="tabular-nums">{day}</span>
                     <span>{copy.closed}</span>
@@ -267,10 +356,10 @@ export function HostCalendarDesk({
                 ))}
               </ul>
             ) : null}
-            {gear === "tours" && canEdit ? <TourAvailabilityDesk listings={listings} onSaved={() => void onSaved()} /> : null}
+            {gear === "tours" && canEdit ? <TourAvailabilityDesk listings={[centre]} onSaved={() => void onSaved()} /> : null}
             {gear === "waitlist" ? (
               <div className="space-y-3">
-                <p className="text-sm">{fillCount(copy.waitlistSummary, payload?.waitlistCount ?? 0)}</p>
+                <p className="text-sm">{fillCount(copy.waitlistSummary, payload.waitlistCount)}</p>
                 {canEdit ? <WaitlistPulseButton daycareId={centre.id} onPulsed={onSaved} /> : null}
                 <SpotOfferDesk />
               </div>

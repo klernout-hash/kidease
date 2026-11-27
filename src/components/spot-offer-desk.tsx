@@ -44,7 +44,7 @@ function saveWaitlistCsv(csv: string, filename: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
-export function SpotOfferDesk({ includeTest = false }: { includeTest?: boolean }) {
+export function SpotOfferDesk({ includeTest = false, centreId }: { includeTest?: boolean; centreId?: string }) {
   const { locale } = useCopy();
   const waitlistOn = useRuntimeSwitches().waitlistSpots;
   const nativeShell = useInNativeShell();
@@ -95,7 +95,8 @@ export function SpotOfferDesk({ includeTest = false }: { includeTest?: boolean }
 
   if (!waitlistOn) return <RuntimePaused id="waitlistSpots" compact />;
   if (!centres) return <p className="mt-4 text-sm text-muted">{copy.deskTitle}</p>;
-  if (!centres.length) return null;
+  const visibleCentres = centreId ? centres.filter((centre) => centre.daycareId === centreId) : centres;
+  if (!visibleCentres.length) return null;
 
   function run(key: string, task: () => Promise<unknown>, success?: string) {
     setBusy(key);
@@ -138,7 +139,7 @@ export function SpotOfferDesk({ includeTest = false }: { includeTest?: boolean }
         </p>
       ) : null}
       <div className="mt-4 space-y-6">
-        {centres.map((centre) => {
+        {visibleCentres.map((centre) => {
           const offerAge = offerAges[centre.daycareId] ?? "infant";
           const countdown = centre.openOfferExpiresAt ? offerCountdown(centre.openOfferExpiresAt, now) : null;
           const offeredFamily = centre.families.find((row) => row.id === centre.openOfferWaitlistId);
