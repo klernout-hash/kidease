@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Building2, Calendar, ClipboardCheck, ClipboardList, Heart, Home, LifeBuoy, Menu, MessageCircle, Search } from "lucide-react";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { CountBadge } from "@/components/count-badge";
 import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -18,6 +18,9 @@ import { governmentHomePath } from "@/lib/sign-out-target";
 import { useCopy } from "@/lib/use-copy";
 import { useAirbnbUi } from "@/lib/use-airbnb-ui";
 import { cn } from "@/lib/utils";
+import { createAppTabOwnership } from "@/lib/app-tab-ownership";
+
+const tabOwnership = createAppTabOwnership();
 
 /**
  * Phone tab bar. The last tab is Menu for every role.
@@ -50,22 +53,17 @@ export function AppTabBar() {
   useEffect(() => {
     setNative(isNative());
   }, []);
-  // One bar only: if a nested Shell mounts a second AppTabBar, the later one renders nothing.
-  const [primary, setPrimary] = useState(true);
-  useEffect(() => {
-    const owner = (window as { __keTabBarOwner?: object }).__keTabBarOwner;
-    const me = {};
-    if (owner) {
-      setPrimary(false);
-      return;
-    }
-    (window as { __keTabBarOwner?: object }).__keTabBarOwner = me;
-    return () => {
-      if ((window as { __keTabBarOwner?: object }).__keTabBarOwner === me) delete (window as { __keTabBarOwner?: object }).__keTabBarOwner;
-    };
-  }, []);
+  // The surviving Shell must take over even if it mounted before the old one left.
+  const [token] = useState(() => Symbol("app-tab-bar"));
+  const primary = useSyncExternalStore(
+    tabOwnership.subscribe,
+    () => tabOwnership.isPrimary(token),
+    () => true,
+  );
+  useLayoutEffect(() => tabOwnership.mount(token), [token]);
   // Keyboard open (visual viewport shrinks): hide the bar rather than lifting it mid-screen.
   useEffect(() => {
+    if (!primary) return;
     const vv = window.visualViewport;
     if (!vv) return;
     const root = document.documentElement;
@@ -88,7 +86,7 @@ export function AppTabBar() {
       window.removeEventListener("focusout", check);
       delete root.dataset.keyboard;
     };
-  }, []);
+  }, [primary]);
   const storeTabs = native ? nativeStoreTabs(kind) : null;
   const daycareGrants = session?.centreOwner ? null : session?.centreGrants;
   const daycareTabs = kind === "daycare" && !storeTabs ? daycareTabCount(daycareGrants, session?.hostListing === true) : 0;
