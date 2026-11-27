@@ -109,11 +109,9 @@ export function AppTabBar() {
               ? "grid-cols-4"
               : daycareTabs > 0 && daycareTabs !== 5
                 ? "grid-cols-[repeat(var(--ke-tab-cols),minmax(0,1fr))]"
-              : airbnb && kind === "parent"
-                ? "grid-cols-5"
-              : airbnb && kind === "guest"
-                ? "grid-cols-4"
-                : kind === "guest"
+              : kind === "guest"
+                ? (airbnb ? "grid-cols-4" : "grid-cols-3")
+                : kind === "government"
                   ? "grid-cols-3"
                   : "grid-cols-5",
           )}
