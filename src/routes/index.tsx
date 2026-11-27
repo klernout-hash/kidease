@@ -295,7 +295,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
       setQuery(hit.label);
       return hit;
     }
-    if (raw.trim()) setQuery(raw.trim());
     return null;
   }
 
@@ -391,7 +390,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         radiusKm={radiusKm}
         onRadiusChange={setRadiusKm}
         onLocate={() => void pinLocation()}
-        onSubmit={(typedWhere) => {
+        onSubmit={async (typedWhere) => {
           const typed = (typedWhere ?? place).trim();
           const nearMe = typed === t("nearMe") || typed === t("whereNearby");
           if (!typed || nearMe) {
@@ -401,25 +400,17 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
               to: homeTo,
               start: homeStart || undefined,
             });
-            return;
+            return true;
           }
-          void applyPlace(typed).then((hit) => {
-            if (hit) {
-              goSearch(hit.label, {
-                name: homeName,
-                from: homeFrom,
-                to: homeTo,
-                start: homeStart || undefined,
-              });
-              return;
-            }
-            goSearch(origin.label, {
-              name: homeName.trim() || typed,
-              from: homeFrom,
-              to: homeTo,
-              start: homeStart || undefined,
-            });
+          const hit = await applyPlace(typed);
+          if (!hit) return false;
+          goSearch(hit.label, {
+            name: homeName,
+            from: homeFrom,
+            to: homeTo,
+            start: homeStart || undefined,
           });
+          return true;
         }}
       />
       </div>
