@@ -32,10 +32,10 @@ jobs:
           files=$(gh api --paginate --slurp "$api/files?per_page=100")
           files=$(jq -c 'add' <<< "$files")
           current=$(gh api "$api")
-          if ! jq -en --argjson before "$pr" --argjson after "$current" --argjson files "$files" '
+          if ! jq -e --argjson before "$pr" --argjson after "$current" '
             def state: [.head.sha, .base.sha, .changed_files, ([.labels[].name] | sort)];
-            ($before | state) == ($after | state) and ($files | length) == $after.changed_files
-          ' >/dev/null; then
+            ($before | state) == ($after | state) and length == $after.changed_files
+          ' <<< "$files" >/dev/null; then
             echo "::error::The pull request changed during inspection or its file list is incomplete."
             exit 1
           fi
