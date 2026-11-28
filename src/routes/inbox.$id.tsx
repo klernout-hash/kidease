@@ -460,7 +460,6 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
               parentName={booking?.parentName || user.displayName || t("inboxRoleParent")}
               centreName={name}
               reads={details?.reads ?? []}
-              phoneAlerts={details?.phoneAlerts || []}
               peers={details?.participants || []}
               timeZone={timeZone || undefined}
               conversationId={id}

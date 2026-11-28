@@ -561,7 +561,6 @@ export function CentreInboxDesk({
                 parentName={selected.parentName}
                 centreName={centreName || selected.centreName || selected.daycareName}
                 reads={details?.reads || []}
-                phoneAlerts={details?.phoneAlerts || []}
                 peers={details?.participants || []}
                 timeZone={timeZone || undefined}
                 conversationId={selected.id}
