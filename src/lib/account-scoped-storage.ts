@@ -16,6 +16,8 @@ export const ACCOUNT_SCOPED_LOCAL_KEYS = [
   "kidease-recent-searches",
   "kidease-search-memory",
   "kidease-origin",
+  // N-25: "Hide for now" on the email-code banner belongs to the signed-in person.
+  "ke.healthCodeBanner.hiddenFor",
 ] as const;
 
 /** Lets open screens (for example the home "Recently viewed" row) refresh. */
