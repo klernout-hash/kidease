@@ -1,6 +1,6 @@
 // In-memory care authorization checks using synthetic families and the real server handlers.
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test, { after, before, beforeEach } from "node:test";
 import ts from "typescript";
 import { PGlite } from "@electric-sql/pglite";
@@ -202,6 +202,8 @@ before(async () => {
     );
     create table conversations (id text primary key, last_at timestamptz);
   `);
+  const perBookingAttendance = new URL("../migrations/0237_attendance_per_booking.sql", import.meta.url);
+  if (existsSync(perBookingAttendance)) await pg.exec(readFileSync(perBookingAttendance, "utf8"));
   bindSql();
   const modules = {
     "@tanstack/react-start": { createServerFn },
@@ -440,8 +442,8 @@ test("an enrolled parent can mark their own child absent", async () => {
   );
   assert.equal(saved.ok, true);
   const rows = await attendanceRows();
-  const ada = rows.find((row) => row.child_name === ADA_NAME);
-  const centre = rows.find((row) => row.child_name === CENTRE_CHILD_NAME);
+  const ada = rows.find((row) => row.booking_id === BOOKING_ADA);
+  const centre = rows.find((row) => row.booking_id === BOOKING_CENTRE);
   assert.equal(ada.status, "absent");
   assert.equal(ada.notes, "fever");
   assert.equal(ada.updated_by, PARENT);
@@ -451,3 +453,15 @@ test("an enrolled parent can mark their own child absent", async () => {
   assert.equal(centre.updated_by, STAFF);
 });
 
+test("read-only centre staff have no care write permission", async () => {
+  await assert.rejects(
+    saveMedication(READER, medicationInput({ bookingId: BOOKING_CENTRE, childName: CENTRE_CHILD_NAME })),
+    { status: 403 },
+  );
+  await assert.rejects(
+    saveAttendance(READER, attendanceInput({ bookingId: BOOKING_CENTRE, childName: CENTRE_CHILD_NAME })),
+    { status: 403 },
+  );
+  assert.equal((await medicationRows()).length, 0);
+  assert.ok((await attendanceRows()).every((row) => row.status === "scheduled"));
+});
