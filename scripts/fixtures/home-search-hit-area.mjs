@@ -14,7 +14,7 @@ const COPY_KEYS = [
   "searchStartNow", "searchStartThisMonth", "searchStartNextMonth", "searchNameEmpty", "searchNameMore", "infant", "toddler",
 ];
 const SOURCE_FILES = [
-  "src/components/explore-search-bar.tsx", "src/components/daycare-name-field.tsx", "src/components/chip.tsx",
+  "src/components/explore-search-bar.tsx", "src/components/place-search.tsx", "src/components/daycare-name-field.tsx", "src/components/chip.tsx",
   "src/lib/search-start.ts", "src/lib/dismiss-popovers.ts", "src/lib/utils.ts", "src/lib/cad-format.ts", "src/lib/secure-random.ts", "src/lib/html-text.ts", "src/lib/languages.ts",
 ];
 const DATE_DECLARATIONS = ["ISO_DATE", "isIsoDate", "OPENING_HORIZON_DAYS", "localIsoDate", "dateAsksForOpenSpot", "startWindowForDate", "formatExploreDateRange"];
@@ -44,13 +44,13 @@ export async function buildHomeSearchFixture(root, out) {
   const virtual = {
     "@/lib/explore-search": dates.code,
     "@/lib/default-origin": "export function isNeutralCanadaOrigin(){throw Error('Unexpected origin path in focus fixture');}",
-    "@/lib/geo": "export function nearestCities(){throw Error('Unexpected catalogue path in focus fixture');}",
+    "@/lib/geo": "export function nearestCities(){throw Error('Unexpected catalogue path in focus fixture');}export const geocode=()=>null,postalSearchLabel=()=>null;",
     "@/lib/use-copy": `const packs=${JSON.stringify(packs)};export function useCopy(){const locale=window.__homeHit.locale;return {locale,t:key=>{if(!(key in packs[locale]))throw Error('Unlisted literal copy '+key);return packs[locale][key]}};}`,
     "@/lib/server/daycare-name-search": `export const DAYCARE_NAME_MATCH_LIMIT=40;export function matchDaycareNames({data}){window.__homeHit.lookups.push(data);return Promise.resolve([{slug:'synthetic-maple',name:'Synthetic Maple',city:'Synthetic city',province:'MB'}]);}`,
-    "@tanstack/react-router": `import{createElement}from'react';export function useNavigate(){return value=>{window.__homeHit.navigations.push(value);return Promise.resolve()}}export function Link({to,params,search,children,onClick,...props}){return createElement('a',{...props,href:'#synthetic-daycare',onClick:event=>{onClick?.(event);event.preventDefault();window.__homeHit.navigations.push({to,params,search});}},children);}`,
-    // This boundary preserves the passed DOM/ARIA/classes and event bubbling.
-    // It does not claim PlaceSearch autocomplete or geocoding coverage.
-    "@/components/place-search": `import{createElement}from'react';export function PlaceSearch({id,name,value,onChange,placeholder,className,inputClassName,ariaLabel,ariaLabelledBy,ariaDescribedBy,invalid}){return createElement('div',{className:'relative z-30 min-w-0 flex-1 overflow-visible '+(className||'')},createElement('input',{id,name,value,onChange:event=>onChange(event.target.value),placeholder,className:inputClassName,role:'combobox','aria-expanded':false,'aria-label':ariaLabel,'aria-labelledby':ariaLabelledBy,'aria-describedby':ariaDescribedBy,'aria-invalid':invalid,autoComplete:'off'}));}`,
+    "@tanstack/react-router": `import{createElement}from'react';export const useRouterState=()=>"/";export function useNavigate(){return value=>{window.__homeHit.navigations.push(value);return Promise.resolve()}}export function Link({to,params,search,children,onClick,...props}){return createElement('a',{...props,href:'#synthetic-daycare',onClick:event=>{onClick?.(event);event.preventDefault();window.__homeHit.navigations.push({to,params,search});}},children);}`,
+    "@/lib/server/google-places": `const winnipeg={placeId:'fixture:winnipeg',label:'Winnipeg, MB'};export const suggestPlaces=async({data})=>data.q==='Winni'?[winnipeg]:[];export const resolvePlaceId=async()=>({lat:49.9,lng:-97.1,label:winnipeg.label});export const geocodePlace=async()=>null;`,
+    "@/lib/generic-care-query": "export const isGenericCareQuery=()=>false;",
+    "@/lib/place-suggest": "export const centreSlugFromPlaceId=()=>null,geocodeWithBrowser=async()=>null,isCentrePlaceId=()=>false,placeMatchRank=()=>0,rankPlaceSuggestions=(_query,rows)=>rows,resolveLocalPlace=()=>null,resolvePlaceIdBrowser=async()=>null,suggestLocalPlaces=()=>[],suggestPlacesBrowser=async()=>[];",
     "virtual:home-search-entry": transpile(`import React,{useState}from'react';import{createRoot}from'react-dom/client';import{ExploreSearchBar}from'@/components/explore-search-bar';import{useCopy}from'@/lib/use-copy';
       function Fixture(){const f=window.__homeHit;const{t}=useCopy();const[values,setValues]=useState({where:'',name:'',from:'',to:''});const[start,setStart]=useState('');const[radius,setRadius]=useState(25);const[age,setAge]=useState('');
       f.reset=()=>{setValues({where:'',name:'',from:'',to:''});setStart('');setRadius(25);setAge('')};
@@ -107,7 +107,7 @@ export async function buildHomeSearchFixture(root, out) {
     return `url(data:font/woff2;base64,${bytes.toString("base64")})`;
   });
   return { script, css, copy: packs, provenance: {
-    scope: "Actual ExploreSearchBar + DaycareNameField with structural PlaceSearch/lookup/router boundaries; not autocomplete, full routes or real data",
+    scope: "Actual ExploreSearchBar, PlaceSearch, and DaycareNameField with synthetic lookup and router boundaries",
     source: [...SOURCE_FILES, "src/lib/explore-search.ts"].map((file) => ({ file, sha256: hash(readFileSync(join(root, file))) })),
     dateDeclarations: dates.declarations, dateSourceSha256: dates.sourceSha256,
     copy: readStaticCopyProvenance(root), copyKeys: COPY_KEYS,

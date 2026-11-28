@@ -194,6 +194,17 @@ test("actual home compound fields preserve padding focus and local interactions"
         assert.equal(await placeError.count(), 0);
         assert.equal(await where.getAttribute("aria-invalid"), null);
 
+        if (phase === "after") {
+          const beforeEnter = await page.evaluate(() => window.__homeHit.submits.length);
+          await where.fill("Winni");
+          await page.getByRole("option", { name: /Winnipeg/i }).first().waitFor();
+          await where.press("Enter");
+          await page.waitForFunction((count) => window.__homeHit.submits.length === count, beforeEnter + 1);
+          const submitted = await page.evaluate(() => window.__homeHit.submits.at(-1));
+          assert.match(submitted.where, /^Winnipeg/);
+          assert.equal(submitted.name, "");
+        }
+
         result.callbacks = await page.evaluate(() => ({ lookups: window.__homeHit.lookups, navigations: window.__homeHit.navigations, ages: window.__homeHit.ages, submits: window.__homeHit.submits, transports: window.__homeHit.transports }));
         assert.deepEqual(result.callbacks.transports, []);
         assert.deepEqual(result.browserRequests, []);

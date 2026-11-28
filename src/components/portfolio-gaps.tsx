@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { portfolioCopy, portfolioFocusPath } from "@/lib/child-portfolio-copy";
-import { portfolioGaps, type PortfolioGap } from "@/lib/child-portfolio";
+import { portfolioCopy } from "@/lib/child-portfolio-copy";
+import { portfolioGaps } from "@/lib/child-portfolio";
 import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import { useCopy } from "@/lib/use-copy";
 import type { Child } from "@/lib/types";
@@ -23,9 +23,9 @@ export function PortfolioGaps({ children }: { children: Child[] }) {
   if (!rows.length) return null;
   const french = locale === "fr";
   return (
-    <section className="rounded-xl bg-danger/5 p-4 ring-1 ring-danger/30" role="status">
-      <h2 className="font-display text-xl">{copy.actionTitle}</h2>
-      <p className="mt-1 text-sm">{copy.actionBody}</p>
+    <section className="rounded-xl bg-surface p-4 ring-1 ring-border" aria-labelledby="child-profile-reminders">
+      <h3 id="child-profile-reminders" className="font-display text-lg">{copy.reminderTitle}</h3>
+      <p className="mt-1 text-sm">{copy.reminderBody}</p>
       <ul className="mt-3 space-y-3">
         {rows.map(({ child, gaps }) => (
           <li key={child.id}>
@@ -36,14 +36,13 @@ export function PortfolioGaps({ children }: { children: Child[] }) {
                   <Link
                     to={french ? "/fr/parent" : "/parent"}
                     search={{ tab: "children", child: child.id, focus: gap }}
-                    className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                    className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-4 touch-manipulation focus-visible:outline-ring"
                   >
-                    {copy.gaps[gap as PortfolioGap]}
+                    {copy.gaps[gap]}
                   </Link>
                 </li>
               ))}
             </ul>
-            <p className="sr-only">{portfolioFocusPath(child.id, gaps[0], french)}</p>
           </li>
         ))}
       </ul>

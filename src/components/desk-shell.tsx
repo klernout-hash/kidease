@@ -212,7 +212,8 @@ export function DeskShell({
 }) {
   const meta = DESK_META[desk];
   const { t } = useCopy();
-  const { session } = useSessionDesks();
+  const { session, ready: sessionReady } = useSessionDesks();
+  const centreRolePending = desk === "daycare" && !session;
   const chrome = useRoleChrome();
   const nativeShell = useInNativeShell();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -221,6 +222,7 @@ export function DeskShell({
     showPayCtas: session?.showPayCtas,
     subscriptionsEnabled: nativeShell ? false : chrome.subscriptionsEnabled,
     centreOwner: session?.centreOwner,
+    centreRolePending,
     centreLinked: session?.centreLinked,
     centreGrants: session?.centreGrants,
     centreCanInvite: session?.centreCanInvite,
@@ -276,6 +278,9 @@ export function DeskShell({
                 <div className="mt-2 hidden md:block" data-ke="desk-switcher-slot">
                   <DeskSwitcher />
                 </div>
+              ) : null}
+              {centreRolePending && !sessionReady ? (
+                <div className="ke-skel mt-2 hidden h-11 rounded-xl md:block" aria-hidden="true" />
               ) : null}
               <nav data-ke="desk-desktop-nav" className="mt-2 hidden flex-col gap-[8px] md:flex">
                 {visibleDeskGroups(desk, allItems).map(({ group, items }) => (

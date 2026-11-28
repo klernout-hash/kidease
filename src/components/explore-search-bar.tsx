@@ -177,7 +177,7 @@ export function ExploreSearchBar({
   onDatesChange: (next: { from: string; to: string }) => void;
   start?: SearchStart | "";
   onStartChange?: (start: SearchStart | "") => void;
-  onSubmit: (where?: string) => Promise<boolean>;
+  onSubmit: (where?: string, resolved?: ResolvedPlace) => Promise<boolean>;
   onLocate?: () => void;
   origin?: { lat: number; lng: number; label?: string | null; source?: string | null };
   className?: string;
@@ -209,11 +209,11 @@ export function ExploreSearchBar({
   const [placeNotFound, setPlaceNotFound] = useState(false);
   const submitting = useRef(false);
 
-  async function submitPlace(typed: string) {
+  async function submitPlace(typed: string, resolved?: ResolvedPlace) {
     if (submitting.current) return;
     submitting.current = true;
     try {
-      if (await onSubmit(typed)) {
+      if (await onSubmit(typed, resolved)) {
         setPlaceNotFound(false);
         if (startCollapsed) setExpanded(false);
       } else {
@@ -405,6 +405,10 @@ export function ExploreSearchBar({
                   setPlaceNotFound(false);
                   onWhereChange(place.label);
                   onWhereResolved(place);
+                }}
+                onEnterResolved={(place) => {
+                  setActive(null);
+                  void submitPlace(place.label, place);
                 }}
                 placeholder={t("searchWhereHint")}
                 origin={origin}

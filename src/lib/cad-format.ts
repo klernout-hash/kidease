@@ -3,7 +3,7 @@
  *
  * French: fr-CA with a CAD marker and two decimals, always "1,00 $ CA".
  * Intl's fr-CA output is "1,00 $" with no country, which read as US dollars
- * on the Nov 25 test. English keeps the Intl output for its locale.
+ * on the Nov 25 test. English always labels Canadian dollars with CA$.
  */
 const NBSP = "\u00a0";
 
@@ -34,5 +34,8 @@ export function frenchCad(dollars: number): string {
 export function formatCad(dollars: number, locale: string, options: CadFormatOptions = {}): string {
   if (isFrenchLocale(locale)) return frenchCad(dollars);
   const value = Number.isFinite(Number(dollars)) ? Number(dollars) : 0;
-  return new Intl.NumberFormat(locale || "en-CA", { style: "currency", currency: "CAD", ...options }).format(value);
+  const tag = locale || "en-CA";
+  const formatter = new Intl.NumberFormat(tag, { style: "currency", currency: "CAD", ...options });
+  if (!/^en\b/i.test(tag)) return formatter.format(value);
+  return formatter.formatToParts(value).map((part) => part.type === "currency" ? "CA$" : part.value).join("");
 }

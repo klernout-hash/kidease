@@ -335,6 +335,7 @@ type DeskNavOpts = {
   /** Daycare Subscription and parent plan chrome. Off until SUBSCRIPTIONS_ENABLED. */
   subscriptionsEnabled?: boolean;
   centreOwner?: boolean;
+  centreRolePending?: boolean;
   /** Active centre member. Owner-only items stay hidden for staff unless this is true. */
   centreLinked?: boolean;
   /** Merged grants for a staff login. Owners leave this empty and see the full desk. */
@@ -415,6 +416,7 @@ const BEFORE_CENTRE_NAV = new Set([
 ]);
 
 export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
+  if (desk === "daycare" && opts?.centreRolePending) return [];
   return DESK_NAV[desk].filter((item) => {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
     if (desk === "daycare" && opts?.centreLinked === false && !BEFORE_CENTRE_NAV.has(item.id)) return false;

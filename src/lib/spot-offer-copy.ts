@@ -33,6 +33,11 @@ export type SpotOfferCopy = {
   openOffer: string;
   emptyDesk: string;
   emptyMine: string;
+  noOffers: string;
+  waitlistsElsewhere: string;
+  seeWaitlists: string;
+  offersUnavailable: string;
+  tryAgain: string;
   findCare: string;
   mailOff: string;
   feeBlocked: string;
@@ -77,6 +82,11 @@ const en: SpotOfferCopy = {
   openOffer: "Waiting for an answer",
   emptyDesk: "No families yet. Parents join from your listing.",
   emptyMine: "You are not on a waitlist yet.",
+  noOffers: "No spot offers yet",
+  waitlistsElsewhere: "You can track your requests and waitlists in one place.",
+  seeWaitlists: "See my waitlists",
+  offersUnavailable: "We couldn’t load your offers. Please try again.",
+  tryAgain: "Try again",
   findCare: "Find a daycare",
   mailOff: "Offer emails are off. The family sees the offer when they sign in.",
   feeBlocked: "KidEase does not charge a waitlist fee.",
@@ -123,6 +133,11 @@ const fr: SpotOfferCopy = {
   openOffer: "En attente d'une réponse",
   emptyDesk: "Aucune famille pour le moment. Les parents joignent la liste depuis votre fiche.",
   emptyMine: "Vous n'êtes pas encore sur une liste d'attente.",
+  noOffers: "Aucune offre de place pour le moment",
+  waitlistsElsewhere: "Retrouvez vos demandes et vos listes d’attente au même endroit.",
+  seeWaitlists: "Voir mes listes d’attente",
+  offersUnavailable: "Impossible de charger vos offres. Veuillez réessayer.",
+  tryAgain: "Réessayer",
   findCare: "Trouver une garderie",
   mailOff: "Les courriels d'offre sont désactivés. La famille voit l'offre en se connectant.",
   feeBlocked: "KidEase ne facture aucuns frais de liste d'attente.",
