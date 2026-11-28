@@ -1,3 +1,4 @@
+import { WAITLIST_DEMAND_CELLS_SQL } from "@/lib/waitlist-read-model";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
@@ -8,13 +9,10 @@ import { requireAdmin } from "@/lib/server/roles";
 
 async function cells(province: string) {
   const sql = await sqlClient();
-  const rows = await sql<{ province: string; city: string; age_group: string; n: number }>`
-    select d.province, d.city, w.age_group, count(*)::int as n
-    from daycare_waitlist w
-    join daycares d on d.id = w.daycare_id
-    where w.status = 'waiting' and upper(btrim(d.province)) = ${province.trim().toUpperCase()}
-    group by d.province, d.city, w.age_group
-  `;
+  const rows = await sql.query<{ province: string; city: string; age_group: string; n: number }>(
+    WAITLIST_DEMAND_CELLS_SQL,
+    [province.trim().toUpperCase()],
+  );
   if (!Array.isArray(rows)) throw new Error("Demand report could not be loaded");
   return rows.map((row) => ({
     province: row.province,

@@ -140,6 +140,7 @@ export function areaWaitlistCopy(locale: string | null | undefined): AreaWaitlis
 }
 
 const CENTRE_STATUS_EN: Record<string, string> = {
+  interested: "Spot alerts on",
   waiting: "Waiting",
   offered: "Offered",
   accepted: "Accepted",
@@ -149,6 +150,7 @@ const CENTRE_STATUS_EN: Record<string, string> = {
 };
 
 const CENTRE_STATUS_FR: Record<string, string> = {
+  interested: "Alertes de place activées",
   waiting: "En attente",
   offered: "Offerte",
   accepted: "Acceptée",

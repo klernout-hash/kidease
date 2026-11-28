@@ -1,3 +1,4 @@
+import { CENTRE_WAITLIST_DEMAND_SQL, WAITLIST_READ_SQL } from "@/lib/waitlist-read-model";
 /**
  * Insights for the centres on this account.
  *
@@ -287,10 +288,10 @@ export const loadProviderInsights = createServerFn({ method: "GET" })
         : Promise.resolve([] as { daycare_id: string; hours: number }[]),
       sql
         .query<{ age: string; joined_at: string }>(
-          `select age_group as age, joined_at
-           from daycare_waitlist
-           where daycare_id = any($1::text[])
-             and status in ('waiting', 'offered')`,
+          `select age_group as age, min(created_at) as joined_at
+           from ${WAITLIST_READ_SQL} w
+           where daycare_id = any($1::text[]) and ${CENTRE_WAITLIST_DEMAND_SQL}
+           group by daycare_id, user_id, age_group`,
           [ids],
         )
         .catch(() => [] as { age: string; joined_at: string }[]),

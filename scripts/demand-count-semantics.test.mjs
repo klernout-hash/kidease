@@ -4,6 +4,7 @@ import { after, before, test } from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 import { PGlite } from "@electric-sql/pglite";
+import { WAITLIST_DEMAND_CELLS_SQL, WAITLIST_READ_SQL, CENTRE_WAITLIST_DEMAND_SQL } from "../src/lib/waitlist-read-model.ts";
 import { demandReport, quarterKey } from "../src/lib/compliance/demand.ts";
 
 // Only the production SQL-client boundary is replaced. The actual cells/read
@@ -20,13 +21,12 @@ const javascript = ts.transpileModule(declarations.map((node) => node.getText(so
 const pg = new PGlite();
 const queries = [];
 let unavailable = false;
-const sql = async (strings, ...values) => {
-  const text = strings.reduce((query, part, index) => query + (index ? `$${index}` : "") + part, "");
-  queries.push({ text, values });
+const query = async (text, values) => {
+  queries.push({ text, values: Array.from(values) });
   if (unavailable) throw new Error("local fixture read failure");
   return (await pg.query(text, values)).rows;
 };
-const context = vm.createContext({ sqlClient: async () => sql, demandReport, quarterKey });
+const context = vm.createContext({ sqlClient: async () => ({ query }), demandReport, quarterKey, WAITLIST_DEMAND_CELLS_SQL });
 new vm.Script(`${javascript}\nglobalThis.subject = { cells, readDemandReport };`, {
   filename: sourcePath.pathname,
 }).runInContext(context);
@@ -46,6 +46,20 @@ before(async () => {
       age_group text not null check (age_group in ('infant', 'toddler', 'preschool', 'any')),
       status text not null check (status in ('waiting', 'offered', 'accepted', 'declined', 'expired', 'withdrawn')),
       joined_at timestamptz not null
+    );
+    alter table daycare_waitlist add column updated_at timestamptz;
+    alter table daycare_waitlist add column rank_order int;
+    alter table daycare_waitlist add column child_label text;
+    create table waitlist_interests (
+      id text, user_id text, daycare_id text, age_band text, created_at timestamptz, updated_at timestamptz
+    );
+    create table saved_searches (
+      id text, user_id text, age_band text, created_at timestamptz, updated_at timestamptz,
+      center_label text, postal_code text, radius_km int, start_date date, kind text, alerts_enabled int
+    );
+    create table bookings (
+      id text, user_id text, daycare_id text, age_group text, status text, created_at timestamptz,
+      status_updated_at timestamptz, batch_id text, start_month text
     );
     create unique index fixture_active_waitlist_once
       on daycare_waitlist(daycare_id, user_id) where status in ('waiting', 'offered');
@@ -189,4 +203,29 @@ test("actual data-read boundary distinguishes off, successful empty, and unavail
     assert.equal(failed.status, "unavailable");
     assert.equal(Object.hasOwn(failed, "rows"), false);
   } finally { unavailable = false; }
+});
+
+test("the projection unifies all four sources and keeps private watches out of centre and government demand", async () => {
+  await pg.exec(`
+    insert into waitlist_interests values ('alert', 'p', 'toronto-a', 'toddler', now(), now());
+    insert into saved_searches values
+      ('area', 'p', 'toddler', now(), now(), 'Private area', 'M1M 1M1', 10, null, 'waitlist_area', 1),
+      ('disabled', 'p', 'toddler', now(), now(), 'Private area', null, 10, null, 'waitlist_area', 0);
+    insert into bookings values
+      ('booking', 'p', 'toronto-a', 'toddler', 'waitlist', now(), now(), null, null),
+      ('enrolled', 'p', 'toronto-a', 'toddler', 'accepted', now(), now(), null, null);
+  `);
+  const results = await pg.query(`
+    select id, source, daycare_id, ${CENTRE_WAITLIST_DEMAND_SQL} as demand
+    from ${WAITLIST_READ_SQL} w where user_id = 'p' order by id
+  `);
+  assert.deepEqual(results.rows.map(Object.values), [
+    ["alert", "interest", "toronto-a", true],
+    ["area", "area", null, false],
+    ["booking", "booking", "toronto-a", true],
+    ["enrolled", "booking", "toronto-a", false],
+  ]);
+  const report = plain(await cells("ON"));
+  assert.equal(report.find((row) => row.area === "Toronto" && row.ageKey === "toddler").n, 1);
+  assert.doesNotMatch(JSON.stringify(report), /Private area|M1M 1M1/);
 });
