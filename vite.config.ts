@@ -374,9 +374,13 @@ export default defineConfig(({ command, isPreview, mode }) => {
       },
     },
     modulePreload: {
-      resolveDependencies(_filename, deps) {
+      resolveDependencies(_filename, deps, { hostType }) {
+        // The entry already imports these two chunks. Repeating their hints
+        // on every lazy import adds bytes without fetching anything earlier.
+        // Keep initial HTML preloads and all actual module imports intact.
         return deps.filter(
           (dep) =>
+            !(hostType === "js" && /(?:^|\/)(?:startup-shared|rolldown-runtime)-[^/]+\.js$/.test(dep)) &&
             !/locale-(?:zh|yue|pa|es|ar|tl|it|de)/.test(dep) &&
             !/posthog|product-events/i.test(dep) &&
             !/vacancy-index/i.test(dep) &&
