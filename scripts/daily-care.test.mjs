@@ -141,3 +141,8 @@ test("Daily care is wired on parent desk and daycare Today without touching mark
   assert.doesNotMatch(src("src/lib/server/daily-care.ts"), /FEATURE_SMS|sendSms|emailCommercial/);
   assert.doesNotMatch(src("src/lib/server/care-ops.ts"), /FEATURE_SMS|sendSms|emailCommercial/);
 });
+
+test("old English and French absence URLs open Daily care", () => {
+  assert.match(src("src/routes/parent_.absence.tsx"), /to: "\/parent"[\s\S]*tab: "care"/);
+  assert.match(src("src/routes/fr.parent_.absence.tsx"), /to: "\/fr\/parent"[\s\S]*tab: "care"/);
+});

@@ -14,11 +14,12 @@ const aliases = {
   "@/lib/use-copy": "copy",
   "@/lib/server/coparent": "desk",
   "@/lib/server/coparent-email": "email",
+  "@/lib/server/parent-tracker": "tracker",
 };
 const stubs = {
   entry: `import React from "react"; import {createRoot} from "react-dom/client";
     import {CoparentDesk} from "@/components/coparent-desk";
-    createRoot(document.getElementById("root")).render(React.createElement(CoparentDesk));`,
+    createRoot(document.getElementById("root")).render(React.createElement(CoparentDesk, {shortlistShared:true}));`,
   router: `export const useRouterState = ({select}) => select({location: window.location});
     export const Link = () => null;`,
   copy: "export const useCopy = () => ({locale: document.documentElement.lang});",
@@ -28,6 +29,7 @@ const stubs = {
     export const acceptCoparentInvite = createCoparentInvite,
       removeCoparent = createCoparentInvite, setCoparentAccess = createCoparentInvite;
     export function createCoparentInvite() { throw new Error("fixture does not mutate"); }`,
+  tracker: 'export function inviteShortlistShare() { throw new Error("fixture does not send email"); }',
   email:
     'export function inviteCoparentByEmail() { throw new Error("fixture does not send email"); }',
 };
@@ -53,7 +55,7 @@ const bundle = await build({
   resolve: {
     alias: [
       {
-        find: /^@\/(?!lib\/(?:use-copy|server\/coparent(?:-email)?)(?:$|\/))/,
+        find: /^@\/(?!lib\/(?:use-copy|server\/(?:coparent(?:-email)?|parent-tracker))(?:$|\/))/,
         replacement: join(root, "src/") + "/",
       },
     ],

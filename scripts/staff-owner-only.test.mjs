@@ -53,7 +53,10 @@ test("B05: provider desks and account delete show the owner-only screen for staf
   assert.match(provider, /desk === "employees" && !staffDesk \? <CentreEmployeesPanel|desk === "employees" && !staffDesk \? \(/);
   assert.match(provider, /canBills && !staffDesk/);
   const account = src("src/routes/account.tsx");
-  assert.match(account, /section === "delete" && desk === "provider" && isStaffOnlyLogin/);
+  // N-43: staff on a centre account get the owner-only notice for delete/export/wallet/refer/upgrade.
+  assert.match(account, /accountSectionHiddenForStaff\(search\.section, staffScope\)/);
+  assert.match(account, /staffBlockedSection \? \(\s*[\s\S]{0,80}<OwnerOnlyNotice \/>/);
+  assert.match(account, /section === "delete" && !staffBlockedSection/);
 });
 
 test("B05: insights, Families and the team list are scoped to owner and manager centres server-side", () => {

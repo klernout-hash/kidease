@@ -16,11 +16,8 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-const CONSENT =
-  "I agree to receive text messages from KidEase about my daycare requests and account. Message frequency varies. Msg & data rates may apply. Reply STOP to opt out, HELP for help.";
-
-test("parent SMS consent sentence stays exact for toll-free verification", () => {
-  assert.equal(PARENT_SMS_CONSENT_TEXT, CONSENT);
+test("parent SMS opt-in identifies KidEase and explains how to withdraw", () => {
+  assert.match(PARENT_SMS_CONSENT_TEXT, /I agree.*KidEase.*rates may apply.*Withdraw consent.*STOP.*support@kidease.ca/);
   assert.equal(PARENT_SMS_TERMS_URL, "https://www.kidease.ca/terms");
   const fields = src("src/components/parent-sms-fields.tsx");
   assert.match(fields, /parentSmsConsentText/);

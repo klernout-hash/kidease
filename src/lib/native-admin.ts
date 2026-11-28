@@ -1,7 +1,8 @@
 /**
- * Admin stays on the website. The iOS and Android shells load
+ * The primary iOS and Android shells load
  * https://www.kidease.ca inside a WebView. A document GET to /admin* is
- * behind Cloudflare Access, which sends the shell out to Safari.
+ * behind Cloudflare Access. The signed-in Admin launcher opens its own
+ * in-app browser session for KidEase sign-in, OTP and Cloudflare Access.
  *
  * Detection matches the shell the binary already sends:
  * - Capacitor.isNativePlatform()
@@ -15,6 +16,8 @@
  * (docs/cloudflare.md), so it stays available.
  */
 
+import { ADMIN_LOGIN_SEARCH } from "./admin-desk-gate.ts";
+import { SITEMAP_ORIGIN } from "./public-url.ts";
 import { isNativeUserAgent } from "./native-entitlements.ts";
 
 export const NATIVE_SHELL_COOKIE = "ke_shell";
@@ -39,25 +42,6 @@ export function nativeAdminNotePathFor(fromPath: string | null | undefined): str
 }
 /** Older iOS/Android binaries still open this path. Keep it. */
 export const NATIVE_ADMIN_NOTE_LEGACY_PATH = "/use-the-website";
-
-const NOTE_COPY = {
-  en: {
-    title: "Admin is on the website",
-    lead: "Admin is available on kidease.ca in a browser",
-    body: "This app is for finding daycare and for daycare owners. The admin desk stays on the website, so the app does not open a second login.",
-    home: "Go home",
-  },
-  fr: {
-    title: "L’admin est sur le site web",
-    lead: "L’admin est offert sur kidease.ca dans un navigateur.",
-    body: "Cette appli sert à trouver une garderie et aux propriétaires de garderie. Le bureau admin reste sur le site web, pour que l’appli n’ouvre pas une deuxième connexion.",
-    home: "Aller à l’accueil",
-  },
-} as const;
-
-export function nativeAdminNoteCopy(locale: string | null | undefined) {
-  return locale === "fr" ? NOTE_COPY.fr : NOTE_COPY.en;
-}
 
 export function cookieMarksNativeShell(cookie: string | null | undefined): boolean {
   return new RegExp(`(?:^|;\\s*)${NATIVE_SHELL_COOKIE}=${NATIVE_SHELL_COOKIE_VALUE}(?:;|$)`).test(
@@ -96,6 +80,19 @@ export function nativeShellHidesAdminNow(): boolean {
     cookie: document.cookie,
     nativePlatform: capacitorIsNativePlatform(),
   });
+}
+
+/** Start sign-in and complete Access in the same in-app browser session. */
+export function nativeAdminSignInUrl(locale: string): string {
+  const url = new URL(locale === "fr" ? "/fr/login" : "/login", SITEMAP_ORIGIN);
+  url.search = new URLSearchParams(ADMIN_LOGIN_SEARCH).toString();
+  return url.href;
+}
+
+export async function openNativeAdminBrowser(locale: string): Promise<void> {
+  if (!capacitorIsNativePlatform()) throw new Error("Native browser unavailable");
+  const { Browser } = await import("@capacitor/browser");
+  await Browser.open({ url: nativeAdminSignInUrl(locale), presentationStyle: "fullscreen" });
 }
 
 /** Path only, French prefix removed, no query. */

@@ -977,30 +977,55 @@ export const loadGovDeskPage = createServerFn({ method: "GET" })
 
 const SUMMARY: Array<[GovLeaf, string]> = [
   ["change-requests", "to_review"],
-  ["incidents", "overdue"],
-  ["complaints", "open"],
-  ["ratios", "fail"],
-  ["screening", "expired"],
   ["compliance", "past"],
-  ["fee-caps", "flagged"],
-  ["notifications", "unread"],
+  ["inspection-sync", "records"],
+  ["data-requests", "requests"],
 ];
 
-/** Overview summary: one number per section, each with its page link. */
+/** Reuse the province-scoped page data. Only expose fields used by the overview. */
 export const loadGovSummary = createServerFn({ method: "GET" })
   .middleware([govAuthMiddleware])
   .validator((input: { locale?: string } | undefined) => ({ locale: localeOf(input?.locale) }))
   .handler(async ({ context, data }) => {
     const gov = context.gov as GovActor;
     const pages = await Promise.all(SUMMARY.map(([leaf]) => buildPage(gov, leaf, data.locale).catch(() => null)));
-    const out: Array<{ leaf: GovLeaf; state: GovDeskState; label: string; value: number | null; tone: string | null }> = [];
-    pages.forEach((page, index) => {
-      if (!page) return;
-      const [leaf, key] = SUMMARY[index];
-      const stat = page.stats.find((s) => s.key === key);
-      out.push({ leaf, state: page.state, label: stat?.label ?? "", value: stat?.value ?? null, tone: stat?.tone ?? null });
+    const items = SUMMARY.map(([leaf, key], index) => {
+      const page = pages[index];
+      const stat = page?.stats.find((entry) => entry.key === key);
+      return {
+        leaf,
+        state: page?.state ?? "unavailable",
+        source: page?.source ?? "",
+        label: stat?.label ?? "",
+        value: stat?.value ?? null,
+        tone: stat?.tone ?? null,
+      };
     });
-    return out;
+    const changes = pages[0]?.table?.rows.filter((row) => row.meta?.view === "to_review").slice(0, 3) ?? [];
+    const dates = pages[1]?.table?.rows.filter((row) => row.tone === "bad").slice(0, 3) ?? [];
+    const requests = pages[3]?.table?.rows.slice(0, 3) ?? [];
+    if (changes.length || requests.length) {
+      const sql = await getSql();
+      await Promise.all([
+        changes.length && pages[0] ? auditDesk(sql, gov, pages[0].province, "open:change-requests", true) : undefined,
+        requests.length && pages[3] ? auditDesk(sql, gov, pages[3].province, "open:data-requests", true) : undefined,
+      ]);
+    }
+    return {
+      items,
+      attention: [
+        ...dates.map(({ id, cells }) => ({
+          id, leaf: "compliance" as const, centre: cells[0], city: cells[1], task: cells[2],
+          date: cells[3], status: cells[4], source: cells[5],
+        })),
+        ...changes.map(({ id, cells }) => ({
+          id, leaf: "change-requests" as const, centre: cells[0], city: cells[1], task: cells[2],
+          date: cells[4], status: cells[5], source: pages[0]?.source ?? "",
+        })),
+      ],
+      // The queue already contains only suppressed counts. Never forward case records.
+      requests: requests.map(({ id, cells: [kind, status, count] }) => ({ id, kind, status, count })),
+    };
   });
 
 export const exportGovDeskCsv = createServerFn({ method: "POST" })
