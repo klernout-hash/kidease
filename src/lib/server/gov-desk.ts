@@ -12,6 +12,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { getSql, type Sql } from "@/lib/db";
+import { formatCad } from "@/lib/cad-format";
 import { nid } from "@/lib/utils";
 import { assertGovWritable, type GovActor } from "@/lib/server/gov-actor.server";
 import { readScope } from "@/lib/server/compliance-common";
@@ -538,7 +539,7 @@ async function feeCapsPage(sql: Sql, page: GovDeskPageData) {
   if (feeMode(process.env) === "off") return offPage(page, "FEATURE_FEE_CAPS");
   const caps = publishedCapsFor(page.province);
   page.source = t(L, "Daily fees centres saved on KidEase, compared with your province’s published cap. A monthly fee is never turned into a guessed daily fee.", "Tarifs quotidiens enregistrés par les centres sur KidEase, comparés au plafond publié de votre province. Un tarif mensuel n’est jamais converti en tarif quotidien estimé.");
-  const money = (cents: number) => (cents / 100).toLocaleString(L === "fr" ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" });
+  const money = (cents: number) => formatCad(cents / 100, L);
   page.extra = { caps: caps.map((cap) => ({ ageKey: cap.ageKey, cents: cap.maxDailyCents, source: cap.source })) };
   if (!caps.length) {
     page.state = "unavailable";
