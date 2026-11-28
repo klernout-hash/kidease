@@ -71,7 +71,7 @@ export function GovSummary({ locale, data }: { locale: "en" | "fr"; data?: GovSu
               {data.requests.map((row) => (
                 <li key={row.id} className="flex items-center justify-between gap-2 py-2 text-sm">
                   <span>{label(row.kind)} · {label(row.status)}</span>
-                  <span>{row.count?.toLocaleString(localeTag) ?? hidden}</span>
+                  <span>{typeof row.count === "number" ? row.count.toLocaleString(localeTag) : hidden}</span>
                 </li>
               ))}
             </ul>
