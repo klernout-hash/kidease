@@ -8,9 +8,10 @@ import {
   THANK_YOU_KIND,
 } from "@/lib/growth-loops";
 import { normalizeReferralCode } from "@/lib/referrals";
+import { BASE36, secureRandomString } from "@/lib/secure-random";
 
 function rewardId(): string {
-  return `rw_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
+  return `rw_${secureRandomString(BASE36, 8)}${Date.now().toString(36)}`;
 }
 
 export async function noteThankYou(referrerId: string, referredId: string): Promise<ThankYouWrite> {
