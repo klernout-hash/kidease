@@ -51,9 +51,9 @@ test("listing card photo uses the live and fee pills instead of registry-checked
   assert.doesNotMatch(card, /trustLicensedMatched/);
   assert.doesNotMatch(card, /listingPill/);
   const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
-  assert.match(copy, /cardTenPerDay: "\$10\/day"/);
-  assert.match(copy, /cardQcPerDay: "\$9.65\/day subsidized"/);
-  assert.match(copy, /cardTenPerDay: "10 \$\/jour"/);
+  assert.match(copy, /cardTenPerDay: "CA\$10\/day"/);
+  assert.match(copy, /cardQcPerDay: "CA\$9\.65\/day subsidized"/);
+  assert.match(copy, /cardTenPerDay: "10\\u00a0\$\\u00a0CA\/jour"/);
 });
 
 test("the $10/day pill is the slim white tag (design A) with a 44px tap area", () => {
@@ -64,5 +64,5 @@ test("the $10/day pill is the slim white tag (design A) with a 44px tap area", (
   assert.match(tag, /text-\[#222\]/);
   assert.doesNotMatch(tag, /bg-primary|ke-priority-pill|animate/);
   assert.match(pill, /min-h-11 min-w-11/);
-  assert.match(pill, /"10 \$\/jour" : "\$10\/day"/);
+  assert.match(pill, /"10\\u00a0\$\\u00a0CA\/jour" : "CA\$10\/day"/);
 });

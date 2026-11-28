@@ -1,3 +1,4 @@
+import { formatCad } from "./cad-format.ts";
 import type { AgeVacancyGroup } from "./age-vacancy";
 
 export type AgeVacancyCopy = {
@@ -41,7 +42,7 @@ const en: AgeVacancyCopy = {
   lead: "Search this city to compare them.",
   centres: (n) => `${n} centres`,
   spots: (n) => `${n} open spots on file`,
-  fee: (n) => `Average listed fee $${n} a month`,
+  fee: (n) => `Average listed fee ${formatCad(n, "en-CA", { maximumFractionDigits: 0 })} a month`,
   noFee: "No monthly fee is on file for this age yet.",
   ages: (min, max) => `${min} to ${max} months`,
   search: (city) => `Search daycare in ${city}`,
@@ -56,7 +57,7 @@ const fr: AgeVacancyCopy = {
   lead: "Cherchez dans cette ville pour les comparer.",
   centres: (n) => `${n} centres`,
   spots: (n) => `${n} places libres au dossier`,
-  fee: (n) => `Frais moyens affichés ${n} $ par mois`,
+  fee: (n) => `Frais moyens affichés ${formatCad(n, "fr-CA")} par mois`,
   noFee: "Aucun frais mensuel n'est au dossier pour cet âge.",
   ages: (min, max) => `${min} à ${max} mois`,
   search: (city) => `Chercher une garderie à ${city}`,

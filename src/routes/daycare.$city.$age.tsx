@@ -3,6 +3,7 @@ import { JsonLd } from "@/components/json-ld";
 import { CityHubNotFoundPage } from "@/components/page-not-found";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
+import { formatCad } from "@/lib/cad-format";
 import { ageVacancyCopy, ageVacancyMeta } from "@/lib/age-vacancy-copy";
 import { ageVacancyPath, type AgeVacancyPage } from "@/lib/age-vacancy";
 import { loadAgeVacancyPage } from "@/lib/server/age-vacancy";
@@ -79,7 +80,7 @@ export function AgeVacancyView({ page }: { page: AgeVacancyPage }) {
               <p className="mt-1 text-sm text-muted">
                 {page.city}, {page.province} · {copy.ages(hit.ageMinMonths, hit.ageMaxMonths)}
                 {hit.spots ? ` · ${hit.spots}` : ""}
-                {hit.fee != null ? ` · $${hit.fee}` : ""}
+                {hit.fee != null ? ` · ${formatCad(hit.fee, fr ? "fr-CA" : "en-CA", { minimumFractionDigits: 0 })}` : ""}
               </p>
             </li>
           ))}

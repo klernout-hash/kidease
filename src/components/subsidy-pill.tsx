@@ -32,7 +32,7 @@ export function SubsidyPill({
   const loc = locale === "fr" ? "fr" : "en";
   const note = subsidyNote(subsidy, loc);
   const label = subsidy.subsidy_type === "ten" || subsidy.subsidy_type === "ten_max"
-    ? (loc === "fr" ? "10 $/jour" : "$10/day")
+    ? (loc === "fr" ? "10\u00a0$\u00a0CA/jour" : "CA$10/day")
     : subsidyLabel(subsidy, loc);
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>

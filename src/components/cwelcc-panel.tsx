@@ -113,7 +113,7 @@ export function CwelccPanel() {
       {province === "BC" ? (
         <label className="flex min-h-11 items-center gap-3 text-sm">
           <input type="checkbox" checked={tenDollar} onChange={(event) => setTenDollar(event.target.checked)} />
-          {fr ? "Site à 10 $ par jour" : "$10-a-day site"}
+          {fr ? "Site à 10\u00a0$\u00a0CA par jour" : "CA$10-a-day site"}
         </label>
       ) : null}
       <label className="mt-3 block text-sm">
