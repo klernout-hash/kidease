@@ -130,8 +130,10 @@ const EN = {
   deleteAccount: "Delete account",
   language: "Français",
   demo: "Demo account. Read only. Numbers are real directory counts, with small groups hidden.",
-  nativeTitle: "This desk is on the website",
-  nativeBody: "The phone app does not include the government desk. Open kidease.ca/gov in a browser.",
+  nativeTitle: "The Government desk is on the website",
+  nativeBody: "This app does not include the Government desk. Open kidease.ca in a web browser to use it.",
+  nativeOpenWebsite: "Open kidease.ca",
+  nativeSignedOut: "You are signed out of the app.",
   home: "KidEase home",
   reportTitle: "KidEase government report",
   suppressed: "Hidden",
@@ -268,8 +270,10 @@ const FR = {
   deleteAccount: "Supprimer le compte",
   language: "English",
   demo: "Compte démo. Lecture seule. Les chiffres sont de vraies fiches, et les petits groupes sont cachés.",
-  nativeTitle: "Ce bureau est sur le site web",
-  nativeBody: "L’appli téléphone n’inclut pas le bureau des gouvernements. Ouvrez kidease.ca/gov dans un navigateur.",
+  nativeTitle: "Le bureau gouvernemental est sur le site web",
+  nativeBody: "Cette appli n’inclut pas le bureau gouvernemental. Ouvrez kidease.ca dans un navigateur pour l’utiliser.",
+  nativeOpenWebsite: "Ouvrir kidease.ca",
+  nativeSignedOut: "Votre session est fermée dans l’appli.",
   home: "Accueil KidEase",
   reportTitle: "Rapport gouvernement KidEase",
   suppressed: "Caché",
@@ -289,6 +293,19 @@ export function feeBucketLabel(bucket: string, locale: GovLocale): string {
   if (bucket === "800_1199") return copy.fee800;
   if (bucket === "1200_plus") return copy.fee1200;
   return bucket;
+}
+
+/**
+ * N-31 / P0-6 / N-08: the Government screen inside the store apps, until
+ * in-app Government ships. "Open kidease.ca" opens the real desk in the
+ * system browser (never inside this WebView). Sign out goes to the main
+ * sign-in page: /gov/login in the app would only show this note again.
+ */
+export function govNativeNoteLinks(locale: GovLocale): { websiteUrl: string; signOutTo: string } {
+  return {
+    websiteUrl: `https://www.kidease.ca${govPath(locale)}`,
+    signOutTo: locale === "fr" ? "/fr/login" : "/login",
+  };
 }
 
 export function govPath(locale: GovLocale, leaf: "" | "login" = ""): string {
