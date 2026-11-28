@@ -113,3 +113,44 @@ export function showGovFooterLink(_input?: { enabled?: boolean; native?: boolean
 export function govNativeBlocked(native: boolean): boolean {
   return native === true;
 }
+
+/** What the gov session check told the desk guard. */
+export type GovSessionProbe = {
+  ok: boolean;
+  closed?: boolean;
+  needSecondFactor?: boolean;
+  /** Signed in, but not a government account (parent, staff, owner, admin). */
+  otherAccount?: boolean;
+};
+
+export type GovDeskDecision =
+  | { kind: "desk" }
+  | { kind: "native-note" }
+  | { kind: "unavailable" }
+  | { kind: "redirect"; to: "home" | "verify" | "login" };
+
+/**
+ * N-27: who sees what on /gov and /fr/gov.
+ * - Government officers: the desk (website) or the "use the website" note (app).
+ * - Signed-in parent, staff, owner or admin: one neutral "not available for
+ *   your account" page. No desk data, no redirect, nothing about the desk.
+ * - Guests: the government sign-in page (website) or the app note.
+ * The unavailable page is shown in place, so it cannot loop.
+ */
+export function govDeskDecision(input: {
+  nativeShell: boolean;
+  portalOpen: boolean;
+  session: GovSessionProbe | null;
+}): GovDeskDecision {
+  const session = input.session;
+  if (input.nativeShell) {
+    return session?.otherAccount === true ? { kind: "unavailable" } : { kind: "native-note" };
+  }
+  if (!input.portalOpen) return { kind: "redirect", to: "home" };
+  if (!session) return { kind: "redirect", to: "login" };
+  if (session.ok) return { kind: "desk" };
+  if (session.closed === true) return { kind: "redirect", to: "home" };
+  if (session.otherAccount === true) return { kind: "unavailable" };
+  if (session.needSecondFactor === true) return { kind: "redirect", to: "verify" };
+  return { kind: "redirect", to: "login" };
+}
