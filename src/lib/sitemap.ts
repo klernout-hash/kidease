@@ -153,7 +153,12 @@ function hreflangXml(enPath: string): string {
 }
 
 function escapeXml(value: string): string {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 export function renderSitemapXml(input: {
@@ -168,7 +173,7 @@ export function renderSitemapXml(input: {
     const alt = isCatalogueSitemapPath(path) ? `\n${hreflangXml(bareCataloguePath(path))}` : "";
     entries.push(`  <url>
     <loc>${escapeXml(loc)}</loc>${alt}
-    <lastmod>${lastmod}</lastmod>
+    <lastmod>${escapeXml(lastmod)}</lastmod>
   </url>`);
   }
   for (const slug of input.listingSlugs ?? []) {
@@ -177,7 +182,7 @@ export function renderSitemapXml(input: {
     entries.push(`  <url>
     <loc>${escapeXml(locFor(path))}</loc>
 ${hreflangXml(path)}
-    <lastmod>${lastmod}</lastmod>
+    <lastmod>${escapeXml(lastmod)}</lastmod>
   </url>`);
   }
   const body = entries.join("\n");
@@ -298,7 +303,7 @@ export function renderListingSitemapIndexXml(pageCount: number, lastmod = SITEMA
     const loc = `${SITEMAP_ORIGIN}${listingSitemapPagePath(i + 1)}`;
     return `  <sitemap>
     <loc>${escapeXml(loc)}</loc>
-    <lastmod>${lastmod}</lastmod>
+    <lastmod>${escapeXml(lastmod)}</lastmod>
   </sitemap>`;
   }).join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -313,11 +318,11 @@ export function renderSitemapIndexXml(lastmod = SITEMAP_LASTMOD): string {
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
     <loc>${SITEMAP_ORIGIN}/sitemap.xml</loc>
-    <lastmod>${lastmod}</lastmod>
+    <lastmod>${escapeXml(lastmod)}</lastmod>
   </sitemap>
   <sitemap>
     <loc>${SITEMAP_ORIGIN}${SITEMAP_LISTINGS_PATH}</loc>
-    <lastmod>${lastmod}</lastmod>
+    <lastmod>${escapeXml(lastmod)}</lastmod>
   </sitemap>
 </sitemapindex>
 `;

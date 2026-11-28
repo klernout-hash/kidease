@@ -28,7 +28,10 @@ function mapSlugTokens(slug: string, table: Readonly<Record<string, string>>): s
   if (!slug) return "";
   return slug
     .split("-")
-    .map((token) => table[token.toLowerCase()] ?? token)
+    .map((token) => {
+      const key = token.toLowerCase();
+      return Object.hasOwn(table, key) ? table[key] : token;
+    })
     .join("-");
 }
 
