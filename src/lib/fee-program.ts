@@ -126,10 +126,10 @@ function tenDay(
   source: string,
   verifiedAt: string = SUBSIDY_VERIFIED_AT,
 ): ListingSubsidy {
-  return subsidyFact("ten", "$10 / Day", "10 $ / jour", note, noteFr, source, verifiedAt);
+  return subsidyFact("ten", "CA$10 / Day", "10\u00a0$\u00a0CA / jour", note, noteFr, source, verifiedAt);
 }
 
-/** Harvested catalogue conversion of a Manitoba $10 day into a fake monthly fee. */
+/** Harvested catalogue conversion of a Manitoba CA$10 day into a fake monthly fee. */
 export const CATALOGUE_MONTHLY_FEE_GUESS = 218;
 
 function programKey(raw?: string | null) {
@@ -205,25 +205,25 @@ export function listingSubsidy(d: SubsidyInput): ListingSubsidy | null {
   if (stored === "mb-10-day") {
     return subsidyFact(
       "ten_max",
-      "$10 / Day",
-      "10 $ / jour",
-      "Manitoba funded fee program: parent fee capped at $10/day for eligible 4–10-hour care. Shorter or longer days and school-day schedules differ. Confirm your child’s fee with the centre. Income-tested subsidy is separate.",
-      "Programme financé du Manitoba : tarif parental plafonné à 10 $ par jour pour la garde admissible de 4 à 10 heures. Les journées plus courtes, plus longues et scolaires diffèrent. Confirmez le tarif de votre enfant avec le centre. La subvention selon le revenu est distincte.",
+      "CA$10 / Day",
+      "10\u00a0$\u00a0CA / jour",
+      "Manitoba funded fee program: parent fee capped at CA$10/day for eligible 4–10-hour care. Shorter or longer days and school-day schedules differ. Confirm your child’s fee with the centre. Income-tested subsidy is separate.",
+      "Programme financé du Manitoba : tarif parental plafonné à 10\u00a0$\u00a0CA par jour pour la garde admissible de 4 à 10 heures. Les journées plus courtes, plus longues et scolaires diffèrent. Confirmez le tarif de votre enfant avec le centre. La subvention selon le revenu est distincte.",
       "https://www.gov.mb.ca/education/childcare/families/childcare_fees.html",
       "2026-11-12",
     );
   }
   if (stored === "pe-10-day") {
     return tenDay(
-      "Designated Prince Edward Island Early Years Centre. Parent fee is $10 a day from birth to school entry.",
-      "Centre de la petite enfance désigné de l’Île-du-Prince-Édouard. Tarif parental de 10 $ par jour, de la naissance à l’entrée à l’école.",
+      "Designated Prince Edward Island Early Years Centre. Parent fee is CA$10 a day from birth to school entry.",
+      "Centre de la petite enfance désigné de l’Île-du-Prince-Édouard. Tarif parental de 10\u00a0$\u00a0CA par jour, de la naissance à l’entrée à l’école.",
       "https://www.princeedwardisland.ca/en/information/education-and-early-years/licensed-early-learning-and-child-care",
     );
   }
   if (stored === "nl-10-day") {
     return tenDay(
-      "Confirmed in Newfoundland and Labrador’s operating grant. The parent fee is $10 a day.",
-      "Confirmé dans la subvention de fonctionnement de Terre-Neuve-et-Labrador. Le tarif parental est de 10 $ par jour.",
+      "Confirmed in Newfoundland and Labrador’s operating grant. The parent fee is CA$10 a day.",
+      "Confirmé dans la subvention de fonctionnement de Terre-Neuve-et-Labrador. Le tarif parental est de 10\u00a0$\u00a0CA par jour.",
       "https://www.gov.nl.ca/education/childcare/",
     );
   }
@@ -234,8 +234,8 @@ export function listingSubsidy(d: SubsidyInput): ListingSubsidy | null {
   if (stored === "sk-10-day") {
     return skCoversUnderSix(d)
       ? tenDay(
-          "Confirmed Saskatchewan regulated fee program for eligible children under 6. Ten or more days cost $217.50 a month; fewer than 10 days cost $10 a day. Confirm eligibility and your child’s schedule with the centre. Income-tested support is separate.",
-          "Programme réglementé confirmé de la Saskatchewan pour les enfants admissibles de moins de 6 ans. Dix jours ou plus coûtent 217,50 $ par mois; moins de 10 jours coûtent 10 $ par jour. Confirmez l’admissibilité et l’horaire de votre enfant avec le centre. L’aide selon le revenu est distincte.",
+          "Confirmed Saskatchewan regulated fee program for eligible children under 6. Ten or more days cost CA$217.50 a month; fewer than 10 days cost CA$10 a day. Confirm eligibility and your child’s schedule with the centre. Income-tested support is separate.",
+          "Programme réglementé confirmé de la Saskatchewan pour les enfants admissibles de moins de 6 ans. Dix jours ou plus coûtent 217,50\u00a0$\u00a0CA par mois; moins de 10 jours coûtent 10\u00a0$\u00a0CA par jour. Confirmez l’admissibilité et l’horaire de votre enfant avec le centre. L’aide selon le revenu est distincte.",
           "https://www.saskatchewan.ca/residents/family-and-social-support/child-care/child-care-in-saskatchewan",
           "2026-11-12",
         )
@@ -262,8 +262,8 @@ export function listingSubsidy(d: SubsidyInput): ListingSubsidy | null {
 
 function bcTen() {
   return tenDay(
-    "On the British Columbia $10 a Day list published by the province. CCFRI is a separate fee reduction, not $10 a day.",
-    "Sur la liste 10 $ par jour publiée par la Colombie-Britannique. Le CCFRI est une réduction distincte, pas un tarif de 10 $ par jour.",
+    "On the British Columbia CA$10 a Day list published by the province. CCFRI is a separate fee reduction, not CA$10 a day.",
+    "Sur la liste 10\u00a0$\u00a0CA par jour publiée par la Colombie-Britannique. Le CCFRI est une réduction distincte, pas un tarif de 10\u00a0$\u00a0CA par jour.",
     subsidyYes.bcSource,
   );
 }
@@ -271,10 +271,10 @@ function bcTen() {
 function qcSubsidized() {
   return subsidyFact(
     "qc_965",
-    "$9.65/day subsidized",
-    "9,65 $/jour subventionné",
-    "Quebec subsidized place (CPE or subsidized garderie). The 2026 reduced contribution is $9.65 a day. Checked 1 November 2026.",
-    "Place subventionnée au Québec (CPE ou garderie subventionnée). La contribution réduite de 2026 est de 9,65 $ par jour. Vérifié le 1er novembre 2026.",
+    "CA$9.65/day subsidized",
+    "9,65\u00a0$\u00a0CA/jour subventionné",
+    "Quebec subsidized place (CPE or subsidized garderie). The 2026 reduced contribution is CA$9.65 a day. Checked 1 November 2026.",
+    "Place subventionnée au Québec (CPE ou garderie subventionnée). La contribution réduite de 2026 est de 9,65\u00a0$\u00a0CA par jour. Vérifié le 1er novembre 2026.",
     QC_SOURCE,
     "2026-11-01",
   );
@@ -285,8 +285,8 @@ function ntReduced() {
     "reduced",
     "Reduced fees",
     "Frais réduits",
-    "Northwest Territories fee reduction. $10 a day is a territory average, not a cap.",
-    "Réduction des frais des Territoires du Nord-Ouest. 10 $ par jour est une moyenne territoriale, pas un plafond.",
+    "Northwest Territories fee reduction. CA$10 a day is a territory average, not a cap.",
+    "Réduction des frais des Territoires du Nord-Ouest. 10\u00a0$\u00a0CA par jour est une moyenne territoriale, pas un plafond.",
     "https://www.ece.gov.nt.ca/en/average-10-day-child-care",
   );
 }
@@ -296,8 +296,8 @@ function ytReduced() {
     "reduced",
     "Reduced fees",
     "Frais réduits",
-    "Yukon fee reduction. $10 a day is a territory average, not a cap.",
-    "Réduction des frais du Yukon. 10 $ par jour est une moyenne territoriale, pas un plafond.",
+    "Yukon fee reduction. CA$10 a day is a territory average, not a cap.",
+    "Réduction des frais du Yukon. 10\u00a0$\u00a0CA par jour est une moyenne territoriale, pas un plafond.",
     "https://yukon.ca/en/universal-child-care",
   );
 }

@@ -250,15 +250,15 @@ export function BenefitsPage() {
           </h2>
           <p className="mt-3 text-sm leading-6 text-muted">
             {fr
-              ? "Entente fédérale-provinciale-territoriale pour réduire les frais aux centres permis participants, souvent autour de 10 $ par jour pour les enfants de moins de 6 ans. Le Québec a son propre régime de contribution réduite."
-              : "CWELCC is the federal-provincial-territorial agreement to lower parent fees at participating licensed centres, often described as an average of about $10 a day for children under 6. Quebec has its own reduced-contribution system instead of the same fee schedule."}
+              ? "Entente fédérale-provinciale-territoriale pour réduire les frais aux centres permis participants, souvent autour de 10\u00a0$\u00a0CA par jour pour les enfants de moins de 6 ans. Le Québec a son propre régime de contribution réduite."
+              : "CWELCC is the federal-provincial-territorial agreement to lower parent fees at participating licensed centres, often described as an average of about CA$10 a day for children under 6. Quebec has its own reduced-contribution system instead of the same fee schedule."}
           </p>
           <p className="mt-4 text-sm font-medium">{fr ? "Règles pour les familles" : "How the rules work for families"}</p>
           <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted">
             <li>
               {fr
-                ? "Les tarifs réduits de type 10 $ par jour sont fixés par la province ou le territoire et appliqués au centre participant: pas par KidEase."
-                : "~$10-a-day style reduced fees are set by the province or territory and applied at the participating licensed centre: not by KidEase."}
+                ? "Les tarifs réduits de type 10\u00a0$\u00a0CA par jour sont fixés par la province ou le territoire et appliqués au centre participant: pas par KidEase."
+                : "~CA$10-a-day style reduced fees are set by the province or territory and applied at the participating licensed centre: not by KidEase."}
             </li>
             <li>
               {fr
@@ -267,8 +267,8 @@ export function BenefitsPage() {
             </li>
             <li>
               {fr
-                ? "Tous les centres permis ne sont pas dans le programme. KidEase n'invente pas le tarif. Un badge 10 $/jour n'apparait que si le centre ou la province le confirme."
-                : "Not every licensed centre is in CWELCC. KidEase will not guess. A $10-a-day badge should only appear when the centre or the province confirms it."}
+                ? "Tous les centres permis ne sont pas dans le programme. KidEase n'invente pas le tarif. Un badge 10\u00a0$\u00a0CA/jour n'apparait que si le centre ou la province le confirme."
+                : "Not every licensed centre is in CWELCC. KidEase will not guess. A CA$10-a-day badge should only appear when the centre or the province confirms it."}
             </li>
             <li>
               {fr

@@ -1,5 +1,5 @@
+import { formatCad } from "@/lib/cad-format";
 import { useEffect, useState } from "react";
-import { money } from "@/lib/centre-tools";
 import { centreToolsCopy } from "@/lib/centre-tools-copy";
 import { listParentCentreTools } from "@/lib/server/centre-tools";
 import { useCopy } from "@/lib/use-copy";
@@ -101,13 +101,13 @@ export function ParentCentreToolsPanel() {
               <li key={r.id} className="py-2">
                 <strong>{names.get(r.bookingId || "")}</strong> · {String(r.payload.month)} · {copy.attendance}: {String(r.payload.attended)} · {copy.billed}: {String(r.payload.billedDays)}
                 <br />
-                {copy.parentShare}: ${money(Number(r.payload.parentCents) || 0)}
-                {Number(r.payload.agencyCents) > 0 ? ` · ${copy.agencyShare} (${String(r.payload.agency)}): $${money(Number(r.payload.agencyCents))}` : ""}
+                {copy.parentShare}: {formatCad((Number(r.payload.parentCents) || 0) / 100, locale)}
+                {Number(r.payload.agencyCents) > 0 ? ` · ${copy.agencyShare} (${String(r.payload.agency)}): ${formatCad(Number(r.payload.agencyCents) / 100, locale)}` : ""}
               </li>
             ))}
             {of("tap_receipt").map((r) => (
               <li key={r.id} className="py-2">
-                {copy.tap} · {r.createdAt.slice(0, 10)} · ${money(Number(r.payload.amountCents) || 0)} · {copy.testNoCharge}
+                {copy.tap} · {r.createdAt.slice(0, 10)} · {formatCad((Number(r.payload.amountCents) || 0) / 100, locale)} · {copy.testNoCharge}
               </li>
             ))}
           </ul>

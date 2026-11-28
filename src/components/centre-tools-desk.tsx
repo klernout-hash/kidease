@@ -1,3 +1,4 @@
+import { formatCad } from "@/lib/cad-format";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,6 @@ import {
   menuAllergens,
   menuGaps,
   menuLabel,
-  money,
   payrollCsv,
   payrollSummary,
   pdTotals,
@@ -168,6 +168,7 @@ export function CentreToolsDesk() {
 }
 
 type ToolProps = {
+  locale: "en" | "fr";
   copy: CentreToolsCopy;
   data: Data;
   records: Rec[];
@@ -407,7 +408,7 @@ function QuickbooksTool({ copy, data, records }: ToolProps) {
   );
 }
 
-function TapTool({ copy, data, records, save }: ToolProps) {
+function TapTool({ locale, copy, data, records, save }: ToolProps) {
   const [bookingId, setBookingId] = useState("");
   const [amount, setAmount] = useState("");
   const cents = Math.round(Number(amount) * 100);
@@ -422,12 +423,12 @@ function TapTool({ copy, data, records, save }: ToolProps) {
       </div>
       <Button className="mt-3 min-h-11" disabled={!bookingId || !(cents >= 100)} onClick={() => void save("tap_receipt", { amountCents: cents, method: "tap_to_pay_test", date: new Date().toISOString() }, bookingId)}>{copy.tapTest}</Button>
       </>) : null}
-      <History copy={copy} rows={records.filter((r) => r.kind === "tap_receipt")} render={(r) => `${r.createdAt.slice(0, 10)} · $${money(Number(r.payload.amountCents) || 0)} · ${copy.testNoCharge}`} />
+      <History copy={copy} rows={records.filter((r) => r.kind === "tap_receipt")} render={(r) => `${r.createdAt.slice(0, 10)} · ${formatCad((Number(r.payload.amountCents) || 0) / 100, locale)} · ${copy.testNoCharge}`} />
     </div>
   );
 }
 
-function BillingTool({ copy, data, records, save, month, setMonth, subsidy }: ToolProps & { subsidy: boolean }) {
+function BillingTool({ locale, copy, data, records, save, month, setMonth, subsidy }: ToolProps & { subsidy: boolean }) {
   const [bookingId, setBookingId] = useState("");
   const [fee, setFee] = useState("10");
   const [scheduled, setScheduled] = useState("20");
@@ -471,8 +472,8 @@ function BillingTool({ copy, data, records, save, month, setMonth, subsidy }: To
       <dl className="mt-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
         <div><dt className="text-muted-foreground">{copy.attendance}</dt><dd className="text-lg font-semibold">{bill.attended}</dd></div>
         <div><dt className="text-muted-foreground">{copy.billed}</dt><dd className="text-lg font-semibold">{bill.billedDays}</dd></div>
-        <div><dt className="text-muted-foreground">{copy.agencyShare}</dt><dd className="text-lg font-semibold">${money(bill.agencyCents)}</dd></div>
-        <div><dt className="text-muted-foreground">{copy.parentShare}</dt><dd className="text-lg font-semibold">${money(bill.parentCents)}</dd></div>
+        <div><dt className="text-muted-foreground">{copy.agencyShare}</dt><dd className="text-lg font-semibold">{formatCad(bill.agencyCents / 100, locale)}</dd></div>
+        <div><dt className="text-muted-foreground">{copy.parentShare}</dt><dd className="text-lg font-semibold">{formatCad(bill.parentCents / 100, locale)}</dd></div>
       </dl>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button className="min-h-11" disabled={!bookingId} onClick={() => void save("bill", bill as unknown as Record<string, unknown>, bookingId)}>{copy.save}</Button>
@@ -480,12 +481,12 @@ function BillingTool({ copy, data, records, save, month, setMonth, subsidy }: To
           <Button variant="outline" className="min-h-11" disabled={!saved.length} onClick={() => download(`agency-claim-${month}.csv`, agencyClaimCsv(saved.filter((s) => s.bill.month === month).map((s) => ({ initials: initials(names.get(s.bookingId) || ""), bill: s.bill }))))}>{copy.exportCsv}</Button>
         ) : null}
       </div>
-      <History copy={copy} rows={records.filter((r) => r.kind === "bill")} render={(r) => `${names.get(r.bookingId || "") || copy.child} · ${String(r.payload.month)} · ${copy.parentShare} $${money(Number(r.payload.parentCents) || 0)} · ${copy.agencyShare} $${money(Number(r.payload.agencyCents) || 0)}`} />
+      <History copy={copy} rows={records.filter((r) => r.kind === "bill")} render={(r) => `${names.get(r.bookingId || "") || copy.child} · ${String(r.payload.month)} · ${copy.parentShare} ${formatCad((Number(r.payload.parentCents) || 0) / 100, locale)} · ${copy.agencyShare} ${formatCad((Number(r.payload.agencyCents) || 0) / 100, locale)}`} />
     </div>
   );
 }
 
-function PayrollTool({ copy }: ToolProps) {
+function PayrollTool({ locale, copy }: ToolProps) {
   const [lines, setLines] = useState([{ staffName: "", hours: "", rate: "" }]);
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
@@ -507,7 +508,7 @@ function PayrollTool({ copy }: ToolProps) {
         </div>
       ))}
       <Button variant="outline" className="mt-2 min-h-11" onClick={() => setLines([...lines, { staffName: "", hours: "", rate: "" }])}>+</Button>
-      <ul className="mt-3 text-sm">{summary.map((s) => <li key={s.staffName}>{s.staffName}: {s.hours} h · {copy.gross} ${money(s.grossCents)}</li>)}</ul>
+      <ul className="mt-3 text-sm">{summary.map((s) => <li key={s.staffName}>{s.staffName}: {s.hours} h · {copy.gross} {formatCad(s.grossCents / 100, locale)}</li>)}</ul>
       <Button className="mt-3 min-h-11" disabled={!pay.length} onClick={() => download("payroll-export.csv", payrollCsv(start, end, pay))}>{copy.exportCsv}</Button>
     </div>
   );

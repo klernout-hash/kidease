@@ -290,7 +290,7 @@ export function ShotListing() {
               {t("shotFeesFrom")}
             </p>
             <p className="font-display text-[16px] tabular-nums">
-              {locale === "fr" ? "10\u00a0$" : "$10"}<span className="text-[10px]" style={{ color: MUTED }}>
+              {locale === "fr" ? "10\u00a0$\u00a0CA" : "CA$10"}<span className="text-[10px]" style={{ color: MUTED }}>
                 {t("shotPerDay")}
               </span>
             </p>

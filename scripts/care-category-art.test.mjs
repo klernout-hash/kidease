@@ -158,8 +158,8 @@ test("compact white fee tags (design A) keep eligibility, details and accessible
   assert.match(pill, /bg-white\/92/);
   assert.match(pill, /text-\[#222\]/);
   assert.doesNotMatch(pill, /bg-primary/);
-  assert.match(pill, /\$10\/day/);
-  assert.match(pill, /10 \$\/jour/);
+  assert.match(pill, /CA\$10\/day/);
+  assert.match(pill, /10\\u00a0\$\\u00a0CA\/jour/);
   assert.doesNotMatch(pill, /ke-priority-pill|feePillPulses/);
   assert.doesNotMatch(src("src/components/airbnb-screens.tsx"), /ke-priority-pill|feePillPulses/);
   assert.match(pill, /<Popover\.Portal>[\s\S]*data-ke="card-fee-source"/);

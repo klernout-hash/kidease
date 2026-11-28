@@ -138,7 +138,7 @@ export function NetCostCalculator({
       {prov === "QC" ? (
         <label className="mt-1 flex min-h-11 items-center gap-2 text-sm">
           <input type="checkbox" checked={qcReduced} onChange={(event) => setQcReduced(event.target.checked)} />
-          {fr ? "Place à contribution réduite (environ 9,65 $ par jour)" : "Reduced-contribution space (about $9.65 a day)"}
+          {fr ? "Place à contribution réduite (environ 9,65\u00a0$\u00a0CA par jour)" : "Reduced-contribution space (about CA$9.65 a day)"}
         </label>
       ) : null}
       {result ? (

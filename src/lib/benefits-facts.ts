@@ -1,3 +1,5 @@
+import { formatCad } from "./cad-format.ts";
+
 /**
  * Dated, official-linked childcare benefit facts for the public /benefits page.
  * Do not invent eligibility tables. Update from canada.ca / provincial sites only.
@@ -72,15 +74,15 @@ export const BC_ESTIMATOR_HREF = "https://myfamilyservices.gov.bc.ca/s/estimator
 export const BC_MFS_HREF = "https://myfamilyservices.gov.bc.ca/";
 
 export function moneyEn(amount: number, decimals = 0) {
-  return `$${amount.toLocaleString("en-CA", {
+  return formatCad(amount, "en-CA", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  })}`;
+  });
 }
 
 export function moneyFr(amount: number, decimals = 0) {
   return `${amount.toLocaleString("fr-CA", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  })}\u00a0$`;
+  })}\u00a0$\u00a0CA`;
 }

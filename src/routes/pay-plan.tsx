@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { autopayEnabled, instalmentsEnabled, savedPaymentsEnabled, splitInstalments } from "@/lib/invoice-money";
+import { formatCad } from "@/lib/cad-format";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/pay-plan")({
@@ -20,6 +21,7 @@ function PayPlanPage() {
   const autopay = autopayEnabled();
   const instalments = instalmentsEnabled();
   const sample = instalments ? splitInstalments(10000, 3) : null;
+  const cad = (cents: number) => formatCad(cents / 100, fr ? "fr-CA" : "en-CA");
   return (
     <Shell>
       <main className="ke-gutter mx-auto w-full max-w-lg py-12">
@@ -36,8 +38,8 @@ function PayPlanPage() {
           <li>
             {sample
               ? fr
-                ? `Exemple de 100 $ en 3 versements : ${sample.map((cents) => (cents / 100).toFixed(2)).join(", ")} $. Sans intérêt.`
-                : `Example of $100 in 3 parts: ${sample.map((cents) => (cents / 100).toFixed(2)).join(", ")}. No interest.`
+                ? `Exemple de ${cad(10000)} en 3 versements : ${sample.map(cad).join(", ")}. Sans intérêt.`
+                : `Example of ${cad(10000)} in 3 parts: ${sample.map(cad).join(", ")}. No interest.`
               : fr
                 ? "Versements : éteint."
                 : "Instalments: off."}

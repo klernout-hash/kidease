@@ -137,7 +137,7 @@ export function AirbnbHome({
           const ages = ageRangeLabel(row.ageMinMonths, row.ageMaxMonths, locale);
           const fresh = freshnessLine(row.spotsUpdatedAt || row.lastVacancyUpdatedAt, locale);
           const subsidy = listingSubsidy(row);
-          const fee = subsidy ? ((subsidy.subsidy_type === "ten" || subsidy.subsidy_type === "ten_max") ? (locale === "fr" ? "10 $/jour" : "$10/day") : subsidyLabel(subsidy, locale)) : "";
+          const fee = subsidy ? ((subsidy.subsidy_type === "ten" || subsidy.subsidy_type === "ten_max") ? (locale === "fr" ? "10\u00a0$\u00a0CA/jour" : "CA$10/day") : subsidyLabel(subsidy, locale)) : "";
           return (
             <Link
               key={row.id}
