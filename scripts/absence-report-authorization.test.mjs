@@ -220,6 +220,7 @@ before(async () => {
     create table attendance (
       id text primary key,
       daycare_id text not null,
+      booking_id text,
       child_name text not null,
       parent_user_id text,
       day date not null,
@@ -227,7 +228,10 @@ before(async () => {
       notes text,
       updated_by text
     );
-    create unique index attendance_day_child_idx on attendance (daycare_id, child_name, day);
+    create unique index attendance_day_booking_idx on attendance (daycare_id, booking_id, day)
+      where booking_id is not null;
+    create unique index attendance_day_child_unlinked_idx on attendance (daycare_id, child_name, day)
+      where booking_id is null;
     create table staff_shifts (
       daycare_id text,
       room_band text,
@@ -272,7 +276,7 @@ before(async () => {
   await pg.query(
     `insert into attendance (id, daycare_id, child_name, parent_user_id, day, status, notes, updated_by)
      values ('probe-2', 'centre-x', 'Probe', 'parent-b', $1, 'scheduled', 'replaced', 'intruder')
-     on conflict (daycare_id, child_name, day)
+     on conflict (daycare_id, child_name, day) where booking_id is null
      do update set status = 'scheduled', notes = excluded.notes, updated_by = excluded.updated_by`,
     [day],
   );

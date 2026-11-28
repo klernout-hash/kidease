@@ -41,9 +41,9 @@ export const reportParentAbsence = createServerFn({ method: "POST" })
     for (const day of days) {
       const id = `abs_${booking.id}_${day}`.replace(/[^a-z0-9_-]/gi, "").slice(0, 80);
       const rows = await sql<{ id: string }>`
-        insert into attendance (id, daycare_id, child_name, parent_user_id, day, status, notes, updated_by)
-        values (${id}, ${booking.daycare_id}, ${booking.child_name}, ${context.userId}, ${day}, ${"absent"}, ${data.reason}, ${context.userId})
-        on conflict (daycare_id, child_name, day) do update
+        insert into attendance (id, daycare_id, booking_id, child_name, parent_user_id, day, status, notes, updated_by)
+        values (${id}, ${booking.daycare_id}, ${booking.id}, ${booking.child_name}, ${context.userId}, ${day}, ${"absent"}, ${data.reason}, ${context.userId})
+        on conflict (daycare_id, booking_id, day) where booking_id is not null do update
           set status = 'absent', notes = excluded.notes, updated_by = excluded.updated_by
           where attendance.parent_user_id = ${context.userId}
         returning id

@@ -40,7 +40,9 @@ export const reportAbsence = createServerFn({ method: "POST" })
     const childName = booking.child_name;
     const current = await sql<{ status: string }>`
       select status from attendance
-      where daycare_id = ${daycareId} and child_name = ${childName} and day = ${data.day}
+      where daycare_id = ${daycareId} and day = ${data.day}
+        and (booking_id = ${booking.id} or (booking_id is null and child_name = ${childName}))
+      order by (booking_id is null)
       limit 1
     `;
     const alreadyAbsent = current[0]?.status === "absent" || current[0]?.status === "sick" || current[0]?.status === "vacation";
@@ -70,12 +72,12 @@ export const reportAbsence = createServerFn({ method: "POST" })
     const id = newId("at");
     const saved = await sql<{ id: string }>`
       insert into attendance (
-        id, daycare_id, child_name, parent_user_id, day, status, notes, updated_by
+        id, daycare_id, booking_id, child_name, parent_user_id, day, status, notes, updated_by
       ) values (
-        ${id}, ${daycareId}, ${childName}, ${context.userId}, ${data.day},
+        ${id}, ${daycareId}, ${booking.id}, ${childName}, ${context.userId}, ${data.day},
         ${"absent"}, ${"Parent reported an absence"}, ${context.userId}
       )
-      on conflict (daycare_id, child_name, day)
+      on conflict (daycare_id, booking_id, day) where booking_id is not null
       do update set status = 'absent', notes = excluded.notes, updated_by = excluded.updated_by
       where attendance.parent_user_id = ${context.userId}
       returning id
