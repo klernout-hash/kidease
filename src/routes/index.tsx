@@ -235,6 +235,7 @@ export function HomePage({ boot, liveClaimed = false, changeLocation = false }: 
 
   const featuredSearch = (
     <MobileSearchHome
+      key={changeLocation ? "change-location" : "explore"}
       origin={originSource ? origin : boot.origin}
       initiallyOpen={changeLocation}
       onCommit={(params) => {

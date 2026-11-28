@@ -131,7 +131,7 @@ export function CookieConsentBanner() {
       style={{ bottom: tabsBottom, paddingBottom: tabsBottom ? "0.375rem" : undefined }}
       className="ke-cookie-consent ke-safe-x fixed inset-x-0 z-40 [--ke-pad-x:0.75rem] pb-[max(0.375rem,env(safe-area-inset-bottom))] pt-1.5"
     >
-      <div className="ke-cookie-consent-panel mx-auto flex max-w-[48rem] flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-surface px-3 py-1 shadow-card ring-1 ring-border">
+      <div className="ke-cookie-consent-panel mx-auto flex max-w-[35rem] flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-surface px-3 py-1 shadow-card ring-1 ring-border">
         <span className="hidden size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-primary sm:grid">
           <Cookie className="size-3.5" aria-hidden />
         </span>

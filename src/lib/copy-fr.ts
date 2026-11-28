@@ -4016,7 +4016,6 @@ export const fr = {
     topRatedRuleSafety: "Aucun signalement de sécurité retenu sur les 12 derniers mois",
 
     msv2FindNear: "Trouvez une garderie près de chez vous",
-    msv2CategoryPreschool: "Préscolaire",
     msv2All: "Tout",
     msv2Centres: "Centres",
     msv2Homes: "Garderies en milieu familial",
@@ -4029,10 +4028,6 @@ export const fr = {
     msv2AddLocation: "Ajouter un lieu",
     msv2AddDate: "Ajouter une date",
     msv2AddChild: "Ajouter un enfant",
-    msv2PillWhere: "Où",
-    msv2PillWhen: "Quand",
-    msv2PillWho: "Qui",
-    msv2AddAge: "Âge de l’enfant",
     msv2WherePh: "Ville, quartier ou code postal",
     msv2StartTab: "Date de début",
     msv2Flexible: "Flexible",

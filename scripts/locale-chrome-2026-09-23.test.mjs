@@ -144,7 +144,7 @@ test("km distances and 0-live home honesty from #270 stay intact", () => {
   assert.equal(strip.zeroLiveHint, true);
   assert.match(src("src/lib/copy-en.ts"), /searchLiveEmptyCount: "0 live on KidEase · \{n\} licensed nearby"/);
   assert.doesNotMatch(src("src/routes/index.tsx"), /data-ke="home-zero-live"/);
-  assert.match(src("src/routes/index.tsx"), /strip\.liveCount > 0/);
+  assert.doesNotMatch(src("src/routes/index.tsx"), /data-ke="home-live-strip"/);
   assert.match(src("src/routes/search.tsx"), /exploreBrowseHint/);
 });
 

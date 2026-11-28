@@ -59,7 +59,7 @@ test("a city category keeps that daycare type and a wider list", () => {
   assert.match(rails, /city\?\.trim\(\)/);
 });
 
-test("home category pictures keep their search URLs inside the header", () => {
+test("legacy category pictures and Explore chips preserve search parameters", () => {
   const rails = readFileSync(join(root, "src/components/facility-type-rails.tsx"), "utf8");
   const shell = readFileSync(join(root, "src/components/shell.tsx"), "utf8");
   const home = readFileSync(join(root, "src/components/airbnb-screens.tsx"), "utf8");
@@ -70,5 +70,5 @@ test("home category pictures keep their search URLs inside the header", () => {
   assert.match(home, /fac: "child_care_centre"/);
   assert.match(home, /cat: "before-after"/);
   assert.match(shell, /data-ke="header-care-categories"/);
-  assert.match(readFileSync(join(root, "src/routes/index.tsx"), "utf8"), /headerCategories=\{boot\.airbnbUi/);
+  assert.match(readFileSync(join(root, "src/routes/index.tsx"), "utf8"), /<MobileSearchHome/);
 });

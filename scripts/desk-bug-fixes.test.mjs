@@ -57,6 +57,6 @@ test("desk pages name themselves and subscription is not the pay tab", () => {
   assert.doesNotMatch(src("src/routes/provider.tsx"), /infantMonthly: 1200/);
   assert.match(src("src/components/parent-shortlist.tsx"), /t\("saved"\)/);
   assert.doesNotMatch(src("src/components/admin-mail.tsx"), /TITAN_APP_PASSWORD/);
-  assert.match(src("src/routes/index.tsx"), /ke-home w-full/);
+  assert.match(src("src/routes/index.tsx"), /data-ke="home-discovery-surface"/);
   assert.doesNotMatch(src("src/routes/index.tsx"), /ke-defer-paint/);
 });

@@ -31,7 +31,7 @@ test("native guest, parent, and provider tabs are the role bar, not an empty sto
   assert.equal(adminKind, "parent");
 });
 
-test("the tab bar is one frosted bar and the cookie sheet stays under it", () => {
+test("the tab bar is one frosted bar and the cookie notice sits above it", () => {
   const bar = read("src/components/app-tab-bar.tsx");
   const css = read("src/styles.css");
   assert.equal((bar.match(/data-ke="app-tab-bar"/g) ?? []).length, 1);
@@ -56,7 +56,7 @@ test("the tab bar is one frosted bar and the cookie sheet stays under it", () =>
   assert.match(css, /html\[data-native="1"\] \.ke-site-footer/);
   assert.match(css, /html\[data-runtime="native"\] \.ke-site-footer/);
   assert.doesNotMatch(css, /html\[data-native="1"\] \[data-ke="cookie-consent"\]/);
-  assert.match(read("src/routes/__root.tsx"), /<CookieConsentBanner \/>\s*<Outlet \/>/);
+  assert.match(read("src/routes/__root.tsx"), /<Outlet \/>\s*<CookieConsentBanner \/>/);
 });
 
 test("sign out and delete account are on Menu, the account screen, and the account drawer", () => {

@@ -3,9 +3,9 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
+import ts from "typescript";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import ts from "typescript";
 import { FACILITY_TYPES } from "../src/lib/facility-type.ts";
 import { careCategoryArt } from "../src/lib/care-category-art.ts";
 import { localePath } from "../src/lib/locale-path.ts";
@@ -27,29 +27,16 @@ function iconComponent() {
   return module.exports.CareCategoryIcon;
 }
 
-test("default home supplies the shared category navigation inside Shell without changing the flagged variant", () => {
+test("Explore renders the shared category row once across viewports and looks", () => {
   const home = read("src/routes/index.tsx");
-  const source = ts.createSourceFile("index.tsx", home, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  let header;
-  function visit(node) {
-    if (ts.isJsxAttribute(node) && node.name.getText(source) === "headerCategories") header = node;
-    ts.forEachChild(node, visit);
-  }
-  visit(source);
-  assert.ok(header?.initializer && ts.isJsxExpression(header.initializer));
-  const branch = header.initializer.expression;
-  assert.ok(ts.isConditionalExpression(branch));
-  assert.equal(branch.condition.getText(source), "boot.airbnbUi");
-  assert.match(branch.whenTrue.getText(source), /<AirbnbCareCategories\s*\/>/);
-  assert.match(branch.whenFalse.getText(source), /<HomeCareTypeRow\s+compact\s+toSearch/);
-  assert.match(branch.whenFalse.getText(source), /city=\{origin\.label\}/);
-  assert.doesNotMatch(branch.whenFalse.getText(source), /\bfit\b/);
-  assert.equal((home.match(/<HomeCareTypeRow\b/g) ?? []).length, 1);
-  // The same controlled rail behavior remains in both website and app content.
-  assert.equal((home.match(/careType=\{homeType\}/g) ?? []).length, 2);
-  assert.equal((home.match(/onCareType=\{\(type\) => setHomeCareType\(type\)\}/g) ?? []).length, 2);
-  assert.match(read("src/components/home-discovery.tsx"), /menu=\{!onCareType\}/);
+  const sheet = read("src/components/mobile-search-sheet.tsx");
+  assert.equal((home.match(/<MobileSearchHome/g) ?? []).length, 1);
+  assert.doesNotMatch(home, /headerCategories=|<HomeCareTypeRow|<AirbnbCareCategories/);
+  assert.equal((sheet.match(/data-ke="msv2-categories"/g) ?? []).length, 1);
+  assert.match(sheet, /MOBILE_CATEGORIES.map/);
+  assert.match(sheet, /mobileSearchParams\(next\)/);
   assert.match(read("public/look-boot.js"), /DEFAULT_LOOK = "classic"/);
+
 });
 
 for (const locale of ["en", "fr"]) {

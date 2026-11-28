@@ -44,8 +44,8 @@ const CATEGORY_KEY: Record<MobileCategory, CopyKey> = {
   all: "msv2All",
   centre: "msv2Centres",
   home: "msv2Homes",
-  preschool: "msv2CategoryPreschool",
-  subsidy: "msv2Subsidy",
+  preschool: "preschool",
+  subsidy: "msv2SubsidyChip",
   open: "msv2OpenNow",
   "before-after": "msv2BeforeAfter",
   french: "msv2French",
@@ -184,9 +184,9 @@ export function MobileSearchHome({
   // N-39: the pill shows the area the cards below are from until a parent picks one.
   const whereShown = whereAnswer(draft) || (origin?.label ?? "").trim();
   const segments: { step: MobileSearchStep; label: CopyKey; answer: string; placeholder: CopyKey }[] = [
-    { step: "where", label: "msv2PillWhere", answer: whereShown, placeholder: "msv2AddLocation" },
-    { step: "when", label: "msv2PillWhen", answer: whenAnswer(draft, locale), placeholder: "msv2AddDate" },
-    { step: "who", label: "msv2PillWho", answer: whoAnswer(draft, locale), placeholder: "msv2AddAge" },
+    { step: "where", label: "searchWhere", answer: whereShown, placeholder: "msv2AddLocation" },
+    { step: "when", label: "msv2When", answer: whenAnswer(draft, locale), placeholder: "msv2AddDate" },
+    { step: "who", label: "msv2Who", answer: whoAnswer(draft, locale), placeholder: "searchChildAge" },
   ];
   return (
     <div data-ke="msv2-home">
@@ -245,7 +245,6 @@ export function MobileSearchHome({
                 )}
                 onClick={() => {
                   const next = { ...draft, category: id };
-
                   if (id !== "all") onCommit(mobileSearchParams(next), next);
                 }}
               >
