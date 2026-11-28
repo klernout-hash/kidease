@@ -36,13 +36,13 @@ test("every login continue passes the sign-in language", () => {
   assert.match(signup, /locale: locale === "fr" \? "fr" : "en",/);
 });
 
-test("French sign-out goes to /fr from the account page and the app menu", () => {
-  assert.equal(signOutTarget({ role: "parent", pathname: "/fr/account", locale: "fr" }), "/fr");
-  assert.equal(signOutTarget({ role: "parent", pathname: "/fr/parent", locale: "fr" }), "/fr");
-  assert.equal(signOutTarget({ role: "parent", pathname: "/account", locale: "en" }), "/");
+test("French sign-out goes to /fr/login from the account page and the app menu (N-37)", () => {
+  assert.equal(signOutTarget({ role: "parent", pathname: "/fr/account", locale: "fr" }), "/fr/login");
+  assert.equal(signOutTarget({ role: "parent", pathname: "/fr/parent", locale: "fr" }), "/fr/login");
+  assert.equal(signOutTarget({ role: "parent", pathname: "/account", locale: "en" }), "/login");
   const account = read("src/routes/account.tsx");
   assert.doesNotMatch(account, /signOut\("\/"\)/);
   assert.match(account, /signOut\(signOutTarget\(\{ role: chrome\.role, pathname, locale \}\)\)/);
   const airbnb = read("src/components/airbnb-screens.tsx");
-  assert.match(airbnb, /signOut\(locale === "fr" \? "\/fr" : "\/"\)/);
+  assert.match(airbnb, /signOut\(signedOutLoginPath\(locale === "fr" \? "fr" : "en"\)\)/);
 });

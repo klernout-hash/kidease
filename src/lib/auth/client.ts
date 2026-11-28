@@ -1,4 +1,5 @@
 import { createAuthClient } from "better-auth/react";
+import { clearAccountScopedStorage } from "@/lib/account-scoped-storage";
 import { clearCompare } from "@/lib/compare";
 import { clearDeskLanded, clearSessionHint, clearStickyDesk, forgetRememberedRole, markJustSignedOut } from "@/lib/desks";
 import { resetPostHogIdentity } from "@/lib/posthog";
@@ -351,6 +352,8 @@ export function clearClientAuthState(): void {
     /* storage unavailable */
   }
   clearSearchCache();
+  // N-67: recently viewed, resume link, recent searches and the saved search place.
+  clearAccountScopedStorage();
   try {
     sessionStorage.removeItem(LOGIN_BOUNCE_KEY);
   } catch {
@@ -385,7 +388,7 @@ export async function dropExistingSession(): Promise<void> {
   clearClientAuthState();
 }
 
-export async function signOut(redirectTo = "/"): Promise<void> {
+export async function signOut(redirectTo = "/login"): Promise<void> {
   try {
     await Promise.race([releaseThisPhone(), rejectAfter(400, "push-release-timeout")]).catch(() => undefined);
     clearClientAuthState();

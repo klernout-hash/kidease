@@ -7,6 +7,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import { AppearanceControl } from "@/components/appearance-control";
 import { CareCategoryIcon } from "@/components/care-category-icon";
 import { signOut } from "@/lib/auth/client";
+import { signedOutLoginPath } from "@/lib/sign-out-target";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
   ageRangeLabel,
@@ -265,7 +266,7 @@ export function AirbnbAccount() {
             type="button"
             className="ke-airbnb-row mt-4"
             data-ke="airbnb-security-sign-out"
-            onClick={() => void signOut(locale === "fr" ? "/fr" : "/")}
+            onClick={() => void signOut(signedOutLoginPath(locale === "fr" ? "fr" : "en"))}
           >
             <span>{copy.signOut}</span>
           </button>
@@ -304,7 +305,7 @@ export function AirbnbAccount() {
       <nav className="ke-airbnb-hub" aria-label={copy.account}>
         {rows.map((id) =>
           id === "sign-out" ? (
-            <button key={id} type="button" className="ke-airbnb-row" data-ke="airbnb-sign-out" onClick={() => void signOut(locale === "fr" ? "/fr" : "/")}>
+            <button key={id} type="button" className="ke-airbnb-row" data-ke="airbnb-sign-out" onClick={() => void signOut(signedOutLoginPath(locale === "fr" ? "fr" : "en"))}>
               <span>{copy.signOut}</span>
             </button>
           ) : id === "notifications" ? (

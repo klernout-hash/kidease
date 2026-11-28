@@ -245,13 +245,7 @@ export function AppMenuScreen({
 
       {user ? (
         <div className="relative z-[45] mt-auto flex flex-col gap-3 pt-8 pb-[max(3.25rem,env(safe-area-inset-bottom))]" data-ke="menu-account-actions">
-          <Link
-            to={localePath("/delete-account", locale)}
-            data-ke="menu-delete-account"
-            className="flex min-h-11 w-full items-center justify-center rounded-full px-4 text-sm font-semibold text-fg ring-1 ring-border touch-manipulation"
-          >
-            {t("deleteAccount")}
-          </Link>
+          {/* N-37: Sign out comes first. It is never below Delete account. */}
           <button
             type="button"
             data-ke="menu-sign-out"
@@ -261,6 +255,13 @@ export function AppMenuScreen({
             <MenuGlyph id="logout" className="text-bg" />
             {t("signOut")}
           </button>
+          <Link
+            to={localePath("/delete-account", locale)}
+            data-ke="menu-delete-account"
+            className="flex min-h-11 w-full items-center justify-center rounded-full px-4 text-sm font-semibold text-fg ring-1 ring-border touch-manipulation"
+          >
+            {t("deleteAccount")}
+          </Link>
         </div>
       ) : null}
     </main>
