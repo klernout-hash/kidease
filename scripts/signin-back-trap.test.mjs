@@ -49,5 +49,5 @@ test("N-78: sign-in has a 44px Back at the top, and both Backs and Android Back 
   const boot = src("src/components/native-boot.tsx");
   assert.match(boot, /if \(isAuthPagePath\(window\.location\.pathname\)\) \{/);
   assert.match(boot, /const plan = currentAuthPageBack\(canGoBack, next/);
-  assert.match(boot, /if \(plan\.via === "replace"\) \{\s+window\.location\.replace\(plan\.href\);/);
+  assert.match(boot, /if \(plan\.via === "replace"\) \{\s+window\.location\.replace\(safeInternalPath\(plan\.href, "/"\)\);/);
 });
