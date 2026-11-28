@@ -110,23 +110,29 @@ export function threadCode(threadId: string): string {
   return threadId.replace(/[^a-zA-Z0-9]/g, "").slice(-6);
 }
 
-/** Match an owner reply to a thread code. Does not read a phone number. */
-export function threadIdFromOwnerReply(body: string, threads: Array<{ id: string }>): string | null {
+export function ownerReplyCode(body: string): string | null {
   const match = String(body || "").match(/#([a-zA-Z0-9]{4,12})/);
-  if (!match) return threads[0]?.id || null;
-  const code = match[1].toLowerCase();
+  return match ? match[1].toLowerCase() : null;
+}
+
+/** Match an owner reply to a thread code. No code means no thread. Does not read a phone number. */
+export function threadIdFromOwnerReply(body: string, threads: Array<{ id: string }>): string | null {
+  const code = ownerReplyCode(body);
+  if (!code) return null;
   return threads.find((row) => threadCode(row.id).toLowerCase() === code)?.id || null;
 }
 
-/** Flag off is a 404. A bad signature is 401. The phone is not stored. */
+/** Flag off is a 404. A bad signature is 401. A sender that is not the owner is 403. The phone is not stored. */
 export function handleSupportOwnerReply(input: {
   flagOn: boolean;
   signatureOk: boolean;
+  senderOk: boolean;
   body: string;
   threads: Array<{ id: string }>;
-}): { status: 404 | 401 | 200; threadId: string | null; text: string } {
+}): { status: 404 | 403 | 401 | 200; threadId: string | null; text: string } {
   if (!input.flagOn) return { status: 404, threadId: null, text: "" };
   if (!input.signatureOk) return { status: 401, threadId: null, text: "" };
+  if (!input.senderOk) return { status: 403, threadId: null, text: "" };
   const threadId = threadIdFromOwnerReply(input.body, input.threads);
   return { status: 200, threadId, text: cleanSupportBody(input.body.replace(/#[a-zA-Z0-9]{4,12}/g, " ")) };
 }

@@ -53,9 +53,12 @@ async function run(request: Request) {
     });
   }
   const { supportSmsReplyEnabled } = await import("@/lib/features");
-  if (supportSmsReplyEnabled()) {
+  if (supportSmsReplyEnabled() && opt !== "stop" && opt !== "start" && opt !== "help") {
     const { maybeRecordSupportOwnerReply } = await import("@/lib/server/support-desk");
-    const recorded = await maybeRecordSupportOwnerReply(params.Body || params.body || "").catch(() => false);
+    const recorded = await maybeRecordSupportOwnerReply({
+      from: params.From || params.from,
+      body: params.Body || params.body || "",
+    }).catch(() => false);
     if (recorded) {
       return new Response(twimlEmpty(), { status: 200, headers: { "Content-Type": "text/xml" } });
     }

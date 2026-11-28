@@ -11,7 +11,9 @@ import {
   supportRateAllows,
   supportRoleLabel,
   handleSupportOwnerReply,
+  ownerReplyCode,
 } from "@/lib/support-desk";
+import { normalizeChatPhone } from "@/lib/support-chat";
 import { sendSms } from "@/lib/server/sms";
 import { requireSupport } from "@/lib/server/roles";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
@@ -239,12 +241,29 @@ export const replyAdminSupportDesk = createServerFn({ method: "POST" })
     return { enabled: true as const, ok: true as const, id };
   });
 
-/** Owner reply into a support thread. Off unless both support flags are on. Does not store the phone. */
-export async function maybeRecordSupportOwnerReply(body: string): Promise<boolean> {
-  if (!supportSmsReplyEnabled()) return false;
+/** Only a text from SUPPORT_ALERT_PHONE counts as the owner. An unset phone matches no one. */
+export function isSupportOwnerSender(from: string | null | undefined, env: EnvMap = process.env): boolean {
+  const owner = normalizeChatPhone(env.SUPPORT_ALERT_PHONE);
+  return Boolean(owner) && normalizeChatPhone(from) === owner;
+}
+
+/**
+ * Owner reply into a support thread. Off unless both support flags are on.
+ * Call only after the Twilio signature passed. Needs the owner phone and a #thread code.
+ * Does not store the phone.
+ */
+export async function maybeRecordSupportOwnerReply(input: {
+  from: string | null | undefined;
+  body: string;
+  env?: EnvMap;
+}): Promise<boolean> {
+  const env = input.env ?? process.env;
+  if (!supportSmsReplyEnabled(env)) return false;
+  const senderOk = isSupportOwnerSender(input.from, env);
+  if (!senderOk || !ownerReplyCode(input.body)) return false;
   const sql = await getSql();
   const threads = await sql<{ id: string }>`select id from support_threads order by updated_at desc limit 20`;
-  const result = handleSupportOwnerReply({ flagOn: true, signatureOk: true, body, threads });
+  const result = handleSupportOwnerReply({ flagOn: true, signatureOk: true, senderOk, body: input.body, threads });
   if (!result.threadId || !result.text) return false;
   await sql`
     insert into support_messages (id, thread_id, sender, body)
