@@ -17,6 +17,7 @@ const PREVIEW_BRANCHES = new Set([
   "cursor/stripe-test-invoices-031c",
   "cursor/home-lcp-13f1",
   "cursor/background-check-guidance-25df",
+  "codex/invoice-read-model",
 ]);
 
 /** Paths that do not change the website Vercel ships. */
