@@ -32,7 +32,7 @@ test("listing detail keeps website CTAs, login next, and a back link", () => {
   assert.match(listing, /data-ke="listing-next-step-lead"/);
   assert.match(listing, /const primaryLabel = tourReady \? t\("requestTour"\) : t\("requestInfo"\)/);
   assert.equal((listing.match(/onClick=\{primaryAction\}/g) ?? []).length, 2);
-  assert.match(listing, /md:hidden/);
+  assert.match(listing, /lg:hidden/); // P3-16: phone action bar through portrait tablets
   assert.match(listing, /\[\[data-channel=app\]_&\]:bottom-\[calc\(5rem\+var\(--ke-keyboard,0px\)\)\]/);
   assert.doesNotMatch(listing, /\[\[data-channel=website\]_&\]:hidden/);
   assert.doesNotMatch(listing, /to="\/checkin\/\$id"/);
