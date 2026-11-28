@@ -55,10 +55,8 @@ test("the tab bar is one frosted bar and the cookie sheet stays under it", () =>
   assert.doesNotMatch(tabRule, /backdrop-filter:\s*none/);
   assert.match(css, /html\[data-native="1"\] \.ke-site-footer/);
   assert.match(css, /html\[data-runtime="native"\] \.ke-site-footer/);
-  assert.match(css, /html\[data-native="1"\] \[data-ke="cookie-consent"\]/);
-  const cookieAt = css.indexOf('html[data-native="1"] [data-ke="cookie-consent"]');
-  const cookieRule = css.slice(cookieAt, css.indexOf("}", cookieAt));
-  assert.match(cookieRule, /z-index:\s*40/);
+  assert.doesNotMatch(css, /html\[data-native="1"\] \[data-ke="cookie-consent"\]/);
+  assert.match(read("src/routes/__root.tsx"), /<CookieConsentBanner \/>\s*<Outlet \/>/);
 });
 
 test("sign out and delete account are on Menu, the account screen, and the account drawer", () => {
