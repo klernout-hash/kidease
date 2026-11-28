@@ -174,7 +174,7 @@ test("parent rails are wired on parent desk, home, and search see-all", () => {
   assert.match(parent, /LOADER_SETTLE_MS/);
 
   const home = src("src/routes/index.tsx");
-  assert.match(src("src/components/home-discovery.tsx"), /FacilityTypeRails/);
+  assert.match(src("src/components/home-discovery.tsx"), /data-ke="explore-grid"[\s\S]*<DaycareCard/);
   assert.match(home, /<HomeDiscovery/);
   assert.doesNotMatch(home, /ParentDeskRails/);
   assert.match(home, /withTimeoutFallback/);

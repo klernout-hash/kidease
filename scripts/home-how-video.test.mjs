@@ -17,7 +17,7 @@ test("home explainer is desktop website only, lazy, and below featured centres",
   const css = src("src/styles.css");
   assert.equal((home.match(/<HomeHowVideo \/>/g) ?? []).length, 1);
 
-  const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
+  const web = home.slice(home.indexOf('id="featured"'));
   const featuredAt = web.indexOf('id="featured"');
   const howAt = web.indexOf('id="how"');
   const videoAt = web.indexOf("<HomeHowVideo />");
@@ -30,8 +30,7 @@ test("home explainer is desktop website only, lazy, and below featured centres",
   assert.doesNotMatch(howBlock, /howStressFree/);
   assert.doesNotMatch(video, /<h2/);
 
-  const app = home.slice(home.indexOf("ke-home-app"));
-  assert.doesNotMatch(app, /HomeHowVideo/);
+  assert.match(home, /ke-web-only[^>]+>\s*<section id="how"/);
 
   assert.match(css, /\.ke-how-video \{\n\s*display: none !important;/);
   assert.match(css, /@media \(min-width: 1024px\) \{\n\s*html\[data-runtime="web"\] \.ke-how-video/);

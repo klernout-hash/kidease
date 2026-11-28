@@ -4001,6 +4001,7 @@ export const en = {
     topRatedRuleSafety: "No upheld safety report in the last 12 months",
 
     msv2FindNear: "Find child care near you",
+    msv2CategoryPreschool: "Preschool",
     msv2All: "All",
     msv2Centres: "Centres",
     msv2Homes: "Home daycares",
@@ -4013,6 +4014,10 @@ export const en = {
     msv2AddLocation: "Add location",
     msv2AddDate: "Add start date",
     msv2AddChild: "Add child",
+    msv2PillWhere: "Where",
+    msv2PillWhen: "When",
+    msv2PillWho: "Who",
+    msv2AddAge: "Child's age",
     msv2WherePh: "City, neighbourhood or postal code",
     msv2StartTab: "Start date",
     msv2Flexible: "Flexible",

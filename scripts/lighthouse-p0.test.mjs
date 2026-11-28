@@ -24,13 +24,13 @@ test("home LCP hero is preloaded and sized instead of a late 1200-only AVIF", ()
   assert.match(listing, /priority/);
 
   const home = src("src/routes/index.tsx");
-  const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
+  const web = home.slice(home.indexOf("ke-web-only"));
   assert.doesNotMatch(web, /HeroYard/);
   assert.doesNotMatch(web, /HeroBanner/);
   assert.doesNotMatch(home, /imageSrcSet: HERO_LCP_AVIF_SRCSET/);
   assert.doesNotMatch(home, /HeroBanner/);
   assert.doesNotMatch(home, /eager=\{i < 3\}/);
-  assert.match(src("src/components/home-discovery.tsx"), /eagerThumbs=\{false\}/);
+  assert.match(src("src/components/home-discovery.tsx"), /eager=\{index < 2\}/);
 
   const avif480 = statSync(join(root, "public/photos/hero-480-k2.avif")).size;
   const avif768 = statSync(join(root, "public/photos/hero-768-k2.avif")).size;
@@ -62,7 +62,7 @@ test("listing and search chips use ke-chip (AA contrast + 44px target), not mute
   assert.doesNotMatch(search, /text-muted hover:text-fg/);
 
   const home = src("src/routes/index.tsx");
-  assert.match(home, /<ChipButton/);
+  assert.match(home, /<MobileSearchHome/);
   assert.doesNotMatch(home, /text-sm text-muted ring-1 ring-border/);
 
   const health = src("src/components/listing-health.tsx");

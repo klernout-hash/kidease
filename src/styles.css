@@ -3100,6 +3100,15 @@ html[data-keyboard="open"] [data-ke="app-tab-bar"] {
   display: none !important;
 }
 
+/* N-39: the cookie bar is pinned to the bottom; reserve its height so it never hides the end of a page,
+   and lift the help button above it. --ke-cookie-h is measured by the banner. */
+html[data-cookie-banner="open"] body {
+  padding-bottom: var(--ke-cookie-h, 0px);
+}
+html[data-cookie-banner="open"] .ke-help-bot {
+  translate: 0 calc(-1 * var(--ke-cookie-h, 0px));
+}
+
 /* P-08: one bottom layer at a time — the Get-alerts prompt waits until the cookie choice is made. */
 html[data-cookie-banner="open"] [data-ke="push-explainer"] {
   display: none;

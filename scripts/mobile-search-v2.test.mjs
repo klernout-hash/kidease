@@ -35,7 +35,7 @@ function draft(patch) {
   return { ...emptyMobileSearch(), ...patch, counts: { ...emptyMobileSearch().counts, ...(patch.counts || {}) } };
 }
 
-test("FEATURE_MOBILE_SEARCH_V2 stays off and the old search stays in the tree", () => {
+test("Home always shows the shared pill and the results experiment remains flagged", () => {
   assert.equal(FLAG_DEFAULTS.FEATURE_MOBILE_SEARCH_V2, false);
   assert.equal(mobileSearchV2Enabled({}), false);
   assert.equal(mobileSearchV2Enabled({ FEATURE_MOBILE_SEARCH_V2: "1" }), true);
@@ -43,9 +43,8 @@ test("FEATURE_MOBILE_SEARCH_V2 stays off and the old search stays in the tree", 
   const home = src("src/routes/index.tsx");
   const search = src("src/routes/search.tsx");
   const sheet = src("src/components/mobile-search-sheet.tsx");
-  assert.match(home, /boot\.mobileSearchV2 \?/);
-  assert.match(home, /ExploreSearchBar/);
-  assert.match(home, /readMobileSearchV2/);
+  assert.equal((home.match(/<MobileSearchHome/g) ?? []).length, 1);
+  assert.doesNotMatch(home, /readMobileSearchV2|<ExploreSearchBar/);
   assert.match(search, /boot\.mobileSearchV2 \?/);
   assert.match(search, /ExploreSearchBar/);
   assert.match(search, /withPaintBudget\(/);

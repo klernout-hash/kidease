@@ -35,30 +35,18 @@ test("parent rails drop stacked headings and show an empty state", () => {
   assert.match(rails, /emptyFindCare/);
 });
 
-test("app home uses one location bar; website does not stack rails and the featured grid", () => {
+test("Explore shares one search and listing grid across app and web", () => {
   const home = src("src/routes/index.tsx");
-  const appBlock = home.slice(home.indexOf("ke-app-only"));
-  const webBlock = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
-  assert.match(home, /const featuredSearch/);
-  assert.match(home, /<ExploreSearchBar/);
-  assert.match(appBlock, /featuredSearch/);
-  assert.doesNotMatch(appBlock, /heroCityBrowse/);
-  assert.doesNotMatch(appBlock, /CITY_CHIPS/);
-  assert.match(home, /function applyPlace/);
-  assert.doesNotMatch(appBlock, /locationForm/);
-  assert.doesNotMatch(appBlock, /useLocation\(\)/);
-  assert.doesNotMatch(home, /ParentDeskRails/);
-  assert.match(appBlock, /<HomeDiscovery/);
-  assert.match(webBlock, /featuredSearch/);
-  assert.doesNotMatch(webBlock, /heroCityBrowse/);
-  assert.doesNotMatch(webBlock, /HomePopularCities/);
-  assert.match(webBlock, /<HomeDiscovery/);
-  assert.match(src("src/components/home-discovery.tsx"), /FacilityTypeRails[\s\S]*items=\{shown\}[\s\S]*visual/);
-  assert.doesNotMatch(webBlock, /ke-web-grid/);
-  assert.doesNotMatch(home, /const locationForm/);
-  assert.doesNotMatch(home, /const \[manual, setManual\]/);
-  assert.match(src("src/components/explore-search-bar.tsx"), /PlaceSearch/);
+  const discovery = src("src/components/home-discovery.tsx");
+  assert.equal((home.match(/<MobileSearchHome/g) ?? []).length, 1);
+  assert.equal((home.match(/<HomeDiscovery/g) ?? []).length, 1);
+  assert.ok(home.indexOf("<HomeDiscovery") < home.indexOf("{belowResults}"));
+  assert.ok(home.indexOf("{belowResults}") < home.indexOf("ke-web-only"));
+  assert.doesNotMatch(home, /<ExploreSearchBar|ParentDeskRails|CITY_CHIPS/);
+  assert.match(discovery, /grid-cols-2.*md:grid-cols-3.*2xl:grid-cols-5/);
+  assert.match(discovery, /<DaycareCard/);
 });
+
 
 test("listing nearby uses a rail; compare and missing listing use EmptyState copy", () => {
   const listing = src("src/routes/daycare.$slug.tsx");

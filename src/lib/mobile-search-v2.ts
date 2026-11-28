@@ -14,7 +14,7 @@ export const MOBILE_SEARCH_FLAG = "FEATURE_MOBILE_SEARCH_V2";
 export const MOBILE_SEARCH_STEPS = ["where", "when", "who"] as const;
 export type MobileSearchStep = (typeof MOBILE_SEARCH_STEPS)[number];
 
-export const MOBILE_CATEGORIES = ["all", "centre", "home", "open", "before-after", "french"] as const;
+export const MOBILE_CATEGORIES = ["all", "centre", "preschool", "before-after", "home", "subsidy", "open", "french"] as const;
 export type MobileCategory = (typeof MOBILE_CATEGORIES)[number];
 
 export const DATE_FLEX = ["exact", "two-weeks", "month", "school-year"] as const;
@@ -266,11 +266,12 @@ export function mobileSearchParams(draft: MobileSearchDraft, nearLabel = ""): Mo
   else if (draft.schedule === "drop-in") out.sched = "flexible";
   else if (draft.schedule === "before-after") out.cat = "before-after";
   if (draft.category === "centre") out.fac = "child_care_centre";
+  else if (draft.category === "preschool") out.fac = "nursery_preschool";
   else if (draft.category === "home") out.fac = "family_home";
   else if (draft.category === "open") out.openings = "1";
   else if (draft.category === "before-after") out.cat = "before-after";
   else if (draft.category === "french") out.spoken = "fr";
-  if (draft.subsidy) out.subsidy = "1";
+  if (draft.subsidy || draft.category === "subsidy") out.subsidy = "1";
   if (draft.accessibility) out.inclusive = "1";
   if (draft.french) out.spoken = "fr";
   return out;

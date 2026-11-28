@@ -27,6 +27,7 @@ export function CookieConsentBanner() {
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [reopened, setReopened] = useState(false);
+  const [tabsBottom, setTabsBottom] = useState(0);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // EM4: on phones the bar covered Password and Sign in. Sign-in pages wait
   // for the choice until the next page. Analytics stay off until then.
@@ -71,10 +72,34 @@ export function CookieConsentBanner() {
     };
   }, [visible]);
 
+  // N-39: a slim bar pinned above the bottom tabs. The page reserves the bar's
+  // height (--ke-cookie-h, see styles.css), so the last cards are never hidden.
+  useEffect(() => {
+    const node = panel.current;
+    if (!visible || !node) return;
+    const root = document.documentElement;
+    const measure = () => {
+      const tabs = document.querySelector<HTMLElement>('[data-ke="app-tab-bar"]');
+      const box = tabs?.getBoundingClientRect();
+      // A bottom bar is wider than tall; the tablet side rail is not, and needs no offset.
+      const atBottom = box && box.height > 0 && box.width > box.height && box.bottom >= window.innerHeight - 1;
+      setTabsBottom(atBottom ? Math.round(box.height) : 0);
+      root.style.setProperty("--ke-cookie-h", `${Math.ceil(node.getBoundingClientRect().height)}px`);
+    };
+    measure();
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(measure) : null;
+    observer?.observe(node);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", measure);
+      root.style.removeProperty("--ke-cookie-h");
+    };
+  }, [visible]);
+
   useEffect(() => {
     if (!visible || !reopened) return;
     panel.current?.focus();
-    panel.current?.scrollIntoView({ block: "start" });
   }, [visible, reopened]);
 
   async function choose(value: "granted" | "denied") {
@@ -103,9 +128,10 @@ export function CookieConsentBanner() {
       aria-describedby="ke-cookie-consent-body"
       ref={panel}
       tabIndex={-1}
-      className="ke-cookie-consent ke-safe-x shrink-0 [--ke-pad-x:0.75rem] pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]"
+      style={{ bottom: tabsBottom, paddingBottom: tabsBottom ? "0.375rem" : undefined }}
+      className="ke-cookie-consent ke-safe-x fixed inset-x-0 z-40 [--ke-pad-x:0.75rem] pb-[max(0.375rem,env(safe-area-inset-bottom))] pt-1.5"
     >
-      <div className="ke-cookie-consent-panel mx-auto flex max-w-[35rem] flex-wrap items-center gap-2 rounded-xl bg-surface px-3 py-2 ring-1 ring-border">
+      <div className="ke-cookie-consent-panel mx-auto flex max-w-[48rem] flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-surface px-3 py-1 shadow-card ring-1 ring-border">
         <span className="hidden size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-primary sm:grid">
           <Cookie className="size-3.5" aria-hidden />
         </span>

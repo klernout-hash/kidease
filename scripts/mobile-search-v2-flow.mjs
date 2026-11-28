@@ -41,8 +41,7 @@ async function dismissCookies() {
 
 async function phoneRoot() {
   await page.waitForFunction(() => document.documentElement.dataset.channel);
-  const channel = await page.evaluate(() => document.documentElement.dataset.channel);
-  return channel === "app" ? ".ke-home-app" : ".ke-home-web";
+  return '[data-ke="home-discovery-surface"]';
 }
 
 try {
@@ -58,7 +57,7 @@ try {
   await page.screenshot({ path: join(outDir, "01-pill.png") });
   mark("pill", true);
 
-  await pill.click();
+  await pill.locator("[data-ke=msv2-pill-where]").click();
   const sheet = page.locator("[data-ke=msv2-sheet]");
   await sheet.waitFor({ state: "visible" });
   await page.screenshot({ path: join(outDir, "02-where.png") });
@@ -104,9 +103,9 @@ try {
     const el = document.querySelector(sel);
     return !!el && Object.keys(el).some((key) => key.startsWith("__reactProps"));
   }, `${frRoot} [data-ke=msv2-pill]`);
-  const frText = await frPill.innerText();
+  const frText = await frPill.getAttribute("aria-label");
   await page.screenshot({ path: join(outDir, "06-pill-fr.png") });
-  await frPill.click();
+  await frPill.locator("[data-ke=msv2-pill-who]").click();
   await page.locator("[data-ke=msv2-sheet]").waitFor({ state: "visible" });
   await page.screenshot({ path: join(outDir, "07-where-fr.png") });
   mark("french", /garderie/i.test(frText), frText.replace(/\s+/g, " "));

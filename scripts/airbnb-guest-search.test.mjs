@@ -20,5 +20,5 @@ test("search map stays a short pane and the listing bar has two actions", () => 
   assert.equal(publicMonthlyFee(477, { province: "ON" }), null);
   assert.equal(publicMonthlyFee(477, { province: "ON", feeConfidence: "centre" }), 477);
   assert.match(src("src/components/save-listing-button.tsx"), /save-signin-sheet/);
-  assert.match(src("src/routes/index.tsx"), /max-md:hidden|md:block/);
+  assert.match(src("src/routes/index.tsx"), /<MobileSearchHome/);
 });

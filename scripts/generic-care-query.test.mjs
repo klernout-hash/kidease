@@ -79,13 +79,13 @@ test("resolveLocationQuery and geocodePlace skip Photon for care words", () => {
   assert.match(search, /if \(genericCare\) return;/);
 });
 
-test("phone home keeps one Airbnb care row when the flag is on", () => {
+test("Explore shares one category row across devices", () => {
   const css = src("src/styles.css");
   const shell = src("src/components/shell.tsx");
   assert.match(shell, /data-ke="header-care-categories"/);
   assert.match(css, /\.ke-home \[data-ke="msv2-categories"\]/);
   assert.doesNotMatch(shell, /data-ke="phone-care-tabs"/);
   const home = src("src/routes/index.tsx");
-  assert.equal(home.match(/<AirbnbCareCategories/g)?.length, 1);
-  assert.match(home, /headerCategories=\{boot\.airbnbUi/);
+  assert.equal(home.match(/<MobileSearchHome/g)?.length, 1);
+  assert.doesNotMatch(home, /<AirbnbCareCategories|headerCategories=/);
 });

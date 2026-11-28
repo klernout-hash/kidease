@@ -28,7 +28,7 @@ test("flag off does not add the airbnb attribute or home class", () => {
   // The phone home keeps the classic map, list, and hero even when the flag is on.
   assert.doesNotMatch(home, /<AirbnbHome/);
   assert.doesNotMatch(home, /ke-airbnb-hide-phone/);
-  assert.match(home, /<AirbnbCareCategories/);
+  assert.match(home, /<MobileSearchHome/);
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.doesNotMatch(listing, /AirbnbListingPhone/);
   assert.doesNotMatch(listing, /ke-airbnb-hide-phone/);
