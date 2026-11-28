@@ -184,7 +184,7 @@ test("tax receipts sum paid invoices only and build both PDFs", () => {
   assert.equal(capped.groups.length, 0);
   const server = src("src/lib/server/tax-receipts.ts");
   assert.match(server, /taxReceiptsEnabled/);
-  assert.match(server, /status = 'paid'/);
+  assert.match(server, /INVOICE_SETTLED_SQL/);
   assert.doesNotMatch(server, /daycare_fee_invoices|sendTransactionalMail|notifyConsentedUserSms|infant_monthly/);
 });
 

@@ -15,7 +15,8 @@ import { failureReasonText } from "@/lib/payment-state";
 import { useCopy } from "@/lib/use-copy";
 import { money } from "@/lib/utils";
 import { periodLabel } from "@/lib/stripe-methods";
-import { type Bill, billDollars } from "@/lib/bill";
+import type { Bill } from "@/lib/bill";
+import { formatInvoiceDisplayMoney } from "@/lib/stripe-parent-invoice";
 import { WalletMethodHints } from "@/components/wallet-methods";
 import { openStripeCheckout } from "@/lib/wallets";
 import { publicPayMessage } from "@/lib/stripe-public-error";
@@ -232,7 +233,7 @@ function PayBillPage() {
             <div className="mt-4 space-y-2 border-t border-border pt-4">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm text-muted">{t("centreBill")}</span>
-                <span className="tabular-nums">{money(billDollars(bill), locale)}</span>
+                <span className="tabular-nums">{formatInvoiceDisplayMoney(bill.amountCents, bill.currency, locale)}</span>
               </div>
               {serviceFee && serviceFee.feeCents > 0 ? (
                 <div className="flex items-center justify-between gap-3">
@@ -243,7 +244,7 @@ function PayBillPage() {
               <div className="flex items-center justify-between gap-3 border-t border-border pt-2">
                 <span className="text-sm font-medium">{alreadyPaid ? t("paid") : t("youPay")}</span>
                 <span className="font-display text-2xl tabular-nums">
-                  {money((serviceFee?.parentPaysCents ?? bill.amountCents) / 100, locale)}
+                  {formatInvoiceDisplayMoney(serviceFee?.parentPaysCents ?? bill.amountCents, bill.currency, locale)}
                 </span>
               </div>
             </div>
@@ -299,7 +300,7 @@ function PayBillPage() {
             <CaslConsentFields value={consents} onChange={setConsents} showEmailService={false} />
             <Button className="w-full" disabled={busy} onClick={() => void pay()}>
               <Lock className="size-4" />
-              {t("pay")} · {money((serviceFee?.parentPaysCents ?? bill!.amountCents) / 100, locale)}
+              {t("pay")} · {formatInvoiceDisplayMoney(serviceFee?.parentPaysCents ?? bill!.amountCents, bill!.currency, locale)}
             </Button>
             <WalletMethodHints stripeLive={stripeLive} />
             <p className="text-center text-xs text-subtle">{t("stripeMark")}</p>
@@ -313,7 +314,7 @@ function PayBillPage() {
             </span>
             <p className="mt-3 font-display text-2xl">{t("paid")}</p>
             <p className="mt-1 text-sm text-muted">
-              {t("paidTo")} {bill.daycareName} · {money((serviceFee?.parentPaysCents ?? bill.amountCents) / 100, locale)}
+              {t("paidTo")} {bill.daycareName} · {formatInvoiceDisplayMoney(serviceFee?.parentPaysCents ?? bill.amountCents, bill.currency, locale)}
             </p>
             {serviceFee && serviceFee.feeCents > 0 ? (
               <p className="mt-2 text-sm text-muted">

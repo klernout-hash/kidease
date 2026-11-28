@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { dollarsToCents } from "@/lib/bill";
+import { INVOICE_OPEN_SQL, INVOICE_READ_MODEL_SQL, INVOICE_SETTLED_SQL } from "@/lib/invoice-read-model";
 import { getSql } from "@/lib/db";
 import {
   shapeHostEarnings,
@@ -21,7 +21,7 @@ export const loadHostEarnings = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<HostEarnings> => {
     try {
       const sql = await getSql();
-      const rows = await sql<{
+      const rows = await sql.query<{
         id: string;
         number: string | null;
         status: string;
@@ -29,31 +29,31 @@ export const loadHostEarnings = createServerFn({ method: "GET" })
         paid_at: string | null;
         due_at: string | null;
         net_cents: number | null;
-        amount_cents: number | null;
-        platform_fee_cents: number | null;
-        total: number | null;
-        platform_fee: number | null;
+
+
+
+
         parent_name: string | null;
         child_name: string | null;
         centre_name: string | null;
-      }>`
+      }>(`
         select i.id, i.number, i.status, i.period, i.paid_at, i.due_at,
-          i.net_cents, i.amount_cents, i.platform_fee_cents, i.total, i.platform_fee,
+          i.read_net_cents as net_cents,
           u.name as parent_name, ch.name as child_name, d.name as centre_name
-        from invoices i
+        from ${INVOICE_READ_MODEL_SQL} i
         join provider_daycares p on p.daycare_id = i.daycare_id
         left join daycares d on d.id = i.daycare_id
         left join "user" u on u.id = i.parent_user_id
         left join children ch on ch.id = i.child_id
-        where p.user_id = ${context.userId}
-          and i.status in ('paid', 'sent')
+        where p.user_id = $1
+          and (${INVOICE_SETTLED_SQL} or ${INVOICE_OPEN_SQL})
         order by coalesce(i.paid_at, i.due_at, i.created_at) desc
-        limit ${BILL_LIMIT}
-      `;
+        limit $2
+      `, [context.userId, BILL_LIMIT]);
       const bills: HostBill[] = rows.map((row) => ({
         id: row.id,
         status: row.status,
-        netCents: netCents(row),
+        netCents: Number(row.net_cents),
         period: row.period,
         paidAt: row.paid_at,
         dueAt: row.due_at,
@@ -197,18 +197,4 @@ function finiteCount(value: number | null | undefined): number | null {
   const n = Number(value);
   if (!Number.isFinite(n) || n < 0) return null;
   return Math.round(n);
-}
-
-function netCents(row: {
-  net_cents: number | null;
-  amount_cents: number | null;
-  platform_fee_cents: number | null;
-  total: number | null;
-  platform_fee: number | null;
-}): number {
-  if (row.net_cents != null && Number.isFinite(Number(row.net_cents))) return Number(row.net_cents);
-  const amount = row.amount_cents != null ? Number(row.amount_cents) : dollarsToCents(Number(row.total) || 0);
-  const fee =
-    row.platform_fee_cents != null ? Number(row.platform_fee_cents) : dollarsToCents(Number(row.platform_fee) || 0);
-  return Math.max(0, amount - fee);
 }

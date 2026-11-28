@@ -359,6 +359,6 @@ test("the pay page total matches Checkout, and a paid return can mark the bill",
   const pay = src("src/routes/pay.bill.$billId.tsx");
   assert.match(pay, /confirming/);
   assert.match(pay, /!confirming/);
-  assert.match(src("src/lib/server/stripe-parent-invoices.ts"), /from invoices i/);
+  assert.match(src("src/lib/server/stripe-parent-invoices.ts"), /from \$\{INVOICE_READ_MODEL_SQL\} i/);
   assert.match(src("src/components/stripe-invoice-list.tsx"), /payPath/);
 });

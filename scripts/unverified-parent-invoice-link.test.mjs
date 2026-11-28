@@ -19,6 +19,7 @@ import { scopeFromLinks } from "../src/lib/coparent.ts";
 import { coparentEmailEnabled, coparentLinkEnabled } from "../src/lib/features.ts";
 import * as alertPush from "../src/lib/alert-push.ts";
 import * as familyTime from "../src/lib/family-time.ts";
+import * as invoiceReadModel from "../src/lib/invoice-read-model.ts";
 import * as stripeParentInvoice from "../src/lib/stripe-parent-invoice.ts";
 import * as centreRoles from "../src/lib/centre-roles.ts";
 import * as staffPermissions from "../src/lib/staff-permissions.ts";
@@ -161,6 +162,7 @@ const parentInvoices = loadModule("src/lib/server/stripe-parent-invoices.ts", {
   "@/lib/alert-push": alertPush,
   "@/lib/family-time": familyTime,
   "@/lib/stripe-parent-invoice": stripeParentInvoice,
+  "@/lib/invoice-read-model": invoiceReadModel,
   "@/lib/server/coparent": { familyScopeFor },
   "@/lib/email-layout": {
     brandedNotice: () => ({ heading: "Invoice", text: "Invoice", locale: "en" }),
