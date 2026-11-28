@@ -3,6 +3,7 @@ import { EmptyState } from "@/components/empty-state";
 import { localePath } from "@/lib/locale-path";
 import type { DaycareCard as Card } from "@/lib/types";
 import { listingThumb } from "@/lib/photo";
+import { homeGridItems } from "@/lib/now-loops";
 import { useCopy } from "@/lib/use-copy";
 
 export function HomeDiscovery({
@@ -11,12 +12,14 @@ export function HomeDiscovery({
   liveOnly,
   hasPublic,
   onShowAll,
+  city,
 }: {
   ready: boolean;
   shown: Card[];
   liveOnly: boolean;
   hasPublic: boolean;
   onShowAll: () => void;
+  city?: string;
 }) {
   const { t, locale } = useCopy();
   if (!ready && shown.length === 0) return <HomeCardSkeleton />;
@@ -35,7 +38,7 @@ export function HomeDiscovery({
       </div>
     );
   }
-  const cards = shown.slice(0, 12);
+  const cards = homeGridItems(shown, { city, label: city });
   const leadPhoto = cards.findIndex((item) => {
     const photo = listingThumb(item.photos);
     return Boolean(photo && !photo.includes("storefront-placeholder"));

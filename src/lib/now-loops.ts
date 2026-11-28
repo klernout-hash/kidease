@@ -135,6 +135,25 @@ export function homeRailItems<T extends LiveLookingInput>(
   return looking;
 }
 
+/**
+ * Home Explore grid: live-looking cards (real photo, ages, fees) lead, the rest follow,
+ * so the first screen is never a wall of hollow cards. Nothing is dropped or invented.
+ */
+export function homeGridItems<T extends LiveLookingInput & { id: string }>(
+  rows: readonly T[],
+  opts?: { city?: string | null; label?: string | null; limit?: number },
+): T[] {
+  const lead = homeRailItems([...rows], opts);
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const row of [...lead, ...rows]) {
+    if (seen.has(row.id)) continue;
+    seen.add(row.id);
+    out.push(row);
+  }
+  return out.slice(0, opts?.limit ?? 12);
+}
+
 export function listingServesSearchAge(
   d: Pick<Daycare, "agesKnown" | "ageMinMonths" | "ageMaxMonths" | "amenities">,
   age: SearchAge,

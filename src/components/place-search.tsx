@@ -122,6 +122,14 @@ async function loadSuggestions(
   return merged;
 }
 
+/**
+ * Where suggestions for the Explore sheet. Same order as PlaceSearch: server Places
+ * (Photon on the server, no browser key), then the browser fallback, merged with local cities.
+ */
+export function suggestWherePlaces(q: string, origin?: { lat: number; lng: number }): Promise<PlaceSuggestion[]> {
+  return loadSuggestions(q, origin);
+}
+
 function newSession() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
   return `ke-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;

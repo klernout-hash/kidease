@@ -93,8 +93,18 @@ describe("Places autocomplete stays on the server key", () => {
 
   it("search and home use PlaceSearch", () => {
     assert.match(read("src/routes/search.tsx"), /ExploreSearchBar/);
-    assert.match(read("src/routes/index.tsx"), /ExploreSearchBar/);
     assert.match(read("src/components/explore-search-bar.tsx"), /PlaceSearch/);
+    // N-39 mockup 1: home uses the Where/When/Who pill. Its Where step asks the same
+    // server-first Places lookup PlaceSearch uses, never a browser Google key.
+    const home = read("src/routes/index.tsx");
+    const sheet = read("src/components/mobile-search-sheet.tsx");
+    const places = read("src/components/place-search.tsx");
+    assert.match(home, /<MobileSearchHome/);
+    assert.match(sheet, /import \{ suggestWherePlaces \} from "@\/components\/place-search"/);
+    assert.match(sheet, /suggestWherePlaces\(placeQuery/);
+    assert.match(places, /export function suggestWherePlaces[\s\S]*?return loadSuggestions\(q, origin\)/);
+    assert.match(places, /remote = await suggestPlaces\(/);
+    assert.doesNotMatch(sheet, /process\.env\.GOOGLE_|loadGoogleMaps/);
   });
 });
 

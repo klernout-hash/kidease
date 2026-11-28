@@ -35,7 +35,7 @@ test("home hero has no city pills and no Browse by city link", () => {
 
 test("live toggle stays off the home hero when the live count is 0", () => {
   const home = src("src/routes/index.tsx");
-  assert.doesNotMatch(home, /data-ke="home-live-strip"/);
+  assert.match(home, /featuredReady && strip\.liveCount > 0/);
   assert.doesNotMatch(home, /data-ke="home-zero-live"/);
   assert.doesNotMatch(home, /exploreBrowseHint/);
 });

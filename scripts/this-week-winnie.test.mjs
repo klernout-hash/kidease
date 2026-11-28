@@ -49,7 +49,8 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
   assert.doesNotMatch(search, /ExploreRails/);
   assert.doesNotMatch(search, /FacilityTypeRails/);
 
-  assert.match(home, /homeRailItems/);
+  // N-39 mockup 1: one grid; homeGridItems leads with homeRailItems (live-looking) cards.
+  assert.match(home, /homeGridItems/);
   assert.match(chips, /RAIL_AGES/);
   assert.match(cats, /listingAgeUnknown/);
   assert.match(care, /hasConfirmedAges/);

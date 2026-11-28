@@ -43,7 +43,10 @@ import { compactExploreSearch, readLiveSearchFlag } from "@/lib/explore-search";
 import { compactSearchRadius } from "@/lib/search-radius";
 import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
-import { homeLiveStrip } from "@/lib/home-live-strip";
+import { featuredHomeAgreement, homeLiveStrip } from "@/lib/home-live-strip";
+import { homeGridItems } from "@/lib/now-loops";
+import type { MobileSearchParams } from "@/lib/mobile-search-v2";
+import { ChipButton } from "@/components/chip";
 import type { DaycareCard as Card } from "@/lib/types";
 
 const RoleEnrollChooser = lazy(() =>
@@ -86,8 +89,9 @@ export async function loadProductHome() {
 
 export type ProductHomeBoot = Awaited<ReturnType<typeof loadProductHome>>;
 
+/** Same photo the home grid marks priority. Preload that one, not a later card. */
 function homeLcpPhoto(rows: Card[]): string | undefined {
-  return rows.slice(0, 12)
+  return homeGridItems(rows)
     .map((row) => listingThumb(row.photos))
     .find((photo) => Boolean(photo && !photo.includes("storefront-placeholder")));
 }
@@ -203,8 +207,13 @@ export function HomePage({ boot, liveClaimed = false, changeLocation = false }: 
     };
   }, [origin, originSource, radiusKm, boot.origin, boot.featuredReady]);
 
-  function goSearch(label?: string) {
-    const search = { ...compactSearchRadius({ km: radiusKm }), q: compactExploreSearch({ q: label }).q };
+  /** One way to /search: the pill's Where/When/Who answers, the chosen radius (km), EN or FR. */
+  function goSearch(label?: string, params: MobileSearchParams = {}) {
+    const search = {
+      ...params,
+      ...compactSearchRadius({ km: radiusKm }),
+      q: compactExploreSearch({ q: label ?? params.q }).q,
+    };
     if (locale === "fr") void navigate({ to: "/fr/search", search });
     else void navigate({ to: "/search", search });
   }
@@ -224,6 +233,7 @@ export function HomePage({ boot, liveClaimed = false, changeLocation = false }: 
   );
   const liveCount = useMemo(() => publicFeatured.filter((r) => r.live).length, [publicFeatured]);
   const strip = homeLiveStrip(liveCount, publicFeatured.length);
+  const featuredAgreement = featuredHomeAgreement(publicFeatured.length);
   const shown = useMemo(
     () => uniqueById(liveOnly ? publicFeatured.filter((r) => r.live) : publicFeatured),
     [publicFeatured, liveOnly],
@@ -238,12 +248,7 @@ export function HomePage({ boot, liveClaimed = false, changeLocation = false }: 
       key={changeLocation ? "change-location" : "explore"}
       origin={originSource ? origin : boot.origin}
       initiallyOpen={changeLocation}
-      onCommit={(params) => {
-        void navigate({
-          to: locale === "fr" ? "/fr/search" : "/search",
-          search: { ...params, ...compactSearchRadius({ km: radiusKm }) },
-        });
-      }}
+      onCommit={(params) => goSearch(params.q, params)}
     />
   );
 
@@ -275,18 +280,35 @@ export function HomePage({ boot, liveClaimed = false, changeLocation = false }: 
       <h1 className="ke-gutter mx-auto w-full pt-3 text-center text-[clamp(1.25rem,3.4vw,2rem)] leading-tight tracking-[-0.03em]">
         {t("tagline")}
       </h1>
-        <section className="bg-bg">
-          <div className="ke-gutter mx-auto w-full pb-1 pt-2">{featuredSearch}</div>
+        <section data-ke="home-search" className="bg-bg">
+          <div className="ke-gutter mx-auto w-full pb-1 pt-2">
+            {featuredSearch}
+            {featuredReady && strip.liveCount > 0 ? (
+              <div className="mx-auto mt-1 flex min-h-11 w-full max-w-[60rem] flex-wrap gap-2" data-ke="home-live-strip">
+                <ChipButton on={liveOnly} onClick={() => setLiveOnly(true)}>
+                  {t(strip.liveLabelKey).replace("{n}", String(strip.liveCount))}
+                </ChipButton>
+                {featuredAgreement.showChip ? (
+                  <ChipButton on={!liveOnly} onClick={() => setLiveOnly(false)}>
+                    {t(strip.secondaryLabelKey).replace("{n}", String(strip.secondaryCount))}
+                  </ChipButton>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </section>
 
         <section id="featured" className="ke-gutter mx-auto w-full pb-8 pt-1 md:pb-12">
-          <h2 className="scroll-mb-32 text-xl tracking-[-0.03em] max-lg:sr-only md:text-2xl">{t(strip.featuredTitleKey)}</h2>
+          {!featuredReady || featuredAgreement.showSection ? (
+            <h2 className="scroll-mb-32 text-xl tracking-[-0.03em] max-lg:sr-only md:text-2xl">{t(strip.featuredTitleKey)}</h2>
+          ) : null}
           <HomeDiscovery
             ready={featuredReady}
             shown={liveClaimed ? claimedLive : shown}
             liveOnly={liveOnly}
             hasPublic={publicFeatured.length > 0}
             onShowAll={() => setLiveOnly(false)}
+            city={origin.label}
           />
           <div className="mt-6">
             <Button size="md" variant="secondary" className="rounded-[14px]" onClick={() => goSearch(origin.label)}>

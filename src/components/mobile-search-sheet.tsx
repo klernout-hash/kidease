@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { List, Map, Search, SlidersHorizontal, X } from "lucide-react";
 import { popularHomeCities } from "@/lib/home-popular-cities";
 import { reverseGeocode } from "@/lib/geo";
+import { suggestWherePlaces } from "@/components/place-search";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import {
   applyDateFlex,
@@ -459,7 +460,29 @@ function SearchSheet({
     onClose();
   }
 
-  const suggestions = localWhereSuggestions(typed);
+  const local = localWhereSuggestions(typed);
+  // Places autocomplete (server first) for streets and towns the local city list does not know.
+  const [remote, setRemote] = useState<{ q: string; rows: { label: string; secondary: string }[] }>({ q: "", rows: [] });
+  const placeQuery = typed.trim();
+  const originLat = origin?.lat;
+  const originLng = origin?.lng;
+  useEffect(() => {
+    if (placeQuery.length < 3) return;
+    let cancelled = false;
+    const id = window.setTimeout(() => {
+      const near = originLat != null && originLng != null ? { lat: originLat, lng: originLng } : undefined;
+      void suggestWherePlaces(placeQuery, near)
+        .then((rows) => {
+          if (!cancelled) setRemote({ q: placeQuery, rows: rows.map((row) => ({ label: row.label, secondary: row.secondary })) });
+        })
+        .catch(() => {});
+    }, 250);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
+  }, [placeQuery, originLat, originLng]);
+  const suggestions = remote.q === placeQuery && remote.rows.length ? remote.rows : local;
   const cities = popularHomeCities(
     origin ? { lat: origin.lat, lng: origin.lng, label: origin.label || undefined } : undefined,
     locale === "fr" ? "fr" : "en",
