@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import { describe, it } from "node:test";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,9 +24,9 @@ describe("theme preference", () => {
     assert.equal(parseThemePreference("light"), "light");
     assert.equal(parseThemePreference("dark"), "dark");
     assert.equal(parseThemePreference("system"), "system");
-    assert.equal(parseThemePreference("nope"), "dark");
-    assert.equal(parseThemePreference(null), "dark");
-    assert.equal(parseThemePreference(undefined), "dark");
+    assert.equal(parseThemePreference("nope"), "light");
+    assert.equal(parseThemePreference(null), "light");
+    assert.equal(parseThemePreference(undefined), "light");
   });
 
   it("resolves System from prefers-color-scheme", () => {
@@ -47,7 +48,7 @@ describe("theme preference", () => {
     };
     try {
       assert.equal(THEME_STORAGE_KEY, "kidease-theme");
-      assert.equal(readThemePreference(), "dark");
+      assert.equal(readThemePreference(), "light");
       writeThemePreference("dark");
       assert.equal(memory.get(THEME_STORAGE_KEY), "dark");
       assert.equal(readThemePreference(), "dark");
@@ -87,9 +88,49 @@ describe("appearance is wired across public + desks chrome", () => {
     assert.match(boot, /prefers-color-scheme: dark/);
     assert.match(boot, /dataset\.theme/);
     assert.match(boot, /dataset\.resolvedTheme/);
-    assert.match(rootHtml, /src="\/theme-boot\.js"/);
-    assert.match(rootHtml, /data-theme="dark"/);
+    assert.match(rootHtml, /src="\/theme-boot\.js\?v=2"/);
+    assert.match(rootHtml, /data-theme="light"/);
+    assert.match(rootHtml, /data-resolved-theme="light"/);
+    assert.doesNotMatch(rootHtml, /data-theme="dark"/);
     assert.match(rootHtml, /ThemeBoot/);
+  });
+
+  it("first paint is Light for new visitors and keeps a saved Dark / System choice", () => {
+    const boot = src("public/theme-boot.js");
+    for (const [stored, osDark, preference, resolved] of [
+      [null, false, "light", "light"],
+      [null, true, "light", "light"],
+      ["garbage", true, "light", "light"],
+      [undefined, true, "light", "light"],
+      ["light", true, "light", "light"],
+      ["dark", false, "dark", "dark"],
+      ["system", true, "system", "dark"],
+      ["system", false, "system", "light"],
+    ]) {
+      const rootEl = { dataset: {}, style: {} };
+      runInNewContext(boot, {
+        window: {
+          matchMedia: () => ({ matches: osDark }),
+          localStorage: {
+            getItem: () => {
+              if (stored === undefined) throw new Error("Storage unavailable");
+              return stored;
+            },
+          },
+        },
+        document: { documentElement: rootEl },
+      });
+      assert.deepEqual({ ...rootEl.dataset }, { theme: preference, resolvedTheme: resolved }, `stored=${stored} osDark=${osDark}`);
+      assert.equal(rootEl.style.colorScheme, resolved);
+    }
+  });
+
+  it("a failed account read never overrides this device's saved choice", () => {
+    const prefs = src("src/lib/server/account-prefs.ts");
+    const getter = prefs.slice(prefs.indexOf("export const getMyTheme"), prefs.indexOf("export const saveMyTheme"));
+    assert.doesNotMatch(getter, /\} catch/);
+    assert.doesNotMatch(getter, /DEFAULT_THEME_PREFERENCE/);
+    assert.match(src("src/components/theme-boot.tsx"), /\.catch\(\(\) => undefined\)/);
   });
 
   it("dark tokens follow resolved theme and System follows the OS", () => {

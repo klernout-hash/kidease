@@ -25,6 +25,9 @@ test("T1: guest Light/Dark carries into a System or unset account", () => {
   assert.deepEqual(signInThemePlan("light", "dark"), { theme: "light", save: false });
   assert.deepEqual(signInThemePlan("system", null), { theme: "system", save: false });
   assert.deepEqual(signInThemePlan("system", "system"), { theme: "system", save: false });
+  // Light default: an account that never chose and no device choice lands on Light.
+  assert.deepEqual(signInThemePlan(null, null), { theme: "light", save: false });
+  assert.deepEqual(signInThemePlan("dark", null), { theme: "dark", save: false });
 });
 
 test("G5: status time has no daylight-time abbreviation", () => {
