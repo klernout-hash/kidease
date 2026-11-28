@@ -16,7 +16,7 @@ export const SMS_PRIVACY_EN: LegalSection = {
   blocks: [
     {
       type: "p",
-      text: "KidEase may send transactional and service text messages when you give a mobile number and opt in. Examples: sign-in or verification codes, tour or waitlist updates, centre-request notices, and support replies. Message frequency varies. Message and data rates may apply.",
+      text: "KidEase (Winnipeg, Manitoba) sends service texts to your mobile number only after you give express consent. These texts cover sign-in codes, tours, waitlists, requests to daycares, and support replies. SMS is optional. Message frequency varies. Message and data rates may apply.",
     },
     {
       type: "p",
@@ -25,10 +25,8 @@ export const SMS_PRIVACY_EN: LegalSection = {
     {
       type: "ul",
       items: [
-        "Consent is not a condition of using KidEase or of purchasing a plan.",
-        "Reply STOP to cancel. You will get one confirmation text and then no further program messages.",
-        "Reply HELP for help, or email support@kidease.ca.",
-        "You can also turn SMS off in account or alert settings and at /unsubscribe.",
+        "Withdraw consent at any time by replying STOP or ARRÊT, or by turning off texts at kidease.ca/unsubscribe.",
+        "Contact KidEase at support@kidease.ca or 1-877-502-7728. You can also reply HELP.",
         "No mobile information will be shared with third parties or affiliates for marketing or promotional purposes.",
         "Twilio is our text-message processor. It receives the destination number and message body only to deliver that text. See https://www.twilio.com/en-us/legal/privacy",
       ],
@@ -44,7 +42,7 @@ export const SMS_PRIVACY_FR: LegalSection = {
   blocks: [
     {
       type: "p",
-      text: "KidEase peut envoyer des textos de service lorsque vous donnez un numéro mobile et que vous consentez. Exemples : codes de connexion, mises à jour de visite ou de liste d’attente, avis de demande au centre, réponses du soutien. La fréquence varie. Des frais de messagerie et de données peuvent s’appliquer.",
+      text: "KidEase (Winnipeg, Manitoba) envoie des textos de service à votre numéro de cellulaire uniquement avec votre consentement exprès. Ces textos portent sur les codes de connexion, les visites, les listes d’attente, les demandes aux garderies et les réponses du soutien. Les textos sont facultatifs. La fréquence des messages varie. Des frais de messagerie et de données peuvent s’appliquer.",
     },
     {
       type: "p",
@@ -53,10 +51,8 @@ export const SMS_PRIVACY_FR: LegalSection = {
     {
       type: "ul",
       items: [
-        "Le consentement n’est pas une condition d’utilisation de KidEase ni d’un achat.",
-        "Répondez STOP pour vous désinscrire. Vous recevrez un accusé, puis plus de textos du programme.",
-        "Répondez AIDE pour obtenir de l’aide, ou écrivez à support@kidease.ca.",
-        "Vous pouvez aussi désactiver les SMS dans le compte et à /unsubscribe.",
+        "Retirez votre consentement en tout temps en répondant ARRÊT ou STOP, ou en désactivant les textos à kidease.ca/unsubscribe.",
+        "Joignez KidEase à support@kidease.ca ou au 1-877-502-7728. Vous pouvez aussi répondre AIDE.",
         "Twilio traite l’envoi des textos. Il reçoit le numéro et le message seulement pour livrer ce texte. https://www.twilio.com/en-us/legal/privacy",
       ],
     },
@@ -71,7 +67,7 @@ export const SMS_TERMS_EN: LegalSection = {
   blocks: [
     {
       type: "p",
-      text: "By providing your mobile number and opting in, you agree to receive KidEase service texts at that number, which may be sent by an autodialer. Types of messages: verification codes, tour and waitlist updates, centre-request notices, and support. Message frequency varies. Message and data rates may apply.",
+      text: "KidEase (Winnipeg, Manitoba) sends service texts to your mobile number only after you give express consent. These texts cover sign-in codes, tours, waitlists, requests to daycares, and support replies. SMS is optional. Message frequency varies. Message and data rates may apply.",
     },
     {
       type: "p",
@@ -80,9 +76,8 @@ export const SMS_TERMS_EN: LegalSection = {
     {
       type: "ul",
       items: [
-        "Reply STOP to cancel. You will get one confirmation text and then no further program messages.",
-        "Reply HELP for help, or email support@kidease.ca.",
-        "Consent is not required to use the website or app.",
+        "Withdraw consent at any time by replying STOP or ARRÊT, or by turning off texts at kidease.ca/unsubscribe.",
+        "Contact KidEase at support@kidease.ca or 1-877-502-7728. You can also reply HELP.",
         "Privacy Policy: https://kidease.ca/privacy",
       ],
     },
@@ -95,7 +90,7 @@ export const SMS_TERMS_FR: LegalSection = {
   blocks: [
     {
       type: "p",
-      text: "En donnant votre numéro et en consentant, vous acceptez de recevoir des textos de service KidEase, y compris par composeur automatique. Types : codes, visites, liste d’attente, demandes au centre, soutien. La fréquence varie. Des frais peuvent s’appliquer.",
+      text: "KidEase (Winnipeg, Manitoba) envoie des textos de service à votre numéro de cellulaire uniquement avec votre consentement exprès. Ces textos portent sur les codes de connexion, les visites, les listes d’attente, les demandes aux garderies et les réponses du soutien. Les textos sont facultatifs. La fréquence des messages varie. Des frais de messagerie et de données peuvent s’appliquer.",
     },
     {
       type: "p",
@@ -104,9 +99,8 @@ export const SMS_TERMS_FR: LegalSection = {
     {
       type: "ul",
       items: [
-        "Répondez STOP pour vous désinscrire. Vous recevrez un accusé, puis plus de textos du programme.",
-        "Répondez AIDE pour obtenir de l’aide, ou écrivez à support@kidease.ca.",
-        "Le consentement n’est pas exigé pour utiliser le site ou l’appli.",
+        "Retirez votre consentement en tout temps en répondant ARRÊT ou STOP, ou en désactivant les textos à kidease.ca/unsubscribe.",
+        "Joignez KidEase à support@kidease.ca ou au 1-877-502-7728. Vous pouvez aussi répondre AIDE.",
         "Politique de confidentialité : https://kidease.ca/privacy",
       ],
     },

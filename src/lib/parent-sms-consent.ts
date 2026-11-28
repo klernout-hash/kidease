@@ -1,16 +1,12 @@
 import { normalizeCaslPhone } from "./casl.ts";
 import { pageSeoHead, withNoindex } from "./page-seo.ts";
 
-/**
- * Toll-free opt-in sentence for +1 877-502-7728.
- * Keep this string exact. Twilio matches it word for word.
- */
 export const PARENT_SMS_CONSENT_TEXT =
-  "I agree to receive text messages from KidEase about my daycare requests and account. Message frequency varies. Msg & data rates may apply. Reply STOP to opt out, HELP for help.";
+  "I agree to receive text messages from KidEase about my daycare requests and account. Message frequency varies. Message and data rates may apply. Withdraw consent at any time by replying STOP. Contact KidEase at support@kidease.ca.";
 
 /** Shown on /fr/signup. ARRÊT and AIDE are accepted by the inbound keyword parser. */
 export const PARENT_SMS_CONSENT_TEXT_FR =
-  "J’accepte de recevoir des textos de KidEase au sujet de mes demandes de garde et de mon compte. La fréquence des messages varie. Des frais de messagerie et de données peuvent s’appliquer. Répondez ARRÊT pour vous désabonner, AIDE pour obtenir de l’aide.";
+  "J’accepte de recevoir des textos de KidEase au sujet de mes demandes de garde et de mon compte. La fréquence des messages varie. Des frais de messagerie et de données peuvent s’appliquer. Retirez votre consentement en tout temps en répondant ARRÊT. Joignez KidEase à support@kidease.ca.";
 
 export function parentSmsConsentText(locale: string): string {
   return locale === "fr" ? PARENT_SMS_CONSENT_TEXT_FR : PARENT_SMS_CONSENT_TEXT;

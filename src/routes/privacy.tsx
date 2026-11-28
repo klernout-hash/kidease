@@ -5,7 +5,7 @@ import { LEGAL_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { SMS_PRIVACY_EN, SMS_PRIVACY_FR, withSmsSection } from "@/lib/sms-legal";
 import { legalDocWithoutStorePurchase } from "@/lib/store-purchase-copy";
 import { useCopy } from "@/lib/use-copy";
-import { useInNativeShell } from "@/lib/use-native-shell";
+import { useStoreShell } from "@/lib/use-native-shell";
 
 export const Route = createFileRoute("/privacy")({
   head: () => pageSeoHead(LEGAL_PAGE_SEO.privacy),
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/privacy")({
 
 function Privacy() {
   const { locale } = useCopy();
-  const hideCommerce = useInNativeShell();
+  const hideCommerce = useStoreShell();
   const raw =
     locale === "fr"
       ? withSmsSection(PRIVACY_V2_FR, SMS_PRIVACY_FR)
