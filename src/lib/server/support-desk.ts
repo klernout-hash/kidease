@@ -239,13 +239,25 @@ export const replyAdminSupportDesk = createServerFn({ method: "POST" })
     return { enabled: true as const, ok: true as const, id };
   });
 
-/** Owner reply into a support thread. Off unless both support flags are on. Does not store the phone. */
-export async function maybeRecordSupportOwnerReply(body: string): Promise<boolean> {
-  if (!supportSmsReplyEnabled()) return false;
+/**
+ * Owner reply into a support thread. Off unless both support flags are on.
+ * Only a text from SUPPORT_ALERT_PHONE that names a full thread id is stored. Does not store the phone.
+ */
+export async function maybeRecordSupportOwnerReply(
+  input: { from: string | null | undefined; body: string },
+  env: EnvMap = process.env,
+): Promise<boolean> {
+  if (!supportSmsReplyEnabled(env)) return false;
   const sql = await getSql();
   const threads = await sql<{ id: string }>`select id from support_threads order by updated_at desc limit 20`;
-  const result = handleSupportOwnerReply({ flagOn: true, signatureOk: true, body, threads });
-  if (!result.threadId || !result.text) return false;
+  const result = handleSupportOwnerReply({
+    flagOn: true,
+    from: input.from,
+    ownerPhone: env.SUPPORT_ALERT_PHONE,
+    body: input.body,
+    threads,
+  });
+  if (result.status !== 200 || !result.threadId || !result.text) return false;
   await sql`
     insert into support_messages (id, thread_id, sender, body)
     values (${nid()}, ${result.threadId}, 'admin', ${result.text})

@@ -35,7 +35,8 @@ export function liveAgentSmsDecision(
   body: string,
   agentPhone = liveChatAgentPhone(),
 ): { route: boolean; code: string | null } {
-  if (normalizeChatPhone(from) !== normalizeChatPhone(agentPhone)) {
+  const agent = normalizeChatPhone(agentPhone);
+  if (!agent || normalizeChatPhone(from) !== agent) {
     return { route: false, code: null };
   }
   return { route: true, code: ticketCodeFromSms(body) };
