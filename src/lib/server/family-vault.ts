@@ -69,7 +69,7 @@ export async function listParentVault(userId: string): Promise<{
   const sql = await getSql();
   const [centreIds, children] = await Promise.all([
     chosenCentreIds(sql, userId),
-    sql<{ id: string; name: string }>`select id, name from children where user_id = ${userId} order by name, id`,
+    sql<{ id: string; name: string }>`select id, name from children where user_id = ${userId} order by name, id`.catch(() => []),
   ]);
   const centres = centreIds.length
     ? await sql
