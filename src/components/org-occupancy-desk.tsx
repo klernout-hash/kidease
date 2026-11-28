@@ -9,6 +9,7 @@ import { orgCopy } from "@/lib/org-occupancy-copy";
 import { orgOccupancyCsv, type OrgOccupancyCsvReport } from "@/lib/org-occupancy-csv";
 import { listOrgOccupancy, setOrgCentre } from "@/lib/server/org-occupancy";
 import { useCopy } from "@/lib/use-copy";
+import { OwnerOnlyNotice } from "@/components/owner-only-notice";
 
 function downloadCsv(report: OrgOccupancyCsvReport, locale: string) {
   const url = URL.createObjectURL(
@@ -27,12 +28,7 @@ function downloadCsv(report: OrgOccupancyCsvReport, locale: string) {
 }
 
 function OccupancyOwnerOnly() {
-  const { t } = useCopy();
-  return (
-    <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="staff-owner-only">
-      {t("employeeStaffForbidden")}
-    </p>
-  );
+  return <OwnerOnlyNotice />;
 }
 
 export function OrgOccupancyDesk() {
