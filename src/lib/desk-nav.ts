@@ -424,7 +424,7 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (desk === "daycare" && opts?.centreLinked === false && !BEFORE_CENTRE_NAV.has(item.id)) return false;
     if (desk === "daycare" && item.id === "screening" && opts?.centreOwner === false) return false;
     if (desk === "daycare" && (item.id === "inspection-sync" || item.id === "subsidy")) {
-      return opts?.centreOwner === true && opts.centreRole !== "staff" && opts.centreRole !== "read_only";
+      return opts?.centreOwner === true && opts.centreRole === "owner";
     }
     if (desk === "daycare" && opts && staffDeskBlocked(item.id, opts)) return false;
     if (item.id === "learning") return opts?.curriculumPack === true;

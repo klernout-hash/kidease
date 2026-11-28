@@ -120,9 +120,11 @@ test("inspection and subsidy appear together only for resolved centre owners", (
     undefined,
     { centreRolePending: true, centreOwner: true },
     { centreRole: "staff", centreOwner: true },
+    { centreRole: "manager", centreOwner: true },
+    { centreOwner: true },
     { centreRole: "read_only", centreOwner: true },
     { centreOwner: false },
-    { centreOwner: true, centreLinked: false },
+    { centreOwner: true, centreLinked: false, centreRole: "owner" },
   ]) assert.deepEqual(links(opts), []);
   for (const desk of ["parent", "admin", "support"]) {
     assert.ok(visibleDeskNav(desk).every((item) => !targets.includes(item.id)));
