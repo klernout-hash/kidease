@@ -460,7 +460,7 @@ export function ChildCheckHistory() {
         <AlertDialog.Portal>
           <AlertDialog.Overlay className="fixed inset-0 z-50 bg-fg/40" />
           <AlertDialog.Content
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl bg-surface px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-fg shadow-card sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:w-[min(30rem,calc(100%-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
+            className="ke-safe-x fixed inset-x-0 bottom-0 z-50 max-h-[90dvh] overflow-y-auto rounded-t-2xl bg-surface [--ke-pad-x:1.25rem] pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-fg shadow-card sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:w-[min(30rem,calc(100%-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
             data-ke="parent-absence-confirm"
             onCloseAutoFocus={(event) => {
               if (absenceTrigger.current && !absenceTrigger.current.disabled) {
