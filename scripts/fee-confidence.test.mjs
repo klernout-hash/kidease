@@ -26,6 +26,12 @@ test("backfilled bands are a provincial estimate and centre-entered fees are con
   assert.equal(typed.confidence, "centre");
   assert.equal(typed.priceList, true);
 
+  // KB-55: centre-entered but uncited, or cited only to a city page, is not shown as a fee.
+  assert.equal(listingFeeNotes({ live: true, preschoolMonthly: 1025, feeConfidence: "centre" }).priceList, false);
+  assert.equal(listingFeeNotes({ live: true, preschoolMonthly: 1025, feeConfidence: "centre", factSource: "https://www.toronto.ca/child-care-fees" }).priceList, false);
+  assert.equal(copy.en.feeAskCentre, "Ask the centre");
+  assert.equal(copy.fr.feeAskCentre, "Renseignez-vous auprès du centre");
+
   assert.equal(copy.en.feeProvincialEstimate, "Provincial estimate");
   assert.equal(copy.fr.feeProvincialEstimate, "Estimation provinciale");
   assert.equal(copy.en.feeConfirmedByCentre, "Confirmed by centre");

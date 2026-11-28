@@ -83,6 +83,8 @@ test("public fee visibility does not disclose unknown amounts or inferred monthl
   assert.equal(parentListingMonthlyFee({ fromPrice: 900, live: true, feeConfirmed: false }), null);
   assert.equal(parentListingMonthlyFee({ fromPrice: 900, feeConfidence: "estimate" }), null);
   assert.equal(parentListingMonthlyFee({ fromPrice: 900, feeConfidence: "centre", factSource: "Centre fee sheet" }), 900);
+  assert.equal(parentListingMonthlyFee({ fromPrice: 900, feeConfirmed: true, feeConfidence: "centre" }), null);
+  assert.equal(parentListingMonthlyFee({ fromPrice: 900, feeConfirmed: true, feeConfidence: "centre", factSource: "https://www.toronto.ca/fees" }), null);
   assert.equal(parentListingMonthlyFee({ fromPrice: 0, feeConfirmed: true }), null);
   assert.equal(parentListingMonthlyFee({ fromPrice: undefined, feeConfirmed: true }), null);
   assert.equal(parentListingMonthlyFee({ fromPrice: 218, feeConfirmed: true }), null);

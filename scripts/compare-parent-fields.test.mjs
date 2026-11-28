@@ -15,7 +15,7 @@ test("compare stays open for two or three centres while subscriptions are off", 
   assert.equal(parent, 10);
 });
 
-test("fee after the program uses a confirmed fee or a published daily amount", () => {
+test("fee after the program shows only a listing-level cited fee; a published daily amount is a program, not a fee", () => {
   const confirmed = compareFeeAfterSubsidy(
     {
       preschoolMonthly: 1200,
@@ -46,6 +46,11 @@ test("fee after the program uses a confirmed fee or a published daily amount", (
   );
   assert.match(programOnly, /\$10 a day/);
   assert.doesNotMatch(programOnly, /900/);
+
+  // KB-55: a "confirmed" flag without a fee citation, or a provincial page as the citation, is not a fee.
+  const uncited = { preschoolMonthly: 1200, feeConfirmed: true, feeConfidence: "centre", province: "ON" };
+  assert.equal(compareFeeAfterSubsidy(uncited, "en"), "Ask the centre");
+  assert.equal(compareFeeAfterSubsidy({ ...uncited, factSource: "https://www.ontario.ca/page/child-care-fees" }, "fr"), "Renseignez-vous auprès du centre");
 
   const unknown = compareFeeAfterSubsidy({ province: "ON", preschoolMonthly: 218 }, "fr");
   assert.equal(unknown, "Renseignez-vous auprès du centre");
