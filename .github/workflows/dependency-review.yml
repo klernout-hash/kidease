@@ -1,0 +1,30 @@
+name: Dependency review
+
+# Flags new npm / GitHub Actions dependencies with known vulnerabilities in a PR.
+# Uses the free GitHub dependency graph (public repo). No secrets, no settings.
+# Not a required check until Kyle adds it to the branch rules.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
+        with:
+          fail-on-severity: high
+          fail-on-scopes: runtime, development
+          vulnerability-check: true
+          license-check: false
+          comment-summary-in-pr: never
+          # Waivers: list GHSA ids here, one per line, each with a reason and date in the PR that adds it.
+          allow-ghsas: ""
