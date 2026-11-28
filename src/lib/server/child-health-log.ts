@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { SHARED_IMMUNIZATION_RECORDS_SQL } from "@/lib/immunization-share";
 import { openHealth } from "@/lib/child-health-crypto";
 import { canReadChildHealth, healthLogFields } from "@/lib/child-health-access";
 
@@ -66,6 +67,16 @@ export const listChildHealthLog = createServerFn({ method: "POST" })
       order by ch.name
       limit 40
     `.catch(() => [] as Row[]);
+    const linked = rows.length
+      ? await (async () => {
+          const { daycareIdsForArea } = await import("@/lib/server/centre-access");
+          const centres = await daycareIdsForArea(sql, context.userId, "documents", "view");
+          return sql.query<{ child_id: string }>(SHARED_IMMUNIZATION_RECORDS_SQL, [
+            rows.map((row) => row.id), context.userId, centres,
+          ]);
+        })().catch(() => [])
+      : [];
+    const onFile = new Set(linked.map((row) => row.child_id));
     return {
       rows: rows.flatMap((row) => {
         const own = row.owner_id === context.userId;
@@ -82,7 +93,7 @@ export const listChildHealthLog = createServerFn({ method: "POST" })
           allergies: openHealth(row.allergies),
           medications: openHealth(row.medications),
         });
-        return [{ id: row.id, name: row.name, ...fields }];
+        return [{ id: row.id, name: row.name, immunizationOnFile: onFile.has(row.id), ...fields }];
       }),
     };
   });

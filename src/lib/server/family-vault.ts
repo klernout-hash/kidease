@@ -1,3 +1,4 @@
+import { SHARE_IMMUNIZATION_SQL } from "@/lib/immunization-share";
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { getSql, type Sql } from "@/lib/db";
 import {
@@ -36,6 +37,7 @@ export type CentreSharedDoc = {
   daycareId: string;
   daycareName: string;
   parentName: string;
+  childName?: string;
 };
 
 function iso(value: string | Date | null | undefined): string | null {
@@ -59,9 +61,16 @@ async function chosenCentreIds(sql: Sql, userId: string): Promise<string[]> {
   return [...new Set(rows.map((row) => row.daycare_id).filter(Boolean))];
 }
 
-export async function listParentVault(userId: string): Promise<{ documents: VaultDocument[]; centres: VaultCentre[] }> {
+export async function listParentVault(userId: string): Promise<{
+  documents: VaultDocument[];
+  centres: VaultCentre[];
+  children: Array<{ id: string; name: string }>;
+}> {
   const sql = await getSql();
-  const centreIds = await chosenCentreIds(sql, userId);
+  const [centreIds, children] = await Promise.all([
+    chosenCentreIds(sql, userId),
+    sql<{ id: string; name: string }>`select id, name from children where user_id = ${userId} order by name, id`,
+  ]);
   const centres = centreIds.length
     ? await sql
         .query<{ id: string; name: string }>(
@@ -101,6 +110,7 @@ export async function listParentVault(userId: string): Promise<{ documents: Vaul
         .catch(() => [])
     : [];
   return {
+    children,
     centres: centres.map((centre) => ({ id: centre.id, name: centre.name })),
     documents: docs.flatMap((doc) => {
       if (!isFamilyDocKind(doc.kind)) return [];
@@ -172,6 +182,7 @@ export async function shareFamilyDocument(input: {
   userId: string;
   documentId: string;
   daycareId: string;
+  childId?: string;
 }): Promise<{ shareId: string }> {
   const sql = await getSql();
   const docs = await sql<{ id: string }>`
@@ -181,6 +192,13 @@ export async function shareFamilyDocument(input: {
   const chosen = await chosenCentreIds(sql, input.userId);
   if (!canShareWithCentre(input.daycareId, chosen)) {
     throw Object.assign(new Error("centre_not_chosen"), { status: 400 });
+  }
+  if (input.childId) {
+    const rows = await sql.query<{ id: string }>(SHARE_IMMUNIZATION_SQL, [
+      input.documentId, input.daycareId, input.userId, input.childId, nid("fs"),
+    ]);
+    if (!rows[0]) throw Object.assign(new Error("child_not_linked"), { status: 400 });
+    return { shareId: rows[0].id };
   }
   const open = await sql<{ id: string }>`
     select id from family_document_shares
@@ -226,7 +244,7 @@ export async function deleteFamilyDocument(input: { userId: string; documentId: 
 
 export async function listCentreFamilyDocs(userId: string): Promise<CentreSharedDoc[]> {
   const sql = await getSql();
-  const { listAccessibleDaycareIds } = await import("@/lib/server/centre-access");
+  const { familyFileAccess, listAccessibleDaycareIds } = await import("@/lib/server/centre-access");
   const centreIds = await listAccessibleDaycareIds(sql, userId);
   if (!centreIds.length) return [];
   const rows = await sql
@@ -239,19 +257,28 @@ export async function listCentreFamilyDocs(userId: string): Promise<CentreShared
       daycare_id: string;
       daycare_name: string;
       parent_name: string | null;
+      child_name: string | null;
     }>(
       `select s.id as share_id, d.id as document_id, d.kind, d.file_name, d.created_at,
-              s.daycare_id, c.name as daycare_name, u.name as parent_name
+              s.daycare_id, c.name as daycare_name, u.name as parent_name, child.name as child_name
        from family_document_shares s
        join family_documents d on d.id = s.document_id
        join daycares c on c.id = s.daycare_id
        left join "user" u on u.id = d.user_id
+       left join immunization_files file on file.id = s.id and file.daycare_id = s.daycare_id
+         and file.owner_user_id = d.user_id and file.kind = 'record' and d.kind = 'immunization'
+       left join children child on child.id = file.child_id and child.user_id = d.user_id
        where s.revoked_at is null and s.daycare_id = any($1::text[])
        order by s.shared_at desc
        limit 40`,
       [centreIds],
     )
     .catch(() => []);
+  const linkedCentreIds = [...new Set(rows.filter((row) => row.child_name).map((row) => row.daycare_id))];
+  const linkedAccess = await Promise.all(linkedCentreIds.map(async (daycareId) =>
+    await familyFileAccess(sql, userId, daycareId) === "allowed" ? daycareId : null,
+  ));
+  const allowed = new Set(linkedAccess);
   return rows.flatMap((row) => {
     if (!isFamilyDocKind(row.kind)) return [];
     return [
@@ -264,6 +291,7 @@ export async function listCentreFamilyDocs(userId: string): Promise<CentreShared
         daycareId: row.daycare_id,
         daycareName: row.daycare_name,
         parentName: (row.parent_name || "").trim() || "Parent",
+        childName: allowed.has(row.daycare_id) ? row.child_name ?? undefined : undefined,
       },
     ];
   });

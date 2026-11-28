@@ -62,6 +62,7 @@ export const Route = createFileRoute("/api/family-documents")({
             action?: string;
             documentId?: string;
             daycareId?: string;
+            childId?: string;
             shareId?: string;
           } | null;
           const action = body?.action || "";
@@ -71,6 +72,7 @@ export const Route = createFileRoute("/api/family-documents")({
               userId,
               documentId: String(body?.documentId || ""),
               daycareId: String(body?.daycareId || ""),
+              childId: typeof body?.childId === "string" ? body.childId.trim().slice(0, 128) : undefined,
             });
             return Response.json({ ok: true, shareId: saved.shareId });
           }
