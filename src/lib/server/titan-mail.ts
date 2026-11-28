@@ -483,6 +483,7 @@ export function parseRfc822(raw: string): { headers: Record<string, string>; bod
   return { headers, body };
 }
 
+/** Returns display text for escaped React text nodes and plain-text mail. */
 export function htmlToText(html: string): string {
   return html
     .replace(/<style[\s\S]*?<\/style>/gi, "")

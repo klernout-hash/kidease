@@ -242,3 +242,13 @@ test("security.txt is RFC 9116-ish and lives at /.well-known/security.txt", () =
   assert.match(security, /^Canonical: https:\/\/www\.kidease\.ca\/\.well-known\/security\.txt$/m);
   assert.match(security, /^Expires: 2027-09-05T00:00:00\.000Z$/m);
 });
+
+test("sitemap renderers preserve XML text and attribute boundaries", async () => {
+  const { renderSitemapXml, renderListingSitemapIndexXml, renderSitemapIndexXml } = await import("../src/lib/sitemap.ts");
+  const lastmod = "Centre A & Centre B";
+  const xml = renderSitemapXml({ paths: ['/daycare/city/centre?name="A"&name=\'B\''], lastmod });
+  assert.match(xml, /href="[^"]+name=&quot;A&quot;&amp;name=&apos;B&apos;"/);
+  for (const rendered of [xml, renderListingSitemapIndexXml(1, lastmod), renderSitemapIndexXml(lastmod)]) {
+    assert.match(rendered, /<lastmod>Centre A &amp; Centre B<\/lastmod>/);
+  }
+});

@@ -156,3 +156,8 @@ test("listing route redirects typo slugs; generators and Neon lookup stay remapp
   assert.match(migration, /cetnre/);
   assert.match(migration, /centre/);
 });
+
+test("slug normalization rewrites only the configured typo tokens", () => {
+  assert.equal(normalizeListingSlug("centre-constructor-cetnre"), "centre-constructor-centre");
+  assert.deepEqual(listingSlugLookupKeys("constructor"), ["constructor"]);
+});
