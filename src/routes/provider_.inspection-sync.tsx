@@ -7,6 +7,7 @@ import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { inspectionSyncEnabled } from "@/lib/wiring/inspection-sync";
 import { useCopy } from "@/lib/use-copy";
 import { ToolError, ToolPending } from "@/components/tool-states";
+import { OwnerOnlyNotice } from "@/components/owner-only-notice";
 
 export const Route = createFileRoute("/provider_/inspection-sync")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/provider_/inspection-sync")({
 
 function Page() {
   const { enabled } = Route.useLoaderData();
-  const { locale, t } = useCopy();
+  const { locale } = useCopy();
   const { session, ready } = useSessionDesks();
   const fr = locale === "fr";
   if (!ready) return <ToolPending />;
@@ -27,9 +28,7 @@ function Page() {
     return (
       <Shell>
         <main className="mx-auto max-w-3xl px-4 py-6">
-          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="staff-owner-only">
-            {t("employeeStaffForbidden")}
-          </p>
+          <OwnerOnlyNotice />
         </main>
       </Shell>
     );

@@ -152,6 +152,7 @@ const SpotOfferDesk = lazy(() =>
 );
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { loadProviderDeskBatch } from "@/lib/provider-desk-read";
+import { OwnerOnlyNotice } from "@/components/owner-only-notice";
 
 // Desk editors and reports load when their selected desk renders. Today keeps
 // its existing content while the navigation stays mounted during other loads.
@@ -672,7 +673,7 @@ export function ProviderPage() {
       ) : null}
       {/* B05: staff logins do not see owner numbers. The server refuses them too. */}
       {staffDesk && (desk === "insights" || desk === "top-rated" || desk === "employees") ? (
-        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="staff-owner-only">{t("employeeStaffForbidden")}</p>
+        <OwnerOnlyNotice />
       ) : null}
       {desk === "insights" && !staffDesk ? <ProviderInsightsDesk /> : null}
       {desk === "top-rated" && !staffDesk ? <TopRatedDesk on={topRated} /> : null}
@@ -1386,13 +1387,11 @@ export function ProviderPage() {
         ) : !sessionReady ? (
           <div role="status" aria-label={t("loading")}><DeskSkeleton /></div>
         ) : (
-          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="staff-owner-only">
-            {t("employeeStaffForbidden")}
-          </p>
+          <OwnerOnlyNotice />
         )
       ) : null}
 
-      {desk === "licence" && !centreOwner ? <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} /> : null}
+      {desk === "licence" && !centreOwner ? <OwnerAccessNotice pending={ownerPending} unknown={ownerUnknown} /> : null}
 
       {desk === "licence" && centreOwner ? (
         !deskSettled ? null : deskListings.length === 0 ? (
@@ -1453,7 +1452,7 @@ export function ProviderPage() {
             {centreOwner ? <TaxReceiptStudio desk="centre" /> : null}
           </div>
         ) : (
-          <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} />
+          <OwnerAccessNotice pending={ownerPending} unknown={ownerUnknown} />
         )
       ) : null}
 
@@ -1464,7 +1463,7 @@ export function ProviderPage() {
             <CentreAgreementEditor />
           </>
         ) : (
-          <OwnerOnlyNotice pending={ownerPending} unknown={ownerUnknown} />
+          <OwnerAccessNotice pending={ownerPending} unknown={ownerUnknown} />
         )
       ) : null}
 
@@ -1482,8 +1481,8 @@ export function ProviderPage() {
  * the role lookup failed, offer a reload instead of telling an owner the tab
  * is not for them.
  */
-function OwnerOnlyNotice({ pending, unknown }: { pending: boolean; unknown: boolean }) {
-  const { t, locale } = useCopy();
+function OwnerAccessNotice({ pending, unknown }: { pending: boolean; unknown: boolean }) {
+  const { locale } = useCopy();
   const fr = locale === "fr";
   if (pending) {
     return (
@@ -1506,7 +1505,7 @@ function OwnerOnlyNotice({ pending, unknown }: { pending: boolean; unknown: bool
       </div>
     );
   }
-  return <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>;
+  return <OwnerOnlyNotice />;
 }
 
 function ProviderOnboarding() {

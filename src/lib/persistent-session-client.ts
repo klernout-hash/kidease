@@ -239,15 +239,18 @@ export async function bootPersistentSession(): Promise<void> {
 export async function endPersistentSession(): Promise<void> {
   const marked = typeof document !== "undefined" && /(?:^|; )kidease-persistent=1(?:;|$)/.test(document.cookie);
   if (!isNative() && !marked) return;
+  // N-34: drop the Keychain / Keystore tokens first. Sign out only waits a
+  // moment for this step, and a slow or blocked server call used to leave the
+  // refresh token behind, so the next launch signed the person back in.
+  await secureRemove(REFRESH_KEY);
+  await secureRemove(STEP_KEY);
+  if (typeof document !== "undefined") {
+    document.cookie = "kidease-persistent=; Path=/; Max-Age=0; SameSite=Lax";
+  }
   try {
     const { revokePersistentDevice } = await import("@/lib/server/persistent-session");
     await revokePersistentDevice({ data: { current: true } });
   } catch {
     /* the session may already be gone */
-  }
-  await secureRemove(REFRESH_KEY);
-  await secureRemove(STEP_KEY);
-  if (typeof document !== "undefined") {
-    document.cookie = "kidease-persistent=; Path=/; Max-Age=0; SameSite=Lax";
   }
 }

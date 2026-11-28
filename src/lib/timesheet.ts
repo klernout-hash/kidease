@@ -15,6 +15,22 @@ export type TimeEntry = {
   clockOut: string | null;
 };
 
+/**
+ * N-02: who sees the whole team's hours, downloads the CSV and edits any
+ * shift. The centre owner (and a manager, who runs the team, and KidEase
+ * admin). Staff, leads and read-only logins only see and fix the shifts
+ * they recorded themselves.
+ */
+export function timesheetTeamAccess(role: string | null | undefined, admin = false): boolean {
+  if (admin) return true;
+  return role === "owner" || role === "manager";
+}
+
+export function canEditTimesheetEntry(input: { team: boolean; createdBy: string | null | undefined; userId: string }): boolean {
+  if (input.team) return true;
+  return Boolean(input.userId) && input.createdBy === input.userId;
+}
+
 export type AuditChange = {
   field: "staff_name" | "clock_in" | "clock_out";
   before: string;

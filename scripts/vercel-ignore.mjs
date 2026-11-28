@@ -2,7 +2,7 @@
  * Vercel Ignored Build Step for kidease-git.
  * Exit 0 skips the deployment. Exit 1 builds it.
  *
- * The project skips every cursor/* preview. These branches need a public
+ * The project skips every cursor/*, claude/* and codex/* preview. These branches need a public
  * preview: the parent sign-up form, the PostHog Allow opt-in fix, the
  * Stripe test-invoice preview, and the home LCP measurement. Other cursor
  * branches stay skipped.
@@ -36,7 +36,7 @@ export function isWebsiteChange(path) {
 export function shouldIgnoreVercelBuild(ref, opts = {}) {
   const name = String(ref || "");
   if (PREVIEW_BRANCHES.has(name)) return false;
-  if (name.startsWith("cursor/")) return true;
+  if (name.startsWith("cursor/") || name.startsWith("claude/") || name.startsWith("codex/")) return true;
   const files = opts.changedFiles;
   if (Array.isArray(files) && files.length > 0 && files.every((file) => !isWebsiteChange(file))) return true;
   // A preview redeploy of the same commit is a second build of a tree we already shipped.

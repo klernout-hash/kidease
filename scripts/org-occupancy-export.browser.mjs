@@ -90,6 +90,8 @@ const virtual = {
     }
     export function setOrgCentre(){window.__orgCsvFixture.centreChanges++;throw new Error('Not part of downloading the report');}
   `,
+  "@/components/owner-only-notice":
+    "import{createElement}from'react';export function OwnerOnlyNotice(){return createElement('p',{'data-ke':'staff-owner-only'},'owner only');}",
   "@tanstack/react-router":
     "import{createElement}from'react';export function Link({to,search,children,...props}){return createElement('a',{...props,href:to},children);}",
 };

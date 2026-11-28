@@ -1727,7 +1727,8 @@ async function signOutFromMenu(page) {
   const button = page.locator("#ke-nav-drawer").getByRole("button", { name: /^sign out$/i });
   await button.waitFor({ state: "visible", timeout: timeoutMs });
   await button.click();
-  await page.waitForURL((url) => url.pathname === "/" || url.pathname === "", { timeout: timeoutMs });
+  // N-37: sign-out lands on the sign-in page (/login or /fr/login), never Guest Explore.
+  await page.waitForURL((url) => /^\/(fr\/)?login\/?$/.test(url.pathname), { timeout: timeoutMs });
 }
 
 async function openProfileAbout(page) {

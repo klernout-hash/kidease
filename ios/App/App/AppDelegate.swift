@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import Security
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,8 +8,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        Self.purgeSessionKeychainAfterReinstall()
         return true
+    }
+
+    /// N-34: iOS keeps Keychain items after the app is deleted, but deletes
+    /// UserDefaults. On the first launch after a fresh install there is no
+    /// marker yet, so drop any phone-session tokens a previous install left
+    /// behind. Uninstall and reinstall then always starts signed out.
+    static let installMarkerKey = "ke.sessionInstallMarker"
+    static let sessionKeychainService = "ca.kidease.app.session"
+
+    static func purgeSessionKeychainAfterReinstall(defaults: UserDefaults = .standard) {
+        if defaults.bool(forKey: installMarkerKey) { return }
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: sessionKeychainService,
+        ]
+        SecItemDelete(query as CFDictionary)
+        defaults.set(true, forKey: installMarkerKey)
     }
 
     func applicationWillResignActive(_ application: UIApplication) {

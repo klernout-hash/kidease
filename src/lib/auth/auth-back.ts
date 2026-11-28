@@ -1,5 +1,6 @@
 import { privateArea } from "../role-access.ts";
 import { isSafeInternalPath } from "../safe-internal-path.ts";
+import { previousScreenHref, readHistoryIndex } from "../screen-history.ts";
 
 /**
  * Back from sign-in / sign-up must never return to the protected `next`
@@ -76,4 +77,29 @@ export function currentAuthBackFallback(next?: string | null, locale?: "en" | "f
     referrer: document.referrer,
     origin: window.location.origin,
   });
+}
+
+export type AuthPageBack = { via: "history" } | { via: "replace"; href: string };
+
+/**
+ * N-78: Back (the on-screen control and Android hardware Back) from sign-in.
+ * Popping history is only safe when the screen before was a public page
+ * this tab saw. Otherwise the entry behind sign-in may be the protected tab
+ * that sent the guest here, and Back would bounce straight back to sign-in
+ * (the guest trap). In that case replace with a public page instead.
+ */
+export function authPageBackPlan(input: {
+  canGoBack: boolean;
+  previousHref: string | null | undefined;
+  fallback: string;
+}): AuthPageBack {
+  if (input.canGoBack && isPublicBackTarget(input.previousHref)) return { via: "history" };
+  return { via: "replace", href: input.fallback };
+}
+
+/** Browser-side plan using the live router history and screen stack. */
+export function currentAuthPageBack(canGoBack: boolean, next?: string | null, locale?: "en" | "fr"): AuthPageBack {
+  const previousHref =
+    typeof window === "undefined" ? null : previousScreenHref(readHistoryIndex(window.history.state));
+  return authPageBackPlan({ canGoBack, previousHref, fallback: currentAuthBackFallback(next, locale) });
 }
