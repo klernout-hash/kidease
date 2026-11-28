@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { authClient, dropExistingSession, signOut, turnstileFetchOptions } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
@@ -36,6 +36,15 @@ async function openGovWebsite(url: string): Promise<void> {
  * "Open kidease.ca" button, and a Sign out that works on the first tap.
  */
 export function GovNativeNote({ locale }: { locale: GovLocale }) {
+  // N-27: a signed-in parent, staff, owner or admin gets the neutral page.
+  const unavailable = useRouterState({
+    select: (s) => s.matches.some((m) => (m.context as { govUnavailable?: boolean } | undefined)?.govUnavailable === true),
+  });
+  if (unavailable) return <AccountUnavailableNote locale={locale} />;
+  return <GovAppNote locale={locale} />;
+}
+
+function GovAppNote({ locale }: { locale: GovLocale }) {
   const copy = govCopy(locale);
   const links = govNativeNoteLinks(locale);
   const { user, isPending } = useCurrentUserState();
@@ -253,5 +262,34 @@ export function GovLogin({ locale, invite, expired = false }: { locale: GovLocal
         </form>
       </main>
     </div>
+  );
+}
+
+/**
+ * N-27: neutral page for signed-in accounts that are not government.
+ * Says nothing about the desk, loads no desk data, and never redirects.
+ */
+export function AccountUnavailableNote({ locale }: { locale: GovLocale }) {
+  const copy = govCopy(locale);
+  const home = locale === "fr" ? "/fr" : "/";
+  return (
+    <main
+      className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pt-[max(4rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]"
+      data-ke="account-unavailable"
+    >
+      <p className="text-sm font-semibold text-primary">KidEase</p>
+      <h1 className="mt-2 font-display text-[clamp(1.75rem,6vw,2.25rem)] leading-tight">{copy.unavailableTitle}</h1>
+      <p className="mt-3 text-base">{copy.unavailableBody}</p>
+      <Button size="lg" className="mt-8 w-full touch-manipulation" asChild>
+        <a href={home} data-ke="account-unavailable-home">
+          {copy.unavailableHome}
+        </a>
+      </Button>
+      <p className="mt-6 text-sm">
+        <a href={locale === "fr" ? "/fr/contact" : "/contact"} className="inline-flex min-h-11 items-center font-medium text-primary underline underline-offset-4">
+          {copy.unavailableHelp}
+        </a>
+      </p>
+    </main>
   );
 }

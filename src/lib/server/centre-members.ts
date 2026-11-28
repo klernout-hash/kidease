@@ -810,43 +810,61 @@ export const acceptCentreInvite = createServerFn({ method: "POST" })
     if (!decision.ok) throw new Error(decision.error);
     if (!actor.emailVerified) throw new Error(CENTRE_INVITE_EMAIL_UNVERIFIED);
 
+    // Take the invite in one conditional statement that rechecks the token,
+    // pending status, expiry, and this user's verified matching mailbox.
+    // Membership is granted only from the row this statement returns, so a
+    // double or concurrent accept, a revoke, or an expiry grants nothing.
+    const taken = await sql<{ id: string; daycare_id: string; role: string; name: string | null }>`
+      update centre_invites
+      set status = 'accepted', accepted_at = now(), accepted_user_id = ${context.userId}
+      where id = ${invite.id}
+        and token_hash = ${hash}
+        and status = 'pending'
+        and expires_at > now()
+        and exists (
+          select 1 from "user" u
+          where u.id = ${context.userId}
+            and u."emailVerified" = true
+            and lower(u.email) = lower(centre_invites.email)
+        )
+      returning id, daycare_id, role, name
+    `.catch(() => []);
+    const source = taken[0];
+    if (!source) throw new Error(CENTRE_INVITE_NOT_FOUND);
+    const accepted = { id: source.id, daycare_id: source.daycare_id, role: source.role, name: source.name };
+
     const existing = await sql<{ id: string }>`
       select id from centre_members
-      where daycare_id = ${invite.daycare_id} and user_id = ${context.userId}
+      where daycare_id = ${accepted.daycare_id} and user_id = ${context.userId}
       limit 1
     `.catch(() => []);
     if (existing[0]) {
       await sql`
         update centre_members
-        set role = ${invite.role}, status = 'active', revoked_at = null, revoked_by = null,
+        set role = ${accepted.role}, status = 'active', revoked_at = null, revoked_by = null,
             invited_by = coalesce(invited_by, ${context.userId})
         where id = ${existing[0].id}
       `;
     } else {
       await sql`
         insert into centre_members (id, daycare_id, user_id, role, status, invited_by)
-        values (${nid("cm")}, ${invite.daycare_id}, ${context.userId}, ${invite.role}, 'active', ${context.userId})
+        values (${nid("cm")}, ${accepted.daycare_id}, ${context.userId}, ${accepted.role}, 'active', ${context.userId})
       `;
     }
-    await rememberPreset(sql, invite.daycare_id, context.userId, await invitePreset(sql, invite.id, invite.role));
-    await sql`
-      update centre_invites
-      set status = 'accepted', accepted_at = now(), accepted_user_id = ${context.userId}
-      where id = ${invite.id}
-    `;
+    await rememberPreset(sql, accepted.daycare_id, context.userId, await invitePreset(sql, accepted.id, accepted.role));
     await logSecurityEvent({
       kind: "employee_accept",
       actorUserId: context.userId,
-      daycareId: invite.daycare_id,
-      detail: `accepted ${invite.role}`,
+      daycareId: accepted.daycare_id,
+      detail: `accepted ${accepted.role}`,
     });
-    if (invite.name) {
+    if (accepted.name) {
       await sql`
-        update "user" set name = ${invite.name}
+        update "user" set name = ${accepted.name}
         where id = ${context.userId} and (name is null or btrim(name) = '')
       `.catch(() => undefined);
     }
-    return { ok: true as const, daycareId: invite.daycare_id };
+    return { ok: true as const, daycareId: accepted.daycare_id };
   });
 
 export const updateCentreStaffPermissions = createServerFn({ method: "POST" })

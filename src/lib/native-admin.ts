@@ -136,6 +136,15 @@ export function isCloudflareAccessHost(host: string | null | undefined): boolean
   return value === "cloudflareaccess.com" || value.endsWith(".cloudflareaccess.com");
 }
 
+/**
+ * N-27: an /admin* path inside the app. Only the admin account gets the
+ * "Admin is on the website" note. Everyone else (guest, parent, staff,
+ * owner, government) gets the plain 404, so the app never hints at /admin.
+ */
+export function nativeAccessPathOutcome(role: string | null | undefined): "note" | "not-found" {
+  return role === "admin" ? "note" : "not-found";
+}
+
 /** Where an explicit Admin tap goes inside the shell. Same host, not Safari. */
 export function nativeAdminNoteHref(): string {
   return NATIVE_ADMIN_NOTE_PATH;

@@ -142,6 +142,8 @@ export const getEmailCodePreference = createServerFn({ method: "GET" })
       providerPrompt: provider.prompt,
       providerLocked: provider.redact,
       graceEndsAt: provider.graceEndsAt,
+      // N-25: one deadline day, computed here, shown as is on every device.
+      graceEndsDay: provider.graceEndsDay,
     };
   });
 
