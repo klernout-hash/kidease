@@ -10,7 +10,8 @@ const src = (rel) => readFileSync(join(root, rel), "utf8");
 
 test("bell screen renders feed only, links to menu settings", () => {
   const inbox = src("src/components/notifications-inbox.tsx");
-  assert.match(inbox, /<UnifiedAlertPanel mode="feed" \/>/);
+  assert.doesNotMatch(inbox, /<UnifiedAlertPanel/);
+  assert.match(inbox, /items\.map\(/);
   assert.doesNotMatch(inbox, /<LifecyclePrefs/);
   assert.match(inbox, /screen: "notifications"/);
   assert.match(inbox, /data-ke="bell-settings-link"/);

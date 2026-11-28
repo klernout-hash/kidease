@@ -208,7 +208,7 @@ const FRENCH_DESK_NESTED = new Set<string>(["/parent", "/inbox"]);
 /** Parent, inbox, account, menu, provider, and support have French URLs. */
 export function isFrenchDeskPath(pathname: string | null | undefined): boolean {
   const bare = stripLocalePrefix(pathname);
-  if (bare === "/provider/leads") return true;
+  if (["/provider/leads", "/provider/subsidy", "/provider/inspection-sync"].includes(bare)) return true;
   if ((FRENCH_DESK_PREFIXES as readonly string[]).includes(bare)) return true;
   for (const prefix of FRENCH_DESK_NESTED) {
     if (bare.startsWith(`${prefix}/`)) return true;

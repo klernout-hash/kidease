@@ -40,7 +40,7 @@ import { TourCard } from "@/components/tour-card";
 import { nextInboxAction } from "@/lib/engagement";
 import { money } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
-import { MIN_POLL_MS, pollBackoffMs } from "@/lib/fn-query";
+import { MIN_POLL_MS, pollBackoffMs, retryReadOnce } from "@/lib/fn-query";
 import type { BookingStatus, Child, Message, Schedule, TourRequest } from "@/lib/types";
 
 export const Route = createFileRoute("/inbox/$id")({
@@ -131,7 +131,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
       setLoadState("missing");
       return;
     }
-    const res = await getThread({ data: id });
+    const res = await retryReadOnce(() => getThread({ data: id }));
     if (!res) {
       setLoadState("missing");
       return;
@@ -442,7 +442,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             </div>
           ) : null}
           {loadState === "error" ? (
-            <div className="rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
+            <div className="rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" role="alert" data-ke="inbox-thread-load-error">
               <p className="text-sm text-muted">{t("threadLoadFailed")}</p>
               <Button className="mt-4" type="button" onClick={() => void load().catch(() => setLoadState("error"))}>
                 {t("threadTryAgain")}
@@ -460,7 +460,6 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
               parentName={booking?.parentName || user.displayName || t("inboxRoleParent")}
               centreName={name}
               reads={details?.reads ?? []}
-              phoneAlerts={details?.phoneAlerts || []}
               peers={details?.participants || []}
               timeZone={timeZone || undefined}
               conversationId={id}

@@ -204,7 +204,7 @@ test("conversation details projects expiry without schema writes or invented mes
     });
     assert.equal(details.tourStatus, deadline === FUTURE ? "pending" : "expired");
     assert.deepEqual(details.reads, []);
-    assert.deepEqual(details.phoneAlerts, []);
+    assert.equal("phoneAlerts" in details, false);
     run.assertReadOnly();
   }
 });

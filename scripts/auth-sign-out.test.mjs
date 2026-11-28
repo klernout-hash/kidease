@@ -7,6 +7,7 @@ import {
 } from "../src/lib/account-scoped-storage.ts";
 import { signedOutLoginPath, signOutTarget } from "../src/lib/sign-out-target.ts";
 import { RESUME_PATH_KEY } from "../src/lib/retention.ts";
+import { ORIGIN_STORAGE_KEY } from "../src/lib/geo.ts";
 import { SEARCH_MEMORY_KEY } from "../src/lib/search-memory.ts";
 import { THEME_STORAGE_KEY } from "../src/lib/theme.ts";
 
@@ -62,6 +63,7 @@ test("N-67: sign-out clears account-scoped history but keeps device settings", (
     [RESUME_PATH_KEY]: "/daycare/synthetic",
     "kidease-recent-searches": "[]",
     [SEARCH_MEMORY_KEY]: "{}",
+    [ORIGIN_STORAGE_KEY]: "{}",
     [THEME_STORAGE_KEY]: "light",
     "kidease-text-scale": "large",
   });
@@ -73,6 +75,7 @@ test("N-67: sign-out clears account-scoped history but keeps device settings", (
   // The listed keys are the ones the app actually writes.
   assert.ok(ACCOUNT_SCOPED_LOCAL_KEYS.includes(RESUME_PATH_KEY));
   assert.ok(ACCOUNT_SCOPED_LOCAL_KEYS.includes(SEARCH_MEMORY_KEY));
+  assert.ok(ACCOUNT_SCOPED_LOCAL_KEYS.includes(ORIGIN_STORAGE_KEY));
   assert.match(src("src/lib/recent.ts"), /const KEY = "kidease-recent";/);
   assert.match(src("src/lib/recent-searches.ts"), /const STORAGE_KEY = "kidease-recent-searches";/);
   // Wired into the one place every sign-out and account switch passes through.

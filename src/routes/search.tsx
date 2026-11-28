@@ -658,11 +658,9 @@ export function SearchScreen({
         memoryLoaded.current = true;
         return;
       }
-      let memory = readSearchMemory(window.localStorage.getItem(SEARCH_MEMORY_KEY));
-      if (user?.id) {
-        const remote = await loadSearchMemory().catch(() => null);
-        if (remote && remote.enabled && remote.memory) memory = remote.memory;
-      }
+      const memory = user?.id
+        ? (await loadSearchMemory().catch(() => null))?.memory
+        : readSearchMemory(window.localStorage.getItem(SEARCH_MEMORY_KEY));
       if (!live) return;
       memoryLoaded.current = true;
       if (!memory) return;
@@ -677,7 +675,7 @@ export function SearchScreen({
   }, [userPending, user?.id, incoming, setAgeGroup, setOrigin, setQuery]);
 
   useEffect(() => {
-    if (!memoryLoaded.current) return;
+    if (!memoryLoaded.current || userPending) return;
     const memory = parseSearchMemory({
       label: origin.label,
       lat: origin.lat,
@@ -686,9 +684,9 @@ export function SearchScreen({
       budgetMonthly: Number(budgetMonthly) || null,
     });
     if (!memory) return;
-    window.localStorage.setItem(SEARCH_MEMORY_KEY, JSON.stringify(memory));
     if (user?.id) void saveSearchMemory({ data: memory }).catch(() => undefined);
-  }, [origin.label, origin.lat, origin.lng, ageGroup, budgetMonthly, user?.id]);
+    else window.localStorage.setItem(SEARCH_MEMORY_KEY, JSON.stringify(memory));
+  }, [origin.label, origin.lat, origin.lng, ageGroup, budgetMonthly, user?.id, userPending]);
 
   useEffect(() => {
     if (readLiveSearchFlag(incoming.live)) setClaimVerifiedOnly(true);

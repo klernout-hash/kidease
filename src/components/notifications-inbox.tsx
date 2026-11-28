@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import { Bell, Settings } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { notificationSettingsCopy } from "@/lib/notification-settings-copy";
@@ -8,30 +8,63 @@ import { DeskSkeleton } from "@/components/page-skeleton";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { notificationHrefForShell } from "@/lib/native-admin";
-import { fillNotificationCopy, isCriticalNotification, notificationCopyKey, type NotificationItem } from "@/lib/notifications";
+import { fillNotificationCopy, isCriticalNotification, notificationCopyKey } from "@/lib/notifications";
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { listMyNotifications, markNotificationRead } from "@/lib/server/notifications";
-import { UnifiedAlertPanel } from "@/components/unified-alert-panel";
-import { markUnifiedAlertRead } from "@/lib/server/unified-alert-api";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
 import { refreshSessionDesks } from "@/components/session-desks";
-import { groupNotifications, markItemsRead, notificationTimeLabel } from "@/lib/notification-groups";
+import { notificationTimeLabel } from "@/lib/notification-groups";
+import { alertTextForReader } from "@/lib/unified-alerts";
+
+type Items = Awaited<ReturnType<typeof listMyNotifications>>;
 
 export function NotificationsInbox() {
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
   const hideAdmin = useNativeHidesAdmin();
-  const [items, setItems] = useState<NotificationItem[] | null>(null);
+  const [feed, setFeed] = useState<{ userId: string; items: Items | "error" } | null>(null);
+  const [attempt, retry] = useState(0);
   const [marking, setMarking] = useState(false);
+  const userId = user?.id;
+  const items = feed?.userId === userId ? feed?.items : null;
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!userId) return;
+    let cancelled = false;
     void listMyNotifications()
-      .then(setItems)
-      .catch(() => setItems([]));
-  }, [user?.id]);
+      .then((next) => {
+        if (!cancelled) setFeed({ userId, items: next });
+      })
+      .catch(() => {
+        if (!cancelled) setFeed({ userId, items: "error" });
+      });
+    return () => { cancelled = true; };
+  }, [userId, attempt]);
+
+  async function markAllRead() {
+    if (!userId) return;
+    setMarking(true);
+    try {
+      await markNotificationRead({ data: { all: true } });
+      setFeed({ userId, items: await listMyNotifications() });
+      refreshSessionDesks();
+      confirmAction(t, "markedRead");
+    } finally {
+      setMarking(false);
+    }
+  }
+
+  function openNotification(event: MouseEvent<HTMLAnchorElement>, row: Items[number], href: string) {
+    if (row.readAt || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    void markNotificationRead({ data: { receipts: row.receipts } })
+      .finally(() => {
+        refreshSessionDesks();
+        window.location.assign(href);
+      }).catch(() => undefined);
+  }
 
   if (isPending) {
     return (
@@ -47,26 +80,13 @@ export function NotificationsInbox() {
       <main className="ke-gutter mx-auto w-full max-w-3xl pb-8 pt-5">
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">{t("notifications")}</h1>
-          {items?.some((row) => !row.readAt) ? (
+          {Array.isArray(items) && items.some((row) => !row.readAt) ? (
             <Button
               size="sm"
               variant="secondary"
               disabled={marking}
               data-ke="notifications-mark-all"
-              onClick={() => {
-                setMarking(true);
-                void markNotificationRead({ data: { all: true } })
-                  .then(() => markUnifiedAlertRead({ data: { all: true } }).catch(() => undefined))
-                  .then(() => {
-                    // Dots and the button clear now; the bell badge refetches now.
-                    setItems((cur) => (cur ? markItemsRead(cur, "all") : cur));
-                    refreshSessionDesks();
-                    confirmAction(t, "markedRead");
-                    return listMyNotifications().then(setItems);
-                  })
-                  .catch(() => undefined)
-                  .finally(() => setMarking(false));
-              }}
+              onClick={() => void markAllRead().catch(() => undefined)}
             >
               {t("markAlertsRead")}
             </Button>
@@ -82,12 +102,18 @@ export function NotificationsInbox() {
           <Settings className="size-4" aria-hidden />
           {notificationSettingsCopy(locale).title}
         </Link>
-        <UnifiedAlertPanel mode="feed" />
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
-          {items === null ? (
+          {items == null ? (
             <li className="space-y-3 p-4" aria-hidden="true">
               <div className="ke-skel h-14 w-full rounded-xl" />
               <div className="ke-skel h-14 w-full rounded-xl" />
+            </li>
+          ) : items === "error" ? (
+            <li className="p-4">
+              <p role="alert" className="mb-2 text-sm">{t("searchAlertsLoadFailed")}</p>
+              <Button variant="secondary" onClick={() => { setFeed(null); retry((n) => n + 1); }}>
+                {t("tryAgain")}
+              </Button>
             </li>
           ) : items.length === 0 ? (
             <li className="p-2">
@@ -100,44 +126,40 @@ export function NotificationsInbox() {
               />
             </li>
           ) : (
-            groupNotifications(items).map((group) => {
-              const item = group.lead;
-              const title = fillNotificationCopy(t(notificationCopyKey(item.titleKey)), {
-                name: item.daycareName,
-                kind: item.status,
-              });
+            items.map((row) => {
+              const item = row.data;
+              const text = "titleKey" in item
+                ? {
+                    title: fillNotificationCopy(t(notificationCopyKey(item.titleKey)), {
+                      name: item.daycareName,
+                      kind: item.status,
+                    }),
+                    body: null,
+                    critical: isCriticalNotification(item),
+                  }
+                : { ...alertTextForReader(item.typeId, locale === "fr" ? "fr" : "en", item), critical: item.critical };
+              const href = notificationHrefForShell(item.href, hideAdmin);
               return (
-                <li key={item.id}>
+                <li key={row.key}>
                   <a
-                    href={notificationHrefForShell(item.href, hideAdmin)}
+                    href={href}
                     data-ke="notification-row"
-                    data-count={group.count}
                     className="flex min-h-14 w-full items-start gap-3 px-4 py-3 text-left hover:bg-surface-2"
-                    onClick={() => {
-                      if (!group.unread) return;
-                      setItems((cur) => (cur ? markItemsRead(cur, group.ids) : cur));
-                      void Promise.all(group.ids.map((id) => markNotificationRead({ data: { id } })))
-                        .then(() => refreshSessionDesks())
-                        .catch(() => undefined);
-                    }}
+                    onClick={(event) => openNotification(event, row, href)}
                   >
                     <span
-                      className={`mt-2 size-2 shrink-0 rounded-full ${group.unread ? "bg-danger" : "bg-border"}`}
+                      className={`mt-2 size-2 shrink-0 rounded-full ${row.readAt ? "bg-border" : "bg-danger"}`}
                       aria-hidden
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="flex items-baseline gap-2">
-                        <span className="text-[15px] font-medium text-fg">{title}</span>
-                        {group.count > 1 ? (
-                          <span className="shrink-0 rounded-full bg-surface-2 px-2 text-xs font-medium text-muted" data-ke="notification-count">
-                            ×{group.count}
-                          </span>
-                        ) : null}
-                      </span>
-                      {isCriticalNotification(item) ? (
+                      <span className="block text-[15px] font-medium text-fg">{text.title}</span>
+                      {text.body ? <span className="mt-0.5 block text-sm text-muted">{text.body}</span> : null}
+                      {text.critical ? (
                         <span className="mt-0.5 block text-xs font-medium text-danger">{t("inboxCriticalNotif")}</span>
                       ) : null}
-                      <span className="mt-0.5 block text-xs text-muted">{notificationTimeLabel(item.createdAt, locale)}</span>
+                      <time className="mt-0.5 block text-xs text-muted" dateTime={row.createdAt}>
+                        {notificationTimeLabel(row.createdAt, locale)}
+                      </time>
                     </span>
                   </a>
                 </li>

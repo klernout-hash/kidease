@@ -1805,13 +1805,6 @@ html:not([data-look="clean"]) :is(a, button, [role="button"]).h-11 {
   html[data-runtime="native"]:has([data-ke="role-switch-pill"]) .ke-help-bot {
     bottom: calc(8rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
   }
-  html[data-cookie-banner="open"]:not([data-channel="app"]):not([data-runtime="native"]) .ke-help-bot {
-    bottom: calc(6.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
-  }
-  html[data-cookie-banner="open"][data-channel="app"] .ke-help-bot,
-  html[data-cookie-banner="open"][data-runtime="native"] .ke-help-bot {
-    bottom: calc(10.5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
-  }
   /* The chat bubble is fixed at the bottom-right. Clear it only while that bubble is on the page. */
   @media (max-width: 767px) {
     html:has(.ke-help-bot) [data-ke="recently-viewed"] {
@@ -1853,29 +1846,17 @@ html:not([data-look="clean"]) :is(a, button, [role="button"]).h-11 {
     html:has([data-ke="listing-sticky-bar"]) .ke-help-bot {
       bottom: calc(11rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
     }
-    html[data-cookie-banner="open"]:has([data-ke="listing-sticky-bar"]) .ke-help-bot {
-      bottom: calc(16rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
-    }
     html:has([data-ke="listing-sticky-bar"]) {
       scroll-padding-bottom: calc(8rem + env(safe-area-inset-bottom, 0px));
     }
-    html[data-cookie-banner="open"]:has([data-ke="listing-sticky-bar"]) {
-      scroll-padding-bottom: calc(16rem + env(safe-area-inset-bottom, 0px));
-    }
     html:has([data-ke="listing-sticky-bar"]) .ke-listing-page {
       padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
-    }
-    html[data-cookie-banner="open"]:has([data-ke="listing-sticky-bar"]) .ke-listing-page {
-      padding-bottom: calc(14rem + env(safe-area-inset-bottom, 0px));
     }
     html:has([data-ke="listing-sticky-bar"]) #listing-reviews {
       scroll-margin-bottom: calc(8rem + env(safe-area-inset-bottom, 0px));
     }
     html:has([data-ke="thread-composer"]) .ke-help-bot {
       bottom: calc(7.5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
-    }
-    html[data-cookie-banner="open"]:has(.ke-help-bot) body {
-      padding-bottom: calc(12rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
     }
   }
   html:has([data-ke="thread-header"]) .ke-help-bot {
@@ -2816,6 +2797,16 @@ html[data-channel="app"]:not([data-channel="website"]) [data-ke="search-split"]:
   }
 }
 
+html[data-channel="website"] [data-ke="inbox-split"][data-selected="true"] > .ke-split-list {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  html[data-channel="website"] [data-ke="inbox-split"]:has([data-ke="inbox-thread-load-error"]) > .ke-split-list {
+    display: block;
+  }
+}
+
 /* On a wide website, messages stay one column: the list, or the open thread. */
 @media (min-width: 1280px) {
   html[data-channel="website"] .ke-site-desktop {
@@ -2827,9 +2818,7 @@ html[data-channel="app"]:not([data-channel="website"]) [data-ke="search-split"]:
   html[data-channel="website"] [data-ke="inbox-split"][data-selected="false"] > .ke-split-detail {
     display: none;
   }
-  html[data-channel="website"] [data-ke="inbox-split"][data-selected="true"] > .ke-split-list {
-    display: none;
-  }
+
 }
 .ke-site-desktop {
   display: none;
@@ -2946,64 +2935,6 @@ html {
   scroll-padding-bottom: calc(6rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
 }
 
-/* Cookie bar must not eat Request info clicks outside the consent card. */
-html[data-cookie-banner="open"] body {
-  padding-bottom: 7.5rem;
-}
-/* At wide widths the consent card sits in the corner so it does not cover search chips. */
-@media (min-width: 1280px) {
-  html[data-cookie-banner="open"] [data-ke="cookie-consent"] {
-    left: auto;
-    right: max(1rem, env(safe-area-inset-right));
-    width: min(26rem, calc(100vw - 2rem));
-    padding-inline: 0;
-  }
-  html[data-cookie-banner="open"] .ke-explore-filter-sticky {
-    z-index: 60;
-    scroll-margin-bottom: 10rem;
-    background: color-mix(in oklab, var(--color-bg) 96%, transparent);
-  }
-  html[data-cookie-banner="open"] body {
-    padding-bottom: 10rem;
-  }
-}
-/* A taller consent card stays above the listing actions and under the filter chips. */
-@media (max-width: 767px) {
-  html[data-cookie-banner="open"]:has([data-ke="host-editor"]),
-  html[data-cookie-banner="open"]:has([data-ke="host-editor"]) body,
-  html[data-cookie-banner="open"]:has([data-ke="host-section"]),
-  html[data-cookie-banner="open"]:has([data-ke="host-section"]) body {
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
-    padding-bottom: 0;
-  }
-  html[data-cookie-banner="open"]:has([data-ke="host-editor"]) #main-content,
-  html[data-cookie-banner="open"]:has([data-ke="host-section"]) #main-content {
-    min-height: 0;
-    /* Root type is fluid, so this is taller than the cookie row plus the tab bar. */
-    max-height: calc(100dvh - 11rem - env(safe-area-inset-bottom, 0px));
-    overflow: auto;
-  }
-  html[data-cookie-banner="open"] [data-ke="host-editor"],
-  html[data-cookie-banner="open"] [data-ke="host-section"] {
-    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
-  }
-  html[data-cookie-banner="open"] [data-ke="host-view-fab"] {
-    bottom: calc(9.5rem + env(safe-area-inset-bottom, 0px));
-  }
-  html[data-cookie-banner="open"] [data-ke="listing-sticky-bar"] {
-    bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
-  }
-  html[data-cookie-banner="open"] .ke-explore-filter-sticky {
-    z-index: 60;
-    background: var(--color-bg);
-  }
-  html[data-cookie-banner="open"]:has([data-ke="listing-sticky-bar"]) body {
-    padding-bottom: calc(24rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
-  }
-}
-
 /*
   Footer badges share one height. This sits outside @layer so it beats h-10
   and max-w-full, and the artwork is not cropped or squeezed.
@@ -3078,23 +3009,11 @@ body {
   position: relative;
   z-index: 1;
 }
-html[data-channel="app"] [data-ke="cookie-consent"],
-html[data-runtime="ios"] [data-ke="cookie-consent"],
-html[data-runtime="android"] [data-ke="cookie-consent"],
-html[data-runtime="native"] [data-ke="cookie-consent"],
-html[data-native="1"] [data-ke="cookie-consent"] {
-  bottom: calc(5.25rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
-  z-index: 40;
-}
-/* Listing actions sit above the tab bar. The consent card stays above both. */
-@media (max-width: 767px) {
-  html:has([data-ke="listing-sticky-bar"]) [data-ke="cookie-consent"] {
-    bottom: calc(15rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
-  }
-}
-html[data-native="1"] [data-ke="cookie-consent"][data-compact="native"] .ke-cookie-consent-panel,
-html[data-channel="app"] [data-ke="cookie-consent"][data-compact="native"] .ke-cookie-consent-panel {
-  max-width: 28rem;
+/* N-71: no skip link in the phone apps. display:none also drops it from TalkBack/VoiceOver. */
+html[data-runtime="ios"] [data-ke="skip-link"],
+html[data-runtime="android"] [data-ke="skip-link"],
+html[data-runtime="native"] [data-ke="skip-link"] {
+  display: none !important;
 }
 /* Sign out sits above the cookie sheet and the role pill, under the tab bar. */
 html[data-native="1"] [data-ke="menu-account-actions"],
@@ -3103,9 +3022,6 @@ html[data-runtime="native"] [data-ke="menu-account-actions"] {
   position: relative;
   z-index: 45;
   padding-bottom: 3.25rem;
-}
-html[data-native-prompt="open"] [data-ke="menu-account-actions"] {
-  padding-bottom: 9rem;
 }
 html[data-native="1"] [data-ke="push-explain"],
 html[data-runtime="native"] [data-ke="push-explain"] {
@@ -3177,12 +3093,6 @@ html[data-resolved-theme="dark"] .ke-site-footer {
   html:has([data-ke="listing-more"] [role="menu"]) .ke-help-bot {
     z-index: 15;
   }
-}
-
-/* Consent height changes with French, text size and wrapping. Reuse the
-   launcher's existing measured clearance in every channel while it is open. */
-html[data-cookie-banner="open"]:has(.ke-help-bot) .ke-help-bot {
-  bottom: calc(var(--ke-help-clear, calc(10.5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)))) + var(--ke-keyboard, 0px));
 }
 
 /* Keyboard open: the bottom tab bar steps aside instead of floating over content. */
@@ -3270,7 +3180,10 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
 [data-ke="host-section"] {
   word-spacing: 0.14em;
 }
-@media (min-width: 768px) {
+/* P3-16: two columns from 1024px. Portrait tablets (768-1023) get the phone
+   layout: one column with the sticky action bar, so the side card never
+   squeezes or overlaps the main column. */
+@media (min-width: 1024px) {
   .ke-listing-page {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
@@ -3283,6 +3196,18 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
     position: sticky;
     top: 5rem;
     align-self: start;
+  }
+}
+/* Portrait tablets keep the phone action bar. Reserve room so it never covers content. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  html:has([data-ke="listing-sticky-bar"]) .ke-listing-page {
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+  }
+  html:has([data-ke="listing-sticky-bar"]) {
+    scroll-padding-bottom: calc(8rem + env(safe-area-inset-bottom, 0px));
+  }
+  html:has([data-ke="listing-sticky-bar"]) .ke-help-bot {
+    bottom: calc(6rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
   }
 }
 .ke-photo-frame > span,

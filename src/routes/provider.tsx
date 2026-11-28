@@ -624,7 +624,6 @@ export function ProviderPage() {
   return (
     <TwoFactorGate next={search.desk ? `/provider?desk=${search.desk}` : "/provider"}>
     <LoginFunnelDeskLand desk="provider" />
-    <HealthSecondFactorBanner />
     {search.preview === "support" && operatorTools ? <SupportPreviewBanner /> : null}
     <DeskShell
       desk="daycare"
@@ -649,6 +648,8 @@ export function ProviderPage() {
         void navigate({ to: deskPath, search: { ...search, desk: nextDesk }, replace: true });
       }}
     >
+      {/* P3-5: inline in the content column, never under the rail or system bars. */}
+      <HealthSecondFactorBanner />
       <Suspense fallback={
         <div role="status" aria-live="polite" aria-label={t("loading")}>
           <DeskSkeleton />

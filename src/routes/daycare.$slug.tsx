@@ -478,7 +478,7 @@ export function Listing() {
                 </dd>
               </div>
             </dl>
-            <div className="mt-4 md:hidden">
+            <div className="mt-4 lg:hidden">
               <EarlyListingActions locale={locale} />
             </div>
             <div id="listing-overview" className="mt-6 space-y-6">
@@ -532,7 +532,7 @@ export function Listing() {
               </div>
             </div>
           </div>
-          <aside className="ke-listing-summary ke-panel mx-4 mb-6 hidden h-fit px-4 py-4 shadow-card md:mx-0 md:block" data-ke="listing-action-summary">
+          <aside className="ke-listing-summary ke-panel mx-4 mb-6 hidden h-fit px-4 py-4 shadow-card lg:mx-0 lg:block" data-ke="listing-action-summary">
             <p className="text-sm font-semibold">{locale === "fr" ? "Disponibilité" : "Availability"}</p>
             <p className="text-sm text-muted">{locale === "fr" ? "Non confirmée" : "Not confirmed"}</p>
             <p className="mt-3 text-sm font-semibold">{locale === "fr" ? "Frais et soutien" : "Fees and support"}</p>
@@ -832,8 +832,8 @@ export function Listing() {
 
   return (
     <Shell>
-      <article className={`ke-listing-page ke-listing-read mx-auto min-w-0 max-w-6xl pb-[calc(12rem+env(safe-area-inset-bottom))] md:pb-10`}>
-        <div className="min-w-0 md:col-span-2 md:mb-6 md:px-4 md:pt-4 lg:ke-gutter">
+      <article className={`ke-listing-page ke-listing-read mx-auto min-w-0 max-w-6xl pb-[calc(12rem+env(safe-area-inset-bottom))] lg:pb-10`}>
+        <div className="min-w-0 md:mb-6 md:px-4 md:pt-4 lg:col-span-2 lg:ke-gutter">
           <ListingHeroGallery
             photos={gallery}
             index={photo}
@@ -879,7 +879,7 @@ export function Listing() {
         <header className="mt-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1" data-ke="listing-name">
-              <div className="flex items-start gap-1">
+              <div className="flex flex-wrap items-start gap-x-1">
                 <h1 className="min-w-0 font-display text-[24px] font-semibold leading-[30px] md:text-[30px] md:leading-9">{name}</h1>
                 {verifiedCheck ? <VerifiedCheck className="mt-1 shrink-0" /> : null}
                 {data.documentsVerified ? (
@@ -890,18 +890,19 @@ export function Listing() {
               </div>
 
             </div>
+            {gallery.length ? null : (
+              <ShareListingButton slug={d.slug} name={name} appearance="icon" className="shrink-0" />
+            )}
+          </div>
+          {/* P3-4: below the title row, full width. Inside the row it squeezed the title to one letter per line. */}
           {!isPublicListing(d) ? (
             <p
-              className="mt-2 rounded-xl bg-surface px-3 py-2 text-sm font-medium ring-1 ring-border"
+              className="mt-2 w-full rounded-xl bg-surface px-3 py-2 text-sm font-medium ring-1 ring-border"
               data-ke="hidden-from-public"
             >
               {t("hiddenFromPublic")}
             </p>
           ) : null}
-            {gallery.length ? null : (
-              <ShareListingButton slug={d.slug} name={name} appearance="icon" className="shrink-0" />
-            )}
-          </div>
           <p className="mt-2 text-base text-muted" data-ke="listing-place-type">{facilityLabel} · {publicPlace}</p>
           {d.addressProtected ? (
             <p className="mt-2 max-w-prose text-sm" data-ke="home-address-note">{t("homeAddressNote")}</p>
@@ -943,7 +944,7 @@ export function Listing() {
 
           <ListingBadges item={ranked} compact feeOnly />
           <HiringEceBadge show={Boolean(data.jobs?.length)} />
-          {parentActions ? <p className="mt-4 text-sm text-muted md:hidden" data-ke="listing-next-step-lead">{nextStepLead}</p> : null}
+          {parentActions ? <p className="mt-4 text-sm text-muted lg:hidden" data-ke="listing-next-step-lead">{nextStepLead}</p> : null}
 
 
         </header>
@@ -1382,7 +1383,7 @@ export function Listing() {
           <ListingRail title={t("similar")} items={liveLookingOnly(data.nearby)} seeAllHref={localePath("/search", locale)} className="mt-12 first:mt-12" />
         ) : null}
         </div>
-        <aside className="ke-listing-summary ke-panel mx-4 hidden h-fit space-y-3 rounded-2xl border border-border px-5 py-5 shadow-card md:mx-0 md:mr-4 md:block" style={{ gridRow: 2, top: "calc(var(--ke-header-h, 4rem) + 1rem)" }} aria-labelledby="listing-next-step" data-ke="listing-action-summary">
+        <aside className="ke-listing-summary ke-panel mx-4 hidden h-fit space-y-3 rounded-2xl border border-border px-5 py-5 shadow-card lg:mx-0 lg:mr-4 lg:block" style={{ gridRow: 2, top: "calc(var(--ke-header-h, 4rem) + 1rem)" }} aria-labelledby="listing-next-step" data-ke="listing-action-summary">
           <h2 id="listing-next-step" className="font-display text-xl font-semibold">{locale === "fr" ? "Votre prochaine étape" : "Your next step"}</h2>
           {parentActions ? <p className="text-sm text-muted" data-ke="listing-next-step-lead">{nextStepLead}</p> : null}
           <div className="mt-3 grid gap-1.5">
@@ -1402,7 +1403,7 @@ export function Listing() {
       </article>
 
       {!requestOpen && !tourOpen && !infoOpen && !messageOpen && !galleryOpen ? (
-      <div className={`ke-safe-x fixed inset-x-0 z-20 border-t border-border bg-surface/95 [--ke-pad-x:0.75rem] py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden bottom-[var(--ke-keyboard,0px)] [[data-channel=app]_&]:bottom-[calc(5rem+var(--ke-keyboard,0px))]`} data-ke="listing-sticky-bar">
+      <div className={`ke-safe-x fixed inset-x-0 z-20 border-t border-border bg-surface/95 [--ke-pad-x:0.75rem] py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden bottom-[var(--ke-keyboard,0px)] [[data-channel=app]_&]:bottom-[calc(5rem+var(--ke-keyboard,0px))]`} data-ke="listing-sticky-bar">
         <div className="mx-auto flex max-w-lg items-center gap-2" data-ke={parentActions ? "listing-parent-actions" : undefined}>
           {parentActions ? (
             <>

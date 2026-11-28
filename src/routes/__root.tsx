@@ -385,7 +385,7 @@ function RootDocument() {
         <script src="/look-boot.js?v=1" />
       </head>
       <body className="flex min-h-[100dvh] w-full min-w-0 flex-col overflow-x-clip">
-        <SkipLink enabled={a11yPass} />
+        <SkipLink enabled={a11yPass && !nativeShell} />
         <PreviewHostBridge />
         <AuthProvider>
           <ViewAsProvider>
@@ -404,6 +404,7 @@ function RootDocument() {
           <RouteProgress />
           <ScreenHistoryRecorder />
           <div id="main-content" tabIndex={-1} className="flex w-full min-w-0 flex-1 flex-col outline-none">
+            <CookieConsentBanner />
             <Outlet />
           </div>
           <LiveChatSlot />
@@ -412,7 +413,6 @@ function RootDocument() {
             <IncomingVideoAlert />
           </AfterFirstPaint>
           </ViewAsProvider>
-          <CookieConsentBanner />
           <Suspense fallback={null}>
             <KidEaseToaster />
             <SuccessConfirmHost />

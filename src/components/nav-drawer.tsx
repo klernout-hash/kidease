@@ -1,4 +1,4 @@
-import { Children, useEffect, useRef, type ReactNode } from "react";
+import { Children, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { X } from "lucide-react";
@@ -19,7 +19,7 @@ import { deskQueryForViewer, showDeskSwitcher } from "@/lib/desks";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
-import { nextDrawerLatch, type DrawerLatch } from "@/lib/drawer-latch";
+import { DRAWER_TAP_GUARD_MS, nextDrawerLatch, type DrawerLatch } from "@/lib/drawer-latch";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { useRoleChrome } from "@/components/role-chrome";
 import { SmartMatchEntry } from "@/components/smart-match";
@@ -142,6 +142,15 @@ export function NavDrawer({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
+  // N-30: which open the rows are live for. Rows are inert until the guard ends.
+  const [openCount, setOpenCount] = useState(0);
+  const [liveFor, setLiveFor] = useState(-1);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setOpenCount((n) => n + 1);
+  }
+  const rowsLive = liveFor === openCount;
   const latchRef = useRef<DrawerLatch | null>(null);
   const latched = nextDrawerLatch(open, menusReady, role, paid, latchRef.current);
   latchRef.current = latched;
@@ -194,6 +203,12 @@ export function NavDrawer({
     };
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open) return;
+    const id = window.setTimeout(() => setLiveFor(openCount), DRAWER_TAP_GUARD_MS);
+    return () => window.clearTimeout(id);
+  }, [open, openCount]);
+
   // Never leave a closed `fixed inset-0` portal in the DOM. After CSS loads,
   // an opacity-0 backdrop still sits at z-[80] and eats every click if
   // `hidden` / `pointer-events-none` fail (Safari + display:none + fixed).
@@ -228,7 +243,7 @@ export function NavDrawer({
           </button>
         </div>
         {!signedIn && showMenus ? (
-          <div className="shrink-0 border-b border-border px-3 py-3">
+          <div className="shrink-0 border-b border-border px-3 py-3" inert={!rowsLive} data-ke="drawer-rows-head">
             <Link
               to={loginTo}
               onClick={onClose}
@@ -248,7 +263,7 @@ export function NavDrawer({
             </Link>
           </div>
         ) : null}
-        <nav className="flex-1 px-3 py-3">
+        <nav className="flex-1 px-3 py-3" inert={!rowsLive} data-ke="drawer-rows">
           {guestMenu ? (
             <GuestDrawerLinks navExtra={navExtra} onClose={onClose} title={title} />
           ) : (
