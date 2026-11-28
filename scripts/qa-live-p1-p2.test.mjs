@@ -51,8 +51,9 @@ test("featured chip and section share one count and hide together at zero", () =
   assert.match(home, /featuredAgreement\.showSection/);
   assert.match(home, /radiusKm: 25/);
   assert.match(home, /radiusKm,/);
-  assert.match(home, /skipLiveLooking/);
-  assert.match(home, /homeRailItems/);
+  // N-39 mockup 1: one Explore grid; live-looking cards still lead (homeGridItems uses homeRailItems).
+  assert.match(home, /homeGridItems\(/);
+  assert.match(src("src/lib/now-loops.ts"), /export function homeGridItems[\s\S]*?homeRailItems\(/);
   assert.match(daycares, /clampRadiusKm\(Number\(input\.radiusKm\) \|\| 25\)/);
   assert.doesNotMatch(daycares, /radiusKm: 40/);
 });

@@ -1,52 +1,27 @@
-import { useMemo } from "react";
-import { FacilityTypeRails } from "@/components/facility-type-rail-list";
-import type { BrowseDaycareType } from "@/components/facility-type-rails";
-import { ListingRail } from "@/components/listing-rail";
+import { DaycareCard } from "@/components/daycare-card";
 import { EmptyState } from "@/components/empty-state";
-import { honestVacancy, homeRailItems, liveLookingOnly } from "@/lib/now-loops";
 import { localePath } from "@/lib/locale-path";
 import type { DaycareCard as Card } from "@/lib/types";
-import { uniqueById } from "@/lib/utils";
+import { listingThumb } from "@/lib/photo";
+import { homeGridItems } from "@/lib/now-loops";
 import { useCopy } from "@/lib/use-copy";
 
 export function HomeDiscovery({
   ready,
   shown,
-  publicFeatured,
-  placeLabel,
-  /** First photo is the phone LCP when no live rail sits above these cards. */
-  priorityFirst = false,
   liveOnly,
   hasPublic,
   onShowAll,
-  careType,
-  onCareType,
   city,
 }: {
   ready: boolean;
   shown: Card[];
-  publicFeatured: Card[];
-  placeLabel?: string;
-  priorityFirst?: boolean;
   liveOnly: boolean;
   hasPublic: boolean;
   onShowAll: () => void;
-  careType?: BrowseDaycareType;
-  onCareType?: (type?: BrowseDaycareType) => void;
   city?: string;
 }) {
   const { t, locale } = useCopy();
-  const liveLookingRail = useMemo(
-    () => homeRailItems(liveLookingOnly(publicFeatured), { city: placeLabel, label: placeLabel }),
-    [placeLabel, publicFeatured],
-  );
-  const availableNow = useMemo(() => {
-    return uniqueById(liveLookingRail.filter((row) => honestVacancy(row).kind === "open")).slice(0, 18);
-  }, [liveLookingRail]);
-  const availableNextMonth = useMemo(() => {
-    const top = new Set(availableNow.slice(0, 6).map((row) => row.id));
-    return shown.filter((row) => honestVacancy(row).kind === "open" && !top.has(row.id)).slice(0, 18);
-  }, [availableNow, shown]);
   if (!ready && shown.length === 0) return <HomeCardSkeleton />;
   if (shown.length === 0) {
     return (
@@ -63,21 +38,17 @@ export function HomeDiscovery({
       </div>
     );
   }
+  const cards = homeGridItems(shown, { city, label: city });
+  const leadPhoto = cards.findIndex((item) => {
+    const photo = listingThumb(item.photos);
+    return Boolean(photo && !photo.includes("storefront-placeholder"));
+  });
   return (
-    <>
-      <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={priorityFirst} visual />
-      <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
-      <FacilityTypeRails
-        items={shown}
-        visual
-        skipLiveLooking
-        menu={!onCareType}
-        selected={careType}
-        onSelect={onCareType}
-        city={city}
-        eagerThumbs={priorityFirst && availableNow.length === 0}
-      />
-    </>
+    <div data-ke="explore-grid" className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+      {cards.map((item, index) => (
+        <DaycareCard key={item.id} item={item} presentation="visual" eager={index < 2} priority={index === leadPhoto} />
+      ))}
+    </div>
   );
 }
 

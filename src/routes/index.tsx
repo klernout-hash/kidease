@@ -1,5 +1,5 @@
 import { FEATURE_SPONSORED_LISTINGS } from "@/lib/sponsored-flag";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
@@ -10,30 +10,25 @@ const HomeHowVideo = lazy(() =>
 );
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
-import { HomeCareTypeRow, type BrowseDaycareType } from "@/components/facility-type-rails";
-import { getHomeCareType, setHomeCareType, subscribeHomeCareType } from "@/lib/home-care-selection";
 import { HomeDiscovery } from "@/components/home-discovery";
 import { RecentlyViewedRow } from "@/components/recently-viewed-row";
 import { Button } from "@/components/ui/button";
 import {
   FeelPhoto,
 } from "@/components/building-photo";
-import { ChipButton } from "@/components/chip";
 import { CARD_SIZES, CARD_WIDTHS, STEP_SIZES, photoSrcSet, photoUrl, listingThumb } from "@/lib/photo";
 import { featuredDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { BootPending } from "@/components/boot-pending";
 import { HOME_PAINT_BUDGET_MS, ORIGIN_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
-import { geocode, postalSearchLabel, readSavedOrigin, reverseGeocode } from "@/lib/geo";
+import { readSavedOrigin } from "@/lib/geo";
 import {
   coerceDirectoryOrigin,
-  originFromDeviceFix,
   productHomeOrigin,
   readClientTimeZone,
   searchOriginOrWinnipeg,
   trustedSavedOrigin,
 } from "@/lib/default-origin";
-import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
@@ -42,30 +37,23 @@ import { publicListings } from "@/lib/listing-visibility";
 import { isClaimVerified } from "@/lib/trust";
 import { readRecent } from "@/lib/recent";
 import { isSafeSitemapSlug } from "@/lib/sitemap";
-import type { ResolvedPlace } from "@/components/place-search";
-import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { MobileSearchHome } from "@/components/mobile-search-sheet";
-import { readMobileSearchV2 } from "@/lib/mobile-search-flag";
 import { SmartMatchEntry } from "@/components/smart-match";
-import { resolveLocationQuery } from "@/components/place-search";
 import { compactExploreSearch, readLiveSearchFlag } from "@/lib/explore-search";
 import { compactSearchRadius } from "@/lib/search-radius";
-import { LocationConsentCard } from "@/components/location-consent";
 import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { featuredHomeAgreement, homeLiveStrip } from "@/lib/home-live-strip";
+import { homeGridItems } from "@/lib/now-loops";
+import type { MobileSearchParams } from "@/lib/mobile-search-v2";
+import { ChipButton } from "@/components/chip";
 import type { DaycareCard as Card } from "@/lib/types";
-import { honestVacancy, homeRailItems, liveLookingOnly, type SearchAge } from "@/lib/now-loops";
-import type { SearchStart } from "@/lib/search-start";
 
 const RoleEnrollChooser = lazy(() =>
   import("@/components/role-enroll").then((m) => ({ default: m.RoleEnrollChooser })),
 );
 const RoleEnrollDialog = lazy(() =>
   import("@/components/role-enroll").then((m) => ({ default: m.RoleEnrollDialog })),
-);
-const AirbnbCareCategories = lazy(() =>
-  import("@/components/airbnb-screens").then((m) => ({ default: m.AirbnbCareCategories })),
 );
 
 export function homeValidateSearch(s: Record<string, unknown>) {
@@ -77,13 +65,7 @@ export function homeValidateSearch(s: Record<string, unknown>) {
   };
 }
 
-export async function loadProductHome(knownAirbnbUi?: boolean) {
-  const flags = Promise.all([
-    typeof knownAirbnbUi === "boolean"
-      ? Promise.resolve(knownAirbnbUi)
-      : import("@/lib/airbnb-ui-flag").then((mod) => mod.readAirbnbUi()).catch(() => false),
-    readMobileSearchV2().catch(() => false),
-  ]);
+export async function loadProductHome() {
   const raw = await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
   const origin = searchOriginOrWinnipeg(raw);
   try {
@@ -91,42 +73,32 @@ export async function loadProductHome(knownAirbnbUi?: boolean) {
       featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label, radiusKm: 25 } }),
       HOME_PAINT_BUDGET_MS,
     );
-    const [airbnbUi, mobileSearchV2] = await flags;
     return {
       featured: Array.isArray(painted.value) ? painted.value : [],
       featuredReady: painted.ready,
       origin,
-      mobileSearchV2,
-      airbnbUi,
     };
   } catch {
-    const [airbnbUi, mobileSearchV2] = await flags;
     return {
       featured: [],
       featuredReady: true,
       origin,
-      mobileSearchV2,
-      airbnbUi,
     };
   }
 }
 
 export type ProductHomeBoot = Awaited<ReturnType<typeof loadProductHome>>;
 
-/** Same photo the first home rail marks eager. Preload that one, not a later claimed card. */
+/** Same photo the home grid marks priority. Preload that one, not a later card. */
 function homeLcpPhoto(rows: Card[]): string | undefined {
-  const open = uniqueById(
-    homeRailItems(liveLookingOnly(rows)).filter((row) => honestVacancy(row).kind === "open"),
-  ).slice(0, 18);
-  const pool = open.length ? open : rows;
-  return pool
+  return homeGridItems(rows)
     .map((row) => listingThumb(row.photos))
     .find((photo) => Boolean(photo && !photo.includes("storefront-placeholder")));
 }
 
 export const Route = createFileRoute("/")({
   validateSearch: homeValidateSearch,
-  loader: ({ context }) => loadProductHome(context.airbnbUi),
+  loader: loadProductHome,
   staleTime: 60_000,
   pendingMs: 0,
   pendingMinMs: 0,
@@ -156,10 +128,10 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const search = Route.useSearch();
-  return <HomePage boot={Route.useLoaderData()} liveClaimed={search.live === 1} />;
+  return <HomePage boot={Route.useLoaderData()} liveClaimed={search.live === 1} changeLocation={search.change === "1"} />;
 }
 
-export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot; liveClaimed?: boolean }) {
+export function HomePage({ boot, liveClaimed = false, changeLocation = false }: { boot: ProductHomeBoot; liveClaimed?: boolean; changeLocation?: boolean }) {
   const { t, locale } = useCopy();
   const navigate = useNavigate();
   const origin = useAppStore((s) => s.origin);
@@ -168,21 +140,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
   const liveOnly = useAppStore((s) => s.liveOnly);
   const setLiveOnly = useAppStore((s) => s.setLiveOnly);
   const radiusKm = useAppStore((s) => s.radiusKm);
-  const setRadiusKm = useAppStore((s) => s.setRadiusKm);
-  const setQuery = useAppStore((s) => s.setQuery);
-  const locationConsent = useAppStore((s) => s.locationConsent);
-  const setLocationConsent = useAppStore((s) => s.setLocationConsent);
-  const [place, setPlace] = useState(() =>
-    boot.origin.source === "manual" ? boot.origin.label : t("nearMe"),
-  );
-  const [homeName, setHomeName] = useState("");
-  const [homeType, setHomeType] = useState<BrowseDaycareType | undefined>(() => getHomeCareType());
-  useEffect(() => subscribeHomeCareType(setHomeType), []);
-  const [homeFrom, setHomeFrom] = useState("");
-  const [homeTo, setHomeTo] = useState("");
-  const [homeStart, setHomeStart] = useState<SearchStart | "">("");
-  const [askLocation, setAskLocation] = useState(false);
-  const [, setBusy] = useState(false);
   const [featured, setFeatured] = useState<Card[]>(publicListings(boot.featured ?? []));
   const [featuredReady, setFeaturedReady] = useState(boot.featuredReady !== false);
   const [recent, setRecent] = useState<Card[]>([]);
@@ -203,21 +160,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
       timeZone,
     );
     setOrigin({ lat: next.lat, lng: next.lng, label: next.label }, next.source);
-    setPlace(next.source === "manual" ? next.label : next.source === "default" ? next.label : t("nearMe"));
-  }, [boot.origin.lat, boot.origin.lng, boot.origin.label, boot.origin.source, setOrigin, t]);
-
-  useEffect(() => {
-    const loc = originSource ? origin : boot.origin;
-    const source = originSource || boot.origin.source;
-    setPlace((current) => {
-      const near = t("nearMe");
-      const nearby = t("whereNearby");
-      const untouched = !current.trim() || current === near || current === nearby || current === loc.label;
-      if (!untouched && source !== "manual") return current;
-      if (!(loc.label || "").trim()) return "";
-      return source === "manual" ? loc.label : near;
-    });
-  }, [origin.label, originSource, boot.origin.label, boot.origin.source, locale]);
+  }, [boot.origin.lat, boot.origin.lng, boot.origin.label, boot.origin.source, setOrigin]);
 
   useEffect(() => {
     const loc = originSource ? origin : boot.origin;
@@ -264,64 +207,15 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
     };
   }, [origin, originSource, radiusKm, boot.origin, boot.featuredReady]);
 
-  function goSearch(label?: string, extra?: { name?: string; from?: string; to?: string; age?: SearchAge; start?: SearchStart }) {
-    const fields = compactExploreSearch({
-      q: label,
-      name: extra?.name,
-      from: extra?.from,
-      to: extra?.to,
-    });
-    const age = extra?.age || undefined;
-    const start = extra?.start || homeStart || undefined;
+  /** One way to /search: the pill's Where/When/Who answers, the chosen radius (km), EN or FR. */
+  function goSearch(label?: string, params: MobileSearchParams = {}) {
     const search = {
+      ...params,
       ...compactSearchRadius({ km: radiusKm }),
-      q: fields.q,
-      name: fields.name,
-      from: fields.from,
-      to: fields.to,
-      age: age || undefined,
-      start: start || undefined,
+      q: compactExploreSearch({ q: label ?? params.q }).q,
     };
     if (locale === "fr") void navigate({ to: "/fr/search", search });
     else void navigate({ to: "/search", search });
-  }
-
-  async function applyPlace(raw: string, resolved?: ResolvedPlace) {
-    const found = resolved ?? (await resolveLocationQuery(raw)) ?? geocode(raw);
-    const postal = postalSearchLabel(raw);
-    const hit = found && postal ? { ...found, label: postal } : found;
-    if (hit) {
-      setOrigin({ ...hit, explicit: true }, "manual");
-      setPlace(hit.label);
-      setQuery(hit.label);
-      return hit;
-    }
-    return null;
-  }
-
-  async function pinHere() {
-    setBusy(true);
-    const pos = await getDeviceLocation({ precise: true });
-    setBusy(false);
-    if (pos) {
-      setLocationConsent("granted");
-      const resolved = originFromDeviceFix(pos, boot.origin, { timeZone: readClientTimeZone() });
-      const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
-      setOrigin({ lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" }, resolved.source);
-      setPlace(resolved.source === "gps" && label ? t("nearMe") : label);
-      void hapticLight();
-      return true;
-    }
-    setLocationConsent("denied");
-    return false;
-  }
-
-  async function pinLocation() {
-    if (locationConsent !== "granted") {
-      setAskLocation(true);
-      return;
-    }
-    await pinHere();
   }
 
   useEffect(() => {
@@ -350,132 +244,30 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
   );
 
   const featuredSearch = (
-    <>
-      {boot.mobileSearchV2 ? (
-        <div className="md:hidden">
-          <MobileSearchHome
-            origin={origin}
-            onCommit={(params) => {
-              void navigate({ to: locale === "fr" ? "/fr/search" : "/search", search: { ...params, ...compactSearchRadius({ km: radiusKm }) } });
-            }}
-          />
-        </div>
-      ) : null}
-      <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
-      <ExploreSearchBar
-        className="mx-auto mt-1 w-full max-w-[960px]"
-        prominent
-        compactSubmit
-        values={{ where: place, name: homeName, from: homeFrom, to: homeTo }}
-        origin={origin}
-        start={homeStart}
-        onWhereChange={setPlace}
-        onWhereResolved={(hit) => {
-          setOrigin({ ...hit, explicit: true }, "manual");
-          setPlace(hit.label);
-          setQuery(hit.label);
-        }}
-        onNameChange={setHomeName}
-        onDatesChange={({ from, to }) => {
-          setHomeFrom(from);
-          setHomeTo(to);
-        }}
-        onStartChange={(start) => {
-          setHomeStart(start);
-          if (!start) {
-            setHomeFrom("");
-            setHomeTo("");
-          }
-        }}
-        startCollapsed={false}
-        radiusKm={radiusKm}
-        onRadiusChange={setRadiusKm}
-        onLocate={() => void pinLocation()}
-        onSubmit={async (typedWhere, resolved) => {
-          const typed = (typedWhere ?? place).trim();
-          const nearMe = typed === t("nearMe") || typed === t("whereNearby");
-          if (!typed || nearMe) {
-            goSearch(origin.label, {
-              name: homeName,
-              from: homeFrom,
-              to: homeTo,
-              start: homeStart || undefined,
-            });
-            return true;
-          }
-          const hit = await applyPlace(typed, resolved);
-          if (!hit) return false;
-          goSearch(hit.label, {
-            name: homeName,
-            from: homeFrom,
-            to: homeTo,
-            start: homeStart || undefined,
-          });
-          return true;
-        }}
-      />
-      </div>
+    <MobileSearchHome
+      key={changeLocation ? "change-location" : "explore"}
+      origin={originSource ? origin : boot.origin}
+      initiallyOpen={changeLocation}
+      onCommit={(params) => goSearch(params.q, params)}
+    />
+  );
+
+  // Promos and the trust note sit under the listings, so cards are the first thing a parent sees.
+  const belowResults = (
+    <div data-ke="home-below-results" className="ke-gutter mx-auto w-full space-y-4 pb-8">
+      <p className="max-w-2xl text-sm text-muted">{t(FEATURE_SPONSORED_LISTINGS ? "featuredBody" : "featuredBodyPlain")}</p>
       <SmartMatchEntry card />
-      <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
-      <div
-        data-ke="home-hero-pills"
-        className="mx-auto mt-2 flex min-h-11 w-full max-w-[960px] flex-wrap items-center justify-center gap-x-2.5 [&:has([data-ke=smart-match-open]):has([data-ke=resume-visit])_[data-ke=home-hero-dot]]:inline"
-      >
-        <span aria-hidden="true" data-ke="home-hero-dot" className="hidden text-muted">
-          ·
-        </span>
+      <div data-ke="home-hero-pills" className="flex min-h-11 w-full flex-wrap items-center gap-x-2.5">
         <ResumeVisitCard quiet />
       </div>
-      <HeroClaimStrip />
-      </div>
-
-      {featuredReady && strip.liveCount > 0 ? (
-        <div className="mt-4 flex min-h-11 flex-wrap gap-2" data-ke="home-live-strip">
-          <ChipButton on={liveOnly} onClick={() => setLiveOnly(true)}>
-            {t(strip.liveLabelKey).replace("{n}", String(strip.liveCount))}
-          </ChipButton>
-          {featuredAgreement.showChip ? (
-            <ChipButton on={!liveOnly} onClick={() => setLiveOnly(false)}>
-              {t(strip.secondaryLabelKey).replace("{n}", String(strip.secondaryCount))}
-            </ChipButton>
-          ) : null}
-        </div>
-      ) : null}
-
-      {askLocation ? (
-        <div className="mt-3">
-          <LocationConsentCard
-            onAllow={() => {
-              setAskLocation(false);
-              void pinHere();
-            }}
-            onLater={() => {
-              setAskLocation(false);
-            }}
-          />
-        </div>
-      ) : null}
-    </>
+      <HeroClaimStrip lower />
+      <TrustBar />
+      <RecentlyViewedRow items={recentPublic} cards />
+    </div>
   );
 
   return (
-    <Shell
-      headerCategories={boot.airbnbUi ? (
-        // Sized fallback: a null fallback collapsed the 102px category row for a frame
-        // after hydration and pushed the whole page (CLS ~0.28 on phones).
-        <Suspense fallback={<div className="ke-header-cats-fallback" aria-hidden="true" />}>
-          <AirbnbCareCategories />
-        </Suspense>
-      ) : (
-        <HomeCareTypeRow
-          compact
-          toSearch
-          selected={homeType}
-          onSelect={setHomeCareType}
-          city={origin.label}
-        />
-      )}
-    >
+    <Shell>
       <main className="w-full min-w-0">
       <div data-ke="launch-shell" role="status" aria-live="polite" className="w-full text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">KidEase</p>
@@ -484,40 +276,38 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         </p>
       </div>
       <JsonLd json={organizationGraphJsonLdScript(locale === "fr" ? "fr" : "en")} />
-      <div className="ke-home w-full min-w-0" data-ke="home-discovery-surface">
-      <h1 className="ke-gutter mx-auto w-full pt-4 text-center text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
+      <div className="w-full min-w-0" data-ke="home-discovery-surface">
+      <h1 className="ke-gutter mx-auto w-full pt-3 text-center text-[clamp(1.25rem,3.4vw,2rem)] leading-tight tracking-[-0.03em]">
         {t("tagline")}
       </h1>
-      <div className="ke-home-web ke-web-only w-full [[data-channel=app]_&]:hidden">
-        <section className="from-soft border-b border-border bg-bg">
-          <div className="ke-gutter mx-auto w-full pb-10 pt-1 md:pb-14">
+        <section data-ke="home-search" className="bg-bg">
+          <div className="ke-gutter mx-auto w-full pb-1 pt-2">
             {featuredSearch}
-            <Link to="/search" className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary md:hidden">
-              {t("smartMatchTitle")}
-            </Link>
+            {featuredReady && strip.liveCount > 0 ? (
+              <div className="mx-auto mt-1 flex min-h-11 w-full max-w-[60rem] flex-wrap gap-2" data-ke="home-live-strip">
+                <ChipButton on={liveOnly} onClick={() => setLiveOnly(true)}>
+                  {t(strip.liveLabelKey).replace("{n}", String(strip.liveCount))}
+                </ChipButton>
+                {featuredAgreement.showChip ? (
+                  <ChipButton on={!liveOnly} onClick={() => setLiveOnly(false)}>
+                    {t(strip.secondaryLabelKey).replace("{n}", String(strip.secondaryCount))}
+                  </ChipButton>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </section>
 
-        {/* Clean look: centres this family opened sit right under the search. */}
-        <div className="ke-clean-only ke-gutter mx-auto w-full pt-4">
-          <RecentlyViewedRow items={recentPublic} cards />
-        </div>
-
-        {!featuredReady || featuredAgreement.showSection ? (
-        <section id="featured" className="ke-gutter mx-auto w-full pb-8 pt-4 md:pb-12 md:pt-5">
-          <h2 className="scroll-mb-32 text-xl tracking-[-0.03em] max-lg:sr-only md:text-2xl">{t(strip.featuredTitleKey)}</h2>
-          <p className="mt-2 max-w-2xl text-sm text-muted">{t(FEATURE_SPONSORED_LISTINGS ? "featuredBody" : "featuredBodyPlain")}</p>
+        <section id="featured" className="ke-gutter mx-auto w-full pb-8 pt-1 md:pb-12">
+          {!featuredReady || featuredAgreement.showSection ? (
+            <h2 className="scroll-mb-32 text-xl tracking-[-0.03em] max-lg:sr-only md:text-2xl">{t(strip.featuredTitleKey)}</h2>
+          ) : null}
           <HomeDiscovery
             ready={featuredReady}
             shown={liveClaimed ? claimedLive : shown}
-            publicFeatured={publicFeatured}
-            placeLabel={origin.label}
-            priorityFirst
             liveOnly={liveOnly}
             hasPublic={publicFeatured.length > 0}
             onShowAll={() => setLiveOnly(false)}
-            careType={homeType}
-            onCareType={(type) => setHomeCareType(type)}
             city={origin.label}
           />
           <div className="mt-6">
@@ -527,12 +317,10 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
             </Button>
           </div>
         </section>
-        ) : null}
 
-        <div className="ke-gutter mx-auto w-full pt-2 md:pt-8">
-          <TrustBar />
-        </div>
+        {belowResults}
 
+      <div className="ke-web-only w-full [[data-channel=app]_&]:hidden">
         <section id="how" aria-labelledby="how-kidease-heading" className="ke-gutter mx-auto w-full py-10 md:py-16">
           <h2 id="how-kidease-heading" className="text-center text-xl tracking-[-0.03em] text-fg md:text-2xl">
             {t("howVideoTitle")}
@@ -564,15 +352,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
             />
           </div>
         </section>
-
-        {/* Clean look: the claim line sits here, below the listings, instead of in the hero. */}
-        <div className="ke-clean-only ke-gutter mx-auto w-full pb-8">
-          <HeroClaimStrip lower />
-        </div>
-
-        <div className="ke-classic-only ke-gutter mx-auto w-full">
-          <RecentlyViewedRow items={recentPublic} cards />
-        </div>
 
         <section className="bg-surface">
           <div className="ke-gutter mx-auto w-full py-16">
@@ -633,43 +412,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
 
       </div>
 
-      <div className="ke-home-app ke-app-only hidden w-full [[data-channel=app]_&]:block">
-        <section className="border-b border-border bg-bg">
-          <div className="ke-gutter mx-auto w-full pb-10 pt-2">
-            {featuredSearch}
-          </div>
-        </section>
-        <section className="ke-gutter mx-auto w-full pb-6 pt-6">
-          <div className="ke-clean-only pb-5">
-            <RecentlyViewedRow items={recentPublic} cards />
-          </div>
-          <TrustBar />
-          <h2 className="mt-4 scroll-mb-32 text-xl tracking-[-0.03em] max-lg:sr-only">{t(strip.featuredTitleKey)}</h2>
-          <p className="mt-2 max-w-2xl text-sm text-muted">{t(FEATURE_SPONSORED_LISTINGS ? "featuredBody" : "featuredBodyPlain")}</p>
-          <HomeDiscovery
-            ready={featuredReady}
-            shown={liveClaimed ? claimedLive : shown}
-            publicFeatured={publicFeatured}
-            placeLabel={origin.label}
-            priorityFirst
-            liveOnly={liveOnly}
-            hasPublic={publicFeatured.length > 0}
-            onShowAll={() => setLiveOnly(false)}
-            careType={homeType}
-            onCareType={(type) => setHomeCareType(type)}
-            city={origin.label}
-          />
-          <div className="mt-6">
-            <Button size="md" variant="secondary" className="w-full rounded-[14px]" onClick={() => goSearch(origin.label)}>
-              <Search className="size-5" />
-              {t("heroCta")}
-            </Button>
-          </div>
-          <div className="ke-classic-only">
-            <RecentlyViewedRow items={recentPublic} cards />
-          </div>
-        </section>
-      </div>
       </div>
       </main>
 

@@ -403,8 +403,8 @@ test("search, cards, rails, and vacancy wire the shared helper", () => {
   assert.match(search, /splitSearchResults/);
   assert.match(search, /search_filters_applied/);
   assert.match(search, /search_results_shown/);
-  assert.match(src("src/components/home-discovery.tsx"), /homeRailItems|isLiveLookingCard/);
-  assert.match(home, /ExploreSearchBar/);
+  assert.match(src("src/components/home-discovery.tsx"), /<DaycareCard/);
+  assert.match(home, /<MobileSearchHome/);
   assert.doesNotMatch(home, /SearchAgeGate/);
   assert.match(fr, /isLiveLookingCard|startWindowToDate/);
   assert.match(card, /liveLookingGaps/);

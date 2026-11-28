@@ -35,7 +35,7 @@ function draft(patch) {
   return { ...emptyMobileSearch(), ...patch, counts: { ...emptyMobileSearch().counts, ...(patch.counts || {}) } };
 }
 
-test("FEATURE_MOBILE_SEARCH_V2 stays off and the old search stays in the tree", () => {
+test("Home always shows the shared pill and the results experiment remains flagged", () => {
   assert.equal(FLAG_DEFAULTS.FEATURE_MOBILE_SEARCH_V2, false);
   assert.equal(mobileSearchV2Enabled({}), false);
   assert.equal(mobileSearchV2Enabled({ FEATURE_MOBILE_SEARCH_V2: "1" }), true);
@@ -43,9 +43,8 @@ test("FEATURE_MOBILE_SEARCH_V2 stays off and the old search stays in the tree", 
   const home = src("src/routes/index.tsx");
   const search = src("src/routes/search.tsx");
   const sheet = src("src/components/mobile-search-sheet.tsx");
-  assert.match(home, /boot\.mobileSearchV2 \?/);
-  assert.match(home, /ExploreSearchBar/);
-  assert.match(home, /readMobileSearchV2/);
+  assert.equal((home.match(/<MobileSearchHome/g) ?? []).length, 1);
+  assert.doesNotMatch(home, /readMobileSearchV2|<ExploreSearchBar/);
   assert.match(search, /boot\.mobileSearchV2 \?/);
   assert.match(search, /ExploreSearchBar/);
   assert.match(search, /withPaintBudget\(/);
@@ -80,17 +79,17 @@ test("closed cards and the results summary use the answer, in English and French
   assert.equal(whereAnswer(filled), "Winnipeg, R3T");
   assert.match(whenAnswer(filled, "en"), /Starts Jan/);
   assert.match(whenAnswer(filled, "en"), /Full-time/);
-  assert.equal(whoAnswer(filled, "en"), "1 child, 2 yrs");
+  assert.equal(whoAnswer(filled, "en"), "1 child, Toddler");
   assert.match(whenAnswer(filled, "fr"), /Dès le/);
   assert.match(whenAnswer(filled, "fr"), /Temps plein/);
-  assert.equal(whoAnswer(filled, "fr"), "1 enfant, 2 ans");
+  assert.equal(whoAnswer(filled, "fr"), "1 enfant, Trottineur");
   assert.equal(resultsHeadline("Winnipeg", "en"), "Child care in Winnipeg");
   assert.equal(resultsHeadline("Winnipeg", "fr"), "Garderies à Winnipeg");
   const sub = resultsSubline(filled, "en");
   assert.match(sub, /Starts Jan/);
   assert.match(sub, /Full-time/);
-  assert.match(sub, /1 child, 2 yrs/);
-  assert.match(resultsSubline(filled, "fr"), /1 enfant, 2 ans/);
+  assert.match(sub, /1 child, Toddler/);
+  assert.match(resultsSubline(filled, "fr"), /1 enfant, Trottineur/);
   assert.equal(whoAnswer(draft({ counts: { infant: 1, toddler: 1 } }), "en"), "2 children");
   assert.equal(whoAnswer(draft({ counts: { preschool: 2 } }), "fr"), "2 enfants");
 });
@@ -115,6 +114,8 @@ test("Winnipeg and a postal code stay on the existing search index", () => {
   const centre = mobileSearchParams(draft({ where: "Toronto", category: "centre", schedule: "part-time" }));
   assert.equal(centre.fac, "child_care_centre");
   assert.equal(centre.sched, "part");
+  assert.equal(mobileSearchParams(draft({ category: "preschool" })).fac, "nursery_preschool");
+  assert.equal(mobileSearchParams(draft({ category: "subsidy" })).subsidy, "1");
   const drop = mobileSearchParams(draft({ where: "Calgary", schedule: "drop-in", category: "open", subsidy: true, french: true }));
   assert.equal(drop.sched, "flexible");
   assert.equal(drop.openings, "1");

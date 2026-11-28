@@ -91,7 +91,9 @@ describe("Canada distances stay in kilometres", () => {
     assert.doesNotMatch(card, /t\("miAway"\)/);
     assert.doesNotMatch(label, /"mi"/);
     assert.match(src("src/components/explore-search-bar.tsx"), /\{km\} km/);
-    assert.match(home, /onRadiusChange=\{setRadiusKm\}/);
+    // N-39 mockup 1: home has no radius control of its own; it forwards the saved km radius.
+    assert.match(home, /compactSearchRadius\(\{ km: radiusKm \}\)/);
+    assert.doesNotMatch(src("src/components/mobile-search-sheet.tsx"), /unitsMi|miAway/);
     assert.doesNotMatch(home, /unitsMi/);
     assert.match(search, /data-ke="radius-km"/);
     assert.doesNotMatch(search, /setDistanceUnit\("mi"\)/);

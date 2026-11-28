@@ -9,17 +9,17 @@
  * sweep, and runDuoPass checks each pose (safe strip, rail, split map, crease)
  * and a fold, unfold, rotate sequence on one page load.
  */
-import { DUO_CREASE_X, DUO_POSES } from "./store-viewports.mjs";
+import { DUO_CREASE_X, DUO_POSES, openHomeWhere } from "./store-viewports.mjs";
 
 
 const NATIVE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 KidEaseNative";
 
 const ROUTES = [
-  { path: "/", field: "[data-ke='where-field'] input", value: "Winnipeg" },
+  { path: "/", field: "[data-ke=msv2-where-input]", explore: true, value: "Winnipeg" },
   { path: "/search", field: "[data-ke='where-field'] input", value: "Winnipeg" },
   { path: "/login", field: "input[type='password']", value: "correct-horse" },
   { path: "/help", field: "input[autocomplete='name']", value: "Ada" },
-  { path: "/fr", field: "[data-ke='where-field'] input", value: "Winnipeg" },
+  { path: "/fr", field: "[data-ke=msv2-where-input]", explore: true, value: "Winnipeg" },
   { path: "/call/demo", field: "input[type='email']", value: "ada@kidease.ca" },
   { path: "/video/demo", field: "input[type='email']", value: "ada@kidease.ca" },
 ];
@@ -74,6 +74,7 @@ export async function runFoldResizePass(browser, base) {
         problems.push(`${label} status ${status}`);
         continue;
       }
+      if (route.explore) await openHomeWhere(page);
       const armed = await page.evaluate((field) => {
         window.__keFoldMark = "stay";
         const input = field ? document.querySelector(field) : null;

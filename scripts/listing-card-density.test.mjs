@@ -65,7 +65,7 @@ test("rails, search skeletons, and featured grids share the tighter footprint", 
   assert.match(search, /ke-result-stack/);
   assert.match(search, /ke-skel ke-card-photo/);
   assert.doesNotMatch(search, /lg:grid-cols-5 xl:grid-cols-6/);
-  assert.match(home, /FacilityTypeRails[\s\S]*items=\{shown\}[\s\S]*visual/);
+  assert.match(home, /data-ke="explore-grid"[\s\S]*presentation="visual"/);
   assert.doesNotMatch(home, /ke-web-grid/);
   assert.match(photo, /200px/);
   assert.match(photo, /CARD_WIDTHS = \[320, 480, 768\]/);
@@ -86,16 +86,9 @@ test("Recently Viewed, both card presentations, and show-more share one photo ra
   assert.doesNotMatch(css, /min\(85vw, 18\.5rem\)|flex-basis: 17\.5rem|flex: 0 0 86%/);
 });
 
-test("classic and clean home retain their Recently Viewed placement with the same photo cards on web and app", () => {
+test("Explore renders one Recently Viewed row", () => {
   const home = src("src/routes/index.tsx");
-  const web = home.slice(home.indexOf('className="ke-home-web'), home.indexOf('className="ke-home-app'));
-  const app = home.slice(home.indexOf('className="ke-home-app'));
-  for (const channel of [web, app]) {
-    assert.equal((channel.match(/<RecentlyViewedRow items=\{recentPublic\} cards \/>/g) ?? []).length, 2);
-    for (const look of ["classic", "clean"]) {
-      assert.match(channel, new RegExp(`className="ke-${look}-only[^"]*">\\s*<RecentlyViewedRow items=\\{recentPublic\\} cards \\/>`));
-    }
-  }
+  assert.equal((home.match(/<RecentlyViewedRow items=\{recentPublic\} cards \/>/g) ?? []).length, 1);
   assert.doesNotMatch(home, /<RecentlyViewedRow items=\{recentPublic\} \/>/);
   const recent = src("src/components/recently-viewed-row.tsx");
   assert.match(recent, /to=\{localePath\(`\/daycare\/\$\{item\.slug\}`, locale\)\}/);

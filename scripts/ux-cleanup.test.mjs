@@ -96,9 +96,11 @@ test("Listing has one primary CTA, sticky enquire, and a hero that shares the ti
 
 test("Home is search-first above the fold with one primary", () => {
   const home = src("src/routes/index.tsx");
-  const hero = home.slice(home.indexOf("from-soft"), home.indexOf("id=\"how\""));
+  // N-39 mockup 1: tagline, then the Where/When/Who pill, then cards. One primary (the pill's search).
+  assert.ok(home.includes('data-ke="home-search"'));
+  const hero = home.slice(home.indexOf('data-ke="home-search"'), home.indexOf("id=\"how\""));
   assert.match(hero, /featuredSearch/);
-  assert.match(hero, /from-soft/);
+  assert.ok(hero.indexOf("featuredSearch") < hero.indexOf("<HomeDiscovery"));
   assert.doesNotMatch(home, /data-ke="browse-cities"/);
   assert.doesNotMatch(home, /HomePopularCities/);
   assert.doesNotMatch(hero, /hero-trust-chips/);

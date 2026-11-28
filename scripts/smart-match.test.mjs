@@ -168,7 +168,8 @@ test("smart match stays on the page and does not send places to the model", () =
   assert.match(ui, /mt-3 flex justify-center/);
   assert.equal(tx("en", "smartMatchCta"), "Find my match with AI");
   assert.equal(tx("fr", "smartMatchCta"), "Trouver ma garderie idéale avec l’IA");
-  assert.match(home, /text-center text-\[clamp\(1\.6rem,4\.2vw,2\.75rem\)\]/);
+  // N-39 mockup 1: a smaller centred tagline so the pill and cards sit higher.
+  assert.match(home, /text-center text-\[clamp\(1\.25rem,3\.4vw,2rem\)\]/);
   assert.match(read("src/routes/fr.index.tsx"), /<HomePage/);
   const claim = read("src/components/claim-listing-cta.tsx");
   assert.match(claim, /source === "card"/);

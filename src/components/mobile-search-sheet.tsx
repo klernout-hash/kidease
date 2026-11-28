@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { List, Map, Search, SlidersHorizontal, X } from "lucide-react";
 import { popularHomeCities } from "@/lib/home-popular-cities";
 import { reverseGeocode } from "@/lib/geo";
+import { suggestWherePlaces } from "@/components/place-search";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import {
   applyDateFlex,
@@ -32,6 +33,7 @@ import {
   type MobileCategory,
   type MobileSearchDraft,
   type MobileSearchParams,
+  type MobileSearchStep,
   type ScheduleChoice,
 } from "@/lib/mobile-search-v2";
 import { localIsoDate as isoDay } from "@/lib/explore-search";
@@ -43,6 +45,8 @@ const CATEGORY_KEY: Record<MobileCategory, CopyKey> = {
   all: "msv2All",
   centre: "msv2Centres",
   home: "msv2Homes",
+  preschool: "preschool",
+  subsidy: "msv2SubsidyChip",
   open: "msv2OpenNow",
   "before-after": "msv2BeforeAfter",
   french: "msv2French",
@@ -164,30 +168,69 @@ function MonthCalendar({
 
 export function MobileSearchHome({
   origin,
+  initiallyOpen = false,
   onCommit,
 }: {
+  initiallyOpen?: boolean;
   origin?: { lat: number; lng: number; label?: string | null };
   onCommit: (params: MobileSearchParams, draft: MobileSearchDraft) => void;
 }) {
   const { t, locale } = useCopy();
   const [draft, setDraft] = useState<MobileSearchDraft>(emptyMobileSearch);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initiallyOpen);
+  const openAt = (step: MobileSearchStep) => {
+    setDraft((cur) => setStep(cur, step));
+    setOpen(true);
+  };
+  // N-39: the pill shows the area the cards below are from until a parent picks one.
+  const whereShown = whereAnswer(draft) || (origin?.label ?? "").trim();
+  const segments: { step: MobileSearchStep; label: CopyKey; answer: string; placeholder: CopyKey }[] = [
+    { step: "where", label: "searchWhere", answer: whereShown, placeholder: "msv2AddLocation" },
+    { step: "when", label: "msv2When", answer: whenAnswer(draft, locale), placeholder: "msv2AddDate" },
+    { step: "who", label: "msv2Who", answer: whoAnswer(draft, locale), placeholder: "searchChildAge" },
+  ];
   return (
     <div data-ke="msv2-home">
       <div className="sticky top-[var(--ke-header-h,3.5rem)] z-30 -mx-1 bg-bg/95 px-1 pb-2 pt-1 backdrop-blur-md">
-        <button
-          type="button"
+        <div
           data-ke="msv2-pill"
-          data-tour="search-where"
-          className="flex h-14 w-full items-center gap-3 rounded-full bg-bg px-4 text-left shadow-card ring-1 ring-border"
-          onClick={() => setOpen(true)}
+          role="group"
+          aria-label={t("msv2FindNear")}
+          className="mx-auto flex min-h-14 w-full max-w-[60rem] items-center rounded-full bg-bg py-1 pl-2 pr-1 shadow-card ring-1 ring-border"
         >
-          <Search className="size-5 shrink-0 text-fg" strokeWidth={2.4} aria-hidden="true" />
-          <span className="min-w-0 flex-1 text-center text-base font-semibold text-fg">{t("msv2FindNear")}</span>
-        </button>
+          {segments.map((seg, index) => (
+            <button
+              key={seg.step}
+              type="button"
+              data-ke={`msv2-pill-${seg.step}`}
+              data-tour={seg.step === "where" ? "search-where" : undefined}
+              className={cn(
+                "flex min-h-11 min-w-0 flex-1 touch-manipulation flex-col justify-center px-2 sm:px-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                index > 0 && "border-l border-border",
+              )}
+              onClick={() => openAt(seg.step)}
+            >
+              <span className="text-xs font-semibold leading-4 text-fg">{t(seg.label)}</span>
+              <span className={cn("truncate text-sm leading-5", seg.answer ? "text-fg" : "text-muted")}>
+                {seg.answer || t(seg.placeholder)}
+              </span>
+            </button>
+          ))}
+          <button
+            type="button"
+            data-ke="msv2-pill-search"
+            className="grid size-11 shrink-0 touch-manipulation place-items-center rounded-full bg-primary text-primary-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label={t("searchSubmit")}
+            onClick={() => openAt("where")}
+          >
+            <Search className="size-5" strokeWidth={2.4} aria-hidden="true" />
+          </button>
+        </div>
         <div
           data-ke="msv2-categories"
-          className="mt-2 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="group"
+          aria-label={t("searchRowFilters")}
+          className="mx-auto mt-2 flex w-full max-w-[60rem] gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {MOBILE_CATEGORIES.map((id) => {
             const on = draft.category === id;
@@ -198,10 +241,13 @@ export function MobileSearchHome({
                 aria-pressed={on}
                 data-ke={`msv2-cat-${id}`}
                 className={cn(
-                  "inline-flex h-11 shrink-0 items-center rounded-full px-3 text-base font-semibold",
+                  "inline-flex min-h-11 shrink-0 touch-manipulation items-center rounded-full px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   on ? "bg-primary text-primary-fg" : "bg-surface text-fg ring-1 ring-border",
                 )}
-                onClick={() => setDraft((cur) => ({ ...cur, category: id }))}
+                onClick={() => {
+                  const next = { ...draft, category: id };
+                  if (id !== "all") onCommit(mobileSearchParams(next), next);
+                }}
               >
                 {t(CATEGORY_KEY[id])}
               </button>
@@ -222,7 +268,6 @@ export function MobileSearchHome({
           }}
         />
       ) : null}
-      <p className="sr-only">{locale === "fr" ? "Recherche mobile" : "Mobile search"}</p>
     </div>
   );
 }
@@ -415,7 +460,29 @@ function SearchSheet({
     onClose();
   }
 
-  const suggestions = localWhereSuggestions(typed);
+  const local = localWhereSuggestions(typed);
+  // Places autocomplete (server first) for streets and towns the local city list does not know.
+  const [remote, setRemote] = useState<{ q: string; rows: { label: string; secondary: string }[] }>({ q: "", rows: [] });
+  const placeQuery = typed.trim();
+  const originLat = origin?.lat;
+  const originLng = origin?.lng;
+  useEffect(() => {
+    if (placeQuery.length < 3) return;
+    let cancelled = false;
+    const id = window.setTimeout(() => {
+      const near = originLat != null && originLng != null ? { lat: originLat, lng: originLng } : undefined;
+      void suggestWherePlaces(placeQuery, near)
+        .then((rows) => {
+          if (!cancelled) setRemote({ q: placeQuery, rows: rows.map((row) => ({ label: row.label, secondary: row.secondary })) });
+        })
+        .catch(() => {});
+    }, 250);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
+  }, [placeQuery, originLat, originLng]);
+  const suggestions = remote.q === placeQuery && remote.rows.length ? remote.rows : local;
   const cities = popularHomeCities(
     origin ? { lat: origin.lat, lng: origin.lng, label: origin.label || undefined } : undefined,
     locale === "fr" ? "fr" : "en",

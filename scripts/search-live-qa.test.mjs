@@ -12,6 +12,7 @@ import {
   splitLiveBrowseHint,
 } from "../src/lib/explore-search.ts";
 import { rankPlaceSuggestions, suggestLocalPlaces } from "../src/lib/place-suggest.ts";
+import { emptyMobileSearch, mobileSearchParams } from "../src/lib/mobile-search-v2.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -101,8 +102,13 @@ test("the Where box keeps unresolved locations separate, and explicit name match
   const home = src("src/routes/index.tsx");
   assert.match(resultSubmit, /return true;\s*\}\s*return false;/);
   assert.doesNotMatch(resultSubmit, /name: label/);
-  assert.match(home, /const hit = await applyPlace\(typed, resolved\);\s*if \(!hit\) return false;/);
-  assert.match(home, /name: homeName,/);
+  // N-39 mockup 1: the home pill sends the typed place as q only; /search resolves it and
+  // shows searchWhereNotFound. A place the pill cannot match never becomes a name search.
+  assert.match(home, /onCommit=\{\(params\) => goSearch\(params\.q, params\)\}/);
+  assert.doesNotMatch(home, /name: label|name: params/);
+  const unresolved = mobileSearchParams({ ...emptyMobileSearch(), where: "Nowhereville" });
+  assert.equal(unresolved.q, "Nowhereville");
+  assert.equal("name" in unresolved, false);
   assert.match(src("src/components/explore-search-bar.tsx"), /searchWhereNotFound/);
   assert.match(src("src/components/place-search.tsx"), /centre:/);
   const ordered = orderNameMatches([

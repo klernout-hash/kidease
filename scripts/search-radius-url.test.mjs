@@ -67,15 +67,23 @@ test("changing radius keeps all unrelated URL fields, restarts pagination, and d
 test("home search serializes selected radius for English and French before navigation", () => {
   for (const locale of ["en", "fr"]) {
     let navigation;
-    const goSearch = routeFunction("goSearch", { locale, radiusKm: 5, homeStart: "this-month", navigate: (next) => { navigation = next; } }, "index");
-    goSearch("Winnipeg", { name: "Synthetic Maple", from: "2027-01-15", age: "infant" });
+    const goSearch = routeFunction("goSearch", { locale, radiusKm: 5, navigate: (next) => { navigation = next; } }, "index");
+    // N-39 mockup 1: the home pill's Where/When/Who answers arrive as mobileSearchParams.
+    goSearch(" Winnipeg ", { q: " Winnipeg ", from: "2027-01-15", to: "2027-02-15", age: "infant", ages: "infant", sched: "full", subsidy: "1" });
     assert.equal(navigation.to, locale === "fr" ? "/fr/search" : "/search");
     assert.equal(navigation.search.km, 5);
     assert.equal(navigation.search.q, "Winnipeg");
-    assert.equal(navigation.search.name, "Synthetic Maple");
     assert.equal(navigation.search.from, "2027-01-15");
+    assert.equal(navigation.search.to, "2027-02-15");
     assert.equal(navigation.search.age, "infant");
-    assert.equal(navigation.search.start, "this-month");
+    assert.equal(navigation.search.ages, "infant");
+    assert.equal(navigation.search.sched, "full");
+    assert.equal(navigation.search.subsidy, "1");
+    assert.equal("mi" in navigation.search, false);
+    // The default 25 km stays out of the URL; "See all" passes only the area.
+    const plain = routeFunction("goSearch", { locale, radiusKm: 25, navigate: (next) => { navigation = next; } }, "index");
+    plain("Winnipeg, MB");
+    assert.deepEqual({ ...navigation.search }, { q: "Winnipeg, MB" });
   }
 });
 

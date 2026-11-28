@@ -116,7 +116,7 @@ test("Where menu lists the closest cities and keeps Nearby first", () => {
 
 test("guest home hero keeps the search bar and drops the city grid and trust duplicate", () => {
   const home = src("src/routes/index.tsx");
-  const hero = home.slice(home.indexOf("from-soft"), home.indexOf('id="how"'));
+  const hero = home.slice(home.indexOf("{featuredSearch}"), home.indexOf("{belowResults}"));
   assert.doesNotMatch(hero, /HomePopularCities/);
   assert.match(hero, /featuredSearch/);
   assert.doesNotMatch(hero, /heroCityBrowse/);

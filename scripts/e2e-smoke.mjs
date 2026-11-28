@@ -18,7 +18,7 @@ import { chromium, webkit } from "playwright";
 import { runIpadViewportPass } from "./ipad-viewports.mjs";
 import { runPhoneViewportPass, runMobileLayoutRegression, runPhoneIssuePass } from "./phone-viewports.mjs";
 import { runFoldResizePass } from "./fold-resize.mjs";
-import { STORE_GROUP_NAMES, runStoreViewportPass } from "./store-viewports.mjs";
+import { STORE_GROUP_NAMES, openHomeWhere, runStoreViewportPass } from "./store-viewports.mjs";
 import { runDesktopVisualPass } from "./desktop-visual.mjs";
 import { captureAppStoreAvailability } from "./app-store-availability.mjs";
 import { checkedOutputPath, checkedUrl, smokeAllowedOutputDirs } from "./browser-guard.mjs";
@@ -1201,18 +1201,25 @@ function record(name, pass, detail = {}) {
 async function clientHandlerSmoke(page, base) {
   try {
     await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    const where = page.locator("[data-ke=where-field] input").first();
-    await where.waitFor({ timeout: timeoutMs });
+    const where = await openHomeWhere(page);
+    const sheet = page.locator("[data-ke=msv2-sheet]");
     await where.fill("Winnipeg");
-    await page.locator("[data-ke=search-submit]").first().click();
-    await page.waitForURL(/\/search/i, { timeout: timeoutMs }).catch(() => {});
-    const landed = page.url();
+    await sheet.locator("[data-ke=msv2-where-list] button", { hasText: /Winnipeg/i }).first().click();
+    await sheet.locator("[data-ke=msv2-next]").click();
+    await page.locator("[data-ke=msv2-sheet][data-step=when]").waitFor();
+    await sheet.locator("[data-ke=msv2-next]").click();
+    await page.locator("[data-ke=msv2-sheet][data-step=who]").waitFor();
+    await sheet.locator("[data-ke=msv2-count-toddler] + button").click();
+    await sheet.locator("[data-ke=msv2-search]").click();
+    await page.waitForURL(/\/search/i, { timeout: timeoutMs });
+    const landed = new URL(page.url());
     record(
       "home-search-submit",
-      /\/search/i.test(landed) && /Winnipeg/i.test(decodeURIComponent(landed)),
-      { note: landed.split("?")[0] },
+      /Winnipeg/i.test(landed.searchParams.get("q") ?? "") && landed.searchParams.get("age") === "toddler",
+      { note: landed.pathname },
     );
 
+    await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     const save = page.locator("[data-ke=save-listing]").first();
     await save.waitFor({ timeout: timeoutMs });
     const saveHref = (await save.getAttribute("href")) || "";
@@ -1535,12 +1542,12 @@ async function frenchChromeSmoke(page, base) {
 const RADIUS_LABEL_WIDTHS = [320, 360, 390, 412, 430, 480, 640, 767, 834, 1023];
 const RADIUS_LABEL_OPTIONS = ["5", "10", "25", "50"];
 
-/** Every home radius option stays fully visible from 320px up. Desktop width stays capped. */
+/** Every search radius option stays fully visible from 320px up. Desktop width stays capped. */
 async function radiusLabelSmoke(page, base) {
   const misses = [];
   for (const width of RADIUS_LABEL_WIDTHS) {
     await page.setViewportSize({ width, height: 800 });
-    for (const path of ["/", "/fr"]) {
+    for (const path of ["/search?q=Winnipeg", "/fr/search?q=Winnipeg"]) {
       const res = await page.goto(new URL(path, base).href, {
         waitUntil: "domcontentloaded",
         timeout: timeoutMs,
@@ -1587,7 +1594,7 @@ async function radiusLabelSmoke(page, base) {
     }
   }
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+  await page.goto(new URL("/search?q=Winnipeg", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
   await page.evaluate(() => document.fonts?.ready).catch(() => {});
   const desktop = await page.evaluate((options) => {
     const select = [...document.querySelectorAll('[data-ke="search-radius"]')].find(

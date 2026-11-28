@@ -55,5 +55,7 @@ test("/search chrome is one filter bar and keeps existing filter math", () => {
   assert.match(copy, /nearWork: "Near work"/);
   assert.match(explore, /redirect\(\{ to: "\/search" \}\)/);
   assert.doesNotMatch(home, /SearchAgeGate/);
-  assert.match(home, /onStartChange/);
+  // N-39 mockup 1: home starts with the Where/When/Who pill; When (date + flexibility) lives in the sheet.
+  assert.match(home, /<MobileSearchHome/);
+  assert.match(src("src/components/mobile-search-sheet.tsx"), /step: "when", label: "msv2When"/);
 });

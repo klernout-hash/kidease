@@ -46,10 +46,8 @@ test("home keeps a single trust disclaimer and the police-check wording", () => 
   assert.doesNotMatch(home, /t\("heroTrust"\)/);
   assert.doesNotMatch(src("src/routes/fr.index.tsx"), /t\("heroTrust"\)/);
   assert.match(home, /<TrustBar/);
-  const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
-  const app = home.slice(home.indexOf("ke-app-only"));
-  assert.equal((web.match(/<TrustBar/g) ?? []).length, 1);
-  assert.equal((app.match(/<TrustBar/g) ?? []).length, 1);
+  assert.equal((home.match(/<TrustBar/g) ?? []).length, 1);
+  assert.ok(home.indexOf("<HomeDiscovery") < home.indexOf("{belowResults}"));
   assert.match(copy, /trustBarLead: "Licensed centres only\. Screening on file means required documents were reviewed; KidEase does not run police checks\."/);
   assert.match(copy, /trustBarLead: "Centres permis seulement\. Dossier de filtrage signifie que les documents requis ont été examinés ; KidEase ne fait pas de contrôle policier\."/);
   assert.match(copy, /homeTrustVerify: "How we verify"/);
@@ -82,7 +80,7 @@ test("home search bar is a slim pill with a claim strip and a daycare header pil
   assert.match(bar, /lg:before:w-px/);
   assert.match(bar, /quiet=\{prominent\}/);
   assert.match(bar, /prominent \? "size-\[44px\]"/);
-  assert.match(home, /max-w-\[960px\]/);
+  assert.match(src("src/components/mobile-search-sheet.tsx"), /max-w-\[60rem\]/);
   assert.match(home, /data-ke="home-hero-pills"[\s\S]*?<HeroClaimStrip/);
   assert.match(fr, /<HomePage/);
   assert.match(fr, /pageSeoHead\(MARKETING_PAGE_SEO_FR\.home\)/);
@@ -136,7 +134,7 @@ test("search control has a Search button, radius, and no Care schedule subtitle"
   assert.match(bar, /data-ke="where-field"/);
   assert.match(bar, /data-ke="where-controls"/);
   assert.doesNotMatch(bar, /whenFilled \? whenLabel : t\("searchWhen"\)/);
-  assert.match(home, /onRadiusChange=\{setRadiusKm\}/);
+  assert.match(home, /compactSearchRadius\(\{ km: radiusKm \}\)/);
   assert.doesNotMatch(home, /displayDistance\(radiusKm/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /searchSubmit: "Search"/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /searchSubmit: "Rechercher"/);

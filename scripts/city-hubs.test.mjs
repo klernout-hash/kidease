@@ -144,8 +144,8 @@ test("generated city-hubs.json keeps Winnipeg and other dense cities", () => {
 
 test("guest home links Browse by city and does not render city pills", () => {
   const home = src("src/routes/index.tsx");
-  const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
-  const hero = web.slice(web.indexOf("from-soft"), web.indexOf('id="how"'));
+  const web = home.slice(home.indexOf("ke-web-only"));
+  const hero = home.slice(home.indexOf("{featuredSearch}"), home.indexOf("{belowResults}"));
   assert.doesNotMatch(hero, /HomePopularCities/);
   assert.doesNotMatch(hero, /<CityHubLinks/);
   assert.doesNotMatch(hero, /CITY_CHIPS/);
@@ -157,7 +157,7 @@ test("guest home links Browse by city and does not render city pills", () => {
   assert.doesNotMatch(web, /t\("requestInfo"\)/);
   assert.doesNotMatch(web, /t\("heroTrust"\)/);
 
-  const app = home.slice(home.indexOf("ke-app-only"));
+  const app = home.slice(home.indexOf("{featuredSearch}"), home.indexOf("ke-web-only"));
   assert.doesNotMatch(app, /CITY_CHIPS/);
   assert.equal((app.match(/<CityHubLinks/g) ?? []).length, 0);
   assert.doesNotMatch(app, /heroCityBrowse/);

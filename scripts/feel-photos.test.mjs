@@ -67,7 +67,7 @@ test("marketing feel photos stay on existing /photos paths", () => {
   assert.match(source, /type="image\/avif"/);
 
   const home = readFileSync(join(root, "src/routes/index.tsx"), "utf8");
-  const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
+  const web = home.slice(home.indexOf("ke-web-only"));
   assert.doesNotMatch(web, /HeroYard/);
   assert.doesNotMatch(readFileSync(join(root, "src/components/shell.tsx"), "utf8"), /HomeCareTypeRow/);
   // Category illustrations are separate from the unchanged marketing photos.

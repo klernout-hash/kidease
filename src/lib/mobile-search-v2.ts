@@ -14,7 +14,7 @@ export const MOBILE_SEARCH_FLAG = "FEATURE_MOBILE_SEARCH_V2";
 export const MOBILE_SEARCH_STEPS = ["where", "when", "who"] as const;
 export type MobileSearchStep = (typeof MOBILE_SEARCH_STEPS)[number];
 
-export const MOBILE_CATEGORIES = ["all", "centre", "home", "open", "before-after", "french"] as const;
+export const MOBILE_CATEGORIES = ["all", "centre", "preschool", "before-after", "home", "subsidy", "open", "french"] as const;
 export type MobileCategory = (typeof MOBILE_CATEGORIES)[number];
 
 export const DATE_FLEX = ["exact", "two-weeks", "month", "school-year"] as const;
@@ -89,9 +89,9 @@ export function mergeMobileSearchParams(previous: Record<string, unknown>, next:
 const RECENT_KEY = "kidease-mobile-search-v2";
 const RECENT_LIMIT = 5;
 
-const AGE_SHORT = {
-  en: { infant: "0–18 mo", toddler: "2 yrs", preschool: "4 yrs", "school-age": "6 yrs" },
-  fr: { infant: "0–18 mois", toddler: "2 ans", preschool: "4 ans", "school-age": "6 ans" },
+const AGE_BAND_LABEL = {
+  en: { infant: "Infant", toddler: "Toddler", preschool: "Preschool", "school-age": "School-age" },
+  fr: { infant: "Poupon", toddler: "Trottineur", preschool: "Préscolaire", "school-age": "Âge scolaire" },
 } as const;
 
 export function emptyCounts(): ChildCounts {
@@ -219,7 +219,7 @@ export function whoAnswer(draft: MobileSearchDraft, locale = "en"): string {
   const tag = localeTag(locale);
   const bands = CHILD_BANDS.filter((band) => draft.counts[band] > 0);
   if (total === 1 && bands.length === 1) {
-    const age = AGE_SHORT[tag][bands[0]];
+    const age = AGE_BAND_LABEL[tag][bands[0]];
     return tag === "fr" ? `1 enfant, ${age}` : `1 child, ${age}`;
   }
   return tag === "fr" ? `${total} enfants` : `${total} children`;
@@ -266,11 +266,12 @@ export function mobileSearchParams(draft: MobileSearchDraft, nearLabel = ""): Mo
   else if (draft.schedule === "drop-in") out.sched = "flexible";
   else if (draft.schedule === "before-after") out.cat = "before-after";
   if (draft.category === "centre") out.fac = "child_care_centre";
+  else if (draft.category === "preschool") out.fac = "nursery_preschool";
   else if (draft.category === "home") out.fac = "family_home";
   else if (draft.category === "open") out.openings = "1";
   else if (draft.category === "before-after") out.cat = "before-after";
   else if (draft.category === "french") out.spoken = "fr";
-  if (draft.subsidy) out.subsidy = "1";
+  if (draft.subsidy || draft.category === "subsidy") out.subsidy = "1";
   if (draft.accessibility) out.inclusive = "1";
   if (draft.french) out.spoken = "fr";
   return out;

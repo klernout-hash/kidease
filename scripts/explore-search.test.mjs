@@ -84,7 +84,7 @@ test("Explore search bar is an Airbnb-style pill wired to /search params", () =>
   assert.match(search, /setView\(view === "map" \? "list" : "map"\)/);
   assert.match(search, /setFilters/);
 
-  assert.match(home, /ExploreSearchBar/);
+  assert.match(home, /<MobileSearchHome/);
   assert.match(copy, /searchWhereHint: "Search destinations"/);
   assert.match(copy, /searchWhenHint: "Start date"/);
   assert.match(copy, /searchWhereHint: "Chercher une destination"/);
@@ -165,13 +165,13 @@ test("the combined guest helper supports names but the separate place fields do 
   const home = src("src/routes/index.tsx");
   const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.doesNotMatch(home, /guestHeroSearch|homeName\.trim\(\) \|\| typed/);
-  assert.match(home, /const hit = await applyPlace\(typed, resolved\);\s*if \(!hit\) return false/);
+  assert.match(src("src/components/mobile-search-sheet.tsx"), /localWhereSuggestions\(typed\)/);
   const search = src("src/routes/search.tsx");
   const handler = search.slice(search.indexOf("async function applyQuery"), search.indexOf("function followDevice"));
   assert.match(handler, /return false;/);
   assert.doesNotMatch(handler, /name: label/);
   assert.match(handler, /name: nameQuery/);
-  assert.match(home, /name: homeName/);
+  assert.match(home, /<MobileSearchHome/);
   assert.match(copy, /locationPh: "Address, city, postal code, or daycare"/);
   assert.match(copy, /locationPh: "Adresse, ville, code postal ou garderie"/);
 });

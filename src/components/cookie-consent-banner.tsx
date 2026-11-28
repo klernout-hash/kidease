@@ -103,13 +103,13 @@ export function CookieConsentBanner() {
       aria-describedby="ke-cookie-consent-body"
       ref={panel}
       tabIndex={-1}
-      className="ke-cookie-consent ke-safe-x shrink-0 [--ke-pad-x:0.75rem] pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]"
+      className="ke-cookie-consent ke-safe-x shrink-0 [--ke-pad-x:0.75rem] pb-1.5 pt-[max(0.375rem,env(safe-area-inset-top))]"
     >
-      <div className="ke-cookie-consent-panel mx-auto flex max-w-[35rem] flex-wrap items-center gap-2 rounded-xl bg-surface px-3 py-2 ring-1 ring-border">
+      <div className="ke-cookie-consent-panel mx-auto flex max-w-[35rem] flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-surface px-3 py-1 ring-1 ring-border">
         <span className="hidden size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-primary sm:grid">
           <Cookie className="size-3.5" aria-hidden />
         </span>
-        <div className="min-w-0 flex-1 basis-48">
+        <div className="flex min-w-0 flex-1 basis-48 flex-wrap items-center gap-x-2">
           <p id="ke-cookie-consent-title" className="text-xs font-semibold leading-4 text-fg">
             {t("cookieConsentTitle")}
           </p>
