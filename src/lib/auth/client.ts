@@ -1,5 +1,7 @@
 import { createAuthClient } from "better-auth/react";
 import { clearAccountScopedStorage } from "@/lib/account-scoped-storage";
+import { DUAL_ANCHOR_STORAGE_KEY } from "@/lib/dual-anchor";
+import { useAppStore } from "@/lib/store";
 import { clearCompare } from "@/lib/compare";
 import { clearDeskLanded, clearSessionHint, clearStickyDesk, forgetRememberedRole, markJustSignedOut } from "@/lib/desks";
 import { resetPostHogIdentity } from "@/lib/posthog";
@@ -133,6 +135,8 @@ export async function signIn(
     await signOutBestEffort();
   }
   setBearerToken(null);
+  clearAccountScopedStorage();
+  resetAccountSearchLocation();
 
   if (isNativeSocialProvider(providerId)) {
     if (providerId === "apple" && !inLivePreview()) {
@@ -336,6 +340,17 @@ async function signOutBestEffort(): Promise<void> {
   }
 }
 
+function resetAccountSearchLocation(): void {
+  const { origin, originSource, originAt, located, query, workOrigin, anchorMode } = useAppStore.getInitialState();
+  useAppStore.setState({ origin, originSource, originAt, located, query, workOrigin, anchorMode });
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(DUAL_ANCHOR_STORAGE_KEY);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 /** Drop client session crumbs so the next paint cannot look half-logged-in. */
 export function clearClientAuthState(): void {
   markLocalSignedOut();
@@ -356,6 +371,7 @@ export function clearClientAuthState(): void {
   clearSearchCache();
   // N-67: recently viewed, resume link, recent searches and the saved search place.
   clearAccountScopedStorage();
+  resetAccountSearchLocation();
   try {
     sessionStorage.removeItem(LOGIN_BOUNCE_KEY);
   } catch {
