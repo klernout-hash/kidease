@@ -15,7 +15,7 @@ import { useDeskMenu } from "@/components/desk-menu";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { attentionForItem } from "@/lib/attention";
 import { bindDeskGroup, deskHrefForLocale, visibleDeskGroups, writeDeskGroupOpen } from "@/lib/desk-nav";
-import { showDeskSwitcher } from "@/lib/desks";
+import { deskQueryForViewer, showDeskSwitcher } from "@/lib/desks";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -309,12 +309,15 @@ export function NavDrawer({
                             <CountBadge count={attentionForItem(session?.attention, item.id)} />
                           </>
                         );
+                        const search = item.search?.desk === "director"
+                          ? { ...item.search, desk: deskQueryForViewer("provider", session?.centreRole) }
+                          : item.search;
                         if (item.href) {
                           return (
                             <Link
                               key={item.id}
                               to={deskHrefForLocale(item.href, pathname)}
-                              {...(item.search ? { search: item.search } : {})}
+                              {...(search ? { search } : {})}
                               onClick={onClose}
                               data-nav={plan ? "upgrade" : item.id}
                               className={rowClass}
