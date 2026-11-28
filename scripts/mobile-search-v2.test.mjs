@@ -114,6 +114,8 @@ test("Winnipeg and a postal code stay on the existing search index", () => {
   const centre = mobileSearchParams(draft({ where: "Toronto", category: "centre", schedule: "part-time" }));
   assert.equal(centre.fac, "child_care_centre");
   assert.equal(centre.sched, "part");
+  assert.equal(mobileSearchParams(draft({ category: "preschool" })).fac, "nursery_preschool");
+  assert.equal(mobileSearchParams(draft({ category: "subsidy" })).subsidy, "1");
   const drop = mobileSearchParams(draft({ where: "Calgary", schedule: "drop-in", category: "open", subsidy: true, french: true }));
   assert.equal(drop.sched, "flexible");
   assert.equal(drop.openings, "1");

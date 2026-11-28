@@ -190,7 +190,7 @@ export async function openRoute(page, base, path) {
   if (path === "/" || path === "/fr") {
     await page
       .waitForFunction(() => {
-        if (document.querySelector(".ke-home [aria-busy='true']")) return false;
+        if (document.querySelector("[data-ke=home-discovery-surface] [aria-busy='true']")) return false;
         const root = document.querySelector("[data-ke='home-how-video']");
         if (!root) return true;
         const box = root.getBoundingClientRect();

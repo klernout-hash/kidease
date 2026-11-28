@@ -219,20 +219,31 @@ async function sweepSizes(page, base, viewports, problems) {
   }
 }
 
-async function armField(page, base, path, selector, value) {
-  const status = await openRoute(page, base, path);
+export async function openHomeWhere(page) {
+  const segment = page.locator("[data-ke=msv2-pill-where]");
+  await segment.waitFor();
+  await page.waitForFunction(() => {
+    const button = document.querySelector("[data-ke=msv2-pill-where]");
+    return Boolean(button && Object.keys(button).some((key) => key.startsWith("__reactProps")));
+  });
+  await segment.click();
+  const field = page.locator("[data-ke=msv2-where-input]");
+  await field.waitFor();
+  return field;
+}
+
+async function armHomeWhere(page, base) {
+  const status = await openRoute(page, base, "/");
   if (status >= 500) return { ok: false, reason: `status ${status}` };
   const armed = await page.evaluate(() => {
     window.__keFoldMark = "stay";
     return performance.timeOrigin;
   });
-  const field = page.locator(selector).locator("visible=true").first();
-  if (await field.isVisible().catch(() => false)) {
-    await field.fill(value);
-    await field.evaluate((el) => {
-      el.dataset.keTyped = "1";
-    });
-  }
+  const field = await openHomeWhere(page);
+  await field.fill("Winnipeg");
+  await field.evaluate((el) => {
+    el.dataset.keTyped = "1";
+  });
   return { ok: true, origin: armed };
 }
 
@@ -248,7 +259,7 @@ async function readLive(page, expect) {
     const input = document.querySelector("[data-ke-typed='1']");
     if (expect.value) {
       if (!input || !input.isConnected) notes.push("state-detached");
-      else if (input.value !== expect.value && input.dataset.keTyped !== "1") notes.push(`state ${input.value}`);
+      else if (input.value !== expect.value) notes.push(`state ${input.value}`);
     }
     const pageEl = document.querySelector("[data-ke='page']");
     const pageWidth = pageEl ? Math.round(pageEl.getBoundingClientRect().width) : null;
@@ -259,7 +270,7 @@ async function readLive(page, expect) {
 
 async function liveFold(page, base, problems) {
   try {
-    const armed = await armField(page, base, "/", "[data-ke='where-field'] input", "Winnipeg");
+    const armed = await armHomeWhere(page, base);
     if (!armed.ok) {
       problems.push(`fold-live / ${armed.reason}`);
       return;
@@ -276,7 +287,6 @@ async function liveFold(page, base, problems) {
       const found = await readLive(page, {
         channel: "app",
         shape: expectedShape(step.width, step.height),
-        field: "[data-ke='where-field'] input",
         value: "Winnipeg",
         cap: step.width >= 768 ? pageCap(step.width) : 0,
       });
@@ -331,7 +341,7 @@ async function liveFold(page, base, problems) {
 
 async function liveWindow(page, base, problems) {
   try {
-    const armed = await armField(page, base, "/", "[data-ke='where-field'] input", "Winnipeg");
+    const armed = await armHomeWhere(page, base);
     if (!armed.ok) {
       problems.push(`win-live / ${armed.reason}`);
       return;
@@ -351,7 +361,6 @@ async function liveWindow(page, base, problems) {
       const found = await readLive(page, {
         channel,
         shape: expectedShape(step.width, step.height),
-        field: "[data-ke='where-field'] input",
         value: "Winnipeg",
         cap: channel === "app" && step.width >= 768 ? pageCap(step.width) : 0,
       });
@@ -520,7 +529,7 @@ export async function runStoreViewportPass(browser, base, stores = STORE_GROUP_N
     if (group.store === "samsung") await liveFold(page, base, problems);
     if (group.store === "huawei") {
       try {
-        const armed = await armField(page, base, "/", "[data-ke='where-field'] input", "Winnipeg");
+        const armed = await armHomeWhere(page, base);
         if (!armed.ok) problems.push(`matex-live / ${armed.reason}`);
         else {
           for (const step of [
@@ -533,8 +542,7 @@ export async function runStoreViewportPass(browser, base, stores = STORE_GROUP_N
             const found = await readLive(page, {
               channel: "app",
               shape: expectedShape(step.width, step.height),
-              field: "[data-ke='where-field'] input",
-              value: "Winnipeg",
+                    value: "Winnipeg",
               cap: step.width >= 768 ? pageCap(step.width) : 0,
             });
             for (const note of found.notes) problems.push(`matex-live ${step.name} ${note}`);
