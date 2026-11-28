@@ -128,3 +128,12 @@ test("inspection and subsidy appear together only for resolved centre owners", (
     assert.ok(visibleDeskNav(desk).every((item) => !targets.includes(item.id)));
   }
 });
+
+test("both Owner Menu layouts use the guarded compliance group", () => {
+  const phone = src("src/components/phone-category-menu.tsx");
+  const app = src("src/components/app-menu-screen.tsx");
+  assert.match(app, /<OwnerComplianceMenu ownerDesk=\{showCreate\}/);
+  assert.match(phone, /<OwnerComplianceMenu ownerDesk=\{host\}/);
+  assert.match(phone, /if \(!ownerDesk \|\| !ready \|\| chrome.guestView\) return null/);
+  assert.match(phone, /visibleDeskNav\("daycare", \{\s*centreOwner: session\?\.centreOwner/);
+});

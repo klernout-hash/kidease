@@ -32,7 +32,7 @@ import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
 import { useMounted } from "@/lib/use-mounted";
 import { useCopy } from "@/lib/use-copy";
 import { useAirbnbUi } from "@/lib/use-airbnb-ui";
-import { PhoneCategoryMenu } from "@/components/phone-category-menu";
+import { OwnerComplianceMenu, PhoneCategoryMenu } from "@/components/phone-category-menu";
 import { MonthBars } from "@/components/month-bars";
 
 const AppearanceControl = lazy(() =>
@@ -158,6 +158,7 @@ export function AppMenuScreen({
         </Link>
       )}
 
+      <OwnerComplianceMenu ownerDesk={showCreate} />
       <nav className="ke-menu-group mt-6" aria-label={t("navMenu")}>
         {user && highlight !== "create" ? (
           <MenuRow to={menuDeskPath(pathname)} search={{ screen: "payments" }} label={t("earningsPayments")} icon="terms" marker="payments" />

@@ -5,7 +5,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/session-desks";
 import { staffPhoneMarkerAllowed } from "@/lib/staff-permissions";
 import { signOut } from "@/lib/auth/client";
-import { menuDeskPath, providerDeskPath } from "@/lib/desk-nav";
+import { deskHrefForLocale, menuDeskPath, providerDeskPath, visibleDeskNav } from "@/lib/desk-nav";
 import { localePath } from "@/lib/locale-path";
 import { signOutTarget } from "@/lib/sign-out-target";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -140,6 +140,34 @@ function helpGroup(menu: string): Group {
 
 const GUEST_HIDDEN = new Set(["requests", "waitlists", "care", "account", "notifications", "saved", "children"]);
 
+export function OwnerComplianceMenu({ ownerDesk }: { ownerDesk: boolean }) {
+  const { t } = useCopy();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { session, ready } = useSessionDesks();
+  const chrome = useRoleChrome();
+  if (!ownerDesk || !ready || chrome.guestView) return null;
+  const entries = visibleDeskNav("daycare", {
+    centreOwner: session?.centreOwner,
+    centreRole: session?.centreRole,
+    centreLinked: session?.centreLinked,
+  }).filter((item) => item.id === "inspection-sync" || item.id === "subsidy");
+  if (!entries.length) return null;
+  return (
+    <nav className="ke-menu-group mt-6" aria-label={t("navComplianceFunding")} data-ke="owner-compliance-menu">
+      <h2 className="px-3 py-2 text-sm font-semibold">{t("navComplianceFunding")}</h2>
+      {entries.map((item) => (
+        <MenuRow
+          key={item.id}
+          to={deskHrefForLocale(item.href!, pathname)}
+          label={item.labelKey ? t(item.labelKey) : item.label}
+          icon={item.id === "inspection-sync" ? "verify" : "benefits"}
+          marker={item.id}
+        />
+      ))}
+    </nav>
+  );
+}
+
 export function PhoneCategoryMenu({ host }: { host: boolean }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -186,6 +214,7 @@ export function PhoneCategoryMenu({ host }: { host: boolean }) {
           {t("menuSignInCard")}
         </Link>
       )}
+      <OwnerComplianceMenu ownerDesk={host} />
       {groups.map((group) => (
         <nav key={group.en} aria-label={fr ? group.fr : group.en}>
           <h2>{fr ? group.fr : group.en}</h2>
