@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/empty-state";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { spotOfferCopy } from "@/lib/spot-offer-copy";
 import { listMySpotOffers, respondMySpotOffer, type MySpotOfferRow } from "@/lib/server/spot-offers";
+import { listMyWaitlists } from "@/lib/server/waitlist-tracker";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { RuntimePaused } from "@/components/runtime-paused";
 import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
@@ -19,12 +20,21 @@ function when(iso: string, locale: string) {
   return date.toLocaleString(locale === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium", timeStyle: "short" });
 }
 
+async function loadSpotOffers() {
+  const { rows } = await listMySpotOffers();
+  if (rows.length) return { rows, hasWaitlists: false };
+  const { requests, centres, areas } = await listMyWaitlists();
+  return { rows, hasWaitlists: Boolean(requests.length || centres.length || areas.length) };
+}
+
 export function MySpotOffers() {
   const { locale } = useCopy();
   const waitlistOn = useRuntimeSwitches().waitlistSpots;
   const copy = spotOfferCopy(locale);
   const { user, isPending } = useCurrentUserState();
-  const [rows, setRows] = useState<MySpotOfferRow[] | null>(null);
+  const [result, setResult] = useState<{ rows: MySpotOfferRow[]; hasWaitlists: boolean } | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const rows = result?.rows ?? null;
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const pc = pipelineCopy(locale);
@@ -36,25 +46,26 @@ export function MySpotOffers() {
   }, []);
 
   function load() {
-    return listMySpotOffers()
-      .then((result) => setRows(result.rows))
-      .catch(() => setRows([]));
+    setLoadFailed(false);
+    return loadSpotOffers()
+      .then(setResult)
+      .catch(() => setLoadFailed(true));
   }
 
   useEffect(() => {
-    if (isPending || !user) return;
+    if (isPending || !user || !waitlistOn) return;
     let live = true;
-    void listMySpotOffers()
-      .then((result) => {
-        if (live) setRows(result.rows);
+    void loadSpotOffers()
+      .then((data) => {
+        if (live) setResult(data);
       })
       .catch(() => {
-        if (live) setRows([]);
+        if (live) setLoadFailed(true);
       });
     return () => {
       live = false;
     };
-  }, [user, isPending]);
+  }, [user, isPending, waitlistOn]);
 
   if (!waitlistOn) {
     return (
@@ -90,9 +101,25 @@ export function MySpotOffers() {
             {note}
           </p>
         ) : null}
-        {rows === null ? <p className="mt-6 text-sm text-muted">{copy.mineTitle}</p> : null}
-        {rows && !rows.length ? (
-          <EmptyState title={copy.emptyMine} body={copy.mineLead} action={copy.findCare} actionTo="/search" />
+        {rows === null && !loadFailed ? <p className="mt-6 text-sm text-muted">{copy.mineTitle}</p> : null}
+        {loadFailed ? (
+          <div className="mt-6 space-y-2">
+            <p role="alert">{copy.offersUnavailable}</p>
+            <Button type="button" variant="secondary" onClick={() => void load()}>{copy.tryAgain}</Button>
+          </div>
+        ) : null}
+        {result && !rows?.length ? (
+          <div className="mt-6 space-y-2" data-ke="spot-offers-empty">
+            <h2 className="font-medium">{copy.noOffers}</h2>
+            <p className="text-sm text-muted">{result.hasWaitlists ? copy.waitlistsElsewhere : copy.emptyMine}</p>
+            <Button asChild>
+              {result.hasWaitlists ? (
+                <Link to={localePath("/parent", locale)} search={{ tab: "waitlists" }}>{copy.seeWaitlists}</Link>
+              ) : (
+                <Link to={localePath("/search", locale)}>{copy.findCare}</Link>
+              )}
+            </Button>
+          </div>
         ) : null}
         {rows && rows.length ? (
           <ul className="mt-6 divide-y divide-border">
