@@ -1,6 +1,6 @@
 name: DB restore test (quarterly)
 
-# Downloads the newest weekly dump from the private R2 bucket and restores it
+# Downloads the newest encrypted weekly dump from the private R2 bucket and restores it
 # into a throwaway Postgres container inside the job (not Neon, costs nothing).
 # Checks key tables have rows, then everything is discarded with the runner.
 on:
@@ -40,12 +40,13 @@ jobs:
     steps:
       - name: Check required secrets are set
         env:
+          BACKUP_ENCRYPTION_IDENTITY: ${{ secrets.BACKUP_ENCRYPTION_IDENTITY }}
           BACKUP_R2_ACCESS_KEY_ID: ${{ secrets.BACKUP_R2_ACCESS_KEY_ID }}
           BACKUP_R2_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_R2_SECRET_ACCESS_KEY }}
           BACKUP_R2_ACCOUNT_ID: ${{ secrets.BACKUP_R2_ACCOUNT_ID }}
         run: |
           missing=0
-          for v in BACKUP_R2_ACCESS_KEY_ID BACKUP_R2_SECRET_ACCESS_KEY BACKUP_R2_ACCOUNT_ID; do
+          for v in BACKUP_ENCRYPTION_IDENTITY BACKUP_R2_ACCESS_KEY_ID BACKUP_R2_SECRET_ACCESS_KEY BACKUP_R2_ACCOUNT_ID; do
             if [ -z "${!v}" ]; then echo "::error::Missing repo secret $v (see docs/backups.md)"; missing=1; fi
           done
           exit $missing
@@ -56,10 +57,10 @@ jobs:
           sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
           echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
           sudo apt-get update -qq
-          sudo apt-get install -y -qq "postgresql-client-${PG_MAJOR}"
+          sudo apt-get install -y -qq "postgresql-client-${PG_MAJOR}" age
           echo "/usr/lib/postgresql/${PG_MAJOR}/bin" >> "$GITHUB_PATH"
 
-      - name: Download newest weekly dump
+      - name: Download newest encrypted weekly dump
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_R2_SECRET_ACCESS_KEY }}
@@ -71,26 +72,32 @@ jobs:
           set -euo pipefail
           endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
           key=$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix weekly/ --endpoint-url "$endpoint" \
-                  --query 'sort_by(Contents,&Key)[-1].Key' --output text)
-          if [ -z "$key" ] || [ "$key" = "None" ]; then echo "::error::No weekly dumps found"; exit 1; fi
+                  --query 'Contents[].Key' --output json |
+                jq -er '[.[]? | select(test("^weekly/[0-9]{4}-[0-9]{2}-[0-9]{2}[.]dump[.]age$"))] | sort | last // empty')
+          umask 077
           mkdir -p "$RUNNER_TEMP/restore"
-          aws s3 cp "s3://${BUCKET}/${key}" "$RUNNER_TEMP/restore/db.dump" --endpoint-url "$endpoint" --only-show-errors
-          echo "restoring ${key} ($(stat -c %s "$RUNNER_TEMP/restore/db.dump") bytes)"
+          aws s3 cp "s3://${BUCKET}/${key}" "$RUNNER_TEMP/restore/db.dump.age" --endpoint-url "$endpoint" --only-show-errors
           echo "### Restore test of \`${key}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Decrypt and validate the backup
+        env:
+          BACKUP_ENCRYPTION_IDENTITY: ${{ secrets.BACKUP_ENCRYPTION_IDENTITY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${BACKUP_ENCRYPTION_IDENTITY:?Missing backup encryption identity}"
+          age --decrypt --identity <(printf '%s\n' "$BACKUP_ENCRYPTION_IDENTITY") \
+            --output "$RUNNER_TEMP/restore/db.dump" "$RUNNER_TEMP/restore/db.dump.age"
+          pg_restore --list "$RUNNER_TEMP/restore/db.dump" > /dev/null
 
       - name: Restore into throwaway Postgres
         run: |
-          set -uo pipefail
-          psql -v ON_ERROR_STOP=1 -c "select version();"
-          # Neon-only roles/extensions may not exist here; --no-owner/--no-privileges
-          # skip role grants. Remaining errors are logged and judged by the row checks.
-          pg_restore --no-owner --no-privileges --jobs=4 --dbname "$PGDATABASE" \
-            "$RUNNER_TEMP/restore/db.dump" 2> "$RUNNER_TEMP/restore/errors.log"
-          rc=$?
-          errs=$(grep -c 'error:' "$RUNNER_TEMP/restore/errors.log" || true)
-          echo "pg_restore exit=$rc, errors=$errs"
-          grep 'error:' "$RUNNER_TEMP/restore/errors.log" | head -20 || true
-          echo "pg_restore errors (non-fatal unless row checks fail): $errs" >> "$GITHUB_STEP_SUMMARY"
+          set -euo pipefail
+          if ! pg_restore --exit-on-error --no-owner --no-privileges --jobs=4 --dbname "$PGDATABASE" \
+            "$RUNNER_TEMP/restore/db.dump" > "$RUNNER_TEMP/restore/restore.log" 2>&1; then
+            echo "::error::The encrypted backup did not restore completely."
+            exit 1
+          fi
 
       - name: Check key tables have rows
         run: |
