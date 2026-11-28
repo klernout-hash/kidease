@@ -24,7 +24,7 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { localePath } from "@/lib/locale-path";
 import { showStoreComingSoon } from "@/lib/store-placeholders";
 import { useCopy } from "@/lib/use-copy";
-import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
+import { useInNativeShell, useNativeHidesAdmin as useCapacitorShell, useStoreChannel } from "@/lib/use-native-shell";
 import { HomeScreenGuide } from "@/components/home-screen-guide";
 import { AppStoreStatus } from "@/components/app-store-status";
 import { MicrosoftStoreLink } from "@/components/microsoft-store-link";
@@ -63,7 +63,8 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
   const hideCommerce = useInNativeShell();
   const plansOn = useRoleChrome().subscriptionsEnabled === true;
   const storeChannel = useStoreChannel();
-  const showStores = showStoreComingSoon(storeChannel);
+  const native = useCapacitorShell();
+  const showStores = !native && showStoreComingSoon(storeChannel);
   const huaweiGallery = useRouterState({
     select: (state) => state.matches.some((match) => (match.context as { huaweiGallery?: boolean }).huaweiGallery === true),
   });
