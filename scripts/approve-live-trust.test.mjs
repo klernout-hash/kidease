@@ -368,10 +368,10 @@ test("guest, parent, and daycare stay in sync with the approval strip", () => {
   assert.equal(publicBrowseClaim({ ...unclaimed, listingActive: false, role: "guest" }), false);
   assert.equal(publicBrowseClaim({ live: true, claimed: true, claimStatus: "approved", role: "guest" }), false);
   assert.equal(publicBrowseClaim({ live: false, claimed: true, claimStatus: "waiting", role: "guest" }), false);
-  assert.equal(listingSubsidy({ province: "MB", feeProgram: "mb-10-day" })?.subsidy_label, "$10 / Day");
-  assert.equal(listingSubsidy({ province: "PE", feeProgram: "pe-10-day" })?.subsidy_label, "$10 / Day");
+  assert.equal(listingSubsidy({ province: "MB", feeProgram: "mb-10-day" })?.subsidy_label, "CA$10 / Day");
+  assert.equal(listingSubsidy({ province: "PE", feeProgram: "pe-10-day" })?.subsidy_label, "CA$10 / Day");
   assert.equal(listingSubsidy({ province: "ON" }), null);
-  assert.equal(listingSubsidy({ province: "QC", feeProgram: "qc-9-65" })?.subsidy_label, "$9.65/day subsidized");
+  assert.equal(listingSubsidy({ province: "QC", feeProgram: "qc-9-65" })?.subsidy_label, "CA$9.65/day subsidized");
   assert.notEqual(listingSubsidy({ province: "NT", feeProgram: "nt-reduced" })?.subsidy_label, "$10/day");
   assert.equal(approvalScreeningFact({ screeningOnFile: false, staffScreeningAttested: true }).status, "Attested");
   assert.equal(
