@@ -1,0 +1,47 @@
+name: Merge gate
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review, edited]
+
+permissions:
+  pull-requests: read
+
+concurrency:
+  group: merge-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  merge-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check holds and database approval
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          api="repos/$GITHUB_REPOSITORY/pulls/$PR"
+          pr=$(gh api "$api")
+          if jq -e 'any(.labels[].name; test("^(hold|do-not-merge|needs-migration-approval|needs-kyle)$"; "i"))' <<< "$pr" >/dev/null; then
+            echo "::error::This pull request has a merge hold."
+            exit 1
+          fi
+          files=$(gh api --paginate --slurp "$api/files?per_page=100")
+          files=$(jq -c 'add' <<< "$files")
+          current=$(gh api "$api")
+          if ! jq -en --argjson before "$pr" --argjson after "$current" --argjson files "$files" '
+            def state: [.head.sha, .base.sha, .changed_files, ([.labels[].name] | sort)];
+            ($before | state) == ($after | state) and ($files | length) == $after.changed_files
+          ' >/dev/null; then
+            echo "::error::The pull request changed during inspection or its file list is incomplete."
+            exit 1
+          fi
+          if jq -e 'any(.[] | (.filename, .previous_filename // empty);
+              test("^(migrations/|migrations-rls/|src/lib/(db\\.ts$|server/(runtime-schema|automation-schema)\\.ts$))"))' <<< "$files" >/dev/null &&
+            ! jq -e 'any(.labels[].name; . == "db-approved")' <<< "$pr" >/dev/null; then
+            echo "::error::Database changes require the db-approved label."
+            exit 1
+          fi
