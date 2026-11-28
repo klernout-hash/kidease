@@ -15,7 +15,7 @@ const canonicalRoot = realpathSync(root);
 const ui = ["src/components/help-launcher-shell.tsx", "src/components/help-bot.tsx", "src/components/turnstile-field.tsx"];
 const allowed = new Set([
   ...ui, "src/components/ui/button.tsx", "src/lib/help-launcher.ts", "src/lib/gov/access.ts",
-  "src/lib/locale-path.ts", "src/lib/ai/help-bubble.ts", "src/lib/ai/flags.ts", "src/lib/ai/flag-gate.ts",
+  "src/lib/locale-path.ts", "src/lib/ai/help-bubble.ts", "src/lib/ai/desk-help.ts", "src/lib/ai/flags.ts", "src/lib/ai/flag-gate.ts",
   "src/lib/ai/pii.ts", "src/lib/ai/event-props.ts", "src/lib/ranking/weights.ts", "src/lib/turnstile-widget.ts",
   "src/lib/utils.ts", "src/lib/cad-format.ts", "src/lib/secure-random.ts", "src/lib/html-text.ts", "src/lib/languages.ts", "src/lib/french-type.ts",
 ]);
@@ -30,6 +30,8 @@ const rewrites = {
   [ui[1]]: {
     "@/lib/use-copy": "a11y-fixture:copy",
     "@/lib/auth/use-current-user": "a11y-fixture:user",
+    "@/components/role-chrome": "a11y-fixture:role",
+    "@/components/session-desks": "a11y-fixture:desks",
     "@/lib/posthog": "a11y-fixture:analytics",
     "@/lib/server/parent-helper": "a11y-fixture:help-service",
     "@/lib/server/support-chat": "a11y-fixture:chat-service",
@@ -96,6 +98,8 @@ export async function startHelpDialogFixture(out) {
       export function useCopy(){const path=useRouterState({select:s=>s.location.pathname});const locale=path==='/fr'||path.startsWith('/fr/')?'fr':'en';return {locale,t:key=>tx(locale,key)};}
     `,
     "a11y-fixture:user": "export function useCurrentUserState(){return {user:null,loading:false};}",
+    "a11y-fixture:role": 'export function useRoleChrome(){return {role:"guest"};}',
+    "a11y-fixture:desks": "export function useSessionDesks(){return {session:null};}",
     "a11y-fixture:analytics": "export function capturePostHogEvent(){throw new Error('Analytics are denied in Help QA');}",
     "a11y-fixture:turnstile-key": "export async function getTurnstileSiteKey(){return '';}",
     "a11y-fixture:help-service": `
@@ -263,7 +267,7 @@ export async function startHelpDialogFixture(out) {
             assert.equal(metrics.processGuard.violations, 0, "The private process guard must remain clean");
           }
           assert.deepEqual(new Set(metrics.sourceModules), allowed, "Only the complete actual Help source graph may load");
-          assert.equal(metrics.rewrittenEdges.length, 9, "All explicit service/copy edges must be isolated");
+          assert.equal(metrics.rewrittenEdges.length, 11, "All explicit service/copy edges must be isolated");
           assert.equal(metrics.serverRequestsBlocked, 0, "Browser denial must stop service calls before the fixture server");
         } finally {
           if (!processGuard) globalThis.fetch = previousFetch;
