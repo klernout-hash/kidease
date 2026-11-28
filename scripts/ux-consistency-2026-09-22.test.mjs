@@ -62,7 +62,7 @@ describe("directory cards never paint a broken image for an empty URL", () => {
   it("hides a failed img and falls back without dropping the transform retry", () => {
     const photo = src("src/components/building-photo.tsx");
     const carousel = src("src/components/photo-carousel.tsx");
-    assert.match(photo, /healMediaUrl/);
+    assert.match(photo, /safeListingImageSrc/);
     assert.match(photo, /data-ke-photo=\{loaded \? "ok" : "pending"\}/);
     assert.match(photo, /invisible absolute inset-0/);
     assert.match(photo, /skipTransform/);

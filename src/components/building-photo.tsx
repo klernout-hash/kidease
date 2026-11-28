@@ -12,7 +12,7 @@ import {
   srcsetWidthsFor,
 } from "@/lib/photo";
 import { isMissingCatalogueBuilding } from "@/lib/catalogue-buildings";
-import { healMediaUrl, isFailedPhotoUrl, isStockListingPhoto, rememberFailedPhoto } from "@/lib/listing-photo";
+import { isFailedPhotoUrl, isStockListingPhoto, rememberFailedPhoto, safeListingImageSrc } from "@/lib/listing-photo";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -171,7 +171,8 @@ export function BuildingPhoto({
   /** Broken or missing stills. Live listings pass false so they are not asked to claim. */
   claim?: boolean;
 }) {
-  const healed = healMediaUrl(src);
+  // Unsupported sources (other hosts, http:, javascript:, SVG data) become "" and show the placeholder.
+  const healed = safeListingImageSrc(src);
   const ref = useRef<HTMLImageElement>(null);
   const [cur, setCur] = useState(healed);
   const [broken, setBroken] = useState(photoNeedsFallback(healed));
@@ -179,7 +180,7 @@ export function BuildingPhoto({
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const next = healMediaUrl(src);
+    const next = safeListingImageSrc(src);
     setCur(next);
     setBroken(photoNeedsFallback(next));
     setSkipTransform(false);
