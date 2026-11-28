@@ -15,6 +15,7 @@ export const ACCOUNT_SCOPED_LOCAL_KEYS = [
   "kidease-resume-path",
   "kidease-recent-searches",
   "kidease-search-memory",
+  "kidease-origin",
 ] as const;
 
 /** Lets open screens (for example the home "Recently viewed" row) refresh. */
