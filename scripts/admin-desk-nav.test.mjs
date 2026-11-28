@@ -60,7 +60,7 @@ test("parent or daycare hitting /admin get the same 404", () => {
   assert.equal(adminGateFailureKind("Not authorized"), "home");
 });
 
-test("header, hamburger, and menu Admin entries document-navigate to /admin", () => {
+test("web Admin entries use document navigation and the native menu uses its launcher", () => {
   const switcher = src("src/components/desk-switcher.tsx");
   const drawer = src("src/components/nav-drawer.tsx");
   const menu = src("src/components/menu-desk-tools.tsx");
@@ -75,7 +75,8 @@ test("header, hamburger, and menu Admin entries document-navigate to /admin", ()
   assert.doesNotMatch(drawer, /AdminDeskLink/);
   assert.match(drawer, /isAdmin/);
   assert.doesNotMatch(menu, /AdminDeskLink/);
-  assert.match(menu, /canSeeAdminDesk\(session\?\.role, session\?\.email\)/);
+  assert.match(menu, /canVisitDesk\(session\.desks, "admin", session\.role, session\.email\)/);
+  assert.match(menu, /openNativeAdminBrowser\(locale\)/);
   assert.match(src("src/components/shell.tsx"), /canSeeAdminDesk\(session\?\.role, session\?\.email/);
   assert.doesNotMatch(drawer, /to="\/admin"/);
   assert.doesNotMatch(menu, /to="\/admin"/);
