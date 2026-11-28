@@ -102,6 +102,8 @@ async function previewDb() {
   await pg.exec(read("migrations/0182_attendance_handoff.sql"));
   await pg.exec(read("migrations/0012_attendance.sql"));
   await pg.exec(read("migrations/0237_attendance_per_booking.sql"));
+  await pg.exec(read("migrations/0119_staff_scheduling.sql"));
+  await pg.exec(read("migrations/0146_absence_reports.sql"));
   return { pg, sql: sqlFor(pg) };
 }
 

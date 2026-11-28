@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { evaluateFeatureFlag } from "@/lib/flags";
-import { absenceDays, miniSiteOpen, rsvpHeadcount, type RsvpAnswer } from "@/lib/phase5-rules";
+import { miniSiteOpen, rsvpHeadcount, type RsvpAnswer } from "@/lib/phase5-rules";
 
 export const phase5Flags = createServerFn({ method: "GET" }).handler(async () => ({
   absence: evaluateFeatureFlag("FEATURE_PARENT_ABSENCE"),
@@ -11,48 +11,6 @@ export const phase5Flags = createServerFn({ method: "GET" }).handler(async () =>
   miniSite: evaluateFeatureFlag("FEATURE_CENTRE_MINISITE"),
   forecast: evaluateFeatureFlag("FEATURE_ROOM_FORECAST"),
 }));
-
-export const reportParentAbsence = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
-  .validator((data: { bookingId?: string; from?: string; to?: string; reason?: string }) => ({
-    bookingId: String(data?.bookingId || "").trim().slice(0, 100),
-    from: String(data?.from || "").slice(0, 10),
-    to: String(data?.to || data?.from || "").slice(0, 10),
-    reason: String(data?.reason || "").trim().slice(0, 200),
-  }))
-  .handler(async ({ context, data }) => {
-    if (!evaluateFeatureFlag("FEATURE_PARENT_ABSENCE")) return { ok: false as const, error: "off" };
-    const days = absenceDays(data.from, data.to);
-    if (!data.bookingId || !days.length) return { ok: false as const, error: "day" };
-    const sql = await getSql();
-    // The centre and child name are taken from this one enrolment read and never from the request.
-    const bookings = await sql<{ id: string; daycare_id: string; child_name: string }>`
-      select b.id, b.daycare_id, coalesce(c.name, 'Child') as child_name
-      from bookings b
-      left join children c on c.id = b.child_id
-      where b.id = ${data.bookingId} and b.user_id = ${context.userId}
-        and (c.user_id = ${context.userId} or c.id is null)
-        and b.status in ('accepted', 'active')
-      limit 1
-    `;
-    const booking = bookings[0];
-    if (!booking) return { ok: false as const, error: "enrol" };
-    const saved: string[] = [];
-    for (const day of days) {
-      const id = `abs_${booking.id}_${day}`.replace(/[^a-z0-9_-]/gi, "").slice(0, 80);
-      const rows = await sql<{ id: string }>`
-        insert into attendance (id, daycare_id, booking_id, child_name, parent_user_id, day, status, notes, updated_by)
-        values (${id}, ${booking.daycare_id}, ${booking.id}, ${booking.child_name}, ${context.userId}, ${day}, ${"absent"}, ${data.reason}, ${context.userId})
-        on conflict (daycare_id, booking_id, day) where booking_id is not null do update
-          set status = 'absent', notes = excluded.notes, updated_by = excluded.updated_by
-          where attendance.parent_user_id = ${context.userId}
-        returning id
-      `;
-      if (rows.length) saved.push(day);
-    }
-    if (!saved.length) return { ok: false as const, error: "record" };
-    return { ok: true as const, days: saved, reoffered: false as const };
-  });
 
 export const saveCentreEvent = createServerFn({ method: "POST" })
   .middleware([authMiddleware])

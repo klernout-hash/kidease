@@ -37,9 +37,7 @@ const { saveAttendance, getWeekSchedule } = await import("../src/lib/server/ops.
 const { updateChild } = await import("../src/lib/server/family.ts");
 const { getLicensedMonth } = await import("../src/lib/server/care-ops.ts");
 const { redeemKioskScan } = await import("../src/lib/server/qr-kiosk.ts");
-const { reportParentAbsence } = await import("../src/lib/server/phase5.ts");
-const { reportAbsence } = await import("../src/lib/server/wiring/absence-reports.ts");
-const { saveParentAbsenceReport } = await import("../src/lib/server/attendance-handoff.ts");
+const { reportMyChildAbsence, cancelMyChildAbsence, listCentreAbsences } = await import("../src/lib/server/child-checkin.ts");
 const { emptyChild } = await import("../src/lib/child-profile.ts");
 const { mintKioskToken } = await import("../src/lib/qr-kiosk.ts");
 const { centreLocalDay } = await import("../src/lib/attendance-handoff.ts");
@@ -148,6 +146,7 @@ async function openDb() {
       child_id text,
       status text not null,
       conversation_id text,
+      age_group text not null default 'preschool',
       parent_name text
     );
     create table conversations (
@@ -165,7 +164,8 @@ async function openDb() {
       created_at timestamptz not null default now()
     );
     create table provider_daycares (user_id text, daycare_id text);
-    create table centre_members (user_id text, daycare_id text, status text, role text);
+    create table centre_members (user_id text, daycare_id text, status text, role text, permission_preset text, permissions jsonb);
+    create table profiles (user_id text, locale text);
   `);
   for (const statement of migrationStatements()) {
     try {
@@ -176,7 +176,9 @@ async function openDb() {
     }
   }
   await pg.exec(readFileSync(join(root, "migrations/0133_kiosk_scans.sql"), "utf8"));
-  await pg.exec(readFileSync(join(root, "migrations/0146_absence_reports.sql"), "utf8"));
+  for (const file of ["0146_absence_reports.sql", "0119_staff_scheduling.sql", "0045_user_notifications.sql"]) {
+    await pg.exec(readFileSync(join(root, "migrations", file), "utf8"));
+  }
   await pg.exec(`
     insert into daycares (id, name, province, timezone) values
       ('${CENTRE}', 'Maple Room', 'MB', 'America/Winnipeg');
@@ -411,108 +413,60 @@ describe("attendance rows stay with the child they belong to", { concurrency: 1 
     }
   });
 
-  test("a parent absence mark must not change another child's attendance row", async () => {
-    const { pg, sql } = await openDb();
-    const previous = process.env.FEATURE_PARENT_ABSENCE;
-    process.env.FEATURE_PARENT_ABSENCE = "1";
-    try {
-      await withSql(sql, () =>
-        saveAttendance(attendanceInput(STAFF, VICTIM_BOOKING, "arrived", "inhaler is in the bag")),
-      );
-      const before = (await rowsFor(sql, VICTIM_BOOKING, DAY))[0];
-      await withSql(sql, () =>
-        reportParentAbsence({
-          context: { userId: ATTACKER },
-          data: {
-            daycareId: CENTRE,
-            childName: VICTIM_NAME,
-            from: DAY,
-            to: DAY,
-            reason: "forged absence",
-          },
-        }),
-      );
-      const victim = await rowsFor(sql, VICTIM_BOOKING, DAY);
-      assert.equal(victim.length, 1);
-      assert.equal(victim[0].id, before.id);
-      assert.equal(victim[0].status, "arrived");
-      assert.equal(victim[0].notes, "inhaler is in the bag");
-      assert.equal(victim[0].updated_by, STAFF);
-      assert.equal(victim[0].booking_id, VICTIM_BOOKING);
-      assert.equal(victim[0].parent_user_id, VICTIM);
-    } finally {
-      if (previous === undefined) delete process.env.FEATURE_PARENT_ABSENCE;
-      else process.env.FEATURE_PARENT_ABSENCE = previous;
-      await pg.close();
-    }
-  });
-
-  test("an enrolled parent's room absence must not mark a classmate absent", async () => {
-    const { pg, sql } = await openDb();
-    const previous = process.env.FEATURE_ABSENCE_REPORTS;
-    process.env.FEATURE_ABSENCE_REPORTS = "1";
-    try {
-      await withSql(sql, () =>
-        saveAttendance(attendanceInput(STAFF, VICTIM_BOOKING, "arrived", "inhaler is in the bag")),
-      );
-      const before = (await rowsFor(sql, VICTIM_BOOKING, DAY))[0];
-      await withSql(sql, () =>
-        reportAbsence({
-          context: { userId: ATTACKER },
-          data: { daycareId: CENTRE, childName: VICTIM_NAME, day: DAY, band: "preschool" },
-        }),
-      );
-      const victim = await rowsFor(sql, VICTIM_BOOKING, DAY);
-      assert.equal(victim.length, 1);
-      assert.equal(victim[0].id, before.id);
-      assert.equal(victim[0].status, "arrived");
-      assert.equal(victim[0].notes, "inhaler is in the bag");
-      assert.equal(victim[0].updated_by, STAFF);
-      const reports = await sql`
-        select child_name, parent_user_id from absence_reports
-        where daycare_id = ${CENTRE} and day = ${DAY} and child_name = ${VICTIM_NAME}
-      `;
-      assert.equal(reports.length, 0);
-    } finally {
-      if (previous === undefined) delete process.env.FEATURE_ABSENCE_REPORTS;
-      else process.env.FEATURE_ABSENCE_REPORTS = previous;
-      await pg.close();
-    }
-  });
-
-  test("a guarded parent absence still records that parent's own child when names match", async () => {
+  test("Daily care scopes absences to the reporting family and the reviewing centre", async () => {
     const { pg, sql } = await openDb();
     try {
       await renameAttacker(sql, VICTIM_NAME);
-      const now = new Date("2026-11-02T18:00:00.000Z");
+      const now = new Date();
       const localDay = centreLocalDay(now, "America/Winnipeg");
-      await withSql(sql, () =>
-        saveAttendance(
-          attendanceInput(STAFF, VICTIM_BOOKING, "arrived", "inhaler is in the bag", localDay),
-        ),
-      );
-      const before = (await rowsFor(sql, VICTIM_BOOKING, localDay))[0];
-      const saved = await saveParentAbsenceReport(sql, {
-        userId: ATTACKER,
-        bookingId: ATTACKER_BOOKING,
-        status: "sick",
-        now,
-      });
-      assert.equal(saved.ok, true);
-      assert.equal(saved.status, "sick");
-      const victim = await rowsFor(sql, VICTIM_BOOKING, localDay);
-      const attacker = await rowsFor(sql, ATTACKER_BOOKING, localDay);
-      assert.equal(victim.length, 1);
-      assert.equal(victim[0].id, before.id);
-      assert.equal(victim[0].status, "arrived");
-      assert.equal(victim[0].notes, "inhaler is in the bag");
-      assert.equal(victim[0].updated_by, STAFF);
-      assert.equal(victim[0].booking_id, VICTIM_BOOKING);
-      assert.equal(attacker.length, 1);
-      assert.equal(attacker[0].status, "sick");
-      assert.equal(attacker[0].booking_id, ATTACKER_BOOKING);
-      assert.equal(attacker[0].parent_user_id, ATTACKER);
-      assert.notEqual(attacker[0].id, victim[0].id);
+      await withSql(sql, () => saveAttendance(attendanceInput(STAFF, VICTIM_BOOKING, "arrived", "Door note", localDay)));
+      const before = await rowsFor(sql, VICTIM_BOOKING, localDay);
+      const input = { context: { userId: ATTACKER }, data: { bookingId: ATTACKER_BOOKING, status: "sick", localDay } };
+      const report = (bookingId) => withSql(sql, () => reportMyChildAbsence({ ...input, data: { ...input.data, bookingId } }));
+      assert.equal((await report(VICTIM_BOOKING)).ok, false);
+      await sql`update bookings set status = 'pending' where id = ${ATTACKER_BOOKING}`;
+      assert.equal((await report(ATTACKER_BOOKING)).ok, false);
+      assert.deepEqual(await sql`select id from absence_reports`, []);
+      await sql`update bookings set status = 'active' where id = ${ATTACKER_BOOKING}`;
+      await sql`
+        insert into staff_shifts (id, daycare_id, staff_name, role, room_band, starts_at, ends_at, created_by)
+        values ('shift', ${CENTRE}, 'Sample staff', 'ece', 'preschool', now() - interval '1 hour', now() + interval '1 hour', ${STAFF})
+      `;
+      await sql`
+        insert into centre_members (user_id, daycare_id, status, role)
+        values ('manager', ${CENTRE}, 'active', 'manager'), ('employee', ${CENTRE}, 'active', 'staff')
+      `;
+      assert.equal((await report(ATTACKER_BOOKING)).ok, true);
+      assert.equal((await report(ATTACKER_BOOKING)).ok, true);
+      assert.deepEqual(await rowsFor(sql, VICTIM_BOOKING, localDay), before);
+      const [attacker] = await rowsFor(sql, ATTACKER_BOOKING, localDay);
+      assert.equal(attacker.status, "sick");
+      assert.equal(attacker.parent_user_id, ATTACKER);
+      assert.deepEqual(await sql`select id, parent_user_id, band, children_now, ratio_status from absence_reports`, [{
+        id: `ab_${attacker.id}`, parent_user_id: ATTACKER, band: "preschool", children_now: 1, ratio_status: "ok",
+      }]);
+      const list = (userId, centre = CENTRE) => withSql(sql, () => listCentreAbsences({
+        context: { userId }, data: { centre, day: localDay },
+      }));
+      for (const userId of [STAFF, "manager"]) {
+        const visible = await list(userId);
+        assert.equal(visible.selected, CENTRE);
+        assert.deepEqual(visible.rows, [{
+          id: attacker.id, child_name: VICTIM_NAME, status: "sick", children_now: 1, ratio_status: "ok",
+        }]);
+      }
+      for (const [userId, centre] of [["employee", CENTRE], [ATTACKER, CENTRE], [STAFF, "another-centre"]]) {
+        const denied = await list(userId, centre);
+        assert.equal(denied.selected, null);
+        assert.deepEqual(denied.rows, []);
+      }
+      assert.deepEqual(await sql`select user_id, href from user_notifications order by user_id`, [
+        { user_id: "employee", href: "/provider?desk=today" },
+        { user_id: "manager", href: `/provider/absence?centre=${CENTRE}&day=${localDay}&lang=en` },
+        { user_id: STAFF, href: `/provider/absence?centre=${CENTRE}&day=${localDay}&lang=en` },
+      ]);
+      assert.equal((await withSql(sql, () => cancelMyChildAbsence(input))).ok, true);
+      assert.deepEqual((await list(STAFF)).rows, []);
     } finally {
       await pg.close();
     }
