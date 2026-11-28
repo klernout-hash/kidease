@@ -285,3 +285,22 @@ test("IMAP atoms and NIL parse as lists", () => {
   assert.equal(seq[1], null);
   assert.equal(seq[2], "Hi");
 });
+
+test("outgoing mail uses independent MIME and message identifiers", () => {
+  const input = {
+    fromHeader: "KidEase <mail@example.invalid>",
+    fromEmail: "mail@example.invalid",
+    to: "parent@example.invalid",
+    subject: "Tour",
+    text: "See you at 9.",
+  };
+  const first = buildOutgoingMail(input).raw;
+  const second = buildOutgoingMail(input).raw;
+  const boundary = /boundary="(ke[a-f0-9]{33,})"/.exec(first)?.[1];
+  const messageId = /Message-ID: (<\d+\.[a-f0-9]{32}@kidease\.ca>)/.exec(first)?.[1];
+  assert.ok(boundary);
+  assert.ok(messageId);
+  assert.ok(first.includes(`--${boundary}--\r\n`));
+  assert.ok(!second.includes(boundary));
+  assert.ok(!second.includes(messageId));
+});
