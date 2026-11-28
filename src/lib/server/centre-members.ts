@@ -615,6 +615,8 @@ async function verifiedInviteEmail(
 /**
  * Attach a live staff invite for this mailbox when the person presses Accept.
  * Leaves the login and any account-closure date alone, and does not grant owner.
+ * Email match only counts once the account has proven it owns that mailbox
+ * (emailVerified); otherwise the emailed invite link is the only way in.
  */
 export async function claimPendingCentreInvitesForUser(
   sql: Awaited<ReturnType<typeof getSql>>,
@@ -633,11 +635,15 @@ export async function claimPendingCentreInvitesForUser(
     expires_at: string | Date;
     invited_by: string | null;
   }>`
-    select id, daycare_id, email, role, status, expires_at, invited_by
-    from centre_invites
-    where lower(email) = ${normalized}
-      and status = 'pending'
-      and expires_at > now()
+    select i.id, i.daycare_id, i.email, i.role, i.status, i.expires_at, i.invited_by
+    from centre_invites i
+    join "user" u
+      on u.id = ${userId}
+      and u."emailVerified" = true
+      and lower(u.email) = lower(i.email)
+    where lower(i.email) = ${normalized}
+      and i.status = 'pending'
+      and i.expires_at > now()
   `.catch(() => []);
   const now = Date.now();
   const wanted = (inviteId || "").trim();
@@ -654,8 +660,28 @@ export async function claimPendingCentreInvitesForUser(
     })),
   }).filter((row) => !wanted || row.id === wanted);
   let claimed = 0;
-  for (const invite of chosen) {
-    const source = rows.find((row) => row.id === invite.id);
+  for (const candidate of chosen) {
+    // Mark the invite taken in one statement that rechecks the verified mailbox,
+    // then grant only what that statement returned.
+    const taken = await sql<{ id: string; daycare_id: string; role: string; invited_by: string | null }>`
+      update centre_invites
+      set status = 'accepted', accepted_at = now(), accepted_user_id = ${userId}
+      where id = ${candidate.id}
+        and status = 'pending'
+        and expires_at > now()
+        and role = ${candidate.role}
+        and lower(email) = ${normalized}
+        and exists (
+          select 1 from "user" u
+          where u.id = ${userId}
+            and u."emailVerified" = true
+            and lower(u.email) = lower(centre_invites.email)
+        )
+      returning id, daycare_id, role, invited_by
+    `.catch(() => []);
+    const source = taken[0];
+    if (!source) continue;
+    const invite = { id: source.id, daycareId: source.daycare_id, role: candidate.role };
     const existing = await sql<{ id: string; status: string; role: string }>`
       select id, status, role from centre_members
       where daycare_id = ${invite.daycareId} and user_id = ${userId}
@@ -670,7 +696,7 @@ export async function claimPendingCentreInvitesForUser(
           ${userId},
           ${invite.role},
           'active',
-          ${source?.invited_by || userId}
+          ${source.invited_by || userId}
         )
       `;
     } else if (existing[0].status !== "active") {
@@ -684,11 +710,6 @@ export async function claimPendingCentreInvitesForUser(
     if (!existing[0]) {
       await rememberPreset(sql, invite.daycareId, userId, await invitePreset(sql, invite.id, invite.role));
     }
-    await sql`
-      update centre_invites
-      set status = 'accepted', accepted_at = now(), accepted_user_id = ${userId}
-      where id = ${invite.id} and status = 'pending'
-    `;
     await logSecurityEvent({
       kind: "employee_accept",
       actorUserId: userId,
@@ -712,6 +733,10 @@ export const listMyStaffInvites = createServerFn({ method: "GET" })
       select i.id, i.role, d.name as centre
       from centre_invites i
       join daycares d on d.id = i.daycare_id
+      join "user" u
+        on u.id = ${context.userId}
+        and u."emailVerified" = true
+        and lower(u.email) = lower(i.email)
       where lower(i.email) = ${email}
         and i.status = 'pending'
         and i.expires_at > now()

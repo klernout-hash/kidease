@@ -262,7 +262,7 @@ test("production counts exclude named QA while keeping real waiting claims and h
   assert.equal(fixture().unexpectedQueries, 0);
 });
 
-test("reader overlays a stored licence reference without any unrelated enrichment read", async () => {
+test("reader overlays a stored claim licence, never an anonymous enrol upload, without unrelated reads", async () => {
   fixture().rows = [
     centre("from-claim", { license_photo: null }),
     centre("from-upload", { license_photo: null }),
@@ -275,8 +275,10 @@ test("reader overlays a stored licence reference without any unrelated enrichmen
   ];
   const result = await readAdminCentreQueueRows();
   assert.equal(result.length, 2);
-  assert.ok(result.every((row) => row.licensePhoto));
-  assert.equal(fixture().calls.length, 4);
+  assert.ok(result.find((row) => row.daycareId === "from-claim").licensePhoto);
+  assert.equal(result.find((row) => row.daycareId === "from-upload").licensePhoto, null);
+  assert.equal(fixture().calls.some((call) => /from license_uploads/i.test(call.text)), false);
+  assert.equal(fixture().calls.length, 3);
   assert.equal(fixture().unexpectedQueries, 0);
 });
 

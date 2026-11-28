@@ -213,7 +213,7 @@ test("upload and admin reprocess call the polisher and do not touch Live gates",
   const script = src("scripts/reprocess-listing-photos.mjs");
   assert.match(claims, /prepareListingUploadPhoto\(data\.storefront\)/);
   assert.match(claims, /prepareListingUploadPhoto\(src\)/);
-  assert.match(claims, /persistLicenseInput\(data\.licensePhoto/);
+  assert.match(claims, /parseLicenseInput\(data\.licensePhoto/);
   assert.doesNotMatch(claims, /prepareListingUploadPhoto\(data\.licensePhoto\)/);
   assert.match(family, /prepareListingUploadPhoto\(data\.storefront\)/);
   assert.match(reprocess, /polishStoredPhotoList/);
