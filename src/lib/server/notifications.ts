@@ -1,4 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import {
+  mergeNotificationEvents,
+  notificationEventKey,
+  type NotificationReceipt,
+} from "@/lib/notification-groups";
+import type { UnifiedEvent } from "./unified-alerts";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
@@ -9,7 +15,7 @@ import { OUTBOX_BELL_CATEGORIES, isAlertCategory, safeAlertHref } from "@/lib/al
 import {
   claimNotificationHref,
   claimTitleKey,
-  failClosedUnread,
+  unreadFromRows,
   inboxNotificationHref,
   isAllowedNotificationHref,
   isNotificationKind,
@@ -185,13 +191,26 @@ async function projectFromClaims(
 async function projectFromInbox(sql: Sql, userId: string): Promise<ProjectedNotification[]> {
   const rows = await sql<{
     id: string;
+    conversation_id: string;
     name: string;
-    last_at: string;
+    created_at: string;
+    read_at: string | null;
     parent_user_id: string;
   }>`
-    select c.id, d.name, c.last_at, c.user_id as parent_user_id
-    from conversations c
+    select m.id, c.id as conversation_id, d.name, m.created_at,
+           case when r.last_read_at >= m.created_at then r.last_read_at
+                else (
+                  select max(n.read_at) from user_notifications n
+                  where n.user_id = ${userId} and n.kind = 'inbox'
+                    and starts_with(n.source_key, 'inbox:' || c.id || ':')
+                    and n.created_at >= m.created_at
+                )
+           end as read_at,
+           c.user_id as parent_user_id
+    from messages m
+    join conversations c on c.id = m.conversation_id
     join daycares d on d.id = c.daycare_id
+    left join conversation_reads r on r.conversation_id = c.id and r.user_id = ${userId}
     where (
         c.user_id = ${userId}
         or exists (
@@ -199,29 +218,20 @@ async function projectFromInbox(sql: Sql, userId: string): Promise<ProjectedNoti
           where p.user_id = ${userId} and p.daycare_id = c.daycare_id
         )
       )
-      and exists (
-        select 1 from messages m
-        where m.conversation_id = c.id
-          and m.sender <> 'system'
-          and m.sender <> case when c.user_id = ${userId} then 'parent' else 'provider' end
-          and m.created_at > coalesce(
-            (select r.last_read_at from conversation_reads r
-             where r.conversation_id = c.id and r.user_id = ${userId}),
-            '1970-01-01'::timestamptz
-          )
-      )
-    order by c.last_at desc
-    limit 20
+      and m.sender = case when c.user_id = ${userId} then 'provider' else 'parent' end
+    order by m.created_at desc, m.id desc
+    limit 60
   `.catch(() => []);
 
   return rows.map((row) => ({
     kind: "inbox",
     titleKey: "notifInbox",
-    href: inboxNotificationHref(row.id, row.parent_user_id === userId ? "family" : "centre"),
-    sourceKey: notificationSourceKey("inbox", row.id, String(row.last_at)),
-    createdAt: String(row.last_at),
+    href: inboxNotificationHref(row.conversation_id, row.parent_user_id === userId ? "family" : "centre"),
+    sourceKey: notificationSourceKey("inbox", "message", row.id),
+    createdAt: String(row.created_at),
+    readAt: row.read_at ? String(row.read_at) : null,
     daycareName: row.name,
-    status: "unread",
+    status: null,
   }));
 }
 
@@ -350,23 +360,35 @@ export async function projectUserNotifications(sql: Sql, userId: string): Promis
 }
 
 async function persistProjected(sql: Sql, userId: string, rows: ProjectedNotification[]) {
-  for (const row of rows) {
-    const id = nid("nt");
-    await sql`
-      insert into user_notifications (
-        id, user_id, kind, title_key, href, source_key, daycare_name, status, created_at, read_at
-      ) values (
-        ${id}, ${userId}, ${row.kind}, ${row.titleKey}, ${row.href}, ${row.sourceKey},
-        ${row.daycareName ?? null}, ${row.status ?? null}, ${row.createdAt}, ${row.readAt ?? null}
-      )
-      on conflict (user_id, source_key) do update
-        set href = excluded.href,
-            title_key = excluded.title_key,
-            daycare_name = excluded.daycare_name,
-            status = excluded.status,
-            read_at = coalesce(user_notifications.read_at, excluded.read_at)
-    `.catch(() => undefined);
-  }
+  if (!rows.length) return;
+  const unique = new Map(rows.map((row) => [row.sourceKey, row]));
+  const batch = [...unique.values()].map((row) => ({
+    id: nid("nt"),
+    kind: row.kind,
+    title_key: row.titleKey,
+    href: row.href,
+    source_key: row.sourceKey,
+    daycare_name: row.daycareName ?? null,
+    status: row.status ?? null,
+    created_at: row.createdAt,
+    read_at: row.readAt ?? null,
+  }));
+  await sql`
+    insert into user_notifications (
+      id, user_id, kind, title_key, href, source_key, daycare_name, status, created_at, read_at
+    )
+    select id, ${userId}, kind, title_key, href, source_key, daycare_name, status, created_at, read_at
+    from jsonb_to_recordset(${JSON.stringify(batch)}::jsonb) as incoming(
+      id text, kind text, title_key text, href text, source_key text,
+      daycare_name text, status text, created_at timestamptz, read_at timestamptz
+    )
+    on conflict (user_id, source_key) do update
+      set href = excluded.href,
+          title_key = excluded.title_key,
+          daycare_name = excluded.daycare_name,
+          status = excluded.status,
+          read_at = coalesce(user_notifications.read_at, excluded.read_at)
+  `.catch(() => undefined);
 }
 
 function mapRow(row: {
@@ -395,49 +417,60 @@ function mapRow(row: {
   };
 }
 
-export async function syncAndListNotifications(userId: string): Promise<NotificationItem[]> {
-  try {
-    const sql = await getSql();
-    await ensureNotificationsTable(sql);
-    const projected = await projectUserNotifications(sql, userId);
-    await persistProjected(sql, userId, projected);
-    const rows = await sql<{
-      id: string;
-      kind: string;
-      title_key: string;
-      href: string;
-      source_key: string;
-      created_at: string;
-      read_at: string | null;
-      daycare_name: string | null;
-      status: string | null;
-    }>`
-      select id, kind, title_key, href, source_key, created_at, read_at, daycare_name, status
-      from user_notifications
-      where user_id = ${userId}
-      order by created_at desc
-      limit 60
-    `.catch(() => []);
-    return rows.map(mapRow).filter((row): row is NotificationItem => Boolean(row));
-  } catch {
-    return [];
-  }
+async function syncAndListNotifications(userId: string): Promise<NotificationItem[]> {
+  const sql = await getSql();
+  await ensureNotificationsTable(sql);
+  const projected = await projectUserNotifications(sql, userId);
+  await persistProjected(sql, userId, projected);
+  const rows = await sql<{
+    id: string;
+    kind: string;
+    title_key: string;
+    href: string;
+    source_key: string;
+    created_at: string;
+    read_at: string | null;
+    daycare_name: string | null;
+    status: string | null;
+  }>`
+    select id, kind, title_key, href, source_key, created_at, read_at, daycare_name, status
+    from user_notifications
+    where user_id = ${userId}
+    and (kind <> 'inbox' or source_key not like 'inbox:%' or source_key like 'inbox:message:%')
+    order by created_at desc, id desc
+    limit 60
+  `;
+  return rows.map(mapRow).filter((row): row is NotificationItem => Boolean(row));
+}
+
+async function notificationFeed(userId: string) {
+  const { listUnifiedEvents } = await import("./unified-alerts");
+  const { nativeShellRequest } = await import("@/lib/native-shell-request");
+  const native = await nativeShellRequest();
+  const [projected, unified] = await Promise.all([
+    syncAndListNotifications(userId),
+    listUnifiedEvents(userId, native).catch(() => []),
+  ]);
+  return mergeNotificationEvents<NotificationItem | UnifiedEvent>([
+    ...projected.map((item) => ({
+      key: notificationEventKey("projected", item.sourceKey),
+      data: item,
+      createdAt: item.createdAt,
+      readAt: item.readAt,
+      receipts: [{ source: "projected" as const, id: item.id }],
+    })),
+    ...unified.map((item) => ({
+      key: notificationEventKey("unified", item.dedupeKey),
+      data: item,
+      createdAt: item.createdAt,
+      readAt: item.readAt,
+      receipts: [{ source: "unified" as const, id: item.id }],
+    })),
+  ]);
 }
 
 export async function countUnreadNotifications(userId: string): Promise<number> {
-  try {
-    const listed = await syncAndListNotifications(userId);
-    let extra = 0;
-    try {
-      const { countUnreadUnifiedAlerts } = await import("./unified-alerts");
-      extra = await countUnreadUnifiedAlerts(userId);
-    } catch {
-      extra = 0;
-    }
-    return failClosedUnread(listed.filter((row) => !row.readAt).length + extra);
-  } catch {
-    return 0;
-  }
+  return unreadFromRows(await notificationFeed(userId).catch(() => []));
 }
 
 export async function markNotificationsRead(
@@ -462,7 +495,7 @@ export async function markNotificationsRead(
 
 export const listMyNotifications = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => syncAndListNotifications(context.userId));
+  .handler(async ({ context }) => notificationFeed(context.userId));
 
 export const getNotificationUnread = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -470,8 +503,23 @@ export const getNotificationUnread = createServerFn({ method: "GET" })
 
 export const markNotificationRead = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { id?: string; all?: boolean }) => ({
-    id: String(input?.id || "").trim(),
-    all: Boolean(input?.all),
+  .validator((input: { receipts?: NotificationReceipt[]; all?: boolean }) => ({
+    receipts: (Array.isArray(input?.receipts) ? input.receipts : [])
+      .filter((row) => (row?.source === "projected" || row?.source === "unified") && typeof row.id === "string")
+      .slice(0, 10),
+    all: input?.all === true,
   }))
-  .handler(async ({ context, data }) => markNotificationsRead(context.userId, data));
+  .handler(async ({ context, data }) => {
+    const { markUnifiedRead } = await import("./unified-alerts");
+    if (data.all) {
+      await Promise.all([
+        markNotificationsRead(context.userId, { all: true }),
+        markUnifiedRead(context.userId, { all: true }),
+      ]);
+    } else {
+      await Promise.all(data.receipts.map(({ id, source }) => source === "projected"
+        ? markNotificationsRead(context.userId, { id })
+        : markUnifiedRead(context.userId, { id })));
+    }
+    return { ok: true as const };
+  });

@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseStatus } from "@tanstack/react-start/server";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { getSql } from "@/lib/db";
-import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { assertGovWritable, type GovActor } from "@/lib/server/gov-actor.server";
 import { nextSubsidyStatus, subsidyStatusEnabled, subsidyStatusMode, type SubsidyStatus } from "@/lib/wiring/subsidy-status";
 import { deliverNotice, newId } from "@/lib/server/wiring/runtime";
@@ -32,15 +32,30 @@ export const updateSubsidy = createServerFn({ method: "POST" })
     status: String(input?.status || "").slice(0, 20),
   }))
   .handler(async ({ context, data }) => {
-    if (!subsidyStatusEnabled()) return { ok: false as const, error: "off" };
     const sql = await getSql();
+    const ownerRows = await sql<{ id: string }>`
+      select d.id from daycares d
+      where exists (
+        select 1 from provider_daycares p
+        where p.daycare_id = d.id and p.user_id = ${context.userId}
+      ) or exists (
+        select 1 from centre_members m
+        where m.daycare_id = d.id and m.user_id = ${context.userId}
+          and m.status = 'active' and m.role = 'owner'
+      )
+    `;
+    if (!ownerRows.length) {
+      setResponseStatus(403);
+      return { ok: false as const, error: "owner" };
+    }
+    if (!subsidyStatusEnabled()) return { ok: false as const, error: "off" };
+    const ids = ownerRows.map(({ id }) => id);
     const rows = await sql<{ id: string; parent_user_id: string; daycare_id: string; province: string; status: string }>`
-      select id, parent_user_id, daycare_id, province, status from subsidy_cases where id = ${data.id} limit 1
+      select id, parent_user_id, daycare_id, province, status from subsidy_cases
+      where id = ${data.id} and daycare_id = any(${ids}::text[]) limit 1
     `;
     const row = rows[0];
     if (!row) return { ok: false as const, error: "missing" };
-    const ids = await listAccessibleDaycareIds(sql, context.userId);
-    if (!ids.includes(row.daycare_id)) return { ok: false as const, error: "centre" };
     const decision = nextSubsidyStatus({
       from: row.status as SubsidyStatus,
       to: data.status,
@@ -48,7 +63,21 @@ export const updateSubsidy = createServerFn({ method: "POST" })
       recordProvince: row.province,
     });
     if (!decision.ok) return { ok: false as const, error: decision.error };
-    await sql`update subsidy_cases set status = ${decision.status}, updated_at = now() where id = ${row.id}`;
+    // Confirm the owner and original status again in the write itself.
+    const changed = await sql<{ id: string }>`
+      update subsidy_cases as target set status = ${decision.status}, updated_at = now()
+      where target.id = ${row.id} and target.daycare_id = ${row.daycare_id} and target.status = ${row.status}
+        and (exists (
+          select 1 from provider_daycares p
+          where p.daycare_id = target.daycare_id and p.user_id = ${context.userId}
+        ) or exists (
+          select 1 from centre_members m
+          where m.daycare_id = target.daycare_id and m.user_id = ${context.userId}
+            and m.status = 'active' and m.role = 'owner'
+        ))
+      returning target.id
+    `;
+    if (!changed.length) return { ok: false as const, error: "changed" };
     await deliverNotice({
       feature: "subsidy_status",
       flag: "FEATURE_SUBSIDY_STATUS",

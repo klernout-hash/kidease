@@ -9,7 +9,7 @@ import { StrictMode, startTransition } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { installServerFnFetchGate } from "./lib/server-fn-client";
 import { ensureFrenchCopy } from "./lib/copy-runtime";
-import { readLocaleCookie } from "./lib/locale-geo";
+import { localeFromSearch, readLocaleCookie } from "./lib/locale-geo";
 import { afterBrowserInstrumentation } from "./lib/sentry-browser-start";
 
 installZodCsp();
@@ -35,7 +35,14 @@ function savedFrench(): boolean {
     return false;
   }
 }
-const french = path === "/fr" || path.startsWith("/fr/") || savedFrench();
+// SSR has already rendered its chosen copy. In particular, private desk links
+// use ?lang=fr without a /fr path or a saved language change.
+const french =
+  localeFromSearch(window.location.search) === "fr" ||
+  /^fr(?:-|$)/i.test(document.documentElement.lang) ||
+  path === "/fr" ||
+  path.startsWith("/fr/") ||
+  savedFrench();
 const copyReady = french ? ensureFrenchCopy() : null;
 const ready = copyReady ? Promise.all([instrumentationReady, copyReady]) : instrumentationReady;
 afterBrowserInstrumentation(ready, paint);

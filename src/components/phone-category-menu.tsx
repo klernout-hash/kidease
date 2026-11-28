@@ -212,9 +212,7 @@ export function PhoneCategoryMenu({ host }: { host: boolean }) {
       <RoleSwitchPill />
       {user ? (
         <div className="ke-phone-cats-actions" data-ke="menu-account-actions">
-          <Link to={localePath("/delete-account", locale)} data-ke="menu-delete-account">
-            {t("deleteAccount")}
-          </Link>
+          {/* N-37: Sign out comes first. It is never below Delete account. */}
           <button
             type="button"
             data-ke="menu-sign-out"
@@ -223,6 +221,9 @@ export function PhoneCategoryMenu({ host }: { host: boolean }) {
             <MenuGlyph id="logout" />
             {t("signOut")}
           </button>
+          <Link to={localePath("/delete-account", locale)} data-ke="menu-delete-account">
+            {t("deleteAccount")}
+          </Link>
         </div>
       ) : null}
     </section>

@@ -14,6 +14,7 @@ export type CoparentCopy = {
   create: string;
   copy: string;
   copied: string;
+  share: string;
   join: string;
   remove: string;
   saveAccess: string;
@@ -33,7 +34,7 @@ const en: CoparentCopy = {
   title: "Share your family",
   lead: "Invite the other parent. They sign in with their own account.",
   shared: "You both see the same children, tours, waitlists, messages, and bills.",
-  noSend: "This link stays in KidEase. We do not email or text it.",
+  noSend: "Only share this link with the other parent. KidEase does not send it by email or text.",
   linkEmailed: "We emailed this link to them. You can also copy it here.",
   offTitle: "Family sharing is off",
   offBody: "You can still add your child and send a request on your own.",
@@ -44,6 +45,7 @@ const en: CoparentCopy = {
   create: "Create an invite link",
   copy: "Copy the link",
   copied: "Link copied",
+  share: "Share the link",
   join: "Join this family",
   remove: "Remove this parent",
   saveAccess: "Save access",
@@ -72,8 +74,10 @@ const fr: CoparentCopy = {
   title: "Partager votre famille",
   lead: "Invitez l’autre parent. Cette personne se connecte avec son propre compte.",
   shared: "Vous voyez les mêmes enfants, visites, listes d’attente, messages et factures.",
-  noSend: "Ce lien reste dans KidEase. Nous ne l’envoyons pas par courriel ni par texto.",
-  linkEmailed: "Nous avons envoyé ce lien par courriel à cette personne. Vous pouvez aussi le copier ici.",
+  noSend:
+    "Partagez ce lien uniquement avec l’autre parent. KidEase ne l’envoie pas par courriel ni par texto.",
+  linkEmailed:
+    "Nous avons envoyé ce lien par courriel à cette personne. Vous pouvez aussi le copier ici.",
   offTitle: "Le partage familial est désactivé",
   offBody: "Vous pouvez encore ajouter votre enfant et envoyer une demande.",
   home: "Voir vos enfants",
@@ -83,6 +87,7 @@ const fr: CoparentCopy = {
   create: "Créer un lien d’invitation",
   copy: "Copier le lien",
   copied: "Lien copié",
+  share: "Partager le lien",
   join: "Joindre cette famille",
   remove: "Retirer ce parent",
   saveAccess: "Enregistrer l’accès",

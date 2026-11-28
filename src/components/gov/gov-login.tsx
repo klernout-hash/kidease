@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
-import { authClient, dropExistingSession, turnstileFetchOptions } from "@/lib/auth/client";
+import { authClient, dropExistingSession, signOut, turnstileFetchOptions } from "@/lib/auth/client";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { tx } from "@/lib/copy-runtime";
@@ -8,27 +9,81 @@ import { useCopy } from "@/lib/use-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { celebrateAfterNavigation } from "@/lib/success-confirm";
-import { govCopy, govPath } from "@/lib/gov/copy";
+import { govCopy, govNativeNoteLinks, govPath } from "@/lib/gov/copy";
 import type { GovLocale } from "@/lib/gov/aggregate";
 import { GovHelp } from "@/components/gov/gov-help";
 import { getGovSession } from "@/lib/server/gov-portal";
 import { govVerifyPath } from "@/lib/gov/second-factor";
 import { acceptGovInviteFn } from "@/lib/server/gov-admin";
 
+async function openGovWebsite(url: string): Promise<void> {
+  const { isNative } = await import("@/lib/native");
+  if (isNative()) {
+    try {
+      const { Browser } = await import("@capacitor/browser");
+      await Browser.open({ url });
+      return;
+    } catch {
+      /* old binary without the Browser plugin: fall through */
+    }
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+/**
+ * N-31 / P0-6 / N-08: the one Government screen in the store apps.
+ * Government wording (not Admin), no parent or daycare rail, one primary
+ * "Open kidease.ca" button, and a Sign out that works on the first tap.
+ */
 export function GovNativeNote({ locale }: { locale: GovLocale }) {
   const copy = govCopy(locale);
+  const links = govNativeNoteLinks(locale);
+  const { user, isPending } = useCurrentUserState();
   return (
-    <main className="mx-auto w-full max-w-lg px-4 py-16">
-      <h1 className="font-display text-3xl">{copy.nativeTitle}</h1>
+    <main
+      className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pt-[max(4rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]"
+      data-ke="gov-native-note"
+    >
+      <p className="text-sm font-semibold text-primary">KidEase</p>
+      <h1 className="mt-2 font-display text-[clamp(1.75rem,6vw,2.25rem)] leading-tight">
+        {copy.nativeTitle}
+      </h1>
       <p className="mt-3 text-base">{copy.nativeBody}</p>
-      <p className="mt-6">
-        <Link to="/" className="inline-flex min-h-11 items-center font-medium text-primary">
-          {copy.home}
-        </Link>
-      </p>
+      <Button
+        type="button"
+        size="lg"
+        className="mt-8 w-full touch-manipulation"
+        data-ke="gov-native-open-website"
+        onClick={() => void openGovWebsite(links.websiteUrl)}
+      >
+        {copy.nativeOpenWebsite}
+      </Button>
+      {user ? (
+        <Button
+          type="button"
+          variant="secondary"
+          size="lg"
+          className="mt-3 w-full touch-manipulation"
+          data-ke="gov-native-sign-out"
+          onClick={() => void signOut(links.signOutTo)}
+        >
+          {copy.signOut}
+        </Button>
+      ) : isPending ? null : (
+        <p className="mt-6 text-sm text-muted" data-ke="gov-native-signed-out">
+          {copy.nativeSignedOut}{" "}
+          <Link
+            to={locale === "fr" ? "/fr" : "/"}
+            className="inline-flex min-h-11 items-center font-medium text-primary"
+          >
+            {copy.home}
+          </Link>
+        </p>
+      )}
     </main>
   );
 }
+
 
 export function GovClosedNote({ locale }: { locale: GovLocale }) {
   const copy = govCopy(locale);

@@ -9,13 +9,22 @@ import {
   providerDeskListingVisible,
 } from "@/lib/listing-visibility";
 import { nid } from "@/lib/utils";
+import { secureRandomString } from "@/lib/secure-random";
+import { assertListingOperator } from "@/lib/server/listing-owner-access";
 import { recordVacancyEvent } from "./vacancy-history";
 import { upsertDaycare } from "./seed";
 import { callerIsAdmin } from "./public-listing";
 import { mapDaycare, type DaycareRow } from "./map-row";
 import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
-import { applyInteriorPhotos, applyManagedListingPhotos, applyStorefrontPhoto, listingPhotosChanged, managedListingPhotos, MAX_LISTING_PHOTOS } from "@/lib/listing-photo";
+import {
+  applyInteriorPhotos,
+  applyManagedListingPhotos,
+  applyStorefrontPhoto,
+  listingPhotosChanged,
+  managedListingPhotos,
+  MAX_LISTING_PHOTOS,
+} from "@/lib/listing-photo";
 import { claimListingScore } from "@/lib/claim-search";
 import { isHomeDaycare, postalFsa } from "@/lib/home-address-privacy";
 import { applyMasterCareType } from "@/lib/server/master-care-type";
@@ -58,10 +67,7 @@ export type ClaimHit = {
 };
 
 function makeCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < 6; i += 1) out += chars[Math.floor(Math.random() * chars.length)];
-  return out;
+  return secureRandomString("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 6);
 }
 
 type LicenseUpload = { body: Buffer; mime: string };
@@ -91,7 +97,11 @@ async function persistLicenseUpload(upload: LicenseUpload, keyScope: string) {
   return stored.storageRef;
 }
 
-async function storeLicensePhoto(sql: Awaited<ReturnType<typeof getSql>>, daycareId: string | null, photo: string) {
+async function storeLicensePhoto(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  daycareId: string | null,
+  photo: string,
+) {
   if (!daycareId) return;
   const rows = await sql<{ id: string }>`
     update daycares set license_photo = ${photo} where id = ${daycareId} returning id
@@ -195,7 +205,11 @@ export const searchClaimable = createServerFn({ method: "POST" })
 
 /** Public name and city for a claim link. Does not start a claim. */
 export const previewClaimTarget = createServerFn({ method: "GET" })
-  .validator((id: string) => String(id || "").trim().slice(0, 80))
+  .validator((id: string) =>
+    String(id || "")
+      .trim()
+      .slice(0, 80),
+  )
   .handler(async ({ data: id }) => {
     if (!id) return null;
     const listed = await catalogByIdGet(id);
@@ -216,6 +230,8 @@ export const startClaim = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
     assertRuntimeSwitch("FEATURE_CLAIM_LISTING");
+    const sql = await getSql();
+    await assertListingOperator(sql, context.userId, "Only the centre owner can claim a listing.");
     const listed = await catalogByIdGet(daycareId);
     if (listed && ((listed.mergedInto || "").trim() || (listed.importFault || "").trim())) {
       throw new Error("Listing not found");
@@ -224,7 +240,6 @@ export const startClaim = createServerFn({ method: "POST" })
     const isAdmin = adminOnly ? await callerIsAdmin() : false;
     let existingOwner: string | null = null;
     let ownerEmail: string | null = null;
-    const sql = await getSql();
     if (listed && (!adminOnly || isAdmin || listed.slug === "qa-reviewer-demo-centre")) {
       const existing = await sql<{ user_id: string; owner_email: string | null }>`
         select p.user_id, u.email as owner_email
@@ -341,18 +356,22 @@ export const startClaim = createServerFn({ method: "POST" })
 
 export const verifyClaim = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: {
-    daycareId: string;
-    code: string;
-    licensePhoto?: string;
-    turnstileToken?: string;
-    infantMonthly?: unknown;
-    toddlerMonthly?: unknown;
-    preschoolMonthly?: unknown;
-    acceptTermsVersion?: string;
-    locale?: string;
-  }) => input)
+  .validator(
+    (input: {
+      daycareId: string;
+      code: string;
+      licensePhoto?: string;
+      turnstileToken?: string;
+      infantMonthly?: unknown;
+      toddlerMonthly?: unknown;
+      preschoolMonthly?: unknown;
+      acceptTermsVersion?: string;
+      locale?: string;
+    }) => input,
+  )
   .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    await assertListingOperator(sql, context.userId, "Only the centre owner can claim a listing.");
     const { PROVIDER_TERMS_VERSION } = await import("@/lib/legal-copy-v2");
     if (data.acceptTermsVersion !== PROVIDER_TERMS_VERSION) {
       throw new Error("Accept the Provider Terms to finish your claim");
@@ -361,13 +380,13 @@ export const verifyClaim = createServerFn({ method: "POST" })
     await assertTurnstileToken(data.turnstileToken);
     const upload = await parseLicenseInput(data.licensePhoto);
     if (!upload) throw new Error("Upload a photo or PDF of your provincial licence");
-    const sql = await getSql();
     const waiting = await sql<{ id: string }>`
       select id from listing_claims
       where user_id = ${context.userId} and daycare_id = ${data.daycareId} and status = 'waiting'
       order by created_at desc limit 1
     `;
-    if (waiting[0]) return { ok: true as const, status: "waiting" as const, alreadyPending: true as const };
+    if (waiting[0])
+      return { ok: true as const, status: "waiting" as const, alreadyPending: true as const };
     const rows = await sql<{
       id: string;
       code: string;
@@ -503,13 +522,17 @@ export const verifyClaim = createServerFn({ method: "POST" })
 
 export const saveClaimFees = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: {
-    daycareId: string;
-    infantMonthly?: unknown;
-    toddlerMonthly?: unknown;
-    preschoolMonthly?: unknown;
-  }) => input)
+  .validator(
+    (input: {
+      daycareId: string;
+      infantMonthly?: unknown;
+      toddlerMonthly?: unknown;
+      preschoolMonthly?: unknown;
+    }) => input,
+  )
   .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    await assertListingOperator(sql, context.userId, "Only the centre owner can claim a listing.");
     const { parseOptionalMonthlyFee } = await import("@/lib/fee-confidence");
     const infant = parseOptionalMonthlyFee(data.infantMonthly);
     const toddler = parseOptionalMonthlyFee(data.toddlerMonthly);
@@ -517,7 +540,6 @@ export const saveClaimFees = createServerFn({ method: "POST" })
     if (infant == null && toddler == null && preschool == null) {
       throw new Error("Enter a monthly fee or leave this for later");
     }
-    const sql = await getSql();
     const rows = await sql<{ id: string; status: string }>`
       select id, status from listing_claims
       where user_id = ${context.userId} and daycare_id = ${data.daycareId} and status = 'waiting'
@@ -536,17 +558,19 @@ export const saveClaimFees = createServerFn({ method: "POST" })
   });
 
 export const submitEnrollLicense = createServerFn({ method: "POST" })
-  .validator((input: {
-    name: string;
-    email: string;
-    centre: string;
-    city: string;
-    phone?: string;
-    body: string;
-    licensePhoto: string;
-    daycareId?: string;
-    turnstileToken?: string;
-  }) => input)
+  .validator(
+    (input: {
+      name: string;
+      email: string;
+      centre: string;
+      city: string;
+      phone?: string;
+      body: string;
+      licensePhoto: string;
+      daycareId?: string;
+      turnstileToken?: string;
+    }) => input,
+  )
   .handler(async ({ data }) => {
     const { assertTurnstileToken } = await import("@/lib/server/turnstile");
     await assertTurnstileToken(data.turnstileToken);
@@ -605,7 +629,9 @@ export const submitEnrollLicense = createServerFn({ method: "POST" })
         daycareName: centre,
         city,
         slug: undefined,
-        detail: [`Licence photo attached`, data.phone && `Phone: ${data.phone}`, body].filter(Boolean).join("\n"),
+        detail: [`Licence photo attached`, data.phone && `Phone: ${data.phone}`, body]
+          .filter(Boolean)
+          .join("\n"),
       });
       eventId = result?.id ?? null;
     } catch (err) {
@@ -723,7 +749,12 @@ export const updateListing = createServerFn({ method: "POST" })
     const beforeWatch = await import("@/lib/server/alert-fanout")
       .then((mod) => mod.readListingWatch(sql, data.daycareId))
       .catch(() => null);
-    if (row.name !== undefined || row.visibility !== undefined || row.is_test !== undefined || row.claim_status !== undefined) {
+    if (
+      row.name !== undefined ||
+      row.visibility !== undefined ||
+      row.is_test !== undefined ||
+      row.claim_status !== undefined
+    ) {
       const actor = await lookupUser(context.userId);
       const onDesk = providerDeskListingVisible(
         {
@@ -773,7 +804,9 @@ export const updateListing = createServerFn({ method: "POST" })
     const { ensureFeeConfidenceColumn } = await import("@/lib/server/fee-confidence");
     if (centreFees) await ensureFeeConfidenceColumn();
     const licenseUpload = await parseLicenseInput(data.licensePhoto);
-    const license = licenseUpload ? await persistLicenseUpload(licenseUpload, data.daycareId) : null;
+    const license = licenseUpload
+      ? await persistLicenseUpload(licenseUpload, data.daycareId)
+      : null;
     const hours = (data.hours ?? "").trim();
     const licenseNumber = (data.licenseNumber ?? "").trim().slice(0, 80);
     const licenseExpiry = (data.licenseExpiry ?? "").trim().slice(0, 10) || null;
@@ -849,7 +882,9 @@ export const updateListing = createServerFn({ method: "POST" })
     if (!wrote[0]) throw new Error(LISTING_NOT_FOUND);
     if (photosChanged) {
       const { pruneListingSpacePhotos } = await import("@/lib/listing-spaces-store");
-      await pruneListingSpacePhotos(sql, data.daycareId, managedListingPhotos(photos)).catch(() => undefined);
+      await pruneListingSpacePhotos(sql, data.daycareId, managedListingPhotos(photos)).catch(
+        () => undefined,
+      );
     }
     const culture = cultureFieldsToSql({
       staffLanguages: data.staffLanguages,
@@ -924,7 +959,8 @@ export const updateListing = createServerFn({ method: "POST" })
         where daycare_id = ${data.daycareId} and user_id = ${context.userId}
       `.catch(() => undefined);
     }
-    const { notifySavedListingChange, readListingWatch } = await import("@/lib/server/alert-fanout");
+    const { notifySavedListingChange, readListingWatch } =
+      await import("@/lib/server/alert-fanout");
     const { scheduleWatchKey } = await import("@/lib/alert-rules");
     const written = (await readListingWatch(sql, data.daycareId).catch(() => null)) ?? {
       infantMonthly,
@@ -934,7 +970,9 @@ export const updateListing = createServerFn({ method: "POST" })
       ageMinMonths: minAge,
       ageMaxMonths: maxAge,
       hours: hours || beforeWatch?.hours || "",
-      scheduleKey: data.scheduleOptions ? scheduleWatchKey(data.scheduleOptions) : beforeWatch?.scheduleKey || "",
+      scheduleKey: data.scheduleOptions
+        ? scheduleWatchKey(data.scheduleOptions)
+        : beforeWatch?.scheduleKey || "",
     };
     void notifySavedListingChange({
       daycareId: data.daycareId,
@@ -942,7 +980,9 @@ export const updateListing = createServerFn({ method: "POST" })
       after: written,
     }).catch(() => undefined);
     const { noteMonthlyUnchecked } = await import("@/lib/server/compliance-fees");
-    const provinceRows = await sql<{ province: string }>`select province from daycares where id = ${data.daycareId} limit 1`.catch(() => []);
+    const provinceRows = await sql<{
+      province: string;
+    }>`select province from daycares where id = ${data.daycareId} limit 1`.catch(() => []);
     const monthly = Math.round((Number(data.infantMonthly) || 0) * 100);
     await noteMonthlyUnchecked({
       daycareId: data.daycareId,

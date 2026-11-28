@@ -5,6 +5,8 @@
  * tied to that family. The invite is an in-app link. No email. No SMS.
  */
 
+import { SITEMAP_ORIGIN } from "./public-url.ts";
+
 export const COPARENT_FLAG = "FEATURE_COPARENT_LINK";
 export const VIEW_ONLY_MESSAGE = "You can look at this family. You cannot change it.";
 
@@ -42,6 +44,28 @@ export function tokenOk(token: string): boolean {
 /** In-app path only. Nothing is emailed or texted. */
 export function invitePath(token: string, deskPath: "/parent" | "/fr/parent" = "/parent"): string {
   return `${deskPath}?tab=family&invite=${encodeURIComponent(token)}`;
+}
+
+/** Use the public HTTPS host in production or a native shell, but keep preview tokens in Preview. */
+export function inviteShareUrl(
+  token: string,
+  deskPath: "/parent" | "/fr/parent" = "/parent",
+  currentOrigin?: string,
+): string {
+  let origin = SITEMAP_ORIGIN;
+  if (currentOrigin) {
+    try {
+      const current = new URL(currentOrigin);
+      const publicHost = current.hostname === "kidease.ca" || current.hostname === "www.kidease.ca";
+      const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(current.hostname);
+      if (!publicHost && (current.protocol === "https:" || (loopback && current.protocol === "http:"))) {
+        origin = current.origin;
+      }
+    } catch {
+      // Native origins such as "null" have no usable HTTP host.
+    }
+  }
+  return `${origin}${invitePath(token, deskPath)}`;
 }
 
 export function scopeFromLinks(actorId: string, links: readonly CoparentLink[], enabled: boolean): FamilyScope {

@@ -9,6 +9,7 @@ import {
   inboxStatusLine,
   messageFilterCopyKey,
   readByNames,
+  rowTitle,
   withYouPrefix,
 } from "../src/lib/inbox-thread-ui.ts";
 
@@ -90,4 +91,10 @@ test("an enquiry is not called enrolled, and block stays out of the thread heade
   assert.doesNotMatch(header, /BlockMessagesButton|ThreadCallActions/);
   assert.match(src("src/routes/inbox.$id.tsx"), /data-ke="inbox-safety"[\s\S]*BlockMessagesButton/);
   assert.match(src("src/components/centre-inbox.tsx"), /data-ke="inbox-safety"[\s\S]*BlockMessagesButton/);
+});
+
+test("parent thread labels use each participant name once", () => {
+  assert.equal(rowTitle({ viewerIsParent: true, memberNames: "Sam, Sam, SAM, Lou" }), "Sam, Lou");
+  assert.equal(rowTitle({ viewerIsParent: true, memberNames: " ", centreName: "Little Learners" }), "Little Learners");
+  assert.doesNotMatch(src("src/lib/server/conversation-state.ts"), /message_push_state|phoneAlerts/);
 });

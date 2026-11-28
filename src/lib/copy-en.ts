@@ -540,6 +540,7 @@ export const en = {
     findChildcare: "Find child care",
     searchWhere: "Where",
     searchWhereHint: "Search destinations",
+    searchWhereNotFound: "Location not found. Try a city and province or a postal code.",
     whereSuggested: "Suggested destinations",
     whereNearby: "Nearby",
     whereNearbyHint: "Find child care around you",

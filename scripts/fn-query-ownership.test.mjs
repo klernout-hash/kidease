@@ -59,3 +59,20 @@ test("clean fresh retries preserve ordinary pending dedup and cacheIf rejection"
   assert.equal(await dedupedQuery("same", 30000, async () => "not cached", { fresh: true, cacheIf: () => false }), "not cached");
   assert.equal(await cached(), "unexpected rebuild");
 });
+
+test("message reads retry once and preserve a valid empty response", async () => {
+  const { retryReadOnce } = await import("../src/lib/fn-query.ts");
+  let attempts = 0;
+  assert.deepEqual(await retryReadOnce(async () => {
+    if (++attempts === 1) throw new Error("temporary failure");
+    return [];
+  }), []);
+  assert.equal(attempts, 2);
+  assert.equal(await retryReadOnce(async () => null), null);
+  attempts = 0;
+  await assert.rejects(retryReadOnce(async () => {
+    attempts += 1;
+    throw new Error("still unavailable");
+  }), /still unavailable/);
+  assert.equal(attempts, 2);
+});

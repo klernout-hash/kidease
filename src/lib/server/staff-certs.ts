@@ -5,7 +5,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { centreCanWriteCare } from "@/lib/centre-roles";
+import { setResponseStatus } from "@tanstack/react-start/server";
 import { getSql } from "@/lib/db";
 import { R2_CENTRE_DOC_PREFIX } from "@/lib/private-docs";
 import {
@@ -54,22 +54,20 @@ async function writeCertLink(sql: Sql, link: CertLink) {
   `;
 }
 
-/** Owners, managers and admins with the schedule area. */
-async function centresICanManage(
-  sql: Sql,
-  userId: string,
-  need: "view" | "edit",
-): Promise<string[]> {
-  const { daycareIdsForArea } = await import("@/lib/server/centre-access");
-  return daycareIdsForArea(sql, userId, "schedule", need).catch(() => [] as string[]);
+/** Centre-wide certificate access is scoped to owners. Self-service stays separate. */
+async function centresICanManage(sql: Sql, userId: string): Promise<string[]> {
+  const rows = await sql<{ daycare_id: string }>`
+    select daycare_id from provider_daycares where user_id = ${userId}
+    union
+    select daycare_id from centre_members
+    where user_id = ${userId} and status = 'active' and role = 'owner'
+  `;
+  return rows.map(({ daycare_id }) => daycare_id);
 }
 
 async function canWriteCentre(sql: Sql, userId: string, daycareId: string): Promise<boolean> {
-  const ids = await centresICanManage(sql, userId, "edit");
-  if (!ids.includes(daycareId)) return false;
   const { loadCentreRole } = await import("@/lib/server/centre-access");
-  const role = await loadCentreRole(sql, userId, daycareId).catch(() => null);
-  return centreCanWriteCare(role);
+  return (await loadCentreRole(sql, userId, daycareId)) === "owner";
 }
 
 async function myMemberCentres(sql: Sql, userId: string) {
@@ -111,8 +109,11 @@ export const listCentreEceCerts = createServerFn({ method: "GET" })
   }))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const ids = await centresICanManage(sql, context.userId, "view");
-    if (!ids.length) return { centres: [], daycareId: "", certs: [], members: [], canWrite: false };
+    const ids = await centresICanManage(sql, context.userId);
+    if (!ids.length) {
+      setResponseStatus(403);
+      return { centres: [], daycareId: "", certs: [], members: [], canWrite: false };
+    }
     const centres = await sql
       .query<{ id: string; name: string }>(
         `select id, name from daycares where id = any($1::text[]) order by name`,
@@ -225,7 +226,8 @@ export const saveCentreEceCert = createServerFn({ method: "POST" })
     const sql = await getSql();
     const daycareId = String(data.daycareId || "").trim();
     if (!(await canWriteCentre(sql, context.userId, daycareId))) {
-      throw new Error("You can view this centre. You cannot change it.");
+      setResponseStatus(403);
+      throw new Error("Only the centre owner can manage team certificates.");
     }
     const clean = cleanCertInput(data);
     if (!clean.ok) throw new Error("Check the expiry date.");
@@ -336,12 +338,15 @@ async function certAccess(sql: Sql, userId: string, certId: string, need: "view"
     fileMime: null,
     fileName: null,
   };
-  const self = link.staffUserId === userId;
+  if (link.staffUserId === userId) return { cert, link };
   const centre =
     need === "edit"
       ? await canWriteCentre(sql, userId, cert.daycare_id)
-      : (await centresICanManage(sql, userId, "view")).includes(cert.daycare_id);
-  if (!self && !centre) throw new Error("You cannot open this certificate.");
+      : (await centresICanManage(sql, userId)).includes(cert.daycare_id);
+  if (!centre) {
+    setResponseStatus(403);
+    throw new Error("You cannot open this certificate.");
+  }
   return { cert, link };
 }
 

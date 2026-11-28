@@ -7,6 +7,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import { AppearanceControl } from "@/components/appearance-control";
 import { CareCategoryIcon } from "@/components/care-category-icon";
 import { signOut } from "@/lib/auth/client";
+import { signedOutLoginPath } from "@/lib/sign-out-target";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
   ageRangeLabel,
@@ -25,6 +26,7 @@ import { localePath, localeSwitchHref } from "@/lib/locale-path";
 import { writeLocaleChoiceCookie } from "@/lib/locale-geo";
 import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import { photoUrl } from "@/lib/photo";
+import { safeListingImageSrc } from "@/lib/listing-photo";
 import { saveMyLocale } from "@/lib/server/account-prefs";
 import { getMyContact, saveMyContact, type ContactProfile } from "@/lib/server/profile-contact";
 import { useAppStore } from "@/lib/store";
@@ -130,7 +132,7 @@ export function AirbnbHome({
       )}
       <div className="ke-airbnb-rail" data-ke="airbnb-rail">
         {rows.map((row) => {
-          const photo = row.photos?.find(Boolean);
+          const photo = safeListingImageSrc(row.photos?.find((p) => safeListingImageSrc(p)));
           const where = airbnbPublicPlace(row);
           const ages = ageRangeLabel(row.ageMinMonths, row.ageMaxMonths, locale);
           const fresh = freshnessLine(row.spotsUpdatedAt || row.lastVacancyUpdatedAt, locale);
@@ -264,7 +266,7 @@ export function AirbnbAccount() {
             type="button"
             className="ke-airbnb-row mt-4"
             data-ke="airbnb-security-sign-out"
-            onClick={() => void signOut(locale === "fr" ? "/fr" : "/")}
+            onClick={() => void signOut(signedOutLoginPath(locale === "fr" ? "fr" : "en"))}
           >
             <span>{copy.signOut}</span>
           </button>
@@ -303,7 +305,7 @@ export function AirbnbAccount() {
       <nav className="ke-airbnb-hub" aria-label={copy.account}>
         {rows.map((id) =>
           id === "sign-out" ? (
-            <button key={id} type="button" className="ke-airbnb-row" data-ke="airbnb-sign-out" onClick={() => void signOut(locale === "fr" ? "/fr" : "/")}>
+            <button key={id} type="button" className="ke-airbnb-row" data-ke="airbnb-sign-out" onClick={() => void signOut(signedOutLoginPath(locale === "fr" ? "fr" : "en"))}>
               <span>{copy.signOut}</span>
             </button>
           ) : id === "notifications" ? (
@@ -644,7 +646,7 @@ export function AirbnbListingPhone({
   return (
     <section className="ke-airbnb-phone-only ke-airbnb-screen" data-ke="airbnb-listing">
       <span className="ke-airbnb-photo ke-airbnb-photo-hero">
-        {photo ? <img src={photoUrl(photo, 960)} alt="" /> : null}
+        {safeListingImageSrc(photo) ? <img src={photoUrl(safeListingImageSrc(photo), 960)} alt="" /> : null}
       </span>
       <h1 data-ke="airbnb-listing-name">{name}</h1>
       {place ? <p className="ke-airbnb-card-meta">{place}</p> : null}

@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  ANALYTICS_CONSENT_KEY,
+  restoreNativeAnalyticsConsent,
   scheduleAnalyticsConsentBannerReveal,
   shouldShowAnalyticsConsentBanner,
   writeAnalyticsConsent,
@@ -10,7 +12,6 @@ import {
 import { applyPostHogRecordingGate, startPostHog } from "@/lib/posthog";
 import { localePath } from "@/lib/locale-path";
 import { OPEN_COOKIE_SETTINGS_EVENT } from "@/lib/prompt-manager";
-import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { useCopy } from "@/lib/use-copy";
 
 const AUTH_PAGE = /^\/(?:fr\/)?(?:login|signup|parent\/signup|verify-2fa|forgot-password|reset-password)\/?$/;
@@ -22,7 +23,8 @@ const AUTH_PAGE = /^\/(?:fr\/)?(?:login|signup|parent\/signup|verify-2fa|forgot-
  */
 export function CookieConsentBanner() {
   const { t, locale } = useCopy();
-  const native = useNativeHidesAdmin();
+  const panel = useRef<HTMLElement>(null);
+  const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [reopened, setReopened] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -32,8 +34,23 @@ export function CookieConsentBanner() {
   const visible = open && (reopened || !authPage);
 
   useEffect(() => {
-    if (!shouldShowAnalyticsConsentBanner()) return;
-    return scheduleAnalyticsConsentBannerReveal(() => setOpen(true));
+    let cancelled = false;
+    let cancelReveal: (() => void) | undefined;
+    void (async () => {
+      const preferences = await nativePreferences().catch(() => null);
+      if (cancelled) return;
+      const wasUnset = shouldShowAnalyticsConsentBanner();
+      const restored = await (preferences ? restoreNativeAnalyticsConsent(preferences).catch(() => null) : null);
+      if (cancelled) return;
+      if (wasUnset && restored === "granted") applyChoice();
+      if (restored == null ? shouldShowAnalyticsConsentBanner() : restored === "unset") {
+        cancelReveal = scheduleAnalyticsConsentBannerReveal(() => setOpen(true));
+      }
+    })();
+    return () => {
+      cancelled = true;
+      cancelReveal?.();
+    };
   }, []);
 
   // Footer "Cookie settings" reopens the bar. The saved choice otherwise lasts forever.
@@ -49,40 +66,46 @@ export function CookieConsentBanner() {
   useEffect(() => {
     if (!visible) return;
     document.documentElement.dataset.cookieBanner = "open";
-    if (native) document.documentElement.dataset.nativePrompt = "open";
     return () => {
       delete document.documentElement.dataset.cookieBanner;
-      if (document.documentElement.dataset.nativePrompt === "open") {
-        delete document.documentElement.dataset.nativePrompt;
-      }
     };
-  }, [native, visible]);
+  }, [visible]);
 
-  function choose(value: "granted" | "denied") {
+  useEffect(() => {
+    if (!visible || !reopened) return;
+    panel.current?.focus();
+    panel.current?.scrollIntoView({ block: "start" });
+  }, [visible, reopened]);
+
+  async function choose(value: "granted" | "denied") {
+    setSaving(true);
     writeAnalyticsConsent(value);
-    if (value === "granted") {
-      startPostHog();
-      // instrument.client.ts owns the Sentry import. A static import here
-      // is denied in the server build.
-      window.dispatchEvent(new Event("kidease:analytics-granted"));
+    applyChoice(value);
+    try {
+      const preferences = await nativePreferences();
+      await preferences?.set({ key: ANALYTICS_CONSENT_KEY, value });
+    } catch {
+      // The WebView copy remains available if the native plugin fails.
+    } finally {
+      setSaving(false);
+      setOpen(false);
+      setReopened(false);
     }
-    applyPostHogRecordingGate();
-    setOpen(false);
   }
 
   if (!visible) return null;
 
-  // Slim bar: pinned above the tab bar (safe area) on phones, bottom-centre max 560px on desktop.
   return (
     <aside
       data-ke="cookie-consent"
       role="region"
       aria-labelledby="ke-cookie-consent-title"
       aria-describedby="ke-cookie-consent-body"
-      data-compact={native ? "native" : undefined}
-      className="ke-cookie-consent ke-bottom-prompt ke-safe-x pointer-events-none fixed inset-x-0 z-[55] [--ke-pad-x:0.75rem] pb-2 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] md:bottom-3 md:pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+      ref={panel}
+      tabIndex={-1}
+      className="ke-cookie-consent ke-safe-x shrink-0 [--ke-pad-x:0.75rem] pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]"
     >
-      <div className="ke-cookie-consent-panel pointer-events-auto mx-auto flex max-h-[max(64px,4.5rem,calc(100dvh-14rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] max-w-[560px] flex-wrap items-center gap-[8px] overflow-y-auto overscroll-contain rounded-xl bg-surface/95 px-3 py-2 shadow-lift ring-1 ring-border backdrop-blur-md">
+      <div className="ke-cookie-consent-panel mx-auto flex max-w-[35rem] flex-wrap items-center gap-2 rounded-xl bg-surface px-3 py-2 ring-1 ring-border">
         <span className="hidden size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-primary sm:grid">
           <Cookie className="size-3.5" aria-hidden />
         </span>
@@ -106,14 +129,30 @@ export function CookieConsentBanner() {
         </div>
         {/* Equal weight: same size, side by side. Nothing pre-selected. */}
         <div className="flex w-full flex-wrap justify-end gap-[8px] sm:w-auto sm:shrink-0">
-          <Button type="button" role="button" variant="secondary" data-ke="cookie-essential" className="px-3 text-sm" onClick={() => choose("denied")}>
+          <Button type="button" role="button" variant="secondary" data-ke="cookie-essential" className="px-3 text-sm" disabled={saving} onClick={() => void choose("denied")}>
             {t("cookieConsentEssential")}
           </Button>
-          <Button type="button" role="button" variant="secondary" data-ke="cookie-allow" className="px-3 text-sm" onClick={() => choose("granted")}>
+          <Button type="button" role="button" variant="secondary" data-ke="cookie-allow" className="px-3 text-sm" disabled={saving} onClick={() => void choose("granted")}>
             {t("cookieConsentAllowShort")}
           </Button>
         </div>
       </div>
     </aside>
   );
+}
+
+
+async function nativePreferences() {
+  const { Capacitor } = await import("@capacitor/core");
+  if (!Capacitor.isNativePlatform()) return null;
+  const { Preferences } = await import("@capacitor/preferences");
+  return Preferences;
+}
+
+function applyChoice(value: "granted" | "denied" = "granted") {
+  if (value === "granted") {
+    startPostHog();
+    window.dispatchEvent(new Event("kidease:analytics-granted"));
+  }
+  applyPostHogRecordingGate();
 }

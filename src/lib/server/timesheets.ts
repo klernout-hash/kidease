@@ -1,20 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseStatus } from "@tanstack/react-start/server";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { staffTimesheetsEnabled } from "@/lib/features";
 import {
+  canEditTimesheetEntry,
   planClockIn,
   planClockOut,
   planTimesheetEdit,
   torontoWeek,
   weeklyTotals,
   timesheetCsv,
+  timesheetTeamAccess,
   type TimeEntry,
 } from "@/lib/timesheet";
 import { nid } from "@/lib/utils";
 
 type EntryRow = {
   id: string;
+  created_by?: string | null;
   staff_name: string;
   clock_in_at: string;
   clock_out_at: string | null;
@@ -84,6 +88,28 @@ async function assertCentre(userId: string, daycareId: string) {
   if (!decision.ok) fail(decision.reason === "cross_centre" ? "centre" : "centre");
 }
 
+/** N-02: owner, manager or admin see the whole team. Everyone else sees their own shifts. */
+async function hasTeamAccess(userId: string, daycareId: string): Promise<boolean> {
+  if (!daycareId) return false;
+  const sql = await getSql();
+  const [{ loadCentreRole }, { resolveAdminAccess }] = await Promise.all([
+    import("@/lib/server/centre-access"),
+    import("@/lib/server/roles"),
+  ]);
+  const [role, admin] = await Promise.all([
+    loadCentreRole(sql, userId, daycareId).catch(() => null),
+    resolveAdminAccess(userId)
+      .then((row) => row.ok)
+      .catch(() => false),
+  ]);
+  return timesheetTeamAccess(role, admin);
+}
+
+function ownerOnly(): never {
+  setResponseStatus(403);
+  fail("owner");
+}
+
 async function assertClock(userId: string, daycareId: string) {
   const sql = await getSql();
   const { assertCanWrite } = await import("@/lib/server/centre-access");
@@ -113,6 +139,7 @@ export const listTimesheets = createServerFn({ method: "GET" })
     if (!staffTimesheetsEnabled()) {
       return {
         enabled: false as const,
+        canManage: false,
         centres: [],
         daycareId: "",
         weekLabel: "",
@@ -129,7 +156,7 @@ export const listTimesheets = createServerFn({ method: "GET" })
       daycareIdsForArea(sql, context.userId, "schedule", "view"),
     ]);
     if (!ids.length) {
-      return { enabled: true as const, centres: [], daycareId: "", weekLabel: "", open: [], week: [], totals: [], edits: [] };
+      return { enabled: true as const, canManage: false, centres: [], daycareId: "", weekLabel: "", open: [], week: [], totals: [], edits: [] };
     }
     const centres = await sql.query<{ id: string; name: string }>(
       `select id, name from daycares where id = any($1::text[]) order by name`,
@@ -139,13 +166,17 @@ export const listTimesheets = createServerFn({ method: "GET" })
     const anchor = data.weekOf && !Number.isNaN(Date.parse(data.weekOf)) ? new Date(data.weekOf) : new Date();
     const week = torontoWeek(anchor);
     if (!daycareId) {
-      return { enabled: true as const, centres, daycareId: "", weekLabel: week.label, open: [], week: [], totals: [], edits: [] };
+      return { enabled: true as const, canManage: false, centres, daycareId: "", weekLabel: week.label, open: [], week: [], totals: [], edits: [] };
     }
+    // N-02: Staff see only the shifts they recorded, never other staff's hour logs.
+    const canManage = await hasTeamAccess(context.userId, daycareId);
+    const selfOnly = canManage ? null : context.userId;
     const [rows, edits] = await Promise.all([
       sql<EntryRow>`
       select id, staff_name, clock_in_at, clock_out_at
       from staff_time_entries
       where daycare_id = ${daycareId}
+        and (${selfOnly}::text is null or created_by = ${selfOnly})
         and (
           clock_out_at is null
           or (clock_in_at >= ${week.startIso} and clock_in_at < ${week.endIso})
@@ -158,6 +189,10 @@ export const listTimesheets = createServerFn({ method: "GET" })
       from staff_time_edits e
       left join "user" u on u.id = e.actor_id
       where e.daycare_id = ${daycareId}
+        and (
+          ${selfOnly}::text is null
+          or e.entry_id in (select t.id from staff_time_entries t where t.daycare_id = ${daycareId} and t.created_by = ${selfOnly})
+        )
       order by e.created_at desc
       limit 400
     `.catch(() => [] as EditRow[]),
@@ -170,6 +205,7 @@ export const listTimesheets = createServerFn({ method: "GET" })
     });
     return {
       enabled: true as const,
+      canManage,
       centres: centres.map((row) => ({ id: row.id, name: row.name })),
       daycareId,
       weekLabel: week.label,
@@ -229,12 +265,15 @@ export const clockOutTimesheet = createServerFn({ method: "POST" })
     await assertClock(context.userId, data.daycareId);
     const sql = await getSql();
     const rows = await sql<EntryRow>`
-      select id, staff_name, clock_in_at, clock_out_at
+      select id, created_by, staff_name, clock_in_at, clock_out_at
       from staff_time_entries
       where id = ${data.entryId} and daycare_id = ${data.daycareId}
       limit 1
     `;
     if (!rows[0]) fail("missing");
+    // N-02: Staff fix only their own shifts. Another person's hour log is owner work.
+    const team = await hasTeamAccess(context.userId, data.daycareId);
+    if (!canEditTimesheetEntry({ team, createdBy: rows[0].created_by, userId: context.userId })) ownerOnly();
     const planned = planClockOut(toEntry(rows[0]), new Date());
     if (!planned.ok) fail(planned.error);
     await sql`
@@ -274,12 +313,15 @@ export const editTimesheet = createServerFn({ method: "POST" })
     await assertClock(context.userId, data.daycareId);
     const sql = await getSql();
     const rows = await sql<EntryRow>`
-      select id, staff_name, clock_in_at, clock_out_at
+      select id, created_by, staff_name, clock_in_at, clock_out_at
       from staff_time_entries
       where id = ${data.entryId} and daycare_id = ${data.daycareId}
       limit 1
     `;
     if (!rows[0]) fail("missing");
+    // N-02: Staff fix only their own shifts. Another person's hour log is owner work.
+    const team = await hasTeamAccess(context.userId, data.daycareId);
+    if (!canEditTimesheetEntry({ team, createdBy: rows[0].created_by, userId: context.userId })) ownerOnly();
     const planned = planTimesheetEdit({
       entry: toEntry(rows[0]),
       staffName: data.staffName,
@@ -317,6 +359,8 @@ export const exportTimesheetCsv = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (!staffTimesheetsEnabled()) fail("off");
     await assertCentre(context.userId, data.daycareId);
+    // N-02: the whole-centre hours CSV is owner work. Staff get 403.
+    if (!(await hasTeamAccess(context.userId, data.daycareId))) ownerOnly();
     const sql = await getSql();
     const anchor = data.weekOf && !Number.isNaN(Date.parse(data.weekOf)) ? new Date(data.weekOf) : new Date();
     const week = torontoWeek(anchor);

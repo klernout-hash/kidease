@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
+import { useSessionDesks } from "@/components/session-desks";
 import { EceJobApply } from "@/components/ece-job-board";
 import { gapCopy, jobDeskPowers, type JobDesk } from "@/lib/gap-features";
 import { localePath } from "@/lib/locale-path";
@@ -26,6 +27,14 @@ function fieldClass() {
 }
 
 export function EceJobDesk({ mode }: { mode: Exclude<JobDesk, "public" | "gov"> }) {
+  const { session, ready } = useSessionDesks();
+  const manages = jobDeskPowers(mode).manage;
+  if (manages && !ready) return null;
+  const actualMode = manages && session?.centreRole !== "owner" ? "staff" : mode;
+  return <EceJobDeskContent key={JSON.stringify([actualMode, session?.email])} mode={actualMode} />;
+}
+
+function EceJobDeskContent({ mode }: { mode: Exclude<JobDesk, "public" | "gov"> }) {
   const { locale } = useCopy();
   const { celebrate } = useSuccessConfirm();
   const copy = gapCopy(locale === "fr" ? "fr" : "en");

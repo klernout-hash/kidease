@@ -95,10 +95,15 @@ test("Live on KidEase is a shareable claim-verified filter", () => {
   }
 });
 
-test("a Where box that is not a place becomes a name search, and name matches stay nearest first", () => {
+test("the Where box keeps unresolved locations separate, and explicit name matches stay nearest first", () => {
   const search = src("src/routes/search.tsx");
-  assert.match(search, /name: label/);
-  assert.match(src("src/routes/index.tsx"), /name: homeName\.trim\(\) \|\| typed/);
+  const resultSubmit = search.slice(search.indexOf("async function applyQuery"), search.indexOf("function followDevice"));
+  const home = src("src/routes/index.tsx");
+  assert.match(resultSubmit, /return true;\s*\}\s*return false;/);
+  assert.doesNotMatch(resultSubmit, /name: label/);
+  assert.match(home, /const hit = await applyPlace\(typed, resolved\);\s*if \(!hit\) return false;/);
+  assert.match(home, /name: homeName,/);
+  assert.match(src("src/components/explore-search-bar.tsx"), /searchWhereNotFound/);
   assert.match(src("src/components/place-search.tsx"), /centre:/);
   const ordered = orderNameMatches([
     { name: "Little Fox Vancouver", distanceKm: 1869 },

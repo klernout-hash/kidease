@@ -71,7 +71,8 @@ import {
   listAccessibleDaycareIds,
   loadCentreRole,
 } from "@/lib/server/centre-access";
-import { centreCanCreateListing, centreCanMutateVacancies } from "@/lib/centre-roles";
+import { centreCanMutateVacancies } from "@/lib/centre-roles";
+import { assertListingOperator } from "@/lib/server/listing-owner-access";
 import { enqueueProviderCreatedListing } from "@/lib/server/listing-queue";
 import { assertNewListingAllowed } from "@/lib/server/listing-guard";
 import {
@@ -697,6 +698,15 @@ export const createBooking = createServerFn({ method: "POST" })
     const home = await familyWrite(context.userId);
     const homeId = home.dataUserId;
     const sql = await getSql();
+    let childId: string | null = null;
+    const requestedChildId = typeof data.childId === "string" ? data.childId.trim() : "";
+    if (requestedChildId) {
+      const owned = await sql<{ id: string }>`
+        select id from children where id = ${requestedChildId} and user_id = ${homeId} limit 1
+      `;
+      if (!owned[0]) throw new Error("Child not found");
+      childId = owned[0].id;
+    }
     const { assertChatNotBlocked } = await import("@/lib/server/safety");
     await assertChatNotBlocked(sql, { senderId: homeId, parentUserId: homeId, daycareId: data.daycareId });
     const listed = await catalogByIdGet(data.daycareId);
@@ -724,7 +734,7 @@ export const createBooking = createServerFn({ method: "POST" })
     let status: BookingStatus = spots > 0 ? "accepted" : "waitlist";
     if (status === "accepted") {
       const { holdIncompleteBooking } = await import("@/lib/server/child-portfolio");
-      if (await holdIncompleteBooking(sql, data.childId, d.province)) status = "requested";
+      if (await holdIncompleteBooking(sql, childId, d.province)) status = "requested";
     }
     const existingConvo = await sql<{ id: string }>`
       select id from conversations where user_id = ${homeId} and daycare_id = ${data.daycareId}
@@ -738,7 +748,7 @@ export const createBooking = createServerFn({ method: "POST" })
       insert into bookings (
         id, user_id, daycare_id, child_id, start_month, schedule, age_group, status, monthly_amount
       ) values (
-        ${id}, ${homeId}, ${data.daycareId}, ${data.childId},
+        ${id}, ${homeId}, ${data.daycareId}, ${childId},
         ${data.startMonth}, ${data.schedule}, ${data.ageGroup}, ${status}, ${amount}
       )
     `;
@@ -778,7 +788,7 @@ export const createBooking = createServerFn({ method: "POST" })
       entry: status === "accepted" ? "booking_accepted" : status === "waitlist" ? "waitlist_join" : "enrol_now",
       daycareId: data.daycareId,
       parentUserId: homeId,
-      childId: data.childId,
+      childId,
       ageGroup: data.ageGroup,
       desiredStart: data.startMonth,
       schedule: data.schedule,
@@ -1754,15 +1764,7 @@ export const createListing = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const ownerCount = (
-      await sql<{ n: number }>`
-        select count(*)::int as n from provider_daycares where user_id = ${context.userId}
-      `.catch(() => [{ n: 0 }])
-    )[0]?.n ?? 0;
-    const staffOnly = ownerCount === 0 && (await listAccessibleDaycareIds(sql, context.userId)).length > 0;
-    if (!centreCanCreateListing({ ownerCount, memberOnly: staffOnly })) {
-      throw Object.assign(new Error("Only the centre owner can add a listing."), { status: 403 });
-    }
+    await assertListingOperator(sql, context.userId, "Only the centre owner can add a listing.");
     try {
       await assertNewListingAllowed({
         userId: context.userId,

@@ -43,7 +43,6 @@ export type ConversationDetails = {
   preferredTimes: Array<{ date: string; time: string }>;
   participants: InboxParticipant[];
   reads: InboxRead[];
-  phoneAlerts?: Array<{ messageId?: string; userId: string; state: "sent" | "not_sent" }>;
   assignedUserId?: string | null;
   starred: boolean;
   archived: boolean;
@@ -274,6 +273,14 @@ export function participantInitials(name: string | null | undefined): string {
 }
 
 export function rowTitle(input: { viewerIsParent: boolean; memberNames?: string | null; centreName?: string | null; parentName?: string | null }): string {
-  if (input.viewerIsParent) return (input.memberNames || input.centreName || "").trim();
+  if (input.viewerIsParent) {
+    const names = new Map<string, string>();
+    for (const entry of input.memberNames?.split(", ") ?? []) {
+      const name = entry.trim();
+      const key = name.toLowerCase();
+      if (name && !names.has(key)) names.set(key, name);
+    }
+    return [...names.values()].join(", ") || input.centreName?.trim() || "";
+  }
   return (input.parentName || "").trim();
 }

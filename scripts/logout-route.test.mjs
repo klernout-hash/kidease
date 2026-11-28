@@ -14,10 +14,10 @@ test("B1: /logout and /fr/logout route files exist", () => {
   assert.match(src("src/routes/fr.logout.tsx"), /createFileRoute\("\/fr\/logout"\)/);
 });
 
-test("B1: the page calls signOut to the right home and shows a status", () => {
+test("B1 / N-37: the page signs out to the sign-in page in its language and shows a status", () => {
   const route = src("src/routes/logout.tsx");
-  assert.match(route, /signOut\(home\)/);
-  assert.match(route, /const home = locale === "fr" \? "\/fr" : "\/"/);
+  assert.match(route, /signOut\(login\)/);
+  assert.match(route, /const login = signedOutLoginPath\(locale\)/);
   assert.match(route, /useEffect/);
   assert.match(route, /t\("logoutSigningOut"\)/);
   assert.match(src("src/routes/fr.logout.tsx"), /<LogoutScreen locale="fr" \/>/);

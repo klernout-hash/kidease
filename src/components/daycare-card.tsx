@@ -302,9 +302,9 @@ export const DaycareCard = memo(function DaycareCard({
   const priceAmount = !showFees
     ? ""
     : subsidy?.subsidy_type === "qc_965"
-    ? frCard ? "9,65 $" : "$9.65"
+    ? money(9.65, locale)
     : subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max"
-      ? frCard ? "10 $" : "$10"
+      ? money(10, locale)
       : feeOk
         ? money(item.fromPrice, locale)
         : "";

@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { loadAdminPayouts, type AdminPayoutsPage } from "@/lib/server/admin-payouts";
+import { formatCad } from "@/lib/cad-format";
 import { useCopy } from "@/lib/use-copy";
-
-function cad(amount: number): string {
-  return new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(amount);
-}
 
 function yesNo(on: boolean, fr: boolean): string {
   return on ? (fr ? "Oui" : "On") : (fr ? "Non" : "Off");
@@ -13,6 +10,7 @@ function yesNo(on: boolean, fr: boolean): string {
 export function AdminPayoutsPanel() {
   const { locale } = useCopy();
   const fr = locale === "fr";
+  const cad = (amount: number) => formatCad(amount, locale, { maximumFractionDigits: 0 });
   const [page, setPage] = useState<AdminPayoutsPage | null>(null);
   const [error, setError] = useState("");
 

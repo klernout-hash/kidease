@@ -24,7 +24,7 @@ const sourceFiles = [
   "src/lib/org-occupancy-csv.ts",
   "src/lib/gap-features.ts",
   "src/lib/gov/filtered-export.ts",
-  "src/lib/utils.ts", "src/lib/cad-format.ts",
+  "src/lib/utils.ts", "src/lib/cad-format.ts", "src/lib/secure-random.ts",
   "src/lib/html-text.ts",
   "src/lib/languages.ts",
 ];
@@ -71,6 +71,12 @@ const report = {
   },
 };
 const virtual = {
+  "@/components/session-desks": `
+    export function useSessionDesks() {
+      const {state} = window.__orgCsvFixture;
+      return { ready: state !== 'session-loading', session: {centreRole: state === 'staff' ? 'staff' : 'owner'} };
+    }
+  `,
   "@/components/ece-job-desk": "export function EceJobDesk(){return null;}",
   "@/lib/use-copy":
     "export function useCopy(){return {locale:window.__orgCsvFixture.locale,t:key=>key};}",
@@ -84,6 +90,8 @@ const virtual = {
     }
     export function setOrgCentre(){window.__orgCsvFixture.centreChanges++;throw new Error('Not part of downloading the report');}
   `,
+  "@/components/owner-only-notice":
+    "import{createElement}from'react';export function OwnerOnlyNotice(){return createElement('p',{'data-ke':'staff-owner-only'},'owner only');}",
   "@tanstack/react-router":
     "import{createElement}from'react';export function Link({to,search,children,...props}){return createElement('a',{...props,href:to},children);}",
 };
@@ -223,7 +231,13 @@ test(
           { locale, state, report },
         );
         await page.addScriptTag({ content: script });
-        await page.waitForFunction(() => window.__orgCsvFixture.loads === 1);
+        if (state === "staff") {
+          await page.locator('[data-ke="staff-owner-only"]').waitFor();
+        } else if (state === "session-loading") {
+          await page.getByText(orgCopy(locale).lead, { exact: true }).waitFor();
+        } else {
+          await page.waitForFunction(() => window.__orgCsvFixture.loads === 1);
+        }
         return { context, page, requests };
       }
 
@@ -314,7 +328,7 @@ test(
             await context.close();
           }
         }
-      for (const state of ["loading", "off", "empty"]) {
+      for (const state of ["loading", "off", "empty", "staff", "session-loading"]) {
         const { context, page, requests } = await pageFor("en", 390, state);
         try {
           if (state === "off")
@@ -328,7 +342,12 @@ test(
             0,
           );
           assert.deepEqual(requests, []);
-          results.push({ state, noDownload: "PASS" });
+          const loads = await page.evaluate(() => window.__orgCsvFixture.loads);
+          if (state === "staff" || state === "session-loading") {
+            assert.equal(loads, 0, "do not request owner data without a verified owner session");
+            assert.equal(await page.locator("table").count(), 0);
+          }
+          results.push({ state, noDownload: "PASS", loads });
         } finally {
           await context.close();
         }

@@ -74,3 +74,14 @@ test("blocked analytics files do not reload the page", () => {
   assert.match(readFileSync(join(root, "public/asset-recover.js"), "utf8"), /isBlockedAnalytics\(url\) \|\| isBlockedAnalytics\(message\)/);
   assert.match(readFileSync(join(root, "public/asset-recover.js"), "utf8"), /cache:\s*"reload"/);
 });
+
+test("French owner tools resolve to real routes and use the shared owner-only notice", () => {
+  const tree = readFileSync(join(root, "src/routeTree.gen.ts"), "utf8");
+  for (const tool of ["subsidy", "inspection-sync"]) {
+    assert.equal(localePath(`/provider/${tool}`, "fr"), `/fr/provider/${tool}`);
+    assert.ok(tree.includes(`fullPath: '/fr/provider/${tool}'`));
+    const screen = readFileSync(join(root, `src/components/provider-${tool}.tsx`), "utf8");
+    assert.match(screen, /!session\?\.centreOwner/);
+    assert.match(screen, /<OwnerOnlyNotice \/>/);
+  }
+});

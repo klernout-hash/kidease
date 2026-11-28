@@ -103,7 +103,12 @@ export function KioskPage({ access, preview }: { access: KioskAccess; preview?: 
   const needsPin = !pinHash || exiting;
 
   return (
-    <main className="flex min-h-[100dvh] w-full flex-col gap-6 bg-bg p-8" data-ke="fire-kiosk" data-orientation="landscape">
+    // P3-6: full screen, content centred, clear of notches and system bars.
+    <main
+      className="ke-safe-x flex min-h-[100dvh] w-full flex-col gap-6 bg-bg [--ke-pad-x:2rem] pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))] [&>*]:mx-auto [&>*]:w-full [&>*]:max-w-5xl"
+      data-ke="fire-kiosk"
+      data-orientation="landscape"
+    >
       <header className="flex items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-4xl">{copy.title}</h1>

@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseStatus } from "@tanstack/react-start/server";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { getSql } from "@/lib/db";
-import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { assertGovWritable, type GovActor } from "@/lib/server/gov-actor.server";
 import { acceptInspection, inspectionProvinceOk, inspectionSummary, inspectionSyncEnabled } from "@/lib/wiring/inspection-sync";
 import { newId } from "@/lib/server/wiring/runtime";
@@ -63,12 +63,20 @@ export const centreInspectionSummary = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     if (!inspectionSyncEnabled()) return { enabled: false as const, summary: null };
     const sql = await getSql();
-    const ids = await listAccessibleDaycareIds(sql, context.userId);
-    if (!ids.includes(data.daycareId)) return { enabled: true as const, summary: null };
     const centre = await sql<{ province: string; license_number: string | null }>`
-      select province, license_number from daycares where id = ${data.daycareId} limit 1
+      select d.province, d.license_number from daycares d
+      where d.id = ${data.daycareId}
+        and (
+          exists (select 1 from provider_daycares p where p.daycare_id = d.id and p.user_id = ${context.userId})
+          or exists (select 1 from centre_members m where m.daycare_id = d.id and m.user_id = ${context.userId}
+            and m.status = 'active' and m.role = 'owner')
+        )
     `;
-    if (!centre[0]?.license_number) return { enabled: true as const, summary: null };
+    if (!centre[0]) {
+      setResponseStatus(403);
+      return { enabled: true as const, summary: null };
+    }
+    if (!centre[0].license_number) return { enabled: true as const, summary: null };
     const summary = await inspectionSummaryForLicence(centre[0].province, centre[0].license_number);
     return { enabled: true as const, summary };
   });

@@ -1,13 +1,11 @@
 import { getSql } from "@/lib/db";
 import { nid } from "@/lib/utils";
+import { secureRandomString } from "@/lib/secure-random";
 import { writeTrustEvent } from "@/lib/server/trust";
 import { PROVIDER_CREATED_CLAIM_STATUS } from "@/lib/listing-queue";
 
 function makeClaimCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < 6; i += 1) out += chars[Math.floor(Math.random() * chars.length)];
-  return out;
+  return secureRandomString("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 6);
 }
 
 /**

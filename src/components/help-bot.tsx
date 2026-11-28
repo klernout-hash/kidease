@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
+import { useRoleChrome } from "@/components/role-chrome";
+import { useSessionDesks } from "@/components/session-desks";
+import { helpDeskFor, helpForDesk } from "@/lib/ai/desk-help";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -16,15 +20,21 @@ type AskError = "off" | "turnstile" | "rate_limited" | "ticket";
 export function HelpBotPanel() {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
+  const { role } = useRoleChrome();
+  const { session } = useSessionDesks();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const help = helpForDesk(helpDeskFor(pathname, role, session?.centreRole), locale);
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState("");
-  const [msgs, setMsgs] = useState<ChatMsg[]>([{ role: "assistant", text: t("helpBotHello") }]);
+  const [msgs, setMsgs] = useState<ChatMsg[]>([]);
   const [handedOff, setHandedOff] = useState(false);
   const [chatToken, setChatToken] = useState("");
   const [needChallenge, setNeedChallenge] = useState(false);
   const { onToken, takeChallenge, resetSignal, reset } = useTurnstileToken();
   const transcript = useRef<HTMLDivElement>(null);
-  const starters = ["helpBotQ1", "helpBotQ2", "helpBotQ3", "helpBotQ4"] as const;
+  const starters = help.starters.length ? help.starters : [
+    t("helpBotQ1"), t("helpBotQ2"), t("helpBotQ3"), t("helpBotQ4"),
+  ];
   const showStarters = msgs.every((m) => m.role !== "user");
 
   useEffect(() => {
@@ -79,6 +89,16 @@ export function HelpBotPanel() {
     if (!agent && !safe) {
       setDraft("");
       setMsgs((m) => [...m, { role: "assistant", text: t("helpBotPrivacy") }]);
+      return;
+    }
+    const deskAnswer = !agent && !handedOff && safe ? help.answer(safe) : null;
+    if (deskAnswer) {
+      setDraft("");
+      setMsgs((current) => [
+        ...current,
+        { role: "user", text: safe || "" },
+        { role: "assistant", ...deskAnswer },
+      ]);
       return;
     }
     const token = takeChallenge();
@@ -161,6 +181,9 @@ export function HelpBotPanel() {
         aria-relevant="additions text"
         aria-label={t("helpBot")}
       >
+        <p className="max-w-[90%] break-words rounded-2xl bg-bg px-3 py-2 text-sm leading-5 ring-1 ring-border">
+          {help.greeting || t("helpBotHello")}
+        </p>
         {msgs.map((m, i) => (
           <p
             key={`${i}-${m.role}`}
@@ -184,15 +207,15 @@ export function HelpBotPanel() {
         ))}
         {showStarters ? (
           <div className="flex flex-col gap-2 pt-1">
-            {starters.map((key) => (
+            {starters.map((question) => (
               <button
-                key={key}
+                key={question}
                 type="button"
                 disabled={busy}
-                onClick={() => void sendText(t(key))}
+                onClick={() => void sendText(question)}
                 className="min-h-11 w-full rounded-2xl bg-surface px-3 py-2 text-left text-sm font-medium leading-5 text-primary ring-1 ring-border"
               >
-                {t(key)}
+                {question}
               </button>
             ))}
           </div>

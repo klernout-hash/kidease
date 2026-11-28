@@ -1,5 +1,7 @@
 /** Friend links. Counts only. Sharing does not change a bill. */
 
+import { secureRandom } from "./secure-random.ts";
+
 const ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
 
 export const REFERRAL_STORAGE_KEY = "kidease-refer-code";
@@ -10,7 +12,7 @@ export function normalizeReferralCode(raw: string): string | null {
   return code;
 }
 
-export function newReferralCode(random: () => number = Math.random): string {
+export function newReferralCode(random: () => number = secureRandom): string {
   let out = "";
   for (let i = 0; i < 8; i += 1) {
     const index = Math.min(ALPHABET.length - 1, Math.floor(random() * ALPHABET.length));

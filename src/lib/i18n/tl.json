@@ -354,6 +354,7 @@
   "findChildcare": "Maghanap ng childcare",
   "searchWhere": "Saan",
   "searchWhereHint": "Maghanap ng destinasyon",
+  "searchWhereNotFound": "Hindi nakita ang lokasyon. Subukang maglagay ng lungsod at lalawigan o postal code.",
   "whereSuggested": "Mga mungkahing destinasyon",
   "whereNearby": "Malapit",
   "whereNearbyHint": "Maghanap ng childcare sa paligid mo",

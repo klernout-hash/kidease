@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { ControlReading, FeatureCategory } from "@/lib/admin-feature-registry";
 import { FEATURE_ROLLOUTS } from "@/lib/admin-features";
+import { BASE36, secureRandomString } from "@/lib/secure-random";
 
 type FeatureControlCard = {
   id: string;
@@ -211,7 +212,7 @@ export function AdminFeatureControls({
                       className="inline-flex min-h-11 min-w-11 items-center rounded-full px-3 text-sm font-medium ring-1 ring-border touch-manipulation"
                       disabled={busy}
                       aria-pressed={pending?.key === card.key && pending.rollout === rollout}
-                      onClick={() => setPending({ key: card.key, rollout, requestId: `req_${Math.random().toString(36).slice(2, 12)}` })}
+                      onClick={() => setPending({ key: card.key, rollout, requestId: `req_${secureRandomString(BASE36, 10)}` })}
                     >
                       {rollout === 0 ? copy.off : rollout === 100 ? copy.on : `${rollout}%`}
                     </button>

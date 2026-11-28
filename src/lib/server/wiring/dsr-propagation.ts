@@ -7,14 +7,12 @@ import type { GovActor } from "@/lib/server/gov-actor.server";
 import {
   dsrPropagationEnabled,
   dsrPropagationMode,
-  dsrRoleDone,
   governmentDsrVisible,
   openDsr,
-  type DsrKind,
   type DsrRole,
-  type DsrStatus,
 } from "@/lib/wiring/dsr-propagation";
 import { deliverNotice, newId } from "@/lib/server/wiring/runtime";
+import { completeAdminDsrTask } from "@/lib/server/wiring/dsr-admin-task";
 
 async function retentionHeld(userId: string): Promise<boolean> {
   const sql = await getSql();
@@ -81,34 +79,7 @@ export const completeDsrTask = createServerFn({ method: "POST" })
   .validator((input: { requestId?: string }) => ({ requestId: String(input?.requestId || "").slice(0, 80) }))
   .handler(async ({ context, data }) => {
     if (!dsrPropagationEnabled()) return { ok: false as const, error: "off" };
-    const sql = await getSql();
-    const roleRows = await sql<{ role: string }>`select role from profiles where user_id = ${context.userId} limit 1`;
-    const role = roleRows[0]?.role === "admin" ? "admin" : "provider";
-    const request = await sql<{ id: string; kind: string; status: string; held: number; province: string | null; user_id: string }>`
-      select id, kind, status, held, province, user_id from dsr_requests where id = ${data.requestId} limit 1
-    `;
-    const row = request[0];
-    if (!row) return { ok: false as const, error: "missing" };
-    if (role === "provider") {
-      const ids = await listAccessibleDaycareIds(sql, context.userId);
-      if (!ids.length) return { ok: false as const, error: "centre" };
-    }
-    if (Number(row.held) === 1 && row.kind === "delete") return { ok: false as const, error: "hold" };
-    await sql`
-      update dsr_tasks set status = 'done', done_by = ${context.userId}, done_at = now()
-      where request_id = ${row.id} and role = ${role} and status = 'open'
-    `;
-    const left = await sql<{ n: number }>`
-      select count(*)::int as n from dsr_tasks where request_id = ${row.id} and status = 'open'
-    `;
-    const status = dsrRoleDone({
-      status: row.status as DsrStatus,
-      remaining: Number(left[0]?.n ?? 0),
-      held: Number(row.held) === 1,
-      kind: row.kind as DsrKind,
-    });
-    await sql`update dsr_requests set status = ${status}, updated_at = now() where id = ${row.id}`;
-    return { ok: true as const, status };
+    return completeAdminDsrTask(await getSql(), context.userId, data.requestId);
   });
 
 export const govDsrQueue = createServerFn({ method: "GET" })

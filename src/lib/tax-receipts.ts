@@ -8,7 +8,7 @@
 
 import { canadaProvinceCode } from "./gap-features.ts";
 import { renderTextPdf } from "./gov/pdf.ts";
-import { frenchCad } from "./cad-format.ts";
+import { formatCad } from "./cad-format.ts";
 
 export const TAX_RECEIPT_ROW_CAP = 5000;
 
@@ -81,11 +81,7 @@ export type TaxReceiptLocale = "en" | "fr";
 
 export function cadFromCents(cents: number, locale: TaxReceiptLocale = "en"): string {
   const safe = Number.isFinite(cents) ? Math.max(0, Math.round(cents)) : 0;
-  if (locale === "fr") return frenchCad(safe / 100);
-  const dollars = Math.floor(safe / 100);
-  const rem = safe % 100;
-  const grouped = String(dollars).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return `$${grouped}.${String(rem).padStart(2, "0")}`;
+  return formatCad(safe / 100, locale === "fr" ? "fr-CA" : "en-CA");
 }
 
 function asCents(value: number | null | undefined): number | null {

@@ -5,11 +5,13 @@ import { BrandMark } from "@/components/brand-mark";
 import { signOut } from "@/lib/auth/client";
 import { endSessionForLogout } from "@/lib/server/logout";
 import { useCopy } from "@/lib/use-copy";
+import { signedOutLoginPath } from "@/lib/sign-out-target";
 
 /**
  * `/logout` and `/fr/logout` (B1). The server ends this browser's session in
  * `beforeLoad`, so a visit without JavaScript also signs out. The page then
- * runs the same client sign-out as the button on /account and goes home.
+ * runs the same client sign-out as the button on /account and lands on the
+ * sign-in page in the same language (N-37).
  */
 export async function logoutBeforeLoad(): Promise<void> {
   try {
@@ -35,10 +37,10 @@ function LogoutPage() {
 
 export function LogoutScreen({ locale }: { locale: "en" | "fr" }) {
   const { t } = useCopy();
-  const home = locale === "fr" ? "/fr" : "/";
+  const login = signedOutLoginPath(locale);
   useEffect(() => {
-    void signOut(home);
-  }, [home]);
+    void signOut(login);
+  }, [login]);
   return (
     <ShellLite>
       <main className="ke-auth-viewport mx-auto grid place-items-center px-4 py-10" data-ke="logout">
@@ -52,7 +54,7 @@ export function LogoutScreen({ locale }: { locale: "en" | "fr" }) {
           <p className="mt-2 text-sm text-muted">{t("logoutSigningOutHint")}</p>
           <noscript>
             <p className="mt-4">
-              <a href={home} className="inline-flex min-h-11 items-center font-medium text-primary">
+              <a href={login} className="inline-flex min-h-11 items-center font-medium text-primary">
                 KidEase
               </a>
             </p>

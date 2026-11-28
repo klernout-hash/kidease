@@ -137,6 +137,7 @@ export function PlaceSearch({
   value,
   onChange,
   onResolved,
+  onEnterResolved,
   placeholder,
   className,
   inputClassName,
@@ -145,12 +146,15 @@ export function PlaceSearch({
   name,
   ariaLabel,
   ariaLabelledBy,
+  ariaDescribedBy,
+  invalid,
   emptyMenu,
   onCentre,
 }: {
   value: string;
   onChange: (q: string) => void;
   onResolved: (place: ResolvedPlace) => void;
+  onEnterResolved?: (place: ResolvedPlace) => void;
   placeholder?: string;
   className?: string;
   inputClassName?: string;
@@ -160,6 +164,8 @@ export function PlaceSearch({
   name?: string;
   ariaLabel?: string;
   ariaLabelledBy?: string;
+  ariaDescribedBy?: string;
+  invalid?: boolean;
   /** Shown on focus before a city is typed. Nearby stays first. */
   emptyMenu?: WhereEmptyMenu;
   /** A daycare name in the Where box opens that listing. */
@@ -259,10 +265,11 @@ export function PlaceSearch({
     return () => io.disconnect();
   }, []);
 
-  async function pick(hit: PlaceSuggestion) {
+  async function pick(hit: PlaceSuggestion, fromKeyboard = false) {
+    const typed = input.current?.value;
+    setOpen(false);
     if (isCentrePlaceId(hit.placeId)) {
       const slug = centreSlugFromPlaceId(hit.placeId);
-      setOpen(false);
       setHits([]);
       if (slug && onCentreRef.current) {
         onCentreRef.current({ slug, label: hit.label });
@@ -276,15 +283,16 @@ export function PlaceSearch({
         data: { placeId: hit.placeId, session: session.current },
       }).catch(() => null)) ??
       (await resolvePlaceIdBrowser(hit.placeId));
+    if (input.current?.value !== typed) return;
     session.current = newSession();
-    setOpen(false);
     setHits([]);
     if (resolved) {
       // A typed postal code stays the label; the FSA's city would drop it.
       const postal = postalSearchLabel(value);
       const place = postal ? { ...resolved, label: postal } : resolved;
       onChange(place.label);
-      onResolved(place);
+      if (fromKeyboard && onEnterResolved) onEnterResolved(place);
+      else onResolved(place);
       return;
     }
     onChange(hit.label);
@@ -302,6 +310,7 @@ export function PlaceSearch({
           focusedValue.current = value;
           if (emptyMenu) {
             holdDest.current = true;
+            setActive(0);
             setDestOpen(true);
           }
         }}
@@ -316,10 +325,10 @@ export function PlaceSearch({
         onChange={(e) => {
           const next = e.target.value;
           onChange(next);
+          setOpen(false);
           if (next.trim() === focusedValue.current.trim()) {
             holdDest.current = true;
             setDestOpen(Boolean(emptyMenu));
-            setOpen(false);
             return;
           }
           holdDest.current = false;
@@ -333,6 +342,8 @@ export function PlaceSearch({
         aria-autocomplete="list"
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={invalid}
         autoComplete="off"
         onBlur={(event) => {
           const next = event.relatedTarget as Node | null;
@@ -346,11 +357,39 @@ export function PlaceSearch({
           }, 0);
         }}
         onKeyDown={(e) => {
+          if (e.nativeEvent.isComposing) return;
           if (e.key === "Escape") {
             close();
             holdDest.current = false;
             setDestOpen(false);
             return;
+          }
+          if (showDestinations && emptyMenu) {
+            const count = 1 + emptyMenu.cities.length;
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setActive((i) => (i + 1) % count);
+              return;
+            }
+            if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setActive((i) => (i - 1 + count) % count);
+              return;
+            }
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (active <= 0) {
+                setDestOpen(false);
+                emptyMenu.onNearby?.();
+                return;
+              }
+              const city = emptyMenu.cities[active - 1];
+              if (!city) return;
+              setDestOpen(false);
+              onChange(city.label);
+              onResolved(city);
+              return;
+            }
           }
           if (!open || hits.length === 0) return;
           if (e.key === "ArrowDown") {
@@ -361,7 +400,7 @@ export function PlaceSearch({
             setActive((i) => (i - 1 + hits.length) % hits.length);
           } else if (e.key === "Enter" && hits[active]) {
             e.preventDefault();
-            void pick(hits[active]!);
+            void pick(hits[active]!, true);
           }
         }}
       />
@@ -375,8 +414,12 @@ export function PlaceSearch({
             <li>
               <button
                 type="button"
+                tabIndex={-1}
                 data-ke="where-nearby"
-                className="mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-xl bg-surface-2 px-3 py-2.5 text-left"
+                className={cn(
+                  "mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-xl px-3 py-2.5 text-left",
+                  active === 0 ? "bg-surface-2 ring-1 ring-border" : "bg-surface-2",
+                )}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   setDestOpen(false);
@@ -392,11 +435,15 @@ export function PlaceSearch({
                 </span>
               </button>
             </li>
-            {emptyMenu.cities.map((city) => (
+            {emptyMenu.cities.map((city, i) => (
               <li key={city.label}>
                 <button
                   type="button"
-                  className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-surface-2"
+                  tabIndex={-1}
+                  className={cn(
+                    "flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-surface-2",
+                    active === i + 1 ? "bg-surface-2" : "",
+                  )}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     setDestOpen(false);
@@ -425,6 +472,7 @@ export function PlaceSearch({
             <li key={hit.placeId} role="option" aria-selected={i === active}>
               <button
                 type="button"
+                tabIndex={-1}
                 className={cn(
                   "flex w-full flex-col items-start px-3 py-2 text-left text-sm",
                   i === active ? "bg-surface-2" : "hover:bg-surface-2",

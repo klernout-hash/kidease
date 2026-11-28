@@ -354,6 +354,7 @@
   "findChildcare": "ابحث عن رعاية الأطفال",
   "searchWhere": "أين",
   "searchWhereHint": "ابحث عن الوجهات",
+  "searchWhereNotFound": "لم يتم العثور على الموقع. جرّب إدخال المدينة والمقاطعة أو الرمز البريدي.",
   "whereSuggested": "وجهات مقترحة",
   "whereNearby": "بالقرب",
   "whereNearbyHint": "ابحث عن رعاية الأطفال من حولك",
