@@ -17,6 +17,9 @@ test("parent sign-up branch builds and other cursor branches stay skipped", () =
   assert.equal(shouldIgnoreVercelBuild("cursor/home-lcp-13f1"), false);
   assert.equal(shouldIgnoreVercelBuild("cursor/background-check-guidance-25df"), false);
   assert.equal(shouldIgnoreVercelBuild("cursor/home-video-sound-1e24"), true);
+  assert.equal(shouldIgnoreVercelBuild("claude/cron-secret-timing-safe"), true);
+  assert.equal(shouldIgnoreVercelBuild("claude/batch-1127"), true);
+  assert.equal(shouldIgnoreVercelBuild("main"), false);
   assert.equal(shouldIgnoreVercelBuild("main"), false);
   assert.equal(shouldIgnoreVercelBuild("feat/site-guide-chat"), false);
   assert.equal(shouldIgnoreVercelBuild(""), false);
