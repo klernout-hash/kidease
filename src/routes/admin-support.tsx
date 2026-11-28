@@ -18,12 +18,7 @@ export const Route = createFileRoute("/admin-support")({
         throw redirect({ to: "/verify-2fa", search: { next: "/admin-support" } });
       }
       const raw = err instanceof Error ? err.message : String(err ?? "");
-      if (raw === "Unauthorized") {
-        throw redirect({
-          to: "/login",
-          search: { intent: "in" as const, next: "/admin-support", desk: "support" as const },
-        });
-      }
+      // N-27: signed out is a plain 404 too. Support staff sign in on /login first.
       if (raw === "support-inbox-timeout") return;
       throw notFound();
     }

@@ -13,6 +13,7 @@ import {
   bottomBarKind,
   roleFlipAllowed,
   roleNavItems,
+  chromeRole,
   upgradeNavLabel,
 } from "../src/lib/role-access.ts";
 
@@ -161,4 +162,12 @@ test("a server guest stays signed out while the browser session is still startin
   assert.equal(serverSaysGuest({ signedIn: true, role: null, degraded: false }, false), false);
   assert.equal(serverSaysGuest({ signedIn: false, role: "parent", degraded: false }, false), false);
   assert.equal(serverSaysGuest(null, false), false);
+});
+
+
+test("the shared navigation shows the Support desk only to Support roles", () => {
+  for (const role of ["guest", "parent", "provider", "admin", "government", "support", "support_lead"]) {
+    const nav = roleNavItems({ role: chromeRole(role) });
+    assert.equal(nav.some((item) => item.to === "/support"), role === "support" || role === "support_lead", role);
+  }
 });

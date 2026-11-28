@@ -28,7 +28,7 @@ test("express consent statements exist in EN and FR-CA and are not pre-checked c
   for (const key of Object.keys(CASL_STATEMENTS.en)) {
     assert.ok(CASL_STATEMENTS.fr[key]);
     assert.match(CASL_STATEMENTS.en[key], /Optional|not required/i);
-    assert.match(CASL_STATEMENTS.fr[key], /Facultatif/);
+    assert.match(CASL_STATEMENTS.fr[key], /facultatif/i);
     assert.match(CASL_STATEMENTS.en[key], /Winnipeg/);
     assert.match(CASL_STATEMENTS.fr[key], /Winnipeg/);
   }

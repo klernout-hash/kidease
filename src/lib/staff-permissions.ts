@@ -336,3 +336,28 @@ export function staffDeskBlocked(
 ): boolean {
   return isStaffOnlyLogin(input) && (STAFF_OWNER_ONLY_DESKS as readonly string[]).includes(id);
 }
+
+export const STAFF_HIDDEN_ACCOUNT_SECTIONS = ["delete", "export", "wallet", "refer", "subscription"] as const;
+export type StaffHiddenAccountSection = (typeof STAFF_HIDDEN_ACCOUNT_SECTIONS)[number];
+
+export type StaffAccountScope = { staffOnly: boolean };
+export const OPEN_ACCOUNT_SCOPE: StaffAccountScope = { staffOnly: false };
+
+export function staffOnlyAccount(input: {
+  profileRole?: string | null;
+  centreOwner?: boolean | null;
+  centreRole?: string | null;
+  centreCanInvite?: boolean | null;
+}): boolean {
+  if (input.profileRole === "admin") return false;
+  return isStaffOnlyLogin(input);
+}
+
+export function accountSectionHiddenForStaff(id: string, scope: StaffAccountScope): boolean {
+  if (!scope.staffOnly) return false;
+  if (!(STAFF_HIDDEN_ACCOUNT_SECTIONS as readonly string[]).includes(id)) return false;
+  return true;
+}
+
+/** Server message when a staff-only login calls one of those actions. */
+export const STAFF_ACCOUNT_ACTION_DENIED = "Not authorized: the centre owner manages this for the centre account.";
