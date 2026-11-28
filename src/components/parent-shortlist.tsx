@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { DaycareCard } from "@/components/daycare-card";
 import { EmptyState } from "@/components/empty-state";
@@ -13,11 +13,12 @@ import { Button } from "@/components/ui/button";
 import { MultiApplyPanel } from "@/components/multi-apply-sheet";
 import { mirrorOfflineSaved, readOfflineSaved, type OfflineSaved } from "@/lib/offline-shortlist";
 import { parseTrackStatus, type TrackStatus } from "@/lib/parent-tracker";
-import { inviteShortlistShare, leaveShortlistShare } from "@/lib/server/parent-tracker";
+import { leaveShortlistShare } from "@/lib/server/parent-tracker";
 import { MAX_SHORTLIST_COMPARE, toggleCompareSelection } from "@/lib/shortlist";
 import { useAppStore } from "@/lib/store";
 import type { Booking, DaycareCard as Card, TourRequest } from "@/lib/types";
 import { parentListingFeesVisible, parentListingMonthlyFee } from "@/lib/public-fees";
+import { parentDeskPath } from "@/lib/desk-nav";
 import { useCopy } from "@/lib/use-copy";
 import { useRuntimeSwitches } from "@/lib/use-runtime-switches";
 import { RuntimePaused } from "@/components/runtime-paused";
@@ -28,6 +29,18 @@ import { useParentPlusAccess } from "@/lib/use-parent-plus";
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
 
 const SAVED_EAGER_CARDS = 4;
+
+function InvitePartnerLink() {
+  const { t } = useCopy();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  return (
+    <Button asChild variant="ghost" className="mt-2 min-h-11">
+      <Link to={parentDeskPath(pathname)} search={{ tab: "family" }} hash="invite-partner" data-ke="saved-invite-partner">
+        {t("shareShortlist")}
+      </Link>
+    </Button>
+  );
+}
 
 export function ParentShortlist({
   items: rawItems,
@@ -66,10 +79,6 @@ export function ParentShortlist({
   const [picked, setPicked] = useState<string[]>([]);
   const [offline, setOffline] = useState<OfflineSaved[]>([]);
   const [mapOn, setMapOn] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteBusy, setInviteBusy] = useState(false);
-  const [inviteError, setInviteError] = useState("");
-  const [heldPath, setHeldPath] = useState("");
   const visible = ready ? items : items.slice(0, SAVED_EAGER_CARDS);
   const compared = useMemo(() => items.filter((item) => picked.includes(item.id)).slice(0, compareMax), [compareMax, items, picked]);
   const distances = useMemo(() => Object.fromEntries(items.map((item) => [item.id, item.distanceKm])), [items]);
@@ -101,6 +110,7 @@ export function ParentShortlist({
           ))}
         </ul>
         <p className="mt-3 text-sm text-muted">{note}</p>
+        {!shared ? <InvitePartnerLink /> : null}
       </div>
     );
   }
@@ -111,6 +121,7 @@ export function ParentShortlist({
         <h2 className="font-display text-2xl" data-tour="parent-saved">{t("saved")}</h2>
         <div className="mt-4 w-full">
           <EmptyState title={t("noSaved")} body={t(leadKey)} action={t("emptyFindCare")} actionTo="/search" extra={<FirstRunExample id="parent-saved" />} />
+          {!shared ? <InvitePartnerLink /> : null}
         </div>
       </div>
     );
@@ -150,70 +161,7 @@ export function ParentShortlist({
             </Button>
           </div>
         ) : (
-          <form
-            className="mt-3 w-full space-y-2"
-            data-ke="shortlist-share"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setInviteError("");
-              setHeldPath("");
-              setInviteBusy(true);
-              void inviteShortlistShare({ data: { email: inviteEmail } })
-                .then((result) => {
-                  if (!result.ok) {
-                    const key =
-                      result.reason === "self"
-                        ? "shareShortlistSelf"
-                        : result.reason === "limit"
-                          ? "shareShortlistLimit"
-                          : "shareShortlistEmailBad";
-                    setInviteError(t(key));
-                    return;
-                  }
-                  setInviteEmail("");
-                  if (result.emailed) {
-                    toast.success(t("shareShortlistSent"));
-                    return;
-                  }
-                  setHeldPath(result.path);
-                  toast.message(t("shareShortlistHeld"));
-                })
-                .catch(() => setInviteError(t("shareShortlistBad")))
-                .finally(() => setInviteBusy(false));
-            }}
-          >
-            <p className="text-sm font-medium text-fg">{t("shareShortlist")}</p>
-            <label className="block text-sm" htmlFor="shortlist-partner-email">
-              {t("shareShortlistEmail")}
-            </label>
-            <p className="text-sm text-muted">{t("shareShortlistLead")}</p>
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
-              <input
-                id="shortlist-partner-email"
-                type="email"
-                autoComplete="email"
-                inputMode="email"
-                required
-                value={inviteEmail}
-                onChange={(event) => setInviteEmail(event.target.value)}
-                onFocus={(event) => event.currentTarget.scrollIntoView({ block: "nearest" })}
-                className="h-11 w-full min-w-0 rounded-md border border-border bg-bg px-3 text-base"
-              />
-              <Button type="submit" variant="secondary" disabled={inviteBusy}>
-                {t("shareShortlistSend")}
-              </Button>
-            </div>
-            {inviteError ? (
-              <p role="alert" className="text-sm text-danger">
-                {inviteError}
-              </p>
-            ) : null}
-            {heldPath ? (
-              <p className="break-all text-sm text-fg" data-ke="share-link">
-                {heldPath}
-              </p>
-            ) : null}
-          </form>
+          <InvitePartnerLink />
         )}
         <p className="mt-2 text-sm text-muted">
           {t("shortlistCompareLead")}{" "}

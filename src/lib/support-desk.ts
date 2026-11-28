@@ -115,9 +115,19 @@ export function threadCode(threadId: string): string {
  * No id, an unknown id, or two different ids match nothing.
  */
 export function threadIdFromOwnerReply(body: string, threads: Array<{ id: string }>): string | null {
-  const named = new Set(Array.from(String(body || "").matchAll(/#([A-Za-z0-9_-]+)/g), (match) => match[1]));
-  const found = threads.filter((row) => named.has(row.id));
-  return found.length === 1 ? found[0].id : null;
+  const id = ownerReplyThreadId(body);
+  return id && threads.some((row) => row.id === id) ? id : null;
+}
+
+/** Return the one distinct full thread ID named in the reply. */
+export function ownerReplyThreadId(body: string): string | null {
+  const ids = new Set(Array.from(body.matchAll(/#(id_[A-Za-z0-9_-]+)/g), (match) => match[1]));
+  return ids.size === 1 ? ids.values().next().value ?? null : null;
+}
+
+/** Reserve support IDs and legacy six-character codes for the support path. */
+export function isSupportReplyAttempt(body: string): boolean {
+  return /#id_/i.test(body) || /(^|[^A-Za-z0-9_-])#[a-z0-9]{6}(?![A-Za-z0-9_-])/.test(body);
 }
 
 /** Only the configured owner phone may reply. An unset owner phone accepts no one. */

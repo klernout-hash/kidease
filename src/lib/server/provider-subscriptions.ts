@@ -309,6 +309,9 @@ export const startProviderCheckout = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
+    // N-43: no upgrade for a staff-only login on a centre account.
+    const { assertStaffAccountAction } = await import("@/lib/server/staff-account-guard");
+    await assertStaffAccountAction(context.userId, "subscription");
     const desks = await requireSubscriptionAccess(context.userId);
     assertPayCheckoutAllowed(desks.role);
     if (e2eCheckoutMock()) return { url: E2E_CHECKOUT_URL };

@@ -36,6 +36,7 @@ export function GovFrame({
   onFilter: onFilterProp,
   onSearch: onSearchProp,
   search: searchProp,
+  summary,
   children,
 }: {
   locale: GovLocale;
@@ -53,6 +54,7 @@ export function GovFrame({
   search?: string;
   onSearch?: (value: string) => void;
   onFilter?: (next: { region?: string; city?: string }) => void;
+  summary?: ReactNode;
   children: ReactNode;
 }) {
   const copy = govCopy(locale);
@@ -163,6 +165,7 @@ export function GovFrame({
         <p className="mt-1 text-base" data-ke="gov-as-of" suppressHydrationWarning>
           {copy.asOf} {asOf}
         </p>
+        {summary}
         {regions ? (
         <div className={`sticky ${groupPages.length > 1 ? "top-28" : "top-14"} z-20 -mx-4 mt-4 border-b border-border bg-bg px-4 py-3`} data-ke="gov-filters">
           <label className="block text-sm font-medium" htmlFor="gov-search">

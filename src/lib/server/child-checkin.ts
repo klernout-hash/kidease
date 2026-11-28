@@ -9,9 +9,9 @@ import { canWrite, maxCentreRole } from "@/lib/centre-roles";
 import { getSql } from "@/lib/db";
 import { clampTapTime } from "@/lib/centre-tools";
 import { childCheckinEnabled, centreToolIds } from "@/lib/features";
-import { attendancePreviewEnabled } from "@/lib/attendance-handoff";
+import { attendancePreviewEnabled, centreLocalDay } from "@/lib/attendance-handoff";
 import { parentAbsenceBody } from "@/lib/daily-care";
-import { listAccessibleDaycareIds, loadCentreRole } from "./centre-access";
+import { listAccessibleDaycareIds, listOwnerOrManagerDaycareIds, loadCentreRole } from "./centre-access";
 import {
   cancelParentAbsenceReport,
   commitCorrection,
@@ -28,6 +28,7 @@ import {
   centreAbsenceNotice,
   parentAbsenceCancelledBody,
 } from "@/lib/absence-notice";
+import { readCentreAbsences } from "./wiring/absence-reports";
 import type { ParentAbsenceStatus } from "@/lib/daily-care";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
@@ -37,16 +38,18 @@ async function alertCentreStaff(
   sql: Sql,
   input: { daycareId: string; bookingId: string; localDay: string; sourceStatus: string; text: (locale: "en" | "fr") => string },
 ) {
-  const staff = await sql<{ user_id: string; locale: string | null }>`
-    select s.user_id, p.locale
+  const staff = await sql<{ user_id: string; locale: string | null; can_review: boolean }>`
+    select s.user_id, p.locale, bool_or(s.can_review) as can_review
     from (
-      select user_id from provider_daycares where daycare_id = ${input.daycareId}
-      union
-      select user_id from centre_members where daycare_id = ${input.daycareId} and status = 'active'
+      select user_id, true as can_review from provider_daycares where daycare_id = ${input.daycareId}
+      union all
+      select user_id, (role = 'manager' or permission_preset = 'manager') as can_review
+      from centre_members where daycare_id = ${input.daycareId} and status = 'active'
     ) s
     left join profiles p on p.user_id = s.user_id
+    group by s.user_id, p.locale
     limit 20
-  `.catch(() => [] as { user_id: string; locale: string | null }[]);
+  `.catch(() => []);
   const { saveParentInAppNotice } = await import("./parent-notice");
   for (const person of staff) {
     const locale = person.locale === "fr" ? "fr" : "en";
@@ -54,7 +57,9 @@ async function alertCentreStaff(
       userId: person.user_id,
       kind: "inbox",
       titleKey: "notifCare",
-      href: "/provider?desk=today",
+      href: person.can_review
+        ? `/provider/absence?${new URLSearchParams({ centre: input.daycareId, day: input.localDay, lang: locale })}`
+        : "/provider?desk=today",
       sourceKey: absenceNoticeKey({ bookingId: input.bookingId, localDay: input.localDay, status: input.sourceStatus }),
       daycareName: input.text(locale),
       status: "absence",
@@ -162,6 +167,29 @@ export const listMyChildAttendance = createServerFn({ method: "GET" })
     const sql = await getSql();
     const children = await readParentDay(sql, context.userId, new Date(), enabled);
     return { enabled, children };
+  });
+
+export const listCentreAbsences = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator((input: { centre?: string; day?: string }) => ({
+    centre: typeof input?.centre === "string" ? input.centre.slice(0, 100) : "",
+    day: typeof input?.day === "string" ? input.day : "",
+  }))
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const ids = await listOwnerOrManagerDaycareIds(sql, context.userId);
+    const centres = ids.length ? await sql<{ id: string; name: string; timezone: string | null }>`
+      select id, name, timezone from daycares where id = any(${ids}::text[]) order by name, id
+    ` : [];
+    const selected = data.centre ? centres.find((centre) => centre.id === data.centre) : centres[0];
+    const options = centres.map(({ id, name }) => ({ id, name }));
+    if (!selected) return { centres: options, selected: null, day: "", rows: [] };
+    const requestedDay = /^\d{4}-\d{2}-\d{2}$/.test(data.day) ? new Date(data.day) : null;
+    const day = requestedDay && Number.isFinite(requestedDay.getTime()) && requestedDay.toISOString().slice(0, 10) === data.day
+      ? data.day
+      : centreLocalDay(new Date(), selected.timezone || "America/Winnipeg");
+    const rows = await readCentreAbsences(sql, selected.id, day);
+    return { centres: options, selected: selected.id, day, rows };
   });
 
 export const reportMyChildAbsence = createServerFn({ method: "POST" })
