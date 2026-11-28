@@ -97,7 +97,8 @@ test("known fees do not also say they are confirmed after claim", () => {
   });
   assert.equal(sourced.unconfirmed, false);
   assert.equal(sourced.mb10, false);
-  assert.equal(sourced.priceList, false);
+  // KB-55: a listing-level fee cited to the centre's own site shows.
+  assert.equal(sourced.priceList, true);
   assert.equal(sourced.source, "website");
 
   const unknown = listingFeeNotes({ live: false, province: "MB", city: "Winnipeg" });
@@ -116,9 +117,12 @@ test("known fees do not also say they are confirmed after claim", () => {
   assert.equal(mb.source, null);
   assert.equal(mb.priceList, false);
 
+  // KB-55: a live centre's uncited amount may be the city default. Not shown.
   const live = listingFeeNotes({ live: true, province: "MB", preschoolMonthly: 1025 });
-  assert.equal(live.priceList, true);
+  assert.equal(live.priceList, false);
   assert.equal(live.unconfirmed, false);
+  const liveTyped = listingFeeNotes({ live: true, province: "MB", preschoolMonthly: 1025, feeConfidence: "centre", factSource: "Centre fee sheet" });
+  assert.equal(liveTyped.priceList, true);
 });
 
 test("public ages use months under 2 years and years from 2 up", () => {

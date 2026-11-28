@@ -2653,6 +2653,7 @@ export const en = {
     availUnknown: "Spots not confirmed yet",
     availUnknownLead: "This centre hasn’t confirmed open spots on KidEase. Call or book a tour to check: KidEase does not invent availability.",
     feeUnknown: "Fee not confirmed",
+    feeAskCentre: "Ask the centre",
     feeUnknownLead: "Monthly fees are confirmed after the centre claims this listing. Ask about $10-a-day or subsidy when you tour.",
     feeSourceWebsite: "From the centre's public website, may change",
     feeSourcePublic: "From a public source, may change",

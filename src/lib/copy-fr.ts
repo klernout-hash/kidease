@@ -2661,6 +2661,7 @@ export const fr = {
     availUnknownLead:
       "Ce centre n’a pas confirmé ses places sur KidEase. Appelez ou réservez une visite pour vérifier : KidEase n’invente pas la disponibilité.",
     feeUnknown: "Tarif non confirmé",
+    feeAskCentre: "Renseignez-vous auprès du centre",
     feeUnknownLead: "Les tarifs mensuels sont confirmés après que le centre revendique la fiche. Demandez le 10 $ par jour ou la subvention lors de la visite.",
     feeSourceWebsite: "Selon le site public du centre, peut changer",
     feeSourcePublic: "Selon une source publique, peut changer",

@@ -24,6 +24,7 @@ export function ListingRail({
   labelFar = false,
   showDistance = true,
   ratingFloor,
+  showFees = true,
 }: {
   title: string;
   items: Card[];
@@ -48,6 +49,8 @@ export function ListingRail({
   /** Off when a national Live card is outside the parent's city. */
   showDistance?: boolean;
   ratingFloor?: number;
+  /** Off on home cards: no fee pills there (KB-55). */
+  showFees?: boolean;
 }) {
   const { t } = useCopy();
   const scroller = useRef<HTMLDivElement>(null);
@@ -173,6 +176,7 @@ export function ListingRail({
                 labelFar={labelFar}
                 showDistance={showDistance}
                 ratingFloor={ratingFloor}
+                showFees={showFees}
               />
             </div>
             );

@@ -56,6 +56,7 @@ export type CatalogDbRow = {
   part_time_monthly: number | null;
   fee_program?: string | null;
   fact_source?: string | null;
+  fee_confidence?: string | null;
   spots_infant: number | null;
   spots_toddler: number | null;
   spots_preschool: number | null;
@@ -93,7 +94,7 @@ export const CATALOG_SELECT = `
 id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
 address, city, province, postal_code, lat, lng, phone, hours, hours_fr,
 age_min_months, age_max_months, ages_confirmed, ages_source, ages_source_url, infant_monthly, toddler_monthly,
-preschool_monthly, part_time_monthly, fee_program, fact_source, spots_infant, spots_toddler,
+preschool_monthly, part_time_monthly, fee_program, fact_source, fee_confidence, spots_infant, spots_toddler,
 spots_preschool, waitlist, rating_x10, review_count, license_number,
 license_status, registry_match_state, license_verification_source,
 languages, staff_languages, cultural_programs, cultural_team_note,
@@ -110,7 +111,7 @@ export const CATALOG_LIST_SELECT = `
 id, slug, name, name_fr,
 address, city, province, postal_code, lat, lng, hours,
 age_min_months, age_max_months, ages_confirmed, ages_source, ages_source_url, infant_monthly, toddler_monthly,
-preschool_monthly, part_time_monthly, fee_program, fact_source, spots_infant, spots_toddler,
+preschool_monthly, part_time_monthly, fee_program, fact_source, fee_confidence, spots_infant, spots_toddler,
 spots_preschool, waitlist, rating_x10, review_count, license_number,
 license_status, registry_match_state, license_verification_source,
 languages, staff_languages, cultural_programs,
@@ -379,6 +380,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     partTimeMonthly: row.part_time_monthly,
     feeProgram: row.fee_program || null,
     factSource: row.fact_source || null,
+    feeConfidence: row.fee_confidence === "centre" || row.fee_confidence === "estimate" ? row.fee_confidence : null,
     spotsInfant: Number(row.spots_infant) || 0,
     spotsToddler: Number(row.spots_toddler) || 0,
     spotsPreschool: Number(row.spots_preschool) || 0,

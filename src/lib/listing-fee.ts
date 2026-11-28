@@ -24,6 +24,8 @@ export type ListingFeeInput = {
   facilityType?: string | null;
   feeConfirmed?: boolean | null;
   feeConfidence?: string | null;
+  /** Citation for the stored fee. A province or city page is not a listing citation. */
+  factSource?: string | null;
   agesKnown?: boolean | null;
   ageMinMonths?: number | null;
   ageMaxMonths?: number | null;

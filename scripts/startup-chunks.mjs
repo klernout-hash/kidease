@@ -47,6 +47,7 @@ export const STARTUP_HELPER_ROOTS = Object.freeze([
   "src/lib/catalogue-buildings.ts",
   "src/lib/category-keys.ts",
   "src/lib/centre-tools.ts",
+  "src/lib/cited-fee.ts",
   "src/lib/city-directory.ts",
   "src/lib/city-hub-head.ts",
   "src/lib/city-hub-not-found.ts",

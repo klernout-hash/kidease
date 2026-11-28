@@ -22,6 +22,7 @@ import { scheduleFromStoredFees } from "@/lib/category-keys";
 import { listingStandardGroups, standardAgeGroup, standardAgeLabel } from "@/lib/standard-age-groups";
 import { honestVacancy, isLiveOrClaimed, type VacancyHonestyInput } from "@/lib/now-loops";
 import type { Daycare } from "@/lib/types";
+import { feeIsCitedListingFee } from "@/lib/cited-fee";
 
 export const PARENT_AGE_BANDS = ["infant", "toddler", "preschool", "school-age"] as const;
 export type ParentAgeBand = (typeof PARENT_AGE_BANDS)[number];
@@ -537,9 +538,9 @@ export function listingPrograms(d: Pick<
 
 export function programFeeKnown(
   program: AgeProgram,
-  d: Pick<Daycare, "feeConfirmed" | "live">,
+  d: Pick<Daycare, "feeConfidence" | "factSource">,
 ): boolean {
-  return Boolean((d.feeConfirmed || d.live) && program.monthlyFee && program.monthlyFee > 0);
+  return Boolean(feeIsCitedListingFee(d) && program.monthlyFee && program.monthlyFee > 0);
 }
 
 export function listingAgeChips(

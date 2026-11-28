@@ -4,6 +4,7 @@
  * clipped span has a positive width. Relative imports so Node tests can load this file.
  */
 
+import { feeIsCitedListingFee } from "./cited-fee.ts";
 import { resolveFeeConfidence, type FeeConfidence } from "./fee-confidence.ts";
 import { confirmedStoredFeeProgram, hasListedMonthlyFees } from "./fee-program.ts";
 import { localeTag } from "./languages.ts";
@@ -106,11 +107,12 @@ export function partTimeMonthlyFee(value: number | null | undefined): number | n
   return positiveFee(value);
 }
 
+/** KB-55: a monthly amount shows only when it is this listing's own, cited fee. */
 export function monthlyFeeVisible(
   amount: number | null,
-  d: { feeConfirmed?: boolean | null; live?: boolean | null },
+  d: { feeConfidence?: string | null; factSource?: string | null },
 ): boolean {
-  return Boolean((d.feeConfirmed || d.live) && amount && amount > 0);
+  return Boolean(feeIsCitedListingFee(d) && amount && amount > 0);
 }
 
 /** CAD monthly amount with an explicit unit. */
@@ -143,6 +145,8 @@ export type ListingFeeNotes = {
 /**
  * One fee message. Known monthly amounts do not also say fees are confirmed
  * after claim. Manitoba $10-a-day stays a single explanation.
+ * KB-55: the price list shows only for a listing-level, cited fee. Any other
+ * stored amount (city, province or catalogue default) reads as an estimate.
  */
 export function listingFeeNotes(d: {
   live?: boolean | null;
@@ -157,15 +161,21 @@ export function listingFeeNotes(d: {
 }): ListingFeeNotes {
   const mb10 = confirmedStoredFeeProgram(d) === "mb-10-day";
   const listed = hasListedMonthlyFees(d);
-  const confidence = resolveFeeConfidence(d);
   if (mb10) {
-    return { priceList: false, mb10: true, source: null, unconfirmed: false, confidence };
+    return { priceList: false, mb10: true, source: null, unconfirmed: false, confidence: resolveFeeConfidence(d) };
   }
-  if (d.live && listed) {
-    return { priceList: true, mb10: false, source: null, unconfirmed: false, confidence };
+  if (listed && feeIsCitedListingFee(d)) {
+    const centre = String(d.feeConfidence || "").trim().toLowerCase() === "centre";
+    return {
+      priceList: true,
+      mb10: false,
+      source: centre ? null : feeSourceKind(d.factSource),
+      unconfirmed: false,
+      confidence: centre ? "centre" : null,
+    };
   }
   if (listed) {
-    return { priceList: false, mb10: false, source: feeSourceKind(d.factSource), unconfirmed: false, confidence };
+    return { priceList: false, mb10: false, source: null, unconfirmed: false, confidence: "estimate" };
   }
   return { priceList: false, mb10: false, source: null, unconfirmed: true, confidence: null };
 }

@@ -1,4 +1,5 @@
 import { getSql } from "@/lib/db";
+import { CITED_LISTING_FEE_SQL, REAL_LISTING_FEE_AMOUNT_SQL } from "@/lib/cited-fee";
 import { PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import type { TrendFact, CityFact } from "@/lib/gov/aggregate";
 import type { GovBundle } from "@/lib/gov/bundle";
@@ -50,8 +51,8 @@ async function loadUncached(): Promise<GovBundle> {
           else 0
         end), 0)::int as "openSpots",
         count(*) filter (where btrim(coalesce(fee_program, '')) <> '')::int as "cwelccKnown",
-        count(*) filter (where btrim(coalesce(fact_source, '')) <> '' and (infant_monthly is not null or toddler_monthly is not null or preschool_monthly is not null))::int as "feesConfirmed",
-        count(*) filter (where btrim(coalesce(fact_source, '')) = '' and (infant_monthly is not null or toddler_monthly is not null or preschool_monthly is not null))::int as "feesUncited",
+        count(*) filter (where ${REAL_LISTING_FEE_AMOUNT_SQL} and ${CITED_LISTING_FEE_SQL})::int as "feesConfirmed",
+        count(*) filter (where ${REAL_LISTING_FEE_AMOUNT_SQL} and not ${CITED_LISTING_FEE_SQL})::int as "feesUncited",
         count(*) filter (where
           coalesce(languages, '') ilike '%fr%'
           or coalesce(staff_languages::text, '') ilike '%fr%'
@@ -82,7 +83,7 @@ async function loadUncached(): Promise<GovBundle> {
         select
           upper(btrim(province)) as province,
           btrim(city) as city,
-          case when btrim(coalesce(fact_source, '')) <> '' then 'confirmed' else 'uncited' end as kind,
+          case when ${CITED_LISTING_FEE_SQL} then 'confirmed' else 'uncited' end as kind,
           (
             coalesce(infant_monthly, 0) + coalesce(toddler_monthly, 0) + coalesce(preschool_monthly, 0)
           )::float8 / nullif(

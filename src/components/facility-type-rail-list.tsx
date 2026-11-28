@@ -100,6 +100,7 @@ export function DaycareTypeRails({
   ratingFloor,
   /** Search uses one readable column. Explore keeps the horizontal rails. */
   layout = "rails",
+  showFees = true,
 }: {
   items?: Card[];
   rows?: Partial<Record<BrowseDaycareType, Card[]>>;
@@ -117,6 +118,8 @@ export function DaycareTypeRails({
   city?: string;
   ratingFloor?: number;
   layout?: "rails" | "stack";
+  /** Off on home cards: no fee pills there (KB-55). */
+  showFees?: boolean;
 }) {
   const { t, locale } = useCopy();
   const [localType, setLocalType] = useState<BrowseDaycareType | undefined>();
@@ -152,6 +155,7 @@ export function DaycareTypeRails({
                 priority={index === 0}
                 labelFar={labelFar}
                 ratingFloor={ratingFloor}
+                showFees={showFees}
               />
             ))}
           </div>
@@ -192,6 +196,7 @@ export function DaycareTypeRails({
               visual={visual}
               labelFar={labelFar}
               ratingFloor={ratingFloor}
+              showFees={showFees}
               persist={forced}
               empty={
                 forced && !row.length
@@ -221,6 +226,7 @@ export function FacilityTypeRails(props: {
   selected?: BrowseDaycareType;
   onSelect?: (type?: BrowseDaycareType) => void;
   city?: string;
+  showFees?: boolean;
 }) {
   return <DaycareTypeRails {...props} />;
 }
