@@ -1,22 +1,32 @@
-import { Link } from "@tanstack/react-router";
+import { Link, notFound } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
-import { Button } from "@/components/ui/button";
-import { nativeAdminNoteCopy } from "@/lib/native-admin";
+import { NativeAdminLaunchButton } from "@/components/menu-desk-tools";
+import { canVisitDesk } from "@/lib/desks";
+import { getMyDesks } from "@/lib/server/roles";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { useCopy } from "@/lib/use-copy";
 
+export async function beforeLoadNativeAdminLauncher() {
+  const session = await getMyDesks().catch(() => null);
+  if (!session?.email || !canVisitDesk(session.desks, "admin", session.role, session.email)) throw notFound();
+}
+
 export function AdminOnWebNote() {
-  const { locale } = useCopy();
-  const copy = nativeAdminNoteCopy(locale);
+  const { locale, t } = useCopy();
+  const native = useNativeHidesAdmin();
   return (
     <Shell>
-      <main className="ke-gutter mx-auto flex w-full min-w-0 max-w-lg flex-1 flex-col py-10" data-ke="admin-on-web">
-        <p className="text-sm font-semibold text-primary">KidEase</p>
-        <h1 className="mt-2 font-display text-[clamp(1.75rem,6vw,2.25rem)] leading-tight">{copy.title}</h1>
-        <p className="mt-4 text-base text-fg">{copy.lead}</p>
-        <p className="mt-3 text-base text-muted">{copy.body}</p>
-        <Button asChild size="lg" className="mt-8 w-full">
-          <Link to="/">{copy.home}</Link>
-        </Button>
+      <main className="ke-gutter mx-auto w-full max-w-lg space-y-4 py-10" data-ke="admin-on-web">
+        <h1 className="font-display text-3xl">{t("deskAdmin")} · KidEase</h1>
+        <p className="text-sm text-muted">
+          {locale === "fr"
+            ? "Ouvrez l’administration dans le navigateur de l’appli. Connectez-vous et suivez les étapes de vérification."
+            : "Open Admin in the app’s browser. Sign in and follow the verification steps."}
+        </p>
+        {native ? <NativeAdminLaunchButton /> : <a href="/admin">{t("switchToAdmin")}</a>}
+        <Link to={locale === "fr" ? "/fr" : "/"} className="inline-flex min-h-11 items-center px-3">
+          {t("navHome")}
+        </Link>
       </main>
     </Shell>
   );

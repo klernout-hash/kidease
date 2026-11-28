@@ -370,6 +370,7 @@ import { Route as FrInvoicesIdRouteImport } from './routes/fr.invoices.$id'
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as FrMilieuxFamiliauxIdRouteImport } from './routes/fr.milieux-familiaux_.$id'
 import { Route as FrParentDailyFeedRouteImport } from './routes/fr.parent.daily-feed'
+import { Route as FrParentAbsenceRouteImport } from './routes/fr.parent_.absence'
 import { Route as FrProviderInspectionSyncRouteImport } from './routes/fr.provider_.inspection-sync'
 import { Route as FrProviderLeadsRouteImport } from './routes/fr.provider_.leads'
 import { Route as FrProviderSubsidyRouteImport } from './routes/fr.provider_.subsidy'
@@ -2196,6 +2197,11 @@ const FrParentDailyFeedRoute = FrParentDailyFeedRouteImport.update({
   path: '/daily-feed',
   getParentRoute: () => FrParentRoute,
 } as any)
+const FrParentAbsenceRoute = FrParentAbsenceRouteImport.update({
+  id: '/parent_/absence',
+  path: '/parent/absence',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrProviderInspectionSyncRoute =
   FrProviderInspectionSyncRouteImport.update({
     id: '/provider_/inspection-sync',
@@ -2635,6 +2641,7 @@ export interface FileRoutesByFullPath {
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
+  '/fr/parent/absence': typeof FrParentAbsenceRoute
   '/fr/provider/inspection-sync': typeof FrProviderInspectionSyncRoute
   '/fr/provider/leads': typeof FrProviderLeadsRoute
   '/fr/provider/subsidy': typeof FrProviderSubsidyRoute
@@ -3011,6 +3018,7 @@ export interface FileRoutesByTo {
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
+  '/fr/parent/absence': typeof FrParentAbsenceRoute
   '/fr/provider/inspection-sync': typeof FrProviderInspectionSyncRoute
   '/fr/provider/leads': typeof FrProviderLeadsRoute
   '/fr/provider/subsidy': typeof FrProviderSubsidyRoute
@@ -3390,6 +3398,7 @@ export interface FileRoutesById {
   '/fr/jobs_/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux_/$id': typeof FrMilieuxFamiliauxIdRoute
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
+  '/fr/parent_/absence': typeof FrParentAbsenceRoute
   '/fr/provider_/inspection-sync': typeof FrProviderInspectionSyncRoute
   '/fr/provider_/leads': typeof FrProviderLeadsRoute
   '/fr/provider_/subsidy': typeof FrProviderSubsidyRoute
@@ -3770,6 +3779,7 @@ export interface FileRouteTypes {
     | '/fr/jobs/post'
     | '/fr/milieux-familiaux/$id'
     | '/fr/parent/daily-feed'
+    | '/fr/parent/absence'
     | '/fr/provider/inspection-sync'
     | '/fr/provider/leads'
     | '/fr/provider/subsidy'
@@ -4146,6 +4156,7 @@ export interface FileRouteTypes {
     | '/fr/jobs/post'
     | '/fr/milieux-familiaux/$id'
     | '/fr/parent/daily-feed'
+    | '/fr/parent/absence'
     | '/fr/provider/inspection-sync'
     | '/fr/provider/leads'
     | '/fr/provider/subsidy'
@@ -4524,6 +4535,7 @@ export interface FileRouteTypes {
     | '/fr/jobs_/post'
     | '/fr/milieux-familiaux_/$id'
     | '/fr/parent/daily-feed'
+    | '/fr/parent_/absence'
     | '/fr/provider_/inspection-sync'
     | '/fr/provider_/leads'
     | '/fr/provider_/subsidy'
@@ -7313,6 +7325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrParentDailyFeedRouteImport
       parentRoute: typeof FrParentRoute
     }
+    '/fr/parent_/absence': {
+      id: '/fr/parent_/absence'
+      path: '/parent/absence'
+      fullPath: '/fr/parent/absence'
+      preLoaderRoute: typeof FrParentAbsenceRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/provider_/inspection-sync': {
       id: '/fr/provider_/inspection-sync'
       path: '/provider/inspection-sync'
@@ -7615,6 +7634,7 @@ interface FrRouteChildren {
   FrGovVacanciesRoute: typeof FrGovVacanciesRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
+  FrParentAbsenceRoute: typeof FrParentAbsenceRoute
   FrProviderInspectionSyncRoute: typeof FrProviderInspectionSyncRoute
   FrProviderLeadsRoute: typeof FrProviderLeadsRoute
   FrProviderSubsidyRoute: typeof FrProviderSubsidyRoute
@@ -7726,6 +7746,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrGovVacanciesRoute: FrGovVacanciesRoute,
   FrJobsPostRoute: FrJobsPostRoute,
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
+  FrParentAbsenceRoute: FrParentAbsenceRoute,
   FrProviderInspectionSyncRoute: FrProviderInspectionSyncRoute,
   FrProviderLeadsRoute: FrProviderLeadsRoute,
   FrProviderSubsidyRoute: FrProviderSubsidyRoute,
