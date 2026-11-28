@@ -2,6 +2,8 @@
 begin;
 
 create role kidease_child_family_shadow nologin noinherit nobypassrls;
+-- PG16+ (Neon PG18): the creating owner needs membership to SET ROLE into the shadow role.
+grant kidease_child_family_shadow to current_user;
 
 create schema kidease_rls;
 revoke all on schema kidease_rls from public;
