@@ -101,7 +101,7 @@ test("the Where box keeps unresolved locations separate, and explicit name match
   const home = src("src/routes/index.tsx");
   assert.match(resultSubmit, /return true;\s*\}\s*return false;/);
   assert.doesNotMatch(resultSubmit, /name: label/);
-  assert.match(home, /const hit = await applyPlace\(typed\);\s*if \(!hit\) return false;/);
+  assert.match(home, /const hit = await applyPlace\(typed, resolved\);\s*if \(!hit\) return false;/);
   assert.match(home, /name: homeName,/);
   assert.match(src("src/components/explore-search-bar.tsx"), /searchWhereNotFound/);
   assert.match(src("src/components/place-search.tsx"), /centre:/);
