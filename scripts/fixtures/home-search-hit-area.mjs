@@ -15,7 +15,7 @@ const COPY_KEYS = [
 ];
 const SOURCE_FILES = [
   "src/components/explore-search-bar.tsx", "src/components/daycare-name-field.tsx", "src/components/chip.tsx",
-  "src/lib/search-start.ts", "src/lib/dismiss-popovers.ts", "src/lib/utils.ts", "src/lib/cad-format.ts", "src/lib/html-text.ts", "src/lib/languages.ts",
+  "src/lib/search-start.ts", "src/lib/dismiss-popovers.ts", "src/lib/utils.ts", "src/lib/cad-format.ts", "src/lib/secure-random.ts", "src/lib/html-text.ts", "src/lib/languages.ts",
 ];
 const DATE_DECLARATIONS = ["ISO_DATE", "isIsoDate", "OPENING_HORIZON_DAYS", "localIsoDate", "dateAsksForOpenSpot", "startWindowForDate", "formatExploreDateRange"];
 const hash = (value) => createHash("sha256").update(value).digest("hex");

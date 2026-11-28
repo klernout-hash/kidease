@@ -8,6 +8,7 @@
 
 import { conversationIdFromReference, threadReferenceFromId } from "./thread-reference.ts";
 import type { Message } from "./types.ts";
+import { BASE36, secureRandomString } from "./secure-random.ts";
 import { supportRoleLabel, type SupportRoleLabel } from "./support-desk.ts";
 
 export const LIVE_SUPPORT_FLAG = "FEATURE_LIVE_SUPPORT_CHAT";
@@ -113,7 +114,7 @@ export function cleanIdempotencyKey(raw: string | null | undefined): string | nu
 
 export function newSupportIdempotencyKey(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
-  return `sup_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+  return `sup_${Date.now().toString(36)}${secureRandomString(BASE36, 10)}`;
 }
 
 /** Keep the thread that already belongs to this person. */
