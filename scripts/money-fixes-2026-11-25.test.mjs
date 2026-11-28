@@ -278,7 +278,7 @@ test("old earnings and bills paths redirect to the real tabs", () => {
 
 test("owner-only tabs wait for the session instead of telling the owner they are not the owner", () => {
   const provider = src("src/routes/provider.tsx");
-  assert.match(provider, /function OwnerOnlyNotice/);
+  assert.match(provider, /function OwnerAccessNotice/);
   assert.match(provider, /Checking your access|Vérification de votre accès/);
   assert.match(provider, /sessionReady/);
   const verify = src("src/lib/auth/verify.server.ts");

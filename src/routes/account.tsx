@@ -59,6 +59,7 @@ import { loadProfileDesk } from "@/lib/server/profile-desk";
 import type { ProfileDesk } from "@/lib/server/profile-desk";
 import { ParentWallet } from "@/components/parent-wallet";
 import { connectPaymentsPublic } from "@/lib/server/connect-payments";
+import { OwnerOnlyNotice } from "@/components/owner-only-notice";
 
 export function accountBeforeLoad({
   context,
@@ -943,9 +944,7 @@ function ProfilePane() {
           </section>
         ) : null}
         {section === "delete" && desk === "provider" && isStaffOnlyLogin({ centreOwner: session?.centreOwner, centreRole: session?.centreRole }) ? (
-          <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border" data-ke="staff-owner-only">
-            {t("employeeStaffForbidden")}
-          </p>
+          <OwnerOnlyNotice />
         ) : section === "delete" ? (
           <div data-ke="account-delete">
             <DeleteAccountPanel signedIn={Boolean(user) || (chrome.signedIn && !chrome.pending)} />
