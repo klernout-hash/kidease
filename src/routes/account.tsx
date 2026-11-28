@@ -21,7 +21,8 @@ import { ProfileAvatar } from "@/components/profile-avatar";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
-import { isStaffOnlyLogin } from "@/lib/staff-permissions";
+import { accountSectionHiddenForStaff } from "@/lib/staff-permissions";
+import { getStaffAccountScope } from "@/lib/server/staff-account-guard";
 import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
 import { polishProfilePhoto } from "@/lib/server/profile-photo";
 import { authClient, signOut } from "@/lib/auth/client";
@@ -71,8 +72,14 @@ export function accountBeforeLoad({
   return beforeLoadPrivate(privateReturnPath(location), context.roleChrome);
 }
 
-export function accountLoader() {
-  return connectPaymentsPublic();
+export async function accountLoader() {
+  // N-43: the server says whether this is a staff-only login on a centre
+  // account, so the first paint already hides the centre and family actions.
+  const [connect, staff] = await Promise.all([
+    connectPaymentsPublic(),
+    getStaffAccountScope(),
+  ]);
+  return { ...connect, staffScope: staff };
 }
 
 export function accountHead({
@@ -599,6 +606,11 @@ function ProfilePane() {
 
   const connect = useLoaderData({ strict: false }) as Awaited<ReturnType<typeof accountLoader>>;
   const hideUpgrade = desk === "admin" || desk === "provider" || chrome.subscriptionsEnabled !== true;
+  const staffScope = connect.staffScope;
+  // N-43: a staff-only login asking for a centre or family action by link
+  // gets the owner-only note (with a way back), never the action.
+  const staffBlockedSection =
+    search.section && accountSectionHiddenForStaff(search.section, staffScope) ? search.section : null;
   const section =
     search.section === "wallet" && !connect.enabled
       ? "profile"
@@ -630,6 +642,7 @@ function ProfilePane() {
     if (item.id === "wallet" && (!connect.enabled || !user)) return false;
     if (nativeShell && item.id === "subscription") return false;
     if (item.id === "subscription" && hideUpgrade) return false;
+    if (accountSectionHiddenForStaff(item.id, staffScope)) return false;
     return true;
   });
   const editing = search.edit === "1" && section === "profile";
@@ -932,8 +945,13 @@ function ProfilePane() {
             <AppearanceControl />
           </section>
         ) : null}
-        {section === "refer" && user ? <ReferFriendPanel /> : null}
-        {section === "subscription" ? (
+        {staffBlockedSection ? (
+          <div className="mt-8" data-ke="account-staff-owner-only">
+            <OwnerOnlyNotice />
+          </div>
+        ) : null}
+        {section === "refer" && user && !staffBlockedSection ? <ReferFriendPanel /> : null}
+        {section === "subscription" && !staffBlockedSection ? (
           <section className="ke-digital-plan mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="digital-plan">
             <h2 className="font-display text-xl">{t("navUpgrade")}</h2>
             <p className="mt-2 text-sm text-muted">{t("accountSubscriptionLead")}</p>
@@ -947,14 +965,12 @@ function ProfilePane() {
             </Button>
           </section>
         ) : null}
-        {section === "delete" && desk === "provider" && isStaffOnlyLogin({ centreOwner: session?.centreOwner, centreRole: session?.centreRole }) ? (
-          <OwnerOnlyNotice />
-        ) : section === "delete" ? (
+        {section === "delete" && !staffBlockedSection ? (
           <div data-ke="account-delete">
             <DeleteAccountPanel signedIn={Boolean(user) || (chrome.signedIn && !chrome.pending)} />
           </div>
         ) : null}
-        {section === "export" ? (
+        {section === "export" && !staffBlockedSection ? (
           <AccountExportPanel
             signedIn={Boolean(user) || (chrome.signedIn && !chrome.pending)}
             isAdmin={chrome.role === "admin"}
@@ -966,7 +982,7 @@ function ProfilePane() {
             <SignedInDevices />
           </div>
         ) : null}
-        {section === "wallet" && user && connect.enabled ? <ParentWallet state={connect} fixBillId={search.fix ?? null} /> : null}
+        {section === "wallet" && user && connect.enabled && !staffBlockedSection ? <ParentWallet state={connect} fixBillId={search.fix ?? null} /> : null}
         {section === "email-sms" && user ? (
           <form onSubmit={onSave} className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-email-sms">
             <h2 className="font-display text-lg tracking-[-0.02em]">{t("emailAndSms")}</h2>

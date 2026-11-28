@@ -2157,6 +2157,9 @@ export const deleteAccount = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
     blockViewAsSideEffect("delete");
+    // N-43: a staff-only login on a centre account cannot close it here.
+    const { assertStaffAccountAction } = await import("@/lib/server/staff-account-guard");
+    await assertStaffAccountAction(context.userId, "delete");
     const sql = await getSql();
     const uid = context.userId;
     const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
