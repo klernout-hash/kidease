@@ -122,3 +122,18 @@ test("signed offer links fail closed without a secret and expire", () => {
   assert.match(readFileSync(join(root, "src/lib/server/spot-offers.ts"), "utf8"), /spotOfferMailPlan\(spotOfferMailEnabled\(\)\)/);
   assert.match(readFileSync(join(root, ".env.example"), "utf8"), /FEATURE_SPOT_OFFER_MAIL=0/);
 });
+
+test("P1-8: an empty spot offers list checks every category shown in Waitlists", () => {
+  const source = readFileSync(join(root, "src/components/my-spot-offers.tsx"), "utf8");
+  assert.match(source, /if \(rows.length\) return \{ rows, hasWaitlists: false \};/);
+  assert.match(source, /const \{ requests, centres, areas \} = await listMyWaitlists\(\)/);
+  assert.match(source, /Boolean\(requests.length \|\| centres.length \|\| areas.length\)/);
+  assert.match(source, /result.hasWaitlists \? copy.waitlistsElsewhere : copy.emptyMine/);
+  assert.match(source, /search=\{\{ tab: "waitlists" \}\}/);
+  assert.match(source, /role="alert">\{copy.offersUnavailable\}/);
+  for (const locale of ["en", "fr"]) {
+    const copy = spotOfferCopy(locale);
+    assert.notEqual(copy.noOffers, copy.emptyMine);
+    assert.ok(copy.seeWaitlists && copy.waitlistsElsewhere && copy.tryAgain);
+  }
+});
