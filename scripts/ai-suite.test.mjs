@@ -61,3 +61,12 @@ test("the suite does not call a sender or a paid phone line", () => {
   assert.match(src, /callPlaced: false/);
   assert.match(src, /sent: false/);
 });
+
+test("draft forms announce a draft or a localized validation message beside the submit button", () => {
+  const panel = read("src/components/ai-suite-panel.tsx");
+  assert.match(panel, /setFeedback\(\{ text: draft \|\| problem \|\| missing, error: !draft \}\)/);
+  assert.match(panel, /<Button type="submit"[\s\S]*role="status"[\s\S]*"ai-suite-validation" : "ai-suite-draft"/);
+  for (const text of ["Confirm that the family visited", "Confirmez que la famille a fait une visite", "Enter at least one posted open spot", "Entrez au moins une place libre affichée"]) {
+    assert.ok(panel.includes(text));
+  }
+});

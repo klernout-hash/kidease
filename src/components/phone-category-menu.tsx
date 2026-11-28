@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { AppearanceControl } from "@/components/appearance-control";
 import { MenuGlyph, MenuRow } from "@/components/menu-row";
 import { RoleSwitchPill } from "@/components/role-switch-pill";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -73,6 +74,7 @@ function parentGroups(pathname: string, locale: string, signedIn: boolean): Grou
       en: "Find care",
       fr: "Trouver une garde",
       rows: [
+        ...(signedIn ? [{ en: "Family home", fr: "Accueil de la famille", icon: "parent" as const, to: parent, search: { tab: "explore" }, marker: "family-home" }] : []),
         { en: "Search", fr: "Recherche", icon: "explore", to: localePath("/search", locale), marker: "search" },
         { en: "Saved", fr: "Favoris", icon: "saved", to: parent, search: { tab: "saved" }, marker: "saved" },
         { en: "Children", fr: "Enfants", icon: "parent", to: parent, search: { tab: "children" }, marker: "children" },
@@ -87,7 +89,7 @@ function parentGroups(pathname: string, locale: string, signedIn: boolean): Grou
         { en: "Daily care", fr: "Soins du jour", icon: "howItWorks", to: parent, search: { tab: "care" }, marker: "care" },
         ...(signedIn
           ? [
-              { en: "Pay", fr: "Payer", icon: "benefits" as const, to: parent, search: { tab: "payments" }, marker: "payments" },
+              { en: "Payments", fr: "Paiements", icon: "benefits" as const, to: parent, search: { tab: "payments" }, marker: "payments" },
               { en: "Tour calendar", fr: "Calendrier des visites", icon: "howItWorks" as const, to: parent, search: { tab: "tours" }, marker: "tour-calendar" },
               { en: "From your daycare", fr: "De votre garderie", icon: "daycare" as const, to: parent, search: { tab: "centre" }, marker: "centre-tools" },
               { en: "Search alerts", fr: "Alertes de recherche", icon: "notifications" as const, to: parent, search: { tab: "alerts" }, marker: "alerts" },
@@ -209,6 +211,13 @@ export function PhoneCategoryMenu({ host }: { host: boolean }) {
           ))}
         </nav>
       ))}
+      <div className="mt-5 flex min-h-14 flex-wrap items-center justify-between gap-2 border-y border-border py-1" data-ke="phone-appearance">
+        <span className="flex items-center gap-3 text-sm font-medium text-fg">
+          <MenuGlyph id="appearance" />
+          {t("appearance")}
+        </span>
+        <AppearanceControl variant="select" />
+      </div>
       <RoleSwitchPill />
       {user ? (
         <div className="ke-phone-cats-actions" data-ke="menu-account-actions">

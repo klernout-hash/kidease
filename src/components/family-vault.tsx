@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import type { FamilyDocKind } from "@/lib/family-vault";
@@ -47,6 +47,9 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
   const [kind, setKind] = useState<FamilyDocKind>("immunization");
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(!signedIn);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [fileName, setFileName] = useState("");
+  const fileInput = useRef<HTMLInputElement>(null);
   const [enabled, setEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -57,18 +60,24 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
 
   const load = useCallback(async () => {
     if (!signedIn) return;
-    // no-store: a cached GET kept the list stale after an upload (B-org #42).
-    const res = await fetch("/api/family-documents", { credentials: "same-origin", cache: "no-store" });
-    const body = (await res.json().catch(() => null)) as { documents?: Doc[]; centres?: Centre[]; error?: string } | null;
-    if (!res.ok) {
-      toast.error(vaultError(body?.error || "", t));
+    setLoadFailed(false);
+    setLoaded(false);
+    try {
+      // no-store: a cached GET kept the list stale after an upload (B-org #42).
+      const res = await fetch("/api/family-documents", { credentials: "same-origin", cache: "no-store" });
+      if (!res.ok) {
+        setLoadFailed(true);
+        return;
+      }
+      const body = (await res.json()) as { documents?: Doc[]; centres?: Centre[] };
+      setDocuments(body.documents ?? []);
+      setCentres(body.centres ?? []);
+    } catch {
+      setLoadFailed(true);
+    } finally {
       setLoaded(true);
-      return;
     }
-    setDocuments(body?.documents ?? []);
-    setCentres(body?.centres ?? []);
-    setLoaded(true);
-  }, [signedIn, t]);
+  }, [signedIn]);
 
   useEffect(() => {
     if (enabled) void load();
@@ -93,6 +102,7 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
         toast.error(vaultError(payload?.error || "", t));
         return;
       }
+      setFileName("");
       form.reset();
       toast.success(t("familyDocsSaved"));
       await load();
@@ -164,24 +174,36 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
               <option value="immunization">{t("familyDocsImmunization")}</option>
               <option value="subsidy">{t("familyDocsSubsidy")}</option>
             </select>
-            <label className="block text-sm font-medium" htmlFor="family-doc-file">
-              {t("familyDocsFile")}
-            </label>
-            <input
-              id="family-doc-file"
-              name="file"
-              type="file"
-              accept="application/pdf,image/jpeg,image/png,image/webp"
-              required
-              className="block w-full text-sm"
-              onFocus={(e) => e.currentTarget.scrollIntoView({ block: "center" })}
-            />
-            <Button type="submit" disabled={busy}>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={fileInput}
+                id="family-doc-file"
+                name="file"
+                type="file"
+                accept="application/pdf,image/jpeg,image/png,image/webp"
+                hidden
+                aria-label={t("familyDocsFile")}
+                onChange={(event) => setFileName(event.currentTarget.files?.[0]?.name ?? "")}
+              />
+              <Button type="button" variant="secondary" disabled={busy} onClick={() => fileInput.current?.click()}>
+                {fr ? "Choisir un fichier" : "Choose a file"}
+              </Button>
+              <span className="min-w-0 wrap-anywhere text-sm text-muted" role="status">{fileName}</span>
+            </div>
+            <Button type="submit" disabled={busy || !fileName}>
               {t("familyDocsUpload")}
             </Button>
           </form>
           {!loaded ? <p className="mt-4 text-sm text-muted">{t("familyDocsLoading")}</p> : null}
-          {loaded && documents.length === 0 ? <p className="mt-4 text-sm text-muted">{t("familyDocsEmpty")}</p> : null}
+          {loadFailed ? (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <p role="alert" className="text-sm text-danger">
+                {fr ? "Impossible d’ouvrir vos documents." : "We couldn't open your documents."}
+              </p>
+              <Button type="button" variant="secondary" onClick={() => void load()}>{fr ? "Réessayer" : "Try again"}</Button>
+            </div>
+          ) : null}
+          {loaded && !loadFailed && documents.length === 0 ? <p className="mt-4 text-sm text-muted">{t("familyDocsEmpty")}</p> : null}
           <ul className="mt-4 space-y-3">
             {documents.map((doc) => (
               <li key={doc.id} className="rounded-xl p-3 ring-1 ring-border">

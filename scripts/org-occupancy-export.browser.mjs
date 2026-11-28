@@ -280,6 +280,11 @@ test(
               providedTotals,
               `${gap.orgRequests}: 17 · ${gap.orgStaff}: 5 · ${gap.orgSpots}: 4`,
             );
+            const table = page.getByRole("table");
+            assert.equal(await table.getByRole("columnheader").count(), 7);
+            assert.equal(await table.getByRole("cell").count(), 14);
+            assert.equal(await table.getByRole("row").nth(1).evaluate((row) => getComputedStyle(row).display), width < 768 ? "grid" : "table-row");
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), width);
             await page.keyboard.press("Tab");
             assert(await button.evaluate((element) => document.activeElement === element));
             const focus = await button.evaluate((element) => ({

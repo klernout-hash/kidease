@@ -71,6 +71,7 @@ export function AppMenuScreen({
   const staffViewer = session?.centreRole === "staff" || session?.centreRole === "read_only";
   const hostCards = highlight === "create" && ownsListing && !staffViewer;
   const signedIn = Boolean(user) || chrome.signedIn;
+  const parentMenu = highlight === "find" && (chrome.role === "parent" || currentDesk === "parent");
 
   if (section) {
     return (
@@ -158,15 +159,18 @@ export function AppMenuScreen({
       )}
 
       <nav className="ke-menu-group mt-6" aria-label={t("navMenu")}>
-        {user && highlight !== "create" ? (
+        {user && highlight !== "create" && !parentMenu ? (
           <MenuRow to={menuDeskPath(pathname)} search={{ screen: "payments" }} label={t("earningsPayments")} icon="terms" marker="payments" />
+        ) : null}
+        {signedIn && parentMenu ? (
+          <MenuRow to={parentDeskPath(pathname)} search={{ tab: "explore" }} label={locale === "fr" ? "Accueil de la famille" : "Family home"} icon="parent" marker="family-home" />
         ) : null}
         {signedIn && highlight === "find" ? (
           <MenuRow to={parentDeskPath(pathname)} search={{ tab: "children" }} label={t("children")} icon="parent" marker="children" />
         ) : null}
         {user && highlight === "find" ? (
           <>
-            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "payments" }} label={t("payments")} icon="benefits" marker="payments" />
+            {parentMenu ? <MenuRow to={parentDeskPath(pathname)} search={{ tab: "payments" }} label={t("payments")} icon="benefits" marker="payments" /> : null}
             <MenuRow to={parentDeskPath(pathname)} search={{ tab: "documents" }} label={t("familyDocs")} icon="privacy" marker="documents" />
             <MenuRow to={parentDeskPath(pathname)} search={{ tab: "tours" }} label={t("inboxTourCalendar")} icon="howItWorks" marker="tour-calendar" />
             <MenuRow to={parentDeskPath(pathname)} search={{ tab: "family" }} label={t("shareFamilyNav")} icon="share" marker="family" />

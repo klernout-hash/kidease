@@ -1,5 +1,7 @@
 export type CoparentCopy = {
   title: string;
+  inviteShareTitle: string;
+  inviteShareText: string;
   lead: string;
   shared: string;
   noSend: string;
@@ -32,6 +34,8 @@ export type CoparentCopy = {
 
 const en: CoparentCopy = {
   title: "Share your family",
+  inviteShareTitle: "Join my family on KidEase",
+  inviteShareText: "Use this link to join my family on KidEase.",
   lead: "Invite the other parent. They sign in with their own account.",
   shared: "You both see the same children, tours, waitlists, messages, and bills.",
   noSend: "Only share this link with the other parent. KidEase does not send it by email or text.",
@@ -72,6 +76,8 @@ const en: CoparentCopy = {
 
 const fr: CoparentCopy = {
   title: "Partager votre famille",
+  inviteShareTitle: "Rejoignez ma famille sur KidEase",
+  inviteShareText: "Utilisez ce lien pour rejoindre ma famille sur KidEase.",
   lead: "Invitez l’autre parent. Cette personne se connecte avec son propre compte.",
   shared: "Vous voyez les mêmes enfants, visites, listes d’attente, messages et factures.",
   noSend:
