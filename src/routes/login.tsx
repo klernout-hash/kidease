@@ -244,9 +244,11 @@ function LoginNameControl({ nameRef }: { nameRef: MutableRefObject<string> }) {
 }
 
 export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
-  const out: LoginSearch = {};
+  // Keep the `next` key even when it is dropped: TanStack merges the root
+  // route's raw search into this one, so a missing key would let the raw,
+  // unsafe value reach Route.useSearch().
   const next = typeof s.next === "string" ? sanitizePostLoginNext(s.next) : null;
-  if (next) out.next = next;
+  const out: LoginSearch = { next: next ?? undefined };
   if (s.role === "parent" || s.role === "provider" || s.role === "admin") out.role = s.role;
   if (s.intent === "in" || s.intent === "up" || s.intent === "admin") out.intent = s.intent;
   if (s.step === "role") out.step = "role";

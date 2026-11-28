@@ -15,10 +15,8 @@ const FINISH_HOSTS = new Set(["auth"]);
 
 export function safeInAppPath(raw: string | null | undefined): string {
   const value = String(raw || "").trim();
-  if (!value.startsWith("/") || value.startsWith("//")) return "/login";
-  if (value.includes("://") || value.includes("\\")) return "/login";
-  if (value.length > 512) return "/login";
-  return value;
+  if (value.length > 512 || value.includes("://")) return "/login";
+  return safeInternalPath(value, "/login");
 }
 
 /** callbackURL Better Auth should use so the system browser can hand the app back. */
@@ -131,6 +129,7 @@ export function nativeHandoffPath(input: NativeAuthFinish): string {
 }
 
 import { orderSocialSignIn, providersForStore } from "./providers.ts";
+import { safeInternalPath } from "../safe-internal-path.ts";
 
 export type NativeSocialPlatform = "ios" | "android" | "web";
 

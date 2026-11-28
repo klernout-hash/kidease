@@ -6,6 +6,7 @@
 
 import type { MenuIconId } from "@/lib/menu-icons";
 import { frenchGovPath, isFrPath, localePath } from "./locale-path.ts";
+import { isSafeInternalPath } from "./safe-internal-path.ts";
 
 export type ChromeRole = "guest" | "parent" | "provider" | "admin" | "support" | "government";
 
@@ -122,7 +123,7 @@ function allowsArea(area: PrivateArea, role: ChromeRole): boolean {
  */
 export function privateReturnPath(location: { pathname: string; href?: string; searchStr?: string }): string {
   const href = String(location.href || "");
-  if (href.startsWith("/") && !href.startsWith("//")) return href;
+  if (isSafeInternalPath(href)) return href;
   const raw = String(location.searchStr || "");
   const search = raw && raw !== "?" ? (raw.startsWith("?") ? raw : `?${raw}`) : "";
   return `${location.pathname || "/"}${search}`;
@@ -205,7 +206,7 @@ export function destinationAfterSignIn(input: {
     (input.ownsCentre === true && role !== "admin" && role !== "support");
   const home = daycare ? "/provider" : role === "guest" ? "/parent" : homeForRole(role);
   const next = String(input.next || "").trim();
-  if (!next.startsWith("/") || next.startsWith("//")) return place(home);
+  if (!isSafeInternalPath(next)) return place(home);
   if (daycare && parentDeskNext(next)) return place("/provider");
   const decision = guardPrivatePath({
     pathname: next,

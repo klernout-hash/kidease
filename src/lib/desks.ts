@@ -1,6 +1,7 @@
 import { isKidEaseOperatorEmail } from "./admin-email.ts";
 import { stripLocalePrefix, verify2faPagePath } from "./locale-path.ts";
 import { nativeAdminNotePathFor, nativeShellHidesAdminNow } from "./native-admin.ts";
+import { isSafeInternalPath } from "./safe-internal-path.ts";
 import type { ViewAsPublic } from "./view-as-public.ts";
 
 export type AppRole = "admin" | "support_lead" | "support" | "provider" | "parent" | "government";
@@ -294,7 +295,7 @@ export const AUTH_LOOP_PATHS = ["/login", "/verify-2fa", "/forgot-password", "/r
 
 export function pathnameOfDest(raw: string): string {
   const trimmed = (raw || "").trim();
-  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return "";
+  if (!isSafeInternalPath(trimmed)) return "";
   return trimmed.split("?")[0] || "";
 }
 
@@ -330,13 +331,14 @@ export function isAuthLoopPath(raw: string): boolean {
 }
 
 /**
- * Unwrap `?next=` on auth pages, drop protocol-relative / oversized / loop
- * targets, and treat `/` as "no next" so desk resolution can run.
+ * Unwrap `?next=` on auth pages, drop anything that is not a strict
+ * same-site path (see safe-internal-path.ts), oversized or loop targets,
+ * and treat `/` as "no next" so desk resolution can run.
  */
 export function sanitizePostLoginNext(raw?: string | null, depth = 0): string | null {
   if (depth > 4) return null;
   const trimmed = (raw || "").trim();
-  if (!trimmed.startsWith("/") || trimmed.startsWith("//") || trimmed.length > 512) return null;
+  if (trimmed.length > 512 || !isSafeInternalPath(trimmed)) return null;
   const q = trimmed.indexOf("?");
   const pathOnly = (q === -1 ? trimmed : trimmed.slice(0, q)).replace(/\/+$/, "") || "/";
   const query = q === -1 ? "" : trimmed.slice(q);
