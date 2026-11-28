@@ -67,18 +67,23 @@ test("owner texts batch to one per thread per 10 minutes", () => {
   assert.equal(supportRoleLabel("parent"), "Parent");
 });
 
-test("a bad signature is rejected and a block does not stop support", () => {
-  const off = handleSupportOwnerReply({ flagOn: false, signatureOk: true, body: "hello", threads: [] });
+test("only the owner phone can reply, and only to a full thread id", () => {
+  const owner = "+15555550100";
+  const threads = [{ id: "id_newest00001" }, { id: "id_target00002" }];
+  const off = handleSupportOwnerReply({ flagOn: false, from: owner, ownerPhone: owner, body: "hello", threads });
   assert.equal(off.status, 404);
-  const bad = handleSupportOwnerReply({
-    flagOn: true,
-    signatureOk: false,
-    body: "hello #abc123",
-    threads: [{ id: "thread-abc123" }],
-  });
-  assert.equal(bad.status, 401);
-  const threads = [{ id: "thread-abc123" }, { id: "other" }];
-  assert.equal(threadIdFromOwnerReply("Thanks #abc123", threads), "thread-abc123");
+  for (const [from, ownerPhone] of [["+15555550999", owner], ["", ""], [owner, ""]]) {
+    const bad = handleSupportOwnerReply({ flagOn: true, from, ownerPhone, body: "hello #id_target00002", threads });
+    assert.equal(bad.status, 401);
+    assert.equal(bad.threadId, null);
+  }
+  const ok = handleSupportOwnerReply({ flagOn: true, from: "(555) 555-0100", ownerPhone: owner, body: "On it #id_target00002", threads });
+  assert.deepEqual(ok, { status: 200, threadId: "id_target00002", text: "On it" });
+  assert.equal(threadIdFromOwnerReply("Thanks #id_target00002", threads), "id_target00002");
+  assert.equal(threadIdFromOwnerReply("Thanks #000002", threads), null);
+  assert.equal(threadIdFromOwnerReply("Thanks", threads), null);
+  assert.equal(threadIdFromOwnerReply("#id_newest00001 #id_target00002", threads), null);
+  assert.match(ownerAlertText({ role: "Parent", name: "Ada", preview: "Hi", threadId: "id_target00002" }), /#id_target00002$/);
   assert.match(read("src/lib/server/support-desk.ts"), /requireSupport/);
   assert.doesNotMatch(read("src/lib/server/support-desk.ts"), /isBlocked/);
 });
