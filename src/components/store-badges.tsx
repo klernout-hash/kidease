@@ -1,6 +1,6 @@
 import type { MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { APP_STORES } from "@/lib/app-stores";
+import { appStoreById } from "@/lib/app-stores";
 import { AMAZON_APPSTORE_URL, openAmazonListing } from "@/lib/amazon-appstore";
 import { huaweiBadgeAlt } from "@/lib/huawei-badge-alt";
 import type { ShippedLocale } from "@/lib/languages";
@@ -110,8 +110,10 @@ export function StoreBadges({
 } = {}) {
   const { t, locale } = useCopy();
   const lang = locale as ShippedLocale;
-  const amazonUrl = amazonHref === undefined ? AMAZON_APPSTORE_URL() : amazonHref;
-  const playStore = APP_STORES.find((row) => row.id === "play");
+  const amazonUrl = appStoreById("amazon")?.live
+    ? amazonHref === undefined ? AMAZON_APPSTORE_URL() : amazonHref
+    : null;
+  const playStore = appStoreById("play");
   const playUrl = playStore?.live ? playStore.url : null;
   const leadStore: "play" | "amazon" | null =
     lead === "amazon" && amazonUrl ? "amazon" : playUrl ? "play" : amazonUrl ? "amazon" : null;
@@ -128,23 +130,17 @@ export function StoreBadges({
 
   const amazonTile = (
     <li key="amazon" className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border">
-      {amazonUrl ? (
-        <a
-          href={amazonUrl}
-          onClick={onAmazonClick}
-          rel="noopener noreferrer"
-          className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-          aria-label={t("storeAmazonGet")}
-        >
-          <BadgeImage store="amazon" locale={lang} />
-        </a>
-      ) : (
-        <span className="inline-flex" aria-disabled="true">
-          <BadgeImage store="amazon" locale={lang} muted />
-        </span>
-      )}
+      <a
+        href={amazonUrl ?? undefined}
+        onClick={onAmazonClick}
+        rel="noopener noreferrer"
+        className="inline-flex min-h-11 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        aria-label={t("storeAmazonGet")}
+      >
+        <BadgeImage store="amazon" locale={lang} />
+      </a>
       <p className="mt-2 text-sm font-medium">{names.amazon}</p>
-      <p className="text-sm text-muted">{amazonUrl ? t("storeAvailableNow") : t("storeAmazonPending")}</p>
+      <p className="text-sm text-muted">{t("storeAvailableNow")}</p>
     </li>
   );
 
@@ -175,24 +171,20 @@ export function StoreBadges({
       <p className="mt-3 max-w-2xl text-sm text-muted">
         {leadStore === "amazon" ? t("storeAmazonReadyLead") : leadStore === "play" ? t("storePlayReadyLead") : t("storeAmazonPending")}
       </p>
-      <p className="mt-2 max-w-2xl text-sm text-muted">{t("storeComingSoonLead")}</p>
       <ul className="mt-5 grid grid-cols-1 gap-3 min-[431px]:grid-cols-2 lg:grid-cols-3">
         {order.map((store) => {
-          if (store === "amazon") return amazonTile;
-          const configured = APP_STORES.find((row) => row.id === store);
-          const href = configured?.live ? configured.url : null;
-          const tileHref = store === "huawei" && huaweiHref ? huaweiHref : href;
+          if (store === "amazon") return amazonUrl ? amazonTile : null;
+          const configured = appStoreById(store);
+          if (!configured?.live) return null;
+          const tileHref = store === "huawei" && huaweiHref ? huaweiHref : configured.url;
+          if (!tileHref) return null;
           return (
-            <li key={store} className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border" aria-disabled={tileHref ? undefined : "true"}>
-              {tileHref ? (
-                <a href={tileHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center" data-ke={`store-link-${store}`}>
-                  <BadgeImage store={store} locale={lang} alt={store === "huawei" ? huaweiBadgeAlt(lang) : ""} />
-                </a>
-              ) : (
-                <BadgeImage store={store} locale={lang} muted alt={store === "huawei" ? huaweiBadgeAlt(lang) : ""} />
-              )}
-              <p className={store === "huawei" && !tileHref ? "text-sm font-medium" : "mt-2 text-sm font-medium"}>{names[store]}</p>
-              <p className="text-sm text-muted">{configured?.live ? t("storeAvailableNow") : t("storeComingSoon")}</p>
+            <li key={store} className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border">
+              <a href={tileHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center" data-ke={`store-link-${store}`} aria-label={names[store]}>
+                <BadgeImage store={store} locale={lang} alt={store === "huawei" ? huaweiBadgeAlt(lang) : names[store]} />
+              </a>
+              <p className="mt-2 text-sm font-medium">{names[store]}</p>
+              <p className="text-sm text-muted">{t("storeAvailableNow")}</p>
             </li>
           );
         })}
