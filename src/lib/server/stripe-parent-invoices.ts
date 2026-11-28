@@ -640,12 +640,7 @@ async function resolveLinks(
     daycareId = daycareId || bills[0]?.daycare_id || "";
   }
   const email = invoiceCustomerEmail(object);
-  if (!parentUserId && email) {
-    const users = await sql<{ id: string }>`
-      select id from "user" where lower(btrim(email)) = ${email} limit 1
-    `.catch(() => [] as { id: string }[]);
-    parentUserId = users[0]?.id || "";
-  }
+  if (!parentUserId && email) parentUserId = await verifiedUserIdForEmail(sql, email);
   if (!daycareId) {
     const account = connectAccount(row);
     if (account) {
@@ -656,6 +651,20 @@ async function resolveLinks(
     }
   }
   return { parentUserId: parentUserId || null, daycareId: daycareId || null };
+}
+
+/**
+ * Email sign-up issues a session before the mailbox is confirmed, so an email match only
+ * proves the mailbox when that same row has emailVerified. The check stays in this one
+ * query, and an ambiguous match links no one.
+ */
+async function verifiedUserIdForEmail(sql: Sql, email: string): Promise<string> {
+  const users = await sql<{ id: string }>`
+    select id from "user"
+    where lower(btrim(email)) = ${email} and "emailVerified" = true
+    limit 2
+  `.catch(() => [] as { id: string }[]);
+  return users.length === 1 ? users[0].id : "";
 }
 
 function connectAccount(row: Record<string, unknown> | null): string {
