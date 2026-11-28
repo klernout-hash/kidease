@@ -265,6 +265,26 @@ function handle(state, sql, values) {
   }
   if (
     q.includes("update centre_invites") &&
+    q.includes("token_hash") &&
+    q.includes("returning")
+  ) {
+    // Atomic token accept: values are (userId, id, tokenHash, userId).
+    const invite = state.invites.find((row) => row.id === b && row.token_hash === c);
+    const viewer = verifiedViewer(state, d);
+    if (
+      !invite ||
+      a !== d ||
+      invite.status !== "pending" ||
+      new Date(invite.expires_at).getTime() <= Date.now() ||
+      viewer !== invite.email.toLowerCase()
+    )
+      return [];
+    invite.status = "accepted";
+    invite.accepted_user_id = a;
+    return [{ id: invite.id, daycare_id: invite.daycare_id, role: invite.role, name: invite.name }];
+  }
+  if (
+    q.includes("update centre_invites") &&
     q.includes("status = 'accepted'") &&
     q.includes("returning")
   ) {
