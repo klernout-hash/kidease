@@ -5,7 +5,9 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 import {
   handleSupportOwnerReply,
+  isSupportReplyAttempt,
   ownerAlertText,
+  ownerReplyThreadId,
   shouldSendOwnerSms,
   supportCopy,
   supportPreview,
@@ -86,4 +88,16 @@ test("only the owner phone can reply, and only to a full thread id", () => {
   assert.match(ownerAlertText({ role: "Parent", name: "Ada", preview: "Hi", threadId: "id_target00002" }), /#id_target00002$/);
   assert.match(read("src/lib/server/support-desk.ts"), /requireSupport/);
   assert.doesNotMatch(read("src/lib/server/support-desk.ts"), /isBlocked/);
+});
+
+test("owner texts aimed at a support thread are told apart from live-chat replies", () => {
+  assert.equal(ownerReplyThreadId("On it #id_target00002 #id_target00002 #KE-1234"), "id_target00002");
+  assert.equal(ownerReplyThreadId("#id_target00002 #id_unknown"), null);
+  assert.equal(ownerReplyThreadId("Thanks"), null);
+  for (const body of ["On it #id_target00002", "#id_", "Re #ID_x", "Replying #a1b2c3", "#00002x done", "#abcdef"]) {
+    assert.equal(isSupportReplyAttempt(body), true, body);
+  }
+  for (const body of ["#KE-1234 On my way", "KE-1234 hi", "Thanks, we will call you", "#Thanks so much", "#1 priority", "email a@b.c#abc123"]) {
+    assert.equal(isSupportReplyAttempt(body), false, body);
+  }
 });

@@ -54,12 +54,12 @@ async function run(request: Request) {
   }
   const { supportSmsReplyEnabled } = await import("@/lib/features");
   if (supportSmsReplyEnabled()) {
-    const { maybeRecordSupportOwnerReply } = await import("@/lib/server/support-desk");
-    const recorded = await maybeRecordSupportOwnerReply({
-      from: params.From || params.from,
-      body: params.Body || params.body || "",
-    }).catch(() => false);
-    if (recorded) {
+    const { maybeRecordSupportOwnerReply, supportOwnerReplyAttempt } = await import("@/lib/server/support-desk");
+    const reply = { from: params.From || params.from, body: params.Body || params.body || "" };
+    const recorded = await maybeRecordSupportOwnerReply(reply).catch(() => false);
+    // An owner text aimed at a support thread never falls through to live chat.
+    // If no thread matched, it is dropped with no write.
+    if (recorded || supportOwnerReplyAttempt(reply)) {
       return new Response(twimlEmpty(), { status: 200, headers: { "Content-Type": "text/xml" } });
     }
   }
