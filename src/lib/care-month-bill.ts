@@ -1,9 +1,4 @@
-/**
- * Daily care month summary reads the same `invoices` rows as Pay and Bill history (P1-6).
- * The attendance total is only an estimate until a bill is sent. Once a bill exists for
- * that child and month, the summary shows the bill amount in CA$, not a second number.
- * Read-only: nothing here charges, sends, or changes a bill.
- */
+import { dollarsToCents, type BillStatus } from "./bill.ts";
 
 export type CareMonthBillRow = {
   id: string;
@@ -12,20 +7,21 @@ export type CareMonthBillRow = {
   status: string;
   amount_cents: number | string | null;
   total: number | string | null;
+  currency: string | null;
   created_at?: string | Date | null;
 };
 
 export type CareMonthBill = {
   id: string;
-  status: "sent" | "paid" | "refunded" | "disputed";
+  status: Exclude<BillStatus, "draft">;
+  currency: string;
   amountCents: number;
 };
 
-const SHOWN = new Set(["sent", "paid", "refunded", "disputed"]);
+const SHOWN = new Set(["sent", "paid", "void", "refunded", "disputed"]);
 
-function cents(row: CareMonthBillRow): number {
-  if (row.amount_cents != null && row.amount_cents !== "") return Math.round(Number(row.amount_cents)) || 0;
-  return Math.round((Number(row.total) || 0) * 100);
+export function invoiceDisplayCents(row: Pick<CareMonthBillRow, "amount_cents" | "total">): number {
+  return row.amount_cents == null ? dollarsToCents(Number(row.total)) : Number(row.amount_cents);
 }
 
 function stamp(value: string | Date | null | undefined): number {
@@ -34,13 +30,13 @@ function stamp(value: string | Date | null | undefined): number {
   return Number.isNaN(time) ? 0 : time;
 }
 
-/** Newest sent / paid bill for this booking and YYYY-MM period. Drafts and voided bills are not shown. */
+/** Most recent published bill for this booking and month. */
 export function careMonthBill(rows: readonly CareMonthBillRow[], bookingId: string, month: string): CareMonthBill | null {
   const hit = rows
     .filter((row) => row.booking_id === bookingId && String(row.period || "").slice(0, 7) === month && SHOWN.has(row.status))
-    .sort((a, b) => stamp(b.created_at) - stamp(a.created_at))[0];
+    .sort((a, b) => stamp(b.created_at) - stamp(a.created_at) || b.id.localeCompare(a.id))[0];
   if (!hit) return null;
-  return { id: hit.id, status: hit.status as CareMonthBill["status"], amountCents: cents(hit) };
+  return { id: hit.id, status: hit.status as CareMonthBill["status"], amountCents: invoiceDisplayCents(hit), currency: hit.currency || "cad" };
 }
 
 export function careMonthBillCopy(locale: string) {
@@ -48,24 +44,12 @@ export function careMonthBillCopy(locale: string) {
   return {
     billed: (amount: string) => (fr ? `Facturé : ${amount}` : `Billed: ${amount}`),
     status: (status: CareMonthBill["status"]) =>
-      fr
-        ? status === "paid"
-          ? "payée"
-          : status === "refunded"
-            ? "remboursée"
-            : status === "disputed"
-              ? "contestée"
-              : "à payer"
-        : status === "paid"
-          ? "paid"
-          : status === "refunded"
-            ? "refunded"
-            : status === "disputed"
-              ? "disputed"
-              : "due",
+      (fr
+        ? { sent: "à payer", paid: "payée", void: "annulée", refunded: "remboursée", disputed: "contestée" }
+        : { sent: "due", paid: "paid", void: "void", refunded: "refunded", disputed: "disputed" })[status],
     estimate: fr
-      ? "Estimation selon les présences. Ce n’est pas une facture."
-      : "Estimate from attendance. This is not a bill.",
+      ? "Estimation selon les présences."
+      : "Estimate from attendance.",
     seeBill: fr ? "Voir la facture" : "See the bill",
   };
 }

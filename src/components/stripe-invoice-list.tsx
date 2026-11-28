@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { listMyStripeInvoices, type StripeInvoiceView } from "@/lib/server/stripe-parent-invoices";
 import { brandedInvoicePdf, invoicePdfFilename } from "@/lib/invoice-pdf";
-import { savePdfBytes, savePdfFailedText } from "@/lib/save-pdf";
-import { formatInvoiceMoney } from "@/lib/stripe-parent-invoice";
+import { openHostedPdf, savePdfBytes, savePdfFailedText } from "@/lib/save-pdf";
+import { formatInvoiceDisplayMoney } from "@/lib/stripe-parent-invoice";
 import { isFrPath, localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
@@ -14,7 +14,8 @@ type Audience = "parent" | "daycare" | "all";
 
 async function saveInvoicePdf(invoice: StripeInvoiceView, locale: "en" | "fr") {
   if (invoice.invoicePdf?.startsWith("https://")) {
-    window.open(invoice.invoicePdf, "_blank", "noopener,noreferrer");
+    const result = await openHostedPdf(invoice.invoicePdf);
+    if (result === "failed") toast.error(savePdfFailedText(locale));
     return;
   }
   const bytes = brandedInvoicePdf({
@@ -120,7 +121,7 @@ export function StripeInvoiceList({
       {invoices.length ? (
         <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
           {invoices.map((invoice) => {
-            const money = formatInvoiceMoney(invoice.amountCents, invoice.currency, locale === "fr" ? "fr" : "en");
+            const money = formatInvoiceDisplayMoney(invoice.amountCents, invoice.currency, locale);
             const payHref = invoice.payPath || invoice.hostedInvoiceUrl;
             const canPay = invoice.viewer !== "daycare" && invoice.status === "open" && Boolean(payHref);
             const primary = emphasizePay && canPay && !primaryUsed;
@@ -210,7 +211,7 @@ export function InvoiceDetail({ invoice }: { invoice: StripeInvoiceView }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const listTo = isFrPath(pathname) ? "/fr/invoices" : "/invoices";
   const helpTo = isFrPath(pathname) ? "/fr/help" : "/help";
-  const money = formatInvoiceMoney(invoice.amountCents, invoice.currency, locale === "fr" ? "fr" : "en");
+  const money = formatInvoiceDisplayMoney(invoice.amountCents, invoice.currency, locale);
   const paid = invoice.status === "paid";
   const canPay = invoice.viewer !== "daycare" && invoice.status === "open" && Boolean(invoice.hostedInvoiceUrl);
   return (

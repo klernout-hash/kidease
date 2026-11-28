@@ -1,31 +1,18 @@
-/**
- * Save a PDF the same way on every surface.
- *
- * Website: a normal file download.
- * Phone app (Capacitor WebView): a blob link download does nothing on iOS and
- * most Android WebViews, so open the share sheet with the file instead
- * (Save to Files / Downloads). If the share sheet cannot take a file, report
- * "failed" so the screen never claims a download that did not happen.
- *
- * One tap saves one file: a second call while the first is still open returns "busy".
- */
+import { Capacitor, registerPlugin } from "@capacitor/core";
 
-export type SavePdfResult = "downloaded" | "shared" | "cancelled" | "failed" | "busy";
+const PdfShareFiles = registerPlugin<{
+  stage(options: { filename: string; base64: string }): Promise<{ uri: string }>;
+}>("PdfShareFiles");
 
-export type SavePdfEnv = {
+export type SavePdfResult = "started" | "cancelled" | "failed" | "busy";
+
+type SavePdfEnv = {
   native: boolean;
-  makeFile?: (bytes: Uint8Array, filename: string) => unknown;
-  canShare?: (data: { files: unknown[] }) => boolean;
-  share?: (data: { files: unknown[]; title?: string }) => Promise<void>;
-  download?: (bytes: Uint8Array, filename: string) => boolean;
+  shareFile: (bytes: Uint8Array, filename: string) => Promise<void>;
+  download: (bytes: Uint8Array, filename: string) => boolean;
 };
 
 let inFlight = false;
-
-/** Test hook: clear the one-at-a-time guard. */
-export function resetSavePdfGuard() {
-  inFlight = false;
-}
 
 function pdfBody(bytes: Uint8Array): ArrayBuffer {
   const body = new ArrayBuffer(bytes.byteLength);
@@ -49,47 +36,54 @@ function browserDownload(bytes: Uint8Array, filename: string): boolean {
   return true;
 }
 
-function browserEnv(): SavePdfEnv {
-  type CapWindow = Window & { Capacitor?: { isNativePlatform?: () => boolean } };
-  const win = typeof window !== "undefined" ? (window as CapWindow) : null;
-  const nav = typeof navigator !== "undefined" ? navigator : null;
-  return {
-    native: Boolean(win?.Capacitor?.isNativePlatform?.()),
-    makeFile: (bytes, filename) =>
-      typeof File === "function" ? new File([pdfBody(bytes)], filename, { type: "application/pdf" }) : null,
-    canShare: nav && typeof nav.canShare === "function" ? (data) => nav.canShare(data as ShareData) : undefined,
-    share: nav && typeof nav.share === "function" ? (data) => nav.share(data as ShareData) : undefined,
-    download: browserDownload,
-  };
+async function shareNativePdf(bytes: Uint8Array, filename: string) {
+  const { Share } = await import("@capacitor/share");
+  const safeName = filename.replace(/[^a-zA-Z0-9_.-]/g, "_");
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 8192) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  }
+  const base64 = btoa(binary);
+  const { uri } = await PdfShareFiles.stage({ filename: safeName, base64 });
+  await Share.share({ files: [uri] });
 }
 
-function isAbort(err: unknown): boolean {
-  return Boolean(err && typeof err === "object" && (err as { name?: string }).name === "AbortError");
-}
-
-export async function savePdfBytes(
-  bytes: Uint8Array,
-  filename: string,
-  env: SavePdfEnv = browserEnv(),
-): Promise<SavePdfResult> {
+async function runPdfAction(action: () => Promise<boolean>): Promise<SavePdfResult> {
   if (inFlight) return "busy";
   inFlight = true;
   try {
-    if (env.native) {
-      const file = env.makeFile?.(bytes, filename);
-      const data = { files: file ? [file] : [] };
-      if (!file || !env.share || !env.canShare?.(data)) return "failed";
-      try {
-        await env.share({ ...data, title: filename });
-        return "shared";
-      } catch (err) {
-        return isAbort(err) ? "cancelled" : "failed";
-      }
-    }
-    return env.download?.(bytes, filename) ? "downloaded" : "failed";
+    return (await action()) ? "started" : "failed";
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "";
+    return /cancel/i.test(message) ? "cancelled" : "failed";
   } finally {
     inFlight = false;
   }
+}
+
+export function savePdfBytes(
+  bytes: Uint8Array,
+  filename: string,
+  env: SavePdfEnv = { native: Capacitor.isNativePlatform(), shareFile: shareNativePdf, download: browserDownload },
+): Promise<SavePdfResult> {
+  return runPdfAction(async () => {
+    if (!env.native) return env.download(bytes, filename);
+    await env.shareFile(bytes, filename);
+    return true;
+  });
+}
+
+export function openHostedPdf(url: string): Promise<SavePdfResult> {
+  return runPdfAction(async () => {
+    if (!url.startsWith("https://")) return false;
+    if (Capacitor.isNativePlatform()) {
+      const { Browser } = await import("@capacitor/browser");
+      await Browser.open({ url });
+    } else {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+    return true;
+  });
 }
 
 export function base64ToBytes(base64: string): Uint8Array {
@@ -97,11 +91,6 @@ export function base64ToBytes(base64: string): Uint8Array {
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
   return bytes;
-}
-
-/** True only when a file really left the app. Show "saved" only then. */
-export function savePdfSucceeded(result: SavePdfResult): boolean {
-  return result === "downloaded" || result === "shared";
 }
 
 export function savePdfFailedText(locale: string): string {

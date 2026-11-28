@@ -37,7 +37,8 @@ import { useSessionDesks } from "@/components/desk-switcher";
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import type { Booking, Child, DaycareCard as Card, Payment, TourRequest } from "@/lib/types";
 import type { Bill } from "@/lib/bill";
-import { billDollars, billIsOpen } from "@/lib/bill";
+import { billIsOpen } from "@/lib/bill";
+import { formatInvoiceDisplayMoney } from "@/lib/stripe-parent-invoice";
 import { BillStatusBadge, PaymentStateBadge, PaymentStateNote, RefundNote } from "@/components/bill-status";
 import { failureReasonText } from "@/lib/payment-state";
 import { periodLabel } from "@/lib/stripe-methods";
@@ -857,7 +858,7 @@ export function ParentDesk({
                         />
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="font-display text-xl tabular-nums">{money(billDollars(b), locale)}</span>
+                        <span className="font-display text-xl tabular-nums">{formatInvoiceDisplayMoney(b.amountCents, b.currency, locale)}</span>
                         {b.paymentState === "processing" ? null : (
                           <Button size="sm" asChild>
                             <Link to="/pay/bill/$billId" params={{ billId: b.id }} search={{}} data-ke="native-checkout">
@@ -905,7 +906,7 @@ export function ParentDesk({
                           <RefundNote bill={b} className="mt-1" />
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="tabular-nums">{money(billDollars(b), locale)}</span>
+                          <span className="tabular-nums">{formatInvoiceDisplayMoney(b.amountCents, b.currency, locale)}</span>
                           {b.receiptUrl ? (
                             <Button size="sm" variant="secondary" asChild>
                               <a href={b.receiptUrl} target="_blank" rel="noreferrer">

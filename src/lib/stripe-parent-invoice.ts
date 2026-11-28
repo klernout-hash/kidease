@@ -115,6 +115,15 @@ export function formatInvoiceMoney(cents: number | null, currency: string, local
   }).format(cents / 100);
 }
 
+export function formatInvoiceDisplayMoney(cents: number | null, currency: string, locale: string): string | null {
+  const lang = locale === "fr" ? "fr" : "en";
+  const amount = formatInvoiceMoney(cents, currency, lang);
+  if (lang === "en" && (!/^[a-z]{3}$/i.test(currency) || currency.toLowerCase() === "cad")) {
+    return amount?.replace("$", "CA$") ?? null;
+  }
+  return amount;
+}
+
 export function invoiceAppPath(id: string, locale: InvoiceLocale): string {
   const safe = encodeURIComponent(id);
   return locale === "fr" ? `/fr/invoices/${safe}` : `/invoices/${safe}`;

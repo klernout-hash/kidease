@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { formatInvoiceDisplayMoney } from "@/lib/stripe-parent-invoice";
 import { careMonthBillCopy } from "@/lib/care-month-bill";
 import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
@@ -828,13 +829,13 @@ function MonthShares({
               </p>
               {child.bill ? (
                 <p className="mt-1 text-sm font-medium" data-ke="licensed-month-bill">
-                  {billCopy.billed(money(child.bill.amountCents))} · {billCopy.status(child.bill.status)}
+                  {billCopy.billed(formatInvoiceDisplayMoney(child.bill.amountCents, child.bill.currency, locale) ?? "—")} · {billCopy.status(child.bill.status)}
                   {role === "parent" ? (
                     <>
                       {" · "}
                       <Link
-                        to={locale === "fr" ? "/fr/parent" : "/parent"}
-                        search={{ tab: "payments" }}
+                        to={locale === "fr" ? "/fr/invoices/$id" : "/invoices/$id"}
+                        params={{ id: child.bill.id }}
                         className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline"
                       >
                         {billCopy.seeBill}
@@ -844,15 +845,14 @@ function MonthShares({
                 </p>
               ) : null}
               <p className="mt-1 text-sm">
-                {t("careParentOwes").replace("{amount}", money(ledger.parentCents))}
-                {" · "}
+                {!child.bill ? `${t("careParentOwes").replace("{amount}", money(ledger.parentCents))} · ` : null}
                 {t("careProgramOwes").replace("{amount}", money(ledger.programCents))}
               </p>
               {child.bill ? null : (
                 <p className="mt-1 text-xs text-subtle" data-ke="licensed-month-estimate">{billCopy.estimate}</p>
               )}
               <p className="mt-1 text-xs text-subtle">{t("careProgramNotCollected")}</p>
-              {role === "provider" && dollars && child.parentUserId && !child.bill ? (
+              {role === "provider" && dollars && child.parentUserId ? (
                 <Button className="mt-2" size="sm" disabled={busy !== null} onClick={() => onSend(child)}>
                   {busy === `bill:${child.bookingId}` ? t("loading") : t("careSendParentShare")}
                 </Button>

@@ -1,25 +1,23 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { featureCopy } from "@/lib/flagged-feature-copy";
 import { localePath } from "@/lib/locale-path";
 import { cadFromCents } from "@/lib/tax-receipts";
 import { downloadTaxReceipt, listTaxReceipts } from "@/lib/server/tax-receipts";
-import { base64ToBytes, savePdfBytes, savePdfFailedText, savePdfSucceeded } from "@/lib/save-pdf";
+import { base64ToBytes, savePdfBytes, savePdfFailedText } from "@/lib/save-pdf";
 import { useCopy } from "@/lib/use-copy";
 
 type Group = Awaited<ReturnType<typeof listTaxReceipts>>["groups"][number];
 
 export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centre" }) {
   const { locale } = useCopy();
-  const { celebrate } = useSuccessConfirm();
   const copy = featureCopy(locale);
   const [hidden, setHidden] = useState(true);
   const [years, setYears] = useState<number[]>([]);
   const [year, setYear] = useState<number | null>(null);
   const [groups, setGroups] = useState<Group[]>([]);
-  const [problem, setProblem] = useState<"" | "too-many" | "unavailable" | "none" | "saved" | "save-failed">("");
+  const [problem, setProblem] = useState<"" | "too-many" | "unavailable" | "none" | "save-failed">("");
   const [busy, setBusy] = useState("");
 
   useEffect(() => {
@@ -56,11 +54,9 @@ export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centr
         ? copy.taxUnavailable
         : problem === "none"
           ? copy.taxNone
-          : problem === "saved"
-            ? copy.taxSaved
-            : problem === "save-failed"
-              ? savePdfFailedText(locale)
-              : "";
+          : problem === "save-failed"
+            ? savePdfFailedText(locale)
+            : "";
   const help = (
     <Link to={localePath("/help", locale)} className="inline-flex min-h-11 items-center text-sm font-medium text-primary">
       {copy.help}
@@ -88,14 +84,7 @@ export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centr
           return;
         }
         const saved = await savePdfBytes(base64ToBytes(result.pdfBase64), result.filename);
-        if (saved === "failed") {
-          setProblem("save-failed");
-          return;
-        }
-        // Success only when a file really left the app. A closed share sheet says nothing.
-        if (!savePdfSucceeded(saved)) return;
-        setProblem("saved");
-        celebrate();
+        if (saved === "failed") setProblem("save-failed");
       })
       .catch(() => setProblem("unavailable"))
       .finally(() => setBusy(""));
