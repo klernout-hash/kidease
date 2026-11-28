@@ -3619,7 +3619,7 @@ export const en = {
     accountSaving: "Saving…",
     accountUpdatePassword: "Update password",
     accountUpdateEmail: "Update email",
-    passkeySignIn: "Sign in with Face ID / fingerprint",
+    passkeySignIn: "Sign in with fingerprint or face unlock",
     passkeyOfferTitle: "Turn on Face ID / fingerprint sign-in",
     passkeyOfferLead: "Next time, sign in with your face or fingerprint. Email and password still work.",
     passkeyOfferOn: "Turn it on",

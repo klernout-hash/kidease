@@ -1,9 +1,11 @@
+import * as Dialog from "@radix-ui/react-dialog";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { ChevronRight, Globe, Search, X } from "lucide-react";
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
 import { NotificationBell } from "@/components/notification-bell";
+import { useLanguageChoice } from "@/components/language-select";
 import { AppearanceControl } from "@/components/appearance-control";
 import { CareCategoryIcon } from "@/components/care-category-icon";
 import { signOut } from "@/lib/auth/client";
@@ -21,15 +23,12 @@ import {
   type AirbnbAccountRowId,
 } from "@/lib/airbnb-ui";
 import { airbnbCopy, type AirbnbCopy } from "@/lib/airbnb-ui-copy";
-import { applyDocumentLocale, languageMeta, shippedLanguages } from "@/lib/languages";
-import { localePath, localeSwitchHref } from "@/lib/locale-path";
-import { writeLocaleChoiceCookie } from "@/lib/locale-geo";
+import { languageMeta, shippedLanguages } from "@/lib/languages";
+import { localePath } from "@/lib/locale-path";
 import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import { photoUrl } from "@/lib/photo";
 import { safeListingImageSrc } from "@/lib/listing-photo";
-import { saveMyLocale } from "@/lib/server/account-prefs";
 import { getMyContact, saveMyContact, type ContactProfile } from "@/lib/server/profile-contact";
-import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { NotificationPreferences } from "@/components/notification-preferences";
 import { cn } from "@/lib/utils";
@@ -494,32 +493,21 @@ export function AirbnbPersonal({ onBack }: { onBack: () => void }) {
 }
 
 export function AirbnbLanguage() {
-  const { locale, copy } = useFr();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const setLocale = useAppStore((s) => s.setLocale);
-  const { user } = useCurrentUserState();
+  const { locale: activeLocale } = useCopy();
+  const { choose, changing, appliedLocale } = useLanguageChoice();
+  const locale = appliedLocale ?? activeLocale;
+  const copy = airbnbCopy(locale);
+  const beta = locale === "fr" ? " (bêta)" : " (beta)";
   const [open, setOpen] = useState(false);
   const [known, setKnown] = useState<string[]>([]);
   const [picked, setPicked] = useState<string[]>([]);
   const [query, setQuery] = useState("");
-  const titleId = useId();
 
   useEffect(() => {
     const saved = readKnownLanguages();
     setKnown(saved);
     setPicked(saved);
   }, []);
-
-  function choose(code: Locale) {
-    writeLocaleChoiceCookie(code);
-    setLocale(code, { lock: true });
-    applyDocumentLocale(code);
-    const path = typeof window !== "undefined" ? window.location.pathname : pathname;
-    const search = typeof window !== "undefined" ? window.location.search : "";
-    const dest = localeSwitchHref(path, search, code);
-    if (user) void saveMyLocale({ data: { locale: code } }).catch(() => undefined);
-    if (dest) window.location.assign(dest);
-  }
 
   const current = languageMeta(locale);
   const dirty = picked.slice().sort().join() !== known.slice().sort().join();
@@ -537,7 +525,7 @@ export function AirbnbLanguage() {
       <h1>{copy.language}</h1>
       <article className="ke-airbnb-lang-card">
         <p>{copy.appLanguage}</p>
-        <strong>{current.native}</strong>
+        <strong>{current.native}{current.code === "ar" ? beta : ""}</strong>
         <p className="ke-airbnb-help">{copy.editLanguage}</p>
         <div className="ke-airbnb-lang-list" role="radiogroup" aria-label={copy.appLanguage}>
           {shippedLanguages().map((lang) => (
@@ -548,72 +536,76 @@ export function AirbnbLanguage() {
               aria-checked={lang.code === locale}
               data-ke={`airbnb-locale-${lang.code}`}
               className={cn("ke-airbnb-lang", lang.code === locale && "is-on")}
-              onClick={() => choose(lang.code)}
+              disabled={changing}
+              onClick={() => void choose(lang.code)}
             >
-              <span>{lang.native}</span>
+              <span>{lang.native}{lang.code === "ar" ? beta : ""}</span>
               {lang.code === locale ? <span aria-hidden="true">✓</span> : null}
             </button>
           ))}
         </div>
       </article>
-      <div className="ke-airbnb-known">
-        <h2>{copy.knownLanguages}</h2>
-        <button type="button" className="ke-airbnb-outline" data-ke="airbnb-add-languages" onClick={() => setOpen(true)}>
-          {copy.addLanguages}
-        </button>
-        {known.length ? <p>{known.map((code) => languageMeta(code as Locale).native).join(" · ")}</p> : null}
-      </div>
-      {open ? (
-        <div className="ke-airbnb-sheet" role="dialog" aria-modal="true" aria-labelledby={titleId} data-ke="airbnb-lang-sheet">
-          <button type="button" className="ke-airbnb-x" aria-label={copy.close} onClick={() => setOpen(false)}>
-            <X />
-          </button>
-          <h2 id={titleId}>{copy.addLanguages}</h2>
-          <input
-            className="ke-airbnb-field-input"
-            value={query}
-            placeholder={copy.languageSearch}
-            aria-label={copy.languageSearch}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <div className="ke-airbnb-lang-list">
-            {languages.map((lang) => {
-              const on = picked.includes(lang.code);
-              return (
-                <button
-                  key={lang.code}
-                  type="button"
-                  aria-pressed={on}
-                  className={cn("ke-airbnb-lang", on && "is-on")}
-                  onClick={() =>
-                    setPicked((currentCodes) =>
-                      currentCodes.includes(lang.code)
-                        ? currentCodes.filter((code) => code !== lang.code)
-                        : [...currentCodes, lang.code],
-                    )
-                  }
-                >
-                  <span>{lang.native}</span>
-                  <span aria-hidden="true">{on ? "✓" : ""}</span>
-                </button>
-              );
-            })}
-          </div>
-          <button
-            type="button"
-            className="ke-airbnb-pill-btn"
-            disabled={!dirty}
-            data-ke="airbnb-lang-save"
-            onClick={() => {
-              writeKnownLanguages(picked);
-              setKnown(picked);
-              setOpen(false);
-            }}
-          >
-            {copy.save}
-          </button>
+      <Dialog.Root open={open} onOpenChange={setOpen}>
+        <div className="ke-airbnb-known">
+          <h2>{copy.knownLanguages}</h2>
+          <Dialog.Trigger className="ke-airbnb-outline" data-ke="airbnb-add-languages">
+            {copy.addLanguages}
+          </Dialog.Trigger>
+          {known.length ? <p>{known.map((code) => languageMeta(code as Locale).native).join(" · ")}</p> : null}
         </div>
-      ) : null}
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-[69] bg-black/40" />
+          <Dialog.Content className="ke-airbnb-sheet" aria-describedby={undefined} data-ke="airbnb-lang-sheet">
+            <Dialog.Title className="pe-12">{copy.addLanguages}</Dialog.Title>
+            <input
+              className="ke-airbnb-field-input"
+              value={query}
+              placeholder={copy.languageSearch}
+              aria-label={copy.languageSearch}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            <div className="ke-airbnb-lang-list">
+              {languages.map((lang) => {
+                const on = picked.includes(lang.code);
+                return (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    aria-pressed={on}
+                    className={cn("ke-airbnb-lang", on && "is-on")}
+                    onClick={() =>
+                      setPicked((currentCodes) =>
+                        currentCodes.includes(lang.code)
+                          ? currentCodes.filter((code) => code !== lang.code)
+                          : [...currentCodes, lang.code],
+                      )
+                    }
+                  >
+                    <span>{lang.native}</span>
+                    <span aria-hidden="true">{on ? "✓" : ""}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              className="ke-airbnb-pill-btn"
+              disabled={!dirty}
+              data-ke="airbnb-lang-save"
+              onClick={() => {
+                writeKnownLanguages(picked);
+                setKnown(picked);
+                setOpen(false);
+              }}
+            >
+              {copy.save}
+            </button>
+            <Dialog.Close className="ke-airbnb-x absolute right-4 top-2 touch-manipulation" aria-label={copy.close}>
+              <X aria-hidden />
+            </Dialog.Close>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </section>
   );
 }

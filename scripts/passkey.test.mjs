@@ -76,8 +76,8 @@ test("login, settings, and Android fallback are wired", () => {
   const account = read("src/routes/account.tsx");
   assert.match(account, /chrome\.signedIn && !chrome\.pending/);
   assert.match(account, /section === "security" && \(user \|\| \(chrome\.signedIn && !chrome\.pending\)\)/);
-  assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /passkeySignIn: "Sign in with Face ID \/ fingerprint"/);
-  assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /passkeySignIn: "Connexion avec Face ID \/ empreinte"/);
+  assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /passkeySignIn: "Sign in with fingerprint or face unlock"/);
+  assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /passkeySignIn: "Se connecter avec une empreinte ou la reconnaissance faciale"/);
   const plugin = read("src/lib/auth/passkey-plugin.ts");
   assert.match(plugin, /requireUserVerification: true/);
   assert.match(plugin, /passkeySatisfiesAdminEmailStep/);

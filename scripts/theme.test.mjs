@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import { describe, it } from "node:test";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,9 +24,9 @@ describe("theme preference", () => {
     assert.equal(parseThemePreference("light"), "light");
     assert.equal(parseThemePreference("dark"), "dark");
     assert.equal(parseThemePreference("system"), "system");
-    assert.equal(parseThemePreference("nope"), "dark");
-    assert.equal(parseThemePreference(null), "dark");
-    assert.equal(parseThemePreference(undefined), "dark");
+    assert.equal(parseThemePreference("nope"), "system");
+    assert.equal(parseThemePreference(null), "system");
+    assert.equal(parseThemePreference(undefined), "system");
   });
 
   it("resolves System from prefers-color-scheme", () => {
@@ -47,7 +48,7 @@ describe("theme preference", () => {
     };
     try {
       assert.equal(THEME_STORAGE_KEY, "kidease-theme");
-      assert.equal(readThemePreference(), "dark");
+      assert.equal(readThemePreference(), "system");
       writeThemePreference("dark");
       assert.equal(memory.get(THEME_STORAGE_KEY), "dark");
       assert.equal(readThemePreference(), "dark");
@@ -87,9 +88,35 @@ describe("appearance is wired across public + desks chrome", () => {
     assert.match(boot, /prefers-color-scheme: dark/);
     assert.match(boot, /dataset\.theme/);
     assert.match(boot, /dataset\.resolvedTheme/);
-    assert.match(rootHtml, /src="\/theme-boot\.js"/);
-    assert.match(rootHtml, /data-theme="dark"/);
+    assert.match(rootHtml, /src="\/theme-boot\.js\?v=2"/);
+    assert.match(rootHtml, /data-theme="system"/);
+    assert.doesNotMatch(rootHtml, /data-resolved-theme="dark"\s*$/m);
     assert.match(rootHtml, /ThemeBoot/);
+  });
+
+  it("first paint follows the OS on a fresh install and respects saved choices", () => {
+    const boot = src("public/theme-boot.js");
+    for (const [stored, dark, preference, resolved] of [
+      [null, false, "system", "light"],
+      [null, true, "system", "dark"],
+      ["light", true, "light", "light"],
+      ["dark", false, "dark", "dark"],
+      [undefined, true, "system", "dark"],
+    ]) {
+      const root = { dataset: {}, style: {} };
+      runInNewContext(boot, {
+        window: {
+          matchMedia: () => ({ matches: dark }),
+          localStorage: { getItem: () => {
+            if (stored === undefined) throw new Error("Storage unavailable");
+            return stored;
+          } },
+        },
+        document: { documentElement: root },
+      });
+      assert.deepEqual(root.dataset, { theme: preference, resolvedTheme: resolved });
+      assert.equal(root.style.colorScheme, resolved);
+    }
   });
 
   it("dark tokens follow resolved theme and System follows the OS", () => {
