@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { homeLandPath, openAdminDesk } from "../src/lib/desks.ts";
+import { canVisitDesk, homeLandPath, openAdminDesk } from "../src/lib/desks.ts";
 import {
   NATIVE_ADMIN_NOTE_PATH,
   accessPathname,
@@ -16,7 +16,8 @@ import {
   isAccessProtectedPath,
   isCloudflareAccessHost,
   nativeAccountDest,
-  nativeAdminNoteCopy,
+  nativeAdminSignInUrl,
+  openNativeAdminBrowser,
   nativeShellHidesAdmin,
   notificationHrefForShell,
 } from "../src/lib/native-admin.ts";
@@ -90,18 +91,38 @@ test("native admin accounts keep a normal desk; the website still opens Admin", 
   assert.equal(notificationHrefForShell("/admin", false), "/admin");
 });
 
-test("the note page says Admin is on the website and does not open Safari", () => {
-  const en = nativeAdminNoteCopy("en");
-  const fr = nativeAdminNoteCopy("fr");
-  assert.equal(en.lead, "Admin is available on kidease.ca in a browser");
-  assert.match(fr.lead, /kidease\.ca/);
-  assert.doesNotMatch(en.lead, /https?:\/\//);
+test("the native launcher opens the existing operator sign-in on the protected origin", async () => {
+  for (const [locale, path] of [["en", "/login"], ["fr", "/fr/login"]]) {
+    const url = new URL(nativeAdminSignInUrl(locale));
+    assert.equal(url.origin, "https://www.kidease.ca");
+    assert.equal(url.pathname, path);
+    assert.deepEqual(Object.fromEntries(url.searchParams), {
+      role: "admin", desk: "admin", intent: "admin", next: "/admin",
+    });
+  }
+  await assert.rejects(openNativeAdminBrowser("en"), /Native browser unavailable/);
+  const native = src("src/lib/native-admin.ts");
+  assert.match(native, /Browser\.open\(\{ url: nativeAdminSignInUrl\(locale\), presentationStyle: "fullscreen" \}\)/);
+});
+
+test("only the designated admin gets the launcher or a legacy note page", () => {
+  const designated = "kyle@kidease.ca";
+  for (const role of [null, "parent", "provider", "support", "support_lead", "government"]) {
+    assert.equal(canVisitDesk(["admin"], "admin", role, designated), false);
+  }
+  assert.equal(canVisitDesk(["admin"], "admin", "admin", "other@example.invalid"), false);
+  assert.equal(canVisitDesk(["admin"], "admin", "admin", designated), true);
+  const menu = src("src/components/menu-desk-tools.tsx");
+  assert.match(menu, /!native \|\| !session\?\.email \|\| !canVisitDesk/);
   const page = src("src/components/admin-on-web-note.tsx");
-  assert.match(page, /nativeAdminNoteCopy/);
-  assert.match(src("src/routes/app-admin-unavailable.tsx"), /AdminOnWebNote/);
-  assert.match(src("src/routes/use-the-website.tsx"), /AdminOnWebNote/);
-  assert.match(src("src/routes/app-admin-unavailable.tsx"), /noindex/);
-  assert.doesNotMatch(page, /window\.open|Browser\.open|target="_blank"/);
+  assert.match(page, /getMyDesks\(\)/);
+  assert.match(page, /!session\?\.email \|\| !canVisitDesk.*throw notFound\(\)/);
+  for (const route of ["app-admin-unavailable", "fr.app-admin-unavailable", "use-the-website"]) {
+    const source = src(`src/routes/${route}.tsx`);
+    assert.match(source, /beforeLoad: beforeLoadNativeAdminLauncher/);
+    assert.match(source, /noindex/);
+  }
+  assert.match(src("src/lib/server/admin-route.ts"), /assertAdminDesk\(\)/);
   assert.equal(typeof openAdminDesk, "function");
   const desks = src("src/lib/desks.ts");
   const fn = desks.slice(desks.indexOf("export function openAdminDesk"));
