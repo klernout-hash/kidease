@@ -25,6 +25,7 @@ import {
   writeStickyDesk,
 } from "@/lib/desks";
 import { isAccessProtectedPath, nativeShellHidesAdminNow } from "@/lib/native-admin";
+import { safeInternalPath } from "@/lib/safe-internal-path";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { destinationAfterSignIn } from "@/lib/role-access";
 import { getMyDesks } from "@/lib/server/roles";
@@ -203,7 +204,7 @@ export function assignPostAuthDest(dest: string): void {
           : DESK_PATH.parent;
     }
   }
-  window.location.assign(url.startsWith("/") && !url.startsWith("//") ? url : "/parent");
+  window.location.assign(safeInternalPath(url, DESK_PATH.parent));
 }
 
 function fallbackDest(input: {

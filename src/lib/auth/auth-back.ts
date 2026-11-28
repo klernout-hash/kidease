@@ -1,4 +1,5 @@
 import { privateArea } from "../role-access.ts";
+import { isSafeInternalPath } from "../safe-internal-path.ts";
 
 /**
  * Back from sign-in / sign-up must never return to the protected `next`
@@ -31,7 +32,7 @@ export function isAuthPagePath(raw: string): boolean {
 
 /** A same-site path a signed-out guest can land on without bouncing to sign-in. */
 export function isPublicBackTarget(raw: string | null | undefined): boolean {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return false;
+  if (!isSafeInternalPath(raw)) return false;
   const path = barePathOf(raw);
   if (isAuthPagePath(path)) return false;
   const unprefixed = path === "/fr" ? "/" : path.startsWith("/fr/") ? path.slice(3) : path;

@@ -5,6 +5,7 @@ import { useCurrentUser, useCurrentUserState } from "./use-current-user";
 import { getTwoFactorStatus } from "@/lib/server/two-factor";
 import { yieldToMain } from "@/lib/yield-main";
 import { isFrPath } from "@/lib/locale-path";
+import { isSafeInternalPath } from "@/lib/safe-internal-path";
 import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import {
@@ -64,7 +65,7 @@ export function RedirectToSignIn({ to = SIGN_IN_PATH }: { to?: string }) {
         intent: "in" as const,
         next:
           sanitizePostLoginNext(next) ??
-          (next.startsWith("/") && !next.startsWith("//") && !isAuthLoopPath(next) ? next : "/"),
+          (isSafeInternalPath(next) && !isAuthLoopPath(next) ? next : "/"),
         ...(desk ? { desk: deskQueryValue(desk), role: loginRoleFromDesk(desk) } : {}),
       }}
     />
