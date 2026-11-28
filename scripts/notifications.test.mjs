@@ -65,7 +65,7 @@ test("unread badge fails closed — no invented counts", () => {
   assert.equal(failClosedUnread(0), 0);
   assert.equal(formatUnreadBadge(0), "");
   assert.equal(formatUnreadBadge(1), "1");
-  assert.equal(formatUnreadBadge(12), "9+");
+  assert.equal(formatUnreadBadge(12), "12");
   assert.equal(unreadFromRows([{ readAt: null }, { readAt: "2026-09-13" }]), 1);
 });
 
@@ -269,6 +269,6 @@ test("migration persists notification rows with read_at", () => {
   assert.match(server, /listing_claims/);
   assert.match(server, /search_alert_notices/);
   assert.match(server, /conversation_reads/);
-  assert.match(server, /failClosedUnread/);
+  assert.match(server, /unreadFromRows\(await notificationFeed/);
   assert.match(server, /on conflict \(user_id, source_key\)/);
 });

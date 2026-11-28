@@ -244,6 +244,7 @@ async function blockedPair(sql: Sql, candidate: UnifiedCandidate): Promise<boole
 export type UnifiedEvent = {
   id: string;
   typeId: string;
+  dedupeKey: string;
   title: string;
   body: string;
   href: string;
@@ -260,6 +261,7 @@ export async function listUnifiedEvents(userId: string, native: boolean): Promis
   const rows = await sql<{
     id: string;
     type_id: string;
+    dedupe_key: string;
     title: string;
     body: string;
     href: string;
@@ -268,10 +270,10 @@ export async function listUnifiedEvents(userId: string, native: boolean): Promis
     critical: number | boolean;
     audience: string;
   }>`
-    select id, type_id, title, body, href, created_at, read_at, critical, audience
+    select id, type_id, dedupe_key, title, body, href, created_at, read_at, critical, audience
     from unified_alert_events
     where user_id = ${userId}
-    order by created_at desc
+    order by created_at desc, id desc
     limit 40
   `.catch(() => []);
   return rows
@@ -279,6 +281,7 @@ export async function listUnifiedEvents(userId: string, native: boolean): Promis
     .map((row) => ({
       id: row.id,
       typeId: row.type_id,
+      dedupeKey: row.dedupe_key,
       title: row.title,
       body: row.body,
       href: safeUnifiedHref(row.href),
@@ -291,19 +294,6 @@ export async function listUnifiedEvents(userId: string, native: boolean): Promis
 
 function iso(value: string | Date): string {
   return value instanceof Date ? value.toISOString() : String(value);
-}
-
-export async function countUnreadUnifiedAlerts(userId: string): Promise<number> {
-  if (!unifiedAlertsEnabled()) return 0;
-  const sql = await getSql();
-  await ensure(sql);
-  const rows = await sql<{ n: number }>`
-    select count(*)::int as n from unified_alert_events
-    where user_id = ${userId} and read_at is null
-  `.catch(() => [] as Array<{ n: number }>);
-  const n = Number(rows[0]?.n || 0);
-  if (!Number.isFinite(n) || n < 0) return 0;
-  return Math.min(99, Math.floor(n));
 }
 
 export async function markUnifiedRead(userId: string, input: { id?: string; all?: boolean }): Promise<void> {

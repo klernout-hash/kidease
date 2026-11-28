@@ -95,13 +95,13 @@ export function isNotificationTitleKey(value: string | null | undefined): value 
 /** Badge / count: never invent a number. Invalid or missing → 0. */
 export function failClosedUnread(n: unknown): number {
   if (typeof n !== "number" || !Number.isFinite(n) || n < 0) return 0;
-  return Math.min(99, Math.floor(n));
+  return Math.floor(n);
 }
 
 export function formatUnreadBadge(n: number): string {
   const count = failClosedUnread(n);
   if (count <= 0) return "";
-  return count > 9 ? "9+" : String(count);
+  return String(count);
 }
 
 export function notificationSourceKey(kind: NotificationKind, id: string, extra?: string | null): string {
