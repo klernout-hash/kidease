@@ -9,6 +9,8 @@ import {
   DESK_NAV,
   PARENT_PRIMARY_NAV_IDS,
   visibleDeskNav,
+  visibleDeskGroups,
+  deskHrefForLocale,
   visiblePrimaryDeskNav,
   visibleSecondaryDeskNav,
 } from "../src/lib/desk-nav.ts";
@@ -102,4 +104,27 @@ test("centre nav waits for a confirmed role and the drawer maps staff account li
   assert.ok(visibleDeskNav("parent", { centreRolePending: true }).length > 0);
   assert.match(src("src/components/desk-shell.tsx"), /centreRolePending = desk === "daycare" && !session/);
   assert.match(src("src/components/nav-drawer.tsx"), /deskQueryForViewer\("provider", session\?\.centreRole\)/);
+});
+
+test("inspection and subsidy appear together only for resolved centre owners", () => {
+  const targets = ["inspection-sync", "subsidy"];
+  const links = (opts) => visibleDeskNav("daycare", opts).filter((item) => targets.includes(item.id));
+  const owner = links({ centreOwner: true, centreRole: "owner" });
+  assert.deepEqual(ids(owner), targets);
+  assert.deepEqual(visibleDeskGroups("daycare", owner).map(({ group }) => group.id), ["compliance"]);
+  assert.deepEqual(owner.map(({ href }) => deskHrefForLocale(href, "/fr/provider")), [
+    "/fr/provider/inspection-sync",
+    "/fr/provider/subsidy",
+  ]);
+  for (const opts of [
+    undefined,
+    { centreRolePending: true, centreOwner: true },
+    { centreRole: "staff", centreOwner: true },
+    { centreRole: "read_only", centreOwner: true },
+    { centreOwner: false },
+    { centreOwner: true, centreLinked: false },
+  ]) assert.deepEqual(links(opts), []);
+  for (const desk of ["parent", "admin", "support"]) {
+    assert.ok(visibleDeskNav(desk).every((item) => !targets.includes(item.id)));
+  }
 });

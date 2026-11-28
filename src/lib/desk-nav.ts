@@ -108,6 +108,8 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "tools", label: "Centre tools", hint: "Menus, checklists, billing helpers", labelKey: "centreToolsNav", hintKey: "centreToolsNavHint", href: "/provider", search: { desk: "tools" } },
     { id: "centre-care", label: "Care", hint: "Check-in, logs, and family files", labelKey: "dailyCare", hintKey: "dailyCareHint", href: "/provider", search: { desk: "care" } },
     { id: "money", label: "Earnings", hint: "Payouts, invoices, and payment history", labelKey: "deskNavMoney", hintKey: "deskNavMoneyHint", href: "/provider", search: { desk: "money" } },
+    { id: "inspection-sync", label: "Inspection sync", labelKey: "navInspectionSync", href: "/provider/inspection-sync" },
+    { id: "subsidy", label: "Subsidy", labelKey: "navProviderSubsidy", href: "/provider/subsidy" },
     { id: "licence", label: "Licence", hint: "Trust checklist + photo", labelKey: "listingCoachOpenLicence", hintKey: "deskNavLicenceHint", href: "/provider", search: { desk: "licence" } },
     { id: "centre-documents", label: "Documents", hint: "Insurance, policies, and handbook", labelKey: "deskNavDocuments", hintKey: "deskNavDocumentsHint", href: "/provider", search: { desk: "documents" } },
     { id: "contract", label: "Contract", hint: "Agreement + enrolment packs", labelKey: "deskNavContract", hintKey: "deskNavContractHint", href: "/provider", search: { desk: "contract" } },
@@ -421,6 +423,9 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
     if (desk === "daycare" && opts?.centreLinked === false && !BEFORE_CENTRE_NAV.has(item.id)) return false;
     if (desk === "daycare" && item.id === "screening" && opts?.centreOwner === false) return false;
+    if (desk === "daycare" && (item.id === "inspection-sync" || item.id === "subsidy")) {
+      return opts?.centreOwner === true && opts.centreRole !== "staff" && opts.centreRole !== "read_only";
+    }
     if (desk === "daycare" && opts && staffDeskBlocked(item.id, opts)) return false;
     if (item.id === "learning") return opts?.curriculumPack === true;
     if (item.id === "family") return opts?.coparentLink === true || opts?.coparentEmail === true;
@@ -499,7 +504,7 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
     { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "calendar", "listings", "messages", "requests"] },
     { id: "business", label: "Business", labelKey: "navBusiness", open: true, itemIds: ["money", "insights", "leads", "tours", "top-rated", "promote"] },
     { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "hours", "screening", "learning", "tools", "centre-care"] },
-    { id: "compliance", label: "Compliance", labelKey: "navCompliance", itemIds: ["licence", "centre-documents", "contract"] },
+    { id: "compliance", label: "Compliance and funding", labelKey: "navComplianceFunding", open: true, itemIds: ["inspection-sync", "subsidy", "licence", "centre-documents", "contract"] },
     { id: "grow", label: "Grow", labelKey: "navGrow", itemIds: ["post-job", "add", "claim"] },
     { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "subscription", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", itemIds: ["notify-prefs", "security", "email-sms"] },
