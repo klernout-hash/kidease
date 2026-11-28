@@ -71,7 +71,7 @@ export function StaffTimesheetDesk() {
         if (row.enabled && row.daycareId) setDaycareId(row.daycareId);
       })
       .catch(() =>
-        setDesk({ enabled: false, centres: [], daycareId: "", weekLabel: "", open: [], week: [], totals: [], edits: [] }),
+        setDesk({ enabled: false, canManage: false, centres: [], daycareId: "", weekLabel: "", open: [], week: [], totals: [], edits: [] }),
       );
   }
 
@@ -204,6 +204,8 @@ export function StaffTimesheetDesk() {
       <div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="font-display text-xl">{copy.thisWeek}</h3>
+          {/* N-02: the whole-centre CSV is owner work. Staff only see their own shifts. */}
+          {desk.canManage ? (
           <Button
             type="button"
             variant="outline"
@@ -227,7 +229,13 @@ export function StaffTimesheetDesk() {
           >
             {copy.exportCsv}
           </Button>
+          ) : null}
         </div>
+        {desk.canManage ? null : (
+          <p className="mt-2 text-sm text-muted" data-ke="timesheet-own-hours">
+            {copy.errors.owner}
+          </p>
+        )}
         {desk.totals.length === 0 ? <p className="mt-2 text-sm text-muted">{copy.noRows}</p> : null}
         <ul className="mt-3 space-y-2">
           {desk.totals.map((row) => (

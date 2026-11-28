@@ -354,6 +354,7 @@
   "findChildcare": "搵托兒服務",
   "searchWhere": "邊度",
   "searchWhereHint": "搜尋目的地",
+  "searchWhereNotFound": "搵唔到呢個地點。試吓輸入城市同省份，或者郵政編碼。",
   "whereSuggested": "建議目的地",
   "whereNearby": "附近",
   "whereNearbyHint": "搵你附近嘅托兒",

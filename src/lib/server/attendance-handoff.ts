@@ -556,7 +556,7 @@ export async function readParentDay(sql: Sql, userId: string, now: Date, include
 /** Existing parent away notices update the operational record, never staff confirmations. */
 export async function saveParentAbsenceReport(
   sql: Sql,
-  input: { userId: string; bookingId: string; status: string; now: Date },
+  input: { userId: string; bookingId: string; status: string; now: Date; localDay?: string },
 ) {
   if (!isParentAbsenceStatus(input.status)) return { ok: false as const, error: "Choose an absence report." };
   const bookings = await sql<{
@@ -573,6 +573,9 @@ export async function saveParentAbsenceReport(
   const booking = bookings[0];
   if (!booking) return { ok: false as const, error: "That child is not enrolled on this account." };
   const localDay = centreLocalDay(input.now, booking.timezone || "America/Winnipeg");
+  if (input.localDay !== undefined && input.localDay !== localDay) {
+    return { ok: false as const, code: "date-changed" as const, error: "The centre date changed." };
+  }
   const saved = await sql<{ id: string }>`
     insert into attendance (id, daycare_id, booking_id, conversation_id, child_name, parent_user_id, day, status, updated_by)
     values (${nid("at")}, ${booking.daycare_id}, ${booking.id}, ${booking.conversation_id}, ${booking.child_name}, ${input.userId}, ${localDay}, ${input.status}, ${input.userId})

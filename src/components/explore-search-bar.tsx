@@ -177,7 +177,7 @@ export function ExploreSearchBar({
   onDatesChange: (next: { from: string; to: string }) => void;
   start?: SearchStart | "";
   onStartChange?: (start: SearchStart | "") => void;
-  onSubmit: (where?: string) => void;
+  onSubmit: (where?: string, resolved?: ResolvedPlace) => Promise<boolean>;
   onLocate?: () => void;
   origin?: { lat: number; lng: number; label?: string | null; source?: string | null };
   className?: string;
@@ -199,12 +199,31 @@ export function ExploreSearchBar({
   const whereId = useId();
   const nameId = useId();
   const whereLabelId = useId();
+  const whereErrorId = useId();
   const whenLabelId = useId();
   const nameLabelId = useId();
   const whenPanelId = useId();
   const wrap = useRef<HTMLFormElement>(null);
   const [active, setActive] = useState<Field | null>(null);
   const [expanded, setExpanded] = useState(!startCollapsed);
+  const [placeNotFound, setPlaceNotFound] = useState(false);
+  const submitting = useRef(false);
+
+  async function submitPlace(typed: string, resolved?: ResolvedPlace) {
+    if (submitting.current) return;
+    submitting.current = true;
+    try {
+      if (await onSubmit(typed, resolved)) {
+        setPlaceNotFound(false);
+        if (startCollapsed) setExpanded(false);
+      } else {
+        setPlaceNotFound(true);
+        setExpanded(true);
+      }
+    } finally {
+      submitting.current = false;
+    }
+  }
   const dateLabel = formatExploreDateRange(values.from, values.to, locale);
   const startLabel = start ? t(START_COPY[start]) : "";
   const whenLabel = dateLabel || (onStartChange ? startLabel : "") || t("searchWhenHint");
@@ -281,7 +300,7 @@ export function ExploreSearchBar({
         data-tour="parent-search"
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit(values.where);
+          void submitPlace(values.where);
         }}
       >
         <div className="flex min-h-14 w-full items-center gap-[8px] rounded-full bg-surface py-1 pl-4 pr-1.5 shadow-card ring-1 ring-border">
@@ -329,8 +348,7 @@ export function ExploreSearchBar({
         setActive(null);
         const input = e.currentTarget.querySelector("[data-ke=where-field] input");
         const typed = input instanceof HTMLInputElement ? input.value : values.where;
-        onSubmit(typed);
-        if (startCollapsed) setExpanded(false);
+        void submitPlace(typed);
       }}
     >
       {startCollapsed ? (
@@ -379,14 +397,24 @@ export function ExploreSearchBar({
                 id={whereId}
                 name="q"
                 value={values.where}
-                onChange={onWhereChange}
+                onChange={(text) => {
+                  setPlaceNotFound(false);
+                  onWhereChange(text);
+                }}
                 onResolved={(place) => {
+                  setPlaceNotFound(false);
                   onWhereChange(place.label);
                   onWhereResolved(place);
+                }}
+                onEnterResolved={(place) => {
+                  setActive(null);
+                  void submitPlace(place.label, place);
                 }}
                 placeholder={t("searchWhereHint")}
                 origin={origin}
                 ariaLabelledBy={whereLabelId}
+                ariaDescribedBy={placeNotFound ? whereErrorId : undefined}
+                invalid={placeNotFound || undefined}
                 className={prominent ? "h-4 min-h-0" : "min-h-6"}
                 onCentre={(hit) => {
                   void navigate({ to: "/daycare/$slug", params: { slug: hit.slug } });
@@ -567,6 +595,11 @@ export function ExploreSearchBar({
           </div>
         ) : null}
       </div>
+      {placeNotFound ? (
+        <p id={whereErrorId} role="alert" className="mt-2 px-3 text-sm font-medium text-destructive">
+          {t("searchWhereNotFound")}
+        </p>
+      ) : null}
     </form>
   );
 }

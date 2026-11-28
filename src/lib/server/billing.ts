@@ -3,7 +3,12 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
 import { connectLiveEnabled, parentChargeQuote, quoteShownOnPayPage } from "@/lib/connect-payments";
-import { centreUsesTestStripe, payerUsesTestStripe, stripeCredentialsForMode } from "@/lib/stripe-route";
+import {
+  centreUsesTestStripe,
+  payerUsesTestStripe,
+  stripeCredentialsForMode,
+  type PaymentStripeMode,
+} from "@/lib/stripe-route";
 import { currentPeriod, platformFeeBps } from "@/lib/stripe-methods";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import {
@@ -16,7 +21,7 @@ import {
   parseBillStatus,
 } from "@/lib/bill";
 import { canCreateBillForCentre, canReadBill, decideBillCheckout, resolveConnectDestination } from "@/lib/access-control";
-import { extractStripeBillRef, type StripeBillObject } from "@/lib/stripe-bill-event";
+import { extractStripeBillRef, stripePaymentSettlesBill, type StripeBillObject } from "@/lib/stripe-bill-event";
 import { createStripeCheckoutSession, retrieveStripeCheckoutSession } from "@/lib/server/stripe-checkout";
 import { rememberStripeCustomer } from "@/lib/server/stripe-lifecycle";
 import { notifyParentBill, notifyParentBillState, notifyPlatform } from "@/lib/server/notify";
@@ -132,6 +137,45 @@ async function loadInvoice(sql: Sql, id: string): Promise<InvoiceRow | null> {
   return found[0] ?? null;
 }
 
+type CentreStripeFlags = {
+  id?: string | null;
+  slug: string | null;
+  visibility: string | null;
+  is_test: number | boolean | null;
+  is_demo: number | boolean | null;
+};
+
+/**
+ * The Stripe mode a bill is charged and settled in. Test only for a parent
+ * with the server-set profiles.is_test flag or a QA centre; never from an email.
+ */
+async function billStripeMode(
+  sql: Sql,
+  bill: Pick<Bill, "parentUserId" | "daycareId">,
+  centre?: CentreStripeFlags | null,
+): Promise<PaymentStripeMode> {
+  const payer = await sql<{ is_test: number | boolean | null }>`
+    select is_test from profiles where user_id = ${bill.parentUserId} limit 1
+  `.catch(() => [] as { is_test: number | boolean | null }[]);
+  const flags =
+    centre ??
+    (
+      await sql<CentreStripeFlags>`
+        select id, slug, visibility, is_test, is_demo from daycares where id = ${bill.daycareId} limit 1
+      `.catch(() => [] as CentreStripeFlags[])
+    )[0];
+  const qa =
+    payerUsesTestStripe({ isTest: payer[0]?.is_test }) ||
+    centreUsesTestStripe({
+      id: flags?.id || bill.daycareId,
+      slug: flags?.slug,
+      visibility: flags?.visibility,
+      isTest: flags?.is_test,
+      isDemo: flags?.is_demo,
+    });
+  return qa ? "test" : "live";
+}
+
 function nextBillNumber(id: string, at = new Date()) {
   const ym = `${at.getFullYear()}${String(at.getMonth() + 1).padStart(2, "0")}`;
   return `KE-${ym}-${id.slice(-4).toUpperCase()}`;
@@ -227,6 +271,8 @@ async function recordPaymentRow(
 export async function applyStripeBillEvent(input: {
   type: string;
   object?: StripeBillObject | null;
+  /** The signed event's livemode. Must agree with the object's own livemode. */
+  livemode?: boolean | null;
 }): Promise<{ ok: true; billId: string | null; status?: BillStatus; handled: string }> {
   const type = input.type || "";
   const ref = extractStripeBillRef(input.object, type);
@@ -266,6 +312,20 @@ export async function applyStripeBillEvent(input: {
   const bill = await findBillForStripe(sql, ref);
   if (!bill) return { ok: true, billId: ref.billId, handled: type };
   if (bill.status === "paid" || bill.status === "refunded" || bill.status === "void") {
+    return { ok: true, billId: bill.id, status: bill.status, handled: type };
+  }
+
+  const eventLive = typeof input.livemode === "boolean" ? input.livemode : null;
+  const livemode =
+    eventLive !== null && ref.livemode !== null && eventLive !== ref.livemode ? null : (eventLive ?? ref.livemode);
+  const mode = await billStripeMode(sql, bill);
+  if (!stripePaymentSettlesBill({ ...ref, livemode }, { mode, amountCents: bill.amountCents, currency: bill.currency })) {
+    console.error("[kidease-bill] Stripe payment does not match the bill", {
+      billId: bill.id,
+      mode,
+      livemode,
+      amountCents: ref.amountCents,
+    });
     return { ok: true, billId: bill.id, status: bill.status, handled: type };
   }
 
@@ -845,14 +905,9 @@ export const getBill = createServerFn({ method: "GET" })
     const bill = mapBill(row);
     // Centre flags and the Connect row only need the daycare id: fetch them
     // alongside the access check instead of one after another (Pay page speed).
-    const centrePromise = sql<{
-      slug: string | null;
-      visibility: string | null;
-      is_test: number | boolean | null;
-      is_demo: number | boolean | null;
-    }>`
-      select slug, visibility, is_test, is_demo from daycares where id = ${bill.daycareId} limit 1
-    `.catch(() => []);
+    const centrePromise = sql<CentreStripeFlags>`
+      select id, slug, visibility, is_test, is_demo from daycares where id = ${bill.daycareId} limit 1
+    `.catch(() => [] as CentreStripeFlags[]);
     const connectPromise = sql<{ stripe_account_id: string | null; charges_enabled: number }>`
       select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${bill.daycareId} limit 1
     `.catch(() => []);
@@ -868,17 +923,9 @@ export const getBill = createServerFn({ method: "GET" })
       status: bill.status,
     });
     if (!access.ok) throw new Error("Bill not found");
-    const centre = (await centrePromise)[0];
+    const centre = (await centrePromise)[0] ?? null;
     const settled = await reconcilePaidCheckout(sql, bill, {
-      qa:
-        payerUsesTestStripe({ email: bill.parentEmail }) ||
-        centreUsesTestStripe({
-          id: bill.daycareId,
-          slug: centre?.slug,
-          visibility: centre?.visibility,
-          isTest: centre?.is_test,
-          isDemo: centre?.is_demo,
-        }),
+      mode: await billStripeMode(sql, bill, centre),
     });
     const current = (await withPaymentState(sql, [settled ?? bill]))[0]!;
     const connect = await connectPromise;
@@ -901,23 +948,29 @@ export const getBill = createServerFn({ method: "GET" })
 async function reconcilePaidCheckout(
   sql: Sql,
   bill: Bill,
-  opts: { qa: boolean },
+  opts: { mode: PaymentStripeMode },
 ): Promise<Bill | null> {
   if (bill.status !== "sent") return bill;
   const sessionId = (bill.stripeCheckoutSessionId || "").trim();
   if (!sessionId.startsWith("cs_")) return bill;
-  const creds = stripeCredentialsForMode(opts.qa ? "test" : "live", process.env);
-  const secret = opts.qa ? (creds.ok && !creds.secret.startsWith("sk_live_") ? creds.secret : "") : creds.ok ? creds.secret : "";
+  const qa = opts.mode === "test";
+  const creds = stripeCredentialsForMode(opts.mode, process.env);
+  const secret = qa ? (creds.ok && !creds.secret.startsWith("sk_live_") ? creds.secret : "") : creds.ok ? creds.secret : "";
   if (!secret) return bill;
   try {
-    const session = await retrieveStripeCheckoutSession(sessionId, { secret, qa: opts.qa });
+    // One read: livemode and amount_total below come from this same session.
+    const session = await retrieveStripeCheckoutSession(sessionId, { secret, qa });
     if (session.payment_status !== "paid") return bill;
     await applyStripeBillEvent({
       type: "checkout.session.completed",
+      livemode: typeof session.livemode === "boolean" ? session.livemode : null,
       object: {
         id: session.id || sessionId,
         object: "checkout.session",
         payment_status: "paid",
+        livemode: session.livemode,
+        amount_total: session.amount_total,
+        currency: session.currency,
         client_reference_id: bill.id,
         metadata: { bill_id: bill.id, kidease: "bill" },
         payment_intent: session.payment_intent,
@@ -945,28 +998,9 @@ export const createBillCheckout = createServerFn({ method: "POST" })
     const sql = await getSql();
     const row = await loadInvoice(sql, billId);
     const bill = row ? mapBill(row) : null;
-    const centreRows = bill
-      ? await sql<{
-          id: string;
-          slug: string | null;
-          visibility: string | null;
-          is_test: number | boolean | null;
-          is_demo: number | boolean | null;
-        }>`
-          select id, slug, visibility, is_test, is_demo from daycares where id = ${bill.daycareId} limit 1
-        `.catch(() => [])
-      : [];
-    const centre = centreRows[0];
-    const qa =
-      payerUsesTestStripe({ email: bill?.parentEmail }) ||
-      centreUsesTestStripe({
-        id: centre?.id || bill?.daycareId,
-        slug: centre?.slug,
-        visibility: centre?.visibility,
-        isTest: centre?.is_test,
-        isDemo: centre?.is_demo,
-      });
-    const creds = stripeCredentialsForMode(qa ? "test" : "live", process.env);
+    const mode: PaymentStripeMode = bill ? await billStripeMode(sql, bill) : "live";
+    const qa = mode === "test";
+    const creds = stripeCredentialsForMode(mode, process.env);
     const qaSecret = qa && creds.ok && !creds.secret.startsWith("sk_live_") ? creds.secret : null;
     if (qa && !qaSecret) throw new Error("missing_test_key");
     const gate = decideBillCheckout({
@@ -980,7 +1014,7 @@ export const createBillCheckout = createServerFn({ method: "POST" })
     // The old-session check (a Stripe round trip), the Connect row and the
     // payer profile are independent: run them together (Pay now speed).
     const [settled, connect, profile] = await Promise.all([
-      reconcilePaidCheckout(sql, bill, { qa }),
+      reconcilePaidCheckout(sql, bill, { mode }),
       sql<{ stripe_account_id: string | null; charges_enabled: number }>`
         select stripe_account_id, charges_enabled from stripe_accounts where daycare_id = ${bill.daycareId} limit 1
       `.catch(() => []),

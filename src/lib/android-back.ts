@@ -20,6 +20,12 @@ export async function bindAndroidBack(onBack: (canGoBack: boolean) => void, onEx
   if (!isNative() || nativePlatform() !== "android") return () => {};
   const { App } = await import("@capacitor/app");
   const handle = await App.addListener("backButton", ({ canGoBack }) => {
+    // Native <dialog> sheets already use a history entry. Managed overlays
+    // can consume Escape before Android falls back to history or exits.
+    if (!document.querySelector("dialog[open]")) {
+      const escape = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+      if (!document.dispatchEvent(escape)) return;
+    }
     const decision = androidBackDecision({
       platform: "android",
       path: window.location.pathname,

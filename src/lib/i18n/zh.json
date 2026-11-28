@@ -354,6 +354,7 @@
   "findChildcare": "寻找托育服务",
   "searchWhere": "地点",
   "searchWhereHint": "搜索目的地",
+  "searchWhereNotFound": "未找到该地点。请尝试输入城市和省份，或邮政编码。",
   "whereSuggested": "推荐目的地",
   "whereNearby": "附近",
   "whereNearbyHint": "寻找您附近的托育服务",

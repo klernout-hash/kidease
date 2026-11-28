@@ -24,7 +24,7 @@ const sourceFiles = [
   "src/lib/org-occupancy-csv.ts",
   "src/lib/gap-features.ts",
   "src/lib/gov/filtered-export.ts",
-  "src/lib/utils.ts", "src/lib/cad-format.ts",
+  "src/lib/utils.ts", "src/lib/cad-format.ts", "src/lib/secure-random.ts",
   "src/lib/html-text.ts",
   "src/lib/languages.ts",
 ];
@@ -90,6 +90,8 @@ const virtual = {
     }
     export function setOrgCentre(){window.__orgCsvFixture.centreChanges++;throw new Error('Not part of downloading the report');}
   `,
+  "@/components/owner-only-notice":
+    "import{createElement}from'react';export function OwnerOnlyNotice(){return createElement('p',{'data-ke':'staff-owner-only'},'owner only');}",
   "@tanstack/react-router":
     "import{createElement}from'react';export function Link({to,search,children,...props}){return createElement('a',{...props,href:to},children);}",
 };

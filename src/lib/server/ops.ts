@@ -10,7 +10,7 @@ import {
 } from "@/lib/daily-care";
 import { nid } from "@/lib/utils";
 import { listAccessibleDaycareIds, loadCentreRole } from "./centre-access";
-import { insertCareStatusMessage } from "./daily-care";
+import { insertCareStatusMessage, loadEnrolledBooking } from "./daily-care";
 
 export type { AttendanceStatus };
 
@@ -179,16 +179,16 @@ export const saveAttendance = createServerFn({ method: "POST" })
       throw centreActionDenied("write");
     }
     const staffOk = centreCanWriteCare(centreRole);
-    const parentOk = data.parentUserId === context.userId;
-    if (!staffOk && !parentOk) {
-      const ownBooking = await sql<{ id: string }>`
-        select id from bookings
-        where id = ${data.bookingId ?? ""} and user_id = ${context.userId}
-          and daycare_id = ${data.daycareId}
-          and status in ('accepted', 'active')
-      `;
-      if (!ownBooking[0]) throw new Error("Not allowed");
-    }
+    const booking = await loadEnrolledBooking(sql, {
+      daycareId: data.daycareId,
+      bookingId: data.bookingId,
+      parentUserId: staffOk ? null : context.userId,
+    });
+    if (!staffOk && !booking) throw new Error("Not allowed");
+    const bookingId = booking ? booking.id : (data.bookingId ?? null);
+    const conversationId = booking ? booking.conversation_id : (data.conversationId ?? null);
+    const childName = booking ? booking.child_name : data.childName;
+    const parentUserId = booking ? booking.user_id : (data.parentUserId ?? context.userId);
     const id = nid("at");
     await sql`
       insert into attendance (
@@ -196,8 +196,8 @@ export const saveAttendance = createServerFn({ method: "POST" })
         day, drop_off, pick_up, status, notes, updated_by
       )
       values (
-        ${id}, ${data.daycareId}, ${data.bookingId ?? null}, ${data.conversationId ?? null},
-        ${data.childName}, ${data.parentUserId ?? context.userId}, ${data.day},
+        ${id}, ${data.daycareId}, ${bookingId}, ${conversationId},
+        ${childName}, ${parentUserId}, ${data.day},
         ${data.dropOff || "07:30"}, ${data.pickUp || "17:00"}, ${data.status},
         ${data.notes ?? ""}, ${context.userId}
       )
@@ -228,11 +228,11 @@ export const saveAttendance = createServerFn({ method: "POST" })
       const centre = await sql<{ name: string }>`select name from daycares where id = ${data.daycareId} limit 1`;
       const daycareName = centre[0]?.name || "the centre";
       await insertCareStatusMessage({
-        conversationId: data.conversationId ?? null,
+        conversationId,
         daycareId: data.daycareId,
         daycareName,
-        parentUserId: data.parentUserId ?? (parentOk ? context.userId : null),
-        body: careStatusBody({ kind: action, childName: data.childName, daycareName }),
+        parentUserId: booking ? booking.user_id : (data.parentUserId ?? null),
+        body: careStatusBody({ kind: action, childName, daycareName }),
         actorUserId: context.userId,
       }).catch(() => undefined);
     }

@@ -945,7 +945,6 @@ export function ParentDesk({
       {contentTab === "children" ? (
         <div className="mt-6 space-y-4">
           <ChildHealthLog key={`${user.id}:${childHealthVersion}`} />
-          <PortfolioGaps children={children} />
           <div>
             <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>
             <p className="mt-1 text-sm text-muted">
@@ -953,6 +952,7 @@ export function ParentDesk({
               <span className="ke-site-desktop">{t("childProfileSendLead")}</span>
             </p>
           </div>
+          {familyCanWrite && !editing ? <PortfolioGaps children={children} /> : null}
           {familyCanWrite ? null : (
             <p className="rounded-xl bg-surface p-4 text-sm ring-1 ring-border" role="status">
               {locale === "fr"

@@ -100,7 +100,7 @@ export function InboxDesk({
         data-selected={onThread ? "true" : "false"}
       >
         {/* On the website an open thread is the whole pane at every width; below 1280px the list used to stack above it. */}
-        <div className={cn("ke-split-list min-w-0", onThread && "max-h-full overflow-y-auto [[data-channel=website]_&]:hidden")}>
+        <div className={cn("ke-split-list min-w-0", onThread && "max-h-full overflow-y-auto")}>
           <InboxList bare />
         </div>
         <div className={cn("ke-split-detail min-w-0", onThread && "flex h-full min-h-0 flex-col")} data-ke="inbox-detail">

@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { PushExplain } from "@/components/push-explain";
 import { Button } from "@/components/ui/button";
 import { confirmAction } from "@/lib/success-confirm";
 import {
@@ -133,6 +134,7 @@ export function AlertPushSettings({
         </Link>
       </p>
       {inPhoneApp ? null : <p className="mt-2 text-sm text-muted">{intro.apps}</p>}
+      <PushExplain key={audience} audience={audience} />
       {children}
       </div>
     </details>

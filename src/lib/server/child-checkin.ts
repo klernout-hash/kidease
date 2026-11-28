@@ -166,15 +166,16 @@ export const listMyChildAttendance = createServerFn({ method: "GET" })
 
 export const reportMyChildAbsence = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { bookingId?: string; status?: string; locale?: string }) => ({
+  .validator((input: { bookingId?: string; status?: string; localDay?: string; locale?: string }) => ({
     bookingId: String(input?.bookingId || "").trim().slice(0, 100),
     status: String(input?.status || ""),
+    localDay: typeof input?.localDay === "string" ? input.localDay.slice(0, 11) : undefined,
     locale: input?.locale === "fr" ? "fr" : "en",
   }))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const report = await saveParentAbsenceReport(sql, {
-      userId: context.userId, bookingId: data.bookingId, status: data.status, now: new Date(),
+      userId: context.userId, bookingId: data.bookingId, status: data.status, localDay: data.localDay, now: new Date(),
     });
     if (!report.ok) return report;
     const { insertCareStatusMessage } = await import("./daily-care");

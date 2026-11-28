@@ -127,6 +127,12 @@ export function recordScreen(index: number, crumb: ScreenCrumb): void {
   }
 }
 
+/** The screen recorded just before this history index, if this tab saw it. */
+export function previousScreenHref(index: number, crumbs: ReadonlyMap<number, ScreenCrumb> = stack): string | null {
+  if (index <= 0) return null;
+  return crumbs.get(index - 1)?.href || null;
+}
+
 export function resolveHistoryBack(input: {
   index: number;
   currentHref: string;

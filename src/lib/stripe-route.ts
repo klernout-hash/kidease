@@ -1,18 +1,10 @@
 /**
- * A QA account or a hidden centre always uses test keys.
+ * A QA account (profiles.is_test) or a hidden centre always uses test keys.
  * A real parent at a public centre uses live keys only when KIDEASE_CONNECT_LIVE is exactly 1.
  * No secret values are stored here.
  */
 
 export type PaymentStripeMode = "test" | "live";
-
-const QA_PAYER_EMAILS = new Set([
-  "klernout45@gmail.com",
-  "reviewer.parent@kidease.ca",
-  "reviewer.daycare@kidease.ca",
-  "reviewer-parent@kidease.ca",
-  "reviewer-provider@kidease.ca",
-]);
 
 export type StripeRouteEnv = {
   STRIPE_SECRET_KEY?: string;
@@ -27,16 +19,13 @@ export function flagOn(value: boolean | number | string | null | undefined): boo
   return text === "1" || text === "true";
 }
 
-/** Reviewer mailboxes, the QA parent, and kyle+qa plus-addresses. */
-export function payerUsesTestStripe(input: {
-  email?: string | null;
-  isTest?: boolean | number | string | null;
-}): boolean {
-  if (flagOn(input.isTest)) return true;
-  const email = String(input.email || "").trim().toLowerCase();
-  if (!email) return false;
-  if (QA_PAYER_EMAILS.has(email)) return true;
-  return /^kyle\+qa[a-z0-9-]*@kidease\.ca$/.test(email);
+/**
+ * Only the server-set profiles.is_test flag (reviewer seed, admin) puts a payer
+ * on test keys. The account email is never used: anyone can sign up with any
+ * address, unverified, and a test-mode payment must not settle a real bill.
+ */
+export function payerUsesTestStripe(input: { isTest?: boolean | number | string | null }): boolean {
+  return flagOn(input.isTest);
 }
 
 /** Hidden, unpublished, or fixture centres. A public live centre is not included. */
@@ -125,7 +114,7 @@ export type RoutedStripeCall =
 export function routeStripeCall(input: {
   paymentsEnabled: boolean;
   liveEnabled: boolean;
-  payer?: { email?: string | null; isTest?: boolean | number | string | null } | null;
+  payer?: { isTest?: boolean | number | string | null } | null;
   centre?: {
     id?: string | null;
     slug?: string | null;
@@ -136,7 +125,7 @@ export function routeStripeCall(input: {
   env?: StripeRouteEnv;
 }): RoutedStripeCall {
   if (!input.paymentsEnabled) return { ok: false, mode: null, reason: "off" };
-  const payerQa = payerUsesTestStripe({ email: input.payer?.email, isTest: input.payer?.isTest });
+  const payerQa = payerUsesTestStripe({ isTest: input.payer?.isTest });
   const centreQa = input.centre ? centreUsesTestStripe(input.centre) : false;
   const qa = payerQa || centreQa;
   const mode: PaymentStripeMode = qa ? "test" : paymentStripeMode({ payerQa, centreQa, liveEnabled: input.liveEnabled });

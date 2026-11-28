@@ -42,6 +42,7 @@ import { publicListings } from "@/lib/listing-visibility";
 import { isClaimVerified } from "@/lib/trust";
 import { readRecent } from "@/lib/recent";
 import { isSafeSitemapSlug } from "@/lib/sitemap";
+import type { ResolvedPlace } from "@/components/place-search";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { MobileSearchHome } from "@/components/mobile-search-sheet";
 import { readMobileSearchV2 } from "@/lib/mobile-search-flag";
@@ -285,8 +286,8 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
     else void navigate({ to: "/search", search });
   }
 
-  async function applyPlace(raw: string) {
-    const found = (await resolveLocationQuery(raw)) ?? geocode(raw);
+  async function applyPlace(raw: string, resolved?: ResolvedPlace) {
+    const found = resolved ?? (await resolveLocationQuery(raw)) ?? geocode(raw);
     const postal = postalSearchLabel(raw);
     const hit = found && postal ? { ...found, label: postal } : found;
     if (hit) {
@@ -295,7 +296,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
       setQuery(hit.label);
       return hit;
     }
-    if (raw.trim()) setQuery(raw.trim());
     return null;
   }
 
@@ -391,7 +391,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         radiusKm={radiusKm}
         onRadiusChange={setRadiusKm}
         onLocate={() => void pinLocation()}
-        onSubmit={(typedWhere) => {
+        onSubmit={async (typedWhere, resolved) => {
           const typed = (typedWhere ?? place).trim();
           const nearMe = typed === t("nearMe") || typed === t("whereNearby");
           if (!typed || nearMe) {
@@ -401,25 +401,17 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
               to: homeTo,
               start: homeStart || undefined,
             });
-            return;
+            return true;
           }
-          void applyPlace(typed).then((hit) => {
-            if (hit) {
-              goSearch(hit.label, {
-                name: homeName,
-                from: homeFrom,
-                to: homeTo,
-                start: homeStart || undefined,
-              });
-              return;
-            }
-            goSearch(origin.label, {
-              name: homeName.trim() || typed,
-              from: homeFrom,
-              to: homeTo,
-              start: homeStart || undefined,
-            });
+          const hit = await applyPlace(typed, resolved);
+          if (!hit) return false;
+          goSearch(hit.label, {
+            name: homeName,
+            from: homeFrom,
+            to: homeTo,
+            start: homeStart || undefined,
           });
+          return true;
         }}
       />
       </div>

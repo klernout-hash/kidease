@@ -1727,7 +1727,8 @@ async function signOutFromMenu(page) {
   const button = page.locator("#ke-nav-drawer").getByRole("button", { name: /^sign out$/i });
   await button.waitFor({ state: "visible", timeout: timeoutMs });
   await button.click();
-  await page.waitForURL((url) => url.pathname === "/" || url.pathname === "", { timeout: timeoutMs });
+  // N-37: sign-out lands on the sign-in page (/login or /fr/login), never Guest Explore.
+  await page.waitForURL((url) => /^\/(fr\/)?login\/?$/.test(url.pathname), { timeout: timeoutMs });
 }
 
 async function openProfileAbout(page) {
@@ -1972,6 +1973,36 @@ async function runSignedInSessions(page, base) {
   }
   try {
     await setFixture(page.context(), base, { role: "government" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await gotoSettled(page, new URL("/?app=1", base).href);
+    const govTabs = page.locator('[data-ke="app-tab-bar"][data-bar="government"] > div');
+    await govTabs.waitFor({ state: "visible", timeout: timeoutMs });
+    for (const [pose, width, height, rail] of [
+      ["phone", 390, 844, false],
+      ["tablet-portrait", 820, 1180, false],
+      ["tablet-rail", 960, 800, true],
+      ["phone-return", 390, 844, false],
+    ]) {
+      await page.setViewportSize({ width, height });
+      const layout = await govTabs.evaluate((bar) => {
+        const tabs = [...bar.querySelectorAll('[data-ke="app-tab"]')];
+        const { display, gridTemplateColumns } = getComputedStyle(bar);
+        const boxes = tabs.map((tab) => tab.getBoundingClientRect());
+        const frame = bar.getBoundingClientRect();
+        return {
+          display,
+          columns: gridTemplateColumns.split(" ").length,
+          ids: tabs.map((tab) => tab.getAttribute("data-nav")).join(","),
+          touchTargets: boxes.every((box) => box.width >= 44 && box.height >= 44),
+          centered: boxes.length > 0 && Math.abs((boxes[0].left - frame.left) - (frame.right - boxes.at(-1).right)) <= 1,
+          stacked: boxes.every((box, i) => i === 0 || box.top >= boxes[i - 1].bottom),
+        };
+      });
+      record(`gov-app-tabs-${pose}`,
+        layout.ids === "gov,listings,account" && layout.touchTargets &&
+          (rail ? layout.display === "flex" && layout.stacked : layout.display === "grid" && layout.columns === 3 && layout.centered),
+        { note: JSON.stringify(layout) });
+    }
     for (const width of [1280, 820, 390]) {
       await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
       await page.goto(new URL("/gov", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });

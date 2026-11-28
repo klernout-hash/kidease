@@ -35,9 +35,9 @@ function normalizeConsent(raw: string | null): AnalyticsConsent {
 }
 
 export function readAnalyticsConsent(storage?: Pick<Storage, "getItem"> | null): AnalyticsConsent {
-  const store = storage ?? (typeof window !== "undefined" ? window.localStorage : null);
-  if (!store) return "unset";
   try {
+    const store = storage ?? (typeof window !== "undefined" ? window.localStorage : null);
+    if (!store) return "unset";
     return normalizeConsent(store.getItem(ANALYTICS_CONSENT_KEY));
   } catch {
     /* private mode / blocked storage */
@@ -49,14 +49,34 @@ export function writeAnalyticsConsent(
   value: AnalyticsConsent,
   storage?: Pick<Storage, "setItem" | "removeItem"> | null,
 ): void {
-  const store = storage ?? (typeof window !== "undefined" ? window.localStorage : null);
-  if (!store) return;
   try {
+    const store = storage ?? (typeof window !== "undefined" ? window.localStorage : null);
+    if (!store) return;
     if (value === "unset") store.removeItem(ANALYTICS_CONSENT_KEY);
     else store.setItem(ANALYTICS_CONSENT_KEY, value);
   } catch {
     /* ignore */
   }
+}
+
+type ConsentPreferences = {
+  get(options: { key: string }): Promise<{ value: string | null }>;
+  set(options: { key: string; value: string }): Promise<void>;
+};
+
+/** Keep a copy outside WebView storage and migrate an existing web choice. */
+export async function restoreNativeAnalyticsConsent(
+  preferences: ConsentPreferences,
+  storage?: Storage,
+): Promise<AnalyticsConsent> {
+  const local = readAnalyticsConsent(storage);
+  const saved = normalizeConsent((await preferences.get({ key: ANALYTICS_CONSENT_KEY })).value);
+  if (local !== "unset") {
+    if (saved !== local) await preferences.set({ key: ANALYTICS_CONSENT_KEY, value: local });
+    return local;
+  }
+  if (saved !== "unset") writeAnalyticsConsent(saved, storage);
+  return saved;
 }
 
 /** PostHog (pageviews, autocapture, replay) only after Allow. */

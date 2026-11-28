@@ -1,6 +1,8 @@
 import { useNavigate, useRouterState, useSearch } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { retryReadOnce } from "@/lib/fn-query";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { EmptyState } from "@/components/empty-state";
@@ -30,6 +32,8 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
   const { sticky } = useSessionDesks();
   const view: InboxView = resolveInboxView({ search: search.view, sticky });
   const [items, setItems] = useState<CentreInboxThread[] | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reload, setReload] = useState(0);
   const [filter, setFilter] = useState<MessageFilter>("all");
   const [query, setQuery] = useState("");
   const [bodyMatchIds, setBodyMatchIds] = useState<string[]>([]);
@@ -37,10 +41,14 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
 
   useEffect(() => {
     if (!user?.id) return;
-    void listInbox({ data: { view } })
-      .then((rows) => setItems(rows as CentreInboxThread[]))
-      .catch(() => setItems([]));
-  }, [user?.id, view]);
+    let live = true;
+    setItems(null);
+    setLoadFailed(false);
+    void retryReadOnce(() => listInbox({ data: { view } }))
+      .then((rows) => { if (live) setItems(rows as CentreInboxThread[]); })
+      .catch(() => { if (live) setLoadFailed(true); });
+    return () => { live = false; };
+  }, [user?.id, view, reload]);
 
   const visible = useMemo(
     () => (items ? filterInboxList(items, { filter, query, bodyMatchIds: new Set(bodyMatchIds) }) : []),
@@ -121,7 +129,14 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
         ))}
       </div>
       <ul className="mt-2">
-        {items === null ? (
+        {loadFailed ? (
+          <li className="p-4" role="alert">
+            <p className="text-sm">{t("threadLoadFailed")}</p>
+            <Button variant="secondary" className="mt-2" onClick={() => setReload((n) => n + 1)}>
+              {t("threadTryAgain")}
+            </Button>
+          </li>
+        ) : items === null ? (
           <li className="space-y-3 p-4" aria-hidden="true">
             <div className="ke-skel h-16 w-full rounded-xl" />
             <div className="ke-skel h-16 w-full rounded-xl" />

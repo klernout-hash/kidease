@@ -167,6 +167,7 @@ export async function localeDocumentDecision(request: Request): Promise<LocaleDo
     bare === "/use-the-website" ||
     bare === "/auth/app-return" ||
     bare === "/auth/native-handoff" ||
+    bare === "/auth/native-prepare" ||
     bare === "/auth/native-start"
   ) {
     return none;

@@ -9,7 +9,7 @@ import { publishFix } from "@/lib/location-stream";
 import { trackLocation } from "@/lib/telemetry";
 
 /** Live GPS while Explore is open and the parent granted when-in-use location. */
-export function useLivePresence(active: boolean) {
+export function useLivePresence(active: boolean, permissionRevision: number) {
   useEffect(() => {
     if (!active) return undefined;
     if (useAppStore.getState().locationConsent !== "granted") return undefined;
@@ -30,5 +30,5 @@ export function useLivePresence(active: boolean) {
       publishFix(here.lat, here.lng, here.label);
       trackLocation("locate", here.lat, here.lng, here.label, { radiusKm });
     });
-  }, [active]);
+  }, [active, permissionRevision]);
 }

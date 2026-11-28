@@ -145,7 +145,7 @@ test("the four starter questions each land on a real page", () => {
   }
   const bot = read("src/components/help-bot.tsx");
   assert.match(bot, /helpBotQ1/);
-  assert.match(bot, /sendText\(t\(key\)\)/);
+  assert.match(bot, /sendText\(question\)/);
   assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /Tap a question/);
   assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /Touchez une question/);
 });

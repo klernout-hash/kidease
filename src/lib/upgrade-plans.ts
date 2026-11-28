@@ -5,7 +5,7 @@
  * Network yearly ($390/site) is a proposal until STRIPE_PRICE_NETWORK_YEARLY is set.
  */
 
-import { formatCad, frenchCad } from "./cad-format.ts";
+import { formatCad } from "./cad-format.ts";
 
 export type PlanLocale = "en" | "fr";
 
@@ -379,17 +379,12 @@ export function upgradeUnlockedBenefits(input: {
  * French uses the app's CAD format with the country marker (`0,00 $ CA`, `7,99 $ CA`).
  */
 export function formatPlanCad(amount: number, locale: PlanLocale): string {
-  const fr = locale === "fr";
   const safe = Number.isFinite(amount) ? amount : 0;
-  if (fr) return frenchCad(safe);
   const digits = Number.isInteger(safe) ? 0 : 2;
-  const formatted = formatCad(safe, "en-CA", {
+  return formatCad(safe, locale === "fr" ? "fr-CA" : "en-CA", {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   });
-  const negative = formatted.includes("-");
-  const numeric = formatted.replace(/[^\d,.]/g, "");
-  return `${negative ? "-" : ""}CA$${numeric}`;
 }
 
 export function yearlySavingsLine(monthly: number, yearly: number | null | undefined, locale: PlanLocale): string | null {

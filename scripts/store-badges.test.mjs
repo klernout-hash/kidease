@@ -20,16 +20,17 @@ const EXPORTS = {
 };
 
 // Render the real TSX, replacing router context and the unrelated Amazon opener.
-function renderPanel(component, locale, stores = APP_STORES) {
+function renderPanel(component, locale, stores = APP_STORES, native = false) {
   const copy = locale === "fr" ? fr : en;
   const compiled = new Map();
   const dependencies = {
     "@/lib/app-stores": {
       APP_STORES: stores,
       appShareUrl: (origin) => `${origin}/app`,
-      appStoreById,
-      liveAppStores,
+      appStoreById: (id) => appStoreById(id, stores),
+      liveAppStores: () => liveAppStores(stores),
     },
+    "@/lib/use-native-shell": { useNativeHidesAdmin: () => native },
     "@/lib/use-copy": { useCopy: () => ({ locale, t: (key) => copy[key] }) },
     "@/lib/amazon-appstore": { AMAZON_APPSTORE_URL: () => AMAZON_STORE_URL, openAmazonListing: () => false },
     "@/lib/locale-path": { localePath: (path) => (locale === "fr" ? `/fr${path}` : path) },
@@ -84,19 +85,14 @@ for (const locale of ["en", "fr"]) {
       }
     });
 
-    test(`${component} ${locale}: verified links and pending stores keep their behavior`, () => {
+    test(`${component} ${locale}: only live stores with download links are shown`, () => {
       const html = renderPanel(component, locale);
       const play = tile(html, "Google Play");
       assert.match(play, /<a\b[^>]*href="https:\/\/play\.google\.com\/store\/apps\/details\?id=ca\.kidease\.app"/);
-      for (const name of ["App Store", "Galaxy Store", "Microsoft Store"]) {
-        const pending = tile(html, name);
-        assert.ok(pending.includes(copy.storeComingSoon));
-        assert.doesNotMatch(pending, /<a\b|href=/);
-      }
+      assert.equal([...html.matchAll(/<li\b/g)].length, 3);
+      assert.ok(!html.includes(copy.storeComingSoon));
       const nonLive = APP_STORES.map((store) => store.id === "play" ? { ...store, live: false } : store);
-      const pendingWithUrl = tile(renderPanel(component, locale, nonLive), "Google Play");
-      assert.ok(pendingWithUrl.includes(copy.storeComingSoon));
-      assert.doesNotMatch(pendingWithUrl, /<a\b|href=/);
+      assert.doesNotMatch(renderPanel(component, locale, nonLive), /Google Play|play\.google\.com/);
     });
   }
 }
@@ -149,3 +145,7 @@ for (const locale of ["en", "fr"]) {
     ].join(""));
   });
 }
+
+test("native shells omit the shared download panel", () => {
+  assert.equal(renderPanel("app-store-status", "en", APP_STORES, true), "");
+});

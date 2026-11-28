@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { retryReadOnce } from "@/lib/fn-query";
 import { useCopy } from "@/lib/use-copy";
 import { localePath } from "@/lib/locale-path";
 import { LiveSupportChat } from "@/components/live-support-chat";
@@ -18,8 +19,8 @@ function useSupportDeskStatus() {
   useEffect(() => {
     let stop = false;
     void Promise.all([
-      supportDeskStatus().catch(() => ({ enabled: false })),
-      liveSupportStatus().catch(() => ({ enabled: false })),
+      retryReadOnce(supportDeskStatus).catch(() => ({ enabled: false })),
+      retryReadOnce(liveSupportStatus).catch(() => ({ enabled: false })),
     ]).then(([legacy, next]) => {
       if (stop) return;
       setEnabled(Boolean(legacy.enabled));
@@ -147,7 +148,7 @@ function SupportThread({ copy }: { copy: (typeof supportCopy)[SupportLocale] }) 
   const [note, setNote] = useState("");
 
   useEffect(() => {
-    void loadSupportDesk()
+    void retryReadOnce(loadSupportDesk)
       .then((row) => {
         if (row.enabled) setLines(row.messages);
       })

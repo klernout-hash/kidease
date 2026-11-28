@@ -32,6 +32,7 @@ import {
   type ConversationDetails,
   type MessageFilter,
 } from "@/lib/inbox-thread-ui";
+import { retryReadOnce } from "@/lib/fn-query";
 import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import { nextInboxAction } from "@/lib/engagement";
 import { assignInboxThread, searchInboxList, searchInboxText } from "@/lib/server/engagement";
@@ -78,6 +79,9 @@ export function CentreInboxDesk({
   const [sendError, setSendError] = useState("");
   const [quickOpen, setQuickOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(openDetail);
+  const [listFailed, setListFailed] = useState(false);
+  const [threadFailure, setThreadFailure] = useState<string | null>(null);
+  const threadGen = useRef(0);
   const [threadReady, setThreadReady] = useState(false);
   const [details, setDetails] = useState<ConversationDetails | null>(null);
   const [stateBusy, setStateBusy] = useState(false);
@@ -121,7 +125,12 @@ export function CentreInboxDesk({
 
   async function loadList() {
     const gen = ++listGen.current;
-    const rows = (await listInbox({ data: { view: "centre" } })) as CentreInboxThread[];
+    setListFailed(false);
+    const rows = (await retryReadOnce(() => listInbox({ data: { view: "centre" } })).catch(() => null)) as CentreInboxThread[] | null;
+    if (!rows) {
+      if (gen === listGen.current) setListFailed(true);
+      return;
+    }
     if (gen !== listGen.current) return;
     const flags = await loadDeskFeatureFlags().catch(() => null);
     if (gen !== listGen.current) return;
@@ -133,12 +142,19 @@ export function CentreInboxDesk({
       listLeadRequests({ data: { desk: "centre" } }).catch(() => []),
       listTourRequests({ data: { desk: "centre" } }).catch(() => []),
     ]);
-    setItems(mergeUnifiedInbox(rows, leadRows, tourRows));
+    if (gen === listGen.current) setItems(mergeUnifiedInbox(rows, leadRows, tourRows));
   }
 
   async function loadThread(id: string) {
+    const gen = ++threadGen.current;
     setThreadReady(false);
-    const res = await getThread({ data: { conversationId: id, markRead: true } });
+    setThreadFailure(null);
+    const res = await retryReadOnce(() => getThread({ data: { conversationId: id, markRead: true } })).catch(() => undefined);
+    if (gen !== threadGen.current) return;
+    if (res === undefined) {
+      setThreadFailure(id);
+      return;
+    }
     if (!res) {
       setMessages([]);
       setTours([]);
@@ -157,6 +173,7 @@ export function CentreInboxDesk({
     setTimeZone(res.timeZone || "");
     setThreadReady(true);
     const meta = await getConversationDetails({ data: { conversationId: id } }).catch(() => null);
+    if (gen !== threadGen.current) return;
     setDetails(meta);
     void loadList().catch(() => undefined);
   }
@@ -199,7 +216,7 @@ export function CentreInboxDesk({
 
   useEffect(() => {
     if (!user?.id) return;
-    void loadList().catch(() => setItems([]));
+    void loadList();
     void listLeadRequests({ data: { desk: "centre" } })
       .then(setLeads)
       .catch(() => setLeads([]));
@@ -207,6 +224,8 @@ export function CentreInboxDesk({
 
   useEffect(() => {
     if (!user?.id || !selectedId || isOrphanInboxId(selectedId)) {
+      threadGen.current += 1;
+      setThreadFailure(null);
       setMessages([]);
       setTours([]);
       setDetails(null);
@@ -343,7 +362,14 @@ export function CentreInboxDesk({
         </div>
       </div>
       <ul className="shrink-0">
-        {items === null ? (
+        {items === null && listFailed ? (
+          <li className="p-4" role="alert">
+            <p className="text-sm">{t("threadLoadFailed")}</p>
+            <Button variant="secondary" className="mt-2" onClick={() => void loadList()}>
+              {t("threadTryAgain")}
+            </Button>
+          </li>
+        ) : items === null ? (
           <li className="space-y-2 p-3" aria-hidden>
             <div className="ke-skel h-16 rounded-xl" />
             <div className="ke-skel h-16 rounded-xl" />
@@ -516,7 +542,14 @@ export function CentreInboxDesk({
             </div>
           ) : null}
           <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
-            {!threadReady ? (
+            {threadFailure === selected.id ? (
+              <div role="alert">
+                <p className="text-sm">{t("threadLoadFailed")}</p>
+                <Button variant="secondary" className="mt-2" onClick={() => void loadThread(selected.id)}>
+                  {t("threadTryAgain")}
+                </Button>
+              </div>
+            ) : !threadReady ? (
               <div className="ke-skel h-20 rounded-xl" aria-hidden />
             ) : cleaned.filter((m) => m.body).length === 0 ? (
               <p className="text-sm text-muted">{t("inboxNoMessagesYet")}</p>
@@ -528,7 +561,6 @@ export function CentreInboxDesk({
                 parentName={selected.parentName}
                 centreName={centreName || selected.centreName || selected.daycareName}
                 reads={details?.reads || []}
-                phoneAlerts={details?.phoneAlerts || []}
                 peers={details?.participants || []}
                 timeZone={timeZone || undefined}
                 conversationId={selected.id}
@@ -549,7 +581,7 @@ export function CentreInboxDesk({
                 </Link>
               </Button>
             </div>
-          ) : canWrite ? (
+          ) : threadReady && canWrite ? (
             <>
             <ThreadCallLockedNote show={threadReady && !callsMatched && (voiceReady || Boolean(videoSurface))} viewer="centre" />
             <ThreadComposer

@@ -90,7 +90,8 @@ test("a daycare cannot approve until the child file is complete", () => {
   assert.equal(view.doctorName, "");
   assert.equal("likes" in view, false);
   assert.equal(scrubPickupList("Sam Lee\nRiley", ["Riley"]), "Sam Lee");
-  assert.match(portfolioCopy("fr").actionTitle, /Action requise/);
+  assert.match(portfolioCopy("fr").reminderTitle, /Rappels/);
+  assert.equal(portfolioCopy("en").reminderTitle, "Child profile reminders");
   assert.match(portfolioCopy("en").incomplete, /Portfolio incomplete/);
 });
 
