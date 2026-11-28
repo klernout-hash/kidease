@@ -142,8 +142,8 @@ test("N-13: one owner-only notice component for every gated desk", () => {
   for (const file of [
     "src/routes/provider.tsx",
     "src/routes/account.tsx",
-    "src/routes/provider_.inspection-sync.tsx",
-    "src/routes/provider_.subsidy.tsx",
+    "src/components/provider-inspection-sync.tsx",
+    "src/components/provider-subsidy.tsx",
     "src/components/org-occupancy-desk.tsx",
   ]) {
     const body = src(file);
