@@ -35,6 +35,9 @@ export const exportMyData = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const userId = context.userId;
+    // N-43: no export for a staff-only login on a centre account.
+    const { assertStaffAccountAction } = await import("@/lib/server/staff-account-guard");
+    await assertStaffAccountAction(userId, "export");
     const sql = await getSql();
     let recent = 0;
     try {
