@@ -9,6 +9,7 @@ import {
   providerDeskListingVisible,
 } from "@/lib/listing-visibility";
 import { nid } from "@/lib/utils";
+import { secureRandomString } from "@/lib/secure-random";
 import { assertListingOperator } from "@/lib/server/listing-owner-access";
 import { recordVacancyEvent } from "./vacancy-history";
 import { upsertDaycare } from "./seed";
@@ -59,10 +60,7 @@ export type ClaimHit = {
 };
 
 function makeCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < 6; i += 1) out += chars[Math.floor(Math.random() * chars.length)];
-  return out;
+  return secureRandomString("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 6);
 }
 
 async function persistLicenseInput(raw?: string | null, daycareId?: string | null) {

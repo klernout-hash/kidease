@@ -4,6 +4,7 @@ import { decodeHtml } from "./html-text.ts";
 import type { AgeGroup, Locale } from "./types";
 import { localeTag } from "./languages.ts";
 import { formatCad } from "./cad-format.ts";
+import { BASE36, secureRandomString } from "./secure-random.ts";
 
 export { decodeHtml };
 
@@ -130,8 +131,9 @@ export function money(cad: number, locale: Locale = "en") {
   });
 }
 
+/** Row id: `prefix_` + 8 secure base36 chars + 4 time chars (same shape as before). */
 export function nid(prefix = "id") {
-  return `${prefix}_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-4)}`;
+  return `${prefix}_${secureRandomString(BASE36, 8)}${Date.now().toString(36).slice(-4)}`;
 }
 
 export function monthsBetween(birthdate: string, at = new Date()) {

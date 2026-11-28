@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { safeListingImageSrc } from "@/lib/listing-photo";
 import { Mic, MicOff, Video, VideoOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Shell } from "@/components/shell";
@@ -132,7 +133,7 @@ function CameraCheckIn() {
     void getDaycare({ data: id }).then((res) => {
       if (!res) return;
       setName(locale === "fr" ? res.daycare.nameFr : res.daycare.name);
-      setPhoto(res.daycare.photos[1] ?? res.daycare.photos[0] ?? "/photos/playroom.jpg");
+      setPhoto(safeListingImageSrc(res.daycare.photos[1]) || safeListingImageSrc(res.daycare.photos[0]) || "/photos/playroom.jpg");
     });
   }, [id, locale]);
 

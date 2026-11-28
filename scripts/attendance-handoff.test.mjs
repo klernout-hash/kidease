@@ -268,9 +268,13 @@ test("parent absence reports are dated plans and cannot change confirmed physica
     const booking = await pg.query("select id from bookings where user_id = 'parent-demo' and child_id like '%avery' limit 1");
     const bookingId = booking.rows[0].id;
     const now = new Date("2026-11-13T02:00:00.000Z");
+    const stale = await saveParentAbsenceReport(sql, { userId: "parent-demo", bookingId, status: "absent", now, localDay: "2026-11-13" });
+    assert.equal(stale.ok, false);
+    assert.equal(stale.code, "date-changed");
+    assert.equal((await readParentDay(sql, "parent-demo", now)).find((row) => row.bookingId === bookingId).parentReported, false);
     await commitHandoff(sql, { actorId: "staff-1", role: "staff", bookingId, action: "check_in", pickupName: "", now });
     for (const status of ["absent", "sick", "vacation"]) {
-      const saved = await saveParentAbsenceReport(sql, { userId: "parent-demo", bookingId, status, now });
+      const saved = await saveParentAbsenceReport(sql, { userId: "parent-demo", bookingId, status, now, localDay: "2026-11-12" });
       assert.equal(saved.ok, true);
       assert.equal(saved.localDay, "2026-11-12");
       const child = (await readParentDay(sql, "parent-demo", now)).find((row) => row.bookingId === bookingId);

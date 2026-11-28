@@ -30,7 +30,7 @@ const { en, fr } = packs;
 const supportEmail = readSupportEmail(root);
 const sourceFiles = [
   "src/routes/contact.tsx", "src/components/turnstile-field.tsx", "src/components/ui/button.tsx",
-  "src/lib/turnstile-widget.ts", "src/lib/public-form-error.ts", "src/lib/utils.ts", "src/lib/cad-format.ts",
+  "src/lib/turnstile-widget.ts", "src/lib/public-form-error.ts", "src/lib/utils.ts", "src/lib/cad-format.ts", "src/lib/secure-random.ts",
   "src/lib/html-text.ts", "src/lib/languages.ts", "src/lib/french-type.ts",
 ];
 const allowedSources = new Set(sourceFiles.map((path) => join(root, path)));

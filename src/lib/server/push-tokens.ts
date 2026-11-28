@@ -9,6 +9,7 @@
 import { evaluateFeatureFlag, type EnvMap } from "../flags.ts";
 import { pushArmed } from "../channel-readiness.ts";
 import { admRegistrationAllowed } from "../amazon/gate.ts";
+import { BASE36, secureRandomString } from "../secure-random.ts";
 
 export const PUSH_SCAFFOLD_MESSAGE =
   "Push is scaffolded only. FEATURE_PUSH is off until Kyle adds Firebase and Apple credentials.";
@@ -117,7 +118,7 @@ export function validateRegisterInput(input: PushRegisterInput): { ok: true; dat
 }
 
 export function newPushTokenId(): string {
-  return `pt_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-4)}`;
+  return `pt_${secureRandomString(BASE36, 8)}${Date.now().toString(36).slice(-4)}`;
 }
 
 /**
