@@ -342,14 +342,23 @@ export function localeSwitchPath(pathname: string, nextLocale: string): string |
   return null;
 }
 
-/** Language switch URL, including the current query. Null when this page has no twin. */
+/** English is served at the unprefixed URL. */
+export function englishAliasPath(pathname: string): string | null {
+  if (pathname === "/en") return "/";
+  if (!pathname.startsWith("/en/")) return null;
+  return `/${pathname.slice(4).replace(/^\/+/, "")}`;
+}
+
+/** Keep filters when switching language and drop any previous query language override. */
 export function localeSwitchHref(pathname: string, search: string, nextLocale: string): string | null {
-  const dest = localeSwitchPath(pathname, nextLocale);
-  if (!dest) return null;
+  const current = normalizePathname(pathname);
+  const dest = localeSwitchPath(current, nextLocale) ?? current;
   const query = search && search !== "?" ? (search.startsWith("?") ? search : `?${search}`) : "";
-  const href = `${dest}${query}`;
-  const here = `${normalizePathname(pathname)}${query}`;
-  return href === here ? null : href;
+  const params = new URLSearchParams(query);
+  if (!params.has("lang")) return dest === current ? null : `${dest}${query}`;
+  params.delete("lang");
+  const remaining = params.toString();
+  return remaining ? `${dest}?${remaining}` : dest;
 }
 
 export function hreflangLinks(

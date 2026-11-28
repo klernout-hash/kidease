@@ -341,8 +341,7 @@ function RootDocument() {
       data-native={hideAdmin ? "1" : undefined}
       data-runtime={nativeShell ? "native" : "web"}
       data-store={storeChannel}
-      data-theme="dark"
-      data-resolved-theme="dark"
+      data-theme="system"
       data-ui={airbnbUi ? "airbnb-v1" : undefined}
       data-huawei-review={huaweiReview ? "1" : undefined}
       suppressHydrationWarning
@@ -364,6 +363,7 @@ function RootDocument() {
               'html[data-resolved-theme="dark"],html[data-resolved-theme="dark"] body{background:#101218;color:#f4f1ea}' +
               ".ke-skel{border-radius:14px;background:#ececef}" +
               'html[data-resolved-theme="dark"] .ke-skel{background:#272d3a}' +
+              '@media(prefers-color-scheme:dark){html[data-theme="system"]:not([data-resolved-theme]),html[data-theme="system"]:not([data-resolved-theme]) body{background:#101218;color:#f4f1ea}html[data-theme="system"]:not([data-resolved-theme]) .ke-skel{background:#272d3a}}' +
               "img.ke-photo{background-color:#ececef}" +
               "[data-ke-mark]{display:inline-flex;flex-direction:column}" +
               "[data-ke-mark] img{display:block;object-fit:contain;max-width:80px;max-height:80px}" +
@@ -380,7 +380,7 @@ function RootDocument() {
         <script src="/asset-recover.js?v=2" />
         <HeadContent />
         <script src="/channel-boot.js?v=10" />
-        <script src="/theme-boot.js" />
+        <script src="/theme-boot.js?v=2" />
         {/* Versioned: the edge keeps boot scripts for a long time. Bump v when look-boot.js changes. */}
         <script src="/look-boot.js?v=1" />
       </head>

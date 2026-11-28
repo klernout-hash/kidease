@@ -3633,7 +3633,7 @@ export const fr = {
     accountSaving: "Enregistrement…",
     accountUpdatePassword: "Mettre à jour le mot de passe",
     accountUpdateEmail: "Mettre à jour le courriel",
-    passkeySignIn: "Connexion avec Face ID / empreinte",
+    passkeySignIn: "Se connecter avec une empreinte ou la reconnaissance faciale",
     passkeyOfferTitle: "Activer la connexion Face ID / empreinte",
     passkeyOfferLead: "La prochaine fois, connectez-vous avec votre visage ou votre empreinte. Le courriel et le mot de passe restent offerts.",
     passkeyOfferOn: "L’activer",

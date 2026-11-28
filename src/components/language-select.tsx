@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useRouteContext, useRouterState } from "@tanstack/react-router";
+import { useRouteContext } from "@tanstack/react-router";
 import { ChevronDown, Globe } from "lucide-react";
 import { useFrCaPack } from "@/components/fr-ca-boot";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -50,6 +50,43 @@ export function LocaleChoiceSync() {
   return null;
 }
 
+export function useLanguageChoice() {
+  const setLocale = useAppStore((s) => s.setLocale);
+  const { user, isPending } = useCurrentUserState();
+  const [changing, setChanging] = useState(false);
+  const [appliedLocale, setAppliedLocale] = useState<Locale | null>(null);
+
+  async function choose(next: Locale) {
+    setChanging(true);
+    let navigating = false;
+    try {
+      if (isExtraLocale(next) && !await activateLocale(next)) return;
+      if (!isExtraLocale(next)) void activateLocale(next);
+      const dest = localeSwitchHref(window.location.pathname, window.location.search, next);
+      writeLocaleChoiceCookie(next);
+      setLocale(next, { lock: true });
+      applyDocumentLocale(next);
+      setAppliedLocale(next);
+      if (user) {
+        await saveMyLocale({ data: { locale: next } }).catch(queueLocaleSync);
+      } else if (isPending) {
+        queueLocaleSync();
+      }
+      if (dest) {
+        window.location.assign(dest);
+        navigating = true;
+      }
+    } finally {
+      if (!navigating) {
+        setAppliedLocale(null);
+        setChanging(false);
+      }
+    }
+  }
+
+  return { choose, changing, appliedLocale };
+}
+
 export function LanguageSelect({
   className = "",
   compact = false,
@@ -64,9 +101,7 @@ export function LanguageSelect({
   const a11yPass = useRouteContext({ from: "__root__", select: (s) => Boolean(s.a11yPass) });
   const [announced, setAnnounced] = useState<string | null>(null);
   const frCa = useFrCaPack();
-  const setLocale = useAppStore((s) => s.setLocale);
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { user, isPending } = useCurrentUserState();
+  const { choose, changing, appliedLocale } = useLanguageChoice();
 
   return (
     <label
@@ -85,41 +120,12 @@ export function LanguageSelect({
         </span>
       ) : null}
       <select
-        value={locale}
+        value={appliedLocale ?? locale}
+        disabled={changing}
         onChange={(e) => {
           const next = e.target.value as Locale;
           if (a11yPass) setAnnounced(languageMeta(next).native);
-          const apply = () => {
-            const path = typeof window !== "undefined" ? window.location.pathname : pathname;
-            const search = typeof window !== "undefined" ? window.location.search : "";
-            const dest = localeSwitchHref(path, search, next);
-            writeLocaleChoiceCookie(next);
-            if (dest) {
-              window.location.assign(dest);
-              return;
-            }
-            setLocale(next, { lock: true });
-            applyDocumentLocale(next);
-            const finish = () => undefined;
-            if (!user) {
-              if (isPending) queueLocaleSync();
-              finish();
-              return;
-            }
-            void saveMyLocale({ data: { locale: next } })
-              .catch(() => queueLocaleSync())
-              .finally(finish);
-          };
-          // English and French are already in memory. Extra languages wait
-          // for their pack so the page does not flash English strings.
-          if (!isExtraLocale(next)) {
-            void activateLocale(next);
-            apply();
-            return;
-          }
-          void activateLocale(next).then((ok) => {
-            if (ok) apply();
-          });
+          void choose(next);
         }}
         className={cn(
           "ke-lang-select w-full cursor-pointer touch-manipulation rounded-full border-0 bg-transparent text-center font-medium text-muted hover:text-fg",
@@ -133,6 +139,7 @@ export function LanguageSelect({
         {shippedLanguages().map((lang) => (
           <option key={lang.code} value={lang.code}>
             {frCa && lang.code === "fr" ? "Français (Canada)" : lang.native}
+            {lang.code === "ar" ? (locale === "fr" ? " (bêta)" : " (beta)") : ""}
           </option>
         ))}
       </select>

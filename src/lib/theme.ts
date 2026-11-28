@@ -3,8 +3,8 @@ export type ResolvedTheme = "light" | "dark";
 
 export const THEME_STORAGE_KEY = "kidease-theme";
 export const THEME_PREFERENCES = ["light", "dark", "system"] as const;
-/** Master UI/UX spec: dark by default; "system" follows the OS (light when the OS is light). */
-export const DEFAULT_THEME_PREFERENCE: ThemePreference = "dark";
+/** Follow the device until the user chooses a different appearance. */
+export const DEFAULT_THEME_PREFERENCE: ThemePreference = "system";
 
 /** Brand navy — matches the existing theme-color meta. */
 export const THEME_COLOR_LIGHT = "#1A3790";
@@ -16,7 +16,7 @@ export function parseThemePreference(value: unknown): ThemePreference {
 }
 
 export function prefersDarkScheme(
-  query: { matches: boolean } | null = typeof window === "undefined"
+  query: { matches: boolean } | null = typeof window === "undefined" || typeof window.matchMedia !== "function"
     ? null
     : window.matchMedia("(prefers-color-scheme: dark)"),
 ): boolean {

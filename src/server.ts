@@ -4,8 +4,18 @@ import "./instrument.server";
 import "@/lib/server/outbound-gate";
 
 import handler, { createServerEntry } from "@tanstack/react-start/server-entry";
+import { englishAliasPath } from "@/lib/locale-path";
 import { reportError } from "@/lib/observe";
 import { flushSentry } from "@/lib/sentry.server";
+
+function englishAliasRedirect(request: Request): Response | null {
+  if (request.method !== "GET" && request.method !== "HEAD") return null;
+  const url = new URL(request.url);
+  const path = englishAliasPath(url.pathname);
+  if (!path) return null;
+  url.pathname = path;
+  return Response.redirect(url, 301);
+}
 
 function signinRedirect(request: Request): Response | null {
   const url = new URL(request.url);
@@ -30,7 +40,7 @@ async function admissionsRedirect(request: Request): Promise<Response | null> {
 export default createServerEntry({
   async fetch(request) {
     try {
-      const bounced = signinRedirect(request);
+      const bounced = englishAliasRedirect(request) ?? signinRedirect(request);
       if (bounced) return bounced;
       const admissions = await admissionsRedirect(request);
       if (admissions) return admissions;

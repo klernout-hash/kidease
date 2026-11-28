@@ -107,6 +107,7 @@ import {
   shouldOfferPasskey,
   shouldUseAndroidCredentialManager,
   signInWithPasskey,
+  webViewHasWebAuthn,
 } from "@/lib/passkey-client";
 import type { CopyKey } from "@/lib/copy";
 
@@ -388,6 +389,10 @@ export function LoginScreen({
   const [stalled, setStalled] = useState(false);
   const [nativeResume, setNativeResume] = useState<"idle" | "opening" | "signed-out">("idle");
   const [passkeyOffer, setPasskeyOffer] = useState(false);
+  const [canSignInWithPasskey, setCanSignInWithPasskey] = useState(false);
+  useEffect(() => {
+    setCanSignInWithPasskey(!nativeIosSkipsPasskey() && (webViewHasWebAuthn() || shouldUseAndroidCredentialManager()));
+  }, []);
 
   const appShell = isNative() || isStandalone() || storeChannel !== "web";
   const showKeepMe = showKeepMeSignedIn({
@@ -1198,7 +1203,7 @@ export function LoginScreen({
                 ? locale === "fr" ? "Continuer" : "Continue"
                 : busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
-            {mode === "in" && !askEmailOnly && !nativeIosSkipsPasskey() ? (
+            {mode === "in" && !askEmailOnly && canSignInWithPasskey ? (
               <Button
                 type="button"
                 variant="secondary"
