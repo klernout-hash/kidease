@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
+import { ChildHealthLog } from "@/components/child-health-log";
 import { AdminLicenceReads } from "@/components/admin-licence-reads";
 import { useCleanLook } from "@/lib/use-clean-look";
 import { CatalogueHealthStrip } from "@/components/catalogue-health-strip";
@@ -1228,6 +1229,7 @@ function PeoplePanel({
   return (
     <>
       <AdminViewAsPicker />
+      <ChildHealthLog admin />
       <div className="mb-4">
         <h2 className="font-display text-2xl">Users</h2>
         <p className="mt-1 max-w-prose text-sm leading-6 text-muted">

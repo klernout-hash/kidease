@@ -7,9 +7,11 @@ export function canReadChildHealth(input: {
   viewerId: string;
   childOwnerId: string;
   enrolledAtCentre: boolean;
+  designatedAdmin?: boolean;
 }): boolean {
   if (!input.viewerId) return false;
-  if (input.viewer === "public" || input.viewer === "admin") return false;
+  if (input.viewer === "public") return false;
+  if (input.viewer === "admin") return input.designatedAdmin === true;
   if (input.viewer === "parent") return input.viewerId === input.childOwnerId;
   if (input.viewer === "provider" || input.viewer === "staff") return input.enrolledAtCentre;
   return false;
