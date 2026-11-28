@@ -18,7 +18,7 @@ test("public daycare fees remain available while subscription checkout stays off
   assert.equal(FLAG_DEFAULTS.FEATURE_PROVIDER_SUBSCRIPTIONS, false);
   assert.equal(subscriptionsEnabled({ SUBSCRIPTIONS_ENABLED: "0" }), false);
   assert.equal(parentListingFeesVisible(), true);
-  assert.equal(parentListingMonthlyFee({ fromPrice: 900, feeConfirmed: true, province: "ON", feeConfidence: "centre" }), 900);
+  assert.equal(parentListingMonthlyFee({ fromPrice: 900, feeConfirmed: true, province: "ON", feeConfidence: "centre", factSource: "Centre fee sheet" }), 900);
   for (const role of ["parent", "provider", "admin"]) {
     assert.equal(canUsePayCheckout(role, { SUBSCRIPTIONS_ENABLED: "0", SHOW_PAY_CTAS: "1" }), false);
   }
@@ -82,12 +82,12 @@ test("public fee visibility does not disclose unknown amounts or inferred monthl
   assert.equal(parentListingMonthlyFee({ fromPrice: 900, live: false, feeConfirmed: false }), null);
   assert.equal(parentListingMonthlyFee({ fromPrice: 900, live: true, feeConfirmed: false }), null);
   assert.equal(parentListingMonthlyFee({ fromPrice: 900, feeConfidence: "estimate" }), null);
-  assert.equal(parentListingMonthlyFee({ fromPrice: 900, feeConfidence: "centre" }), 900);
+  assert.equal(parentListingMonthlyFee({ fromPrice: 900, feeConfidence: "centre", factSource: "Centre fee sheet" }), 900);
   assert.equal(parentListingMonthlyFee({ fromPrice: 0, feeConfirmed: true }), null);
   assert.equal(parentListingMonthlyFee({ fromPrice: undefined, feeConfirmed: true }), null);
   assert.equal(parentListingMonthlyFee({ fromPrice: 218, feeConfirmed: true }), null);
   const program = { province: "SK", feeProgram: "sk-10-day", agesKnown: true, ageMinMonths: 0, ageMaxMonths: 60 };
   assert.equal(parentListingMonthlyFee({ ...program, fromPrice: 217.5, feeConfirmed: true }), null);
-  assert.equal(parentListingMonthlyFee({ ...program, fromPrice: 217.5, feeConfirmed: true, feeConfidence: "centre" }), 217.5);
+  assert.equal(parentListingMonthlyFee({ ...program, fromPrice: 217.5, feeConfirmed: true, feeConfidence: "centre", factSource: "Centre fee sheet" }), 217.5);
   assert.equal(parentListingMonthlyFee({ fromPrice: 217, feeConfirmed: true, province: "MB", feeProgram: "mb-10-day" }), null);
 });

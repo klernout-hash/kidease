@@ -19,6 +19,7 @@ test("fee after the program uses a confirmed fee or a published daily amount", (
   const confirmed = compareFeeAfterSubsidy(
     {
       preschoolMonthly: 1200,
+      factSource: "Centre fee sheet",
       feeConfirmed: true,
       feeConfidence: "centre",
       province: "ON",
@@ -47,7 +48,7 @@ test("fee after the program uses a confirmed fee or a published daily amount", (
   assert.doesNotMatch(programOnly, /900/);
 
   const unknown = compareFeeAfterSubsidy({ province: "ON", preschoolMonthly: 218 }, "fr");
-  assert.equal(unknown, "Demandez au centre");
+  assert.equal(unknown, "Renseignez-vous auprès du centre");
 });
 
 test("distance uses the saved commute address before the home pin", () => {

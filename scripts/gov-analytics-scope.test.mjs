@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { buildGovDashboard, parseGovScope } from "../src/lib/gov/aggregate.ts";
 import { bundleForScope } from "../src/lib/gov/bundle.ts";
 import { dashboardCsv } from "../src/lib/gov/csv.ts";
+import { CITED_LISTING_FEE_SQL, REAL_LISTING_FEE_AMOUNT_SQL } from "../src/lib/cited-fee.ts";
 import { PUBLIC_LISTING_SQL } from "../src/lib/listing-visibility.ts";
 
 const actor = { orgName: "QA province", demo: true, readOnly: true };
@@ -138,7 +139,7 @@ test("the actual city and fee SQL count unmapped public listings without moving 
       id text, slug text, name text, province text, city text, license_number text, license_status text,
       licensed_capacity int, last_vacancy_updated_at timestamp, spots_updated_at timestamp,
       confirmed_open_spots int, spots_infant int, spots_toddler int, spots_preschool int,
-      fee_program text, fact_source text, infant_monthly numeric, toddler_monthly numeric, preschool_monthly numeric,
+      fee_program text, fact_source text, fee_confidence text, infant_monthly numeric, toddler_monthly numeric, preschool_monthly numeric, part_time_monthly numeric,
       languages text, staff_languages jsonb, amenities text, programs jsonb, lat float8, lng float8,
       merged_into text, import_fault text, listing_active int, is_test int, is_demo int,
       visibility text, address text, claim_status text
@@ -146,7 +147,7 @@ test("the actual city and fee SQL count unmapped public listings without moving 
     insert into daycares (id, slug, name, province, city, license_number, licensed_capacity, fact_source, toddler_monthly, lat, lng)
     select 'fixture-' || n, 'public-centre-' || n, 'Public centre ' || n, 'MB',
       case when n <= 4 then 'Wpg' when n <= 8 then 'Winnipeg' else 'Brandon' end,
-      'licence-' || n, 20, 'Synthetic cited source', 350,
+      'licence-' || n, 20, 'Synthetic centre fee sheet', 350,
       case when n <= 2 then 49.9 when n = 5 then 50.2 else 0 end,
       case when n <= 2 then -97.1 when n = 5 then -97.4 else 0 end
     from generate_series(1, 16) n;
@@ -156,7 +157,9 @@ test("the actual city and fee SQL count unmapped public listings without moving 
     const source = readFileSync(new URL("../src/lib/server/gov-data.server.ts", import.meta.url), "utf8");
     const licensed = source.slice(source.indexOf("const LICENSED_SQL =")).split("`")[1];
     const query = (name, next) => source.slice(source.indexOf(`const ${name} =`), source.indexOf(`const ${next} =`)).split("`")[1]
-      .replaceAll("${PUBLIC_LISTING_SQL}", PUBLIC_LISTING_SQL).replaceAll("${LICENSED_SQL}", licensed);
+      .replaceAll("${PUBLIC_LISTING_SQL}", PUBLIC_LISTING_SQL).replaceAll("${LICENSED_SQL}", licensed)
+      .replaceAll("${CITED_LISTING_FEE_SQL}", CITED_LISTING_FEE_SQL)
+      .replaceAll("${REAL_LISTING_FEE_AMOUNT_SQL}", REAL_LISTING_FEE_AMOUNT_SQL);
     const cities = (await db.query(query("cityRows", "feeRows"))).rows.map((row) => ({ ...row, lat: row.lat ?? 0, lng: row.lng ?? 0 }));
     const fees = (await db.query(query("feeRows", "waitRows"))).rows;
     const raw = { cities, fees, waitlist: [], trends: [], fill: [], jobCounts: [], generatedAt: "2026-11-12T00:00:00.000Z" };

@@ -22,7 +22,7 @@ test("backfilled bands are a provincial estimate and centre-entered fees are con
   assert.equal(backfill.confidence, "estimate");
   assert.equal(backfill.priceList, false);
 
-  const typed = listingFeeNotes({ live: true, preschoolMonthly: 1025, feeConfidence: "centre" });
+  const typed = listingFeeNotes({ live: true, preschoolMonthly: 1025, feeConfidence: "centre", factSource: "Centre fee sheet" });
   assert.equal(typed.confidence, "centre");
   assert.equal(typed.priceList, true);
 
@@ -45,5 +45,5 @@ test("claim and check-in accept a real monthly fee and ignore blanks", () => {
   assert.match(src("src/lib/server/open-spots-checkin.ts"), /saveCentreMonthlyFees/);
   assert.match(src("src/lib/server/fee-confidence.ts"), /fee_confidence = 'centre'/);
   assert.match(src("migrations/0108_fee_confidence.sql"), /add column if not exists fee_confidence/);
-  assert.match(src("src/routes/daycare.\$slug.tsx"), /feeProvincialEstimate/);
+  assert.match(src("src/routes/daycare.\$slug.tsx"), /feeAskCentre/);
 });

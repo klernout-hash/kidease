@@ -30,7 +30,7 @@ export function compareFeeAfterSubsidy(
     return program ? `${day} · ${program}` : day;
   }
   if (program) return program;
-  return locale === "fr" ? "Demandez au centre" : "Ask the centre";
+  return locale === "fr" ? "Renseignez-vous auprès du centre" : "Ask the centre";
 }
 
 function confirmedParentMonthly(listing: ListingFeeInput & { fromPrice?: number | null }): number | null {
