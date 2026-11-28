@@ -205,14 +205,23 @@ export function AccountPage() {
   return <ProfilePane />;
 }
 
-function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: ReactNode }) {
+function AccountDeskFrame({ desk, section, children }: {
+  desk: DeskKey | null;
+  section: NonNullable<AccountSearch["section"]>;
+  children: ReactNode;
+}) {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const active = desk === "support"
+    ? section === "delete" ? "delete" : "account"
+    : section === "alerts" ? "notify-prefs"
+      : section === "profile" || section === "appearance" || section === "delete" ||
+          section === "security" || section === "email-sms" ? section : "account";
   if (desk === "provider") {
     return (
       <DeskShell
         desk="daycare"
-        active="account"
+        active={active}
         headingMode="aside"
         onSelect={(id) => {
           if (id === "account") return;
@@ -227,7 +236,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
     return (
       <DeskShell
         desk="parent"
-        active="account"
+        active={active}
         headingMode="aside"
         onSelect={(id) => {
           if (id === "account") return;
@@ -242,7 +251,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
     return (
       <DeskShell
         desk="admin"
-        active="account"
+        active={active}
         headingMode="aside"
         onSelect={(id) => {
           if (id === "account") return;
@@ -257,7 +266,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
     return (
       <DeskShell
         desk="support"
-        active="account"
+        active={active}
         headingMode="aside"
         onSelect={(id) => {
           if (id === "account") return;
@@ -731,7 +740,7 @@ function ProfilePane() {
   }
 
   return (
-    <AccountDeskFrame desk={desk}>
+    <AccountDeskFrame desk={desk} section={section}>
       <main className={desk ? "max-w-lg pb-6" : "ke-gutter mx-auto max-w-lg pb-10 pt-6"}>
         <FirstRunMenuLinks />
         {user ? (
