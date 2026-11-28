@@ -19,6 +19,7 @@ import {
 } from "@/lib/daily-care";
 import { dailyLogsEnabled } from "@/lib/features";
 import { nid } from "@/lib/utils";
+import { careMonthBill, type CareMonthBill, type CareMonthBillRow } from "@/lib/care-month-bill";
 import { listAccessibleDaycareIds, loadCentreRole } from "./centre-access";
 import { insertCareStatusMessage, loadEnrolledBooking } from "./daily-care";
 import {
@@ -755,6 +756,8 @@ export type LicensedMonthChild = {
   parentUserId: string | null;
   days: Array<{ day: string; status: string }>;
   split: CareSplitRow | null;
+  /** The sent bill for this child and month, from the same invoices rows as Pay (P1-6). */
+  bill: CareMonthBill | null;
 };
 
 export const getLicensedMonth = createServerFn({ method: "POST" })
@@ -855,6 +858,27 @@ export const getLicensedMonth = createServerFn({ method: "POST" })
           )
         )
     `.catch(() => []);
+    // Bills: the parent's own, or a centre the viewer owns. Staff without the owner link see the estimate only.
+    const ownedCentres = new Set(
+      (
+        await sql<{ daycare_id: string }>`
+          select daycare_id from provider_daycares where user_id = ${context.userId}
+        `.catch(() => [] as { daycare_id: string }[])
+      ).map((row) => row.daycare_id),
+    );
+    const billBookingIds = kids
+      .filter((kid) => kid.parent_user_id === context.userId || ownedCentres.has(kid.daycare_id))
+      .map((kid) => kid.booking_id);
+    const billRows = billBookingIds.length
+      ? await sql
+          .query<CareMonthBillRow>(
+            `select id, booking_id, period, status, amount_cents, total, created_at
+             from invoices
+             where booking_id = any($1::text[]) and period = $2 and status <> 'draft'`,
+            [billBookingIds, month],
+          )
+          .catch(() => [] as CareMonthBillRow[])
+      : [];
     const children: LicensedMonthChild[] = kids.map((kid) => {
       const splitHit = splitRows.find((s) => s.booking_id === kid.booking_id);
       const kind = splitHit && isProgramKind(splitHit.program_kind) ? splitHit.program_kind : null;
@@ -884,6 +908,7 @@ export const getLicensedMonth = createServerFn({ method: "POST" })
                 programLabel: splitHit.program_label || "",
               }
             : null,
+        bill: careMonthBill(billRows, kid.booking_id, month),
       };
     });
     return { month, children };
