@@ -98,6 +98,7 @@ test("security-sensitive generators no longer reference Math.random", () => {
     "src/lib/server/listing-queue.ts",
     "src/lib/server/growth-loops.ts",
     "src/lib/server/push-tokens.ts",
+    "src/lib/server/titan-mail.ts",
     "src/components/admin-feature-controls.tsx",
   ]) {
     assert.doesNotMatch(src(file), /Math\.random/, file);

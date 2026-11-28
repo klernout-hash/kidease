@@ -1,5 +1,6 @@
 /** Titan IMAP/SMTP helpers for Admin Mail. No Start/DB — tests import this file. */
 
+import { randomBytes } from "node:crypto";
 import { isResendSendFrom } from "../mail-from.ts";
 
 export const TITAN_WEB_INBOX = "https://app.titan.email";
@@ -279,8 +280,9 @@ export function buildOutgoingMail(input: {
   references?: string;
   date?: Date;
 }): BuiltMail {
-  const boundary = `ke${Date.now().toString(16)}${Math.random().toString(16).slice(2, 10)}`;
-  const messageId = `<${Date.now()}.${Math.random().toString(16).slice(2)}@kidease.ca>`;
+  const now = Date.now();
+  const boundary = `ke${now.toString(16)}${randomBytes(16).toString("hex")}`;
+  const messageId = `<${now}.${randomBytes(16).toString("hex")}@kidease.ca>`;
   const html = input.html || adminMailHtml(input.text);
   const headers = [
     `From: ${input.fromHeader}`,
