@@ -293,10 +293,10 @@ describe("PostHog client wiring", () => {
     assert.match(copy, /cookieConsentAllowShort: "Allow"/);
     assert.match(copy, /cookieConsentEssential: "Essentiels seulement"/);
     assert.match(copy, /cookieConsentAllowShort: "Autoriser"/);
-    // Equal weight: both secondary, same size, Essential first; slim bar max 560px.
+    // Equal weight: both secondary, same size, Essential first; slim bar max 35rem.
     assert.ok(banner.indexOf('data-ke="cookie-essential"') < banner.indexOf('data-ke="cookie-allow"'));
     assert.doesNotMatch(banner, /variant="primary"/);
-    assert.match(banner, /max-w-\[560px\]/);
+    assert.match(banner, /max-w-\[35rem\]/);
     assert.doesNotMatch(banner, /type="checkbox"/);
     assert.match(legal, /Allow analytics/);
     assert.match(legal, /Autoriser l’analytique/);

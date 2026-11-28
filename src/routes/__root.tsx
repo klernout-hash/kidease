@@ -404,6 +404,7 @@ function RootDocument() {
           <RouteProgress />
           <ScreenHistoryRecorder />
           <div id="main-content" tabIndex={-1} className="flex w-full min-w-0 flex-1 flex-col outline-none">
+            <CookieConsentBanner />
             <Outlet />
           </div>
           <LiveChatSlot />
@@ -412,7 +413,6 @@ function RootDocument() {
             <IncomingVideoAlert />
           </AfterFirstPaint>
           </ViewAsProvider>
-          <CookieConsentBanner />
           <Suspense fallback={null}>
             <KidEaseToaster />
             <SuccessConfirmHost />
