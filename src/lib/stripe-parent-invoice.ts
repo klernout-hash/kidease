@@ -119,7 +119,7 @@ export function formatInvoiceDisplayMoney(cents: number | null, currency: string
   const lang = locale === "fr" ? "fr" : "en";
   const amount = formatInvoiceMoney(cents, currency, lang);
   if (lang === "en" && (!/^[a-z]{3}$/i.test(currency) || currency.toLowerCase() === "cad")) {
-    return amount?.replace("$", "CA$") ?? null;
+    return amount?.replace(/\$/g, "CA$$") ?? null;
   }
   return amount;
 }
