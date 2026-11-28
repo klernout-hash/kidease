@@ -370,7 +370,9 @@ import { Route as FrInvoicesIdRouteImport } from './routes/fr.invoices.$id'
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as FrMilieuxFamiliauxIdRouteImport } from './routes/fr.milieux-familiaux_.$id'
 import { Route as FrParentDailyFeedRouteImport } from './routes/fr.parent.daily-feed'
+import { Route as FrProviderInspectionSyncRouteImport } from './routes/fr.provider_.inspection-sync'
 import { Route as FrProviderLeadsRouteImport } from './routes/fr.provider_.leads'
+import { Route as FrProviderSubsidyRouteImport } from './routes/fr.provider_.subsidy'
 import { Route as FrRCodeRouteImport } from './routes/fr.r.$code'
 import { Route as FrSupportCaseIdRouteImport } from './routes/fr.support_.$caseId'
 import { Route as FrWelcomeCodeRouteImport } from './routes/fr.welcome.$code'
@@ -2194,9 +2196,20 @@ const FrParentDailyFeedRoute = FrParentDailyFeedRouteImport.update({
   path: '/daily-feed',
   getParentRoute: () => FrParentRoute,
 } as any)
+const FrProviderInspectionSyncRoute =
+  FrProviderInspectionSyncRouteImport.update({
+    id: '/provider_/inspection-sync',
+    path: '/provider/inspection-sync',
+    getParentRoute: () => FrRoute,
+  } as any)
 const FrProviderLeadsRoute = FrProviderLeadsRouteImport.update({
   id: '/provider_/leads',
   path: '/provider/leads',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrProviderSubsidyRoute = FrProviderSubsidyRouteImport.update({
+  id: '/provider_/subsidy',
+  path: '/provider/subsidy',
   getParentRoute: () => FrRoute,
 } as any)
 const FrRCodeRoute = FrRCodeRouteImport.update({
@@ -2622,7 +2635,9 @@ export interface FileRoutesByFullPath {
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
+  '/fr/provider/inspection-sync': typeof FrProviderInspectionSyncRoute
   '/fr/provider/leads': typeof FrProviderLeadsRoute
+  '/fr/provider/subsidy': typeof FrProviderSubsidyRoute
   '/fr/r/$code': typeof FrRCodeRoute
   '/fr/support/$caseId': typeof FrSupportCaseIdRoute
   '/fr/welcome/$code': typeof FrWelcomeCodeRoute
@@ -2996,7 +3011,9 @@ export interface FileRoutesByTo {
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
+  '/fr/provider/inspection-sync': typeof FrProviderInspectionSyncRoute
   '/fr/provider/leads': typeof FrProviderLeadsRoute
+  '/fr/provider/subsidy': typeof FrProviderSubsidyRoute
   '/fr/r/$code': typeof FrRCodeRoute
   '/fr/support/$caseId': typeof FrSupportCaseIdRoute
   '/fr/welcome/$code': typeof FrWelcomeCodeRoute
@@ -3373,7 +3390,9 @@ export interface FileRoutesById {
   '/fr/jobs_/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux_/$id': typeof FrMilieuxFamiliauxIdRoute
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
+  '/fr/provider_/inspection-sync': typeof FrProviderInspectionSyncRoute
   '/fr/provider_/leads': typeof FrProviderLeadsRoute
+  '/fr/provider_/subsidy': typeof FrProviderSubsidyRoute
   '/fr/r/$code': typeof FrRCodeRoute
   '/fr/support_/$caseId': typeof FrSupportCaseIdRoute
   '/fr/welcome/$code': typeof FrWelcomeCodeRoute
@@ -3751,7 +3770,9 @@ export interface FileRouteTypes {
     | '/fr/jobs/post'
     | '/fr/milieux-familiaux/$id'
     | '/fr/parent/daily-feed'
+    | '/fr/provider/inspection-sync'
     | '/fr/provider/leads'
+    | '/fr/provider/subsidy'
     | '/fr/r/$code'
     | '/fr/support/$caseId'
     | '/fr/welcome/$code'
@@ -4125,7 +4146,9 @@ export interface FileRouteTypes {
     | '/fr/jobs/post'
     | '/fr/milieux-familiaux/$id'
     | '/fr/parent/daily-feed'
+    | '/fr/provider/inspection-sync'
     | '/fr/provider/leads'
+    | '/fr/provider/subsidy'
     | '/fr/r/$code'
     | '/fr/support/$caseId'
     | '/fr/welcome/$code'
@@ -4501,7 +4524,9 @@ export interface FileRouteTypes {
     | '/fr/jobs_/post'
     | '/fr/milieux-familiaux_/$id'
     | '/fr/parent/daily-feed'
+    | '/fr/provider_/inspection-sync'
     | '/fr/provider_/leads'
+    | '/fr/provider_/subsidy'
     | '/fr/r/$code'
     | '/fr/support_/$caseId'
     | '/fr/welcome/$code'
@@ -7288,11 +7313,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrParentDailyFeedRouteImport
       parentRoute: typeof FrParentRoute
     }
+    '/fr/provider_/inspection-sync': {
+      id: '/fr/provider_/inspection-sync'
+      path: '/provider/inspection-sync'
+      fullPath: '/fr/provider/inspection-sync'
+      preLoaderRoute: typeof FrProviderInspectionSyncRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/provider_/leads': {
       id: '/fr/provider_/leads'
       path: '/provider/leads'
       fullPath: '/fr/provider/leads'
       preLoaderRoute: typeof FrProviderLeadsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/provider_/subsidy': {
+      id: '/fr/provider_/subsidy'
+      path: '/provider/subsidy'
+      fullPath: '/fr/provider/subsidy'
+      preLoaderRoute: typeof FrProviderSubsidyRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/r/$code': {
@@ -7576,7 +7615,9 @@ interface FrRouteChildren {
   FrGovVacanciesRoute: typeof FrGovVacanciesRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
+  FrProviderInspectionSyncRoute: typeof FrProviderInspectionSyncRoute
   FrProviderLeadsRoute: typeof FrProviderLeadsRoute
+  FrProviderSubsidyRoute: typeof FrProviderSubsidyRoute
   FrRCodeRoute: typeof FrRCodeRoute
   FrSupportCaseIdRoute: typeof FrSupportCaseIdRoute
   FrWelcomeCodeRoute: typeof FrWelcomeCodeRoute
@@ -7685,7 +7726,9 @@ const FrRouteChildren: FrRouteChildren = {
   FrGovVacanciesRoute: FrGovVacanciesRoute,
   FrJobsPostRoute: FrJobsPostRoute,
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
+  FrProviderInspectionSyncRoute: FrProviderInspectionSyncRoute,
   FrProviderLeadsRoute: FrProviderLeadsRoute,
+  FrProviderSubsidyRoute: FrProviderSubsidyRoute,
   FrRCodeRoute: FrRCodeRoute,
   FrSupportCaseIdRoute: FrSupportCaseIdRoute,
   FrWelcomeCodeRoute: FrWelcomeCodeRoute,
