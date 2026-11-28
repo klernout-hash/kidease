@@ -199,7 +199,6 @@ export const Route = createRootRoute({
         {...props}
         links={
           <>
-            {path.startsWith("/admin") && !nativeShellHidesAdminNow() ? <a href="/admin">{copy.admin}</a> : null}
             <a href="/search">{copy.explore}</a>
             <a href="/">{copy.home}</a>
             <a href={`mailto:${SUPPORT_INBOX_EMAIL}`}>{copy.support}</a>

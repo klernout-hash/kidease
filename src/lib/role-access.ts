@@ -284,7 +284,6 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscrip
       { id: "queue", label: "Home", to: "/admin", search: { tab: "queue" }, icon: "verify" },
       { id: "review", label: "Review", to: "/admin", search: { tab: "verify" }, icon: "verify" },
       { id: "messages", label: "Messages", to: "/admin", search: { tab: "mail" }, icon: "messages" },
-      { id: "support", label: "Support", to: "/support", icon: "support" },
       { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
     ];
   }

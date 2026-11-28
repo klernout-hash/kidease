@@ -5,7 +5,7 @@ import { LEGAL_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { SMS_TERMS_EN, SMS_TERMS_FR, withSmsSection } from "@/lib/sms-legal";
 import { legalDocWithoutStorePurchase } from "@/lib/store-purchase-copy";
 import { useCopy } from "@/lib/use-copy";
-import { useInNativeShell } from "@/lib/use-native-shell";
+import { useStoreShell } from "@/lib/use-native-shell";
 
 export const Route = createFileRoute("/terms")({
   head: () => pageSeoHead(LEGAL_PAGE_SEO.terms),
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/terms")({
 
 function Terms() {
   const { locale } = useCopy();
-  const hideCommerce = useInNativeShell();
+  const hideCommerce = useStoreShell();
   const raw =
     locale === "fr" ? withSmsSection(TERMS_V2_FR, SMS_TERMS_FR) : withSmsSection(TERMS_V2_EN, SMS_TERMS_EN);
   const doc = hideCommerce ? legalDocWithoutStorePurchase(raw) : raw;

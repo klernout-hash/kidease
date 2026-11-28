@@ -9,6 +9,7 @@ import { shouldOfferWebShare } from "@/lib/native";
 import { copyText, shareOrCopy } from "@/lib/share";
 import { parentDeskPath } from "@/lib/desk-nav";
 import { custodyCopy } from "@/lib/custody-copy";
+import { inviteShortlistShare } from "@/lib/server/parent-tracker";
 import { inviteCoparentByEmail } from "@/lib/server/coparent-email";
 import {
   acceptCoparentInvite,
@@ -28,17 +29,24 @@ function explain(err: unknown, errors: Record<string, string>, fallback: string)
   return errors[code] || fallback;
 }
 
-export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | null }) {
-  const { locale } = useCopy();
+export function CoparentDesk({ inviteToken = null, shortlistShared = false }: { inviteToken?: string | null; shortlistShared?: boolean }) {
+  const { locale, t } = useCopy();
   const copy = coparentCopy(locale);
   const emailCopy = custodyCopy(locale);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const fromSaved = useRouterState({ select: (s) => s.location.hash === "invite-partner" });
   const deskPath = parentDeskPath(pathname);
   const [desk, setDesk] = useState<Desk | null>(null);
   const [access, setAccess] = useState<"full" | "view">("view");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
+
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const [heldPath, setHeldPath] = useState("");
+  const [inviteKind, setInviteKind] = useState<"family" | "saved">(fromSaved ? "saved" : "family");
 
   function load() {
     void listCoparent()
@@ -54,22 +62,23 @@ export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | nu
   }, []);
 
   if (!desk) return <p className="text-sm text-muted">{copy.lead}</p>;
-  if (!desk.enabled) {
-    return <EmptyState title={copy.offTitle} body={copy.offBody} action={copy.home} actionTo={deskPath} />;
-  }
 
   const link = desk.inviteToken
     ? inviteShareUrl(desk.inviteToken, deskPath, typeof window === "undefined" ? undefined : window.location.origin)
     : "";
   const showJoin = Boolean(inviteToken) && desk.role !== "owner" && desk.role !== "member";
 
+  const canInviteFamily = desk.enabled && desk.role === "none" && !showJoin;
+  const canInviteSaved = !shortlistShared && !showJoin;
+  const showSavedInvite = canInviteSaved && (!canInviteFamily || inviteKind === "saved");
+
   return (
     <section className="mt-6 space-y-6">
       <div>
         <h2 className="font-display text-2xl">{copy.title}</h2>
         <p className="mt-1 text-sm text-muted">{copy.lead}</p>
-        <p className="mt-2 text-sm">{copy.shared}</p>
-        {!link ? <p className="mt-2 text-sm text-muted">{desk.emailEnabled ? emailCopy.lead : copy.noSend}</p> : null}
+        {desk.enabled ? <p className="mt-2 text-sm">{copy.shared}</p> : null}
+        {desk.enabled && !link ? <p className="mt-2 text-sm text-muted">{desk.emailEnabled ? emailCopy.lead : copy.noSend}</p> : null}
       </div>
       {desk.role === "member" && desk.access === "view" ? (
         <p className="rounded-xl bg-surface p-4 text-sm ring-1 ring-border" role="status">
@@ -115,72 +124,160 @@ export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | nu
         </div>
       ) : null}
 
-      {desk.emailEnabled && desk.role === "none" && !showJoin ? (
-        <form
-          className="space-y-3 rounded-xl bg-surface p-4 ring-1 ring-border"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setBusy(true);
-            setError("");
-            void inviteCoparentByEmail({ data: { email, access, deskPath } })
-              .then((row) => {
-                toast.success(row.mailed ? emailCopy.sent : emailCopy.preview);
-                load();
-              })
-              .catch((err) => setError(explain(err, emailCopy.errors, emailCopy.bad)))
-              .finally(() => setBusy(false));
-          }}
-        >
-          <label className="block text-sm">
-            {emailCopy.emailLabel}
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
-              className="ke-input mt-1 min-h-11 w-full"
-            />
-          </label>
-          <p className="text-sm text-muted">{emailCopy.mustAccept}</p>
-          <Button type="submit" disabled={busy}>
-            {emailCopy.send}
-          </Button>
-        </form>
+      {!desk.enabled ? (
+        <EmptyState title={copy.offTitle} body={copy.offBody} action={copy.home} actionTo={deskPath} />
       ) : null}
 
-      {desk.role === "none" && !showJoin && !desk.emailEnabled ? (
-        <form
-          className="space-y-3 rounded-xl bg-surface p-4 ring-1 ring-border"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setBusy(true);
-            setError("");
-            void createCoparentInvite({ data: { access, deskPath } })
-              .then(() => {
-                toast.success(copy.saved);
-                load();
-              })
-              .catch((err) => setError(explain(err, copy.errors, copy.bad)))
-              .finally(() => setBusy(false));
-          }}
-        >
-          <label className="block text-sm">
-            {copy.access}
-            <select
-              className="ke-input mt-1 min-h-11 w-full"
-              value={access}
-              onChange={(event) => setAccess(event.target.value === "full" ? "full" : "view")}
+      {canInviteFamily || canInviteSaved ? (
+        <section id="invite-partner" className="scroll-mt-24 space-y-3" aria-labelledby="invite-partner-title">
+          <h3 id="invite-partner-title" className="text-lg font-semibold">{t("shareShortlist")}</h3>
+          {canInviteFamily && canInviteSaved ? (
+            <label className="block text-sm">
+              {locale === "fr" ? "Que voulez-vous partager?" : "What would you like to share?"}
+              <select
+                className="ke-input mt-1 min-h-11 w-full"
+                value={inviteKind}
+                onChange={(event) => setInviteKind(event.target.value === "saved" ? "saved" : "family")}
+              >
+                <option value="family">{copy.title}</option>
+                <option value="saved">{locale === "fr" ? "Garderies enregistrées seulement" : "Saved daycares only"}</option>
+              </select>
+            </label>
+          ) : null}
+          {showSavedInvite ? (
+            <form
+              className="mt-3 w-full space-y-2"
+              data-ke="shortlist-share"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setInviteError("");
+                setHeldPath("");
+                setInviteBusy(true);
+                void inviteShortlistShare({ data: { email: inviteEmail } })
+                  .then((result) => {
+                    if (!result.ok) {
+                      const key =
+                        result.reason === "self"
+                          ? "shareShortlistSelf"
+                          : result.reason === "limit"
+                            ? "shareShortlistLimit"
+                            : "shareShortlistEmailBad";
+                      setInviteError(t(key));
+                      return;
+                    }
+                    setInviteEmail("");
+                    if (result.emailed) {
+                      toast.success(t("shareShortlistSent"));
+                      return;
+                    }
+                    setHeldPath(result.path);
+                    toast.message(t("shareShortlistHeld"));
+                  })
+                  .catch(() => setInviteError(t("shareShortlistBad")))
+                  .finally(() => setInviteBusy(false));
+              }}
             >
-              <option value="view">{copy.view}</option>
-              <option value="full">{copy.full}</option>
-            </select>
-          </label>
-          <Button type="submit" disabled={busy}>
-            {copy.create}
-          </Button>
-        </form>
+              <label className="block text-sm" htmlFor="shortlist-partner-email">
+                {t("shareShortlistEmail")}
+              </label>
+              <p className="text-sm text-muted">{t("shareShortlistLead")}</p>
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  id="shortlist-partner-email"
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  required
+                  value={inviteEmail}
+                  onChange={(event) => setInviteEmail(event.target.value)}
+                  onFocus={(event) => event.currentTarget.scrollIntoView({ block: "nearest" })}
+                  className="h-11 w-full min-w-0 rounded-md border border-border bg-bg px-3 text-base"
+                />
+                <Button type="submit" disabled={inviteBusy}>
+                  {t("shareShortlistSend")}
+                </Button>
+              </div>
+              {inviteError ? (
+                <p role="alert" className="text-sm text-danger">
+                  {inviteError}
+                </p>
+            ) : null}
+              {heldPath ? (
+                <p className="break-all text-sm text-fg" data-ke="share-link">
+                  {heldPath}
+                </p>
+            ) : null}
+            </form>
+          ) : null}
+        {canInviteFamily && !showSavedInvite && desk.emailEnabled ? (
+          <form
+            className="space-y-3 rounded-xl bg-surface p-4 ring-1 ring-border"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setBusy(true);
+              setError("");
+              void inviteCoparentByEmail({ data: { email, access, deskPath } })
+                .then((row) => {
+                  toast.success(row.mailed ? emailCopy.sent : emailCopy.preview);
+                  load();
+                })
+                .catch((err) => setError(explain(err, emailCopy.errors, emailCopy.bad)))
+                .finally(() => setBusy(false));
+            }}
+          >
+            <label className="block text-sm">
+              {emailCopy.emailLabel}
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
+                className="ke-input mt-1 min-h-11 w-full"
+              />
+            </label>
+            <p className="text-sm text-muted">{emailCopy.mustAccept}</p>
+            <Button type="submit" disabled={busy}>
+              {emailCopy.send}
+            </Button>
+          </form>
+        ) : null}
+
+        {canInviteFamily && !showSavedInvite && !desk.emailEnabled ? (
+          <form
+            className="space-y-3 rounded-xl bg-surface p-4 ring-1 ring-border"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setBusy(true);
+              setError("");
+              void createCoparentInvite({ data: { access, deskPath } })
+                .then(() => {
+                  toast.success(copy.saved);
+                  load();
+                })
+                .catch((err) => setError(explain(err, copy.errors, copy.bad)))
+                .finally(() => setBusy(false));
+            }}
+          >
+            <label className="block text-sm">
+              {copy.access}
+              <select
+                className="ke-input mt-1 min-h-11 w-full"
+                value={access}
+                onChange={(event) => setAccess(event.target.value === "full" ? "full" : "view")}
+              >
+                <option value="view">{copy.view}</option>
+                <option value="full">{copy.full}</option>
+              </select>
+            </label>
+            <Button type="submit" disabled={busy}>
+              {copy.create}
+            </Button>
+          </form>
+        ) : null}
+
+        </section>
       ) : null}
 
       {desk.role === "owner" ? (

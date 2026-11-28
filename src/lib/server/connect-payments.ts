@@ -181,6 +181,8 @@ async function listStripeMethods(customerId: string, defaultId: string | null, s
 export const listWalletMethods = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    const { assertStaffAccountAction } = await import("@/lib/server/staff-account-guard");
+    await assertStaffAccountAction(context.userId, "wallet");
     const sql = await getSql();
     const routed = await stripeCallFor(sql, context.userId);
     if (!("secret" in routed)) return { ok: false as const, reason: routed.reason, methods: [] as WalletMethodView[] };
@@ -194,6 +196,9 @@ export const listWalletMethods = createServerFn({ method: "GET" })
 export const createWalletSetup = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    // N-43: no wallet for a staff-only login on a centre account.
+    const { assertStaffAccountAction } = await import("@/lib/server/staff-account-guard");
+    await assertStaffAccountAction(context.userId, "wallet");
     const sql = await getSql();
     const routed = await stripeCallFor(sql, context.userId);
     if (!("secret" in routed)) return { ok: false as const, reason: routed.reason, clientSecret: null as string | null };
@@ -232,6 +237,9 @@ export const updateWalletMethod = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
+    // N-43: no wallet for a staff-only login on a centre account.
+    const { assertStaffAccountAction } = await import("@/lib/server/staff-account-guard");
+    await assertStaffAccountAction(context.userId, "wallet");
     const sql = await getSql();
     const routed = await stripeCallFor(sql, context.userId);
     if (!("secret" in routed)) return { ok: false as const, reason: routed.reason };
@@ -268,6 +276,9 @@ export const removeWalletMethod = createServerFn({ method: "POST" })
     return id;
   })
   .handler(async ({ context, data: paymentMethodId }) => {
+    // N-43: no wallet for a staff-only login on a centre account.
+    const { assertStaffAccountAction } = await import("@/lib/server/staff-account-guard");
+    await assertStaffAccountAction(context.userId, "wallet");
     const sql = await getSql();
     const routed = await stripeCallFor(sql, context.userId);
     if (!("secret" in routed)) return { ok: false as const, reason: routed.reason };
