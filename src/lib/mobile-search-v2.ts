@@ -89,9 +89,9 @@ export function mergeMobileSearchParams(previous: Record<string, unknown>, next:
 const RECENT_KEY = "kidease-mobile-search-v2";
 const RECENT_LIMIT = 5;
 
-const AGE_SHORT = {
-  en: { infant: "0–18 mo", toddler: "2 yrs", preschool: "4 yrs", "school-age": "6 yrs" },
-  fr: { infant: "0–18 mois", toddler: "2 ans", preschool: "4 ans", "school-age": "6 ans" },
+const AGE_BAND_LABEL = {
+  en: { infant: "Infant", toddler: "Toddler", preschool: "Preschool", "school-age": "School-age" },
+  fr: { infant: "Poupon", toddler: "Trottineur", preschool: "Préscolaire", "school-age": "Âge scolaire" },
 } as const;
 
 export function emptyCounts(): ChildCounts {
@@ -219,7 +219,7 @@ export function whoAnswer(draft: MobileSearchDraft, locale = "en"): string {
   const tag = localeTag(locale);
   const bands = CHILD_BANDS.filter((band) => draft.counts[band] > 0);
   if (total === 1 && bands.length === 1) {
-    const age = AGE_SHORT[tag][bands[0]];
+    const age = AGE_BAND_LABEL[tag][bands[0]];
     return tag === "fr" ? `1 enfant, ${age}` : `1 child, ${age}`;
   }
   return tag === "fr" ? `${total} enfants` : `${total} children`;

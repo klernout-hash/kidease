@@ -135,7 +135,7 @@ export function CookieConsentBanner() {
         <span className="hidden size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-primary sm:grid">
           <Cookie className="size-3.5" aria-hidden />
         </span>
-        <div className="min-w-0 flex-1 basis-48">
+        <div className="flex min-w-0 flex-1 basis-48 flex-wrap items-center gap-x-2">
           <p id="ke-cookie-consent-title" className="text-xs font-semibold leading-4 text-fg">
             {t("cookieConsentTitle")}
           </p>
