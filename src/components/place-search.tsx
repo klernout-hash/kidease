@@ -310,6 +310,7 @@ export function PlaceSearch({
           focusedValue.current = value;
           if (emptyMenu) {
             holdDest.current = true;
+            setActive(0);
             setDestOpen(true);
           }
         }}
@@ -363,6 +364,33 @@ export function PlaceSearch({
             setDestOpen(false);
             return;
           }
+          if (showDestinations && emptyMenu) {
+            const count = 1 + emptyMenu.cities.length;
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setActive((i) => (i + 1) % count);
+              return;
+            }
+            if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setActive((i) => (i - 1 + count) % count);
+              return;
+            }
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (active <= 0) {
+                setDestOpen(false);
+                emptyMenu.onNearby?.();
+                return;
+              }
+              const city = emptyMenu.cities[active - 1];
+              if (!city) return;
+              setDestOpen(false);
+              onChange(city.label);
+              onResolved(city);
+              return;
+            }
+          }
           if (!open || hits.length === 0) return;
           if (e.key === "ArrowDown") {
             e.preventDefault();
@@ -386,8 +414,12 @@ export function PlaceSearch({
             <li>
               <button
                 type="button"
+                tabIndex={-1}
                 data-ke="where-nearby"
-                className="mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-xl bg-surface-2 px-3 py-2.5 text-left"
+                className={cn(
+                  "mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-xl px-3 py-2.5 text-left",
+                  active === 0 ? "bg-surface-2 ring-1 ring-border" : "bg-surface-2",
+                )}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   setDestOpen(false);
@@ -403,11 +435,15 @@ export function PlaceSearch({
                 </span>
               </button>
             </li>
-            {emptyMenu.cities.map((city) => (
+            {emptyMenu.cities.map((city, i) => (
               <li key={city.label}>
                 <button
                   type="button"
-                  className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-surface-2"
+                  tabIndex={-1}
+                  className={cn(
+                    "flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-surface-2",
+                    active === i + 1 ? "bg-surface-2" : "",
+                  )}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     setDestOpen(false);
@@ -436,6 +472,7 @@ export function PlaceSearch({
             <li key={hit.placeId} role="option" aria-selected={i === active}>
               <button
                 type="button"
+                tabIndex={-1}
                 className={cn(
                   "flex w-full flex-col items-start px-3 py-2 text-left text-sm",
                   i === active ? "bg-surface-2" : "hover:bg-surface-2",
