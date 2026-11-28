@@ -3,8 +3,12 @@ export type ResolvedTheme = "light" | "dark";
 
 export const THEME_STORAGE_KEY = "kidease-theme";
 export const THEME_PREFERENCES = ["light", "dark", "system"] as const;
-/** Master UI/UX spec: dark by default; "system" follows the OS (light when the OS is light). */
-export const DEFAULT_THEME_PREFERENCE: ThemePreference = "dark";
+/**
+ * Kyle 2026-11-28: Light for new visitors and fresh installs. Dark and System
+ * stay a choice in Appearance and are remembered (localStorage + account).
+ * Keep public/theme-boot.js and the <html> defaults in __root.tsx in step.
+ */
+export const DEFAULT_THEME_PREFERENCE: ThemePreference = "light";
 
 /** Brand navy — matches the existing theme-color meta. */
 export const THEME_COLOR_LIGHT = "#1A3790";

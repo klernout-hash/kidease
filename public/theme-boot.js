@@ -1,16 +1,21 @@
 (function () {
+  // Light is the default for new visitors. A saved Light / Dark / System choice wins.
+  var pref = "light";
   try {
-    var KEY = "kidease-theme";
-    var raw = window.localStorage.getItem(KEY);
-    var pref = raw === "light" || raw === "dark" || raw === "system" ? raw : "dark";
-    var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    var resolved = pref === "dark" || (pref === "system" && dark) ? "dark" : "light";
-    var r = document.documentElement;
-    r.dataset.theme = pref;
-    r.dataset.resolvedTheme = resolved;
-    r.style.colorScheme = resolved;
+    var raw = window.localStorage.getItem("kidease-theme");
+    if (raw === "light" || raw === "dark" || raw === "system") pref = raw;
   } catch {
-    document.documentElement.dataset.theme = "dark";
-    document.documentElement.dataset.resolvedTheme = "dark";
+    /* storage blocked: keep the light default */
   }
+  var dark = false;
+  try {
+    dark = pref === "system" && !!window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  } catch {
+    dark = false;
+  }
+  var resolved = pref === "dark" || dark ? "dark" : "light";
+  var r = document.documentElement;
+  r.dataset.theme = pref;
+  r.dataset.resolvedTheme = resolved;
+  r.style.colorScheme = resolved;
 })();
