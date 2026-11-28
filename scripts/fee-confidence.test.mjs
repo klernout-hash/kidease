@@ -22,9 +22,15 @@ test("backfilled bands are a provincial estimate and centre-entered fees are con
   assert.equal(backfill.confidence, "estimate");
   assert.equal(backfill.priceList, false);
 
-  const typed = listingFeeNotes({ live: true, preschoolMonthly: 1025, feeConfidence: "centre" });
+  const typed = listingFeeNotes({ live: true, preschoolMonthly: 1025, feeConfidence: "centre", factSource: "Centre fee sheet" });
   assert.equal(typed.confidence, "centre");
   assert.equal(typed.priceList, true);
+
+  // KB-55: centre-entered but uncited, or cited only to a city page, is not shown as a fee.
+  assert.equal(listingFeeNotes({ live: true, preschoolMonthly: 1025, feeConfidence: "centre" }).priceList, false);
+  assert.equal(listingFeeNotes({ live: true, preschoolMonthly: 1025, feeConfidence: "centre", factSource: "https://www.toronto.ca/child-care-fees" }).priceList, false);
+  assert.equal(copy.en.feeAskCentre, "Ask the centre");
+  assert.equal(copy.fr.feeAskCentre, "Renseignez-vous auprès du centre");
 
   assert.equal(copy.en.feeProvincialEstimate, "Provincial estimate");
   assert.equal(copy.fr.feeProvincialEstimate, "Estimation provinciale");
@@ -45,5 +51,5 @@ test("claim and check-in accept a real monthly fee and ignore blanks", () => {
   assert.match(src("src/lib/server/open-spots-checkin.ts"), /saveCentreMonthlyFees/);
   assert.match(src("src/lib/server/fee-confidence.ts"), /fee_confidence = 'centre'/);
   assert.match(src("migrations/0108_fee_confidence.sql"), /add column if not exists fee_confidence/);
-  assert.match(src("src/routes/daycare.\$slug.tsx"), /feeProvincialEstimate/);
+  assert.match(src("src/routes/daycare.\$slug.tsx"), /feeAskCentre/);
 });

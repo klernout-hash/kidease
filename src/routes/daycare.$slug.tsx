@@ -52,7 +52,7 @@ import { spaceTypeLabel, type SpaceGroup } from "@/lib/listing-spaces";
 import { licenseRecordUrl, subsidyEstimatorUrl } from "@/lib/licensing";
 import { reportSearchProvince } from "@/lib/licensing-offices";
 import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
-import { knownListingMonthlyFee, publicMonthlyFee } from "@/lib/listing-fee";
+import { publicMonthlyFee } from "@/lib/listing-fee";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
 import { BackgroundCheckAttestation } from "@/components/background-check-attestation";
@@ -603,7 +603,14 @@ export function Listing() {
   const agesLabel = standardAgeLabelsForListing(d, loc).join(" · ");
   const ageSourceUrl = publicAgeSourceUrl(d.agesSourceUrl);
   const feeNotes = listingFeeNotes(d);
-  const showCentreFees = feeNotes.confidence === "centre" && feeNotes.priceList;
+  const showCentreFees = feeNotes.priceList;
+  const publicFees = {
+    infantMonthly: showCentreFees ? publicMonthlyFee(d.infantMonthly, d) : null,
+    toddlerMonthly: showCentreFees ? publicMonthlyFee(d.toddlerMonthly, d) : null,
+    preschoolMonthly: showCentreFees ? publicMonthlyFee(d.preschoolMonthly, d) : null,
+    partTimeMonthly: showCentreFees ? publicMonthlyFee(d.partTimeMonthly, d) : null,
+  };
+  const hasPublicFees = Object.values(publicFees).some((amount) => amount != null);
   const subsidy = listingSubsidy(d);
   const directionsPlace = {
     address: d.addressProtected ? "" : address,
@@ -982,74 +989,48 @@ export function Listing() {
 
             <section id="listing-fees" className="scroll-mt-24" data-ke="fees-and-support">
               <h2 className="font-display text-2xl">{locale === "fr" ? "Frais et soutien" : "Fees and support"}</h2>
-              {feeNotes.priceList && feeNotes.confidence === "centre" ? (
+              {hasPublicFees ? (
                 <ul className="mt-3 divide-y divide-border">
-                  {d.infantMonthly != null ? (
-                    <PriceRow label={t("infantFee")} value={formatMonthlyFee(d.infantMonthly, locale)} extra={`${d.spotsInfant} ${t("spots")}`} />
+                  {publicFees.infantMonthly != null ? (
+                    <PriceRow label={t("infantFee")} value={formatMonthlyFee(publicFees.infantMonthly, locale)} extra={`${d.spotsInfant} ${t("spots")}`} />
                   ) : null}
-                  {d.toddlerMonthly != null ? (
-                    <PriceRow label={t("toddlerFee")} value={formatMonthlyFee(d.toddlerMonthly, locale)} extra={`${d.spotsToddler} ${t("spots")}`} />
+                  {publicFees.toddlerMonthly != null ? (
+                    <PriceRow label={t("toddlerFee")} value={formatMonthlyFee(publicFees.toddlerMonthly, locale)} extra={`${d.spotsToddler} ${t("spots")}`} />
                   ) : null}
-                  {d.preschoolMonthly != null ? (
-                    <PriceRow label={t("preschoolFee")} value={formatMonthlyFee(d.preschoolMonthly, locale)} extra={`${d.spotsPreschool} ${t("spots")}`} />
+                  {publicFees.preschoolMonthly != null ? (
+                    <PriceRow label={t("preschoolFee")} value={formatMonthlyFee(publicFees.preschoolMonthly, locale)} extra={`${d.spotsPreschool} ${t("spots")}`} />
                   ) : null}
-                  {d.partTimeMonthly != null ? (
-                    <PriceRow label={t("partTimeHalfDay")} value={formatMonthlyFee(d.partTimeMonthly, locale)} extra="" />
+                  {publicFees.partTimeMonthly != null ? (
+                    <PriceRow label={t("partTimeHalfDay")} value={formatMonthlyFee(publicFees.partTimeMonthly, locale)} extra="" />
                   ) : null}
                 </ul>
               ) : null}
               {feeNotes.mb10 ? (
                 <p className="mt-2 max-w-prose text-sm text-muted">{t("feeProgramMb10Day")}</p>
               ) : null}
-              {feeNotes.confidence === "centre" && feeNotes.source === "website" ? (
+              {hasPublicFees && feeNotes.source === "website" ? (
                 <p className="mt-2 text-xs text-muted">{t("feeSourceWebsite")} {t("feeNoCheckDate")}</p>
               ) : null}
-              {feeNotes.confidence === "centre" && feeNotes.source === "public" ? (
+              {hasPublicFees && feeNotes.source === "public" ? (
                 <p className="mt-2 text-xs text-muted">{t("feeSourcePublic")} {t("feeNoCheckDate")}</p>
               ) : null}
-              {feeNotes.confidence === "estimate" ? (
-                <p className="mt-2 max-w-prose text-sm text-muted" data-ke="fee-confidence">
-                  <span className="font-medium text-fg">{t("feeProvincialEstimate")}</span>
-                  {" "}
-                  {t("feeProvincialEstimateLead")}
-                </p>
-              ) : null}
-              {feeNotes.confidence === "centre" ? (
+              {hasPublicFees && feeNotes.confidence === "centre" ? (
                 <p className="mt-2 max-w-prose text-sm text-muted" data-ke="fee-confidence">
                   <span className="font-medium text-fg">{t("feeConfirmedByCentre")}</span>
                   {" "}
                   {t("feeConfirmedByCentreLead")}
                 </p>
               ) : null}
-              {feeNotes.unconfirmed ? (
-                <p className="mt-2 max-w-prose text-sm text-muted">{t("feeUnknownLead")}</p>
+              {!hasPublicFees ? (
+                <p className="mt-2 max-w-prose text-sm text-muted" data-ke="fee-ask-centre">
+                  <span className="font-medium text-fg">{t("feeAskCentre")}</span>
+                </p>
               ) : null}
               <p className="mt-3 text-sm text-muted">{t("feesAndSubsidies")}: {t("aidOnListing")}</p>
               <div className="mt-4">
                 <NetCostCalculator
                   province={d.province}
-                  fees={{
-                    infantMonthly: d.infantMonthly,
-                    toddlerMonthly: d.toddlerMonthly,
-                    preschoolMonthly: d.preschoolMonthly,
-                    partTimeMonthly: d.partTimeMonthly,
-                  }}
-                  grossMonthly={knownListingMonthlyFee(
-                    {
-                      infantMonthly: publicMonthlyFee(d.infantMonthly, d),
-                      toddlerMonthly: publicMonthlyFee(d.toddlerMonthly, d),
-                      preschoolMonthly: publicMonthlyFee(d.preschoolMonthly, d),
-                      partTimeMonthly: publicMonthlyFee(d.partTimeMonthly, d),
-                      feeProgram: d.feeProgram,
-                      province: d.province,
-                      city: d.city,
-                      name,
-                      amenities: d.amenities,
-                      feeConfirmed: d.feeConfirmed,
-                      feeConfidence: d.feeConfidence,
-                    },
-                    "preschool",
-                  )}
+                  fees={publicFees}
                   participating={listingSubsidy(d) != null}
                 />
               </div>

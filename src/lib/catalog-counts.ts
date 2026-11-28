@@ -2,9 +2,11 @@
  * Read-only public catalogue totals for /api/health.
  * Ages stay the existing confirmed-flag count. Photos and fees follow the
  * same honesty rules as the listing cards: no placeholder, logo, or the
- * catalogue fee guess of 218.
+ * catalogue fee guess of 218. Fees count only when listing-level and cited
+ * (see cited-fee.ts); city, provincial and program defaults do not.
  */
 import { cityHubPlaceKeys, cityHubDefBySlug } from "./city-hubs.ts";
+import { CITED_LISTING_FEE_SQL, REAL_LISTING_FEE_AMOUNT_SQL } from "./cited-fee.ts";
 import { CITY_SEARCH_KEY_EXPR } from "./city-search-key.ts";
 import { PUBLIC_LISTING_SQL } from "./listing-visibility.ts";
 
@@ -44,15 +46,8 @@ select
   )::int as photos_confirmed,
   count(*) filter (
     where ${PUBLIC_LISTING_SQL}
-      and (
-        (coalesce(infant_monthly, 0) > 0 and coalesce(infant_monthly, 0) <> 218)
-        or (coalesce(toddler_monthly, 0) > 0 and coalesce(toddler_monthly, 0) <> 218)
-        or (coalesce(preschool_monthly, 0) > 0 and coalesce(preschool_monthly, 0) <> 218)
-        or (coalesce(part_time_monthly, 0) > 0 and coalesce(part_time_monthly, 0) <> 218)
-        or lower(btrim(coalesce(fee_program, ''))) in (
-          'mb-10-day', 'bc-10-day', 'pe-10-day', 'nl-10-day', 'yt-reduced', 'nt-reduced'
-        )
-      )
+      and ${REAL_LISTING_FEE_AMOUNT_SQL}
+      and ${CITED_LISTING_FEE_SQL}
   )::int as fees_confirmed,
   count(*) filter (where ${PUBLIC_LISTING_SQL} and coalesce(ages_confirmed, 0) = 1)::int as ages_confirmed
 from daycares

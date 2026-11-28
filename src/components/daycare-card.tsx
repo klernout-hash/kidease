@@ -45,6 +45,7 @@ import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { parentRatingShown } from "@/lib/review-reports";
 import { listingSubsidy } from "@/lib/fee-program";
 import { isOntarioCapMonthly, publicMonthlyFee } from "@/lib/listing-fee";
+import { hasCitedListingFee } from "@/lib/cited-fee";
 import { SubsidyPill } from "@/components/subsidy-pill";
 import { CardMicroPills } from "@/components/card-micro-pills";
 import { SponsoredMark } from "@/components/sponsored-mark";
@@ -241,9 +242,10 @@ export const DaycareCard = memo(function DaycareCard({
   const rawKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
   const distanceKm = isDoorPin(item.lat, item.lng) ? rawKm : null;
   const subsidy = listingSubsidy(item);
+  // KB-55: a monthly fee shows only when it is this listing's own, cited fee.
   const feeOk =
     item.fromPrice > 0 &&
-    (live || Boolean(item.feeConfirmed) || Boolean(subsidy)) &&
+    hasCitedListingFee(item) &&
     publicMonthlyFee(item.fromPrice, item) != null;
   const gaps = liveLookingGaps(item);
   const vacancy = honestVacancy(item);
@@ -485,7 +487,7 @@ export const DaycareCard = memo(function DaycareCard({
                 <span className="font-normal text-muted">{priceUnit}</span>
               </p>
             ) : !priceOnPhoto ? (
-              <p className="min-h-4 text-[12px] leading-4 text-muted">{t("cardGapFees")}</p>
+              <p className="min-h-4 text-[12px] leading-4 text-muted">{t("feeAskCentre")}</p>
             ) : (
               <p className="min-h-4 text-[12px] leading-4">&nbsp;</p>
             )}

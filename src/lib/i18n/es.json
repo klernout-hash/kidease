@@ -2042,6 +2042,7 @@
   "badgeSubsidy": "Elegible para subsidio (con licencia)",
   "availUnknown": "Cupos aún no confirmados",
   "availUnknownLead": "Este centro no ha confirmado cupos disponibles en KidEase. Llama o reserva una visita para verificarlo: KidEase no inventa la disponibilidad.",
+  "feeAskCentre": "Consulta al centro",
   "feeUnknown": "Tarifa no confirmada",
   "feeUnknownLead": "Las tarifas mensuales se confirman cuando el centro reclama esta ficha. Pregunta por $10 al día o por el subsidio cuando hagas la visita.",
   "feeSourceWebsite": "Del sitio web público del centro, puede cambiar",

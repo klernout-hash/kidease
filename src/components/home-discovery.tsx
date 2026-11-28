@@ -65,11 +65,12 @@ export function HomeDiscovery({
   }
   return (
     <>
-      <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={priorityFirst} visual />
-      <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
+      <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={priorityFirst} visual showFees={false} />
+      <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual showFees={false} />
       <FacilityTypeRails
         items={shown}
         visual
+        showFees={false}
         skipLiveLooking
         menu={!onCareType}
         selected={careType}

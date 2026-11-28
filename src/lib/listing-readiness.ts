@@ -11,6 +11,7 @@ import { feeProgramBadgeKey, officialLicenceNumber } from "@/lib/licensing";
 import { isUnflaggedSharedFallbackSrc } from "@/lib/photo-honesty";
 import { isClaimVerified, type TrustListing } from "@/lib/trust";
 import type { Daycare } from "@/lib/types";
+import { hasCitedListingFee } from "@/lib/cited-fee";
 import {
   compareFreshOpenSpots,
   openSpotCount,
@@ -211,7 +212,8 @@ export function applyListingReadiness<T extends Daycare>(d: T): T {
     availabilityKnown: Boolean(vacancyAt),
     detailsReady: complete.ready,
     completenessMissing: complete.missing,
-    feeConfirmed: Boolean(d.feeConfirmed) || hasListedFees(d),
+    // KB-55: only a listing-level, cited fee is confirmed. City or province defaults are not.
+    feeConfirmed: hasCitedListingFee(d),
   };
 }
 

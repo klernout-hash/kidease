@@ -6,6 +6,7 @@
  */
 
 import { formatCad } from "./cad-format.ts";
+import { feeIsCitedListingFee } from "./cited-fee.ts";
 import { doorDistanceKm } from "./card-distance.ts";
 import { dailyCapDollars, knownListingMonthlyFee, type ListingFeeInput } from "./listing-fee.ts";
 import { listingSubsidy, subsidyLabel } from "./fee-program.ts";
@@ -29,13 +30,13 @@ export function compareFeeAfterSubsidy(
     return program ? `${day} · ${program}` : day;
   }
   if (program) return program;
-  return locale === "fr" ? "Demandez au centre" : "Ask the centre";
+  return locale === "fr" ? "Renseignez-vous auprès du centre" : "Ask the centre";
 }
 
 function confirmedParentMonthly(listing: ListingFeeInput & { fromPrice?: number | null }): number | null {
   const fromCard = parentListingMonthlyFee(listing);
   if (fromCard != null) return fromCard;
-  if (!listing.feeConfirmed && listing.feeConfidence !== "centre") return null;
+  if (!feeIsCitedListingFee(listing)) return null;
   return knownListingMonthlyFee(listing);
 }
 

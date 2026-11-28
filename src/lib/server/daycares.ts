@@ -221,6 +221,7 @@ function toDaycare(d: CatalogDaycare): Daycare {
     preschoolMonthly: d.preschoolMonthly,
     partTimeMonthly: d.partTimeMonthly,
     factSource: d.factSource || null,
+    feeConfidence: d.feeConfidence ?? null,
     spotsInfant: d.spotsInfant,
     spotsToddler: d.spotsToddler,
     spotsPreschool: d.spotsPreschool,

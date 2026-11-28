@@ -2042,6 +2042,7 @@
   "badgeSubsidy": "符合补贴资格（持牌）",
   "availUnknown": "名额尚未确认",
   "availUnknownLead": "该中心尚未在 KidEase 上确认空余名额。请致电或预约参观核实：KidEase 不会编造空位信息。",
+  "feeAskCentre": "请向托儿中心咨询",
   "feeUnknown": "费用尚未确认",
   "feeUnknownLead": "月费将在该中心认领此资料后确认。参观时请询问 $10-a-day 或补贴。",
   "feeSourceWebsite": "来自该中心的公开网站，可能会变动",

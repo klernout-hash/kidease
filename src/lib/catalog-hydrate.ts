@@ -51,6 +51,8 @@ export type CatalogDaycare = {
   feeProgram?: string | null;
   /** Citation for a sourced fill. JSON catalogue rows leave this empty. */
   factSource?: string | null;
+  /** 'centre' when the centre typed the fee, 'estimate' for a public backfill. */
+  feeConfidence?: "centre" | "estimate" | null;
   spotsInfant: number;
   spotsToddler: number;
   spotsPreschool: number;
@@ -147,6 +149,8 @@ type OperatorFact = {
   hours?: string;
   phone?: string;
   feeConfirmed?: boolean;
+  /** Operator page the fee and ages came from. */
+  source?: string;
   /** Sourced provincial program, when the fact file has one. Never guessed. */
   feeProgram?: string | null;
 };
@@ -306,6 +310,8 @@ export function hydrateCentre(
     preschoolMonthly: feeOk ? fact?.preschoolMonthly ?? null : null,
     partTimeMonthly: feeOk ? fact?.partTimeMonthly ?? null : null,
     feeProgram: fact?.feeProgram || null,
+    // KB-55: an operator-published fee is cited to the operator page it came from.
+    factSource: feeOk ? fact?.source?.trim() || null : null,
     spotsInfant: 0,
     spotsToddler: 0,
     spotsPreschool: 0,
