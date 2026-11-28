@@ -111,7 +111,7 @@ test("N-34: iOS purges session Keychain items on the first launch after a reinst
   // Same Keychain service the SecureSession plugin writes.
   const service = /private let service = "([^"]+)"/.exec(plugin)?.[1];
   assert.ok(service);
-  assert.match(app, new RegExp(`sessionKeychainService = "${service.replace(/\./g, "\\.")}"`));
+  assert.match(app, new RegExp(`sessionKeychainService = "${service.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`));
   // Android never restores app data from a backup, so no reinstall purge is needed there.
   assert.match(src("android/app/src/main/AndroidManifest.xml"), /android:allowBackup="false"/);
 });
