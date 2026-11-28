@@ -1,6 +1,7 @@
 import { checkEmailStatus } from "@/lib/auth/email-status-client";
 import { createFileRoute, Link, redirect, useRouteContext, useRouter, useRouterState } from "@tanstack/react-router";
-import { authBackFallback, currentAuthBackFallback } from "@/lib/auth/auth-back";
+import { ChevronLeft } from "lucide-react";
+import { authBackFallback, currentAuthPageBack } from "@/lib/auth/auth-back";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError, TURNSTILE_REQUIRED_MESSAGE } from "@/lib/auth/login-errors";
@@ -962,6 +963,14 @@ export function LoginScreen({
             ? t("loginLeadParent")
             : t("loginLead");
 
+  // N-78: one Back for the top control and the footer link. History only to a
+  // public page this tab saw; otherwise a public page, never the sign-in bounce.
+  const leaveSignIn = () => {
+    const plan = currentAuthPageBack(router.history.canGoBack(), search.next, locale === "fr" ? "fr" : "en");
+    if (plan.via === "history") router.history.back();
+    else window.location.replace(plan.href);
+  };
+
   return (
     <Shell>
       <main
@@ -982,7 +991,19 @@ export function LoginScreen({
         </div>
         <div className="grid min-w-0 place-items-center px-[clamp(0.75rem,3vw,2rem)] py-8 sm:py-10">
           <div className="w-full min-w-0 max-w-md rounded-xl bg-surface p-4 shadow-card ring-1 ring-border sm:p-8">
-            <div className="flex justify-center">
+            <div className="relative flex justify-center">
+              <a
+                href={authBackFallback({ next: search.next, locale: locale === "fr" ? "fr" : "en" })}
+                data-ke="login-top-back"
+                aria-label={t("back")}
+                onClick={(e) => {
+                  e.preventDefault();
+                  leaveSignIn();
+                }}
+                className="absolute left-0 top-1/2 inline-flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full text-fg hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation"
+              >
+                <ChevronLeft aria-hidden="true" className="size-6" />
+              </a>
               <BrandMark size="md" />
             </div>
             <h1 className="mt-4 font-display text-2xl sm:mt-6 sm:text-3xl">
@@ -1221,11 +1242,7 @@ export function LoginScreen({
               data-ke-auth-back=""
               onClick={(e) => {
                 e.preventDefault();
-                if (router.history.canGoBack()) {
-                  router.history.back();
-                  return;
-                }
-                window.location.replace(currentAuthBackFallback(search.next, locale === "fr" ? "fr" : "en"));
+                leaveSignIn();
               }}
               className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline-offset-4 hover:underline"
             >

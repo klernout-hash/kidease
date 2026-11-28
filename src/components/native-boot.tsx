@@ -29,7 +29,7 @@ import { useAppStore } from "@/lib/store";
 import { readDistanceUnit } from "@/lib/units";
 import { readLocationConsent } from "@/lib/location-consent";
 import { bindAndroidBack } from "@/lib/android-back";
-import { currentAuthBackFallback, isAuthPagePath } from "@/lib/auth/auth-back";
+import { currentAuthPageBack, isAuthPagePath } from "@/lib/auth/auth-back";
 import { usePushRegistration } from "@/lib/use-push";
 import { useHuaweiCallPushRegistration } from "@/lib/use-huawei-call-push";
 import { applyTheme, readThemePreference } from "@/lib/theme";
@@ -176,11 +176,16 @@ export function NativeBoot() {
     let cancelled = false;
     void bindAndroidBack(
       (canGoBack) => {
-        // Sign-in/sign-up opened cold (no history): go to a public page, never the protected `next`.
-        if (!canGoBack && isAuthPagePath(window.location.pathname)) {
+        // N-78: on sign-in/sign-up, Back only pops history to a public page this tab saw.
+        // Cold opens, and entries that are the protected tab that sent the guest here,
+        // go to a public page instead, never back into the sign-in bounce.
+        if (isAuthPagePath(window.location.pathname)) {
           const next = new URLSearchParams(window.location.search).get("next");
-          window.location.replace(currentAuthBackFallback(next, window.location.pathname.startsWith("/fr/") ? "fr" : "en"));
-          return;
+          const plan = currentAuthPageBack(canGoBack, next, window.location.pathname.startsWith("/fr/") ? "fr" : "en");
+          if (plan.via === "replace") {
+            window.location.replace(plan.href);
+            return;
+          }
         }
         window.history.back();
       },
