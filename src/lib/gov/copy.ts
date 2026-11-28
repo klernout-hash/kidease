@@ -266,7 +266,7 @@ const FR = {
   overviewLink: "Aperçu",
   areasLink: "Totaux par zone",
   workforceLink: "Personnel",
-  signOut: "Fermer la session",
+  signOut: "Déconnexion",
   deleteAccount: "Supprimer le compte",
   language: "English",
   demo: "Compte démo. Lecture seule. Les chiffres sont de vraies fiches, et les petits groupes sont cachés.",

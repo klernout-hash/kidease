@@ -385,7 +385,7 @@ function RootDocument() {
         <script src="/look-boot.js?v=1" />
       </head>
       <body className="flex min-h-[100dvh] w-full min-w-0 flex-col overflow-x-clip">
-        <SkipLink enabled={a11yPass} />
+        <SkipLink enabled={a11yPass && !nativeShell} />
         <PreviewHostBridge />
         <AuthProvider>
           <ViewAsProvider>

@@ -172,8 +172,8 @@ export function ParentHomeCareContent({
                   <p className="text-sm" data-ke="parent-home-care-status">
                     {!state.snapshot.attendanceEnabled
                       ? fr
-                        ? "Les arrivées et départs confirmés ne sont pas activés."
-                        : "Confirmed arrivals and pickups are not turned on."
+                        ? "Les arrivées et départs confirmés ne sont pas encore offerts."
+                        : "Confirmed arrivals and pickups are not available yet."
                       : !attendance.events.length
                         ? t("careNoArrivalConfirmed")
                         : attendance.status === "here"
@@ -206,8 +206,8 @@ export function ParentHomeCareContent({
                     >
                       {!state.snapshot.journalsEnabled
                         ? fr
-                          ? "Le journal du jour n'est pas activé."
-                          : "Daily notes are not turned on."
+                          ? "Le journal du jour n’est pas encore offert."
+                          : "Daily notes are not available yet."
                         : journal?.body ||
                           (fr
                             ? "Aucune note du jour n'est disponible ici."
