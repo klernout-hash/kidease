@@ -5,7 +5,7 @@ import type { LegalBlock, LegalDoc, LegalSection } from "./legal-copy";
  * Neutral sentences stay. The website is unchanged.
  */
 const PURCHASE =
-  /stripe checkout|apple pay|google pay|interac|\/donate|\bdeposits?\b|d[eé]p[oô]ts?|parent plus|plus parents/i;
+  /stripe checkout|apple pay|google pay|interac|\/donate|\bdeposits?\b|d[eé]p[oô]ts?|parent plus|plus parents|\b(?:paid|premium|digital|subscription|kidease) plans?\b|\bplan (?:charges?|pricing|fees?|prices?)\b|\bsubscriptions?\b|\babonnements?\b|\bforfaits? (?:payants?|numériques?|kidease)\b/i;
 
 export function mentionsStorePurchase(text: string): boolean {
   return PURCHASE.test(String(text || ""));
