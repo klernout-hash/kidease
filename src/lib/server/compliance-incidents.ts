@@ -39,7 +39,7 @@ function zoneFor(province: string) {
 async function centrePayload(userId: string) {
   const mode = incidentsMode(process.env);
   if (mode === "off") return { enabled: false as const, mode, centres: [], rows: [] };
-  const ids = await ownedCentreIds(userId);
+  const ids = await ownedCentreIds(userId, "children", "view");
   const sql = await sqlClient();
   const centres = ids.length
     ? await sql
@@ -77,7 +77,7 @@ export const saveIncident = createServerFn({ method: "POST" })
     const mode = incidentsMode(process.env);
     if (mode === "off") return { ok: false as const, reason: "off" };
     const daycareId = String(data.daycareId || "").trim();
-    const ids = await ownedCentreIds(context.userId);
+    const ids = await ownedCentreIds(context.userId, "children", "edit");
     if (!ids.includes(daycareId)) return { ok: false as const, reason: "centre" };
     const kind = String(data.kind || "");
     if (!isIncidentKind(kind)) return { ok: false as const, reason: "kind" };

@@ -78,13 +78,17 @@ export async function emailSuppressed(email: string): Promise<boolean> {
   return emailBlocked({ suppressed: true, reason, commercial: false });
 }
 
-export async function daycareUserIds(daycareId: string): Promise<string[]> {
+export async function daycareUserIds(
+  daycareId: string,
+  audience: "all" | "financial" = "all",
+): Promise<string[]> {
   const sql = await db();
   const rows = await sql<{ user_id: string }>`
     select user_id from provider_daycares where daycare_id = ${daycareId}
     union
     select user_id from centre_members
     where daycare_id = ${daycareId} and status = 'active'
+      and (${audience} = 'all' or role in ('owner', 'manager'))
   `.catch(() => []);
   return [...new Set(rows.map((row) => row.user_id).filter(Boolean))];
 }

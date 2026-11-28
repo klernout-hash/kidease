@@ -23,7 +23,7 @@ export const loadCentreCalendar = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const mode = calendarMode(process.env);
     if (mode === "off") return { enabled: false as const, mode, centres: [], rows: [] };
-    const ids = await ownedCentreIds(context.userId);
+    const ids = await ownedCentreIds(context.userId, "calendar", "view");
     const sql = await sqlClient();
     const centres = ids.length
       ? await sql.query<{ id: string; name: string; province: string }>(
@@ -51,7 +51,7 @@ export const saveCalendarItem = createServerFn({ method: "POST" })
     const mode = calendarMode(process.env);
     if (mode === "off") return { ok: false as const, reason: "off" };
     const daycareId = String(data.daycareId || "").trim();
-    const ids = await ownedCentreIds(context.userId);
+    const ids = await ownedCentreIds(context.userId, "calendar", "edit");
     if (!ids.includes(daycareId)) return { ok: false as const, reason: "centre" };
     const kind = String(data.kind || "");
     const dueOn = String(data.dueOn || "").slice(0, 10);

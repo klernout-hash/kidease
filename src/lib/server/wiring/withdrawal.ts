@@ -158,7 +158,7 @@ export const cancelWithdrawal = createServerFn({ method: "POST" })
     const mode = withdrawalMode();
     const people = await withdrawalPeople(sql, context.userId, row.daycare_id);
     const lastDay = isoDay(row.last_day);
-    for (const userId of await daycareUserIds(row.daycare_id)) {
+    for (const userId of await daycareUserIds(row.daycare_id, "financial")) {
       await deliverNotice({
         feature: "withdrawal",
         flag: "FEATURE_WITHDRAWAL",
@@ -342,7 +342,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       `.catch(() => undefined);
     }
     const people = await withdrawalPeople(sql, context.userId, data.daycareId);
-    for (const userId of await daycareUserIds(data.daycareId)) {
+    for (const userId of await daycareUserIds(data.daycareId, "financial")) {
       await deliverNotice({
         feature: "withdrawal",
         flag: "FEATURE_WITHDRAWAL",
