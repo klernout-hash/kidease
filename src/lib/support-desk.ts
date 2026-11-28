@@ -1,5 +1,6 @@
 /** Pure rules for the Messages support thread. No database. No phone numbers. */
 
+import { normalizeChatPhone } from "./support-chat.ts";
 import { conversationIdFromReference, threadReferenceFromId } from "./thread-reference.ts";
 
 export const SUPPORT_PREVIEW_CHARS = 80;
@@ -87,8 +88,7 @@ export function shouldSendOwnerSms(lastSentAt: string | null | undefined, nowMs:
 export function ownerAlertText(input: { role: SupportRoleLabel; name: string; preview: string; threadId: string }): string {
   const name = input.name.replace(/\s+/g, " ").trim().slice(0, 40) || "Someone";
   const preview = supportPreview(input.preview) || "(no message)";
-  const code = input.threadId.replace(/[^a-zA-Z0-9]/g, "").slice(-6) || "thread";
-  return `KidEase support. ${input.role} ${name}: "${preview}" https://kidease.ca/admin-chat #${code}`;
+  return `KidEase support. ${input.role} ${name}: "${preview}" https://kidease.ca/admin-chat #${input.threadId}`;
 }
 
 /** Attach a real message number to a support note. A bad number is left off. */
@@ -110,25 +110,35 @@ export function threadCode(threadId: string): string {
   return threadId.replace(/[^a-zA-Z0-9]/g, "").slice(-6);
 }
 
-/** Match an owner reply to a thread code. Does not read a phone number. */
+/**
+ * Match an owner reply to the thread whose full id follows #.
+ * No id, an unknown id, or two different ids match nothing.
+ */
 export function threadIdFromOwnerReply(body: string, threads: Array<{ id: string }>): string | null {
-  const match = String(body || "").match(/#([a-zA-Z0-9]{4,12})/);
-  if (!match) return threads[0]?.id || null;
-  const code = match[1].toLowerCase();
-  return threads.find((row) => threadCode(row.id).toLowerCase() === code)?.id || null;
+  const named = new Set(Array.from(String(body || "").matchAll(/#([A-Za-z0-9_-]+)/g), (match) => match[1]));
+  const found = threads.filter((row) => named.has(row.id));
+  return found.length === 1 ? found[0].id : null;
 }
 
-/** Flag off is a 404. A bad signature is 401. The phone is not stored. */
+/** Only the configured owner phone may reply. An unset owner phone accepts no one. */
+export function isSupportOwnerSender(from: string | null | undefined, ownerPhone: string | null | undefined): boolean {
+  const owner = normalizeChatPhone(ownerPhone);
+  return owner !== "" && normalizeChatPhone(from) === owner;
+}
+
+/** Flag off is a 404. A sender that is not the owner phone is 401. The phone is not stored. */
 export function handleSupportOwnerReply(input: {
   flagOn: boolean;
-  signatureOk: boolean;
+  from: string | null | undefined;
+  ownerPhone: string | null | undefined;
   body: string;
   threads: Array<{ id: string }>;
 }): { status: 404 | 401 | 200; threadId: string | null; text: string } {
   if (!input.flagOn) return { status: 404, threadId: null, text: "" };
-  if (!input.signatureOk) return { status: 401, threadId: null, text: "" };
+  if (!isSupportOwnerSender(input.from, input.ownerPhone)) return { status: 401, threadId: null, text: "" };
   const threadId = threadIdFromOwnerReply(input.body, input.threads);
-  return { status: 200, threadId, text: cleanSupportBody(input.body.replace(/#[a-zA-Z0-9]{4,12}/g, " ")) };
+  if (!threadId) return { status: 200, threadId: null, text: "" };
+  return { status: 200, threadId, text: cleanSupportBody(input.body.split(`#${threadId}`).join(" ")) };
 }
 
 export const supportCopy = {
