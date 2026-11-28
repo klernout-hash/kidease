@@ -718,7 +718,7 @@ export function ParentDesk({
         </Suspense>
       ) : null}
 
-      {contentTab === "family" ? <CoparentDesk inviteToken={familyInvite} /> : null}
+      {contentTab === "family" ? <CoparentDesk inviteToken={familyInvite} shortlistShared={shortlistShared} /> : null}
 
       {contentTab === "waitlists" ? (
         <div className="mt-6">
