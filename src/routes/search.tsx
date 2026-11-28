@@ -518,6 +518,14 @@ export function SearchScreen({
   const [refreshing, setRefreshing] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [filters, setFilters] = useState(false);
+  const closeFilters = useCallback(() => {
+    setFilters(false);
+    requestAnimationFrame(() => {
+      const toggles = document.querySelectorAll<HTMLElement>('[data-ke="msv2-filters"], [data-ke="explore-filters-toggle"]');
+      Array.from(toggles).find((button) => button.getClientRects().length > 0)?.focus();
+    });
+  }, []);
+
   useEffect(() => {
     if (!filters) return;
     const frame = requestAnimationFrame(() => {
@@ -525,16 +533,18 @@ export function SearchScreen({
       title?.focus({ preventScroll: true });
       title?.scrollIntoView({ block: "start", behavior: "auto" });
     });
-    return () => cancelAnimationFrame(frame);
-  }, [filters]);
+    function dismiss(event: KeyboardEvent) {
+      if (event.key !== "Escape" || event.defaultPrevented || document.querySelector("dialog[open]")) return;
+      event.preventDefault();
+      closeFilters();
+    }
+    document.addEventListener("keydown", dismiss);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", dismiss);
+    };
+  }, [filters, closeFilters]);
 
-  function closeFilters() {
-    setFilters(false);
-    requestAnimationFrame(() => {
-      const toggles = document.querySelectorAll<HTMLElement>('[data-ke="msv2-filters"], [data-ke="explore-filters-toggle"]');
-      Array.from(toggles).find((button) => button.getClientRects().length > 0)?.focus();
-    });
-  }
   const [need, setNeed] = useState("");
   const [matchNote, setMatchNote] = useState<string | null>(null);
   const [matchBusy, setMatchBusy] = useState(false);
@@ -1361,10 +1371,10 @@ export function SearchScreen({
     setRecentSearches(readRecentSearches());
   }, []);
 
-  async function applyQuery(typed?: string) {
+  async function applyQuery(typed?: string, resolved?: Parameters<typeof applyPlace>[0]) {
     const label = (typed ?? query).trim();
     if (label) {
-      const hit = await resolveLocationQuery(label);
+      const hit = resolved ?? await resolveLocationQuery(label);
       if (hit) {
         // Keep "R3C 0A1" in the URL and box. The FSA city label ("Winnipeg, MB")
         // would turn a radius search into a whole-city search.

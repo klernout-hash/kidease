@@ -177,7 +177,7 @@ test("T778 and RL-24 receipts name the family and never invent a permit", () => 
   const text = rl.join("\n");
   assert.match(text, /Receipt for: Parent/);
   assert.match(text, /H Provider identification: E2E-QC-100/);
-  assert.match(text, /C Total paid: \$900\.00/);
+  assert.match(text, /C Total paid: CA\$900\.00/);
   assert.doesNotMatch(text, /Child: Leo|Box A: 1|NEQ-123/);
 });
 

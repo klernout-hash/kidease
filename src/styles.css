@@ -1188,13 +1188,13 @@ html:not([data-look="clean"]) :is(a, button, [role="button"]).h-11 {
   .ke-rail-card > article {
     height: 100%;
   }
-  @media (min-width: 768px) {
+  @media (min-width: 46.5rem) {
     .ke-result-stack {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 1.75rem 1rem;
     }
   }
-  @media (min-width: 1100px) {
+  @media (min-width: 68.75rem), (min-width: 64rem) and (min-aspect-ratio: 1/1) {
     .ke-result-stack {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }

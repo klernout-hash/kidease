@@ -22,3 +22,13 @@ test("Native boot listens for the Android back button", () => {
   assert.match(boot, /history\.back/);
   assert.match(boot, /exitApp/);
 });
+
+test("Android Back lets managed overlays consume Escape before touching history", () => {
+  const nativeBack = readFileSync(join(root, "src/lib/android-back.ts"), "utf8");
+  assert.match(nativeBack, /!document.querySelector\("dialog\[open\]"\)/);
+  assert.match(nativeBack, /new KeyboardEvent\("keydown", \{ key: "Escape", bubbles: true, cancelable: true \}\)/);
+  assert.match(nativeBack, /if \(!document.dispatchEvent\(escape\)\) return;[\s\S]*androidBackDecision\(/);
+  const search = readFileSync(join(root, "src/routes/search.tsx"), "utf8");
+  assert.match(search, /event\.key !== "Escape" \|\| event\.defaultPrevented/);
+  assert.match(search, /event\.preventDefault\(\);\s+closeFilters\(\);/);
+});

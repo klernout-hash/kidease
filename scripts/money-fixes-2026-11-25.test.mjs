@@ -173,14 +173,16 @@ test("parent copy no longer adds a KidEase fee; centres see it on bills and earn
 
 // ---------- 4. French money ----------
 
-test("French money always reads 1,00 $ CA", () => {
+test("English and French amounts explicitly show Canadian dollars", () => {
   assert.equal(frenchCad(1), `1,00${NB}$${NB}CA`);
   assert.equal(formatCad(1234.5, "fr-CA").replace(/\s/g, " "), "1 234,50 $ CA");
-  assert.equal(formatCad(1, "en-CA"), "$1.00");
+  assert.equal(formatCad(1, "en-CA"), "CA$1.00");
+  assert.equal(formatCad(-1234.5, "en-CA"), "-CA$1,234.50");
+  assert.equal(money(10, "en"), "CA$10");
   assert.equal(money(1, "fr"), `1,00${NB}$${NB}CA`);
   assert.equal(formatPlanCad(1, "fr"), `1,00${NB}$${NB}CA`);
   assert.equal(cadFromCents(100, "fr"), `1,00${NB}$${NB}CA`);
-  assert.equal(cadFromCents(100, "en"), "$1.00");
+  assert.equal(cadFromCents(100, "en"), "CA$1.00");
 });
 
 // ---------- B02 #1. Earnings crash ----------
@@ -213,7 +215,7 @@ test("invoice PDFs carry CAD, the GST/HST wording and the centre address", () =>
     daycareAddress: "1 Main St, Winnipeg, MB R3C 0A1",
   };
   const en = invoicePdfLines({ ...base, locale: "en" }).join("\n");
-  assert.match(en, /\$1\.00 CAD/);
+  assert.match(en, /CA\$1\.00/);
   assert.match(en, /GST\/HST: no tax charged/);
   assert.match(en, /Address: 1 Main St, Winnipeg, MB R3C 0A1/);
   const fr = invoicePdfLines({ ...base, locale: "fr" }).join("\n");

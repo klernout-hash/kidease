@@ -165,7 +165,7 @@ test("the combined guest helper supports names but the separate place fields do 
   const home = src("src/routes/index.tsx");
   const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.doesNotMatch(home, /guestHeroSearch|homeName\.trim\(\) \|\| typed/);
-  assert.match(home, /const hit = await applyPlace\(typed\);\s*if \(!hit\) return false/);
+  assert.match(home, /const hit = await applyPlace\(typed, resolved\);\s*if \(!hit\) return false/);
   const search = src("src/routes/search.tsx");
   const handler = search.slice(search.indexOf("async function applyQuery"), search.indexOf("function followDevice"));
   assert.match(handler, /return false;/);
