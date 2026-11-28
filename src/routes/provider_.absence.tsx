@@ -27,7 +27,7 @@ const ratioLabels = {
 };
 
 function CentreAbsencePage() {
-  const { centres, selected, day, rows } = Route.useLoaderData();
+  const { centres, selected, day, rows }: Awaited<ReturnType<typeof listCentreAbsences>> = Route.useLoaderData();
   const navigate = Route.useNavigate();
   const { day: requestedDay } = Route.useSearch();
   const { locale, t } = useCopy();
