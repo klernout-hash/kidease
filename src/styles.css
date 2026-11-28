@@ -2816,6 +2816,16 @@ html[data-channel="app"]:not([data-channel="website"]) [data-ke="search-split"]:
   }
 }
 
+html[data-channel="website"] [data-ke="inbox-split"][data-selected="true"] > .ke-split-list {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  html[data-channel="website"] [data-ke="inbox-split"]:has([data-ke="inbox-thread-load-error"]) > .ke-split-list {
+    display: block;
+  }
+}
+
 /* On a wide website, messages stay one column: the list, or the open thread. */
 @media (min-width: 1280px) {
   html[data-channel="website"] .ke-site-desktop {
@@ -2827,9 +2837,7 @@ html[data-channel="app"]:not([data-channel="website"]) [data-ke="search-split"]:
   html[data-channel="website"] [data-ke="inbox-split"][data-selected="false"] > .ke-split-detail {
     display: none;
   }
-  html[data-channel="website"] [data-ke="inbox-split"][data-selected="true"] > .ke-split-list {
-    display: none;
-  }
+
 }
 .ke-site-desktop {
   display: none;
