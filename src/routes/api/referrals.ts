@@ -30,6 +30,14 @@ async function load() {
   try {
     assertSameSiteRequest();
     const userId = await requireUserId();
+    // N-43: no "Refer a friend" code for a staff-only login on a centre account.
+    const { assertStaffAccountAction, StaffAccountActionError } = await import("@/lib/server/staff-account-guard");
+    try {
+      await assertStaffAccountAction(userId, "refer");
+    } catch (err) {
+      if (err instanceof StaffAccountActionError) return Response.json({ ok: false }, { status: 403 });
+      throw err;
+    }
     const summary = await ensureReferralCode(userId);
     return Response.json({ ok: true, ...summary });
   } catch (err) {
