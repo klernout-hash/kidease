@@ -137,6 +137,7 @@ export function PlaceSearch({
   value,
   onChange,
   onResolved,
+  onEnterResolved,
   placeholder,
   className,
   inputClassName,
@@ -153,6 +154,7 @@ export function PlaceSearch({
   value: string;
   onChange: (q: string) => void;
   onResolved: (place: ResolvedPlace) => void;
+  onEnterResolved?: (place: ResolvedPlace) => void;
   placeholder?: string;
   className?: string;
   inputClassName?: string;
@@ -263,10 +265,11 @@ export function PlaceSearch({
     return () => io.disconnect();
   }, []);
 
-  async function pick(hit: PlaceSuggestion) {
+  async function pick(hit: PlaceSuggestion, fromKeyboard = false) {
+    const typed = input.current?.value;
+    setOpen(false);
     if (isCentrePlaceId(hit.placeId)) {
       const slug = centreSlugFromPlaceId(hit.placeId);
-      setOpen(false);
       setHits([]);
       if (slug && onCentreRef.current) {
         onCentreRef.current({ slug, label: hit.label });
@@ -280,15 +283,16 @@ export function PlaceSearch({
         data: { placeId: hit.placeId, session: session.current },
       }).catch(() => null)) ??
       (await resolvePlaceIdBrowser(hit.placeId));
+    if (input.current?.value !== typed) return;
     session.current = newSession();
-    setOpen(false);
     setHits([]);
     if (resolved) {
       // A typed postal code stays the label; the FSA's city would drop it.
       const postal = postalSearchLabel(value);
       const place = postal ? { ...resolved, label: postal } : resolved;
       onChange(place.label);
-      onResolved(place);
+      if (fromKeyboard && onEnterResolved) onEnterResolved(place);
+      else onResolved(place);
       return;
     }
     onChange(hit.label);
@@ -320,10 +324,10 @@ export function PlaceSearch({
         onChange={(e) => {
           const next = e.target.value;
           onChange(next);
+          setOpen(false);
           if (next.trim() === focusedValue.current.trim()) {
             holdDest.current = true;
             setDestOpen(Boolean(emptyMenu));
-            setOpen(false);
             return;
           }
           holdDest.current = false;
@@ -352,6 +356,7 @@ export function PlaceSearch({
           }, 0);
         }}
         onKeyDown={(e) => {
+          if (e.nativeEvent.isComposing) return;
           if (e.key === "Escape") {
             close();
             holdDest.current = false;
@@ -367,7 +372,7 @@ export function PlaceSearch({
             setActive((i) => (i - 1 + hits.length) % hits.length);
           } else if (e.key === "Enter" && hits[active]) {
             e.preventDefault();
-            void pick(hits[active]!);
+            void pick(hits[active]!, true);
           }
         }}
       />
