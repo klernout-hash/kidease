@@ -77,9 +77,9 @@ test("Kids World pin and $326.25 fee are the published address and parent fee", 
 });
 
 test("monthly fees use CAD and an explicit month unit", () => {
-  assert.equal(formatMonthlyFee(1960, "en"), "$1,960/month");
-  assert.equal(formatMonthlyFee(1025, "en"), "$1,025/month");
-  assert.equal(formatMonthlyFee(326.25, "en"), "$326.25/month");
+  assert.equal(formatMonthlyFee(1960, "en"), "CA$1,960/month");
+  assert.equal(formatMonthlyFee(1025, "en"), "CA$1,025/month");
+  assert.equal(formatMonthlyFee(326.25, "en"), "CA$326.25/month");
   const fr = formatMonthlyFee(700, "fr");
   assert.match(fr, /700/);
   assert.match(fr, /\$/);
