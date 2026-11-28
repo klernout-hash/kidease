@@ -39,6 +39,8 @@ import {
 import { nid } from "../utils.ts";
 import { isParentAbsenceStatus, isParentReportedAbsence, type ParentAbsenceStatus } from "../daily-care.ts";
 import { absenceReportKey } from "../absence-notice.ts";
+import { ROOM_BANDS, staffOnShift } from "../staff-scheduling.ts";
+import { applyAbsence } from "../wiring/absence-reports.ts";
 
 type BookingRow = {
   id: string;
@@ -519,9 +521,10 @@ export async function readParentDay(sql: Sql, userId: string, now: Date, include
         (exists (select 1 from provider_daycares p where p.daycare_id = a.daycare_id and p.user_id = a.updated_by)
           or exists (select 1 from centre_members m where m.daycare_id = a.daycare_id and m.user_id = a.updated_by and m.status = 'active')) as staff
       from attendance a
-      where a.daycare_id = ${kid.daycare_id} and a.child_name = ${kid.child_name}
+      where a.daycare_id = ${kid.daycare_id}
         and a.parent_user_id = ${userId} and a.day = ${localDay}
-        and (a.booking_id = ${kid.booking_id} or a.booking_id is null)
+        and (a.booking_id = ${kid.booking_id} or (a.booking_id is null and a.child_name = ${kid.child_name}))
+      order by (a.booking_id is null)
       limit 1
     `;
     const report = reports[0];
@@ -560,9 +563,9 @@ export async function saveParentAbsenceReport(
 ) {
   if (!isParentAbsenceStatus(input.status)) return { ok: false as const, error: "Choose an absence report." };
   const bookings = await sql<{
-    id: string; daycare_id: string; daycare_name: string; child_name: string; timezone: string | null; conversation_id: string | null;
+    id: string; daycare_id: string; daycare_name: string; child_name: string; timezone: string | null; conversation_id: string | null; province: string | null; age_group: string | null;
   }>`
-    select b.id, b.daycare_id, d.name as daycare_name, coalesce(c.name, 'Child') as child_name, d.timezone, b.conversation_id
+    select b.id, b.daycare_id, d.name as daycare_name, coalesce(c.name, 'Child') as child_name, d.timezone, b.conversation_id, d.province, b.age_group
     from bookings b
     join daycares d on d.id = b.daycare_id
     left join children c on c.id = b.child_id
@@ -576,15 +579,50 @@ export async function saveParentAbsenceReport(
   if (input.localDay !== undefined && input.localDay !== localDay) {
     return { ok: false as const, code: "date-changed" as const, error: "The centre date changed." };
   }
+  const band = ROOM_BANDS.find((value) => value === booking.age_group);
+  const [present, shifts] = band ? await Promise.all([
+    sql<{ n: number }>`
+      select count(*)::int as n
+      from attendance a
+      join bookings b on b.id = a.booking_id and b.daycare_id = a.daycare_id
+      where a.daycare_id = ${booking.daycare_id} and a.day = ${localDay}
+        and b.age_group = ${band} and a.booking_id <> ${booking.id}
+        and a.status in ('scheduled', 'arrived', 'departed')
+    `,
+    sql<{ room_band: string; starts_at: string; ends_at: string }>`
+      select room_band, starts_at::text, ends_at::text
+      from staff_shifts where daycare_id = ${booking.daycare_id} and room_band = ${band}
+    `,
+  ]) : [[], []];
+  const province = booking.province ?? "";
+  const result = band ? applyAbsence({
+    alreadyAbsent: true, // The count already excludes the reporting booking.
+    childrenPresent: Number(present[0]?.n ?? 0),
+    staffOnShift: shifts.length ? staffOnShift(
+      shifts.map((row) => ({ roomBand: row.room_band, startsAt: row.starts_at, endsAt: row.ends_at })),
+      band,
+      input.now,
+    ) : null,
+    province,
+    band,
+  }) : null;
+  // Use the attendance row's ID so retrying updates one snapshot for the booking and day.
   const saved = await sql<{ id: string }>`
-    insert into attendance (id, daycare_id, booking_id, conversation_id, child_name, parent_user_id, day, status, updated_by)
-    values (${nid("at")}, ${booking.daycare_id}, ${booking.id}, ${booking.conversation_id}, ${booking.child_name}, ${input.userId}, ${localDay}, ${input.status}, ${input.userId})
-    on conflict (daycare_id, child_name, day) do update set
-      status = excluded.status, updated_by = excluded.updated_by,
-      booking_id = coalesce(attendance.booking_id, excluded.booking_id),
-      conversation_id = coalesce(attendance.conversation_id, excluded.conversation_id)
-    where attendance.parent_user_id = ${input.userId}
-      and (attendance.booking_id is null or attendance.booking_id = ${booking.id})
+    with saved as (
+      insert into attendance (id, daycare_id, booking_id, conversation_id, child_name, parent_user_id, day, status, updated_by)
+      values (${nid("at")}, ${booking.daycare_id}, ${booking.id}, ${booking.conversation_id}, ${booking.child_name}, ${input.userId}, ${localDay}, ${input.status}, ${input.userId})
+      on conflict (daycare_id, booking_id, day) where booking_id is not null do update set
+        status = excluded.status, updated_by = excluded.updated_by, child_name = excluded.child_name,
+        conversation_id = coalesce(attendance.conversation_id, excluded.conversation_id)
+      where attendance.parent_user_id = ${input.userId}
+      returning id, daycare_id, parent_user_id, child_name, day
+    )
+    insert into absence_reports (id, daycare_id, parent_user_id, child_name, day, province, band, children_now, ratio_status)
+    select 'ab_' || id, daycare_id, parent_user_id, child_name, day,
+      ${province}, ${band ?? ""}, ${result?.childrenNow ?? null}, ${result?.ratio?.status ?? null}
+    from saved
+    on conflict (id) do update set child_name = excluded.child_name, band = excluded.band,
+      province = excluded.province, children_now = excluded.children_now, ratio_status = excluded.ratio_status
     returning id
   `;
   if (!saved.length) return { ok: false as const, error: "Ask the centre to check this child's record." };
@@ -615,10 +653,10 @@ export async function cancelParentAbsenceReport(
   const localDay = centreLocalDay(input.now, booking.timezone || "America/Winnipeg");
   const undone = await sql<{ id: string }>`
     update attendance set status = 'scheduled', updated_by = ${input.userId}
-    where daycare_id = ${booking.daycare_id} and child_name = ${booking.child_name} and day = ${localDay}
+    where daycare_id = ${booking.daycare_id} and day = ${localDay}
       and parent_user_id = ${input.userId} and updated_by = ${input.userId}
       and status in ('absent', 'sick', 'vacation')
-      and (booking_id is null or booking_id = ${booking.id})
+      and (booking_id = ${booking.id} or (booking_id is null and child_name = ${booking.child_name}))
     returning id
   `;
   if (!undone.length) return { ok: false as const, error: "There is no absence report to cancel." };
