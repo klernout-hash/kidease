@@ -25,6 +25,7 @@ import { localePath, localeSwitchHref } from "@/lib/locale-path";
 import { writeLocaleChoiceCookie } from "@/lib/locale-geo";
 import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import { photoUrl } from "@/lib/photo";
+import { safeListingImageSrc } from "@/lib/listing-photo";
 import { saveMyLocale } from "@/lib/server/account-prefs";
 import { getMyContact, saveMyContact, type ContactProfile } from "@/lib/server/profile-contact";
 import { useAppStore } from "@/lib/store";
@@ -130,7 +131,7 @@ export function AirbnbHome({
       )}
       <div className="ke-airbnb-rail" data-ke="airbnb-rail">
         {rows.map((row) => {
-          const photo = row.photos?.find(Boolean);
+          const photo = safeListingImageSrc(row.photos?.find((p) => safeListingImageSrc(p)));
           const where = airbnbPublicPlace(row);
           const ages = ageRangeLabel(row.ageMinMonths, row.ageMaxMonths, locale);
           const fresh = freshnessLine(row.spotsUpdatedAt || row.lastVacancyUpdatedAt, locale);
@@ -644,7 +645,7 @@ export function AirbnbListingPhone({
   return (
     <section className="ke-airbnb-phone-only ke-airbnb-screen" data-ke="airbnb-listing">
       <span className="ke-airbnb-photo ke-airbnb-photo-hero">
-        {photo ? <img src={photoUrl(photo, 960)} alt="" /> : null}
+        {safeListingImageSrc(photo) ? <img src={photoUrl(safeListingImageSrc(photo), 960)} alt="" /> : null}
       </span>
       <h1 data-ke="airbnb-listing-name">{name}</h1>
       {place ? <p className="ke-airbnb-card-meta">{place}</p> : null}

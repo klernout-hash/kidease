@@ -15,6 +15,41 @@ export function healMediaUrl(src?: string | null): string {
   return p;
 }
 
+/** Hosts that serve KidEase listing photos: the R2 media domain, R2 dev buckets, and the site itself. */
+const LISTING_IMAGE_HOSTS = new Set(["media.kidease.ca", "www.kidease.ca", "kidease.ca"]);
+/** Centre uploads are raster data URLs until they reach R2. SVG is never allowed (it can carry script). */
+const SAFE_DATA_IMAGE = /^data:image\/(?:jpeg|jpg|png|webp|avif|gif);base64,[a-z0-9+/]+={0,2}$/i;
+// eslint-disable-next-line no-control-regex
+const UNSAFE_CHARS = /[\u0000-\u0020\u007f-\u00a0\\]/;
+
+export function isListingImageHost(host: string): boolean {
+  const h = host.toLowerCase();
+  if (LISTING_IMAGE_HOSTS.has(h)) return true;
+  return h.endsWith(".r2.dev") && /^[a-z0-9-]+\.r2\.dev$/.test(h);
+}
+
+/**
+ * A listing photo URL that is safe to put in <img src>, or "" (render the
+ * branded placeholder). Allowed: same-site paths (`/photos/…`, `/img?…`),
+ * https on the KidEase media hosts, and raster base64 data URLs.
+ * Everything else — other hosts, http:, javascript:, blob:, SVG data — is "".
+ */
+export function safeListingImageSrc(src?: string | null): string {
+  const p = healMediaUrl(src);
+  if (!p) return "";
+  if (p.startsWith("data:")) return SAFE_DATA_IMAGE.test(p) ? p : "";
+  if (UNSAFE_CHARS.test(p)) return "";
+  if (p.startsWith("/")) return p.startsWith("//") ? "" : p;
+  let url: URL;
+  try {
+    url = new URL(p);
+  } catch {
+    return "";
+  }
+  if (url.protocol !== "https:" || url.username || url.password || url.port) return "";
+  return isListingImageHost(url.hostname) ? p : "";
+}
+
 /** Default photos for a newly listed centre before a real storefront is uploaded. */
 export const STOCK_CREATE_PHOTOS = "/photos/community.jpg,/photos/playroom.jpg";
 

@@ -1,4 +1,5 @@
 import { useRef, type TouchEvent } from "react";
+import { safeListingImageSrc } from "@/lib/listing-photo";
 import { ChevronLeft, ChevronRight, Grid2X2, X } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { HistoryBack } from "@/components/history-back";
@@ -111,8 +112,8 @@ export function ListingHeroGallery({
           onClick={() => onOpenChange(true)}
           data-ke="listing-gallery-open"
         >
-        {src.includes("-logo") ? (
-          <img src={src} alt={name} className="size-full bg-surface object-contain p-6" />
+        {src.includes("-logo") && safeListingImageSrc(src) ? (
+          <img src={safeListingImageSrc(src)} alt={name} className="size-full bg-surface object-contain p-6" />
         ) : (
         <BuildingPhoto
           eager
