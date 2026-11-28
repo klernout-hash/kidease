@@ -16,7 +16,6 @@ export function keepLangParam(current: LangSearch | undefined, next: LangSearch)
 /** Parent pages that only have an English route file. /fr/<path> fell into the
  * /fr/parent desk and showed parent home (B-org #40). */
 const FR_PARENT_EN_ONLY = new Set([
-  "absence",
   "child-profile",
   "complaint-updates",
   "data-request",
