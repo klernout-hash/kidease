@@ -109,7 +109,11 @@ test("family invite display, clipboard, and native share use the same URL", () =
   assert.match(screen, /inviteShareUrl\(desk\.inviteToken/);
   assert.match(screen, /<span className="mt-1 block font-medium">\{link\}<\/span>/);
   assert.match(screen, /copyText\(link\)/);
-  assert.match(screen, /shareOrCopy\(\{ title: copy\.title, text: "", url: link \}\)/);
+  assert.match(screen, /sharePayload = \{ title: copy\.inviteShareTitle, text: copy\.inviteShareText, url: link \}/);
+  assert.match(screen, /shareOrCopy\(sharePayload\)/);
+  const copy = src("src/lib/coparent-copy.ts");
+  assert.match(copy, /Join my family on KidEase/);
+  assert.match(copy, /Rejoignez ma famille sur KidEase/);
 });
 
 test("shared children, tours, waitlists, messages, and bills follow the main parent", () => {

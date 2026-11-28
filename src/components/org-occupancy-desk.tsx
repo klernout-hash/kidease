@@ -66,6 +66,7 @@ function OwnerOccupancyDesk() {
         actionTo="/provider"
       />
     );
+  const columns = [copy.capacity, copy.enrolled, copy.openSpots, gap.orgRequests, gap.orgStaff, copy.occupancy];
   return (
     <section className="space-y-6">
       <div>
@@ -87,62 +88,54 @@ function OwnerOccupancyDesk() {
               {copy.downloadCsv}
             </Button>
           </div>
-          <div className="overflow-x-auto rounded-xl bg-surface ring-1 ring-border">
-            <table className="w-full min-w-[32rem] text-sm">
-              <thead className="bg-surface-2 text-left text-xs text-muted">
+          <div className="max-w-full rounded-xl bg-surface ring-1 ring-border md:overflow-x-auto" role="region" aria-label={copy.title} tabIndex={0}>
+            <table role="table" className="w-full text-sm max-md:block md:min-w-[32rem]">
+              <thead className="bg-surface-2 text-left text-xs text-muted max-md:sr-only">
                 <tr>
-                  <th className="px-3 py-2 font-medium">{copy.centre}</th>
-                  <th className="px-3 py-2 font-medium">{copy.capacity}</th>
-                  <th className="px-3 py-2 font-medium">{copy.enrolled}</th>
-                  <th className="px-3 py-2 font-medium">{copy.openSpots}</th>
-                  <th className="px-3 py-2 font-medium">{gap.orgRequests}</th>
-                  <th className="px-3 py-2 font-medium">{gap.orgStaff}</th>
-                  <th className="px-3 py-2 font-medium">{copy.occupancy}</th>
+                  {[copy.centre, ...columns].map((column) => (
+                    <th key={column} scope="col" className="px-3 py-2 font-medium whitespace-nowrap">{column}</th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
-                {desk.sites.map((site) => (
-                  <tr key={site.id}>
-                    <td className="px-3 py-3">
-                      <p className="font-medium">{site.name}</p>
-                      <p className="text-muted">
-                        {[site.city, site.province].filter(Boolean).join(", ")}
-                      </p>
-                      <Link
-                        to="/provider"
-                        search={{ desk: "today", centre: site.id }}
-                        className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-primary"
-                        onClick={() =>
-                          void setOrgCentre({ data: { daycareId: site.id } }).catch(() => undefined)
-                        }
-                      >
-                        {gap.orgUse}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-3 tabular-nums">
-                      {site.licensedCapacity ?? copy.notConfirmed}
-                    </td>
-                    <td className="px-3 py-3 tabular-nums">{site.enrolled ?? copy.notConfirmed}</td>
-                    <td className="px-3 py-3 tabular-nums">
-                      {site.openSpots ?? copy.notConfirmed}
-                    </td>
-                    <td className="px-3 py-3 tabular-nums">
-                      {"requests" in site
-                        ? (site.requests ?? copy.notConfirmed)
-                        : copy.notConfirmed}
-                    </td>
-                    <td className="px-3 py-3 tabular-nums">
-                      {"staff" in site ? (site.staff ?? copy.notConfirmed) : copy.notConfirmed}
-                    </td>
-                    <td className="px-3 py-3">
-                      {site.occupancyPercent != null
-                        ? `${site.occupancyPercent}%`
-                        : site.note === "capacity-missing"
-                          ? copy.missingCapacity
-                          : copy.missingEnrolment}
-                    </td>
-                  </tr>
-                ))}
+              <tbody role="rowgroup" className="divide-y divide-border max-md:block">
+                {desk.sites.map((site) => {
+                  const values = [
+                    site.licensedCapacity ?? copy.notConfirmed,
+                    site.enrolled ?? copy.notConfirmed,
+                    site.openSpots ?? copy.notConfirmed,
+                    ("requests" in site ? site.requests : null) ?? copy.notConfirmed,
+                    ("staff" in site ? site.staff : null) ?? copy.notConfirmed,
+                    site.occupancyPercent != null
+                      ? `${site.occupancyPercent}%`
+                      : site.note === "capacity-missing" ? copy.missingCapacity : copy.missingEnrolment,
+                  ];
+                  return (
+                    <tr role="row" key={site.id} className="max-md:grid max-md:grid-cols-2 max-md:gap-x-2 max-md:p-2">
+                      <td role="cell" className="px-3 py-3 max-md:col-span-2">
+                        <p className="font-medium">{site.name}</p>
+                        <p className="text-muted">
+                          {[site.city, site.province].filter(Boolean).join(", ")}
+                        </p>
+                        <Link
+                          to="/provider"
+                          search={{ desk: "today", centre: site.id }}
+                          className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-primary"
+                          onClick={() =>
+                            void setOrgCentre({ data: { daycareId: site.id } }).catch(() => undefined)
+                          }
+                        >
+                          {gap.orgUse}
+                        </Link>
+                      </td>
+                      {values.map((value, index) => (
+                        <td role="cell" key={columns[index]} className="min-w-0 px-3 py-2 tabular-nums md:py-3">
+                          <span aria-hidden="true" className="block text-xs text-muted md:hidden">{columns[index]}</span>
+                          {value}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

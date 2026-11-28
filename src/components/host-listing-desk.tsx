@@ -589,13 +589,13 @@ function HostEditor({
               : "Photo not available"}
         </span>
         {cover ? (
-          <span className="relative mt-3 block h-48" data-ke="photo-tour-stack">
+          <span className="relative mt-3 block h-48 overflow-hidden rounded-2xl" data-ke="photo-tour-stack">
             {stack.map((src, index) => (
-              <span key={src} className="absolute top-0 w-[88%]" style={{ left: `${index * 6}%`, top: `${index * 8}px` }}>
+              <span key={src} className="absolute bottom-0 w-[88%]" style={{ left: `${index * 6}%`, top: `${index * 8}px` }}>
                 <BuildingPhoto
                   src={src}
                   alt=""
-                  className="aspect-[16/10] w-full rounded-2xl object-cover shadow-card ring-1 ring-border"
+                  className="h-full w-full rounded-2xl object-cover shadow-card ring-1 ring-border"
                   width={640}
                   height={400}
                 />
@@ -614,7 +614,7 @@ function HostEditor({
           {cover ? (locale === "fr" ? "Gérer les photos" : "Manage photos") : locale === "fr" ? "Ajouter des photos" : "Add photos"}
         </span>
       </button>
-      <div role="tablist" aria-label={copy.editor} className="mt-5 inline-flex max-w-full rounded-full bg-[#F7F8FA] p-1 ring-1 ring-black/5 dark:bg-[#11151C] dark:ring-white/10">
+      <div role="tablist" aria-label={copy.editor} className="mt-5 inline-flex max-w-full overflow-x-auto rounded-full bg-[#F7F8FA] p-1 ring-1 ring-black/5 dark:bg-[#11151C] dark:ring-white/10">
         {(
           [
             ["centre", copy.yourCentre],
@@ -627,7 +627,7 @@ function HostEditor({
             role="tab"
             aria-selected={tab === id}
             className={cn(
-              "min-h-11 rounded-full px-4 text-sm font-semibold touch-manipulation",
+              "min-h-11 min-w-11 shrink-0 whitespace-nowrap rounded-full px-3 text-sm font-semibold touch-manipulation sm:px-4",
               tab === id ? "bg-surface text-fg shadow-card" : "text-muted",
             )}
             onClick={() => setTab(id)}

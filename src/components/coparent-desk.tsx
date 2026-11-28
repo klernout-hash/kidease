@@ -61,6 +61,7 @@ export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | nu
   const link = desk.inviteToken
     ? inviteShareUrl(desk.inviteToken, deskPath, typeof window === "undefined" ? undefined : window.location.origin)
     : "";
+  const sharePayload = { title: copy.inviteShareTitle, text: copy.inviteShareText, url: link };
   const showJoin = Boolean(inviteToken) && desk.role !== "owner" && desk.role !== "member";
 
   return (
@@ -220,14 +221,14 @@ export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | nu
                 >
                   {copy.copy}
                 </Button>
-                {shouldOfferWebShare({ title: copy.title, url: link }) ? (
+                {shouldOfferWebShare(sharePayload) ? (
                   <Button
                     type="button"
                     variant="secondary"
                     disabled={busy}
                     onClick={() => {
                       setError("");
-                      void shareOrCopy({ title: copy.title, text: "", url: link }).then((outcome) => {
+                      void shareOrCopy(sharePayload).then((outcome) => {
                         if (outcome === "copied") toast.success(copy.copied);
                         else if (outcome === "failed") setError(copy.bad);
                       });

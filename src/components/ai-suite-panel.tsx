@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { loadAiSuiteGate, type AiSuiteGate } from "@/lib/server/ai-suite";
 import {
   dailyUpdateDraft,
@@ -18,6 +19,10 @@ const COPY = {
     title: "Draft helpers",
     lead: "These notes stay on this screen. KidEase does not send them, post them, or place a call.",
     make: "Make a draft",
+    missing: "Fill in the details above and try again.",
+    missingVisit: "Confirm that the family visited.",
+    missingSpots: "Enter at least one posted open spot.",
+    bands: { new: "New", talking: "In touch", visited: "Visited", enrolled: "Enrolled" },
     tour: "Tour follow-up",
     phone: "Phone script",
     score: "Family step",
@@ -46,6 +51,10 @@ const COPY = {
     title: "Brouillons",
     lead: "Ces notes restent sur cet écran. KidEase ne les envoie pas, ne les publie pas et ne passe pas d’appel.",
     make: "Faire un brouillon",
+    missing: "Remplissez les champs ci-dessus, puis réessayez.",
+    missingVisit: "Confirmez que la famille a fait une visite.",
+    missingSpots: "Entrez au moins une place libre affichée.",
+    bands: { new: "Nouvelle famille", talking: "En contact", visited: "Visite effectuée", enrolled: "Inscription terminée" },
     tour: "Suivi de visite",
     phone: "Texte pour le téléphone",
     score: "Étape de la famille",
@@ -76,7 +85,6 @@ export function AiSuitePanel() {
   const { locale } = useCopy();
   const copy = locale === "fr" ? COPY.fr : COPY.en;
   const [gate, setGate] = useState<AiSuiteGate | null>(null);
-  const [text, setText] = useState("");
 
   useEffect(() => {
     let live = true;
@@ -100,7 +108,6 @@ export function AiSuitePanel() {
     <section className="mt-6 rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="ai-suite">
       <h2 className="font-display text-xl">{copy.title}</h2>
       <p className="mt-2 max-w-prose text-sm leading-6 text-muted">{copy.lead}</p>
-      {text ? <p className="mt-3 max-w-prose text-sm leading-6" data-ke="ai-suite-draft">{text}</p> : null}
       <div className="mt-4 grid gap-4">
         {on("FEATURE_AI_TOUR_FOLLOWUP") ? (
           <DraftForm
@@ -109,8 +116,9 @@ export function AiSuitePanel() {
               ["centre", copy.centre],
               ["parent", copy.parent],
             ]}
-            check={["visited", copy.visited]}
+            check={["visited", copy.visited, copy.missingVisit]}
             action={copy.make}
+            missing={copy.missing}
             onSubmit={(values) => {
               const result = tourFollowUpDraft({
                 enabled: true,
@@ -119,7 +127,7 @@ export function AiSuitePanel() {
                 parentName: values.parent || "",
                 visited: values.visited === "1",
               });
-              setText(result.body);
+              return result.body;
             }}
           />
         ) : null}
@@ -131,6 +139,7 @@ export function AiSuitePanel() {
               ["hours", copy.hours],
             ]}
             action={copy.make}
+            missing={copy.missing}
             onSubmit={(values) => {
               const result = phoneReceptionScript({
                 enabled: true,
@@ -138,7 +147,7 @@ export function AiSuitePanel() {
                 centre: values.centre || "",
                 hours: values.hours || "",
               });
-              setText(result.script);
+              return result.script;
             }}
           />
         ) : null}
@@ -151,6 +160,7 @@ export function AiSuitePanel() {
             ]}
             check={["enrolled", copy.enrolled]}
             action={copy.make}
+            missing={copy.missing}
             onSubmit={(values) => {
               const result = leadScore({
                 enabled: true,
@@ -158,7 +168,7 @@ export function AiSuitePanel() {
                 tours: Number(values.tours) || 0,
                 enrolled: values.enrolled === "1",
               });
-              setText(result.band || "");
+              return result.band ? copy.bands[result.band] : "";
             }}
           />
         ) : null}
@@ -171,6 +181,8 @@ export function AiSuitePanel() {
               ["family", copy.family],
             ]}
             action={copy.make}
+            missing={copy.missing}
+            validate={(values) => Number(values.spots) >= 1 ? "" : copy.missingSpots}
             onSubmit={(values) => {
               const result = waitlistFillDraft({
                 enabled: true,
@@ -179,7 +191,7 @@ export function AiSuitePanel() {
                 openSpots: Number(values.spots) || 0,
                 nextFamily: values.family || "",
               });
-              setText(result.body);
+              return result.body;
             }}
           />
         ) : null}
@@ -191,9 +203,10 @@ export function AiSuitePanel() {
               ["fact", copy.fact],
             ]}
             action={copy.make}
+            missing={copy.missing}
             onSubmit={(values) => {
               const result = postDraft({ enabled: true, locale: lang, centre: values.centre || "", fact: values.fact || "" });
-              setText(result.body);
+              return result.body;
             }}
           />
         ) : null}
@@ -205,9 +218,10 @@ export function AiSuitePanel() {
               ["note", copy.note],
             ]}
             action={copy.make}
+            missing={copy.missing}
             onSubmit={(values) => {
               const result = dailyUpdateDraft({ enabled: true, locale: lang, childName: values.child || "", note: values.note || "" });
-              setText(result.body);
+              return result.body;
             }}
           />
         ) : null}
@@ -218,8 +232,9 @@ export function AiSuitePanel() {
               ["centre", copy.centre],
               ["parent", copy.parent],
             ]}
-            check={["visited", copy.visited]}
+            check={["visited", copy.visited, copy.missingVisit]}
             action={copy.make}
+            missing={copy.missing}
             onSubmit={(values) => {
               const result = reviewRequestDraft({
                 enabled: true,
@@ -228,7 +243,7 @@ export function AiSuitePanel() {
                 parentName: values.parent || "",
                 visited: values.visited === "1",
               });
-              setText(result.body);
+              return result.body;
             }}
           />
         ) : null}
@@ -241,6 +256,7 @@ export function AiSuitePanel() {
               ["educators", copy.educators],
             ]}
             action={copy.make}
+            missing={copy.missing}
             onSubmit={(values) => {
               const result = smartStaffingNote({
                 enabled: true,
@@ -249,7 +265,7 @@ export function AiSuitePanel() {
                 children: Number(values.children) || 0,
                 educators: Number(values.educators) || 0,
               });
-              setText(result.body);
+              return result.body;
             }}
           />
         ) : null}
@@ -276,14 +292,19 @@ function DraftForm({
   fields,
   check,
   action,
+  missing,
+  validate,
   onSubmit,
 }: {
   title: string;
   fields: Array<[string, string]>;
-  check?: [string, string];
+  check?: [string, string] | [string, string, string];
   action: string;
-  onSubmit: (values: Record<string, string>) => void;
+  missing: string;
+  validate?: (values: Record<string, string>) => string;
+  onSubmit: (values: Record<string, string>) => string;
 }) {
+  const [feedback, setFeedback] = useState({ text: "", error: false });
   return (
     <form
       className="grid gap-2"
@@ -291,9 +312,11 @@ function DraftForm({
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         const values: Record<string, string> = {};
-        for (const [key] of fields) values[key] = String(data.get(key) || "");
+        for (const [key] of fields) values[key] = String(data.get(key) || "").trim();
         if (check) values[check[0]] = data.get(check[0]) ? "1" : "";
-        onSubmit(values);
+        const problem = (check?.[2] && !values[check[0]] ? check[2] : "") || validate?.(values);
+        const draft = problem ? "" : onSubmit(values);
+        setFeedback({ text: draft || problem || missing, error: !draft });
       }}
     >
       <h3 className="text-sm font-semibold">{title}</h3>
@@ -309,9 +332,16 @@ function DraftForm({
           {check[1]}
         </label>
       ) : null}
-      <button type="submit" className="inline-flex min-h-11 w-fit items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg touch-manipulation">
+      <Button type="submit" className="w-fit">
         {action}
-      </button>
+      </Button>
+      <div className="max-w-prose text-sm leading-6" role="status" aria-atomic="true">
+        {feedback.text ? (
+          <p className={feedback.error ? "text-danger" : undefined} data-ke={feedback.error ? "ai-suite-validation" : "ai-suite-draft"}>
+            {feedback.text}
+          </p>
+        ) : null}
+      </div>
     </form>
   );
 }
