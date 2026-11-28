@@ -50,7 +50,10 @@ const virtual = {
   twoFactor: `export function isCurrentUserTwoFactorVerified() { return true; }
     export function assertTwoFactorVerified() {}`,
   privateAuth: `export const authMiddleware = { run: () => { throw new Error("Wrong auth middleware"); } };`,
-  centreAccess: `export const listAccessibleDaycareIds = () => { throw new Error("Private centre lookup is not part of government reads"); };`,
+  centreAccess: `
+    const unused = () => { throw new Error("Private centre lookup is not part of government reads"); };
+    export { unused as listAccessibleDaycareIds, unused as listOwnerOrManagerDaycareIds, unused as daycareIdsForArea };
+  `,
   roles: `export const requireAdmin = () => { throw new Error("Government reads must not invoke admin access"); };`,
 };
 const mockFiles = new Map([

@@ -33,9 +33,11 @@ test("financial recipients exclude plain staff and inactive managers", async () 
     `);
     const template = source("wiring/runtime").match(/select user_id from provider_daycares[\s\S]+?(?=`)/)?.[0];
     assert.ok(template);
-    const query = template.replaceAll("${daycareId}", "$1").replaceAll("${audience}", "$2");
+    const restricted = source("wiring/runtime").match(/roleClause = audience === "financial" \? "([^"]+)"/)?.[1];
+    assert.ok(restricted);
     const recipients = async (audience) => {
-      const { rows } = await pg.query(query, ["one", audience]);
+      const query = template.replace("${roleClause}", audience === "financial" ? restricted : "");
+      const { rows } = await pg.query(query, ["one"]);
       return rows.map((row) => row.user_id).sort();
     };
     assert.deepEqual(await recipients("financial"), ["manager", "owner"]);
