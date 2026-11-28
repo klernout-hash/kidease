@@ -35,7 +35,7 @@ export const loadCentreFunding = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const mode = fundingMode(process.env);
     if (mode === "off") return { enabled: false as const, mode, centres: [], report: null };
-    const ids = await ownedCentreIds(context.userId);
+    const ids = await ownedCentreIds(context.userId, "bills", "view");
     const sql = await sqlClient();
     const centres = ids.length
       ? await sql.query<{ id: string; name: string; province: string }>(
@@ -53,7 +53,7 @@ export const buildFundingReport = createServerFn({ method: "POST" })
     const mode = fundingMode(process.env);
     if (mode === "off") return { ok: false as const, reason: "off" };
     const daycareId = String(data.daycareId || "").trim();
-    const ids = await ownedCentreIds(context.userId);
+    const ids = await ownedCentreIds(context.userId, "bills", "edit");
     if (!ids.includes(daycareId)) return { ok: false as const, reason: "centre" };
     const period = String(data.period || "").slice(0, 7);
     if (!/^\d{4}-\d{2}$/.test(period)) return { ok: false as const, reason: "period" };

@@ -6,7 +6,8 @@
 import { getSql, type Sql } from "@/lib/db";
 import { homeProvince, redactLog, type ProvinceCode } from "@/lib/compliance/mode";
 import { transactionalMailFrom } from "@/lib/mail-from";
-import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
+import { daycareIdsForArea, listOwnerOrManagerDaycareIds } from "@/lib/server/centre-access";
+import type { StaffArea } from "@/lib/staff-permissions";
 import { govActorProvince } from "@/lib/gov/province-choice";
 import { gateOutboundEmail } from "@/lib/server/outbound-gate";
 
@@ -56,9 +57,14 @@ export async function caslSmsGranted(userId: string | null): Promise<boolean> {
   return decision.ok;
 }
 
-export async function ownedCentreIds(userId: string): Promise<string[]> {
+export async function ownedCentreIds(userId: string, area: StaffArea, need: "view" | "edit"): Promise<string[]> {
   const sql = await getSql();
-  return listAccessibleDaycareIds(sql, userId);
+  const [managed, granted] = await Promise.all([
+    listOwnerOrManagerDaycareIds(sql, userId),
+    daycareIdsForArea(sql, userId, area, need),
+  ]);
+  const allowed = new Set(granted);
+  return managed.filter((id) => allowed.has(id));
 }
 
 export async function centreRow(sql: Sql, daycareId: string) {

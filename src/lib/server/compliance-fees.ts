@@ -51,7 +51,7 @@ export const loadCentreFees = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const mode = feeMode(process.env);
     if (mode === "off") return { enabled: false as const, mode, centres: [], rows: [] };
-    const ids = await ownedCentreIds(context.userId);
+    const ids = await ownedCentreIds(context.userId, "bills", "view");
     const sql = await sqlClient();
     const centres = ids.length
       ? await sql.query<{ id: string; name: string; province: string }>(`select id, name, province from daycares where id = any($1::text[]) order by name`, [ids]).catch(() => [])
@@ -74,7 +74,7 @@ export const checkDailyFee = createServerFn({ method: "POST" })
     const mode = feeMode(process.env);
     if (mode === "off") return { ok: false as const, reason: "off" };
     const daycareId = String(data.daycareId || "").trim();
-    const ids = await ownedCentreIds(context.userId);
+    const ids = await ownedCentreIds(context.userId, "bills", "edit");
     if (!ids.includes(daycareId)) return { ok: false as const, reason: "centre" };
     const sql = await sqlClient();
     const centre = await centreRow(sql, daycareId);

@@ -48,7 +48,8 @@ const modules = {
   }`,
   centreAccess: `
     function unused() { throw new Error("Centre access is not part of demand reads"); }
-    export const listAccessibleDaycareIds = unused;
+    export const listOwnerOrManagerDaycareIds = unused;
+    export const daycareIdsForArea = unused;
     export const isActiveCentreMember = unused;
     export const listOwnedDaycareIds = unused;`,
   twoFactor: `
