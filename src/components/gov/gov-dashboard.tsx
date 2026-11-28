@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GovSummary, type GovSummaryItem } from "@/components/gov/gov-summary";
+import { GovSummary, type GovSummaryData } from "@/components/gov/gov-summary";
 import { useRouterState } from "@tanstack/react-router";
 import { govMenuHref, type GovSection } from "@/lib/gov/menu";
 import type { GovDashboard } from "@/lib/gov/aggregate";
@@ -283,8 +283,7 @@ export function GovDashboardView({
   section = "overview",
   summary,
 }: {
-  /** Summary tiles and page menu, shown first on the overview. */
-  summary?: GovSummaryItem[];
+  summary?: GovSummaryData;
   data: GovDashboard & {
     licenceFlags?: Array<{ slug: string; name: string; city: string; status: string; expiry?: string | null }>;
     childPerSpace?: number | null;
@@ -348,29 +347,11 @@ export function GovDashboardView({
   }
   const trendLast = data.trends.at(-1);
   const trendPrev = data.trends.at(-2);
-  return (
-    <GovFrame
-      locale={data.locale}
-      section={section}
-      province={data.province}
-      region={regionValue}
-      city={cityValue}
-      regions={regionOptions}
-      cities={cityOptions}
-      asOf={asOf}
-      orgName={data.orgName}
-      search={searchText}
-      onSearch={setSearchText}
-      onFilter={(next) => {
-        if (next.city && next.city !== "ALL") go({ city: next.city, region: regionForCity(next.city) });
-        else go({ region: next.region ?? "ALL", city: next.city ?? "ALL" });
-      }}
-    >
+  const content = (
+    <>
         {data.demo ? <p className="mt-3 rounded-xl bg-surface px-4 py-3 text-sm ring-1 ring-border">{copy.demo}</p> : null}
         {section === "overview" ? (
         <>
-        {summary ? <GovSummary locale={data.locale === "fr" ? "fr" : "en"} items={summary} /> : null}
-        {summary ? <h2 className="mt-8 font-display text-xl" data-ke="gov-overview-detail">{data.locale === "fr" ? "Détails de la province" : "Province detail"}</h2> : null}
         <div className="flex flex-wrap gap-3">
           <a
             href={`${exportBase}&format=pdf&locale=${data.locale}`}
@@ -654,6 +635,35 @@ export function GovDashboardView({
         </section>
         </>
         ) : null}
+    </>
+  );
+  return (
+    <GovFrame
+      locale={data.locale}
+      section={section}
+      province={data.province}
+      region={regionValue}
+      city={cityValue}
+      regions={regionOptions}
+      cities={cityOptions}
+      asOf={asOf}
+      orgName={data.orgName}
+      search={searchText}
+      onSearch={setSearchText}
+      summary={section === "overview" ? <GovSummary locale={data.locale} data={summary} /> : undefined}
+      onFilter={(next) => {
+        if (next.city && next.city !== "ALL") go({ city: next.city, region: regionForCity(next.city) });
+        else go({ region: next.region ?? "ALL", city: next.city ?? "ALL" });
+      }}
+    >
+      {section === "overview" ? (
+        <details className="mt-6" data-ke="gov-overview-detail">
+          <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-primary hover:underline">
+            {data.locale === "fr" ? "Détails du répertoire et rapports" : "Directory details and reports"}
+          </summary>
+          {content}
+        </details>
+      ) : content}
     </GovFrame>
   );
 }
