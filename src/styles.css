@@ -3270,7 +3270,10 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
 [data-ke="host-section"] {
   word-spacing: 0.14em;
 }
-@media (min-width: 768px) {
+/* P3-16: two columns from 1024px. Portrait tablets (768-1023) get the phone
+   layout: one column with the sticky action bar, so the side card never
+   squeezes or overlaps the main column. */
+@media (min-width: 1024px) {
   .ke-listing-page {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
@@ -3283,6 +3286,18 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
     position: sticky;
     top: 5rem;
     align-self: start;
+  }
+}
+/* Portrait tablets keep the phone action bar. Reserve room so it never covers content. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  html:has([data-ke="listing-sticky-bar"]) .ke-listing-page {
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+  }
+  html:has([data-ke="listing-sticky-bar"]) {
+    scroll-padding-bottom: calc(8rem + env(safe-area-inset-bottom, 0px));
+  }
+  html:has([data-ke="listing-sticky-bar"]) .ke-help-bot {
+    bottom: calc(6rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
   }
 }
 .ke-photo-frame > span,

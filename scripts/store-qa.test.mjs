@@ -49,7 +49,8 @@ test("listing, turnstile, login, radius, contact, and the menu match the QA note
   assert.match(listing, /isTransientListingError/);
   assert.match(listing, /listingRetry/);
   assert.match(listing, /data-ke=\{retrying \? "listing-retry"/);
-  assert.match(listing, /md:hidden/);
+  // P3-16: the phone action bar now covers portrait tablets too (hidden from lg).
+  assert.match(listing, /lg:hidden/);
   assert.match(listing, /data-ke="listing-action-summary"/);
   assert.match(listing, /w-full whitespace-normal/);
   assert.match(src("src/lib/use-copy.ts"), /useCallback/);
