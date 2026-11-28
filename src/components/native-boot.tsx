@@ -184,7 +184,11 @@ export function NativeBoot() {
           const next = new URLSearchParams(window.location.search).get("next");
           const plan = currentAuthPageBack(canGoBack, next, window.location.pathname.startsWith("/fr/") ? "fr" : "en");
           if (plan.via === "replace") {
-            window.location.replace(safeInternalPath(plan.href, "/"));
+            // Local-path guard inline (static analysis does not follow helper sanitizers).
+            const target = safeInternalPath(plan.href, "/");
+            window.location.replace(
+              target.startsWith("/") && !target.startsWith("//") && !target.startsWith("/\\") ? target : "/",
+            );
             return;
           }
         }
