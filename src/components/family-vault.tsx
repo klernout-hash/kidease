@@ -44,6 +44,7 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
   const fr = locale === "fr";
   const [documents, setDocuments] = useState<Doc[]>([]);
   const [centres, setCentres] = useState<Centre[]>([]);
+  const [children, setChildren] = useState<Array<{ id: string; name: string }>>([]);
   const [kind, setKind] = useState<FamilyDocKind>("immunization");
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(!signedIn);
@@ -59,7 +60,7 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
     if (!signedIn) return;
     // no-store: a cached GET kept the list stale after an upload (B-org #42).
     const res = await fetch("/api/family-documents", { credentials: "same-origin", cache: "no-store" });
-    const body = (await res.json().catch(() => null)) as { documents?: Doc[]; centres?: Centre[]; error?: string } | null;
+    const body = (await res.json().catch(() => null)) as { documents?: Doc[]; centres?: Centre[]; children?: typeof children; error?: string } | null;
     if (!res.ok) {
       toast.error(vaultError(body?.error || "", t));
       setLoaded(true);
@@ -67,6 +68,7 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
     }
     setDocuments(body?.documents ?? []);
     setCentres(body?.centres ?? []);
+    setChildren(body?.children ?? []);
     setLoaded(true);
   }, [signedIn, t]);
 
@@ -211,10 +213,12 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
                     className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center"
                     onSubmit={(e) => {
                       e.preventDefault();
-                      const daycareId = String(new FormData(e.currentTarget).get("daycareId") || "");
+                      const fields = new FormData(e.currentTarget);
+                      const daycareId = String(fields.get("daycareId") || "");
+                      const childId = String(fields.get("childId") || "");
                       const centreName = centres.find((centre) => centre.id === daycareId)?.name;
                       void act(
-                        { action: "share", documentId: doc.id, daycareId },
+                        { action: "share", documentId: doc.id, daycareId, childId },
                         "familyDocsShared",
                         centreName ? `${t("familyDocsShared")} ${centreName}` : undefined,
                       );
@@ -230,6 +234,15 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
                         </option>
                       ))}
                     </select>
+                    {doc.kind === "immunization" && children.length ? (
+                      <label className="min-w-0 flex-1 text-sm">
+                        {fr ? "Associer au dossier d’un enfant" : "Link to a child’s record"}
+                        <select name="childId" className="mt-1 block min-h-11 w-full rounded-xl bg-surface px-3 ring-1 ring-border">
+                          <option value="">{fr ? "Sans associer un enfant" : "Share without linking a child"}</option>
+                          {children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}
+                        </select>
+                      </label>
+                    ) : null}
                     <Button type="submit" variant="secondary" disabled={busy}>
                       {t("familyDocsShare")}
                     </Button>
@@ -250,7 +263,7 @@ export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: b
 }
 
 export function CentreFamilyDocs({ hideWhenEmpty = false }: { hideWhenEmpty?: boolean } = {}) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const [open, setOpen] = useState(false);
   const [documents, setDocuments] = useState<
     Array<{
@@ -259,6 +272,7 @@ export function CentreFamilyDocs({ hideWhenEmpty = false }: { hideWhenEmpty?: bo
       fileName: string;
       daycareName: string;
       parentName: string;
+      childName?: string;
     }>
   >([]);
   const [loaded, setLoaded] = useState(false);
@@ -307,6 +321,11 @@ export function CentreFamilyDocs({ hideWhenEmpty = false }: { hideWhenEmpty?: bo
             <p className="break-words font-medium">
               {t(KIND_KEY[doc.kind])} · {doc.parentName}
             </p>
+            {doc.childName ? (
+              <p className="break-words text-muted">
+                {locale === "fr" ? "Dossier de vaccination partagé pour" : "Immunization record shared for"} {doc.childName}
+              </p>
+            ) : null}
             <p className="break-words text-muted">{doc.daycareName}</p>
             <a className="inline-flex min-h-11 items-center font-medium text-primary" href={`/api/family-documents/${doc.documentId}`}>
               {t("familyDocsOpen")}

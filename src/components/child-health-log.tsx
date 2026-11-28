@@ -7,6 +7,7 @@ type HealthRow = {
   name: string;
   immunizationStatus: string;
   immunizationNote: string;
+  immunizationOnFile?: boolean;
   allergies: string;
   medications: string;
 };
@@ -52,6 +53,7 @@ export function ChildHealthLog() {
           <li key={row.id} className="text-sm">
             <p className="font-medium">{row.name}</p>
             <p>{fr ? "Vaccins\u00a0:" : "Immunization:"} {row.immunizationStatus || (fr ? "Rien d'enregistré." : "Nothing saved.")}</p>
+            {row.immunizationOnFile ? <p>{fr ? "Dossier de vaccination partagé" : "Immunization record shared"}</p> : null}
             {row.immunizationNote ? <p>{row.immunizationNote}</p> : null}
             <p>{fr ? "Allergies\u00a0:" : "Allergies:"} {row.allergies || (fr ? "Rien d'enregistré." : "Nothing saved.")}</p>
             <p>{fr ? "Médicaments\u00a0:" : "Medications:"} {row.medications || (fr ? "Rien d'enregistré." : "Nothing saved.")}</p>
