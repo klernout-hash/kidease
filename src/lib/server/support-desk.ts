@@ -11,6 +11,9 @@ import {
   supportRateAllows,
   supportRoleLabel,
   handleSupportOwnerReply,
+  isSupportOwnerSender,
+  isSupportReplyAttempt,
+  ownerReplyThreadId,
 } from "@/lib/support-desk";
 import { sendSms } from "@/lib/server/sms";
 import { requireSupport } from "@/lib/server/roles";
@@ -248,8 +251,11 @@ export async function maybeRecordSupportOwnerReply(
   env: EnvMap = process.env,
 ): Promise<boolean> {
   if (!supportSmsReplyEnabled(env)) return false;
+  if (!isSupportOwnerSender(input.from, env.SUPPORT_ALERT_PHONE)) return false;
+  const id = ownerReplyThreadId(input.body);
+  if (!id) return false;
   const sql = await getSql();
-  const threads = await sql<{ id: string }>`select id from support_threads order by updated_at desc limit 20`;
+  const threads = await sql<{ id: string }>`select id from support_threads where id = ${id} limit 1`;
   const result = handleSupportOwnerReply({
     flagOn: true,
     from: input.from,
@@ -267,4 +273,21 @@ export async function maybeRecordSupportOwnerReply(
     where id = ${result.threadId}
   `;
   return true;
+}
+
+/**
+ * An owner-phone text that tries to answer a support thread belongs to the
+ * support path only. If no thread matched, the webhook drops it (no write)
+ * instead of passing it to live chat, even when the live-chat agent phone is
+ * the same number. Other owner texts keep the live-chat behaviour.
+ */
+export function supportOwnerReplyAttempt(
+  input: { from: string | null | undefined; body: string },
+  env: EnvMap = process.env,
+): boolean {
+  return (
+    supportSmsReplyEnabled(env) &&
+    isSupportOwnerSender(input.from, env.SUPPORT_ALERT_PHONE) &&
+    isSupportReplyAttempt(input.body)
+  );
 }
