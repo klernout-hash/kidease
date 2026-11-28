@@ -21,6 +21,34 @@ export function isAttendanceStatus(value: string | null | undefined): value is A
   return (ATTENDANCE_STATUSES as readonly string[]).includes((value || "").trim());
 }
 
+type AttendanceKeyRow = {
+  daycare_id: string;
+  booking_id: string | null;
+  child_name: string;
+  parent_user_id: string | null;
+  day: string;
+};
+
+/**
+ * Attendance belongs to a booking. Older rows saved without one only match a
+ * child of the same family, so a shared name never shows another family's day.
+ */
+export function attendanceRowFinder<T extends AttendanceKeyRow>(rows: T[]) {
+  const byBooking = new Map<string, T>();
+  const unbooked = new Map<string, T>();
+  for (const row of rows) {
+    const day = String(row.day).slice(0, 10);
+    if (row.booking_id) byBooking.set(`${row.booking_id}:${day}`, row);
+    else unbooked.set(`${row.daycare_id}:${row.parent_user_id ?? ""}:${row.child_name}:${day}`, row);
+  }
+  return (
+    kid: { booking_id: string; daycare_id: string; parent_user_id: string; child_name: string },
+    day: string,
+  ): T | undefined =>
+    byBooking.get(`${kid.booking_id}:${day}`) ??
+    unbooked.get(`${kid.daycare_id}:${kid.parent_user_id}:${kid.child_name}:${day}`);
+}
+
 export const DAILY_CARE_HONESTY =
   "For a claimed centre and enrolled children: check-in, the day's note, messages, medication logs, incident reports, room ratios, and the parent/program split. Not payroll timesheets. KidEase does not pay a subsidy.";
 

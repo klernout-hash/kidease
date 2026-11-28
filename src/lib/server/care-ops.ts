@@ -720,9 +720,12 @@ export const saveDayNote = createServerFn({ method: "POST" })
     if (!dayNoteReady({ food, nap, incident, photo })) throw new Error("Add food, nap, an incident, or a photo");
     const sql = await requireStaffWrite(context.userId, daycareId);
     await ensureCareOpsTables(sql);
+    const bookingId = String(data.bookingId || "").trim();
     const marked = await sql<{ status: string }>`
       select status from attendance
-      where daycare_id = ${daycareId} and child_name = ${childName} and day = ${day}
+      where daycare_id = ${daycareId} and day = ${day}
+        and (booking_id = ${bookingId} or (booking_id is null and child_name = ${childName}))
+      order by (booking_id is null)
       limit 1
     `;
     if (!canWriteDayNote(marked[0]?.status)) throw new Error("Mark the day before the note");
@@ -795,11 +798,13 @@ export const getLicensedMonth = createServerFn({ method: "POST" })
     `;
     const rows = await sql<{
       daycare_id: string;
+      booking_id: string | null;
       child_name: string;
+      parent_user_id: string | null;
       day: string;
       status: string;
     }>`
-      select daycare_id, child_name, day::text as day, status
+      select daycare_id, booking_id, child_name, parent_user_id, day::text as day, status
       from attendance
       where day >= ${start}::date and day < (${start}::date + interval '1 month')
         and (
@@ -865,9 +870,16 @@ export const getLicensedMonth = createServerFn({ method: "POST" })
         childName: kid.child_name,
         parentUserId: kid.parent_user_id,
         days: mergeMonthAttendance(
-          rows
-            .filter((r) => r.daycare_id === kid.daycare_id && r.child_name === kid.child_name)
-            .map((r) => ({ day: r.day, status: r.status })),
+          [
+            ...rows.filter((r) => r.booking_id === kid.booking_id),
+            ...rows.filter(
+              (r) =>
+                !r.booking_id &&
+                r.daycare_id === kid.daycare_id &&
+                r.parent_user_id === kid.parent_user_id &&
+                r.child_name === kid.child_name,
+            ),
+          ].map((r) => ({ day: r.day, status: r.status })),
           checks
             .filter((r) => r.booking_id === kid.booking_id)
             .map((r) => ({ day: r.day, action: r.action })),

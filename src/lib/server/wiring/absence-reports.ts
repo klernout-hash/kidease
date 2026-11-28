@@ -6,6 +6,7 @@ import type { RoomBand } from "@/lib/provincial-ratios";
 import { ENROLLED_BOOKING_STATUSES } from "@/lib/review-gate";
 import { absenceReportsEnabled, absenceReportsMode, applyAbsence } from "@/lib/wiring/absence-reports";
 import { daycareUserIds, deliverNotice, newId } from "@/lib/server/wiring/runtime";
+import { loadOwnEnrolledBookingByName } from "@/lib/server/daily-care";
 
 const BANDS = new Set(["infant", "toddler", "preschool", "school-age"]);
 const ENROLLED = ENROLLED_BOOKING_STATUSES;
@@ -33,9 +34,15 @@ export const reportAbsence = createServerFn({ method: "POST" })
       limit 1
     `;
     if (!booking[0]) return { ok: false as const, error: "enrol" };
+    const child = await loadOwnEnrolledBookingByName(sql, {
+      daycareId: data.daycareId,
+      parentUserId: context.userId,
+      childName: data.childName,
+    });
+    if (!child) return { ok: false as const, error: "enrol" };
     const current = await sql<{ status: string }>`
       select status from attendance
-      where daycare_id = ${data.daycareId} and child_name = ${data.childName} and day = ${data.day}
+      where daycare_id = ${data.daycareId} and booking_id = ${child.id} and day = ${data.day}
       limit 1
     `;
     const alreadyAbsent = current[0]?.status === "absent" || current[0]?.status === "sick" || current[0]?.status === "vacation";
@@ -65,19 +72,19 @@ export const reportAbsence = createServerFn({ method: "POST" })
     const id = newId("at");
     await sql`
       insert into attendance (
-        id, daycare_id, child_name, parent_user_id, day, status, notes, updated_by
+        id, daycare_id, booking_id, conversation_id, child_name, parent_user_id, day, status, notes, updated_by
       ) values (
-        ${id}, ${data.daycareId}, ${data.childName}, ${context.userId}, ${data.day},
-        ${"absent"}, ${"Parent reported an absence"}, ${context.userId}
+        ${id}, ${data.daycareId}, ${child.id}, ${child.conversation_id}, ${child.child_name}, ${child.user_id},
+        ${data.day}, ${"absent"}, ${"Parent reported an absence"}, ${context.userId}
       )
-      on conflict (daycare_id, child_name, day)
+      on conflict (daycare_id, booking_id, day)
       do update set status = 'absent', notes = excluded.notes, updated_by = excluded.updated_by
     `;
     await sql`
       insert into absence_reports (
         id, daycare_id, parent_user_id, child_name, day, province, band, children_now, ratio_status
       ) values (
-        ${newId("ab")}, ${data.daycareId}, ${context.userId}, ${data.childName}, ${data.day},
+        ${newId("ab")}, ${data.daycareId}, ${context.userId}, ${child.child_name}, ${data.day},
         ${booking[0].province}, ${data.band}, ${result.childrenNow}, ${result.ratio?.status ?? null}
       )
     `;

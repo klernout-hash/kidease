@@ -144,7 +144,7 @@ export const redeemKioskScan = createServerFn({ method: "POST" })
         ${nid("at")}, ${verified.daycareId}, ${enrolled[0].id}, ${enrolled[0].child_name},
         ${context.userId}, ${day}, ${"07:30"}, ${"17:00"}, ${status}, ${""}, ${context.userId}
       )
-      on conflict (daycare_id, child_name, day)
+      on conflict (daycare_id, booking_id, day)
       do update set status = excluded.status, updated_by = excluded.updated_by
     `;
     return decision;

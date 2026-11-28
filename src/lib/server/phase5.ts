@@ -3,6 +3,8 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { evaluateFeatureFlag } from "@/lib/flags";
 import { absenceDays, miniSiteOpen, rsvpHeadcount, type RsvpAnswer } from "@/lib/phase5-rules";
+import { nid } from "@/lib/utils";
+import { loadOwnEnrolledBookingByName } from "./daily-care";
 
 export const phase5Flags = createServerFn({ method: "GET" }).handler(async () => ({
   absence: evaluateFeatureFlag("FEATURE_PARENT_ABSENCE"),
@@ -26,12 +28,22 @@ export const reportParentAbsence = createServerFn({ method: "POST" })
     const days = absenceDays(data.from, data.to);
     if (!data.daycareId || !data.childName || !days.length) return { ok: false as const, error: "day" };
     const sql = await getSql();
+    const booking = await loadOwnEnrolledBookingByName(sql, {
+      daycareId: data.daycareId,
+      parentUserId: context.userId,
+      childName: data.childName,
+    });
+    if (!booking) return { ok: false as const, error: "enrol" };
     for (const day of days) {
-      const id = `abs_${data.childName}_${day}`.replace(/[^a-z0-9_-]/gi, "").slice(0, 80);
       await sql`
-        insert into attendance (id, daycare_id, child_name, parent_user_id, day, status, notes, updated_by)
-        values (${id}, ${data.daycareId}, ${data.childName}, ${context.userId}, ${day}, ${"absent"}, ${data.reason}, ${context.userId})
-        on conflict (daycare_id, child_name, day) do update
+        insert into attendance (
+          id, daycare_id, booking_id, conversation_id, child_name, parent_user_id, day, status, notes, updated_by
+        )
+        values (
+          ${nid("at")}, ${data.daycareId}, ${booking.id}, ${booking.conversation_id}, ${booking.child_name},
+          ${booking.user_id}, ${day}, ${"absent"}, ${data.reason}, ${context.userId}
+        )
+        on conflict (daycare_id, booking_id, day) do update
           set status = 'absent', notes = excluded.notes, updated_by = excluded.updated_by
       `;
     }

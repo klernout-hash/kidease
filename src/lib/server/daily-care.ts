@@ -129,6 +129,34 @@ export async function loadEnrolledBooking(
   };
 }
 
+/**
+ * The caller's own enrolled child at this centre, picked by the name the parent
+ * typed (full, first, or preferred). Only that family's children are searched,
+ * and a name that fits more than one child picks none.
+ */
+export async function loadOwnEnrolledBookingByName(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  input: { daycareId: string; parentUserId: string; childName: string },
+): Promise<EnrolledBooking | null> {
+  const typed = input.childName.trim().toLowerCase();
+  if (!input.daycareId || !input.parentUserId || !typed) return null;
+  const rows = await sql<EnrolledBooking>`
+    select b.id, b.user_id, b.conversation_id, b.child_id, ch.name as child_name
+    from bookings b
+    join children ch on ch.id = b.child_id and ch.user_id = b.user_id
+    where b.user_id = ${input.parentUserId}
+      and b.daycare_id = ${input.daycareId}
+      and b.status in ('accepted', 'active')
+      and (
+        lower(trim(ch.name)) = ${typed}
+        or lower(split_part(trim(ch.name), ' ', 1)) = ${typed}
+        or lower(trim(coalesce(ch.preferred_name, ''))) = ${typed}
+      )
+    limit 2
+  `;
+  return rows.length === 1 ? rows[0] : null;
+}
+
 /** In-app note only. Attendance, medication, and incident lines do not email. */
 export async function insertCareStatusMessage(input: {
   conversationId: string | null;

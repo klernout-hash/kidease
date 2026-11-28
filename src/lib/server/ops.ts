@@ -3,6 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { centreCanWriteCare } from "@/lib/centre-roles";
 import {
+  attendanceRowFinder,
   careStatusBody,
   isAttendanceStatus,
   type AttendanceStatus,
@@ -130,11 +131,11 @@ export const getWeekSchedule = createServerFn({ method: "POST" })
       order by child_name, day
     `.catch(() => []);
 
-    const byKey = new Map(rows.map((r) => [`${r.daycare_id}:${r.child_name}:${r.day}`, r]));
+    const rowFor = attendanceRowFinder(rows);
     const items: AttendanceRow[] = [];
     for (const kid of kids) {
       for (const day of days) {
-        const hit = byKey.get(`${kid.daycare_id}:${kid.child_name}:${day}`);
+        const hit = rowFor(kid, day);
         items.push({
           id: hit?.id ?? `${kid.booking_id}-${day}`,
           daycareId: kid.daycare_id,
@@ -185,32 +186,52 @@ export const saveAttendance = createServerFn({ method: "POST" })
       parentUserId: staffOk ? null : context.userId,
     });
     if (!staffOk && !booking) throw new Error("Not allowed");
-    const bookingId = booking ? booking.id : (data.bookingId ?? null);
     const conversationId = booking ? booking.conversation_id : (data.conversationId ?? null);
     const childName = booking ? booking.child_name : data.childName;
     const parentUserId = booking ? booking.user_id : (data.parentUserId ?? context.userId);
     const id = nid("at");
-    await sql`
-      insert into attendance (
-        id, daycare_id, booking_id, conversation_id, child_name, parent_user_id,
-        day, drop_off, pick_up, status, notes, updated_by
-      )
-      values (
-        ${id}, ${data.daycareId}, ${bookingId}, ${conversationId},
-        ${childName}, ${parentUserId}, ${data.day},
-        ${data.dropOff || "07:30"}, ${data.pickUp || "17:00"}, ${data.status},
-        ${data.notes ?? ""}, ${context.userId}
-      )
-      on conflict (daycare_id, child_name, day)
-      do update set
-        drop_off = excluded.drop_off,
-        pick_up = excluded.pick_up,
-        status = excluded.status,
-        notes = excluded.notes,
-        updated_by = excluded.updated_by,
-        booking_id = coalesce(excluded.booking_id, attendance.booking_id),
-        conversation_id = coalesce(excluded.conversation_id, attendance.conversation_id)
-    `;
+    if (booking) {
+      await sql`
+        insert into attendance (
+          id, daycare_id, booking_id, conversation_id, child_name, parent_user_id,
+          day, drop_off, pick_up, status, notes, updated_by
+        )
+        values (
+          ${id}, ${data.daycareId}, ${booking.id}, ${booking.conversation_id},
+          ${booking.child_name}, ${booking.user_id}, ${data.day},
+          ${data.dropOff || "07:30"}, ${data.pickUp || "17:00"}, ${data.status},
+          ${data.notes ?? ""}, ${context.userId}
+        )
+        on conflict (daycare_id, booking_id, day)
+        do update set
+          drop_off = excluded.drop_off,
+          pick_up = excluded.pick_up,
+          status = excluded.status,
+          notes = excluded.notes,
+          updated_by = excluded.updated_by,
+          child_name = excluded.child_name
+      `;
+    } else {
+      await sql`
+        insert into attendance (
+          id, daycare_id, booking_id, conversation_id, child_name, parent_user_id,
+          day, drop_off, pick_up, status, notes, updated_by
+        )
+        values (
+          ${id}, ${data.daycareId}, ${null}, ${conversationId},
+          ${childName}, ${parentUserId}, ${data.day},
+          ${data.dropOff || "07:30"}, ${data.pickUp || "17:00"}, ${data.status},
+          ${data.notes ?? ""}, ${context.userId}
+        )
+        on conflict (daycare_id, child_name, day) where booking_id is null
+        do update set
+          drop_off = excluded.drop_off,
+          pick_up = excluded.pick_up,
+          status = excluded.status,
+          notes = excluded.notes,
+          updated_by = excluded.updated_by
+      `;
+    }
 
     const action: CareAttendanceAction | null =
       data.status === "arrived"
