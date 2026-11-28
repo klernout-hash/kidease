@@ -30,6 +30,7 @@ import { readDistanceUnit } from "@/lib/units";
 import { readLocationConsent } from "@/lib/location-consent";
 import { bindAndroidBack } from "@/lib/android-back";
 import { currentAuthPageBack, isAuthPagePath } from "@/lib/auth/auth-back";
+import { safeInternalPath } from "@/lib/safe-internal-path";
 import { usePushRegistration } from "@/lib/use-push";
 import { useHuaweiCallPushRegistration } from "@/lib/use-huawei-call-push";
 import { applyTheme, readThemePreference } from "@/lib/theme";
@@ -183,7 +184,7 @@ export function NativeBoot() {
           const next = new URLSearchParams(window.location.search).get("next");
           const plan = currentAuthPageBack(canGoBack, next, window.location.pathname.startsWith("/fr/") ? "fr" : "en");
           if (plan.via === "replace") {
-            window.location.replace(plan.href);
+            window.location.replace(safeInternalPath(plan.href, "/"));
             return;
           }
         }

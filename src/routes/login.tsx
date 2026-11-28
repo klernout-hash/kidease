@@ -2,6 +2,7 @@ import { checkEmailStatus } from "@/lib/auth/email-status-client";
 import { createFileRoute, Link, redirect, useRouteContext, useRouter, useRouterState } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { authBackFallback, currentAuthPageBack } from "@/lib/auth/auth-back";
+import { safeInternalPath } from "@/lib/safe-internal-path";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError, TURNSTILE_REQUIRED_MESSAGE } from "@/lib/auth/login-errors";
@@ -968,7 +969,7 @@ export function LoginScreen({
   const leaveSignIn = () => {
     const plan = currentAuthPageBack(router.history.canGoBack(), search.next, locale === "fr" ? "fr" : "en");
     if (plan.via === "history") router.history.back();
-    else window.location.replace(plan.href);
+    else window.location.replace(safeInternalPath(plan.href, "/"));
   };
 
   return (
