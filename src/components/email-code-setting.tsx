@@ -4,26 +4,26 @@ import { Button } from "@/components/ui/button";
 import { getEmailCodePreference, setParentEmailCode } from "@/lib/server/second-factor";
 import { useCopy } from "@/lib/use-copy";
 import {
-  HEALTH_BANNER_SNOOZE_KEY,
-  healthBannerCanSnooze,
-  healthBannerVisible,
+  formatDeadlineDay,
+  HEALTH_BANNER_HIDDEN_KEY,
+  healthBannerCanHide,
+  healthBannerMode,
 } from "@/lib/second-factor-policy";
 
-function readBannerSnooze(): number | null {
+function readBannerHidden(): string | null {
   try {
-    const raw = window.localStorage.getItem(HEALTH_BANNER_SNOOZE_KEY);
-    const at = raw ? Number(raw) : NaN;
-    return Number.isFinite(at) ? at : null;
+    return window.localStorage.getItem(HEALTH_BANNER_HIDDEN_KEY);
   } catch {
     return null;
   }
 }
 
-function writeBannerSnooze(at: number): void {
+function writeBannerHidden(day: string | null): void {
   try {
-    window.localStorage.setItem(HEALTH_BANNER_SNOOZE_KEY, String(at));
+    if (day) window.localStorage.setItem(HEALTH_BANNER_HIDDEN_KEY, day);
+    else window.localStorage.removeItem(HEALTH_BANNER_HIDDEN_KEY);
   } catch {
-    /* private mode: the banner hides for this visit only */
+    /* private mode: the choice lasts for this visit only */
   }
 }
 
@@ -90,9 +90,8 @@ export function HealthSecondFactorBanner() {
   const [state, setState] = useState<{
     prompt: boolean;
     locked: boolean;
-    graceEndsAt: number | null;
-    snoozedAt: number | null;
-    checkedAt: number;
+    deadlineDay: string | null;
+    hiddenFor: string | null;
   } | null>(null);
 
   useEffect(() => {
@@ -103,9 +102,8 @@ export function HealthSecondFactorBanner() {
           setState({
             prompt: row.providerPrompt,
             locked: row.providerLocked,
-            graceEndsAt: row.graceEndsAt,
-            snoozedAt: readBannerSnooze(),
-            checkedAt: Date.now(),
+            deadlineDay: row.graceEndsDay ?? null,
+            hiddenFor: readBannerHidden(),
           });
         }
       })
@@ -117,14 +115,43 @@ export function HealthSecondFactorBanner() {
     };
   }, []);
 
-  if (!state?.prompt) return null;
-  if (!healthBannerVisible({ prompt: state.prompt, locked: state.locked, snoozedAt: state.snoozedAt, now: state.checkedAt })) {
-    return null;
+  if (!state) return null;
+  const mode = healthBannerMode(state);
+  if (mode === "none") return null;
+  // N-25: the server picks the day; every device shows that same day.
+  const date = formatDeadlineDay(state.deadlineDay, locale);
+  const setHidden = (day: string | null) => {
+    writeBannerHidden(day);
+    setState((prev) => (prev ? { ...prev, hiddenFor: day } : prev));
+  };
+
+  if (mode === "folded") {
+    return (
+      <div
+        className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-surface px-4 py-2 text-sm ring-1 ring-border"
+        data-ke="health-second-factor-folded"
+      >
+        <span>{t("healthCodeFolded").replace("{date}", date)}</span>
+        <Link
+          to="/verify-2fa"
+          search={{ next: "/provider" }}
+          className="inline-flex min-h-11 items-center font-medium underline underline-offset-4"
+        >
+          {t("healthCodeAction")}
+        </Link>
+        <button
+          type="button"
+          className="inline-flex min-h-11 touch-manipulation items-center text-muted underline underline-offset-4"
+          data-ke="health-second-factor-show"
+          onClick={() => setHidden(null)}
+        >
+          {t("healthCodeShow")}
+        </button>
+      </div>
+    );
   }
-  const canSnooze = healthBannerCanSnooze({ prompt: state.prompt, locked: state.locked });
-  const date = state.graceEndsAt
-    ? new Date(state.graceEndsAt).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", { month: "long", day: "numeric" })
-    : "";
+
+  const canHide = healthBannerCanHide(state);
   const message = state.locked || !date ? t("healthCodeLocked") : t("healthCodePrompt").replace("{date}", date);
   return (
     <section className="mb-4 rounded-xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="health-second-factor">
@@ -135,19 +162,15 @@ export function HealthSecondFactorBanner() {
             {t("healthCodeAction")}
           </Link>
         </Button>
-        {canSnooze ? (
+        {canHide ? (
           <Button
             type="button"
             variant="outline"
             className="min-h-11"
-            data-ke="health-second-factor-snooze"
-            onClick={() => {
-              const at = Date.now();
-              writeBannerSnooze(at);
-              setState((prev) => (prev ? { ...prev, snoozedAt: at, checkedAt: at } : prev));
-            }}
+            data-ke="health-second-factor-hide"
+            onClick={() => setHidden(state.deadlineDay)}
           >
-            {t("healthCodeSnooze")}
+            {t("healthCodeHide")}
           </Button>
         ) : null}
       </div>
