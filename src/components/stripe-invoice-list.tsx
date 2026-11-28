@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { listMyStripeInvoices, type StripeInvoiceView } from "@/lib/server/stripe-parent-invoices";
 import { brandedInvoicePdf, invoicePdfFilename } from "@/lib/invoice-pdf";
-import { formatInvoiceMoney } from "@/lib/stripe-parent-invoice";
+import { openHostedPdf, savePdfBytes, savePdfFailedText } from "@/lib/save-pdf";
+import { formatInvoiceDisplayMoney } from "@/lib/stripe-parent-invoice";
 import { isFrPath, localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
 type Audience = "parent" | "daycare" | "all";
 
-function saveInvoicePdf(invoice: StripeInvoiceView, locale: "en" | "fr") {
+async function saveInvoicePdf(invoice: StripeInvoiceView, locale: "en" | "fr") {
   if (invoice.invoicePdf?.startsWith("https://")) {
-    window.open(invoice.invoicePdf, "_blank", "noopener,noreferrer");
+    const result = await openHostedPdf(invoice.invoicePdf);
+    if (result === "failed") toast.error(savePdfFailedText(locale));
     return;
   }
   const bytes = brandedInvoicePdf({
@@ -26,15 +29,8 @@ function saveInvoicePdf(invoice: StripeInvoiceView, locale: "en" | "fr") {
     daycareAddress: invoice.daycareAddress ?? null,
     locale,
   });
-  const body = new ArrayBuffer(bytes.byteLength);
-  new Uint8Array(body).set(bytes);
-  const blob = new Blob([body], { type: "application/pdf" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = invoicePdfFilename(invoice.number);
-  link.click();
-  URL.revokeObjectURL(url);
+  const result = await savePdfBytes(bytes, invoicePdfFilename(invoice.number));
+  if (result === "failed") toast.error(savePdfFailedText(locale));
 }
 
 export function StripeInvoiceList({
@@ -125,7 +121,7 @@ export function StripeInvoiceList({
       {invoices.length ? (
         <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
           {invoices.map((invoice) => {
-            const money = formatInvoiceMoney(invoice.amountCents, invoice.currency, locale === "fr" ? "fr" : "en");
+            const money = formatInvoiceDisplayMoney(invoice.amountCents, invoice.currency, locale);
             const payHref = invoice.payPath || invoice.hostedInvoiceUrl;
             const canPay = invoice.viewer !== "daycare" && invoice.status === "open" && Boolean(payHref);
             const primary = emphasizePay && canPay && !primaryUsed;
@@ -154,9 +150,9 @@ export function StripeInvoiceList({
                   {canPay && payHref ? (
                     <Button size="md" variant={primary ? "primary" : "secondary"} asChild>
                       {invoice.payPath ? (
-                        <a href={invoice.payPath}>{t("invoicePay")}</a>
+                        <a href={invoice.payPath} data-ke="native-checkout">{t("invoicePay")}</a>
                       ) : (
-                        <a href={payHref} target="_blank" rel="noreferrer">
+                        <a href={payHref} target="_blank" rel="noreferrer" data-ke="native-checkout">
                           {t("invoicePay")}
                         </a>
                       )}
@@ -168,7 +164,7 @@ export function StripeInvoiceList({
                     type="button"
                     data-ke="invoice-pdf"
                     data-invoice={invoice.id}
-                    onClick={() => saveInvoicePdf(invoice, locale === "fr" ? "fr" : "en")}
+                    onClick={() => void saveInvoicePdf(invoice, locale === "fr" ? "fr" : "en")}
                   >
                     {t("invoiceDownloadPdf")}
                   </Button>
@@ -215,7 +211,7 @@ export function InvoiceDetail({ invoice }: { invoice: StripeInvoiceView }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const listTo = isFrPath(pathname) ? "/fr/invoices" : "/invoices";
   const helpTo = isFrPath(pathname) ? "/fr/help" : "/help";
-  const money = formatInvoiceMoney(invoice.amountCents, invoice.currency, locale === "fr" ? "fr" : "en");
+  const money = formatInvoiceDisplayMoney(invoice.amountCents, invoice.currency, locale);
   const paid = invoice.status === "paid";
   const canPay = invoice.viewer !== "daycare" && invoice.status === "open" && Boolean(invoice.hostedInvoiceUrl);
   return (
@@ -238,12 +234,12 @@ export function InvoiceDetail({ invoice }: { invoice: StripeInvoiceView }) {
       <div className="no-print mt-5 flex flex-wrap gap-2">
         {canPay && invoice.hostedInvoiceUrl ? (
           <Button asChild>
-            <a href={invoice.hostedInvoiceUrl} target="_blank" rel="noreferrer">
+            <a href={invoice.hostedInvoiceUrl} target="_blank" rel="noreferrer" data-ke="native-checkout">
               {t("invoicePay")}
             </a>
           </Button>
         ) : null}
-        <Button variant="secondary" type="button" data-ke="invoice-pdf" onClick={() => saveInvoicePdf(invoice, locale === "fr" ? "fr" : "en")}>
+        <Button variant="secondary" type="button" data-ke="invoice-pdf" onClick={() => void saveInvoicePdf(invoice, locale === "fr" ? "fr" : "en")}>
           {t("invoiceDownloadPdf")}
         </Button>
         <Button

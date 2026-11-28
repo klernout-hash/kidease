@@ -3,6 +3,7 @@
  * Idempotent on the Stripe event id. SMS waits out quiet hours.
  */
 
+import { invoiceDisplayCents } from "@/lib/care-month-bill";
 import { createServerFn } from "@tanstack/react-start";
 import { dbSource, getSql, type Sql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
@@ -223,7 +224,14 @@ export async function loadInvoiceForDownload(
 ): Promise<{ authorized: boolean; invoice: (StripeInvoiceView & { invoicePdf: string | null }) | null }> {
   const sql = await getSql();
   const row = await loadRow(sql, invoiceId);
-  if (!row) return { authorized: true, invoice: null };
+  if (!row) {
+    const { familyScopeFor } = await import("./coparent");
+    const { daycareIdsForArea } = await import("./centre-access");
+    const homeId = (await familyScopeFor(userId)).dataUserId;
+    const daycareIds = await daycareIdsForArea(sql, userId, "bills", "view");
+    const bills = await listCentreBillsForDesk(sql, homeId, daycareIds, invoiceId.replace(/:centre$/, ""));
+    return { authorized: true, invoice: bills.find((bill) => bill.id === invoiceId) ?? null };
+  }
   const allowed = await canRead(sql, userId, row);
   if (!allowed) return { authorized: false, invoice: null };
   return { authorized: true, invoice: toView(row, userId) };
@@ -263,7 +271,7 @@ export const listMyStripeInvoices = createServerFn({ method: "GET" })
     return { invoices: [...centreBills, ...rows.map((row) => toView(row, context.userId))] };
   });
 
-async function listCentreBillsForDesk(sql: Sql, homeId: string, daycareIds: string[]): Promise<StripeInvoiceView[]> {
+async function listCentreBillsForDesk(sql: Sql, homeId: string, daycareIds: string[], invoiceId?: string): Promise<StripeInvoiceView[]> {
   const params: unknown[] = [homeId];
   let daycareClause = "false";
   if (daycareIds.length) {
@@ -273,11 +281,13 @@ async function listCentreBillsForDesk(sql: Sql, homeId: string, daycareIds: stri
     });
     daycareClause = `i.daycare_id in (${marks.join(", ")})`;
   }
+  const invoiceClause = invoiceId ? `and i.id = $${params.push(invoiceId)}` : "";
   const rows = await sql
     .query<{
       id: string;
       number: string;
       amount_cents: number | null;
+      total: number | string | null;
       currency: string | null;
       status: string;
       paid_at: string | Date | null;
@@ -290,10 +300,11 @@ async function listCentreBillsForDesk(sql: Sql, homeId: string, daycareIds: stri
       daycare_postal?: string | null;
       daycare_show_address?: boolean | number | null;
     }>(
-      `select i.id, i.number, i.amount_cents, i.currency, i.status, i.paid_at, i.parent_user_id, i.daycare_id, d.name as daycare_name, d.address as daycare_address, d.city as daycare_city, d.province as daycare_province, d.postal_code as daycare_postal, d.show_public_address as daycare_show_address
+      `select i.id, i.number, i.amount_cents, i.total, i.currency, i.status, i.paid_at, i.parent_user_id, i.daycare_id, d.name as daycare_name, d.address as daycare_address, d.city as daycare_city, d.province as daycare_province, d.postal_code as daycare_postal, d.show_public_address as daycare_show_address
        from invoices i
        join daycares d on d.id = i.daycare_id
-       where i.status in ('sent', 'paid', 'void', 'refunded')
+       where i.status in ('sent', 'paid', 'void', 'refunded', 'disputed')
+         ${invoiceClause}
          and (i.parent_user_id = $1 or ${daycareClause})
        order by i.created_at desc
        limit 100`,
@@ -306,7 +317,7 @@ async function listCentreBillsForDesk(sql: Sql, homeId: string, daycareIds: stri
     const paidAt = row.paid_at instanceof Date ? row.paid_at.toISOString() : row.paid_at;
     const base = {
       number: row.number,
-      amountCents: row.amount_cents,
+      amountCents: invoiceDisplayCents(row),
       currency: row.currency || "cad",
       status,
       paidAt: paidAt || null,

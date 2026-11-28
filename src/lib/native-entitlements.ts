@@ -311,4 +311,6 @@ export const NATIVE_COMMERCE_SELECTORS = [
   "[data-ke='native-checkout']",
   "a[href*='checkout.stripe.com']",
   "a[href*='billing.stripe.com']",
+  // Hosted Stripe invoice pages are a pay step too (N-09). The PDF button stays.
+  "a[href*='invoice.stripe.com']",
 ].join(",");

@@ -39,6 +39,7 @@ public class MainActivity extends BridgeActivity {
         OfflinePage.reset();
         registerPlugin(PasskeyPlugin.class);
         registerPlugin(SecureSessionPlugin.class);
+        registerPlugin(PdfShareFilesPlugin.class);
         StorePlugins.register(this);
         super.load();
         MessageChannel.ensure(this);
