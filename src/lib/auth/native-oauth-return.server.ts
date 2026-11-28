@@ -1,7 +1,9 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
+import { isNativeUserAgent } from "@/lib/native-entitlements";
 import {
   isKideasePublicHost,
   KIDEASE_COOKIE_DOMAIN,
+  parseCookieHeader,
   readSessionTokenFromHeader,
   SESSION_TOKEN_COOKIE,
   SHARED_SESSION_TOKEN_COOKIE,
@@ -10,15 +12,24 @@ import {
 import { googleSignInEnabled } from "./google-login-flag";
 import { amazonSignInVisible, huaweiSignInVisible } from "./store-signin-flags";
 import {
+  NATIVE_AUTH_VERIFIER_COOKIE,
   nativeAuthFinishUrl,
+  nativeHandoffVerifierHash,
   nativeOAuthProvider,
   nativeOAuthReturnPath,
   safeInAppPath,
   sanitizeNativeOAuthError,
 } from "./native-oauth";
 
+type Sql = Awaited<ReturnType<typeof import("@/lib/db").getSql>>;
+
 const HANDOFF_SECONDS = 120;
+const VERIFIER_SECONDS = 60 * 15;
 const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
+
+function sha256Hex(value: string): string {
+  return createHash("sha256").update(value).digest("hex");
+}
 
 function redirect(location: string): Response {
   return new Response(null, {
@@ -40,10 +51,31 @@ function sessionCookies(value: string, publicHost: boolean): string[] {
 }
 
 /**
- * Runs in the system auth sheet after Better Auth has set a session cookie
- * there. Mint a one-time code and leave via the app scheme. No session: still
- * return to the webview so the person is not stuck in Safari or Chrome.
+ * POST /auth/native-prepare from the webview, before it opens the sheet.
+ * The verifier stays in this webview's cookie jar (HttpOnly, host-only). The
+ * response carries only its hash, which travels through the sheet as `hv`.
  */
+export async function handleNativeAuthPrepare(request: Request): Promise<Response> {
+  const site = request.headers.get("sec-fetch-site");
+  if (
+    request.method !== "POST" ||
+    (site && site !== "same-origin") ||
+    !isNativeUserAgent(request.headers.get("user-agent"))
+  ) {
+    return new Response(null, { status: 403, headers: { "cache-control": "no-store" } });
+  }
+  const verifier = randomBytes(32).toString("base64url");
+  const headers = new Headers({
+    "content-type": "application/json",
+    "cache-control": "no-store",
+  });
+  headers.append(
+    "set-cookie",
+    `${NATIVE_AUTH_VERIFIER_COOKIE}=${verifier}; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=${VERIFIER_SECONDS}`,
+  );
+  return new Response(JSON.stringify({ hv: sha256Hex(verifier) }), { status: 200, headers });
+}
+
 /**
  * GET /auth/native-start inside the system auth sheet.
  * Better Auth sets the OAuth state cookie on this response, then the sheet
@@ -55,6 +87,7 @@ export async function handleNativeAuthStart(request: Request): Promise<Response>
   const next = safeInAppPath(url.searchParams.get("next"));
   const errorNext = safeInAppPath(url.searchParams.get("errorNext") || next);
   const newUser = url.searchParams.get("newUser");
+  const hv = nativeHandoffVerifierHash(url.searchParams.get("hv"));
   if (
     !provider ||
     (provider === "google" && !googleSignInEnabled(process.env)) ||
@@ -68,9 +101,9 @@ export async function handleNativeAuthStart(request: Request): Promise<Response>
     const apiRes = await auth.api.signInSocial({
       body: {
         provider,
-        callbackURL: nativeOAuthReturnPath(next),
-        errorCallbackURL: nativeOAuthReturnPath(errorNext),
-        ...(newUser ? { newUserCallbackURL: nativeOAuthReturnPath(newUser) } : {}),
+        callbackURL: nativeOAuthReturnPath(next, hv),
+        errorCallbackURL: nativeOAuthReturnPath(errorNext, hv),
+        ...(newUser ? { newUserCallbackURL: nativeOAuthReturnPath(newUser, hv) } : {}),
       },
       headers: request.headers,
       asResponse: true,
@@ -92,9 +125,16 @@ export async function handleNativeAuthStart(request: Request): Promise<Response>
   }
 }
 
+/**
+ * Runs in the system auth sheet after Better Auth has set a session cookie
+ * there. Mint a one-time code bound to the webview's verifier hash and leave
+ * via the app scheme. No session: still return to the webview so the person
+ * is not stuck in Safari or Chrome.
+ */
 export async function handleNativeAuthAppReturn(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const next = safeInAppPath(url.searchParams.get("next"));
+  const hv = nativeHandoffVerifierHash(url.searchParams.get("hv"));
   const oauthError = sanitizeNativeOAuthError(url.searchParams.get("error"));
   if (oauthError) return redirect(nativeAuthFinishUrl({ next, error: oauthError }));
   const raw = readSessionTokenFromHeader(request.headers.get("cookie"));
@@ -110,8 +150,8 @@ export async function handleNativeAuthAppReturn(request: Request): Promise<Respo
     const code = randomBytes(24).toString("base64url");
     const expires = new Date(Date.now() + HANDOFF_SECONDS * 1000).toISOString();
     await sql`
-      insert into native_auth_handoff (code, session_token, next_path, expires_at)
-      values (${code}, ${raw}, ${next}, ${expires})
+      insert into native_auth_handoff (code, session_token, next_path, expires_at, verifier_hash)
+      values (${code}, ${raw}, ${next}, ${expires}, ${hv})
     `;
     return redirect(nativeAuthFinishUrl({ code, next }));
   } catch (err) {
@@ -120,18 +160,43 @@ export async function handleNativeAuthAppReturn(request: Request): Promise<Respo
   }
 }
 
-/** Webview-only. Sets the session cookie that was created in the auth sheet. */
+async function hasLiveSession(sql: Sql, cookieHeader: string | null): Promise<boolean> {
+  const cookies = parseCookieHeader(cookieHeader);
+  for (const name of [SESSION_TOKEN_COOKIE, SHARED_SESSION_TOKEN_COOKIE]) {
+    const token = unsignedSessionToken(cookies.get(name));
+    if (!token) continue;
+    const rows = await sql<{ token: string }>`
+      select token from "session" where token = ${token} and "expiresAt" > now() limit 1
+    `;
+    if (rows[0]) return true;
+  }
+  return false;
+}
+
+/**
+ * Webview-only. Sets the session cookie that was created in the auth sheet,
+ * but only for the webview holding the verifier whose hash the code was
+ * minted with. A webview that is already signed in keeps its session.
+ */
 export async function handleNativeAuthHandoff(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const next = safeInAppPath(url.searchParams.get("next"));
   const code = String(url.searchParams.get("code") || "").trim();
   if (!code || code.length > 128) return redirect(next);
+  if (request.method !== "GET" || !isNativeUserAgent(request.headers.get("user-agent"))) return redirect(next);
+  const cookieHeader = request.headers.get("cookie");
+  const verifier = parseCookieHeader(cookieHeader).get(NATIVE_AUTH_VERIFIER_COOKIE);
+  if (!verifier || verifier.length > 128) return redirect(next);
+  const verifierHash = sha256Hex(verifier);
   try {
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
+    if (await hasLiveSession(sql, cookieHeader)) return redirect(next);
+    // One statement checks the verifier and consumes the code, so the session
+    // set below is the one bound to this webview.
     const rows = await sql<{ session_token: string; next_path: string }>`
       delete from native_auth_handoff
-      where code = ${code} and expires_at > now()
+      where code = ${code} and verifier_hash = ${verifierHash} and expires_at > now()
       returning session_token, next_path
     `;
     const row = rows[0];
