@@ -1,8 +1,8 @@
 import type { PortfolioGap } from "./child-portfolio.ts";
 
 export type PortfolioCopy = {
-  actionTitle: string;
-  actionBody: string;
+  reminderTitle: string;
+  reminderBody: string;
   finish: string;
   incomplete: string;
   incompleteBody: string;
@@ -12,8 +12,8 @@ export type PortfolioCopy = {
 };
 
 const en: PortfolioCopy = {
-  actionTitle: "Action required",
-  actionBody: "Finish this child's file before a daycare can approve the request.",
+  reminderTitle: "Child profile reminders",
+  reminderBody: "Finish this child's file before a daycare can approve the request.",
   finish: "Finish this file",
   incomplete: "Portfolio incomplete",
   incompleteBody: "Approve stays off until the parent finishes the missing parts.",
@@ -32,8 +32,8 @@ const en: PortfolioCopy = {
 };
 
 const fr: PortfolioCopy = {
-  actionTitle: "Action requise",
-  actionBody: "Complétez le dossier de cet enfant avant qu’une garderie puisse approuver la demande.",
+  reminderTitle: "Rappels pour le dossier de l’enfant",
+  reminderBody: "Complétez le dossier de cet enfant avant qu’une garderie puisse approuver la demande.",
   finish: "Compléter ce dossier",
   incomplete: "Dossier incomplet",
   incompleteBody: "Approuver reste désactivé tant que le parent n’a pas fini les parties manquantes.",
@@ -53,9 +53,4 @@ const fr: PortfolioCopy = {
 
 export function portfolioCopy(locale: string): PortfolioCopy {
   return locale === "fr" ? fr : en;
-}
-
-export function portfolioFocusPath(childId: string, gap: PortfolioGap, french: boolean) {
-  const params = new URLSearchParams({ tab: "children", child: childId, focus: gap });
-  return `${french ? "/fr/parent" : "/parent"}?${params.toString()}`;
 }

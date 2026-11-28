@@ -96,3 +96,10 @@ test("Family desk and Daycare desk titles are keyed for EN and FR", () => {
     assert.ok(item.labelKey, item.id);
   }
 });
+
+test("centre nav waits for a confirmed role and the drawer maps staff account links", () => {
+  assert.deepEqual(visibleDeskNav("daycare", { centreRolePending: true }), []);
+  assert.ok(visibleDeskNav("parent", { centreRolePending: true }).length > 0);
+  assert.match(src("src/components/desk-shell.tsx"), /centreRolePending = desk === "daycare" && !session/);
+  assert.match(src("src/components/nav-drawer.tsx"), /deskQueryForViewer\("provider", session\?\.centreRole\)/);
+});

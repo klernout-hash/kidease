@@ -1,4 +1,7 @@
 import { createAuthClient } from "better-auth/react";
+import { clearAccountScopedStorage } from "@/lib/account-scoped-storage";
+import { DUAL_ANCHOR_STORAGE_KEY } from "@/lib/dual-anchor";
+import { useAppStore } from "@/lib/store";
 import { clearCompare } from "@/lib/compare";
 import { clearDeskLanded, clearSessionHint, clearStickyDesk, forgetRememberedRole, markJustSignedOut } from "@/lib/desks";
 import { resetPostHogIdentity } from "@/lib/posthog";
@@ -132,6 +135,8 @@ export async function signIn(
     await signOutBestEffort();
   }
   setBearerToken(null);
+  clearAccountScopedStorage();
+  resetAccountSearchLocation();
 
   if (isNativeSocialProvider(providerId)) {
     if (providerId === "apple" && !inLivePreview()) {
@@ -202,14 +207,16 @@ export async function signIn(
     if (shell) {
       const provider = providerId as "apple" | "google" | "facebook" | "huawei" | "amazon";
       const { nativeOAuthStartPath } = await import("./native-oauth");
+      const { openNativeOAuthSheet, prepareNativeHandoff } = await import("./native-oauth-client");
+      const hv = await prepareNativeHandoff();
       const startPath = nativeOAuthStartPath({
         provider,
         next: callbackURL,
         errorNext: errorCallbackURL,
         newUserNext: newUserCallbackURL,
+        hv,
       });
       const startUrl = new URL(startPath, window.location.origin).toString();
-      const { openNativeOAuthSheet } = await import("./native-oauth-client");
       await openNativeOAuthSheet(startUrl);
       return;
     }
@@ -333,6 +340,17 @@ async function signOutBestEffort(): Promise<void> {
   }
 }
 
+function resetAccountSearchLocation(): void {
+  const { origin, originSource, originAt, located, query, workOrigin, anchorMode } = useAppStore.getInitialState();
+  useAppStore.setState({ origin, originSource, originAt, located, query, workOrigin, anchorMode });
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(DUAL_ANCHOR_STORAGE_KEY);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 /** Drop client session crumbs so the next paint cannot look half-logged-in. */
 export function clearClientAuthState(): void {
   markLocalSignedOut();
@@ -351,6 +369,9 @@ export function clearClientAuthState(): void {
     /* storage unavailable */
   }
   clearSearchCache();
+  // N-67: recently viewed, resume link, recent searches and the saved search place.
+  clearAccountScopedStorage();
+  resetAccountSearchLocation();
   try {
     sessionStorage.removeItem(LOGIN_BOUNCE_KEY);
   } catch {
@@ -385,7 +406,7 @@ export async function dropExistingSession(): Promise<void> {
   clearClientAuthState();
 }
 
-export async function signOut(redirectTo = "/"): Promise<void> {
+export async function signOut(redirectTo = "/login"): Promise<void> {
   try {
     await Promise.race([releaseThisPhone(), rejectAfter(400, "push-release-timeout")]).catch(() => undefined);
     clearClientAuthState();

@@ -22,7 +22,7 @@ import { NativeBoot } from "@/components/native-boot";
 const NativeCommerceStrip = lazy(() =>
   import("@/components/native-commerce-strip").then((m) => ({ default: m.NativeCommerceStrip })),
 );
-const PushExplain = lazy(() => import("@/components/push-explain").then((m) => ({ default: m.PushExplain })));
+const PushRegistrationBoot = lazy(() => import("@/components/push-explain").then((m) => ({ default: m.PushRegistrationBoot })));
 const GetAlertsPrompt = lazy(() =>
   import("@/components/get-alerts-prompt").then((m) => ({ default: m.GetAlertsPrompt })),
 );
@@ -385,7 +385,7 @@ function RootDocument() {
         <script src="/look-boot.js?v=1" />
       </head>
       <body className="flex min-h-[100dvh] w-full min-w-0 flex-col overflow-x-clip">
-        <SkipLink enabled={a11yPass} />
+        <SkipLink enabled={a11yPass && !nativeShell} />
         <PreviewHostBridge />
         <AuthProvider>
           <ViewAsProvider>
@@ -395,7 +395,7 @@ function RootDocument() {
           <NativeBoot />
           <Suspense fallback={null}>
             <NativeCommerceStrip />
-            <PushExplain />
+            <PushRegistrationBoot />
             {nativeShell ? null : <GetAlertsPrompt />}
           </Suspense>
           <PostHogBoot captureExceptions={posthogErrors} />
@@ -404,6 +404,7 @@ function RootDocument() {
           <RouteProgress />
           <ScreenHistoryRecorder />
           <div id="main-content" tabIndex={-1} className="flex w-full min-w-0 flex-1 flex-col outline-none">
+            <CookieConsentBanner />
             <Outlet />
           </div>
           <LiveChatSlot />
@@ -412,7 +413,6 @@ function RootDocument() {
             <IncomingVideoAlert />
           </AfterFirstPaint>
           </ViewAsProvider>
-          <CookieConsentBanner />
           <Suspense fallback={null}>
             <KidEaseToaster />
             <SuccessConfirmHost />

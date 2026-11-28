@@ -35,7 +35,7 @@ export function ParentArrivalLine() {
       <h2 className="font-display text-xl">{fr ? "Arrivée" : "Arrival"}</h2>
       {!ready ? <p className="mt-2 text-sm text-muted">{fr ? "Chargement…" : "Loading…"}</p> : null}
       {ready && !enabled ? (
-        <p className="mt-2 text-sm text-muted">{fr ? "Les heures d'arrivée ne sont pas ouvertes." : "Arrival times are not turned on."}</p>
+        <p className="mt-2 text-sm text-muted">{fr ? "Les heures d’arrivée ne sont pas encore offertes." : "Arrival times are not available yet."}</p>
       ) : null}
       {ready && enabled && lines.length === 0 ? (
         <p className="mt-2 text-sm text-muted">{fr ? "Aucune arrivée enregistrée aujourd'hui." : "No arrival saved today."}</p>

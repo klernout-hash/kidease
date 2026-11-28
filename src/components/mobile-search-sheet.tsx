@@ -446,16 +446,16 @@ function SearchSheet({
     onChange(setStep(draft, next));
   }
 
-  async function submit() {
-    let next = draft;
+  async function submit(selection = draft) {
+    let next = selection;
     let nearLabel = "";
-    if (draft.nearMe && !draft.where.trim()) {
+    if (selection.nearMe && !selection.where.trim()) {
       const pos = await getDeviceLocation({ precise: true });
       if (!pos) return;
       nearLabel = reverseGeocode(pos.lat, pos.lng) || origin?.label || t("nearMe");
-      next = { ...draft, where: nearLabel };
-    } else if (draft.nearMe) {
-      nearLabel = draft.where.trim();
+      next = { ...selection, where: nearLabel };
+    } else if (selection.nearMe) {
+      nearLabel = selection.where.trim();
     }
     const saved = rememberMobileSearch(recent, next);
     writeMobileSearches(saved);
@@ -518,9 +518,18 @@ function SearchSheet({
                 data-ke="msv2-where-input"
                 value={typed}
                 placeholder={t("msv2WherePh")}
+                aria-label={t("msv2Where")}
+                enterKeyHint="search"
                 autoComplete="off"
                 className="h-14 w-full rounded-2xl bg-bg px-4 text-base outline-none ring-1 ring-border"
                 onFocus={() => setWhereFocus(true)}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+                  const where = suggestions[0]?.label ?? typed.trim();
+                  if (!where) return;
+                  event.preventDefault();
+                  void submit({ ...draft, where, nearMe: false });
+                }}
                 onChange={(event) => {
                   setTyped(event.target.value);
                   onChange({ ...draft, where: event.target.value, nearMe: false });

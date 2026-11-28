@@ -518,6 +518,14 @@ export function SearchScreen({
   const [refreshing, setRefreshing] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [filters, setFilters] = useState(false);
+  const closeFilters = useCallback(() => {
+    setFilters(false);
+    requestAnimationFrame(() => {
+      const toggles = document.querySelectorAll<HTMLElement>('[data-ke="msv2-filters"], [data-ke="explore-filters-toggle"]');
+      Array.from(toggles).find((button) => button.getClientRects().length > 0)?.focus();
+    });
+  }, []);
+
   useEffect(() => {
     if (!filters) return;
     const frame = requestAnimationFrame(() => {
@@ -525,16 +533,18 @@ export function SearchScreen({
       title?.focus({ preventScroll: true });
       title?.scrollIntoView({ block: "start", behavior: "auto" });
     });
-    return () => cancelAnimationFrame(frame);
-  }, [filters]);
+    function dismiss(event: KeyboardEvent) {
+      if (event.key !== "Escape" || event.defaultPrevented || document.querySelector("dialog[open]")) return;
+      event.preventDefault();
+      closeFilters();
+    }
+    document.addEventListener("keydown", dismiss);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", dismiss);
+    };
+  }, [filters, closeFilters]);
 
-  function closeFilters() {
-    setFilters(false);
-    requestAnimationFrame(() => {
-      const toggles = document.querySelectorAll<HTMLElement>('[data-ke="msv2-filters"], [data-ke="explore-filters-toggle"]');
-      Array.from(toggles).find((button) => button.getClientRects().length > 0)?.focus();
-    });
-  }
   const [need, setNeed] = useState("");
   const [matchNote, setMatchNote] = useState<string | null>(null);
   const [matchBusy, setMatchBusy] = useState(false);
@@ -573,6 +583,7 @@ export function SearchScreen({
   const [anchorsHydrated, setAnchorsHydrated] = useState(false);
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
+  const [locationPermissionRevision, refreshLocationPermission] = useState(0);
   const [askLocation, setAskLocation] = useState(false);
   const [mapEnabled, setMapEnabled] = useState(false);
   const publicMap = useRuntimeSwitches().publicMap;
@@ -586,7 +597,7 @@ export function SearchScreen({
   const mapGate = useRef(createSearchRequestGate());
   const pageAbort = useRef<AbortController | null>(null);
   const mapAbort = useRef<AbortController | null>(null);
-  useLivePresence(locationConsent === "granted");
+  useLivePresence(locationConsent === "granted", locationPermissionRevision);
 
   const splitMap = useSplitMap() && storeChannel !== "huawei";
   const showSplitMap = splitMap && view !== "map";
@@ -647,11 +658,9 @@ export function SearchScreen({
         memoryLoaded.current = true;
         return;
       }
-      let memory = readSearchMemory(window.localStorage.getItem(SEARCH_MEMORY_KEY));
-      if (user?.id) {
-        const remote = await loadSearchMemory().catch(() => null);
-        if (remote && remote.enabled && remote.memory) memory = remote.memory;
-      }
+      const memory = user?.id
+        ? (await loadSearchMemory().catch(() => null))?.memory
+        : readSearchMemory(window.localStorage.getItem(SEARCH_MEMORY_KEY));
       if (!live) return;
       memoryLoaded.current = true;
       if (!memory) return;
@@ -666,7 +675,7 @@ export function SearchScreen({
   }, [userPending, user?.id, incoming, setAgeGroup, setOrigin, setQuery]);
 
   useEffect(() => {
-    if (!memoryLoaded.current) return;
+    if (!memoryLoaded.current || userPending) return;
     const memory = parseSearchMemory({
       label: origin.label,
       lat: origin.lat,
@@ -675,9 +684,9 @@ export function SearchScreen({
       budgetMonthly: Number(budgetMonthly) || null,
     });
     if (!memory) return;
-    window.localStorage.setItem(SEARCH_MEMORY_KEY, JSON.stringify(memory));
     if (user?.id) void saveSearchMemory({ data: memory }).catch(() => undefined);
-  }, [origin.label, origin.lat, origin.lng, ageGroup, budgetMonthly, user?.id]);
+    else window.localStorage.setItem(SEARCH_MEMORY_KEY, JSON.stringify(memory));
+  }, [origin.label, origin.lat, origin.lng, ageGroup, budgetMonthly, user?.id, userPending]);
 
   useEffect(() => {
     if (readLiveSearchFlag(incoming.live)) setClaimVerifiedOnly(true);
@@ -1074,7 +1083,7 @@ export function SearchScreen({
   ) : (
     <div className="text-sm text-muted" role="status" data-ke="search-map-count">
       <p>{searchMapCount(
-        currentMapResult.pins.length > 0 ? currentMapResult.pins.length : resultTotal,
+        searchMapPins.length,
         Math.max(currentMapResult.total, resultTotal),
         currentMapResult.evidence,
         locale,
@@ -1085,7 +1094,7 @@ export function SearchScreen({
           <Button type="button" variant="secondary" size="sm" onClick={retrySearch} disabled={refreshing}>{mapCoverage.retry}</Button>
           <Link to={localePath("/", locale)} search={{ change: "1" }} className="inline-flex min-h-11 items-center underline">{mapCoverage.changeArea}</Link>
         </div>
-      ) : currentMapResult.pins.length < currentMapResult.total ? (
+      ) : searchMapPins.length < currentMapResult.total ? (
         <p>{locale === "fr" ? "Certaines fiches ne sont pas affichées sur la carte." : "Some listings are not shown on the map."}</p>
       ) : null}
     </div>
@@ -1362,28 +1371,21 @@ export function SearchScreen({
     setRecentSearches(readRecentSearches());
   }, []);
 
-  async function applyQuery(typed?: string) {
+  async function applyQuery(typed?: string, resolved?: Parameters<typeof applyPlace>[0]) {
     const label = (typed ?? query).trim();
     if (label) {
-      const hit = await resolveLocationQuery(label);
+      const hit = resolved ?? await resolveLocationQuery(label);
       if (hit) {
         // Keep "R3C 0A1" in the URL and box. The FSA city label ("Winnipeg, MB")
         // would turn a radius search into a whole-city search.
         const postal = postalSearchLabel(label);
         applyPlace(postal ? { ...hit, label: postal } : hit, label);
-        return;
+        return true;
       }
-      noteSearch(label);
-      const kept = (incoming.q || origin.label || "").trim();
-      writeExploreSearch({
-        q: kept || undefined,
-        name: label,
-        from: needBy,
-        to: needUntil,
-      });
-      return;
+      return false;
     }
     writeExploreSearch({ q: origin.label, name: nameQuery, from: needBy, to: needUntil });
+    return true;
   }
 
   function followDevice(pos: { lat: number; lng: number; accuracyM?: number }) {
@@ -1405,8 +1407,13 @@ export function SearchScreen({
       return;
     }
     const pos = await getDeviceLocation({ precise: true });
-    if (pos) followDevice(pos);
-    else setLocationConsent("denied");
+    if (pos) {
+      // The OS may have just granted permission while app consent stayed granted.
+      refreshLocationPermission((revision) => revision + 1);
+      followDevice(pos);
+    } else {
+      setLocationConsent("denied");
+    }
   }
 
   async function allowLocation() {
@@ -2231,7 +2238,7 @@ export function SearchScreen({
           }}
           onStartChange={(start) => writeNowLoopSearch({ start })}
           onLocate={() => void geo()}
-          onSubmit={(typed) => void applyQuery(typed)}
+          onSubmit={applyQuery}
         />
         <div className="mt-1 flex flex-wrap items-start gap-x-4">
         {recentSearches.length ? (
@@ -2243,7 +2250,9 @@ export function SearchScreen({
                   key={item.label}
                   type="button"
                   className="inline-flex min-h-11 max-w-full items-center rounded-full bg-surface px-3 text-sm ring-1 ring-border"
-                  onClick={() => void applyQuery(item.label)}
+                  onClick={async () => {
+                    if (!(await applyQuery(item.label))) toast.error(t("searchWhereNotFound"));
+                  }}
                 >
                   <span className="truncate">{item.label}</span>
                 </button>

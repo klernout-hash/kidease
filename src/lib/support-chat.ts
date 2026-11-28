@@ -1,5 +1,7 @@
 /** Pure helpers for the KidEase Help text bridge. No database. */
 
+import { secureRandom, secureRandomHex } from "./secure-random.ts";
+
 export const LIVE_CHAT_AGENT_LABEL = "Kyle · KidEase Live Support";
 
 export function normalizeChatPhone(raw: string | null | undefined): string {
@@ -46,17 +48,11 @@ export function liveChatSmsBody(input: { code: string; name: string; page: strin
   return `[KidEase Chat #${input.code}] From ${name} (${page}): "${message}" — Reply to this text starting with #${input.code} (or just reply directly) to message them live in chat.`;
 }
 
-export function randomTicketCode(rand = Math.random): string {
+export function randomTicketCode(rand: () => number = secureRandom): string {
   const n = 1000 + Math.floor(rand() * 9000);
   return `KE-${n}`;
 }
 
 export function randomSessionToken(): string {
-  const bytes = new Uint8Array(18);
-  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
-    crypto.getRandomValues(bytes);
-  } else {
-    for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
-  }
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return secureRandomHex(18);
 }

@@ -39,7 +39,7 @@ test("Amazon listing URL stays empty until the env is a real https listing", () 
   const badges = readFileSync(join(root, "src/components/store-badges.tsx"), "utf8");
   assert.doesNotMatch(page + badges, /amazon\.ca\/dp\/B0[A-Z0-9]{8}/);
   assert.match(badges, /data-ke="amazon-appstore"/);
-  assert.match(badges, /aria-disabled="true"/);
+  assert.match(badges, /return amazonUrl \? amazonTile : null/);
   assert.match(readFileSync(join(root, "src/lib/amazon-appstore.ts"), "utf8"), /amzn:\/\/apps\/android\?p=/);
 });
 

@@ -4,7 +4,11 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { requestHasSessionMaterial } from "../src/lib/anonymous-request.ts";
-import { catalogCountsFromRow, CATALOG_COUNT_SQL, CATALOG_COUNT_TTL_MS } from "../src/lib/catalog-counts.ts";
+import {
+  catalogCountsFromRow,
+  CATALOG_COUNT_SQL,
+  CATALOG_COUNT_TTL_MS,
+} from "../src/lib/catalog-counts.ts";
 import { isInternalQaTraffic } from "../src/lib/internal-qa.ts";
 import { formatStatusCheckedAt, statusServices } from "../src/lib/status-public.ts";
 import {
@@ -32,9 +36,12 @@ test("desktop Playwright uses its versioned cache and unit components always get
   assert.match(versionStep, /npx playwright --version/);
   assert.match(versionStep, /::error::/);
   assert.match(desktop, /actions\/playwright-version/);
-  assert.match(desktop, /actions\/cache\/restore@v\d+/);
-  assert.match(desktop, /actions\/cache\/save@v\d+/);
-  assert.match(desktop, /playwright-\$\{\{ runner\.os \}\}-\$\{\{ steps\.playwright-version\.outputs\.version \}\}-chromium/);
+  assert.match(desktop, /actions\/cache\/restore@(?:v\d+|[0-9a-f]{40} # v\d+)/);
+  assert.match(desktop, /actions\/cache\/save@(?:v\d+|[0-9a-f]{40} # v\d+)/);
+  assert.match(
+    desktop,
+    /playwright-\$\{\{ runner\.os \}\}-\$\{\{ steps\.playwright-version\.outputs\.version \}\}-chromium/,
+  );
   assert.match(desktop, /if: steps\.playwright-cache\.outputs\.cache-hit != 'true'/);
   assert.match(desktop, /npx playwright install-deps chromium/);
   assert.match(desktop, /timeout 180 npx playwright install chromium/);
@@ -72,7 +79,10 @@ test("listing hero gives the centre name to the main photo", () => {
   const gallery = src("src/components/listing-hero-gallery.tsx");
   assert.match(gallery, /alt=\{name\}/);
   assert.match(src("src/routes/daycare.$slug.tsx"), /alt=\{earlyName \|\| undefined\}/);
-  assert.match(src("src/components/building-photo.tsx"), /aria-hidden=\{_alt \? undefined : true\}/);
+  assert.match(
+    src("src/components/building-photo.tsx"),
+    /aria-hidden=\{_alt \? undefined : true\}/,
+  );
 });
 
 test("anonymous public documents get an edge cache and skip the session lookup", () => {
@@ -115,13 +125,16 @@ test("health counts stay read-only and the status page is bilingual", () => {
   assert.match(CATALOG_COUNT_SQL, /fees_confirmed/);
   assert.match(CATALOG_COUNT_SQL, /ages_confirmed/);
   assert.match(CATALOG_COUNT_SQL, /PUBLIC_LISTING_SQL|listing_active/);
-  assert.equal(catalogCountsFromRow({
-    listings_total: 10,
-    winnipeg_total: 2,
-    photos_confirmed: 3,
-    fees_confirmed: 4,
-    ages_confirmed: 5,
-  }).catalogCount, 10);
+  assert.equal(
+    catalogCountsFromRow({
+      listings_total: 10,
+      winnipeg_total: 2,
+      photos_confirmed: 3,
+      fees_confirmed: 4,
+      ages_confirmed: 5,
+    }).catalogCount,
+    10,
+  );
   assert.equal(catalogCountsFromRow({ listings_total: 1 }), null);
   const rows = statusServices({ checks: { app: "ok", database: "ok" } });
   assert.equal(rows.find((row) => row.id === "messages").state, "partial");
@@ -131,12 +144,21 @@ test("health counts stay read-only and the status page is bilingual", () => {
   assert.match(when, /2026/);
   assert.match(src("src/routes/status.tsx"), /statusTitle/);
   assert.match(src("src/routes/status.tsx"), /loadPublicStatus/);
-  assert.doesNotMatch(src("src/routes/status.tsx"), /server\/uptime|@\/lib\/db|catalog-hydrate|pglite/);
+  assert.doesNotMatch(
+    src("src/routes/status.tsx"),
+    /server\/uptime|@\/lib\/db|catalog-hydrate|pglite/,
+  );
   assert.match(src("src/routes/fr.status.tsx"), /\/fr\/status/);
   assert.match(src("src/routes/fr.status.tsx"), /loadPublicStatus/);
   assert.match(src("src/lib/server/status-page.ts"), /await import\("\.\/uptime"\)/);
   assert.doesNotMatch(src("src/lib/server/status-page.ts"), /^import .*from ["']\.\/uptime["']/m);
-  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /statusTitle: "Is KidEase working\?"/);
-  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /statusTitle: "KidEase fonctionne-t-il\?"/);
+  assert.match(
+    src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"),
+    /statusTitle: "Is KidEase working\?"/,
+  );
+  assert.match(
+    src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"),
+    /statusTitle: "KidEase fonctionne-t-il\?"/,
+  );
   assert.match(src("src/lib/site-footer-nav.ts"), /\/status/);
 });

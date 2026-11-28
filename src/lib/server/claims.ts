@@ -9,6 +9,8 @@ import {
   providerDeskListingVisible,
 } from "@/lib/listing-visibility";
 import { nid } from "@/lib/utils";
+import { secureRandomString } from "@/lib/secure-random";
+import { assertListingOperator } from "@/lib/server/listing-owner-access";
 import { recordVacancyEvent } from "./vacancy-history";
 import { upsertDaycare } from "./seed";
 import { callerIsAdmin } from "./public-listing";
@@ -58,10 +60,7 @@ export type ClaimHit = {
 };
 
 function makeCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < 6; i += 1) out += chars[Math.floor(Math.random() * chars.length)];
-  return out;
+  return secureRandomString("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 6);
 }
 
 async function persistLicenseInput(raw?: string | null, daycareId?: string | null) {
@@ -207,6 +206,8 @@ export const startClaim = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const { assertRuntimeSwitch } = await import("@/lib/runtime-switches");
     assertRuntimeSwitch("FEATURE_CLAIM_LISTING");
+    const sql = await getSql();
+    await assertListingOperator(sql, context.userId, "Only the centre owner can claim a listing.");
     const listed = await catalogByIdGet(daycareId);
     if (listed && ((listed.mergedInto || "").trim() || (listed.importFault || "").trim())) {
       throw new Error("Listing not found");
@@ -215,7 +216,6 @@ export const startClaim = createServerFn({ method: "POST" })
     const isAdmin = adminOnly ? await callerIsAdmin() : false;
     let existingOwner: string | null = null;
     let ownerEmail: string | null = null;
-    const sql = await getSql();
     if (listed && (!adminOnly || isAdmin || listed.slug === "qa-reviewer-demo-centre")) {
       const existing = await sql<{ user_id: string; owner_email: string | null }>`
         select p.user_id, u.email as owner_email
@@ -344,6 +344,8 @@ export const verifyClaim = createServerFn({ method: "POST" })
     locale?: string;
   }) => input)
   .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    await assertListingOperator(sql, context.userId, "Only the centre owner can claim a listing.");
     const { PROVIDER_TERMS_VERSION } = await import("@/lib/legal-copy-v2");
     if (data.acceptTermsVersion !== PROVIDER_TERMS_VERSION) {
       throw new Error("Accept the Provider Terms to finish your claim");
@@ -352,7 +354,6 @@ export const verifyClaim = createServerFn({ method: "POST" })
     await assertTurnstileToken(data.turnstileToken);
     const photo = await persistLicenseInput(data.licensePhoto, data.daycareId);
     if (!photo) throw new Error("Upload a photo or PDF of your provincial licence");
-    const sql = await getSql();
     const waiting = await sql<{ id: string }>`
       select id from listing_claims
       where user_id = ${context.userId} and daycare_id = ${data.daycareId} and status = 'waiting'
@@ -497,6 +498,8 @@ export const saveClaimFees = createServerFn({ method: "POST" })
     preschoolMonthly?: unknown;
   }) => input)
   .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    await assertListingOperator(sql, context.userId, "Only the centre owner can claim a listing.");
     const { parseOptionalMonthlyFee } = await import("@/lib/fee-confidence");
     const infant = parseOptionalMonthlyFee(data.infantMonthly);
     const toddler = parseOptionalMonthlyFee(data.toddlerMonthly);
@@ -504,7 +507,6 @@ export const saveClaimFees = createServerFn({ method: "POST" })
     if (infant == null && toddler == null && preschool == null) {
       throw new Error("Enter a monthly fee or leave this for later");
     }
-    const sql = await getSql();
     const rows = await sql<{ id: string; status: string }>`
       select id, status from listing_claims
       where user_id = ${context.userId} and daycare_id = ${data.daycareId} and status = 'waiting'

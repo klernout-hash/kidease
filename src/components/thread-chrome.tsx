@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { ArrowUp, Plus, Video } from "lucide-react";
 import { HistoryBack } from "@/components/history-back";
 import { historyHref } from "@/lib/screen-history";
-import { messageReceipt } from "@/lib/engagement";
 import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
 import {
   joinNames,
@@ -40,48 +39,17 @@ function PersonFace({ name, image, large = false }: { name: string; image?: stri
   );
 }
 
-function ReceiptLine({
-  messageId,
-  createdAt,
-  reads,
-  peers,
-  phoneAlerts,
-  viewerId,
-}: {
-  messageId: string;
+function ReceiptLine({ createdAt, reads, viewerId }: {
   createdAt: string;
   reads: InboxRead[];
-  peers: Array<{ id?: string; name: string }>;
-  phoneAlerts: Array<{ messageId?: string; userId: string; state: "sent" | "not_sent" }>;
   viewerId: string;
 }) {
   const { t } = useCopy();
   const readers = readByNames(reads, createdAt, viewerId);
-  const seen = readers.length
-    ? `${t("inboxSeenHere")} · ${t("inboxReadBy").replace("{names}", joinNames(readers, t("inboxAnd")))}`
-    : "";
-  const phone = phoneAlerts
-    .filter((alert) => !alert.messageId || alert.messageId === messageId)
-    .map((alert) => {
-      const person = reads.find((read) => read.userId === alert.userId);
-      const named = peers.find((peer) => peer.id === alert.userId);
-      const receipt = messageReceipt({
-        userId: alert.userId,
-        seenInApp: reads.some((read) => read.userId === alert.userId && read.lastReadAt >= createdAt),
-        pushState: alert.state,
-      });
-      const name = person?.name || named?.name || "";
-      if (!name || receipt.phone === "unknown") return "";
-      return receipt.phone === "sent"
-        ? t("inboxPhoneSent").replace("{name}", name)
-        : t("inboxPhoneNotSentTo").replace("{name}", name);
-    })
-    .filter(Boolean);
-  const text = [seen, ...phone].filter(Boolean).join(" ");
-  if (!text) return null;
+  if (!readers.length) return null;
   return (
     <p className="mt-1 px-1 text-xs text-subtle" data-ke="inbox-receipt">
-      {text}
+      {t("inboxSeenHere")} · {t("inboxReadBy").replace("{names}", joinNames(readers, t("inboxAnd")))}
     </p>
   );
 }
@@ -99,7 +67,6 @@ export function ThreadTranscript({
   parentName,
   centreName,
   reads,
-  phoneAlerts = [],
   peers = [],
   now = new Date(),
   timeZone,
@@ -112,7 +79,6 @@ export function ThreadTranscript({
   parentName: string;
   centreName: string;
   reads: InboxRead[];
-  phoneAlerts?: Array<{ messageId?: string; userId: string; state: "sent" | "not_sent" }>;
   peers?: Array<{ id?: string; name: string; image?: string | null; role?: string }>;
   now?: Date;
   timeZone?: string;
@@ -180,11 +146,8 @@ export function ThreadTranscript({
                 </p>
                 {mine ? (
                   <ReceiptLine
-                    messageId={m.id}
                     createdAt={m.createdAt}
                     reads={reads}
-                    peers={peers}
-                    phoneAlerts={phoneAlerts}
                     viewerId={viewerId}
                   />
                 ) : null}

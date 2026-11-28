@@ -13,8 +13,8 @@ const MUTATIONS = [
   ["src/lib/server/daily-care.ts", "postDailyJournal", "care"],
   ["src/lib/server/daily-care.ts", "logDailyCare", "care"],
   ["src/lib/server/care-ops.ts", "requireStaffWrite", "care"],
-  ["src/lib/server/provider-screening.ts", "generateScreeningLetter", "screening"],
-  ["src/lib/server/provider-screening.ts", "saveScreeningUpload", "screening"],
+  ["src/lib/server/provider-screening.ts", "generateScreeningLetter", "requireScreeningOwner"],
+  ["src/lib/server/provider-screening.ts", "saveScreeningUpload", "requireScreeningOwner"],
   ["src/lib/server/timesheets.ts", "clockInTimesheet", "assertClock"],
   ["src/lib/server/centre-tools.ts", "saveCentreToolRecord", "meal_plan"],
   ["src/lib/server/host-calendar.ts", "saveHostCalendarDay", "calendar"],
@@ -42,13 +42,13 @@ test("every listed provider mutation rejects a read-only write", () => {
     const start = source.indexOf(`function ${fn}`) >= 0 ? source.indexOf(`function ${fn}`) : source.indexOf(`const ${fn}`);
     assert.ok(start >= 0, `${file} ${fn}`);
     const body = source.slice(start, start + 1800);
-    if (marker === "read_only" || marker === "assertClock") {
+    if (marker === "read_only" || marker === "assertClock" || marker === "requireScreeningOwner") {
       assert.match(body, new RegExp(marker), `${file} ${fn}`);
     } else {
       assert.match(body, new RegExp(`assertCanWrite\\([\\s\\S]{0,240}"${marker}"|canWrite\\([\\s\\S]{0,80}"${marker}"`), `${file} ${fn}`);
     }
     if (marker !== "assertClock") {
-      assert.match(body, /assertCanWrite|centreActionDenied|canWrite/, `${file} ${fn}`);
+      assert.match(body, /assertCanWrite|centreActionDenied|canWrite|requireScreeningOwner/, `${file} ${fn}`);
     }
   }
   assert.match(read("src/lib/server/timesheets.ts"), /assertCanWrite\(sql, userId, daycareId, "clock_in"\)/);

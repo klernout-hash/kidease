@@ -21,7 +21,7 @@ const sourceFiles = [
   "src/lib/provincial-ratios.ts",
   "src/components/ui/button.tsx",
   "src/components/empty-state.tsx",
-  "src/lib/utils.ts", "src/lib/cad-format.ts",
+  "src/lib/utils.ts", "src/lib/cad-format.ts", "src/lib/secure-random.ts",
   "src/lib/html-text.ts",
   "src/lib/languages.ts",
 ];
@@ -68,10 +68,10 @@ const virtual = {
   `,
   "staff-shift-fixture:service": `
     const rows=new Map(${JSON.stringify(initialRows)}.map(row=>[row.id,row]));
-    const qa=window.__staffShiftQa={saveCalls:[],listCalls:0,toasts:[],forbiddenServices:[],rejectNext:false,holdNextLoad:false,pendingLoad:null,
+    const qa=window.__staffShiftQa={saveCalls:[],listCalls:0,toasts:[],forbiddenServices:[],rejectNext:false,holdNextLoad:false,pendingLoad:null,canManage:true,
       snapshot:()=>({rows:structuredClone([...rows.values()]),saveCalls:structuredClone(qa.saveCalls),listCalls:qa.listCalls,hasPendingLoad:Boolean(qa.pendingLoad),forbiddenServices:[...qa.forbiddenServices]})};
     function denied(name){qa.forbiddenServices.push(name);throw new Error('Unlisted synthetic service call: '+name);}
-    function desk(){return {enabled:true,daycareId:'centre-example',province:'ON',centres:[{id:'centre-example',name:'Synthetic Maple Centre'}],shifts:structuredClone([...rows.values()]),certs:[]};}
+    function desk(){return {enabled:true,canManage:qa.canManage,daycareId:'centre-example',province:'ON',centres:[{id:'centre-example',name:'Synthetic Maple Centre'}],shifts:structuredClone([...rows.values()]),certs:[]};}
     qa.releaseLoad=()=>{if(!qa.pendingLoad)return denied('no-pending-load');qa.pendingLoad();};
     export async function listStaffDesk({data}){
       if(data.daycareId&&data.daycareId!=='centre-example')return denied('unexpected-centre');
@@ -354,6 +354,12 @@ try {
       assert.deepEqual((await snapshot()).forbiddenServices, []);
       assert.deepEqual(await page.evaluate(() => window.__staffShiftTransportAttempts), []);
       assert.deepEqual(pageErrors, []);
+      await page.evaluate(() => { window.__staffShiftQa.canManage = false; window.__staffShiftQa.remount(); });
+      await page.locator("[data-ke=staff-shift-row]").first().waitFor();
+      assert.equal(await page.locator("form[aria-labelledby=staff-shift-form-title]").count(), 0);
+      assert.equal(await page.getByRole("button", { name: copy.saveCert, exact: true }).count(), 0);
+      assert.equal(await updatedEdit.count(), 0);
+      assert.equal(await page.getByRole("button", { name: copy.check, exact: true }).count(), 1);
       results.push({ locale, width, prefill: true, cancelNoWriteAndFocusReturn: true, invalidRetainedNoCall: true, rejectedSaveRetained: true, retryUpdatesSameIdAndCount: true, updatedWhileReadHeld: true, freshComponentRemount: true, minTouchTarget: 44, noOverflow: true, saveCalls: 2 });
     } catch (error) {
       if (page && !page.isClosed()) {

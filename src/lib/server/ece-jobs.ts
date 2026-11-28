@@ -4,9 +4,10 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseStatus } from "@tanstack/react-start/server";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
-import { getSql } from "@/lib/db";
+import { getSql, type Sql } from "@/lib/db";
 import { cleanEceNote, cleanEceRole, ecePostReady } from "@/lib/ece-jobs";
 import { eceJobsEnabled } from "@/lib/features";
 import { canadaProvinceCode, jobAppStatus, jobPostStatus, provinceBucket, staffingShortage } from "@/lib/gap-features";
@@ -14,7 +15,23 @@ import { PROVINCES } from "@/lib/gov/places";
 import { govScopeProvince } from "@/lib/gov/province-choice";
 import type { GovActor } from "@/lib/server/gov-actor.server";
 import { nid } from "@/lib/utils";
-import { listAccessibleDaycareIds } from "./centre-access";
+
+
+async function eceOwnerCentreIds(sql: Sql, userId: string): Promise<string[]> {
+  const rows = await sql<{ daycare_id: string }>`
+    select daycare_id from provider_daycares where user_id = ${userId}
+    union
+    select daycare_id from centre_members
+    where user_id = ${userId} and status = 'active' and role = 'owner'
+  `;
+  if (!rows.length) setResponseStatus(403);
+  return rows.map(({ daycare_id }) => daycare_id);
+}
+
+function eceOwnerDenied() {
+  setResponseStatus(403);
+  return { ok: false as const, reason: "owner" as const };
+}
 
 export const eceJobsFlag = createServerFn({ method: "GET" }).handler(async () => eceJobsEnabled());
 
@@ -80,14 +97,19 @@ export const postEceJob = createServerFn({ method: "POST" })
     const role = cleanEceRole(data.role);
     if (!ecePostReady(role)) throw new Error("Add the role title");
     const sql = await getSql();
-    const centres = await listAccessibleDaycareIds(sql, context.userId);
-    if (!centres.includes(data.daycareId)) throw new Error("That centre is not on this account");
     const id = nid("job");
-    await sql`
+    const rows = await sql<{ id: string }>`
       insert into centre_job_posts (id, daycare_id, user_id, role, note)
-      values (${id}, ${data.daycareId}, ${context.userId}, ${role}, ${cleanEceNote(data.note || "")})
+      select ${id}, d.id, ${context.userId}, ${role}, ${cleanEceNote(data.note || "")}
+      from daycares d
+      where d.id = ${data.daycareId} and (
+        exists (select 1 from provider_daycares p where p.daycare_id = d.id and p.user_id = ${context.userId})
+        or exists (select 1 from centre_members m where m.daycare_id = d.id and m.user_id = ${context.userId}
+          and m.status = 'active' and m.role = 'owner')
+      )
+      returning id
     `;
-    return { ok: true as const, id };
+    return rows.length ? { ok: true as const, id } : eceOwnerDenied();
   });
 
 export const applyToEceJob = createServerFn({ method: "POST" })
@@ -130,7 +152,7 @@ export const listMyEceApplicants = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     if (!eceJobsEnabled()) return [];
     const sql = await getSql();
-    const centres = await listAccessibleDaycareIds(sql, context.userId);
+    const centres = await eceOwnerCentreIds(sql, context.userId);
     if (!centres.length) return [];
     const rows = await sql
       .query<{
@@ -165,7 +187,7 @@ export const listMyCentresForJobs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     if (!eceJobsEnabled()) return [];
     const sql = await getSql();
-    const centres = await listAccessibleDaycareIds(sql, context.userId);
+    const centres = await eceOwnerCentreIds(sql, context.userId);
     if (!centres.length) return [];
     const rows = await sql
       .query<{ id: string; name: string }>(
@@ -181,7 +203,7 @@ export const listManagedEceJobs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     if (!eceJobsEnabled()) return { enabled: false as const, posts: [], applicants: [] };
     const sql = await getSql();
-    const centres = await listAccessibleDaycareIds(sql, context.userId);
+    const centres = await eceOwnerCentreIds(sql, context.userId);
     if (!centres.length) return { enabled: true as const, posts: [], applicants: [] };
     const posts = await sql
       .query<{
@@ -257,13 +279,16 @@ export const setEceJobStatus = createServerFn({ method: "POST" })
     if (!eceJobsEnabled()) return { ok: false as const, reason: "off" as const };
     if (!data.jobId) throw new Error("That role is not posted");
     const sql = await getSql();
-    const centres = await listAccessibleDaycareIds(sql, context.userId);
-    const rows = await sql<{ daycare_id: string }>`
-      select daycare_id from centre_job_posts where id = ${data.jobId} limit 1
+    const rows = await sql<{ id: string }>`
+      update centre_job_posts target set status = ${data.status}
+      where target.id = ${data.jobId} and (
+        exists (select 1 from provider_daycares p where p.daycare_id = target.daycare_id and p.user_id = ${context.userId})
+        or exists (select 1 from centre_members m where m.daycare_id = target.daycare_id and m.user_id = ${context.userId}
+          and m.status = 'active' and m.role = 'owner')
+      )
+      returning target.id
     `;
-    if (!rows[0] || !centres.includes(rows[0].daycare_id)) throw new Error("That centre is not on this account");
-    await sql`update centre_job_posts set status = ${data.status} where id = ${data.jobId}`;
-    return { ok: true as const };
+    return rows.length ? { ok: true as const } : eceOwnerDenied();
   });
 
 export const setEceApplicationStatus = createServerFn({ method: "POST" })
@@ -276,13 +301,16 @@ export const setEceApplicationStatus = createServerFn({ method: "POST" })
     if (!eceJobsEnabled()) return { ok: false as const, reason: "off" as const };
     if (!data.applicationId) throw new Error("That application is not here");
     const sql = await getSql();
-    const centres = await listAccessibleDaycareIds(sql, context.userId);
-    const rows = await sql<{ daycare_id: string }>`
-      select daycare_id from job_applications where id = ${data.applicationId} limit 1
+    const rows = await sql<{ id: string }>`
+      update job_applications target set status = ${data.status}
+      where target.id = ${data.applicationId} and (
+        exists (select 1 from provider_daycares p where p.daycare_id = target.daycare_id and p.user_id = ${context.userId})
+        or exists (select 1 from centre_members m where m.daycare_id = target.daycare_id and m.user_id = ${context.userId}
+          and m.status = 'active' and m.role = 'owner')
+      )
+      returning target.id
     `;
-    if (!rows[0] || !centres.includes(rows[0].daycare_id)) throw new Error("That centre is not on this account");
-    await sql`update job_applications set status = ${data.status} where id = ${data.applicationId}`;
-    return { ok: true as const };
+    return rows.length ? { ok: true as const } : eceOwnerDenied();
   });
 
 /** Province counts only. Names and emails stay off this response. */

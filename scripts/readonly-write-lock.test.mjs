@@ -208,6 +208,12 @@ async function harness() {
     },
   });
   const modules = modulesFor(db.sql, privateDocsServer, centreAccess);
+  for (const guard of ["screening-owner-access", "listing-owner-access"]) {
+    modules[`@/lib/server/${guard}`] = load(guard, {
+      ...modules,
+      "@tanstack/react-start/server": { setResponseStatus: () => {} },
+    });
+  }
   const files = {
     "child-checkin": load("child-checkin", modules),
     claims: load("claims", modules),

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { keepLangParam } from "../src/lib/locale-search.ts";
-import { groupNotifications, markItemsRead, notificationTimeLabel } from "../src/lib/notification-groups.ts";
+import { mergeNotificationEvents, notificationEventKey, notificationTimeLabel } from "../src/lib/notification-groups.ts";
 import { createSessionFetch, isSessionRead, sessionRetryDelayMs } from "../src/lib/auth/session-fetch.ts";
 import { tourCalendarPack, wallTimeToInstant } from "../src/lib/tour-add-to-calendar.ts";
 import { blockDialogText } from "../src/lib/safety.ts";
@@ -24,19 +24,24 @@ test("keepLangParam keeps ?lang unless the link sets its own", () => {
   assert.match(src("src/routes/__root.tsx"), /keepLangParam/);
 });
 
-const item = (id, extra = {}) => ({ id, kind: "inbox", titleKey: "notifInbox", href: "/inbox/a", sourceKey: id, createdAt: "2026-11-25T23:30:00.000Z", readAt: null, daycareName: "Oak", status: null, ...extra });
-
-test("repeated New message rows fold into one with a count", () => {
-  const groups = groupNotifications([item("1"), item("2", { readAt: "x" }), item("3", { href: "/inbox/b" })]);
-  assert.equal(groups.length, 2);
-  assert.equal(groups[0].count, 2);
-  assert.deepEqual(groups[0].ids, ["1", "2"]);
-  assert.equal(groups[0].unread, true);
-  const read = markItemsRead([item("1"), item("2")], ["1"], "T");
-  assert.equal(read[0].readAt, "T");
-  assert.equal(read[1].readAt, null);
-  assert.ok(markItemsRead([item("1")], "all", "T").every((row) => row.readAt === "T"));
-  assert.match(notificationTimeLabel("2026-11-25T23:30:00.000Z", "en"), /Nov 25/);
+test("one dated item per message, even when both alert sources record it", () => {
+  const createdAt = "2026-11-25T23:30:00.000Z";
+  const item = (source, sourceKey, id, readAt = null) => ({
+    key: notificationEventKey(source, sourceKey),
+    data: { href: "/inbox/a" },
+    createdAt,
+    readAt,
+    receipts: [{ source, id }],
+  });
+  const rows = mergeNotificationEvents([
+    item("projected", "inbox:message:m1", "n1"),
+    item("projected", "inbox:message:m2", "n2"),
+    item("unified", "parent_new_message:m1", "u1", "2026-11-26T00:00:00Z"),
+  ]);
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows[0].receipts.map((row) => row.id), ["n1", "u1"]);
+  assert.equal(rows.filter((row) => !row.readAt).length, 1);
+  assert.match(notificationTimeLabel(rows[0].createdAt, "en"), /Nov 25/);
 });
 
 test("FR critical alert label is Important, not Urgent", () => {

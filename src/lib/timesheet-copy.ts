@@ -65,6 +65,7 @@ const en: TimesheetCopy = {
     same: "Change a name or a time first.",
     missing: "That shift was not found.",
     time: "Check the times.",
+    owner: "This tab is for the centre owner. You can see and fix your own hours.",
   },
 };
 
@@ -106,6 +107,7 @@ const fr: TimesheetCopy = {
     same: "Changez un nom ou une heure d’abord.",
     missing: "Ce quart est introuvable.",
     time: "Vérifiez les heures.",
+    owner: "Cet onglet est réservé au propriétaire. Vous pouvez voir et corriger vos propres heures.",
   },
 };
 

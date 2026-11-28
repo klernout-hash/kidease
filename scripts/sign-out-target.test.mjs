@@ -22,11 +22,12 @@ test("#1014 item 8: a French government user signs out to /fr/gov/login", () => 
   assert.match(src("src/components/gov/gov-frame.tsx"), /signOut\(govPath\(locale, "login"\)\)/);
 });
 
-test("#1014 item 8: everyone else goes home and keeps French", () => {
-  assert.equal(signOutTarget({ role: "parent", pathname: "/fr/parent", locale: "fr" }), "/fr");
-  assert.equal(signOutTarget({ role: "parent", pathname: "/fr/menu", locale: "en" }), "/fr");
-  assert.equal(signOutTarget({ role: "provider", pathname: "/provider", locale: "en" }), "/");
-  assert.equal(signOutTarget({ role: null, pathname: "/menu", locale: "en" }), "/");
+test("N-37: everyone else lands on the sign-in page and keeps French", () => {
+  assert.equal(signOutTarget({ role: "parent", pathname: "/fr/parent", locale: "fr" }), "/fr/login");
+  assert.equal(signOutTarget({ role: "parent", pathname: "/fr/menu", locale: "en" }), "/fr/login");
+  assert.equal(signOutTarget({ role: "provider", pathname: "/provider", locale: "en" }), "/login");
+  assert.equal(signOutTarget({ role: "admin", pathname: "/admin", locale: "en" }), "/login");
+  assert.equal(signOutTarget({ role: null, pathname: "/menu", locale: "en" }), "/login");
 });
 
 test("#1014 item 8: the government desk home link keeps the language too", () => {

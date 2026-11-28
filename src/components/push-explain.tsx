@@ -1,29 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { shouldShowAnalyticsConsentBanner } from "@/lib/analytics-consent";
 import { isNative } from "@/lib/native";
 import { nativeShellPrompt } from "@/lib/native-prompt";
-import { pushPromptStep } from "@/lib/push-prompt";
-import { registerPushDevice } from "@/lib/push-client";
+import { pushPermissionStillPending, registerPushDevice } from "@/lib/push-client";
+import { pushExplainCopy, pushPromptStep } from "@/lib/push-prompt";
 import { useCopy } from "@/lib/use-copy";
+import type { AlertAudience } from "@/lib/alert-push";
 
 const SEEN_KEY = "ke-native-opened";
 const CHOICE_KEY = "ke-push-choice";
 
-/**
- * Native only. The first launch writes a seen flag and does not prompt.
- * A later launch shows this card. The system permission sheet opens only after Turn on.
- */
-export function PushExplain() {
-  const { t } = useCopy();
-  const { user } = useCurrentUserState();
-  const [open, setOpen] = useState(false);
-  const samsungPush = useRouterState({
+function useSamsungPush() {
+  return useRouterState({
     select: (state) => state.matches.some((match) => (match.context as { samsungPush?: boolean }).samsungPush === true),
   });
+}
 
+/** A returning session may restore prior opt-in, but it never shows an explainer or asks the OS. */
+export function PushRegistrationBoot() {
+  const { user } = useCurrentUserState();
+  const samsungPush = useSamsungPush();
   useEffect(() => {
     if (!isNative() || !user?.id) return;
     let cancelled = false;
@@ -35,65 +34,102 @@ export function PushExplain() {
         return;
       }
       const choice = await Preferences.get({ key: CHOICE_KEY });
+      if (choice.value !== "yes" || cancelled) return;
       const { getPushClientStatus } = await import("@/lib/server/push-api");
-      const status = await getPushClientStatus().catch(() => ({ enabled: false }));
-      const step = pushPromptStep({
-        enabled: status.enabled,
-        firstLaunch: false,
-        choice: choice.value,
-      });
+      const status = await getPushClientStatus();
       if (cancelled) return;
-      const showPush = nativeShellPrompt({
-        native: true,
-        consentUnset: shouldShowAnalyticsConsentBanner(),
-        pushExplain: step === "explain",
-      });
-      if (showPush === "push") setOpen(true);
-      if (step === "register") {
-        await registerPushDevice({ enabled: true, ...(samsungPush ? { samsungFallback: true } : {}) });
+      if (pushPromptStep({ enabled: status.enabled, firstLaunch: false, choice: choice.value }) === "register") {
+        await registerPushDevice({ enabled: true, allowPermissionPrompt: false, samsungFallback: samsungPush });
       }
+    })().catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [user?.id, samsungPush]);
+  return null;
+}
+
+/** In-flow card shown only when a signed-in native user opens phone notification settings. */
+export function PushExplain({ audience }: { audience: AlertAudience }) {
+  const { user } = useCurrentUserState();
+  if (!user?.id) return null;
+  return <PushChoice key={user.id} audience={audience} />;
+}
+
+function PushChoice({ audience }: { audience: AlertAudience }) {
+  const { t, locale } = useCopy();
+  const copy = pushExplainCopy(audience, locale);
+  const samsungPush = useSamsungPush();
+  const title = useId();
+  const [eligible, setEligible] = useState(false);
+  const [consentSettled, setConsentSettled] = useState(false);
+  const [opened, setOpened] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!isNative()) return;
+    let cancelled = false;
+    const refreshConsent = () => setConsentSettled(!shouldShowAnalyticsConsentBanner() && !document.documentElement.dataset.cookieBanner);
+    refreshConsent();
+    const observer = new MutationObserver(refreshConsent);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-cookie-banner"] });
+    void (async () => {
+      const { Preferences } = await import("@capacitor/preferences");
+      const choice = await Preferences.get({ key: CHOICE_KEY });
+      if (choice.value === "no" || cancelled) return;
+      const { getPushClientStatus } = await import("@/lib/server/push-api");
+      const status = await getPushClientStatus();
+      if (!status.enabled || cancelled) return;
+      const available = choice.value !== "yes" || await pushPermissionStillPending(samsungPush);
+      if (!cancelled) setEligible(available);
     })().catch(() => undefined);
     return () => {
       cancelled = true;
+      observer.disconnect();
     };
-  }, [user?.id, samsungPush]);
+  }, [samsungPush]);
 
   async function choose(value: "yes" | "no") {
-    setOpen(false);
-    const { Preferences } = await import("@capacitor/preferences");
-    await Preferences.set({ key: CHOICE_KEY, value });
-    if (value === "yes") await registerPushDevice({ enabled: true, ...(samsungPush ? { samsungFallback: true } : {}) });
+    if (busy || !consentSettled || shouldShowAnalyticsConsentBanner() || document.documentElement.dataset.cookieBanner) return;
+    setBusy(true);
+    setFailed(false);
+    try {
+      const { Preferences } = await import("@capacitor/preferences");
+      if (value === "yes") {
+        const result = await registerPushDevice({ enabled: true, samsungFallback: samsungPush });
+        if (!result.ok) {
+          setFailed(true);
+          return;
+        }
+      }
+      await Preferences.set({ key: CHOICE_KEY, value });
+      setEligible(false);
+      setOpened(false);
+    } catch {
+      setFailed(true);
+    } finally {
+      setBusy(false);
+    }
   }
 
-  useEffect(() => {
-    if (!open) return;
-    document.documentElement.dataset.nativePrompt = "open";
-    return () => {
-      if (document.documentElement.dataset.nativePrompt === "open") {
-        delete document.documentElement.dataset.nativePrompt;
-      }
-    };
-  }, [open]);
+  if (nativeShellPrompt({ native: isNative(), consentUnset: !consentSettled, pushExplain: eligible }) !== "push") return null;
 
-  if (!open) return null;
-
-  return (
-    <div
-      data-ke="push-explain"
-      className="ke-above-tabs ke-safe-x fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 [--ke-pad-x:1rem]"
-    >
-      <div className="mx-auto max-w-lg rounded-2xl bg-surface p-3 shadow-card ring-1 ring-border">
-        <p className="text-base font-semibold text-fg">{t("pushExplainTitle")}</p>
-        <p className="mt-1 text-sm text-muted">{t("pushExplainBody")}</p>
-        <div className="mt-3 flex flex-col gap-2">
-          <Button className="min-h-11" onClick={() => void choose("yes")}>
-            {t("pushExplainYes")}
-          </Button>
-          <Button variant="secondary" className="min-h-11" onClick={() => void choose("no")}>
-            {t("pushExplainNo")}
-          </Button>
-        </div>
+  return opened ? (
+    <section data-ke="push-explain" aria-labelledby={title} className="mt-4 rounded-xl bg-bg p-3 ring-1 ring-border">
+      <h3 id={title} className="text-base font-semibold text-fg">{copy.title}</h3>
+      <p className="mt-1 text-sm text-muted">{copy.body}</p>
+      {failed ? <p className="mt-2 text-sm text-fg" role="status">{copy.retry}</p> : null}
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button type="button" className="min-h-11" disabled={busy} onClick={() => void choose("yes")}>
+          {t("pushExplainYes")}
+        </Button>
+        <Button type="button" variant="secondary" className="min-h-11" disabled={busy} onClick={() => void choose("no")}>
+          {t("pushExplainNo")}
+        </Button>
       </div>
-    </div>
+    </section>
+  ) : (
+    <Button type="button" variant="outline" className="mt-4 min-h-11" data-ke="push-explain-open" onClick={() => setOpened(true)}>
+      {copy.title}
+    </Button>
   );
 }

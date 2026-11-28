@@ -131,7 +131,7 @@ test("editor pages keep one set of spot fields and the old desk stays in source"
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /hostListing &&/);
   assert.match(provider, /hostListingKnown && !hostListing/);
-  assert.match(provider, /desk === "calendar" && !hostListingKnown/);
+  assert.match(provider, /desk === "calendar" && \(\(!hostListingKnown && !sessionReady\)/);
   assert.doesNotMatch(provider, /desk === "calendar" && !hostListing \?/);
   assert.match(provider, /HostTodayHome/);
   assert.match(provider, /!hostListing && deskListings/);

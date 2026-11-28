@@ -181,6 +181,30 @@ test("actual home compound fields preserve padding focus and local interactions"
         await page.getByRole("button", { name: copy.findChildcare, exact: true }).click();
         assert.deepEqual(await page.evaluate((start) => window.__homeHit.submits.slice(start), beforeFinalSubmit), [{ where: "Synthetic place", name: "", radius: 25 }], "The later ordinary Search activation also submits exactly once");
         assert.equal(await page.evaluate(() => window.__homeHit.submits.length), expectedEarlySubmits + 1);
+        await page.evaluate(() => { window.__homeHit.unresolvedPlace = "Unrecognized fixture place"; });
+        await where.fill("Unrecognized fixture place");
+        await page.getByRole("button", { name: copy.findChildcare, exact: true }).click();
+        const placeError = page.getByRole("alert").filter({ hasText: copy.searchWhereNotFound });
+        await placeError.waitFor();
+        assert.equal(await where.inputValue(), "Unrecognized fixture place");
+        assert.equal(await where.getAttribute("aria-invalid"), "true");
+        assert.equal(await where.getAttribute("aria-describedby"), await placeError.getAttribute("id"));
+        assert.equal(await name.inputValue(), "");
+        await where.fill("Corrected fixture place");
+        assert.equal(await placeError.count(), 0);
+        assert.equal(await where.getAttribute("aria-invalid"), null);
+
+        if (phase === "after") {
+          const beforeEnter = await page.evaluate(() => window.__homeHit.submits.length);
+          await where.fill("Winni");
+          await page.getByRole("option", { name: /Winnipeg/i }).first().waitFor();
+          await where.press("Enter");
+          await page.waitForFunction((count) => window.__homeHit.submits.length === count, beforeEnter + 1);
+          const submitted = await page.evaluate(() => window.__homeHit.submits.at(-1));
+          assert.match(submitted.where, /^Winnipeg/);
+          assert.equal(submitted.name, "");
+        }
+
         result.callbacks = await page.evaluate(() => ({ lookups: window.__homeHit.lookups, navigations: window.__homeHit.navigations, ages: window.__homeHit.ages, submits: window.__homeHit.submits, transports: window.__homeHit.transports }));
         assert.deepEqual(result.callbacks.transports, []);
         assert.deepEqual(result.browserRequests, []);

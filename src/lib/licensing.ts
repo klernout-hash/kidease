@@ -120,6 +120,14 @@ export function staysLate(hours: string | null | undefined, amenities: string | 
   return hasAmenity(amenities, "extended") || hasAmenity(amenities, "evenings") || /18:|19:|6 p\.?m|7 p\.?m/i.test(String(hours ?? ""));
 }
 
+/** Imported identity hashes sometimes appear in the licence column. */
+export function looksLikeLicenceHash(raw?: string | null): boolean {
+  const value = raw?.trim() ?? "";
+  return /^d_[a-z0-9]{6,}$/i.test(value)
+    || (/^(?:[a-f0-9]{16}|[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})$/i.test(value)
+      && /[a-f]/i.test(value) && /[0-9]/.test(value));
+}
+
 /**
  * Hide sequential source IDs (bc-1 → "1") so cards only show a real provincial licence #.
  * Ontario numbers are 4–7 digits or P-codes; those stay visible.
@@ -130,7 +138,7 @@ export function officialLicenceNumber(raw?: string | null, id?: string | null): 
   // Catalogue keys such as MB|home-… are not a provincial licence number.
   if (n.includes("|")) return null;
   if (id && n.toLowerCase() === id.toLowerCase()) return null;
-  if (/^d_[a-z0-9]{6,}$/i.test(n)) return null;
+  if (looksLikeLicenceHash(n)) return null;
   const tail = (id || "").split("-").pop() || "";
   if (/^\d{1,3}$/.test(n) && (!id || n === tail)) return null;
   return n;

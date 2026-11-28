@@ -108,7 +108,7 @@ async function stripeCallFor(
   const routed = routeStripeCall({
     paymentsEnabled: true,
     liveEnabled: connectLiveEnabled(),
-    payer: payer ? { email: payer.email, isTest: payer.is_test } : null,
+    payer: payer ? { isTest: payer.is_test } : null,
     centre: centre
       ? { id: centre.id, slug: centre.slug, visibility: centre.visibility, isTest: centre.is_test, isDemo: centre.is_demo }
       : null,
@@ -125,22 +125,25 @@ export const connectPaymentsPublic = createServerFn({ method: "GET" }).handler(a
   const sql = await getSql();
   const payer = await payerRow(sql, user.id);
   const mode = paymentStripeMode({
-    payerQa: payerUsesTestStripe({ email: payer?.email || user.email, isTest: payer?.is_test }),
+    payerQa: payerUsesTestStripe({ isTest: payer?.is_test }),
     centreQa: false,
     liveEnabled: connectLiveEnabled(),
   });
   return publicConnectState(process.env, mode);
 });
 
-async function profileCustomer(sql: Sql, userId: string): Promise<{ customerId: string | null; email: string | null }> {
-  const rows = await sql<{ stripe_customer_id: string | null; email: string | null }>`
-    select p.stripe_customer_id, u.email
+async function profileCustomer(
+  sql: Sql,
+  userId: string,
+): Promise<{ customerId: string | null; email: string | null; isTest: number | boolean | null }> {
+  const rows = await sql<{ stripe_customer_id: string | null; email: string | null; is_test: number | boolean | null }>`
+    select p.stripe_customer_id, u.email, p.is_test
     from "user" u
     left join profiles p on p.user_id = u.id
     where u.id = ${userId}
     limit 1
   `.catch(() => []);
-  return { customerId: rows[0]?.stripe_customer_id ?? null, email: rows[0]?.email ?? null };
+  return { customerId: rows[0]?.stripe_customer_id ?? null, email: rows[0]?.email ?? null, isTest: rows[0]?.is_test ?? null };
 }
 
 async function defaultPaymentMethod(customerId: string, secret?: string): Promise<string | null> {
@@ -200,7 +203,7 @@ export const createWalletSetup = createServerFn({ method: "POST" })
       email: profile.email,
       userId: context.userId,
       secret: routed.secret,
-      persist: routed.mode === "live" || payerUsesTestStripe({ email: profile.email }),
+      persist: routed.mode === "live" || payerUsesTestStripe({ isTest: profile.isTest }),
     });
     const intent = await stripeRequest<{ client_secret?: string | null }>("/setup_intents", {
       ...walletSetupIntentBody(),
@@ -533,7 +536,7 @@ export const listCentreIdsForPayouts = createServerFn({ method: "GET" })
       const routed = routeStripeCall({
         paymentsEnabled: true,
         liveEnabled: connectLiveEnabled(),
-        payer: payer ? { email: payer.email, isTest: payer.is_test } : null,
+        payer: payer ? { isTest: payer.is_test } : null,
         centre: { id: row.id, slug: row.slug, visibility: row.visibility, isTest: row.is_test, isDemo: row.is_demo },
         env: process.env,
       });
@@ -563,7 +566,7 @@ export const listParentPayChoices = createServerFn({ method: "GET" })
     const state = publicConnectState(
       process.env,
       paymentStripeMode({
-        payerQa: payerUsesTestStripe({ email: payer?.email, isTest: payer?.is_test }),
+        payerQa: payerUsesTestStripe({ isTest: payer?.is_test }),
         centreQa: false,
         liveEnabled: connectLiveEnabled(),
       }),
@@ -702,7 +705,7 @@ export async function attachConnectBill(billId: string): Promise<{ ok: boolean; 
   const routed = await stripeCallFor(sql, bill.parent_user_id, bill.daycare_id);
   if (!("secret" in routed)) return { ok: false, reason: routed.reason };
   const profile = await profileCustomer(sql, bill.parent_user_id);
-  const payerQa = payerUsesTestStripe({ email: profile.email });
+  const payerQa = payerUsesTestStripe({ isTest: profile.isTest });
   const customerId = await ensureCanadaStripeCustomer({
     customerId: routed.mode === "live" ? profile.customerId : null,
     email: profile.email,

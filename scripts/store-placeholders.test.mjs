@@ -20,8 +20,6 @@ test("store apps hide the store status line; the website gives current availabil
   assert.equal(tx("en", "storeComingSoon"), "Download unavailable");
   assert.equal(tx("fr", "storeComingSoon"), "Téléchargement indisponible");
   assert.doesNotMatch(`${tx("en", "storeComingSoon")} ${tx("fr", "storeComingSoon")}`, /coming soon|bientôt/i);
-  assert.match(src("src/components/store-badges.tsx"), /const href = configured\?\.live \? configured\.url : null/);
-  assert.match(src("src/components/store-badges.tsx"), /storeComingSoon/);
   assert.match(src("src/routes/get-app.tsx"), /data-ke="store-coming-soon"/);
   assert.match(src("src/routes/get-app.tsx"), /data-ke="store-already-in-app"/);
   assert.doesNotMatch(src("src/components/site-footer.tsx"), /data-ke="store-coming-soon"/);

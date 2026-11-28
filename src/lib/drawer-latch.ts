@@ -7,6 +7,13 @@
 
 export type DrawerLatch = { role: string; paid: boolean };
 
+/**
+ * N-30: rows ignore taps for this long after the menu opens. A fast second
+ * tap (or a ghost click from the opening tap) landed on whatever row slid
+ * under the finger and opened the wrong page.
+ */
+export const DRAWER_TAP_GUARD_MS = 300;
+
 export function nextDrawerLatch(
   open: boolean,
   menusReady: boolean,

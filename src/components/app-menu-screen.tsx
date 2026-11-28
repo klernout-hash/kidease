@@ -69,7 +69,8 @@ export function AppMenuScreen({
   const highlight = menuHighlight({ role: chrome.role, ownsCentre, currentDesk });
   const ownsListing = chrome.ownedSlugs.length > 0 || session?.centreOwner === true;
   const staffViewer = session?.centreRole === "staff" || session?.centreRole === "read_only";
-  const hostCards = highlight === "create" && ownsListing && !staffViewer;
+  const showCreate = highlight === "create" && Boolean(session) && !staffViewer;
+  const hostCards = showCreate && ownsListing;
   const signedIn = Boolean(user) || chrome.signedIn;
 
   if (section) {
@@ -108,7 +109,7 @@ export function AppMenuScreen({
     <>
       {airbnb ? (
         <div className="ke-airbnb-phone-only">
-          <PhoneCategoryMenu host={highlight === "create"} />
+          <PhoneCategoryMenu host={showCreate} />
         </div>
       ) : null}
       <main className={`ke-menu-main ke-screen-enter ke-gutter mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col pb-6 pt-6${airbnb ? " ke-airbnb-hide-phone" : ""}`} data-ke="app-menu" data-role={chrome.role}>
@@ -118,7 +119,7 @@ export function AppMenuScreen({
         <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t("navMenu")}</h1>
       )}
       {hostCards ? <HostCards initialEarnings={earnings} initialInsights={insights} /> : null}
-      {highlight === "create" && !staffViewer ? (
+      {showCreate ? (
         <Link
           to={providerDeskPath(pathname)}
           search={{ desk: "listings" }}
@@ -245,13 +246,7 @@ export function AppMenuScreen({
 
       {user ? (
         <div className="relative z-[45] mt-auto flex flex-col gap-3 pt-8 pb-[max(3.25rem,env(safe-area-inset-bottom))]" data-ke="menu-account-actions">
-          <Link
-            to={localePath("/delete-account", locale)}
-            data-ke="menu-delete-account"
-            className="flex min-h-11 w-full items-center justify-center rounded-full px-4 text-sm font-semibold text-fg ring-1 ring-border touch-manipulation"
-          >
-            {t("deleteAccount")}
-          </Link>
+          {/* N-37: Sign out comes first. It is never below Delete account. */}
           <button
             type="button"
             data-ke="menu-sign-out"
@@ -261,6 +256,13 @@ export function AppMenuScreen({
             <MenuGlyph id="logout" className="text-bg" />
             {t("signOut")}
           </button>
+          <Link
+            to={localePath("/delete-account", locale)}
+            data-ke="menu-delete-account"
+            className="flex min-h-11 w-full items-center justify-center rounded-full px-4 text-sm font-semibold text-fg ring-1 ring-border touch-manipulation"
+          >
+            {t("deleteAccount")}
+          </Link>
         </div>
       ) : null}
     </main>

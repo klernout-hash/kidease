@@ -62,7 +62,7 @@ describe("directory cards never paint a broken image for an empty URL", () => {
   it("hides a failed img and falls back without dropping the transform retry", () => {
     const photo = src("src/components/building-photo.tsx");
     const carousel = src("src/components/photo-carousel.tsx");
-    assert.match(photo, /healMediaUrl/);
+    assert.match(photo, /safeListingImageSrc/);
     assert.match(photo, /data-ke-photo=\{loaded \? "ok" : "pending"\}/);
     assert.match(photo, /invisible absolute inset-0/);
     assert.match(photo, /skipTransform/);
@@ -117,15 +117,15 @@ describe("subscription honesty is one localized line", () => {
   });
 });
 
-describe("cookie consent does not cover the whole bottom edge", () => {
-  it("keeps Essential and Allow, and lets clicks pass outside the card", () => {
+describe("cookie consent sits in the page flow", () => {
+  it("keeps Essential and Allow in a centring container before the route", () => {
     const banner = src("src/components/cookie-consent-banner.tsx");
-    const css = src("src/styles.css");
+    const root = src("src/routes/__root.tsx");
     assert.match(banner, /cookieConsentEssential/);
     assert.match(banner, /cookieConsentAllow/);
-    assert.match(banner, /pointer-events-none/);
-    assert.match(banner, /ke-cookie-consent-panel pointer-events-auto/);
+    assert.doesNotMatch(banner, /\bfixed\b/);
+    assert.match(banner, /ke-cookie-consent-panel mx-auto/);
     assert.match(banner, /dataset\.cookieBanner = "open"/);
-    assert.match(css, /html\[data-cookie-banner="open"\] body/);
+    assert.match(root, /<CookieConsentBanner \/>\s*<Outlet \/>/);
   });
 });

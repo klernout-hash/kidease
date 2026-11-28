@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { CreditCard } from "lucide-react";
+import { ChevronDown, CreditCard } from "lucide-react";
 import { Shell } from "@/components/shell";
 import { CountBadge } from "@/components/count-badge";
 import { DeskMenuProvider } from "@/components/desk-menu";
@@ -15,6 +15,7 @@ import {
   deskHrefForLocale,
   deskPathIsCurrent,
   visibleDeskNav,
+  type DeskGroup,
   type DeskIcon,
   type DeskId,
   type DeskItem,
@@ -70,7 +71,7 @@ function DeskNavFace({
     <>
       <span className="flex w-full min-w-0 items-center gap-2 font-medium leading-snug">
         <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
-        <span className="min-w-0 flex-1 break-words">{label}</span>
+        <span className="min-w-0 flex-1 wrap-anywhere">{label}</span>
         <CountBadge count={count} />
       </span>
       {hint ? (
@@ -100,6 +101,7 @@ function DeskNavButton({
       type="button"
       data-ke="desk-primary-pill"
       data-nav={item.id === "subscription" || item.id === "upgrade" ? "upgrade" : item.id}
+      aria-current={on ? "page" : undefined}
       onClick={() => onSelect(item.id)}
       className={cn(navClass(on), "text-left")}
     >
@@ -142,6 +144,7 @@ function DeskNavLink({
       {...(search ? { search } : {})}
       data-ke="desk-primary-pill"
       data-nav={plan ? "upgrade" : item.id}
+      aria-current={on ? "page" : undefined}
       className={cn(navClass(on), "w-full text-left")}
     >
       <DeskNavFace item={item} on={on} t={t} count={count} />
@@ -158,6 +161,34 @@ function itemIsOn(item: DeskItem, active: string, pathname: string): boolean {
   return active === item.id;
 }
 
+function DeskRailGroup({ desk, group, label, activeItem, children }: {
+  desk: DeskId;
+  group: DeskGroup;
+  label: string;
+  activeItem?: string;
+  children: ReactNode;
+}) {
+  const details = useRef<HTMLDetailsElement | null>(null);
+  useEffect(() => {
+    if (activeItem && details.current) details.current.open = true;
+  }, [activeItem]);
+  return (
+    <details
+      ref={(node) => {
+        details.current = node;
+        bindDeskGroup(node, desk, group.id, Boolean(group.open || activeItem));
+      }}
+      onToggle={(event) => writeDeskGroupOpen(desk, group.id, event.currentTarget.open)}
+      className="group/desk-rail py-0.5"
+    >
+      <summary className="mt-3 flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg border-b border-border px-2.5 pb-1 text-sm font-extrabold uppercase tracking-[0.14em] text-fg [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1 whitespace-normal wrap-anywhere">{label}</span>
+        <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-subtle group-open/desk-rail:rotate-180" />
+      </summary>
+      <div className="mt-[8px] flex flex-col gap-[8px]">{children}</div>
+    </details>
+  );
+}
 
 export function DeskShell({
   desk,
@@ -181,7 +212,8 @@ export function DeskShell({
 }) {
   const meta = DESK_META[desk];
   const { t } = useCopy();
-  const { session } = useSessionDesks();
+  const { session, ready: sessionReady } = useSessionDesks();
+  const centreRolePending = desk === "daycare" && !session;
   const chrome = useRoleChrome();
   const nativeShell = useInNativeShell();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -190,6 +222,7 @@ export function DeskShell({
     showPayCtas: session?.showPayCtas,
     subscriptionsEnabled: nativeShell ? false : chrome.subscriptionsEnabled,
     centreOwner: session?.centreOwner,
+    centreRolePending,
     centreLinked: session?.centreLinked,
     centreGrants: session?.centreGrants,
     centreCanInvite: session?.centreCanInvite,
@@ -246,26 +279,25 @@ export function DeskShell({
                   <DeskSwitcher />
                 </div>
               ) : null}
+              {centreRolePending && !sessionReady ? (
+                <div className="ke-skel mt-2 hidden h-11 rounded-xl md:block" aria-hidden="true" />
+              ) : null}
               <nav data-ke="desk-desktop-nav" className="mt-2 hidden flex-col gap-[8px] md:flex">
                 {visibleDeskGroups(desk, allItems).map(({ group, items }) => (
-                  <details
+                  <DeskRailGroup
                     key={group.id}
-                    ref={(node) => bindDeskGroup(node, desk, group.id, Boolean(group.open))}
-                    onToggle={(event) => writeDeskGroupOpen(desk, group.id, event.currentTarget.open)}
-                    className="py-0.5"
+                    desk={desk}
+                    group={group}
+                    label={group.labelKey ? t(group.labelKey) : group.label}
+                    activeItem={items.find((item) => itemIsOn(item, active, pathname))?.id}
                   >
-                    <summary className="mt-3 flex min-h-[44px] cursor-pointer list-none items-center break-words rounded-lg border-b border-border px-2.5 pb-1 text-sm font-extrabold uppercase tracking-[0.14em] text-fg [&::-webkit-details-marker]:hidden">
-                      <span>{group.labelKey ? t(group.labelKey) : group.label}</span>
-                    </summary>
-                    <div className="mt-[8px] flex flex-col gap-[8px]">
-                      {items.map((item) => {
-                        const on = itemIsOn(item, active, pathname);
-                        const count = attentionForItem(session?.attention, item.id);
-                        if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} count={count} />;
-                        return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} t={t} count={count} />;
-                      })}
-                    </div>
-                  </details>
+                    {items.map((item) => {
+                      const on = itemIsOn(item, active, pathname);
+                      const count = attentionForItem(session?.attention, item.id);
+                      if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} count={count} />;
+                      return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} t={t} count={count} />;
+                    })}
+                  </DeskRailGroup>
                 ))}
               </nav>
             </aside>

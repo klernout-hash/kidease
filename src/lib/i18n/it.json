@@ -354,6 +354,7 @@
   "findChildcare": "Trovi assistenza all'infanzia",
   "searchWhere": "Dove",
   "searchWhereHint": "Cerchi destinazioni",
+  "searchWhereNotFound": "Località non trovata. Prova con una città e una provincia o con un codice postale.",
   "whereSuggested": "Destinazioni suggerite",
   "whereNearby": "Nelle vicinanze",
   "whereNearbyHint": "Trovi assistenza all'infanzia intorno a Lei",

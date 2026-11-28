@@ -10,6 +10,15 @@ export const QUERY_STALE_MS = 30_000;
 export const MIN_POLL_MS = 30_000;
 export const MAX_POLL_BACKOFF_MS = 5 * 60_000;
 
+/** Retry a failed read once. A successful empty response is final. */
+export async function retryReadOnce<T>(read: () => Promise<T>): Promise<T> {
+  try {
+    return await read();
+  } catch {
+    return read();
+  }
+}
+
 type Entry<T> = {
   at: number;
   value?: T;

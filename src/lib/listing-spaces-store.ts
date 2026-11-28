@@ -1,4 +1,5 @@
 import type { Sql } from "./db.ts";
+import { BASE36, secureRandomString } from "./secure-random.ts";
 import { applyManagedListingPhotos, listingPhotosChanged, managedListingPhotos, realManagedListingPhotos, splitPhotoList } from "./listing-photo.ts";
 import {
   MAX_LISTING_SPACES,
@@ -140,7 +141,7 @@ export async function saveListingSpace(
     const sort = await sql<{ n: number }>`
       select coalesce(max(sort_order), 0)::int as n from listing_spaces where daycare_id = ${input.daycareId}
     `;
-    const nextId = `sp_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-4)}`;
+    const nextId = `sp_${secureRandomString(BASE36, 8)}${Date.now().toString(36).slice(-4)}`;
     await sql`
       insert into listing_spaces (id, daycare_id, name, space_type, amenities, accessibility, sort_order)
       values (
