@@ -341,8 +341,8 @@ function RootDocument() {
       data-native={hideAdmin ? "1" : undefined}
       data-runtime={nativeShell ? "native" : "web"}
       data-store={storeChannel}
-      data-theme="dark"
-      data-resolved-theme="dark"
+      data-theme="light"
+      data-resolved-theme="light"
       data-ui={airbnbUi ? "airbnb-v1" : undefined}
       data-huawei-review={huaweiReview ? "1" : undefined}
       suppressHydrationWarning
@@ -380,7 +380,8 @@ function RootDocument() {
         <script src="/asset-recover.js?v=2" />
         <HeadContent />
         <script src="/channel-boot.js?v=10" />
-        <script src="/theme-boot.js" />
+        {/* Bump v when theme-boot.js changes (edge keeps boot scripts a long time). */}
+        <script src="/theme-boot.js?v=2" />
         {/* Versioned: the edge keeps boot scripts for a long time. Bump v when look-boot.js changes. */}
         <script src="/look-boot.js?v=1" />
       </head>

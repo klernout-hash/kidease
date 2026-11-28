@@ -2,21 +2,19 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { isShippedLocale, type ShippedLocale } from "@/lib/languages";
-import { DEFAULT_THEME_PREFERENCE, parseThemePreference, type ThemePreference } from "@/lib/theme";
+import { parseThemePreference, type ThemePreference } from "@/lib/theme";
 
 export const getMyTheme = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<ThemePreference | null> => {
-    try {
-      const sql = await getSql();
-      const rows = await sql<{ theme: string | null }>`
-        select theme from profiles where user_id = ${context.userId} limit 1
-      `;
-      // T1: null means the account never chose, so the guest choice can carry over.
-      return rows[0]?.theme ? parseThemePreference(rows[0].theme) : null;
-    } catch {
-      return DEFAULT_THEME_PREFERENCE;
-    }
+    // No catch on purpose: a failed read rejects, so ThemeBoot keeps this
+    // device's saved choice instead of flipping a Dark user to the Light default.
+    const sql = await getSql();
+    const rows = await sql<{ theme: string | null }>`
+      select theme from profiles where user_id = ${context.userId} limit 1
+    `;
+    // T1: null means the account never chose, so the guest choice can carry over.
+    return rows[0]?.theme ? parseThemePreference(rows[0].theme) : null;
   });
 
 export const saveMyTheme = createServerFn({ method: "POST" })
