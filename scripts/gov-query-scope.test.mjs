@@ -502,7 +502,7 @@ function assertDemandReadOnlyScope(province) {
   const query = readCall("demand");
   assert.ok(query);
   assert.deepEqual(query.values, [province]);
-  assert.match(query.text, /where w\.status = 'waiting' and upper\(btrim\(d\.province\)\) = \$1/i);
+  assert.match(query.text, /where w\.source = 'centre' and w\.status = 'waiting' and upper\(btrim\(d\.province\)\) = \$1/i);
   assert.ok(state().calls.every((call) => /^\s*select\b/i.test(call.text)), "Only mocked SELECT reads are executed");
   assert.equal(state().networkCalls, 0);
 }

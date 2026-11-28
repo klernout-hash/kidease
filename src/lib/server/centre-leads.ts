@@ -1,3 +1,4 @@
+import { WAITLIST_READ_SQL } from "@/lib/waitlist-read-model";
 /**
  * Daycare lead desk. Reads tours, requests, waitlists, offers, and enrolments
  * the family already shared with this centre. Does not read child health.
@@ -115,26 +116,26 @@ async function loadBundle(sql: Sql, daycareId: string): Promise<SourceBundle> {
     left join tour_windows w on w.id = t.window_id
     where t.daycare_id = ${daycareId}
   `.catch(() => []);
-  const bookings = await sql<{
+  const bookings = await sql.query<{
     user_id: string;
     status: string;
     created_at: string;
     age_group: string | null;
     start_month: string | null;
-  }>`
+  }>(`
     select user_id, status, created_at, age_group, start_month
-    from bookings where daycare_id = ${daycareId}
-  `.catch(() => []);
-  const waitlist = await sql<{
+    from ${WAITLIST_READ_SQL} w where w.source = 'booking' and w.daycare_id = $1
+  `, [daycareId]).catch(() => []);
+  const waitlist = await sql.query<{
     user_id: string;
     status: string;
     joined_at: string;
     age_group: string | null;
     child_label: string | null;
-  }>`
-    select user_id, status, joined_at, age_group, child_label
-    from daycare_waitlist where daycare_id = ${daycareId}
-  `.catch(() => []);
+  }>(`
+    select user_id, status, created_at as joined_at, age_group, child_label
+    from ${WAITLIST_READ_SQL} w where w.source in ('centre', 'interest') and w.daycare_id = $1
+  `, [daycareId]).catch(() => []);
   const offers = await sql<{ user_id: string; status: string; offered_at: string; expires_at: string | null }>`
     select user_id, status, offered_at, expires_at from spot_offers where daycare_id = ${daycareId}
   `.catch(() => []);

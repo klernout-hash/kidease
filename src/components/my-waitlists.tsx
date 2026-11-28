@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { areaAgeLabel, areaWaitlistCopy, centreWaitlistStatus } from "@/lib/area-waitlist-copy";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { removeAreaWaitlist } from "@/lib/server/area-waitlist";
+import { setWaitlistInterest } from "@/lib/server/waitlist-api";
 import { withdrawDaycareWaitlist } from "@/lib/server/spot-offers";
 import {
   listMyWaitlists,
@@ -36,7 +37,7 @@ function when(iso: string, locale: string) {
 }
 
 function canLeaveCentre(status: string) {
-  return status === "waiting" || status === "offered";
+  return status === "waiting" || status === "offered" || status === "interested";
 }
 
 export function MyWaitlists() {
@@ -98,6 +99,11 @@ export function MyWaitlists() {
     setBusy(row.id);
     setNote(null);
     try {
+      if (row.status === "interested") {
+        await setWaitlistInterest({ data: { daycareId: row.daycareId, optedIn: false } });
+        await load();
+        return;
+      }
       await withdrawDaycareWaitlist({ data: { id: row.id } });
       setData((cur) =>
         cur
@@ -203,7 +209,7 @@ export function MyWaitlists() {
                 </div>
                 {canLeaveCentre(row.status) && !row.enrolled ? (
                   <Button size="sm" variant="secondary" className="min-h-11" disabled={busy === row.id} onClick={() => void leaveCentre(row)}>
-                    {copy.withdraw}
+                    {row.status === "interested" ? (locale === "fr" ? "Désactiver les alertes" : "Turn off alerts") : copy.withdraw}
                   </Button>
                 ) : null}
               </li>

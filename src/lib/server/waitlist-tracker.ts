@@ -1,3 +1,4 @@
+import { WAITLIST_READ_SQL } from "@/lib/waitlist-read-model";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
@@ -34,6 +35,7 @@ export type WaitlistRow = {
 /** A row from daycare_waitlist, the same list as /parent/spot-offers. */
 export type CentreWaitlistRow = {
   id: string;
+  daycareId: string;
   daycareName: string;
   daycareSlug: string;
   ageGroup: string;
@@ -82,7 +84,7 @@ export const listMyWaitlists = createServerFn({ method: "GET" })
     const sql = await getSql();
     const { familyScopeFor } = await import("@/lib/server/coparent");
     const homeId = (await familyScopeFor(context.userId)).dataUserId;
-    const rows = await sql<{
+    const rows = await sql.query<{
       id: string;
       status: string;
       created_at: string;
@@ -91,15 +93,15 @@ export const listMyWaitlists = createServerFn({ method: "GET" })
       name: string;
       slug: string;
       city: string | null;
-    }>`
-      select b.id, b.status, b.created_at, b.status_updated_at as updated_at, b.batch_id,
+    }>(`
+      select b.id, b.status, b.created_at, b.updated_at, b.batch_id,
              d.name, d.slug, d.city
-      from bookings b
+      from ${WAITLIST_READ_SQL} b
       join daycares d on d.id = b.daycare_id
-      where b.user_id = ${homeId}
+      where b.source = 'booking' and b.user_id = $1
       order by b.created_at desc
       limit 100
-    `.catch(() => []);
+    `, [homeId]).catch(() => []);
     const requests = rows.flatMap((row) => {
       const status = parentWaitlistStatus(row.status);
       if (!status) return [];
@@ -122,7 +124,7 @@ export const listMyWaitlists = createServerFn({ method: "GET" })
   });
 
 async function listCentreWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<CentreWaitlistRow[]> {
-  const entries = await sql<{
+  const entries = await sql.query<{
     id: string;
     daycare_id: string;
     age_group: string;
@@ -130,14 +132,21 @@ async function listCentreWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, u
     joined_at: string | Date;
     name: string;
     slug: string;
-  }>`
-    select w.id, w.daycare_id, w.age_group, w.status, w.joined_at, d.name, d.slug
-    from daycare_waitlist w
+  }>(`
+    select w.id, w.daycare_id, w.age_group, w.status, w.created_at as joined_at, d.name, d.slug
+    from ${WAITLIST_READ_SQL} w
     join daycares d on d.id = w.daycare_id
-    where w.user_id = ${userId}
-    order by w.joined_at desc
+    where w.user_id = $1 and (
+      w.source = 'centre'
+      or (w.source = 'interest' and not exists (
+        select 1 from ${WAITLIST_READ_SQL} joined
+        where joined.source = 'centre' and joined.user_id = w.user_id
+          and joined.daycare_id = w.daycare_id and joined.status in ('waiting', 'offered', 'accepted')
+      ))
+    )
+    order by w.created_at desc
     limit 100
-  `.catch(() => []);
+  `, [userId]).catch(() => []);
   const offers = await sql<{
     id: string;
     waitlist_id: string;
@@ -183,6 +192,7 @@ async function listCentreWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, u
     const line = ranks.get(row.daycare_id);
     return {
       id: row.id,
+      daycareId: row.daycare_id,
       daycareName: row.name,
       daycareSlug: row.slug,
       ageGroup: row.age_group,
@@ -198,7 +208,7 @@ async function listCentreWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, u
 }
 
 async function listAreaWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<AreaWaitlistRow[]> {
-  const rows = await sql<{
+  const rows = await sql.query<{
     id: string;
     center_label: string;
     postal_code: string | null;
@@ -206,13 +216,13 @@ async function listAreaWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, use
     age_band: string;
     start_date: string | Date | null;
     created_at: string | Date;
-  }>`
-    select id, center_label, postal_code, radius_km, age_band, start_date, created_at
-    from saved_searches
-    where user_id = ${userId} and kind = 'waitlist_area' and alerts_enabled = 1
+  }>(`
+    select id, center_label, postal_code, radius_km, age_group as age_band, start_date, created_at
+    from ${WAITLIST_READ_SQL} w
+    where user_id = $1 and source = 'area'
     order by created_at desc
     limit 20
-  `.catch(() => []);
+  `, [userId]).catch(() => []);
   return rows.map((row) => ({
     id: row.id,
     label: row.center_label,

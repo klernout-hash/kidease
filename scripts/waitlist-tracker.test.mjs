@@ -90,13 +90,13 @@ test("events stay on the allowlist and never carry an email", () => {
 test("the list, mail, and alert hook stay scoped to one parent", () => {
   const server = src("src/lib/server/waitlist-tracker.ts");
   assert.match(server, /familyScopeFor\(context\.userId\)/);
-  assert.match(server, /where b\.user_id = \$\{homeId\}/);
-  assert.match(server, /from daycare_waitlist w/);
+  assert.match(server, /where b\.source = .booking. and b\.user_id = \$1/);
+  assert.match(server, /from \$\{WAITLIST_READ_SQL\} w/);
   assert.match(server, /from spot_offers/);
-  assert.match(server, /kind = 'waitlist_area'/);
+  assert.match(server, /source = 'area'/);
   assert.match(server, /assertFamilyWrite\(context\.userId\)/);
   assert.match(server, /where id = \$\{data\.bookingId\} and user_id = \$\{homeId\}/);
-  const listSql = server.slice(server.indexOf("select b.id"), server.indexOf("from bookings b"));
+  const listSql = server.slice(server.indexOf("select b.id"), server.indexOf("from ${WAITLIST_READ_SQL} b"));
   assert.doesNotMatch(listSql, /child_name|parent_name|email/);
   const factsStart = server.indexOf("export async function listOpenWaitlistFacts");
   const factsSql = server.slice(factsStart, server.indexOf("from bookings", factsStart));
