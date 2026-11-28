@@ -114,15 +114,16 @@ App-side: `scripts/request-guard.mjs` `isSensitiveDeskPath` is the allow-list th
 
 ### Native shells and Access
 
-The iOS and Android apps load `https://www.kidease.ca` in a WebView. A document request for `/admin*` is answered by Access **before** Vercel or app middleware, when Access is on the DNS edge. The app therefore:
+The primary iOS and Android WebViews load `https://www.kidease.ca`. Android’s `AdminWebOnlyClient` and iOS’s `AdminWebOnlyPlugin` intercept Admin and Cloudflare Access redirects. The Capacitor configuration has no navigation allow-list for the team domain.
 
-- never links to `/admin` inside the shell
-- 302s `/admin*` to `/app-admin-unavailable` only when the request reaches the app (User-Agent `KidEaseNative` or cookie `ke_shell=native`)
-- keeps that page off the Access path list
+The designated admin can open **Switch to Admin** from the signed-in app menu. Capacitor Browser opens the KidEase operator sign-in on `www.kidease.ca`. The browser completes KidEase password and OTP verification, then follows the document navigation to `/admin` through Cloudflare Access. The browser keeps the Access team cookie and application cookie in its own session. The app does not copy cookies, pass credentials in the URL, or change any Access policies. The primary WebView stays on the app menu. Gov keeps its existing Access protection.
 
-**A Cloudflare Access bypass is still required** for a typed or bookmarked `/admin` URL in the WebView. Middleware cannot see that request. In Zero Trust, add a Bypass policy on the staff application for requests whose User-Agent contains `KidEaseNative` (and, if you can match it, cookie `ke_shell=native`), sending them to the origin. Do not bypass Access for normal browsers. Do not add `/app-admin-unavailable` or `/use-the-website` to the Access path list.
+Android emulator round
 
-Parent / Daycare login also refuse leftover `/admin` or `/support` destinations (`resolvePostLoginPath` + `assignPostAuthDest`). A parent `?role=` / `?desk=` must not paint the operator email-first form (`isAdminLoginIntent`) or full-document-assign into Access. Admin still uses a real document GET to `/admin` so Access can run once. Do not disable Access on `/admin*`.
+1. Use an Android emulator image with a browser that supports Custom Tabs. Install the app and sign in as a parent, a centre staff member, a director, and a Support user in separate sessions. Confirm no Admin launcher is shown. Confirm Support has its own navigation and a guest has neither desk link.
+2. Open a legacy launcher path while signed out and as a parent. Confirm the app shows its usual not-found page.
+3. Sign in as the designated Admin, open Menu, and choose **Switch to Admin**. With a cold browser session, complete KidEase password and OTP verification and the Cloudflare Access challenge. Confirm Admin opens in the in-app browser and can navigate and reload while Access is active.
+4. Close the browser and confirm the app menu is still available. Reopen Admin with an expired Access session and confirm Access prompts again. Repeat from French Menu. Verify on iOS using the same sequence.
 
 ## robots.txt Content-Signal (Lighthouse SEO)
 

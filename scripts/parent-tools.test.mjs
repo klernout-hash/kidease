@@ -70,7 +70,14 @@ describe("parent tools wiring", () => {
     assert.doesNotMatch(tracker, /console\.(log|info|debug|warn|error)/);
     assert.match(src("src/routes/parent.tsx"), /parseShareToken/);
     assert.match(src("src/components/parent-shortlist.tsx"), /data-ke="saved-map-toggle"/);
-    assert.match(src("src/components/parent-shortlist.tsx"), /data-ke="shortlist-share"/);
+    const shortlist = src("src/components/parent-shortlist.tsx");
+    const shareFamily = src("src/components/coparent-desk.tsx");
+    assert.match(shortlist, /search=\{\{ tab: "family" \}\} hash="invite-partner"/);
+    assert.doesNotMatch(shortlist, /inviteShortlistShare|data-ke="shortlist-share"/);
+    assert.match(shareFamily, /id="invite-partner"/);
+    assert.match(shareFamily, /data-ke="shortlist-share"/);
+    assert.match(shareFamily, /inviteShortlistShare\(\{ data: \{ email: inviteEmail \} \}\)/);
+    assert.match(shareFamily, /inviteCoparentByEmail/);
     assert.match(src("src/components/saved-track.tsx"), /data-ke="saved-track"/);
   });
 

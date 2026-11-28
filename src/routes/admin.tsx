@@ -3,7 +3,7 @@ import { Link, Outlet, createFileRoute, useLoaderData, useRouterState } from "@t
 import { beforeLoadAdminDesk, loadAdminQueueForRoute } from "@/lib/server/admin-route";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { ADMIN_LOGIN_SEARCH } from "@/lib/admin-desk-gate";
-import { AdminSignedOut } from "@/components/admin-signed-out";
+import { DefaultNotFound } from "@/components/page-not-found";
 import { AdminQueueBootstrapFallback } from "@/components/admin-queue-bootstrap";
 import {
   isAdminDeskTab,
@@ -61,7 +61,8 @@ export const Route = createFileRoute("/admin")({
   }),
   component: AdminRoute,
   pendingComponent: AdminGatePending,
-  notFoundComponent: AdminSignedOut,
+  // N-27: a plain 404 for everyone but the admin account. No sign-in hint.
+  notFoundComponent: DefaultNotFound,
 });
 
 function AdminGatePending() {

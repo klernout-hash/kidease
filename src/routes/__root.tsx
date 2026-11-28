@@ -58,6 +58,7 @@ import { ensureFrenchCopy } from "@/lib/copy-runtime";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import {
   isAccessProtectedPath,
+  nativeAccessPathOutcome,
   nativeAdminNotePathFor,
   nativeShellHidesAdminNow,
 } from "@/lib/native-admin";
@@ -150,7 +151,8 @@ export const Route = createRootRoute({
     const storeChannel = storeRead.channel;
     const nativeShell = shellBlocksCommerce(storeChannel);
     const hideAdmin = storeRead.hideAdmin;
-    if (hideAdmin && isAccessProtectedPath(location.pathname)) {
+    // N-27: everyone but the admin account falls through to the route's plain 404.
+    if (hideAdmin && isAccessProtectedPath(location.pathname) && nativeAccessPathOutcome(roleChrome.role) === "note") {
       throw redirect({ href: nativeAdminNotePathFor(location.pathname), statusCode: 302 });
     }
     return {
@@ -197,7 +199,6 @@ export const Route = createRootRoute({
         {...props}
         links={
           <>
-            {path.startsWith("/admin") && !nativeShellHidesAdminNow() ? <a href="/admin">{copy.admin}</a> : null}
             <a href="/search">{copy.explore}</a>
             <a href="/">{copy.home}</a>
             <a href={`mailto:${SUPPORT_INBOX_EMAIL}`}>{copy.support}</a>

@@ -68,7 +68,8 @@ export const getGovSession = createServerFn({ method: "GET" })
     const user = await getSessionUser(context.bearerToken);
     if (!user) return { ok: false as const };
     const actor = await loadGovActor(user.id);
-    if (!actor) return { ok: false as const };
+    // N-27: signed in, but not a government account. The desk shows a neutral page.
+    if (!actor) return { ok: false as const, otherAccount: true as const };
     const { isCurrentUserTwoFactorVerified } = await import("@/lib/server/two-factor.server");
     const { govCallAllowed } = await import("@/lib/gov/second-factor");
     if (!govCallAllowed(isCurrentUserTwoFactorVerified(user.id))) {

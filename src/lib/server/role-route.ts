@@ -4,6 +4,7 @@ import { sessionBearerMiddleware } from "@/lib/auth/middleware";
 import { backgroundCheckGuideEnabled, govPortalFooterEnabled, staffJobBoardEnabled, subscriptionsEnabled } from "@/lib/features";
 import { requestHasSessionMaterial } from "@/lib/anonymous-request";
 import { e2eChromeFromRequest } from "@/lib/e2e-role-cookie";
+import { isKidEaseOperatorEmail } from "@/lib/admin-email";
 import { isFrPath } from "@/lib/locale-path";
 import { guardPrivatePath, navRoleForSession, type ChromeRole } from "@/lib/role-access";
 import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
@@ -204,7 +205,8 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
     const { subscriptionAccessOpen } = await import("@/lib/subscription-lifecycle");
     const ownsCentre = flag(row?.owns_centre);
     const activeMember = flag(row?.active_member);
-    const nav = storedNavRole(row?.role ?? "parent", ownsCentre, activeMember);
+    const storedRole = row?.role === "admin" && !isKidEaseOperatorEmail(user.email) ? "parent" : row?.role;
+    const nav = storedNavRole(storedRole ?? "parent", ownsCentre, activeMember);
     const role =
       nav === "admin" || nav === "support" || nav === "provider" || nav === "parent" || nav === "government"
         ? nav
