@@ -3086,6 +3086,12 @@ html[data-native="1"] [data-ke="cookie-consent"] {
   bottom: calc(5.25rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
   z-index: 40;
 }
+/* N-71: no skip link in the phone apps. display:none also drops it from TalkBack/VoiceOver. */
+html[data-runtime="ios"] [data-ke="skip-link"],
+html[data-runtime="android"] [data-ke="skip-link"],
+html[data-runtime="native"] [data-ke="skip-link"] {
+  display: none !important;
+}
 /* Listing actions sit above the tab bar. The consent card stays above both. */
 @media (max-width: 767px) {
   html:has([data-ke="listing-sticky-bar"]) [data-ke="cookie-consent"] {

@@ -85,7 +85,7 @@ const en: AirbnbCopy = {
   paymentsNote: "Receipts only",
   accessibility: "Accessibility",
   legal: "Legal",
-  signOut: "Log out",
+  signOut: "Sign out",
   edit: "Edit",
   save: "Save",
   cancel: "Cancel",
