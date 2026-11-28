@@ -34,6 +34,7 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(ApplePlatformPlugin())
         bridge?.registerPluginInstance(AuthSessionPlugin())
         bridge?.registerPluginInstance(SecureSessionPlugin())
+        bridge?.registerPluginInstance(PdfShareFilesPlugin())
         bridge?.registerPluginInstance(CallKitVoipPlugin())
         bridge?.registerPluginInstance(AdminWebOnlyPlugin())
         if let controller = webView?.configuration.userContentController {
@@ -324,5 +325,40 @@ public class AdminWebOnlyPlugin: CAPPlugin, CAPBridgedPlugin {
         let french = url.path == "/fr" || url.path.hasPrefix("/fr/")
         parts.path = french ? "/fr/app-admin-unavailable" : "/app-admin-unavailable"
         return parts.url
+    }
+}
+
+@objc(PdfShareFilesPlugin)
+public class PdfShareFilesPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "PdfShareFilesPlugin"
+    public let jsName = "PdfShareFiles"
+    public let pluginMethods = [CAPPluginMethod(name: "stage", returnType: CAPPluginReturnPromise)]
+
+    @objc func stage(_ call: CAPPluginCall) {
+        guard let filename = call.getString("filename"),
+              filename.range(of: #"^[a-zA-Z0-9_.-]{1,180}\.pdf$"#, options: .regularExpression) != nil,
+              let base64 = call.getString("base64"), base64.utf8.count <= 28_000_000,
+              let data = Data(base64Encoded: base64) else {
+            call.reject("Invalid PDF")
+            return
+        }
+        do {
+            let files = FileManager.default
+            let root = files.temporaryDirectory.appendingPathComponent("shared-pdfs", isDirectory: true)
+            let cutoff = Date().addingTimeInterval(-86_400)
+            let previous = try? files.contentsOfDirectory(at: root, includingPropertiesForKeys: [.creationDateKey])
+            for item in previous ?? [] {
+                if let date = try? item.resourceValues(forKeys: [.creationDateKey]).creationDate, date < cutoff {
+                    try? files.removeItem(at: item)
+                }
+            }
+            let folder = root.appendingPathComponent(UUID().uuidString, isDirectory: true)
+            try files.createDirectory(at: folder, withIntermediateDirectories: true)
+            let file = folder.appendingPathComponent(filename)
+            try data.write(to: file, options: [.atomic, .completeFileProtection])
+            call.resolve(["uri": file.absoluteString])
+        } catch {
+            call.reject("Could not prepare PDF")
+        }
     }
 }

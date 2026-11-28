@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { tx } from "@/lib/copy";
-import { dollarsToCents } from "@/lib/bill";
+import { INVOICE_OPEN_SQL, INVOICE_READ_MODEL_SQL, INVOICE_SETTLED_SQL } from "@/lib/invoice-read-model";
 import { getSql } from "@/lib/db";
 import {
   maskEmail,
@@ -25,8 +25,6 @@ type MoneyRow = {
   net_cents: number | null;
   amount_cents: number | null;
   platform_fee_cents: number | null;
-  total: number | null;
-  platform_fee: number | null;
 };
 
 export const loadEarningsDesk = createServerFn({ method: "GET" })
@@ -114,27 +112,19 @@ async function centreDesk(userId: string): Promise<EarningsResult> {
   start.setMonth(start.getMonth() - 23, 1);
   const startDay = start.toISOString().slice(0, 10);
   const [aggregates, billRows, email, payoutRow, attendance, tours] = await Promise.all([
-    sql<{ period: string; status: string; net_cents: number; gross_cents: number; fee_cents: number }>`
+    sql.query<{ period: string; status: string; net_cents: number; gross_cents: number; fee_cents: number }>(`
       select
         substring(coalesce(nullif(i.period, ''), to_char(coalesce(i.paid_at, i.due_at, i.created_at), 'YYYY-MM')) from 1 for 7) as period,
         i.status,
-        coalesce(sum(
-          case
-            when i.net_cents is not null then i.net_cents
-            else greatest(
-              coalesce(i.amount_cents, coalesce(i.total, 0) * 100) - coalesce(i.platform_fee_cents, coalesce(i.platform_fee, 0) * 100),
-              0
-            )
-          end
-        ), 0)::int as net_cents,
-        coalesce(sum(coalesce(i.amount_cents, coalesce(i.total, 0) * 100)), 0)::int as gross_cents,
-        coalesce(sum(coalesce(i.platform_fee_cents, coalesce(i.platform_fee, 0) * 100)), 0)::int as fee_cents
-      from invoices i
-      where i.daycare_id = any(${daycareIds}::text[])
-        and i.status in ('paid', 'sent')
-        and coalesce(i.paid_at, i.due_at, i.created_at) >= ${startDay}
+        coalesce(sum(i.read_net_cents), 0)::int as net_cents,
+        coalesce(sum(i.received_cents), 0)::int as gross_cents,
+        coalesce(sum(i.read_fee_cents), 0)::int as fee_cents
+      from ${INVOICE_READ_MODEL_SQL} i
+      where i.daycare_id = any($1::text[])
+        and (${INVOICE_SETTLED_SQL} or ${INVOICE_OPEN_SQL})
+        and coalesce(i.paid_at, i.due_at, i.created_at) >= $2
       group by 1, 2
-    `,
+    `, [daycareIds, startDay]),
     billQuery(sql, daycareIds, owned),
     userEmail(sql, userId),
     owned.length
@@ -229,44 +219,44 @@ type BillRow = MoneyRow & {
 
 async function billQuery(sql: Awaited<ReturnType<typeof getSql>>, daycareIds: string[], ownedIds: string[]): Promise<BillRow[]> {
   if (!daycareIds.length) return [];
-  return sql<BillRow>`
+  return sql.query<BillRow>(`
     select i.id, i.number, i.status, i.period, i.paid_at, i.due_at, i.receipt_url, i.daycare_id,
-      i.net_cents, i.amount_cents, i.platform_fee_cents, i.total, i.platform_fee,
+      i.read_net_cents as net_cents, i.received_cents as amount_cents, i.read_fee_cents as platform_fee_cents,
       u.name as parent_name, u.image as parent_image, ch.name as child_name,
       d.name as centre_name, d.photos as centre_photos, b.start_date as program_start,
-      case when i.daycare_id = any(${ownedIds}::text[]) then po.stripe_payout_id else null end as stripe_payout_id,
-      case when i.daycare_id = any(${ownedIds}::text[]) then po.stripe_transfer_id else null end as stripe_transfer_id,
-      case when i.daycare_id = any(${ownedIds}::text[]) then po.scheduled_for else null end as scheduled_for
-    from invoices i
+      case when i.daycare_id = any($1::text[]) then po.stripe_payout_id else null end as stripe_payout_id,
+      case when i.daycare_id = any($1::text[]) then po.stripe_transfer_id else null end as stripe_transfer_id,
+      case when i.daycare_id = any($1::text[]) then po.scheduled_for else null end as scheduled_for
+    from ${INVOICE_READ_MODEL_SQL} i
     left join daycares d on d.id = i.daycare_id
     left join "user" u on u.id = i.parent_user_id
     left join children ch on ch.id = i.child_id
     left join bookings b on b.id = i.booking_id
     left join payouts po on po.daycare_id = i.daycare_id and po.period = substring(coalesce(i.period, '') from 1 for 7)
-    where i.daycare_id = any(${daycareIds}::text[])
-      and i.status in ('paid', 'sent')
+    where i.daycare_id = any($2::text[])
+      and (${INVOICE_SETTLED_SQL} or ${INVOICE_OPEN_SQL})
     order by coalesce(i.paid_at, i.due_at, i.created_at) desc
-    limit ${BILL_LIMIT}
-  `;
+    limit $3
+  `, [ownedIds, daycareIds, BILL_LIMIT]);
 }
 
 async function parentRows(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<BillRow[]> {
-  return sql<BillRow>`
+  return sql.query<BillRow>(`
     select i.id, i.number, i.status, i.period, i.paid_at, i.due_at, i.receipt_url, i.daycare_id,
-      i.net_cents, i.amount_cents, i.platform_fee_cents, i.total, i.platform_fee,
+      i.read_net_cents as net_cents, i.received_cents as amount_cents, i.read_fee_cents as platform_fee_cents,
       u.name as parent_name, u.image as parent_image, ch.name as child_name,
       d.name as centre_name, d.photos as centre_photos, b.start_date as program_start,
       null::text as stripe_payout_id, null::text as stripe_transfer_id, null::text as scheduled_for
-    from invoices i
+    from ${INVOICE_READ_MODEL_SQL} i
     left join daycares d on d.id = i.daycare_id
     left join "user" u on u.id = i.parent_user_id
     left join children ch on ch.id = i.child_id
     left join bookings b on b.id = i.booking_id
-    where i.parent_user_id = ${userId}
-      and i.status = 'paid'
+    where i.parent_user_id = $1
+      and ${INVOICE_SETTLED_SQL}
     order by coalesce(i.paid_at, i.created_at) desc
-    limit ${BILL_LIMIT}
-  `;
+    limit $2
+  `, [userId, BILL_LIMIT]);
 }
 
 async function loadItems(sql: Awaited<ReturnType<typeof getSql>>, ids: string[]) {
@@ -298,19 +288,12 @@ async function loadItems(sql: Awaited<ReturnType<typeof getSql>>, ids: string[])
 }
 
 function rawBill(row: BillRow, items: RawEarnBill["items"]): RawEarnBill {
-  const gross = row.amount_cents != null && Number.isFinite(Number(row.amount_cents)) ? Number(row.amount_cents) : dollarsToCents(Number(row.total) || 0);
-  const fee =
-    row.platform_fee_cents != null && Number.isFinite(Number(row.platform_fee_cents))
-      ? Number(row.platform_fee_cents)
-      : dollarsToCents(Number(row.platform_fee) || 0);
-  const net =
-    row.net_cents != null && Number.isFinite(Number(row.net_cents)) ? Number(row.net_cents) : Math.max(0, gross - fee);
   return {
     id: row.id,
     status: row.status,
-    grossCents: gross,
-    feeCents: fee,
-    netCents: net,
+    grossCents: Number(row.amount_cents),
+    feeCents: Number(row.platform_fee_cents),
+    netCents: Number(row.net_cents),
     period: row.period,
     paidAt: row.paid_at ? String(row.paid_at) : null,
     dueAt: row.due_at ? String(row.due_at) : null,

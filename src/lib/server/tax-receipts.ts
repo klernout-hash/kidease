@@ -1,3 +1,4 @@
+import { INVOICE_READ_MODEL_SQL, INVOICE_SETTLED_SQL } from "@/lib/invoice-read-model";
 /**
  * Yearly child care receipts. FEATURE_TAX_RECEIPTS defaults off.
  * Totals come from invoices marked paid. No email and no text.
@@ -23,7 +24,6 @@ type InvoiceRow = {
   id: string;
   status: string;
   amount_cents: number | string | null;
-  total: number | string | null;
   currency: string | null;
   paid_at: string | Date | null;
   period: string | null;
@@ -50,12 +50,12 @@ type DayRow = {
 };
 
 const INVOICE_SQL = `
-  select i.id, i.status, i.amount_cents, i.total, i.currency, i.paid_at, i.period,
+  select i.id, i.status, i.received_cents as amount_cents, i.currency, i.paid_at, i.period,
          i.stripe_invoice_id, i.parent_user_id, i.daycare_id,
          d.name as daycare_name, d.province, d.address, d.city, d.postal_code, d.license_number,
          i.child_id, ch.name as child_name, ch.birthdate as child_birthdate,
          u.name as parent_name
-  from invoices i
+  from ${INVOICE_READ_MODEL_SQL} i
   join daycares d on d.id = i.daycare_id
   left join children ch on ch.id = i.child_id
   left join "user" u on u.id = i.parent_user_id
@@ -72,7 +72,7 @@ function mapInvoice(row: InvoiceRow): InvoiceFact {
     id: String(row.id),
     status: String(row.status || ""),
     amountCents: row.amount_cents == null ? null : Number(row.amount_cents),
-    totalDollars: row.total == null ? null : Number(row.total),
+    totalDollars: null,
     currency: row.currency,
     paidAt: iso(row.paid_at),
     period: row.period,
@@ -119,7 +119,7 @@ async function loadInvoices(userId: string, desk: "parent" | "centre"): Promise<
       if (!centres.length) return { enabled: true, ok: true, years: [], groups: [] };
       rows = await sql.query<InvoiceRow>(
         `${INVOICE_SQL}
-         where i.status = 'paid' and i.daycare_id = any($1::text[])
+         where ${INVOICE_SETTLED_SQL} and i.daycare_id = any($1::text[])
          order by i.paid_at desc nulls last
          limit ${TAX_RECEIPT_ROW_CAP + 1}`,
         [centres],
@@ -129,7 +129,7 @@ async function loadInvoices(userId: string, desk: "parent" | "centre"): Promise<
       const homeId = (await familyScopeFor(userId)).dataUserId;
       rows = await sql.query<InvoiceRow>(
         `${INVOICE_SQL}
-         where i.status = 'paid' and i.parent_user_id = $1
+         where ${INVOICE_SETTLED_SQL} and i.parent_user_id = $1
          order by i.paid_at desc nulls last
          limit ${TAX_RECEIPT_ROW_CAP + 1}`,
         [homeId],

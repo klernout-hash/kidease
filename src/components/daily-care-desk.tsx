@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { formatInvoiceDisplayMoney } from "@/lib/stripe-parent-invoice";
+import { careMonthBillCopy } from "@/lib/care-month-bill";
 import { confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
@@ -798,7 +800,8 @@ function MonthShares({
   money: (cents: number) => string;
   onSend: (child: LicensedMonthChild) => void;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
+  const billCopy = careMonthBillCopy(locale);
   return (
     <section className="rounded-xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="licensed-month">
       <h3 className="font-medium">{t("careMonthTitle").replace("{month}", month)}</h3>
@@ -824,11 +827,30 @@ function MonthShares({
                 {" · "}
                 {t("careVacation")} {ledger.vacation}
               </p>
+              {child.bill ? (
+                <p className="mt-1 text-sm font-medium" data-ke="licensed-month-bill">
+                  {billCopy.billed(formatInvoiceDisplayMoney(child.bill.amountCents, child.bill.currency, locale) ?? "—")} · {billCopy.status(child.bill.status)}
+                  {role === "parent" ? (
+                    <>
+                      {" · "}
+                      <Link
+                        to={locale === "fr" ? "/fr/invoices/$id" : "/invoices/$id"}
+                        params={{ id: child.bill.id }}
+                        className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline"
+                      >
+                        {billCopy.seeBill}
+                      </Link>
+                    </>
+                  ) : null}
+                </p>
+              ) : null}
               <p className="mt-1 text-sm">
-                {t("careParentOwes").replace("{amount}", money(ledger.parentCents))}
-                {" · "}
+                {!child.bill ? `${t("careParentOwes").replace("{amount}", money(ledger.parentCents))} · ` : null}
                 {t("careProgramOwes").replace("{amount}", money(ledger.programCents))}
               </p>
+              {child.bill ? null : (
+                <p className="mt-1 text-xs text-subtle" data-ke="licensed-month-estimate">{billCopy.estimate}</p>
+              )}
               <p className="mt-1 text-xs text-subtle">{t("careProgramNotCollected")}</p>
               {role === "provider" && dollars && child.parentUserId ? (
                 <Button className="mt-2" size="sm" disabled={busy !== null} onClick={() => onSend(child)}>

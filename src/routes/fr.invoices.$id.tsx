@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { InvoiceDetail } from "@/components/stripe-invoice-list";
 import { EmptyState } from "@/components/empty-state";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
@@ -29,10 +29,12 @@ export const Route = createFileRoute("/fr/invoices/$id")({
 function FrenchInvoicePage() {
   const { invoice } = Route.useLoaderData();
   const { print } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const { t } = useCopy();
   useEffect(() => {
-    if (print === "1" && invoice) window.print();
-  }, [print, invoice]);
+    if (print !== "1" || !invoice) return;
+    void navigate({ replace: true, search: {} }).then(() => window.print());
+  }, [print, invoice, navigate]);
   return invoice ? (
     <InvoiceDetail invoice={invoice} />
   ) : (

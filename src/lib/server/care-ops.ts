@@ -19,6 +19,8 @@ import {
 } from "@/lib/daily-care";
 import { dailyLogsEnabled } from "@/lib/features";
 import { nid } from "@/lib/utils";
+import { INVOICE_READ_MODEL_SQL } from "@/lib/invoice-read-model";
+import { careMonthBill, type CareMonthBill, type CareMonthBillRow } from "@/lib/care-month-bill";
 import { listAccessibleDaycareIds, loadCentreRole } from "./centre-access";
 import { insertCareStatusMessage, loadEnrolledBooking } from "./daily-care";
 import {
@@ -770,6 +772,8 @@ export type LicensedMonthChild = {
   parentUserId: string | null;
   days: Array<{ day: string; status: string }>;
   split: CareSplitRow | null;
+  /** The sent bill for this child and month, from the same invoices rows as Pay (P1-6). */
+  bill: CareMonthBill | null;
 };
 
 export const getLicensedMonth = createServerFn({ method: "POST" })
@@ -871,6 +875,19 @@ export const getLicensedMonth = createServerFn({ method: "POST" })
           )
         )
     `.catch(() => []);
+    const { familyScopeFor } = await import("./coparent");
+    const { daycareIdsForArea } = await import("./centre-access");
+    const homeId = (await familyScopeFor(context.userId)).dataUserId;
+    const billingCentres = await daycareIdsForArea(sql, context.userId, "bills", "view");
+    const billRows = kids.length
+      ? await sql.query<CareMonthBillRow>(
+          `select id, booking_id, period, status, settlement_status, read_amount_cents as amount_cents, total, currency, created_at
+           from ${INVOICE_READ_MODEL_SQL} i
+           where booking_id = any($1::text[]) and period = $2 and status <> 'draft'
+             and (parent_user_id = $3 or daycare_id = any($4::text[]))`,
+          [kids.map((kid) => kid.booking_id), month, homeId, billingCentres],
+        ).catch(() => [] as CareMonthBillRow[])
+      : [];
     const children: LicensedMonthChild[] = kids.map((kid) => {
       const splitHit = splitRows.find((s) => s.booking_id === kid.booking_id);
       const kind = splitHit && isProgramKind(splitHit.program_kind) ? splitHit.program_kind : null;
@@ -898,6 +915,7 @@ export const getLicensedMonth = createServerFn({ method: "POST" })
                 programLabel: splitHit.program_label || "",
               }
             : null,
+        bill: careMonthBill(billRows, kid.booking_id, month),
       };
     });
     return { month, children };
