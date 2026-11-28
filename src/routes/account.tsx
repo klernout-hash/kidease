@@ -12,7 +12,7 @@ import { DeskSkeleton } from "@/components/page-skeleton";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { HistoryBack } from "@/components/history-back";
 import { historyHref } from "@/lib/screen-history";
-import { DESK_PATH, accountDeskFor, accountDeskParam, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
+import { DESK_PATH, accountDeskFor, accountDeskParam, deskQueryForViewer, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
 import { accountDeskPath, menuDeskPath, parentDeskPath, parentNavSearch, providerDeskPath, providerNavSearch, supportDeskPath } from "@/lib/desk-nav";
 import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -297,6 +297,10 @@ function ProfilePane() {
   const asked = parseDeskQuery(search.desk);
   const rawDesk = accountDeskFor({ asked, sticky, session, ready: desksReady });
   const desk = hideAdmin && rawDesk === "admin" ? "parent" : rawDesk;
+  useEffect(() => {
+    if (search.desk !== "director" || deskQueryForViewer("provider", session?.centreRole) !== "staff") return;
+    void navigate({ to: accountTo, search: { ...search, desk: "staff" }, replace: true });
+  }, [accountTo, navigate, search, session?.centreRole]);
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
